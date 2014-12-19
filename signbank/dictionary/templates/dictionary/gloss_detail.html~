@@ -455,7 +455,7 @@
                                          </div>
                                       <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                                           {% csrf_token %}
-                                          <input type='hidden' name='id' value='relationto_foreignsigndelete_{{rel.id}}'>
+                                          <input type='hidden' name='id' value='relationforeigndelete_{{rel.id}}'>
                                           <input type='hidden' name='value' value='confirmed'>
                                           <div class="modal-footer">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
