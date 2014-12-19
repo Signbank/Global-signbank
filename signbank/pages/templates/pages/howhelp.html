@@ -1,0 +1,58 @@
+{% extends "baselayout.html" %}
+
+{% block jqueryready %}
+
+    config = {
+        clip: {
+            url: '{% auslan_media_prefix %}pages/how-help-small.mp4',
+            autoPlay: true,
+            autoBuffering: true 
+        },
+        plugins: { 
+                controls: {
+                        // which buttons are visible and which are not? 
+                        play:true, 
+                        volume:false, 
+                        mute:false, 
+                        time:true, 
+                        stop:true, 
+                        playlist:false, 
+                        fullscreen:false
+                }
+        },
+        play: { opacity: 0 }
+    };
+    flowplayer("player", "{{ STATIC_URL }}flowplayer/flowplayer-3.1.5.swf", config);
+
+
+{% endblock %}
+
+{% block script %}
+
+{% endblock %}
+
+{% block bodyid %}id='pages'{% endblock %}
+
+
+{% block content %}
+
+{# show the edit button if the user has permission to change pages #}
+{% if perms.pages.change %}
+<div id="editbutton">
+    <a href="/admin/pages/page/{{page.id}}/">[Edit]</a>
+</div>
+{% endif %}
+ 
+    <div id="videocontainer">
+        <div id="player"></div>
+
+    </div> 
+
+{% block pagecontent %}
+   {{ page.content }}
+{% endblock %}
+
+  {% block bottomcontent %}
+  {% endblock %}
+
+{% endblock %}

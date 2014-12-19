@@ -1,0 +1,17 @@
+
+#header h1 {
+    background-image: url(../css/images/auslan/test-server-header.png); 
+
+    background-repeat: no-repeat;
+   /* hide the header text with a negative indent */
+   /* http://phark.typepad.com/phark/2003/08/accessible_imag.html */
+   text-indent: -9000px;
+   height: 92px;
+   margin: 0px;
+}
+
+body {
+  background-image: url(../css/images/auslan/black_02.gif); 
+  background-repeat: repeat-x;
+  padding: 0px; 
+}

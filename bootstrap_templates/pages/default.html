@@ -1,0 +1,30 @@
+{% extends "baselayout.html" %}
+
+
+{% block content %}
+
+{# show the edit button if the user has permission to change pages #}
+{% if perms.pages.change_page %}
+<div id="editbutton">
+    <a class='btn btn-default' href="/publisher/pages/page/{{page.id}}/">Edit Page</a>
+</div>
+{% endif %}
+
+
+{% block topcontent %}
+{% endblock %}
+
+{% block pagecontent %}
+    <div class='row'>
+        <div class="col-md-10 col-md-offset-1">
+   {{ page.content }}
+        </div>
+   </div>
+{% endblock %}
+
+
+{% block bottomcontent %}
+{% endblock %}
+
+
+{% endblock %}

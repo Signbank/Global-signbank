@@ -1,0 +1,107 @@
+{% extends "simple.html" %}
+
+{% block pagetitle %}Auslan Update Video for Gloss{% endblock %}
+
+{% block jqueryready %}
+
+  flowplayer("player1", "{{ STATIC_URL }}flowplayer/flowplayer-3.1.5.swf", '{% auslan_media_prefix %}{{ gloss.get_video_url }}'); 
+  flowplayer("player2", "{{ STATIC_URL }}flowplayer/flowplayer-3.1.5.swf", '{% auslan_media_prefix %}{{ videofile }}'); 
+  
+{% endblock %}
+
+{% block extrahead %}
+
+<style type="text/css">
+
+td .player {
+   width: 320px;
+}
+.player {
+   margin: auto;
+   width:320px;
+   height:240px;
+   border-left: 6px solid black;
+   border-right: 6px solid black;
+}
+
+#container {
+  text-align: center;
+  padding: 2em;
+}
+#videos {
+  width: 100%;
+  margin: auto;
+}
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+<div id="container">
+<h2>Update Video for Gloss <em>{{gloss.idgloss}}</em></h2>
+
+{% ifequal status "cancelled" %}
+<p>Replacement of video cancelled.</p>
+
+<p><a href="javascript:window.close()">Close Window</a></p>
+
+{% else %}
+    {% ifequal status "completed" %}
+    <p>Replacement of video completed.</p>
+    
+    <p><a href="javascript:window.close()">Close Window</a></p>
+    {% endifequal %}
+{% endifequal %}
+
+{% ifequal status "form" %}
+{% if videofile %}
+
+<table id="videos">
+<thead>
+  <tr><th>Existing Video</th><th>New Video</th></tr>
+</thead>
+<tbody>
+  <tr>
+    <td><div class='player' id="player1"></div></td>
+    <td><div class='player' id="player2"></div></td>        
+  </tr>
+  
+  <tr>
+    <td colspan="2">
+    <form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="confirmvideofile" value="{{videofile}}"/> 
+    Confirm update of this video:
+    <input type="submit" value="Confirm"/> 
+    <button name="Cancel" value="cancel">Cancel</button>
+    </form>
+    </td>
+  </tr>
+    
+  </tbody>
+</table>
+
+{% else %}
+
+<form method="POST" enctype="multipart/form-data">
+ {% csrf_token %}
+ <ul>
+  {{form.as_ul}}
+ </ul>
+ <p><input type='submit' value='Upload Video'/></p>
+</form>
+
+<p>When you upload a video it will first be converted to
+the video format used on the site. you will get a 
+chance to preview the video before any permanent change
+is made to the site.</p>
+
+<p>For optimum results, please save your video in
+a Web format (technically, h264 encoded mp4 files).</p>
+
+{% endif %}
+{% endifequal %}
+
+</div>
+{% endblock %}

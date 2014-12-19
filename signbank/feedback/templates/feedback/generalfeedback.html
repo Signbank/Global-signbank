@@ -1,0 +1,43 @@
+
+{% extends "baselayout.html" %}
+
+{% load bootstrap3 %}
+{% block content %}
+
+
+{% if valid %}
+    <p class='alert alert-info'>
+     Thanks for your comment. We value your contribution.
+    </p>
+{% else %}
+    <div class="col-md-6 col-md-offset-3">
+     <h2>General Feedback</h2>
+
+   <p>Please enter any comments you may have about this site and click
+   "submit" to send your feedback to us. We value your contributions and comments.</p>
+   
+  <form method="post" name="general" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div id="{{form.comment.name}}Div" class="formcomponent">
+      <label for='comment'>General comments, suggestions, or anything you feel like telling us.</label>
+      {%if form.comment.errors %}{{form.comment.errors}}{% endif %}
+      {% bootstrap_field form.comment show_label=False %}
+    </div>
+
+    <div id="{{form.video.name}}Div" class="formcomponent">
+      <label for='video'>Upload your feedback as a video.</label>
+      {%if form.video.errors %}{{form.video.errors}}{% endif %}
+      {% bootstrap_field form.video show_label=False %}
+      <p>NOTE: Video files can be quite large, and may take a long time to send.
+           Please be patient when submitting this feedback.</p>
+    </div>
+
+    <hr>
+    <div class="formbuttons">
+      <input class='btn btn-primary' type="submit" value="Submit" class="submit" />
+    </div>
+    <hr>
+  </form>
+  </div>
+{% endif %}
+{% endblock %}

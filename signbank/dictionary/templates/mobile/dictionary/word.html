@@ -1,0 +1,196 @@
+{% extends "baselayout.html" %}
+
+{% block pagetitle %}Auslan: sign for {{ translation.translation }} {% endblock %}
+
+{% block extrahead %}
+
+{% endblock %}
+
+
+{% block content %}
+
+	    <div id="matches">
+	        {% ifequal viewname "words" %}
+	            <h2>Search: <em>{{translation.translation}}</em></h2> 
+             
+	            <div id='matcheslinks' data-role="controlgroup" data-type="horizontal">
+		        {% if n > 1 %}
+		        <a data-role="button" data-icon="arrow-l" href="{% url 'root_page' %}dictionary/words/{{translation.translation}}-{{n|add:"-1"}}.html">&nbsp;</a>
+		        {% endif %}
+				<a data-role='button'>Match {{n}} of {{matches|length}}</a>
+		        {% if n < matches|length %}
+		        <a data-role="button" data-icon="arrow-r" data-iconpos="right" href="{% url 'root_page' %}dictionary/words/{{translation.translation}}-{{n|add:"1"}}.html">&nbsp;</a>
+		        {% endif %}		  
+		        </div>
+	        {% else %}
+	            <div id='matcheslinks' data-role="controlgroup" data-type="horizontal">	            
+	             <a  data-role='button' data-inline='true' href="{% url 'root_page' %}dictionary/words/{{lastmatch}}.html">Return to Matches</a>
+	            </div>
+	        {% endifequal %}
+	        
+	    </div><!-- End #matches -->
+
+		<div id="keywords"> 
+	         <p><strong>Keywords:</strong>
+	         {% for kwd in allkwds %}
+	           {% ifequal translation.translation kwd.translation %}<b>{{ kwd.translation }}</b>{% else %}{{ kwd.translation }}{% endifequal %}{% if not forloop.last %},{% endif %}
+	         {% endfor %}
+	         </p>
+	    </div>
+	     
+    <div id="videocontainer">    
+    <div class="video">         
+    {% if gloss.has_video %}
+          <iframe scrolling="no" frameborder='0' 
+          src="{% url 'signbank.video.views.iframe' gloss.pk %}">
+      </iframe>
+    {% else %} 
+    <img src='{{ STATIC_URL }}images/no-video-ngt.png'>
+    {% endif %}
+    </div>
+    <!-- End VideoJS -->
+	</div>
+	
+	<div id="signinfo">
+	    <div id="signs">
+	        <div data-role="controlgroup" data-type="horizontal">
+	            {% if navigation.prev %}
+	              <a data-role="button" data-inline="true" data-icon="arrow-l" data-direction='reverse' 
+                     href="{% url 'root_page' %}dictionary/gloss/{{navigation.prev.idgloss}}.html?lastmatch={{lastmatch}}">&nbsp;</a>
+	            {% endif %}
+	            <a data-role='button' data-inline='true'>Sign <em>{{glossposn}}</em> of <em>{{glosscount}}</em></a>
+	            {% if navigation.next %}
+	             <a data-role="button" data-inline="true" data-icon="arrow-r" 
+                    href="{% url 'root_page' %}dictionary/gloss/{{navigation.next.idgloss}}.html?lastmatch={{lastmatch}}">&nbsp;</a>
+	            {% endif %}
+	        </div>
+	    </div><!-- End #signs -->
+
+	</div><!-- End #signinfo -->
+
+<div id="word-info-wrapper">
+
+    <div id="definition">
+        <h2>Sign Definition</h2>
+ 
+        {% if definitions.general %} 
+          <h3>General Definition</h3>
+         
+          <ol>
+          {% for def in definitions.general %}
+            <li> {{ def }}</li>
+          {% endfor %} 
+          </ol>
+        {% endif %}
+ 
+        {% if definitions.noun %} 
+          <h3>As a Noun</h3>
+         
+          <ol>
+          {% for def in definitions.noun %}
+            <li> {{ def }}</li>
+          {% endfor %} 
+          </ol>
+        {% endif %}
+          
+        {% if definitions.verb %} 
+          <h3>As a Verb or Adjective</h3> 
+          <ol>
+          {% for def in definitions.verb %}
+            <li> {{ def }}</li>
+          {% endfor %} 
+          </ol>
+        {% endif %}
+          
+          
+        {% if definitions.interact %} 
+          <h3>Interactive</h3> 
+          <ol>
+          {% for def in definitions.interact %}
+              <li> {{ def }}</li>
+          {% endfor %} 
+          </ol>
+        {% endif %}
+          
+        {% if definitions.deictic %} 
+          <h3>As a Pointing Sign</h3> 
+          <ol>
+          {% for def in definitions.deictic %}
+            <li> {{ def }}</li>
+          {% endfor %} 
+          </ol>
+        {% endif %}
+          
+          
+        {% if definitions.modifier %} 
+          <h3>As Modifier</h3> 
+          <ol>
+          {% for def in definitions.modifier %}
+              <li> {{ def }}</li>
+          {% endfor %} 
+          </ol>
+        {% endif %}
+        
+          
+        {% if definitions.question %} 
+          <h3>As Question</h3> 
+          <ol>
+          {% for def in definitions.question %}
+              <li> {{ def }}</li>
+          {% endfor %} 
+          </ol>
+        {% endif %}
+          
+        {% if definitions.augment %} 
+          <h3>Augmented Meaning</h3> 
+          <ol>
+          {% for def in definitions.augment %}
+              <li> {{ def }}</li>
+          {% endfor %} 
+          </ol>
+        {% endif %}
+
+        {% if definitions.note %} 
+          <h3>Note</h3> 
+          <ol>
+          {% for def in definitions.note %}
+              <li> {{ def }}</li>
+          {% endfor %} 
+          </ol>
+        {% endif %}
+
+    </div>
+
+
+        <div>
+           <h4>Sign Distribution</h4> 
+                <ul>
+                {% ifequal dialect_image "images/maps/allstates.gif" %}
+                  <li>All States</li>
+                {% else %}
+	                {% for dialect in gloss.dialect.all %}
+	                  <li>{{ dialect.name }}</li>
+	                {% endfor %}
+                {% endifequal %}
+                </ul>  
+        </div>
+
+    {% if dialect_image %}
+    <div id="states">      
+        <div>
+            <img src="{{ STATIC_URL }}{{dialect_image}}" alt="States"></img>
+        </div>
+    </div> 
+    {% endif %}
+
+
+	<h2>Feedback</h2>
+
+	<p>If you wish to provide feedback, please visit the site
+     on a desktop computer.</p>
+    
+
+
+</div><!-- End #word-info-wrapper -->
+{% endblock %}
+

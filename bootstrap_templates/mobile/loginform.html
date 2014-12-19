@@ -1,0 +1,60 @@
+{# login form should be shown when not logged in #}
+
+{% if not user.is_authenticated %}
+
+  <div id="loginforms">
+
+	<h2>Sign In</h2>
+<div class="ui-body ui-body-c">
+  
+  <form id="loginform" name="login" method="post" action="/accounts/login/">
+    {% if form.errors %} 
+      <div class="ui-body ui-body-e">
+        <h3>Login Error</h3>
+        <p>{{form.errors}}</p>
+      </div>
+    {% endif %}
+    <div data-role="fieldcontain">
+    <label for="email" class="ui-input-text">Email:</label>
+    <input class="boxed" type="text" name="email" />
+    </div>
+
+    <div data-role="fieldcontain">
+    <label for="password" class="ui-input-text">Password:</label>
+    <input class="boxed" type="password" name="password" />
+    </div>
+
+    <button type="submit" name="submit">Log In</button></div>
+    <input type="hidden" name="next" value="{{ next }}" />
+  </form>
+
+{% if allow_registration %}
+    <h2>Register</h2>
+     
+    <div class="ui-body ui-body-c">
+    <p>Register for free to provide feedback on the Auslan dictionary of signs.</p>
+    <a data-role="button" href="/accounts/register/">Register</a>
+    </div>
+{% endif %}
+    
+      <h2>Lost Password</h2>
+<div class="ui-body ui-body-c">
+      <p>If you've lost or forgotten your password, enter your email 
+      address here and we'll reset it and send you a reminder.</p>
+
+      <form id="passwordresetform" action="/accounts/password/reset/" method="POST">
+      <label for="email" class="ui-input-text">Email:</label>
+      <input class="boxed" type="text" name="email" /></p>
+      <button type="submit">Reset Password</button></div>
+      </form>
+    </div>
+
+
+
+
+
+
+
+
+
+{% endif %}

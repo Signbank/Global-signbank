@@ -1,0 +1,31 @@
+/* variant style for red2 - used for medical signbank */
+
+
+html {
+  background-image: url(images/auslan-medical/red2_02.gif);
+}
+
+#leftcontentborder {
+  background-image: url(images/auslan-medical/red2_03.gif);
+}
+
+#rightcontentborder {
+  background-image: url(images/auslan-medical/red2_05.gif);
+}
+
+#header {
+  background-image: url(images/auslan-medical/red2_02.gif);
+}
+ 
+#header h1 {
+    /* replace the header text with the banner image
+       move the text out of the way with padding */
+    background-image: url(images/auslan-medical/medical-header.gif);
+    background-repeat: no-repeat;
+}
+
+.sf-menu { 
+   background-image: url(images/auslan-medical/red2_08.gif);
+   background-position: top right;
+   background-repeat: no-repeat;
+}

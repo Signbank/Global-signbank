@@ -1,0 +1,33 @@
+
+{% extends "baselayout.html" %}
+
+
+{% block content %}
+
+    <h1>File Attachments</h1>
+    
+    <p>This page allows you to upload files of any kind to be hosted on the site.
+    The files are listed below once uploaded and can be referenced by their URL
+    in any page.  The URL is listed after the file link below.</p>
+
+
+
+        <form enctype="multipart/form-data" method="post" action="/attachments/upload/">
+         {% csrf_token %}
+            <fieldset id="attachmentform">
+                <legend>Upload File</legend>
+            <table>
+                <tr><td></td><td><input type="file" name="file"></td></tr>
+                <tr><td>Description:</td><td><input type="text" name="description"></td></tr>
+                <tr><td colspan='2' style="text-align: right"><input type="submit" value="Upload File"></td></tr>
+            </table>
+            </fieldset>
+        </form>
+
+        <ul>
+        {% for o in object_list %}
+          <li><a href="{{o.file.url}}">{{o.description}}</a> URL: {{o.file.url}}</li>
+        {% endfor %}
+        </ul>
+        
+{% endblock %}

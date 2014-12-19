@@ -1,0 +1,11 @@
+{% extends "baselayout.html" %}
+
+{% block content %}
+ 
+ <ul>
+ {% for gloss in glosses %}
+   <li><a href="/dictionary/gloss/{{gloss.idgloss}}.html">{{gloss.idgloss}}</a>
+      -- <a href="{% auslan_media_prefix %}{{gloss.get_video_url}}">{{gloss.get_video_url}}</a></li>
+ {% endfor %}
+ </ul>
+{% endblock %}

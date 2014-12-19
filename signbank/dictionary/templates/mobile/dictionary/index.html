@@ -1,0 +1,39 @@
+{% extends "baselayout.html" %}
+
+{% block content %}
+    <h2>Search the Dictionary</h2>
+    <div>
+    <form id="frmSearch" name="frmSearch" method="get" action="{% url 'root_page' %}dictionary/search/">
+      <input type="search" name="query" value="" maxlength="50">
+      <button type="submit" data-theme="a" data-icon="search" data-inline="true">Sign Search</button>
+      <div data-role="fieldcontain">
+ 	<fieldset data-role="controlgroup">
+		<input id="msb" type="checkbox" name="msb" value="1" class="custom" />
+		<label for="msb">Search medical signs only</label>
+        </fieldset>
+      </div>
+
+    </form> 
+    </div>
+    
+    <h2>Browse Keywords</h2>
+    {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+      <a data-role="button" data-inline="true" href="{% url 'root_page' %}dictionary/search?query={{letter}}" style="font-family: Consolas, Menlo, Monaco, 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace, serif;" >{{letter}}</a>
+   {% endfor %}
+
+<!--
+    <h2>Browse Keywords</h2>
+    <ul data-inset="true" data-role="listview">
+    {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+      <li><a href="{% url 'root_page' %}dictionary/search?query={{letter}}">{{letter}}</a></li>
+   {% endfor %}
+   </ul>
+-->
+
+
+
+{% endblock %}
+
+
+
+

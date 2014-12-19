@@ -1,0 +1,616 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    
+    
+    {% if perms.dictionary.change_gloss %}
+    
+    <script type='text/javascript'>
+    
+     var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
+     var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
+     var handshape_choices = {{gloss.handshape_choices_json|safe}}
+     var location_choices = {{gloss.location_choices_json|safe}}
+     var palm_orientation_choices = {{gloss.palm_orientation_choices_json|safe}}
+     var relative_orientation_choices = {{gloss.relative_orientation_choices_json|safe}}
+     var secondary_location_choices = {{gloss.secondary_location_choices_json|safe}}
+     var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
+     var languages = {{gloss.language_choices|safe}};
+     var dialects = {{gloss.dialect_choices|safe}};
+    
+     var choice_lists = {{gloss.get_choice_lists|safe}};
+    
+    var csrf_token = '{{csrf_token}}';
+      
+    </script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
+    
+    
+    {% endif %}
+{% endblock %}
+
+
+{% block content %}
+
+<div id="signinfo" class='navbar navbar-default navbar-collapse'>
+   
+    <div class='btn-group'>
+        {% if SIGN_NAVIGATION %}
+        
+            {% if navigation.prev %}
+            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo; Previous Sign
+            </a>
+            {% endif %}
+            
+            <button class='btn navbar-btn'>Sign {{glossposn}} of {{glosscount}} in the Auslan Dictionary</button>
+            
+            {% if navigation.next %}
+            <a class="btn navbar-btn btn-default"
+               href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">Next Sign &raquo;</a>
+            {% endif %}
+         {% else %}
+           
+         {% endif %}
+    </div>
+
+    {% if gloss.idgloss %}
+    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.idgloss}}.html">Public View</a>
+    {% endif %}
+    
+    {% if perms.dictionary.change_gloss %}
+    
+    <div class='pull-right'>
+         <span id='edit_message'></span>&nbsp;
+         <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>Delete Sign</button>
+         <button id='enable_edit' class='btn btn-default navbar-btn'>Enable Edit</button>
+         
+         <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+             <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitle'>Delete This Sign</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>This action will delete this sign and all
+                        associated records. It cannot be undone.</p>
+                     </div>
+                  <form action='{% url 'dictionary:update_gloss' gloss.id %}' method='post'>
+                      {% csrf_token %}
+                      <input type='hidden' name='id' value='deletegloss'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                      </div>
+                  </form>
+                      
+                </div>
+              </div>
+        </div>
+         
+    </div>
+    {% endif %}
+</div>
+
+<div id="definitionblock">
+    <div id="leftblock">
+    <div id="videocontainer">
+    {% if gloss.get_video %}
+
+     <!-- {{ gloss.get_video }} -->
+
+        <div id="player">
+          <iframe id='videoiframe' scrolling="no" frameborder='0'
+		   src="/static/{{gloss.get_video}}">
+
+          </iframe>
+        </div>
+        <div id="replay"></div>
+
+    {% else %}
+    <div id='player'>
+     <img src='{{ STATIC_URL }}images/no-video-ngt.png'>
+     <!-- {{ gloss.get_video }} -->
+    </div>
+    {% endif %}
+    
+    </div>
+    
+    <div id="feedback">
+        <ul>
+            {% ifequal viewname "words" %}
+            <li><a href="{% url 'root_page' %}feedback/sign/{{translation.translation}}-{{n}}.html?return=/dictionary/words/{{translation.translation}}-{{n}}.html">Provide feedback about this sign</a></li>
+            {% else %}
+            <li><a href="{% url 'root_page' %}feedback/gloss/{{gloss.idgloss}}.html?return=/dictionary/gloss/{{gloss.idgloss}}.html&lastmatch={{lastmatch}}">Provide feedback about this sign</a></li>
+            {% endifequal %}
+
+            <li><a href="{% url 'root_page' %}feedback/missingsign.html">Report a missing sign</a></li>
+            <li><a href="{% url 'root_page' %}feedback/generalfeedback.html">Provide general site feedback</a></li>
+        </ul>
+    </div>
+    
+    
+    
+    {% if perms.dictionary.change_gloss and perms.dictionary.update_video %}
+    <div class='editform'>
+        <fieldset>
+            <legend>Upload New Video</legend>
+            <p>We have {{gloss.count_videos}} videos for this sign.</p>
+            <form action="/video/upload/" method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+            <table id="staffops">
+              <tr>
+                  <td>{{videoform.videofile}}</td>
+              </tr>
+              <tr>
+                  <td><input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
+                      <input class='btn btn-primary' type='submit' value='Upload Video'/></td>
+              </tr>
+            </table>
+            </form>
+        </fieldset>
+    
+        {% if perms.dictionary.update_video and gloss.count_videos > 0 %}
+        <fieldset>
+         <legend>Delete/Revert Video</legend>
+            <table>
+            <form action="/video/delete/{{gloss.pk}}" method='post'>
+            <tr><td><em>This will delete the most recent upload and restore the most recent earlier version.</em></td></tr>
+            <tr><td>{% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete/Revert this video'></td></tr>
+            </form>
+           </table>
+        </fieldset>
+        {% endif %}
+    </div>
+    {% endif %}
+
+
+    <!--{% include "dictionary/glosstags.html" %}
+    
+    
+    {% if perms.feedback.view_interpreterfeedback %}
+    <div id='interpfeedback'>
+        <h3>Interpreter Notes</h3>
+        {% if perms.feedback.delete_interpreterfeedback %}
+        <p data-toggle='modal' 
+              data-target='#delete_intnote_modal'> 
+               <span class='glyphicon glyphicon-trash note_delete' 
+              ></span>&nbsp;Delete All Interpreter Notes</p>
+
+         <div class="modal fade" id="delete_intnote_modal" 
+              role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+             <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitle'>Delete All Interpreter Notes</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>This action will delete all interpreter notes on this sign. It cannot be undone.</p>
+                     </div>
+                  <form action='{% url "intnote" gloss.id %}' method='post'>
+                      {% csrf_token %}
+                      <input type='hidden' name='action' value='delete_all'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                      </div>
+                  </form>
+              
+                </div>
+              </div>
+         </div>
+         {% endif %}
+        
+        {% if perms.feedback.add_interpreterfeedback %}
+        <form action='/feedback/interpreter/{{gloss.pk}}' method='post'>
+            {% csrf_token %}
+            {% bootstrap_field interpform.comment show_label=False %}
+            {% buttons %}
+                <button type="submit" class="btn btn-primary">
+                     Submit
+                </button>
+            {% endbuttons %}
+        </form>
+        {% endif %}
+        
+        <table class='table'>
+        {% for fb in gloss.interpreterfeedback_set.all %}
+            <tr><th>{{fb.user.first_name}} {{fb.user.last_name}}</th>
+                <th>{{fb.date}}</th>
+                <td>
+                    {% if perms.feedback.delete_interpreterfeedback %}
+                    <span class='glyphicon glyphicon-trash note_delete' 
+                          data-toggle='modal' 
+                          data-target='#delete_intnote_modal_{{fb.id}}'></span>
+            
+                     <div class="modal fade" id="delete_intnote_modal_{{fb.id}}" 
+                          role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                         <div class="modal-dialog modal-sm">
+                            <div class="modal-content">
+                                <div class='modal-header'>
+                                    <h2 id='modalTitle'>Delete This Note</h2>
+                                </div>
+                                <div class='modal-body'>
+                                    <p><strong>{{fb.user.first_name}} {{fb.user.last_name}}</strong></p>
+                                    <p>{{fb.comment}}</p>
+                                    <p>This action will delete this note. It cannot be undone.</p>
+                                 </div>
+                              <form action='{% url "intnote" gloss.id %}' method='post'>
+                                  {% csrf_token %}
+                                  <input type='hidden' name='action' value='delete'>
+                                  <input type='hidden' name='id' value='{{fb.id}}'>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                    <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                                  </div>
+                              </form>
+                          
+                            </div>
+                          </div>
+                     </div>
+                     {% endif %}
+                </td>
+            </tr>
+            <tr><td colspan=3>{{fb.comment}}</td></tr>
+        {% endfor %}
+        </table>
+        
+
+    {% endif %} <-- should be below the div
+    </div>-->
+
+    
+</div>
+
+    <div class='panel-group' id="definition">
+        
+
+        
+        <table class='table table-condensed'>
+            <tr><th>Sign Number:</th><td class='edit edit_int' id='sn'>{% value gloss.sn %}</td></tr>
+            <tr><th>ID Gloss:</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
+            <tr><th>Annotation ID Gloss:</th><td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td></tr>
+            <tr><th>Annotation ID Gloss: English</th><td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td></tr>
+            <tr><th>Keywords</th><td class='edit edit_text' id='keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>Usage Instructions</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
+       </table>
+			 
+    {% if perms.dictionary.view_advanced_properties %}
+    <div class="panel panel-default">
+
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#basicProperties'>Basic Properties</a>
+            </div>
+        </div>
+            
+            
+        <div id="basicProperties" class="panel-collapse collapse">
+            <table class='table table-condensed'>
+                <tr><th>Sense Number</th><td class='edit edit_int'  id='sense'>{% value gloss.sense %}</td></tr>
+                <tr><th>Morphology</th><td class='edit edit_text' id='morph'>{% value gloss.morph %}</td></tr>
+                <tr><th>Stem Sign Number</th><td class='edit edit_text' id='StemSN'>{% value gloss.StemSN %}</td></tr>
+                <tr><th>Compound of</th><td class='edit edit_text' id='compound'>{% value gloss.compound %}</td></tr>
+                <tr><th>Language</th><td class='edit edit_language' id='language'>{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+                <tr><th>Dialect</th><td class='edit edit_dialect' id='dialect'>{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+                <tr><th>Remarks</th><td class='edit edit_int'  id='sense'>{% value gloss.rmrks %}</td></tr>
+            </table>
+         </div>
+    </div>
+
+	<div class="panel panel-default">
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#phonology'>Phonology</a>
+            </div>
+        </div>
+        <div id='phonology' class='panel-collapse collapse'>
+            <table class='table table-condensed'>
+		{% for value,name,label,kind in phonology_fields %}
+		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
+		{% endfor %}
+            
+            </table>
+        </div>
+    </div>
+   
+    <div class="panel panel-default">
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#semantics'>Semantics</a>
+            </div>
+        </div>
+        <div id='semantics' class='panel-collapse collapse'>
+            <table class='table table-condensed'>
+		{% for value,name,label,kind in semantics_fields %}
+		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
+		{% endfor %}
+            
+            </table>
+        </div>
+    </div>
+    
+ 
+   <div class="panel panel-default">
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#frequency'>Frequency</a>
+            </div>
+        </div>
+        <div id='frequency' class='panel-collapse collapse'>
+            <table class='table table-condensed'>
+		{% for value,name,label,kind in frequency_fields %}
+		    <tr><th>{{label}}</th><td class="edit edit_text" id='{{name}}'>{% value value %}</td></tr>
+		{% endfor %}
+            
+            </table>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#relations'>Relations to other Signs</a>
+            </div>
+        </div>
+        <div id='relations' class='collapse'>
+               <table class='table table-condensed'>
+                   {% for rel in gloss.relation_sources.all %}
+                    <tr>
+                         <td>
+                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
+                            
+                             <div class="modal fade" id="delete_relation_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                                 <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class='modal-header'>
+                                            <h2 id='modalTitle'>Delete This Relation</h2>
+                                        </div>
+                                        <div class='modal-body'>
+                                            
+                                            <p>This action will delete the <strong>{{rel.get_role_display}}</strong>
+                                                 relation between {{rel.source}} and {{rel.target}}. It cannot be undone.</p>
+                                         </div>
+                                      <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                          {% csrf_token %}
+                                          <input type='hidden' name='id' value='relationdelete_{{rel.id}}'>
+                                          <input type='hidden' name='value' value='confirmed'>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                            <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                                          </div>
+                                      </form>
+                                          
+                                    </div>
+                                  </div>
+                             </div>
+                            
+                        </td>
+                        
+                        
+                        <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
+                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'>{{rel.target}}</td>
+                        <td>(<a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>view</a>)</td></tr>
+                   {% endfor %}
+               </table>               
+               
+               {% if perms.dictionary.change_gloss %}
+               <form id='add_relation_form' method='post' action='{% url 'dictionary:add_relation' %}'>
+                   {% csrf_token %}
+                   <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
+                   <table class='table table-condensed'>
+                       <tr>
+                           <td>{{relationform.role}}</td>
+                           <td><input class='form-control glosstypeahead' placeholder='SN/ID Gloss/Annotation ID Gloss' name='targetid'></td>
+                           <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
+                       </tr>
+                   </table>
+                </form>
+                {% endif %}
+                
+           {# spacing div to allow room for typeahead dropdown #}
+           <div style='height: 10em'></div>
+           
+        </div>
+    </div>
+    
+    <div class="panel panel-default">
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#relationsforeign'>Relations to Foreign Signs</a>
+            </div>
+        </div>
+        <div id='relationsforeign' class='collapse'>
+               <table class='table table-condensed'>
+	      <tr>
+		  <th style='width:3em'>Loan</th>
+		  <th style='width:6em'>Related Language</th>
+		  <th style='width:10em'>Gloss in related language</th>
+		</tr>
+
+                   {% for rel in gloss.relationtoforeignsign_set.all %}
+                    <tr>                                               
+                         <td>
+                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
+                            
+                             <div class="modal fade" id="delete_relation_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                                 <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class='modal-header'>
+                                            <h2 id='modalTitle'>Delete This Relation</h2>
+                                        </div>
+                                        <div class='modal-body'>
+                                            
+                                            <p>Are you sure you want to delete this? This cannot be undone.</p>
+                                         </div>
+                                      <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                          {% csrf_token %}
+                                          <input type='hidden' name='id' value='relationforeigndelete_{{rel.id}}'>
+                                          <input type='hidden' name='value' value='confirmed'>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                            <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                                          </div>
+                                      </form>
+                                          
+                                    </div>
+                                  </div>
+                             </div>
+                            
+                        </td>
+
+                        <td class='edit edit_check' id='relationforeign-loan_{{rel.id}}'>{{rel.loan}}</td>
+                        <td class='edit edit_text' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
+                        <td class='edit edit_text' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
+                   {% endfor %}
+               </table>
+
+               {% if perms.dictionary.change_gloss %}
+               <form id='add_relationtoforeignsign_form' method='post' action='{% url 'dictionary:add_relationtoforeignsign' %}'>
+                   {% csrf_token %}
+                   <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
+                   <table class='table table-condensed'>
+                       <tr>
+                           <td><input class='checkbox' name='loan' type='checkbox'></td>
+                           <td><input class='form-control' placeholder='Related language' name='other_lang' type='text'></td>
+                           <td><input class='form-control' placeholder='Gloss in related language' name='other_lang_gloss' type='text'></td>
+                           <td><input class='btn btn-primary' value='Add Relation to Foreign Sign' type='submit'></td>
+                       </tr>
+                   </table>
+                </form>
+                {% endif %}
+                               
+           {# spacing div to allow room for typeahead dropdown #}
+           <div style='height: 10em'></div>
+           
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="panel panel-default">
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#pubStatus'>Publication Status</a>
+            </div>
+        </div>
+        
+            
+        <div id="pubStatus" class="panel-collapse collapse">
+        
+            <table class='table table-condensed'>
+                <tr><th>In Web Dictionary</th><td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'>{% if gloss.inWeb %}Yes{% else %}No{% endif %}</td></tr>
+                <tr><th>Proposed New Sign</th><td class='edit edit_check' id='isNew'>{% if gloss.isNew %}Yes{% else %}No{% endif %}</td></tr>
+            </table>
+        </div>
+    </div>
+    
+   
+        
+    <div class="panel panel-default">
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#definitions'>Definitions/Notes</a>
+            </div>
+        </div>
+        <div id='definitions' class='collapse'>
+            
+    {% regroup gloss.definition_set.all by role as roles %}
+    
+    <table class='table'>
+      <tr>
+          <th style='width:1em'></th>
+          <th style='width:3em'>Published</th>
+          <th style='width:3em'>Index</th>
+          <th style='width:10em'>Role</th>
+          <th>Text</th>
+      </tr>
+    {% for role in roles %}
+
+      {% for def in role.list %} 
+      <tr>
+        <td>
+            
+            {% if perms.dictionary.change_gloss %}
+            {% if not def.published and perms.dictionary.can_delete_unpublished or def.published and perms.dictionary.can_delete_published %}
+            <span class='glyphicon glyphicon-trash definition_delete' data-toggle='modal' data-target='#delete_definition_modal_{{def.id}}'></span>
+            
+             <div class="modal fade" id="delete_definition_modal_{{def.id}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                 <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class='modal-header'>
+                            <h2 id='modalTitle'>Delete This Definition</h2>
+                        </div>
+                        <div class='modal-body'>
+                            <p><strong>{{def.get_role_display}}</strong> {{def.text}}</p>
+                            <p>This action will delete this definition/note. It cannot be undone.</p>
+                         </div>
+                      <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                          {% csrf_token %}
+                          <input type='hidden' name='id' value='definitiondelete_{{def.id}}'>
+                          <input type='hidden' name='value' value='confirmed'>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                            <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                          </div>
+                      </form>
+                          
+                    </div>
+                  </div>
+             </div>
+            {% endif %}
+            {% endif %}
+        </td>
+        <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'>{% if def.published %}Yes{% else %}No{% endif %}</td>
+        <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>   
+        <td class='edit edit_role' id='definitionrole_{{def.id}}'>{{def.get_role_display}}</td>
+        <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
+      </tr>
+      {% endfor %}
+      
+
+    {% endfor %}
+    </table>
+    
+    
+    {% if perms.dictionary.change_gloss %}
+    <form id='add_definition' action='{% url 'dictionary:add_definition' gloss.id %}' method="POST">
+        <fieldset>
+        {% csrf_token %}
+         <table class='table'>
+            <tr>
+                <td style='width:5em'><input class='form-control' name='count' type='number'></td>   
+                <td style='width:10em'>{{definitionform.role}}</td>
+                <td><input class='form-control' name='text' placeholder='Enter new definition/note'></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td><input class='btn' type='submit' value='Save New'></td>
+            </tr>
+         </table>
+    </fieldset>
+    
+    </form>
+    {% endif %}
+    
+    
+    </div>
+    
+    </div>
+    
+
+    </div>
+</div>
+
+
+{% endblock %}

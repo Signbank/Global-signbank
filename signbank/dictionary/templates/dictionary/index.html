@@ -1,0 +1,24 @@
+{% extends "baselayout.html" %}
+
+{% block content %}
+
+    <p>Welcome to the Sign Search section of the {{langauge}} SignBank. Here
+    you can search for a sign using an English keyword in the search box
+    above, or browse keywords starting with any letter below. 
+   </p>
+    
+    <p>
+    {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+      <a href="{% url 'root_page' %}dictionary/search?query={{letter}}">{{letter}}</a> | 
+   {% endfor %}
+   </p>
+   
+
+
+
+
+{% endblock %}
+
+
+
+

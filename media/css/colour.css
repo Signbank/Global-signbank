@@ -1,0 +1,148 @@
+
+/* main colour styles for pages, variants (black, red2) are in separate files
+   that are loaded after this */
+
+html {
+  background-color: #fff;
+  background-repeat: repeat-x;
+  background-position: top;
+}
+
+#content {
+  background-color: #FFF; 
+}
+
+#leftcontentborder { 
+}
+
+#rightcontentborder { 
+}
+
+
+#header { 
+  background-repeat: repeat-x;
+  height: 92px;
+}
+ 
+#header h1 { 
+    background-repeat: no-repeat;
+}
+
+#header #frmSearch {
+   color: #FFFFFF; 
+   font-variant: small-caps;
+}
+
+#header #frmSearch a:link {
+   color: #FFFFFF;
+   text-decoration: none;
+   font-variant: small-caps;
+}
+
+
+#footer {
+   background-color: #e3e3e3;   
+}
+
+/* style for the layout of word definitions */
+#extrasigninfo {
+   background-color: #1B1D1F;
+   color: #FFF; 
+}
+
+#signinfo {
+   background-color: #1B1D1F;
+   color: #FFF; 
+}
+#signinfo h2 { 
+   font-size: small;
+   font-weight: normal;
+}
+#signinfo a:link, #signinfo a:visited {
+   color: #FFF;
+   text-decoration: none;
+   font-weight: normal;
+}
+#signs {
+   background-color: #1B1D1F;
+}
+
+#matches .match {
+   border: 1px solid white;
+   margin-bottom: 2px;
+   padding: 1px;
+   padding-left: 10px;
+   padding-right: 10px;
+}
+
+#matches .current {
+  background: white;
+  color: black;
+}
+
+#signs .previous {
+  margin-left: 1em;
+  margin-right: 0px;
+  padding-right: 0.5em;
+  border-right: 1px solid white;
+}
+
+#signs .next {
+  padding-left: 0.5em;
+}
+
+
+#videocontainer { 
+
+   background-color:  #1B1D1F; 
+}
+
+/* replay block below both videos and fingerspelling images */
+#replay {
+   font-weight: bold;
+   font-variant: small-caps;
+   color: #5C9ACB;
+   background-image: url(images/box_22.gif);
+   background-repeat: no-repeat;
+   /* these add up to the height and width of the bg image */
+   height: 37px;
+   padding-top: 5px;
+   width: 300px;
+   padding-right: 32px;
+
+}
+
+
+#handcontainer { 
+
+   background-color:  #1B1D1F; 
+}
+
+
+#keywords {  
+}
+
+#states { 
+}
+    
+#definition {
+   margin-left: 332px;
+   padding-left: 1em;
+   background-color: #FFF;
+}
+#definition h2 {
+   background-color: #E3E3E3;
+   color: #5C9ACB;
+}
+
+
+#staffinfo { 
+   background-color: #FFF;
+}
+#staffinfo h2 {
+   background-color: #E3E3E3;
+   color: #5C9ACB;
+}
+
+
+

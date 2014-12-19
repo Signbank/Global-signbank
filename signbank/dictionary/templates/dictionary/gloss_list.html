@@ -1,0 +1,57 @@
+{% extends "baselayout.html" %}
+
+{% block content %}
+ 
+<div id='tags'>
+  {% for cat, tags in tagdict.items %}
+   <strong>{{cat}}</strong>
+    {% for tag in tags %} 
+      <div class='tag' {% if tag.0 == thistag.1 and cat == thistag.0 %}id='activetag'{% endif %}>
+        <span class='tagname'><a href="/dictionary/tag/{{cat}}:{{tag.0}}">{{tag.0}}</a></span>
+        <span class='tagcount'>{{tag.1}}</span>
+      </div>
+    {% endfor %}
+  {% endfor %}
+</div>
+ 
+        <p>Items marked * below are not in the web version of the dictionary and would not
+        appear in a regular (non staff) search.</p>
+ 
+        
+      <div id="searchresults">
+         <table width="90%">
+            <tr>
+               <td valign="top">
+          {% for gloss in page.object_list %}
+            <p>
+              <a href="{% url 'root_page' %}dictionary/gloss/{{ gloss.idgloss }}.html">{{ gloss.idgloss }}</a>
+              {% if not gloss.inWeb %}*{% endif %}  
+            </p>
+
+            {% if forloop.counter|divisibleby:"10" %}
+            </td> 
+            <td valign="top">
+            {% endif %}
+            
+          {% endfor %}
+           </td>
+          </tr>
+         </table>
+   
+          {% if page.has_next or page.has_previous %} 
+          <p>Jump to results page: 
+          {% for p in paginator.page_range %}
+             {% ifequal p page.number %}
+             <strong>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</strong>
+             {% else %}
+             <a href='?query={{query}}&page={{p}}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
+             {% endifequal %}
+          {% endfor %}
+          </p>
+
+          {% endif %}
+{% endblock %}
+
+
+
+

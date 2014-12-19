@@ -1,0 +1,35 @@
+
+
+<ul class="sf-menu sf-navbar">
+{# add in the top level menu items from pages #}
+{% for item in menu %}
+  <li {% if item.current %}class='current'{% endif %}><a href="{{item.url}}">{{item.title}}</a>
+  {% if item.children %} 
+    <ul class="sf-submenu">
+    {% for subitem in item.children %}
+      <li {% if subitem.current %}class='current'{% endif %}><a href="{{subitem.url}}">{{subitem.title}}</a></li>
+    {% endfor %} 
+    </ul> 
+  {% endif %}
+  </li>
+{% endfor %}
+
+{% if user.is_staff %}
+<li {% if '/feedback/show.html' in request.path %}class="current"{% endif %}
+    {% if '/attachments/' in request.path %}class="current"{% endif %}>
+    <a>Staff</a>
+    <ul> 
+        <li><a href="{% url 'admin:index' %}">Admin</a></li>
+        <li {% if '/feedback/show.html' in request.path %}class="current"{% endif %}>
+              <a href="{% url 'signbank.feedback.views.showfeedback' %}">View Feedback</a></li>
+        <li {% if '/attachments/' in request.path %}class="current"{% endif %}>
+              <a href="{% url 'attachments' %}">File Attachments</a></li>
+    </ul>
+</li>
+{% endif %}
+
+{% if user.is_authenticated %}
+<li><a href="{% url 'logout' %}">Logout</a></li>
+<!-- <li>You are signed in as {{ user.first_name }} {{ user.last_name }}.</li> -->
+{% endif %} 
+</ul>
