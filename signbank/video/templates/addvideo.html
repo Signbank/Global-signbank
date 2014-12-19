@@ -1,0 +1,31 @@
+{% extends "baselayout.html" %}
+
+{% block script %}
+
+{% endblock %}
+
+{% block content %}
+
+
+<form action="/video/upload/" method="post" enctype="multipart/form-data">
+{% csrf_token %}
+{{form}}
+<input type='submit' value='submit'/>
+</form>
+
+
+{% if video %}
+
+<p>File: {{video.videofile.url}}</p>
+
+<video src="{{video.videofile.url}}"/>
+
+{% endif %}
+
+
+
+{% if error %}
+<p>Error: {{error}}</p>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,16 @@
+<playlist version="1">
+<title>{{page.title}} Video Playlist</title>
+<info></info>
+
+<tracklist>
+
+{% for video in page.pagevideo_set.all %}
+<track>
+ <title>{{video.title}}</title>
+ <location>{% auslan_media_prefix %}{{video.video}}</location>
+ <annotation>This is an annotation</annotation>
+</track>
+{% endfor %}
+
+</tracklist>
+</playlist>

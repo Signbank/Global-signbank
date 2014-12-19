@@ -1,0 +1,58 @@
+/* variant style for black - main page style */
+
+
+html { 
+  background-image: url(images/ngt/black_02.gif); 
+} 
+
+#leftcontentborder {
+  background-image: url(images/ngt/black_03.gif);
+}
+
+#rightcontentborder {
+  background-image: url(images/ngt/black_05.gif);
+}
+
+ #header {
+		background-image: url(images/ngt/black_02.gif); 
+        padding:0;
+        background:#B82B22;
+        height:110px;
+        clear:both;
+        position:relative;
+        margin: 0px;
+}
+
+#header h1 {
+        height: 110px;
+        width: 759px;
+        background-image: url(./images/ngt/ngt-header.png);
+        background-position: 20px 20px;
+        background-repeat: no-repeat;   
+        text-indent: -9000px;
+        margin: 0px;
+        
+}
+
+#logoholder {
+    background-image: url(./images/ngt/ru-logo.png);
+    background-repeat: no-repeat;
+    background-position: 20px 20px;
+	width: 265px;
+    height: 110px;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+}
+
+/* superfish menu styling - background image is assumed 26px high */
+.sf-navbar  { 
+   background-image: url(images/ngt/black_08.gif);
+   background-position: top right;
+   background-repeat: no-repeat;
+}
+
+#pages #mainlinks td {
+  
+  background-image: url(images/ngt/black_02.gif);
+}

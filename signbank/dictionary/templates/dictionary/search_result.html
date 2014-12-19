@@ -1,0 +1,114 @@
+{% extends "baselayout.html" %}
+
+{% block content %}
+ 
+
+    <p>Welcome to the Sign Search section of the {{language}} SignBank. Here
+     you can search for a sign using an English keyword in the search box
+     above, or browse keywords starting with any letter below.</p>	
+    
+    <p>
+      {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+        <a href="{% url 'root_page' %}dictionary/search?query={{letter}}">{{letter}}</a> | 
+      {% endfor %}
+    </p>
+    
+    {% if ANON_TAG_SEARCH %}
+    <form class='form-inline' action="{% url 'dictionary:search' %}">
+        <div class='form-group'><label for='query'>{{form.query.label}}</label> {{form.query}}</div>
+        <div class='form-group'><label for='category'>{{form.category.label}}</label> {{form.category}}</div>
+        <div class='form-group'><input type='submit' class='btn btn-primary' value='Submit'></div>
+     </form>
+    {% endif %}
+
+
+        {% ifequal wordcount 0 %}
+           {% if query %}
+            <p>There is no exact match to the word you typed.</p>            
+            
+            <p>There are 
+                {% if ANON_SAFE_SEARCH %}three{% else %}two{% endif %} 
+                main reasons why there may be no match:</p>
+            <ol>
+              <li>There really is no {{language}} sign for which that word is an good translation (you may need to 
+
+            fingerspell the word)</li>
+
+            <li>You have mis-typed the word or you have added unnecessary word endings. Follow these 
+
+            search tips:
+            <ul>
+             <li>type only the first few letters of a word</li>
+
+             <li>type words with no word endings like ‘ing’, ‘ed’, or ‘s’.</li>
+            </ul>
+            {% if ANON_SAFE_SEARCH %}
+            <li>The match is blocked in the public view of {{language}} Signbank because the word/sign is 
+
+            obscene or offensive in English or {{language}}, or both. (Schools and parents have repeatedly 
+
+            requested that these type of words/signs be only visible to registered users.) If you
+            <a href="/accounts/login/">login or register 
+
+            with {{langauge}} Signbank</a>,  you will then be able to find these 
+
+            matching words/signs if they exist in {{language}}.</li>
+            {% endif %}
+        </ul>
+            
+            {% endif %}
+            
+            
+        {% else %}
+         {% ifequal wordcount 1 %}
+            <p>There is one word that fully or partially match your query. Please select the word below.</p>       
+         {% else %}
+           <p>There are {{ wordcount }} words that fully or partially match your query. Please select a word from the list below.</p>
+         {% endifequal %}
+        {% endifequal %}
+ 
+        
+        {% if perms.dictionary.search_gloss and not wordcount == 0 %}
+        <p>Items marked * below are not in the web version of the dictionary and would not
+        appear in a regular (non staff) search.</p>
+        {% endif %}
+        
+      <div id="searchresults">
+         <table width="90%">
+            <tr>
+               <td valign="top">
+          {% for word in page.object_list %}
+            <p>
+              <a href="{% url 'root_page' %}dictionary/words/{{ word.text }}-1.html">{{ word.text }}</a>
+              {% if not word.inWeb %}*{% endif %}  
+            </p>
+
+            {% if forloop.counter|divisibleby:"10" %}
+            </td> 
+            <td valign="top">
+            {% endif %}
+            
+          {% endfor %}
+           </td>
+          </tr>
+         </table>
+       </div>
+       
+          {% if page.has_next or page.has_previous %} 
+          <p>Jump to results page: 
+          {% for p in paginator.page_range %}
+             {% ifequal p page.number %}
+             <strong>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</strong>
+             {% else %}
+             <a href='?query={{query}}&page={{p}}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
+             {% endifequal %}
+          {% endfor %}
+          </p>
+
+          {% endif %}
+
+{% endblock %}
+
+
+
+

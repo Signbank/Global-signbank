@@ -1,0 +1,8 @@
+django==1.6.1
+south
+django-tagging
+django-mobile
+django-reversion
+django-bootstrap3
+django-summernote
+unicodecsv

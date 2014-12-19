@@ -1,0 +1,199 @@
+
+
+{% extends "baselayout.html" %}
+{% load bootstrap3 %}
+
+{% block extrajs %}
+<script type='text/javascript'>
+$(document).ready(function(){
+
+    /* the togglevideobutton switches between input for
+       video upload and input for manual entry of sign
+       details. Manual entry is the default */
+   $("#togglevideobutton").click(function() {
+       $("#videoupload").toggle();
+       $("#signdescriptioninput").toggle();
+       return false;
+    });
+    $("#videoupload").hide();
+    
+    
+    /* the choice of one, two together or two apart hands
+       determines whether some form fields are hidden */
+       
+    $("#id_handform").change(function() {
+       if ($(this).val() == "1") {
+           $("#relativelocationdiv").hide();
+           $("#althandshapediv").hide();
+           $("#handinteractiondiv").hide();
+       } else if ($(this).val() == "2") {
+           $("#relativelocationdiv").hide();
+           $("#althandshapediv").show();
+           $("#handinteractiondiv").show();
+       } else {
+           $("#relativelocationdiv").show();
+           $("#althandshapediv").show();
+           $("#handinteractiondiv").show();
+       }
+       return false;
+    }).change();
+});
+</script>
+{% endblock %}
+ 
+ 
+
+
+{% block content %}
+  <div class="col-md-6 col-md-offset-3">
+      
+      <h2>Missing Sign Feedback</h2>
+      
+  {% if posted %}
+<div id="feedbackmessage">
+    <p class='alert alert-info'>
+        Thank you for your feedback. 
+    </p>
+</div>    
+  {% else %}
+   
+    <p>Please fill out the required questions opposite and then
+    click 'Submit' to report a missing sign to the {{language}} signbank.</p>
+    
+    <p>If verified, the site will be updated 
+         to include the new sign.  Note that this may take some time depending 
+         on the level of requests.</p>
+
+<form method="post" enctype="multipart/form-data" name="missingsign">
+   {% csrf_token %}
+    <p>You may either upload a video that shows the missing sign or
+    fill in details in a form.  In either case, you should
+    enter a meaning and any comments you might have in the text 
+    boxes at the bottom of the form. <p>
+
+    <button class='btn btn-default' id="togglevideobutton">Video Comment</button>
+    
+ <fieldset id="videoupload">
+  <legend>Video Upload</legend>
+  <div id="{{form.video.name}}div">
+    {% bootstrap_label form.video.label %}
+    <p>Upload a video of the sign.</p>
+    {%if form.video.errors %}{{form.video.errors}}{% endif %}
+    {% bootstrap_field form.video show_label=False %}
+       
+    <p>NOTE: Video files can be quite large, and may take a long time to send. 
+    Please be patient when submitting this feedback.</p>
+  </div>
+</fieldset>
+ 
+{# this part of the form only shown if we're not uploading a video #}
+<fieldset id="signdescriptioninput">
+    <legend>Sign Description</legend>
+    
+    
+    <div id="{{form.handform.name}}div">
+        {%if form.handform.errors %}{{form.handform.errors}}{% endif %}
+        {% bootstrap_field form.handform %}
+    </div>
+    
+    <div id="{{form.handshape.name}}div">
+        {%if form.handshape.errors %}{{form.handshape.errors}}{% endif %}
+        {% bootstrap_label form.handshape.label %} <a href="{{ STATIC_URL }}images/feedback/guide_handshapes.gif" target="guide">Show Guide</a>
+        {% bootstrap_field form.handshape show_label=False %}
+    </div>
+    
+    <div id="{{form.althandshape.name}}div">
+        {% bootstrap_label form.althandshape.label %}  
+          <a href="{{ STATIC_URL }}images/feedback/guide_handshapes.gif" target="guide">Show Guide</a>
+
+        {%if form.althandshape.errors %}{{form.althandshape.errors}}{% endif %}
+        {% bootstrap_field form.althandshape show_label=False %}
+    </div>
+    
+    <div id="{{form.location.name}}div">
+         {% bootstrap_label form.location.label %}
+         <a href="{{ STATIC_URL }}images/feedback/guide_signpos.gif" target="guide">Show Guide</a>
+        {%if form.location.errors %}{{form.location.errors}}{% endif %}
+        {% bootstrap_field form.location show_label=False %}
+    </div>
+    
+    <div id="{{form.relativelocation.name}}div">
+        <label>{{form.relativelocation.label}} *
+         <a href="{{ STATIC_URL }}images/feedback/guide_relativesignpos.gif" target="guide">Show Guide</a>
+        </label>
+        {%if form.relativelocation.errors %}{{form.relativelocation.errors}}{% endif %}
+        {% bootstrap_field form.relativelocation show_label=False %}
+    </div>
+    
+    <p id="movementmessagep">Using the guide, select the movement symbol/word that 
+      best describes this sign. Please choose either: one only (chosen from any category), 
+      or a choice from every category.</p>
+    
+    <div id="{{form.handbodycontact.name}}div">
+      {% bootstrap_label form.handbodycontact.label %}
+      <img src="{{ STATIC_URL }}images/feedback/guide_movecontact.gif" class="formguide">
+      {%if form.handbodycontact.errors %}{{form.handbodycontact.errors}}{% endif %}
+      {% bootstrap_field form.handbodycontact show_label=False %}
+    </div>
+    
+    <div id="{{form.handinteraction.name}}div">
+    {% bootstrap_label form.handinteraction.label %}
+    <img src="{{ STATIC_URL }}images/feedback/guide_moveinteraction.gif" class="formguide">
+    {%if form.handinteraction.errors %}{{form.handinteraction.errors}}{% endif %}
+    {% bootstrap_field form.handinteraction show_label=False %}
+    </div>
+    
+    <div id="{{form.direction.name}}div">
+    {% bootstrap_label form.direction.label %}
+    <img src="{{ STATIC_URL }}images/feedback/guide_movedirection.gif" class="formguide">
+    {%if form.direction.errors %}{{form.direction.errors}}{% endif %}
+    {% bootstrap_field form.direction show_label=False %}
+    </div>
+    
+    <div id="{{form.movementtype.name}}div">
+    {% bootstrap_label form.movementtype.label %}
+    <img src="{{ STATIC_URL }}images/feedback/guide_movetype.gif" class="formguide">
+    {%if form.movementtype.errors %}{{form.movementtype.errors}}{% endif %}
+    {% bootstrap_field form.movementtype show_label=False %}
+    </div>
+    
+    <div id="{{form.smallmovement.name}}div">
+    {% bootstrap_label form.smallmovement.label %}
+    <img src="{{ STATIC_URL }}images/feedback/guide_movehands.gif" class="formguide">
+    {%if form.smallmovement.errors %}{{form.smallmovement.errors}}{% endif %}
+    {% bootstrap_field form.smallmovement show_label=False %}
+    </div>
+    
+    <div id="{{form.repetition.name}}div">
+    {% bootstrap_label form.repetition.label %}
+    {%if form.repetition.errors %}{{form.repetition.errors}}{% endif %}
+    {% bootstrap_field form.repetition show_label=False %}
+    </div>
+    
+</fieldset>
+
+<fieldset id="meaninginput">
+  <legend>Details</legend>
+    <div id="{{form.meaning.name}}div">
+        <p>Please explain the meaning of the new or missing sign, or enter individual English words that have the same meaning as this sign (i.e. keywords).</p>
+        {%if form.meaning.errors %}{{form.meaning.errors}}{% endif %}
+        {% bootstrap_field form.meaning show_label=False %}
+    </div>
+
+    <div id="{{form.comments.name}}div">
+        <p>Are there any other comments you would like to give about this sign? For example, do you think there are other or extra keyword/s that belong with this sign? If so, please include your comments below.</p>
+        {%if form.comments.errors %}{{form.comments.errors}}{% endif %}
+        {% bootstrap_field form.comments show_label=False %}
+    </div>
+</fieldset>
+ 
+<hr>
+<div class="formbuttons">
+  <input class='btn btn-primary' type="submit" value="Submit Feedback" class="submit" />
+</div>
+<hr>
+</form>
+
+</div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+{% load bootstrap3 %}
+{% load stylesheet %}
+<html>
+  <head>
+    <title>{% block bootstrap3_title %}Signbank{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap_css/style.css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}{% primary_css %}">
+    {% block extrahead %}{% endblock %}
+  </head>
+  <body>
+
+    <div id='wrap'>
+        <div class="container">
+            
+            <div id="leftcontentborder"></div>
+            <div id="rightcontentborder"></div>
+            <div id='header'><h1>Signbank</h1>
+                <div id='logoholder' class='visible-lg visible-md visible-sm'></div>
+            </div>
+
+            <div id='bslstripe'></div>
+        {% include 'menu.html' %}  
+    
+        {% bootstrap_messages %}
+
+        <div role='main'>
+        {% block content %}(no content){% endblock %}
+        </div>
+        
+        </div>
+    </div>
+
+    <div id="footer"> 
+       <div class='container'>
+          <div id="copyright">
+              <!--
+              <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/">
+                  
+                  <img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png" /></a><br />
+                  -->
+                  <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">The NGT Signbank</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons BY-NC-ND 4.0 International License</a>.
+              
+              
+              <a href="{% url 'signbank.feedback.views.generalfeedback' %}">Provide feedback on the site</a>
+          </div>
+       </div>
+    </div>
+    
+    <script src='{{ STATIC_URL}}js/jquery-1.11.0.min.js'></script>
+    <script src='{{ STATIC_URL}}bootstrap/js/bootstrap.min.js'></script>
+    
+    <!-- DataTables -->
+    <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.dataTables.min.js"></script>
+
+    {% block extrajs %}{% endblock %}
+  </body>
+</html>
+    
+
+  

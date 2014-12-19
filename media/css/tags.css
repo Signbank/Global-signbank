@@ -1,0 +1,41 @@
+/* styles for tags */
+
+.tag {
+	font-size: smaller;
+	background: white; 
+	text-decoration: none;
+	border: 1px solid #ccc; 
+	display: inline-block; 
+	margin: 3px;	 
+}
+.tag a {
+	text-decoration: none;
+	color: black;
+	
+}
+.tag .tagname {
+	padding: 1px 2px 1px 5px;
+}
+#activetag {
+	background: #ccc;
+}
+#activetag .tagcount {
+	border-left: 1px solid #fff;
+}
+.tag .tagcount {
+	padding: 2px 4px 2px 4px;
+	margin: 0px;
+	border-left: 1px solid #ccc;
+}
+
+#tags .taglist {
+    display: block;
+}
+#tags .tagli {
+    display: inline-block;
+}
+
+.tagcount .tagdelete {
+    color: red;
+}
+

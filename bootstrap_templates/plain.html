@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Projekktor Version 8 Test</title>
+<link rel="stylesheet" href="{{ STATIC_URL }}projekktor/themes/maccaco/projekktor.style.css" type="text/css" media="screen" />
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.11.0.min.js"></script> <!-- Load jquery -->
+<script type="text/javascript" src="{{ STATIC_URL }}projekktor/projekktor-1.3.09.min.js"></script> <!-- load projekktor -->
+</head>
+<body>
+
+
+<video id="player_a" class="projekktor" poster="{{ STATIC_URL }}numbersigns/ns_011-019.jpg" 
+       title="this is projekktor" width="640" height="360" controls>
+    <source src="{{ STATIC_URL }}numbersigns/ns_011-019.mp4" type="video/mp4" />
+</video>
+
+
+<script type="text/javascript">
+$(document).ready(function() {
+    projekktor('video', {
+    volume: 0,
+    playerFlashMP4: '{{ STATIC_URL}}projekktor/swf/StrobeMediaPlayback/StrobeMediaPlayback.swf'
+    });
+});
+</script> 
+
+
+</body>
+</html>

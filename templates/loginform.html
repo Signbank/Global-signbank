@@ -1,0 +1,60 @@
+{# login form should be shown when not logged in #}
+
+{% if not user.is_authenticated %}
+
+  <div id="loginforms">
+  
+  <form id="loginform" name="login" method="post" action="/accounts/login/">
+    {% csrf_token %}
+    <fieldset id='signin'>
+    <legend>Sign In</legend>
+    <table width='100%'>
+    {% if form.errors %} 
+      <tr><td colspan='2' style="background: red">Login Error, {{form.errors}}.</td>
+    {% endif %}
+    <tr><td><label for="email">Email:</label></td><td><input  class="boxed" type="text" name="email" /></td></tr>
+    <tr><td><label for="password">Password:</label></td><td><input  class="boxed" type="password" name="password" /></td></tr>
+    <tr><td colspan='2' align='right'>
+          <input type="submit" value="Login">
+        </td>
+    </tr>
+    </table>
+    </fieldset>
+    <input type="hidden" name="next" value="{{ next }}" />
+
+  </form>
+
+{% if allow_registration %}
+  <fieldset id='register'>
+     <legend>Register</legend>
+     
+    <p>Register for free to provide feedback on the NGT dictionary of signs.</p>
+    <p align='right'><a href="/accounts/register/">Register    </a>
+    </p>
+    </fieldset>
+{% endif %}
+    
+    <fieldset id='lostpw'>
+      <legend>Lost Password</legend>
+      <p>If you've lost or forgotten your password, enter your email 
+      address here and we'll reset it and send you a reminder.</p>
+
+      <form id="passwordresetform" action="/accounts/password/reset/" method="POST">
+      {% csrf_token %}
+      <p align='center'><input class="boxed" type="text" name="email" /></p>
+      <p align='right'>
+      <input type="submit" value="reset password">
+      </p>
+      </form>
+    </fieldset>
+    </div>
+
+
+
+
+
+
+
+
+
+{% endif %}

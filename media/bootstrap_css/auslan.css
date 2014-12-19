@@ -1,0 +1,27 @@
+
+#header h1 {
+    background: #b82b22;
+    background-image: url(../css/images/ngt/ngt-header.png); 
+    background-repeat: no-repeat;
+   /* hide the header text with a negative indent */
+   /* http://phark.typepad.com/phark/2003/08/accessible_imag.html */
+   text-indent: -9000px;
+   height: 92px;
+   margin: 0px;
+   width: 1140px;
+}
+
+body {
+  background-image: url(../css/images/auslan/black_02.gif); 
+  background-repeat: repeat-x;
+  padding: 0px; 
+}
+
+#signinfo .navbar-text {
+        color: #000000;
+}
+
+#videoiframe {
+    width: 308px;
+    height: 230px;
+}

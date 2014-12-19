@@ -1,0 +1,183 @@
+{% extends "baselayout.html" %}
+
+{% block extrahead %}
+
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.11.0.min.js"></script>
+    <link href="//vjs.zencdn.net/4.5/video-js.css" rel="stylesheet">
+    <script src="//vjs.zencdn.net/4.5/video.js"></script>
+
+ 
+ 
+{% endblock %}
+{% block extrajs %}
+<script type='text/javascript'>
+/* reveal a comment, possibly including a video */
+togglecomment = function() {
+  if ($(this).hasClass('showing')) {
+    $(this).next('.commentbody').hide();
+    $(this).removeClass('showing');
+    $(this).find('.indicator').removeClass('ui-icon-minus').addClass('ui-icon-plus');
+  } else {
+    $(this).next('.commentbody').show();
+    $(this).addClass('showing');
+    $(this).find('.indicator').removeClass('ui-icon-plus').addClass('ui-icon-minus');
+  }
+};
+
+jQuery(document).ready(function(){
+ 
+    $('.commenthead').click(togglecomment);
+	
+	$('.commentbody').hide();
+ 
+	$('.delete').confirm({
+	    msg:'Delete this comment?',
+	    timeout:3000
+	});	
+ 
+});
+</script>
+{% endblock %}
+
+
+
+
+{% block content %}
+
+  <h3>General Feedback</h3>
+  
+  {% for fb in general %}
+    <div class="panel-group" id="general{fb.id}">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+              {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} |
+            <a data-toggle="collapse" data-parent="#signfb{{fb.id}}" href="#gencollapse{{fb.id}}">
+               View
+            </a>
+          </h4> 
+        </div>
+        <div id="gencollapse{{fb.id}}" class="panel-collapse collapse">
+  
+        {% if fb.video %}  
+        <div class="videocontainer">
+            <video id='genfbvid{{fb.id}}' class='video-js vjs-default-skin' 
+               poster='{{posterurl}}' controls  preload='false' data-setup='{"example_option":true}'>
+                <source src='{{ MEDIA_URL }}{{ fb.video }}' type='video/mp4' codecs='avc1.42E01E, mp4a.40.2'></source>
+            </video>
+            <p><a href='{{ MEDIA_URL }}{{ fb.video }}'>Download video</a><br>
+                (if video does not play here you may be able to play by downloading)</p>
+        </div>
+
+        
+        {% endif %}
+      
+	    <p>{{fb.comment}}</p>
+     
+       <p><form action="/feedback/general/delete/{{fb.id}}" method="post">
+           {% csrf_token %}
+           <input class='delete btn btn-default' type='submit' value='Delete Comment'>
+           </form>
+         </p>
+       </div> 
+      </div>
+     </div>
+  {% endfor %} 
+  
+  <h3>Sign Feedback</h3> 
+  
+  {% for fb in signfb %} 
+    <div class="panel-group" id="sign{fb.id}">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+              {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} |
+            <a data-toggle="collapse" data-parent="#signfb{{fb.id}}" href="#signcollapse{{fb.id}}">
+               View
+            </a>
+          </h4> 
+        </div>
+        <div id="signcollapse{{fb.id}}" class="panel-collapse collapse">
+    
+        <p><strong>Sign:</strong> <a href="{% url 'root_page' %}dictionary/gloss/{{fb.translation.gloss.idgloss}}.html">{{fb.translation.gloss.idgloss}}</a></p>
+    
+        <p><strong>Comment:</strong> {{fb.comment}}</p>
+        <p><strong>Don't Belong:</strong> {{fb.kwnotbelong}}</p>
+        <!--
+        <ul>  
+    	<li>Auslan Sign: {{fb.get_isAuslan_display}}</li>
+    	<li>Where Used: {{fb.get_whereused_display}}</li>
+    	<li>Liked: {{fb.get_like_display}}</li>
+    	<li>Used: {{fb.get_use_display}}</li>
+    	<li>Use Suggested: {{fb.get_suggested_display}}</li>
+    	<li>Correct: {{fb.get_correct_display}}</li>
+        
+        </ul>
+        -->      
+        <p><form action="/feedback/sign/delete/{{fb.id}}" method="post">
+           {% csrf_token %}
+           <input class='delete btn btn-default' type='submit' value='Delete Comment'>
+           </form>
+         </p>     
+     
+        </div> 
+       </div>
+     </div>
+  {% endfor %}
+   
+  <h3>Missing Sign Feedback</h3> 
+  {% for fb in missing %} 
+    
+    <div class="panel-group" id="missing{fb.id}">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+              {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} |
+            <a data-toggle="collapse" data-parent="#missing{{fb.id}}" href="#missingcollapse{{fb.id}}">
+               View
+            </a>
+          </h4> 
+        </div>
+        <div id="missingcollapse{{fb.id}}" class="panel-collapse collapse">
+    
+        <p>Email: <a href="mailto:{{fb.user.email}}">{{fb.user.email}}</a></p>
+        {% if fb.video %}  
+        <div class="videocontainer">
+            <video id='msfb{{fb.id}}' class='video-js vjs-default-skin' 
+               poster='{{posterurl}}' controls preload='false' data-setup='{"example_option":true}'>
+                <source src='{{ MEDIA_URL }}{{ fb.video }}' type='video/mp4' codecs='avc1.42E01E, mp4a.40.2'></source>
+            </video>
+            <p><a href='{{ MEDIA_URL }}{{ fb.video }}'>Download video</a><br>
+                (if video does not play here you may be able to play by downloading)</p>
+         </div>
+        {% endif %}
+    
+         <dl class='dl-horizontal'>
+          <dt>Handform</dt><dd>{{fb.get_handform_display}}</dd>
+          <dt>Handshape</dt><dd>{{fb.get_handshape_display}}</dd>
+          <dt>Alternate Handshape</dt><dd>{{fb.get_althandshape_display}}</dd>
+          <dt>Location</dt><dd>{{fb.get_location_display}}</dd>
+          <dt>Relative Location</dt><dd>{{fb.get_relativelocation_display}}</dd>
+          <dt>Hand Body Contact</dt><dd>{{fb.get_handbodycontact_display}}</dd>
+          <dt>Hand Interaction</dt><dd>{{fb.get_handinteraction_display}}</dd>
+          <dt>Direction</dt><dd>{{fb.get_direction_display}}</dd>
+          <dt>Movement Type</dt><dd>{{fb.movementtype}}</dd>
+          <dt>Small Movement</dt><dd>{{fb.smallmovement}}</dd>
+          <dt>Repetition</dt><dd>{{fb.repetition}}</dd>
+          <dt>Meaning</dt><dd>{{fb.meaning}}</dd>
+          <dt>Comments</dt><dd>{{fb.comments}}</dd>
+         </dl>
+     
+         <p><form action="/feedback/missingsign/delete/{{fb.id}}" method="post">
+           {% csrf_token %}
+           <input class='delete btn btn-default' type='submit' value='Delete Comment'>
+           </form>
+         </p>
+ 
+      </div>
+     </div>
+    </div>
+          
+  {% endfor %} 
+
+{% endblock %}

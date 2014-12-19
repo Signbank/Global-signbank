@@ -1,0 +1,34 @@
+/* variant style for black - main page style */
+
+
+html { 
+  background-image: url(images/auslan/black_02.gif); 
+} 
+
+#leftcontentborder {
+  background-image: url(images/auslan/black_03.gif);
+}
+
+#rightcontentborder {
+  background-image: url(images/auslan/black_05.gif);
+}
+
+#header {
+  background-image: url(images/auslan/black_02.gif); 
+}
+ 
+#header h1 {
+    background-image: url(images/bsl/ngt-header.png); 
+}
+
+/* superfish menu styling - background image is assumed 26px high */
+.sf-navbar  { 
+   background-image: url(images/auslan/black_08.gif);
+   background-position: top right;
+   background-repeat: no-repeat;
+}
+
+#pages #mainlinks td {
+  
+  background-image: url(images/auslan/black_02.gif);
+}

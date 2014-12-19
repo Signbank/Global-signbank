@@ -1,0 +1,74 @@
+
+
+{% extends "baselayout.html" %}
+
+{% block extrahead %}
+
+<link rel="stylesheet" href="{{ STATIC_URL}}projekktor/themes/maccaco/projekktor.style.css" type="text/css" media="screen" />
+
+{% endblock %}
+
+
+{% block extrajs %} 
+<script type="text/javascript">
+    var base_url = "{{ STATIC_URL }}";
+</script>
+
+<script type="text/javascript" src="{{ STATIC_URL }}projekktor/projekktor-1.3.09.min.js"></script>
+<script type='text/javascript' src="{{ STATIC_URL }}js/numbersigns.js"></script>
+
+
+{% endblock %}
+ 
+{% block bodyid %}id='numbersigns'{% endblock %}
+{% block content %}
+
+<div id="numbersigns">
+	<div id="leftblock">
+        <div id="videocontainer">
+          <div id="player">
+              <video id='projekktor' class="projekktor"  src="{{ STATIC_URL }}numbersigns/ns_011-019.mp4">
+          </div>
+        </div>
+             <p>
+        To view signs used to express numbers from ten to 
+        one billion, click a sign          
+        in the table, the corresponding video will 
+        then play.
+      </p>
+      
+	</div>
+
+      <table id="numsigntable">
+        <tr>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_0.jpg" alt="sign for 0"></td>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_1.jpg" alt="sign for 1"></td>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_2.jpg" alt="sign for 2"></td>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_3.jpg" alt="sign for 3"></td>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_4.jpg" alt="sign for 4"></td>
+        </tr>
+        <tr>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_5.jpg" alt="sign for 5"></td>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_6.jpg" alt="sign for 6"></td>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_7.jpg" alt="sign for 7"></td>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_8.jpg" alt="sign for 8"></td>
+          <td><img src="{{ STATIC_URL }}numbersigns/ns_9.jpg" alt="sign for 9"></td>
+        </tr>
+        <tr>
+          <td><a href="javascript:playNS(0)"><img id='ns_010' src="{{ STATIC_URL }}numbersigns/ns_010.jpg" width="95" height="91" alt="" border="0"></a><br></td>
+          <td><a href="javascript:playNS(1)"><img id='ns_011-019' src="{{ STATIC_URL }}numbersigns/ns_011-019.jpg" width="94" height="91" alt="" border="0"></a><br></td>
+          <td><a href="javascript:playNS(2)"><img id='ns_020-090' src="{{ STATIC_URL }}numbersigns/ns_020-090.jpg" width="94" height="91" alt="" border="0"></a><br></td>
+          <td><a href="javascript:playNS(3)"><img id='ns_022-099' src="{{ STATIC_URL }}numbersigns/ns_022-099.jpg" width="94" height="91" alt="" border="0"></a><br></td>
+          <td><a href="javascript:playNS(4)"><img id='ns_200-900' src="{{ STATIC_URL }}numbersigns/ns_200-900.jpg" width="93" height="91" alt="" border="0"></a><br></td>
+        </tr>
+        <tr>
+          <td><a href="javascript:playNS(5)"><img id='ns_100' src="{{ STATIC_URL }}numbersigns/ns_100.jpg" width="95" height="92" alt="" border="0"></a><br></td>    
+          <td><a href="javascript:playNS(6)"><img id='ns_1k' src="{{ STATIC_URL }}numbersigns/ns_1k.jpg" width="94" height="92" alt="" border="0"></a><br></td>
+          <td><a href="javascript:playNS(7)"><img id='ns_1m' src="{{ STATIC_URL }}numbersigns/ns_1m.jpg" width="94" height="92" alt="" border="0"></a><br></td>
+          <td><a href="javascript:playNS(8)"><img id='ns_1g' src="{{ STATIC_URL }}numbersigns/ns_1g.jpg" width="94" height="92" alt="" border="0"></a><br></td>
+        </tr>
+      </table>
+
+</div>
+
+{% endblock %}

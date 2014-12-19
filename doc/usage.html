@@ -1,0 +1,226 @@
+<h1>Signbank User Guide</h1>
+
+<p>
+    This page gives a brief overview of the functionality of the Signbank website.
+</p>
+
+<h2>Public View</h2>
+
+<p>
+    A user who is not logged in will be able to perform a keyword search and will
+    see pages that match a given keyword; each page represents one sign and links
+    are provided to other matches for that keyword.  Keyword searches are based on
+    the start of the word, so a search for 'ab' will find all keywords starting with those letters.
+</p>
+
+<p>
+    The view shown to a public user includes the video for the sign (if any), the
+    keywords associated with the sign, and a list of definitions (noun, verb etc).
+    The definitions that are shown on this page can be customised for a given Signbank
+    site; for example, it is possible to show no definitions at all, even if they have
+    been entered into the database.
+</p>
+
+<p>
+    This page can be configured to show links to the next/previous sign in the dictionary. 
+    These links will only work reliably if sign numbers have been used consistently 
+    in the dictionary since these define the order of signs.  These links can be turned
+    off for a particular Signbank.
+</p>
+
+<h2>Logged In Public View</h2>
+
+<p>
+    A member of the public can register for the site and is then given the option
+    of providing feedback on individual signs.  Feedback can include uploading a video.
+    The feedback and any video is only ever visible to staff and is never made publicly
+    available.
+</p>
+
+<h2>Staff Access</h2>
+
+<p>
+    A number of different levels of staff access are possible, the different capabilities
+    are summarised later.  This section gives a summary of all of the different staff capabilities.
+<p>
+
+<p>
+    At present, a user can only be given staff status by the administrator (Steve Cassidy),
+    in the future some level of control over this may be added to the normal site owner capabilities.
+    For now, please send a request to change a user's status to me.
+</p>
+
+<p>
+    Once a staff user is logged in they will see an additional menu containing links to staff only options.
+    Other pages (such as this one) can also be limited to certain groups of users.
+</p>
+
+<h3>Sign Search</h3>
+
+<p>
+    Staff have access to a more advanced search page for signs that includes all fields associated
+    with signs and associated tags.  The search form is shown at the top of the page, by default only
+    the SN/Gloss and keyword search boxes are visible. There is an "Advanced Search" bar
+    which will show more search options when clicked. Below the search from there is
+    also an option to add a new sign.
+</p>
+
+<p>
+    The Search Gloss/SN field allows a search on either the sign number (SN), ID Gloss or
+    Annotation ID Gloss.  The search is on the first characters of these fields so entering
+    'ab' will show all signs with an ID Gloss or Annotation ID Gloss starting with these
+    letters; entering '12' will show signs with a sign number starting with these digits.
+    The keyword field allows search on the keywords associated with a sign in the same manner
+    as the public search option, however this version is not limited to published signs.
+    The user can just hit Enter or click on the Search button to perform the search.
+</p>
+
+<p>
+    Searches in the form use an implicit AND between fields - that is, if you enter 'ab'
+    in the Gloss field and 'dry' in the keyword field you would see signs with an ID Gloss
+    starting with 'ab' which also have a keyword 'dry' (eg. ABSORB in BSL Signbank).
+</p>
+
+<p>
+    Search results are shown in the list below the form, a summary of the number of
+    matches to the search term is also shown.  The results are shown in a table which
+    lists the Sign Number, ID Gloss, Annotation ID Gloss, Morphology and tags associated
+    with each matching sign. The sign number (which may be None if no sign number is set) is
+    a link to a page that displays the full details of the sign.
+</p>
+
+<p>
+    Another option from this page is to export a version of the search results as a CSV
+    (spreadsheet) file.   If you click on this button instead of the Search button the results
+    will be downloaded as <code>dictionary-export.csv</code>.  This file contains all of the
+    fields stored with each sign as well as the keywords and tags.  No definitions or notes
+    are included in the CSV file.
+</p>
+
+<h2>Sign Detail View</h2>
+
+<p>
+    If you click on a sign in the search results you will be taken to a detailed view of 
+    that sign, this is a variation on the view shown to the public but has much more detail. It 
+    includes all fields in the database and allows a user with the required permissions to edit
+    the sign entry.  
+</p>
+
+<p>
+    The sign detail page shows a video if one has been uploaded for this sign. Below the video is
+    a list of  <strong>tags</strong> that have been associated with the sign.  Tags encode binary
+    properties of a sign and each tag has a prefix that groups them together. For example 
+    <code>semantic:education</code> or <code>phonology:two handed</code>.  New tags can only be 
+    added by the site administrator (but adding them is straightforward).
+</p>
+
+<p>
+    On the right of the page the properties of the sign are listed. These are grouped together and
+    by default only the basic properties are shown. Clicking on the grey title bars show the fields
+    for 'Publication Status', 'Phonology', 'Relations to other Signs' or 'Definitions/Notes'.  In the
+    case that there is no value in the database for a field 'No Value Set' is shown.  Most fields also
+    have a special value 'N/A' which can be used to signify 'Not Applicable'; the intention is to be able
+    to tell the difference between 'value not yet entered' and 'this field does not apply to this sign'. 
+</p>
+
+<h2>Editing</h2>
+<p>
+    If the user has the required permission, a blue "Enable Edit" button shows at the top right of 
+    the page.  When clicked, this will turn red and enable editing of all fields for the sign.  A new
+    "Delete Sign" button will appear and all editable fields will turn red. To modify a field, click on
+    the red text and make the required change (this will either be a text entry, a checkbox or a 
+    selection from a list).  Buttons for OK and Cancel will appear, clicking Ok will save the change
+    and Cancel will revert to the previous value.  All changes take effect immediately. 
+</p>
+
+<p>
+    The "Delete Sign" button will show a dialogue box that asks the user to confirm the deletion of 
+    the sign entry.  Clicking on "Confirm Delete" will delete the entry and return to the sign
+    search page.  Clicking on "Cancel" will return to the sign page.
+</p>
+
+<h3>Relations</h3>
+<p>
+    In the "Relations to other Signs" tab, any relations such as Synonyn, Homonym etc are show.
+    The target sign is shown as the sign number followed by the ID Gloss, eg. 10620-about2a.
+    In edit mode the text of the role (Synonym) and target sign are shown red and can be edited. 
+    When editing the target sign, enter either the ID Gloss, Annotation ID Gloss or Sign Number of
+    the sign you want to link to, you will see a list of possible completions as you type. Click 
+    on the required sign once you see it in the list.  The text box will show the sign ID Gloss
+    followed by a number in brackets. This number is an internal identifier, not the sign number. 
+    When you click "OK" the change will be made and the SN-ID Gloss form will be shown.
+    A relation can also be deleted by clicking on the trashcan icon at the start of each line.
+</p>
+
+<p>
+    Below the list of relations in edit mode is a form to create a new relation. Select the role from
+    the drop down list and enter the target sign as above.  When you click "Add Relation" the page
+    will refresh, you will need to click on the "Relations to other Signs" tab to see the new entry.
+</p>
+
+<h3>Definitions and Notes</h3>
+<p>
+    In the "Definitions/Notes" tab a list of defnitions or notes is shown. Each of these has
+    a "Role" label such as "As a Noun", "Private Note" etc.  and an integer "Index" that defines
+    the order within the category when they are listed on the public pages.   Each entry also has
+    a "Published" field which controls whether the definition or note can be shown in the public
+    view.  A definition/note can also be deleted by clicking on the trashcan icon at the start
+    of each row.
+</p>
+
+<p>
+    Below the list of definitions/notes in edit mode is a form to create a new entry.  As with the
+    relation form, the page will refresh when you submit this form and you will need to click on
+    the "Definitions/Notes" tab again to view the change.  By default, new definitions have the
+    Published field set to No.
+</p>
+
+<h3>Video</h3>
+
+<p>
+    In edit mode, a form to allow upload of video will be shown below the video for the sign. Select
+    a file and click "Upload Video" and the page will refresh and the new video should be show. In 
+    edit mode, a count of the number of videos for this sign is shown.  Each time you upload a new
+    video, the old one is retained but the new one is shown in preference.  If there is at least one
+    video for a sign, a button is shown below the upload form to allow deletion of the current
+    video. Clicking this button will delete the current video and revert to an earlier version if
+    present.  If there is only one video then no video will be shown for the sign.  
+</p>
+
+<p>
+    Videos uploaded should be saved in a web friendly format. Technically this is H264 encoded video, 
+    but most programs that save video for the web will use this format. There is no requirement on
+    the name of the video file, whatever file you upload will be associated with this sign.
+     Videos are displayed in 320x240 
+    pixels and so you should save them at this size for best performance, however higher resolution
+    videos will be ok (but will be slower to play, eg. on the mobile version of the site). 
+</p>
+
+
+<h3>Tags</h3>
+
+<p>
+    Below the video forms is a list of tags associated with this sign.  In edit mode a small red 
+    cross will appear in each tag. Clicking on this cross will delete the tag.  New tags can be 
+    added via the dropdown menu below the tags. 
+</p>
+
+
+<h2>Permissions</h2>
+
+<p>
+    It will be possible to finely control the level of access for different groups of users. At
+    present we have three groups:
+</p>
+
+<ul>
+    <li>Editor: full edit access, can change anything, upload and delete videos etc.</li>
+    <li>Researcher: full search access to see the detailed view of signs, no edit access.</li>
+    <li>Public: only keyword search and the ability to leave feedback on signs.</li>
+</ul>
+
+<p>
+    In future we will develop a richer set of user levels, we've had some discussion about
+    this and will make a proposal for feedback.
+</p>
+

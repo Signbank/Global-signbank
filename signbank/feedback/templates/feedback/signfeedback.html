@@ -1,0 +1,67 @@
+{% extends "baselayout.html" %}
+{% load bootstrap3 %}
+
+{% block content %}
+<div class="col-md-6 col-md-offset-3">
+    <h2>Sign Feedback</h2>
+  
+  <form id="signfeedback" method="post">
+  {% csrf_token %}
+
+  <input type='hidden' name='sourcepage' value='{{sourcepage}}'>
+
+  {% csrf_token %}
+  <p> <span class="feedbackQuestion"> Please give us your comments about this sign. For example:
+  do you think there are other keywords that belong with this sign?
+  Please write your comments or new keyword/s below. </span> <br/>
+  </p>
+
+  {% if feedback_form.comment.errors %}<ul class="errorlist">{{ feedback_form.comment.errors }}</ul>{% endif %}
+    {% bootstrap_field feedback_form.comment show_label=False %} 
+    
+  <p> <span class="feedbackQuestion">Is there a keyword or keyword/s 
+  that DO NOT belong with this sign?</span>
+  <br /> Please provide the list of keywords below  </p>
+  {% if feedback_form.kwnotbelong.errors %}<ul class="errorlist">{{ feedback_form.kwnotbelong.errors }}</ul>{% endif %}
+      {% bootstrap_field feedback_form.kwnotbelong show_label=False %}  
+
+  <p><input class='btn btn-primary' type="submit" value="Submit"/></p>
+
+  <h3>Optional Questions</h3>
+  <p class="feedbackQuestion">Is this sign an {{language}} Sign?</p>
+  
+  {% if feedback_form.isAuslan.errors %}<ul class="errorlist">{{ feedback_form.isAuslan.errors }}</ul>{% endif %}
+  {{ feedback_form.isAuslan }}  
+  
+  <p class="feedbackQuestion">Where is this sign used? </p>
+  <p> {{ feedback_form.whereused }}</p>
+  {% if feedback_form.whereused.errors %}<ul class="errorlist">{{ feedback_form.whereused.errors }}</ul>{% endif %}
+  
+  <p class="feedbackQuestion">Do you like this sign?</p>
+  {% if feedback_form.like.errors %}<ul class="errorlist">{{ feedback_form.like.errors }}</ul>{% endif %}
+      {{ feedback_form.like }}
+ 
+  <p class="feedbackQuestion">Do you use this sign?</p>
+
+   {% if feedback_form.use.errors %}<ul class="errorlist">{{ feedback_form.use.errors }}</ul>{% endif %}
+   {{ feedback_form.use }}
+      
+  <p class="feedbackQuestion">If this sign is a suggested new sign, would you use it?</p>
+  {% if feedback_form.suggested.errors %}<ul class="errorlist">{{ feedback_form.suggested.errors }}</ul>{% endif %}
+      {{ feedback_form.suggested }}
+      
+  <p class="feedbackQuestion">Is the information about the sign correct?</p>
+  {% if feedback_form.correct.errors %}<ul class="errorlist">{{ feedback_form.correct.errors }}</ul>{% endif %}
+      {{ feedback_form.correct }}  
+    
+  <input type="hidden" name="translation_id" value="{{translation.id}}" />
+  <hr/>
+
+  <p><input class='btn btn-primary' type="submit" value="Submit"></p>
+
+  
+</form>
+
+</div>
+
+{% endblock %}

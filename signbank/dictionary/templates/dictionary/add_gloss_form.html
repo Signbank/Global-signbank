@@ -1,0 +1,40 @@
+{% extends "baselayout.html" %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Add Gloss{% endblock %}
+{% block extrahead %}
+{% endblock %}
+ 
+ 
+{% block content %}
+
+ 
+   {% if perms.dictionary.add_gloss %}
+
+        {{add_gloss_form.non_field_errors}}
+         <div id='add_gloss_form'>
+             <form action='{% url "dictionary:add_gloss" %}' method='post'>
+                 {% csrf_token %}
+                 <table class='table'>
+                     <tr>
+                         <th><label for='id_idgloss'>ID Gloss</label></th>
+                         <th><label for='id_annotation_idgloss'>Annotation ID Gloss</label></th>
+                         <th><label for='id_sn'>Sign Number</label></th>
+                         <th></th>
+                     </tr>
+                     <tr>
+                         <td>{{add_gloss_form.idgloss}}</td>
+                         <td>{{add_gloss_form.annotation_idgloss}}</td>
+                         <td>{{add_gloss_form.sn}}</td>
+                         <td><input class='btn btn-primary' type='submit' value='Add New Sign'></td>
+                     </tr>
+                 </table>
+                 
+             </form>
+             {% if add_gloss_form.sn.errors %}
+             <h2>Error</h2>
+                 <p>A sign with that Sign Number already exists. Please choose a different Sign Number.</p>
+             {% endif %}
+        </div>
+      {% endif %}
+      
+{% endblock %}

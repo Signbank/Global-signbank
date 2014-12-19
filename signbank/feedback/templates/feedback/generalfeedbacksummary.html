@@ -1,0 +1,32 @@
+{# Parameters #}
+{# username (string) #}
+{#   Either "" indicating that the user is not logged in, or the user name in <first name> <last name> form. #}
+{# title (string #}
+{#   The title of the page, appears in horizontal span above content. #}
+
+{% extends "standardlayout.html" %}
+
+{% block sideuppercontent %}
+{% endblock %}
+
+{% block sidelowercontent %}
+{% endblock %}
+
+{% block pagecontent %}
+    <h1>General feedback summary</h1>
+    
+    <table>
+      <tr><th>Date</th><th>User</th><th>Comment</th></tr>
+
+      {% for feedback in feedbacklist %}
+      <tr>
+        <td>{{feedback.date}}</td>
+        <td>{{feedback.user}}</td>
+        <td>{{feedback.comment}}{% ifnotequal feedback.video "" %}<br /><br /><a href="upload/{{feedback.video}}">{{feedback.video}}</a>{% endifnotequal %}</td>
+      </tr>
+
+      {% end for %}      
+    </table>
+
+
+{% endblock %}

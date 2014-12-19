@@ -1,0 +1,174 @@
+
+{% extends "baselayout.html" %}
+
+{% block pagetitle %}Auslan: sign for {{ translation.translation }} {% endblock %}
+
+
+{% block jqueryready %}
+
+
+{% endblock %}
+
+{% block script %}
+    function replay() {
+        $f('player').play();
+    }
+{% endblock %}
+
+
+
+
+{% block content %}
+<div id='publicsign'>
+    {% if feedbackmessage %}
+    <div id="feedbackmessage">
+        <p class='alert alert-info'>
+            {{ feedbackmessage }}
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button></p>
+    </div>
+    {% endif %}
+
+    <div id="signinfo" class='navbar navbar-default navbar-collapse'>
+    
+        <div class='btn-group'>
+            {% if SIGN_NAVIGATION %}
+        
+                {% if navigation.prev %}
+                <a class='btn navbar-btn btn-default' href="{% url 'root_page' %}dictionary/gloss/{{navigation.prev.idgloss}}.html?lastmatch={{lastmatch}}">&laquo; <span class='hidden-xs'>Previous Sign</span></a>
+           
+                {% endif %}
+            
+                <button class='btn navbar-btn'>Sign {{glossposn}} of {{glosscount}} <span class='hidden-xs'>in the Auslan Dictionary</span></button>
+            
+                {% if navigation.next %}
+                <a class="btn navbar-btn btn-default"
+                   href="{% url 'root_page' %}dictionary/gloss/{{navigation.next.idgloss}}.html?lastmatch={{lastmatch}}"><span class='hidden-xs'>Next Sign</span> &raquo;</a>
+                {% endif %}
+             {% else %}
+           
+             {% endif %}
+        </div>
+   
+   
+        <div class='pull-right'>
+            {% ifequal viewname "words" %}
+            <span class='navbar-text'>Matches for the word <em>{{ translation.translation }}</em></span>
+            <div class='btn-group'>
+            {% for i in matches %}
+                {% ifequal i n %}
+                <button type='button' class='btn btn-primary navbar-btn'>{{i}}</button>
+                {% else %}
+                <a type='button' class='btn btn-default navbar-btn' href="{{translation.translation}}-{{i}}.html">{{i}}</a>
+                {% endifequal %}
+            {% endfor %}
+            </div>
+            {% else %}
+                {% if lastmatch %}
+                <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/words/{{lastmatch}}.html">Return to Matches</a>
+                {% endif %}
+            {% endifequal %}
+        </div>
+    
+    
+        {% if perms.dictionary.search_gloss %}
+        <div class='btn-group'>
+           <a id='editbutton' class='btn btn-default navbar-btn' href="{% url 'dictionary:admin_gloss_view' pk=gloss.id %}">Detail View</a>
+        </div>
+        {% endif %}
+    
+    </div>
+
+    <div id="definitionblock">
+        <div class='col-md-4'>
+            <div id="videocontainer">
+               <div id="player">
+                {% if gloss.has_video %}
+                  <iframe id='videoiframe' scrolling="no" frameborder='0' 
+                          src="{% url 'signbank.video.views.iframe' gloss.pk %}">
+                  </iframe>
+                {% else %}
+                  <img src='{{ STATIC_URL }}images/no-video-ngt.png'>
+                {% endif %}
+               </div>
+               <div id="replay"></div>
+            </div>
+        
+        
+            <div id="keywords">
+                 <p><strong>Keywords:</strong>
+                 {% for kwd in allkwds %}
+                   {% ifequal translation.translation kwd.translation %}<b>{{ kwd.translation }}</b>{% else %}{{ kwd.translation }}{% endifequal %}{% if not forloop.last %},{% endif %}
+                 {% endfor %}
+                 </p>
+            </div>
+
+            <div id="feedback">
+                <ul>
+                    {% ifequal viewname "words" %}
+                    <li><a href="{% url 'root_page' %}feedback/sign/{{translation.translation}}-{{n}}.html?return=/dictionary/words/{{translation.translation}}-{{n}}.html">Provide feedback about this sign</a></li>
+                    {% else %}
+                    <li><a href="{% url 'root_page' %}feedback/gloss/{{gloss.idgloss}}.html?return=/dictionary/gloss/{{gloss.idgloss}}.html&lastmatch={{lastmatch}}">Provide feedback about this sign</a></li>
+                    {% endifequal %}
+
+                    <li><a href="{% url 'root_page' %}feedback/missingsign.html">Report a missing sign</a></li>
+                    <li><a href="{% url 'root_page' %}feedback/generalfeedback.html">Provide general site feedback</a></li>
+                </ul>
+            </div>
+
+            {% if dialect_image %}
+            <div id="states">
+                <div>
+                    <img src="{{ STATIC_URL }}{{dialect_image}}" alt="States">
+                </div>
+            </div>
+            {% endif %}
+
+            {% if gloss.dialect.all %}
+            <div>
+                <h4>Sign Distribution</h4>
+                <ul>
+                {% ifequal dialect_image "images/maps/allstates.gif" %}
+                  <li>All States</li>
+                {% else %}
+                    {% for dialect in gloss.dialect.all %}
+                      <li>{{ dialect.name }}</li>
+                    {% endfor %}
+                {% endifequal %}
+                </ul> 
+            </div>
+            {% endif %}
+        </div>
+
+        {% if DEFINITION_FIELDS and gloss.published_definitions %}
+        <div  class='col-md-8'>
+            <h2>Sign Definition</h2>
+
+            {% for deftype in DEFINITION_FIELDS %}
+        
+                 {% regroup gloss.published_definitions by role as roles %}
+        
+                 {% for role in roles %}
+              
+                      {% ifequal deftype role.grouper %}  
+                  
+                          <h3>{{role.list.0.get_role_display}}</h3>
+                  
+                          <ol>
+                          {% for def in role.list %}     
+                            <li>{{def.text}}</li>
+                          {% endfor %}
+                          </ol>
+                  
+                      {% endifequal %}
+                 {% endfor %}
+            {% endfor %}
+        
+        </div>
+        {% endif %}
+    
+    </div>
+
+</div>
+
+{% endblock %}
+

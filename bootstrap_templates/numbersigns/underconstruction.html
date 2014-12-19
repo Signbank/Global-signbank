@@ -1,0 +1,32 @@
+
+
+{% extends "baselayout.html" %}
+
+{% block extrahead %}
+
+<link rel="stylesheet" href="{{ STATIC_URL}}projekktor/themes/maccaco/projekktor.style.css" type="text/css" media="screen" />
+
+{% endblock %}
+
+
+{% block extrajs %} 
+<script type="text/javascript">
+    var base_url = "{{ STATIC_URL }}";
+</script>
+
+<script type="text/javascript" src="{{ STATIC_URL }}projekktor/projekktor-1.3.09.min.js"></script>
+<script type='text/javascript' src="{{ STATIC_URL }}js/numbersigns.js"></script>
+
+
+{% endblock %}
+ 
+{% block bodyid %}id='numbersigns'{% endblock %}
+{% block content %}
+
+<div id="numbersigns">
+    
+	<p class='alert alert-info'>The number signs page is under construction.</p>
+
+</div>
+
+{% endblock %}
