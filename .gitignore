@@ -1,3 +1,4 @@
 .hg/*
 .hgignore
 build/django
+.DS_Store
