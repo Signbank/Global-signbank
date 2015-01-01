@@ -176,10 +176,9 @@ function configure_edit() {
 
      $('.edit_list').click(function() 
 	 {
-
 		 $(this).editable(edit_post_url, {
 		     type      : 'select',
-			 data      : choice_lists[$(this).attr('id')]
+		     data    : choice_lists[$(this).attr('id')] 
 		 });
 
 
