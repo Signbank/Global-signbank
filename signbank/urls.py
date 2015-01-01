@@ -1,10 +1,12 @@
 from django.conf.urls import *
 from django.conf import settings
+from django.contrib.auth.decorators import login_required, permission_required
 import registration.forms
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
 from signbank.dictionary.models import Gloss
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView
 
 from django.contrib import admin
 admin.autodiscover()
@@ -17,7 +19,7 @@ else:
     numbersigns_view = TemplateView.as_view(template_name='numbersigns/underconstruction.html')
 
 
-urlpatterns = patterns('',
+urlpatterns = patterns('',                       
 
     url(r'^$', 'signbank.pages.views.page', name='root_page'),
 
@@ -30,12 +32,15 @@ urlpatterns = patterns('',
     url(r'^logout.html', 'django.contrib.auth.views.logout',
                        {'next_page': "/"}, "logout"),
 
-
     url(r'^spell/twohanded.html$', TemplateView.as_view(template_name='fingerspell/fingerspellingtwohanded.html')),
     url(r'^spell/practice.html$', TemplateView.as_view(template_name='fingerspell/fingerspellingpractice.html')),
     url(r'^spell/onehanded.html$', TemplateView.as_view(template_name='fingerspell/fingerspellingonehanded.html')),
     url(r'^numbersigns.html$', numbersigns_view),
 
+    #Hardcoding a number of special urls:
+    url(r'^signs/dictionary/$', 'signbank.dictionary.views.search'),
+    url(r'^signs/search/$', permission_required('signbank.dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
+                       
     # compatibility with old links - intercept and return 401
     url(r'^index.cfm', TemplateView.as_view(template_name='compat.html')),
 
