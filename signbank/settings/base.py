@@ -248,7 +248,7 @@ ACCOUNT_ACTIVATION_DAYS = 7
 # show the number signs page or an under construction page?
 SHOW_NUMBERSIGNS = True
 
-LOGIN_REDIRECT_URL = '/feedback/'
+LOGIN_REDIRECT_URL = 'signs/dictionary'
 
 
 # location of ffmpeg, used to convert uploaded videos
