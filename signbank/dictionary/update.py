@@ -45,7 +45,10 @@ def update_gloss(request, glossid):
         gloss = get_object_or_404(Gloss, id=glossid)
 
         field = request.POST.get('id', '')
-        value = request.POST.get('value', '')[1:];
+        value = request.POST.get('value', '')
+        if value[0] == '_':
+            value = value[1:];
+        
         values = request.POST.getlist('value[]')   # in case we need multiple values 
         
         # validate
