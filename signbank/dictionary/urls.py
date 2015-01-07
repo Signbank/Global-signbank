@@ -36,6 +36,8 @@ urlpatterns = patterns('',
     
     url(r'^missingvideo.html$', 'signbank.dictionary.views.missing_video_view'),
 
+    url(r'^import_videos/$', 'signbank.dictionary.views.import_videos'),
+
     # Admin views
     url(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
     url(r'^gloss/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(GlossDetailView.as_view()), name='admin_gloss_view'),
