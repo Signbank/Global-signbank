@@ -27,7 +27,7 @@ urlpatterns = patterns('',
     url(r'^update/tag/(?P<glossid>\d+)$', 'signbank.dictionary.update.add_tag', name='add_tag'),
     url(r'^update/definition/(?P<glossid>\d+)$', 'signbank.dictionary.update.add_definition', name='add_definition'),
     url(r'^update/relation/$', 'signbank.dictionary.update.add_relation', name='add_relation'),
-    url(r'^update/relation/$', 'signbank.dictionary.update.add_relationtoforeignsign', name='add_relationtoforeignsign'),
+    url(r'^update/relationtoforeignsign/$', 'signbank.dictionary.update.add_relationtoforeignsign', name='add_relationtoforeignsign'),
     url(r'^update/gloss/', 'signbank.dictionary.update.add_gloss', name='add_gloss'),
 
     url(r'^ajax/keyword/(?P<prefix>.*)$', 'signbank.dictionary.views.keyword_value_list'),
@@ -35,6 +35,8 @@ urlpatterns = patterns('',
     url(r'^ajax/gloss/(?P<prefix>.*)$', 'signbank.dictionary.adminviews.gloss_ajax_complete', name='gloss_complete'),
     
     url(r'^missingvideo.html$', 'signbank.dictionary.views.missing_video_view'),
+
+    url(r'^import_videos/folder=(?P<folder>.*)$', 'signbank.dictionary.views.import_videos'),
 
     # Admin views
     url(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
