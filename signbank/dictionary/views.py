@@ -18,7 +18,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 
 from signbank.video.forms import VideoUploadForGlossForm
-
+from signbank.tools import video_to_signbank
 
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
@@ -406,5 +406,18 @@ def missing_video_view(request):
     return render_to_response("dictionary/missingvideo.html",
                               {'glosses': glosses})
 
+def import_videos(request):
 
+	video_folder = '/var/www2/signbank/live/writable/import_videos/';
+
+	out = '<p>Imported</p><ul>';
+
+	for filename in os.listdir(video_folder):
+
+		idgloss,extension = filename.split('.');
+		gloss = Gloss.objects.get(annotation_idgloss=idgloss);
+		video_to_signbank(video_folder,gloss,extension);
+		out += '<li>'+filename+'</li>';
+
+	return HttpResponse(out+'</ul>');
 
