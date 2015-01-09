@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from tagging.models import Tag, TaggedItem
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.exceptions import ObjectDoesNotExist
 
 from django.utils.encoding import smart_unicode
 
@@ -415,7 +416,12 @@ def import_videos(request):
 	for filename in os.listdir(video_folder):
 
 		idgloss,extension = filename.split('.');
-		gloss = Gloss.objects.get(annotation_idgloss=idgloss);
+
+		try:
+			gloss = Gloss.objects.get(annotation_idgloss=idgloss);
+		except ObjectDoesNotExist:
+	                return HttpResponse('Failed at '+filename);
+
 		video_to_signbank(video_folder,gloss,extension);
 		out += '<li>'+filename+'</li>';
 

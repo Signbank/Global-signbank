@@ -31,3 +31,5 @@ def video_to_signbank(source_folder,gloss,extension):
 	source = source_folder+annotation_id+extension;
 	goal = destination_folder+annotation_id+'-'+pk+extension;
 	os.rename(source,goal);
+
+	return True
