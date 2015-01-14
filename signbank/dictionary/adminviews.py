@@ -58,11 +58,12 @@ class GlossListView(ListView):
     
 #        fields = [f.name for f in Gloss._meta.fields]
         #We want to manually set which fields to export here
+
         fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'handCh', 'repeat', 'altern', 'movSh', 'movDir', 'movMan', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
         writer = csv.writer(response)
-        header = [f.verbose_name for f in fields]
+        header = ['Signbank ID'] + [f.verbose_name for f in fields]
 
         for extra_column in ['Languages','Dialects','Keywords','Relations to other signs','Relations to foreign signs',]:
             header.append(extra_column);
@@ -70,7 +71,7 @@ class GlossListView(ListView):
         writer.writerow(header)
     
         for gloss in self.get_queryset():
-            row = []
+            row = [str(gloss.pk)]
             for f in fields:
 
                 #Try the value of the choicelist
