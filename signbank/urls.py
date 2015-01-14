@@ -39,7 +39,8 @@ urlpatterns = patterns('',
 
     #Hardcoding a number of special urls:
     url(r'^signs/dictionary/$', 'signbank.dictionary.views.search'),
-    url(r'^signs/search/$', permission_required('signbank.dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
+    url(r'^signs/search/$', permission_required('dictionary.search_gloss')(GlossListView.as_view())),
+#    url(r'^signs/search/$', GlossListView.as_view(), name='admin_gloss_list'),
     url(r'^feedback/overview/$', 'signbank.feedback.views.showfeedback'),
                        
     # compatibility with old links - intercept and return 401
