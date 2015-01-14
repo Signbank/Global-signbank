@@ -83,11 +83,11 @@ class GlossListView(ListView):
                     row.append(value)
 
             # get languages
-            languages = gloss.language.all();
+            languages = [language.name for language in gloss.language.all()]
             row.append(", ".join(languages));
 
             # get dialects
-            dialects = gloss.dialect.all();
+            dialects = [dialect.name for dialect in gloss.dialect.all()]
             row.append(", ".join(dialects));
 
             # get translations
