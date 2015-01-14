@@ -58,13 +58,13 @@ class GlossListView(ListView):
     
 #        fields = [f.name for f in Gloss._meta.fields]
         #We want to manually set which fields to export here
-        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'language', 'dialect', 'rmrks', 'handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'handCh', 'repeat', 'altern', 'movSh', 'movDir', 'movMan', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
+        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'handCh', 'repeat', 'altern', 'movSh', 'movDir', 'movMan', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
         writer = csv.writer(response)
         header = [f.verbose_name for f in fields]
 
-        for extra_column in ['Keywords','Relations to other signs','Relations to foreign signs']:
+        for extra_column in ['Languages','Dialects','Keywords','Relations to other signs','Relations to foreign signs',]:
             header.append(extra_column);
 
         writer.writerow(header)
@@ -79,8 +79,17 @@ class GlossListView(ListView):
 
                 #If it's not there, try the raw value
                 except AttributeError:
-                    row.append(getattr(gloss,f.name))
-    
+                    value = getattr(gloss,f.name)
+                    row.append(value)
+
+            # get languages
+            languages = gloss.language.all();
+            row.append(", ".join(languages));
+
+            # get dialects
+            dialects = gloss.dialect.all();
+            row.append(", ".join(dialects));
+
             # get translations
             trans = [t.translation.text for t in gloss.translation_set.all()]
             row.append(", ".join(trans))
