@@ -16,7 +16,7 @@ class GlossListView(ListView):
     
     model = Gloss
     template_name = 'dictionary/admin_gloss_list.html'
-    paginate_by = 10
+    paginate_by = 1000
     
     
     def get_context_data(self, **kwargs):
@@ -43,8 +43,9 @@ class GlossListView(ListView):
             return self.render_to_csv_response(context)
         else:
             return super(GlossListView, self).render_to_response(context)
-    
-    
+
+
+    # noinspection PyInterpreter
     def render_to_csv_response(self, context):
         
         if not self.request.user.has_perm('dictionary.export_csv'):
@@ -55,27 +56,43 @@ class GlossListView(ListView):
         response['Content-Disposition'] = 'attachment; filename="dictionary-export.csv"'
     
     
-        fields = [f.name for f in Gloss._meta.fields]
-    
+#        fields = [f.name for f in Gloss._meta.fields]
+        #We want to manually set which fields to export here
+        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'language', 'dialect', 'rmrks', 'handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'handCh', 'repeat', 'altern', 'movSh', 'movDir', 'movMan', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
+        fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
+
         writer = csv.writer(response)
-        header = [Gloss._meta.get_field(f).verbose_name for f in fields]
-        header.append("Keywords")
-        header.append("Tags")
+        header = [f.verbose_name for f in fields]
+
+        for extra_column in ['Keywords','Relations to other signs','Relations to foreign signs']:
+            header.append(extra_column);
+
         writer.writerow(header)
     
         for gloss in self.get_queryset():
             row = []
             for f in fields:
-                row.append(getattr(gloss, f))
+
+                #Try the value of the choicelist
+                try:
+                    row.append(getattr(gloss, 'get_'+f.name+'_display')())
+
+                #If it's not there, try the raw value
+                except AttributeError:
+                    row.append(getattr(gloss,f.name))
     
             # get translations
             trans = [t.translation.text for t in gloss.translation_set.all()]
             row.append(", ".join(trans))
     
-            # get tags
-            tags = [t.name for t in gloss.tags.all()]
-            row.append(", ".join(tags))
-    
+            # get relations to other signs
+            relations = [relation.target.idgloss for relation in Relation.objects.filter(source=gloss)]
+            row.append(", ".join(relations))
+
+            # get relations to foreign signs
+            relations = [relation.other_lang_gloss for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
+            row.append(", ".join(relations))
+
             writer.writerow(row)
     
         return response
