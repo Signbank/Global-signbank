@@ -45,7 +45,7 @@ class GlossListView(ListView):
             return super(GlossListView, self).render_to_response(context)
 
 
-    # noinspection PyInterpreter
+    # noinspection PyInterpreter,PyInterpreter
     def render_to_csv_response(self, context):
         
         if not self.request.user.has_perm('dictionary.export_csv'):
@@ -102,7 +102,15 @@ class GlossListView(ListView):
             relations = [relation.other_lang_gloss for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
             row.append(", ".join(relations))
 
-            writer.writerow(row)
+            #Make it safe for weird chars
+            safe_row = [];
+            for column in row:
+                try:
+                    safe_row.append(column.encode('utf-8'))
+                except AttributeError:
+                    safe_row.append(None);
+
+            writer.writerow(safe_row)
     
         return response
 
