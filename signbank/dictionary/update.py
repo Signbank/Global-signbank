@@ -46,7 +46,10 @@ def update_gloss(request, glossid):
 
         field = request.POST.get('id', '')
         value = request.POST.get('value', '')
-        if value[0] == '_':
+        if len(value) == 0:
+            value = ' '
+
+        elif value[0] == '_':
             value = value[1:];
         
         values = request.POST.getlist('value[]')   # in case we need multiple values 
