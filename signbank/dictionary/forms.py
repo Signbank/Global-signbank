@@ -68,7 +68,9 @@ class GlossSearchForm(forms.ModelForm):
                    'initial_palm_orientation', 'final_palm_orientation', 
                    'initial_secondary_loc', 'final_secondary_loc',
                    'domhndsh', 'subhndsh', 'locprim', 'locsecond',
-                   'final_domhndsh', 'final_subhndsh', 'final_loc'
+                   'final_domhndsh', 'final_subhndsh', 'final_loc',
+
+                  'handedness', 'useInstr','rmrks'
                    )
         widgets = {
                    'inWeb': forms.Select(choices=YESNOCHOICES),
