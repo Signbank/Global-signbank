@@ -17,9 +17,10 @@ import os
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
+import forms
 
 from signbank.video.forms import VideoUploadForGlossForm
-from signbank.tools import video_to_signbank
+from signbank.tools import video_to_signbank, compare_valuedict_to_gloss
 
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
@@ -429,3 +430,54 @@ def import_videos(request):
 
     return HttpResponse(out+'</ul>');
 
+def import_csv(request):
+
+    uploadform = forms.CSVUploadForm;
+    changes = [];
+
+    #Propose changes
+    if len(request.FILES) > 0:
+
+        changes = [{'idgloss':'TEST','field':'Usage instructions','original_value':'haha','new_value':'hihi'}];
+        csv_lines = request.FILES['file'].read().split('\n');
+
+        for nl, line in enumerate(csv_lines):
+
+            #The first line contains the keys
+            if nl == 0:
+                keys = line.split(',');
+                continue;
+
+            values = line.split(',');
+            value_dict = {};
+
+            for nv,value in enumerate(values):
+
+                try:
+                    value_dict[keys[nv]] = value;
+                except IndexError:
+                    pass;
+
+            try:
+                pk = int(value_dict['Signbank ID']);
+            except ValueError:
+                continue;
+
+            gloss = Gloss.objects.get(pk=pk);
+
+
+            changes += compare_valuedict_to_gloss(value_dict,gloss);
+
+        stage = 1;
+
+    #Do changes
+    elif len(request.POST) > 0:
+
+        stage = 2;
+
+    #Show uploadform
+    else:
+
+        stage = 0;
+
+    return render_to_response('dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes},context_instance=RequestContext(request));

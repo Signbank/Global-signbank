@@ -111,5 +111,6 @@ class RelationToForeignSignForm(forms.ModelForm):
         fields = ['loan','other_lang','other_lang_gloss']
         widgets = {}
         
+class CSVUploadForm(forms.Form):
 
-
+    file = forms.FileField()
