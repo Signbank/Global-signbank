@@ -368,5 +368,3 @@ def gloss_ajax_complete(request, prefix):
         result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn, 'pk': "%s (%s)" % (g.idgloss, g.pk)})
     
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
-
-
