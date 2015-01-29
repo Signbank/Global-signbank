@@ -409,21 +409,24 @@ def missing_video_view(request):
 
 def import_videos(request):
 
-	video_folder = '/var/www2/signbank/live/writable/import_videos/';
+    video_folder = '/var/www2/signbank/live/writable/import_videos/';
 
-	out = '<p>Imported</p><ul>';
+    out = '<p>Imported</p><ul>';
 
-	for filename in os.listdir(video_folder):
+    for filename in os.listdir(video_folder):
 
-		idgloss,extension = filename.split('.');
+        try:
+            idgloss,extension = filename.split('.');
+        except ValueError:
+            return HttpResponse('Failed at '+filename+'. Only one dot allowed.')
 
-		try:
-			gloss = Gloss.objects.get(annotation_idgloss=idgloss);
-		except ObjectDoesNotExist:
-	                return HttpResponse('Failed at '+filename);
+        try:
+            gloss = Gloss.objects.get(annotation_idgloss=idgloss);
+        except ObjectDoesNotExist:
+            return HttpResponse('Failed at '+filename);
 
-		video_to_signbank(video_folder,gloss,extension);
-		out += '<li>'+filename+'</li>';
+        video_to_signbank(video_folder,gloss,extension);
+        out += '<li>'+filename+'</li>';
 
-	return HttpResponse(out+'</ul>');
+    return HttpResponse(out+'</ul>');
 
