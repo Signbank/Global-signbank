@@ -52,13 +52,13 @@
    
         <div class='pull-right'>
             {% ifequal viewname "words" %}
-            <span class='navbar-text'>Matches for the word <em>{{ translation.translation }}</em></span>
+            <span class='navbar-text'>Matches for the word <em>{{ translation.translation|safe }}</em></span>
             <div class='btn-group'>
             {% for i in matches %}
                 {% ifequal i n %}
                 <button type='button' class='btn btn-primary navbar-btn'>{{i}}</button>
                 {% else %}
-                <a type='button' class='btn btn-default navbar-btn' href="{{translation.translation}}-{{i}}.html">{{i}}</a>
+                <a type='button' class='btn btn-default navbar-btn' href="{{translation.translation|safe}}-{{i}}.html">{{i}}</a>
                 {% endifequal %}
             {% endfor %}
             </div>

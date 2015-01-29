@@ -29,7 +29,7 @@ class Translation(models.Model):
     index = models.IntegerField("Index")
     
     def __str__(self):
-        return str(self.gloss)+"-"+str(self.translation)
+        return unicode(self.gloss).encode('ascii','ignore')+"-"+unicode(self.translation).encode('ascii','ignore')
     
     def get_absolute_url(self):
         """Return a URL for a view of this translation."""
