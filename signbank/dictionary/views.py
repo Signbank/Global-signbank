@@ -167,7 +167,7 @@ def word(request, keyword, n):
                                # lastmatch is a construction of the url for this word
                                # view that we use to pass to gloss pages
                                # could do with being a fn call to generate this name here and elsewhere
-                               'lastmatch': str(trans.translation)+"-"+str(n),
+                               'lastmatch': unicode(trans.translation)+"-"+str(n),
                                'videofile': videourl,
                                'update_form': update_form,
                                'videoform': video_form,
@@ -415,15 +415,14 @@ def import_videos(request):
 
     for filename in os.listdir(video_folder):
 
-        try:
-            idgloss,extension = filename.split('.');
-        except ValueError:
-            return HttpResponse('Failed at '+filename+'. Only one dot allowed.')
+        parts = filename.split('.');
+        idgloss = '.'.join(parts[:-1]);
+        extension = parts[-1];
 
         try:
             gloss = Gloss.objects.get(annotation_idgloss=idgloss);
         except ObjectDoesNotExist:
-            return HttpResponse('Failed at '+filename);
+            return HttpResponse('Failed at '+filename+'. Could not find '+idgloss+'.');
 
         video_to_signbank(video_folder,gloss,extension);
         out += '<li>'+filename+'</li>';
