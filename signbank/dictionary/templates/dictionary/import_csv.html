@@ -1,0 +1,38 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% block content %}
+
+{% if stage == 0 %}
+    <div>Upload your changed CSV here:</div>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Submit" />
+    </form>
+
+{% elif stage == 1 %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <div>The following changes were detected:</div>
+        <ul>
+        {% for change in changes %}
+
+            <li>For {{ change.idgloss }}, <em>{{ change.human_key }}</em> changes from {{ change.original_human_value }} ({{ change.original_machine_value }}) to {{change.new_human_value}} ({{ change.new_machine_value }}).</li>
+            <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
+        {% endfor %}
+
+        </ul>
+        <input type="submit" value="Make changes" />
+    </form>
+
+{% elif stage == 2 %}
+
+    <p>Changes are live. {{ info }}</p>
+
+{% endif %}
+
+{% endblock %}
