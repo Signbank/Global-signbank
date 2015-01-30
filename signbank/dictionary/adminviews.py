@@ -81,7 +81,7 @@ class GlossListView(ListView):
                 #If it's not there, try the raw value
                 except AttributeError:
                     value = getattr(gloss,f.name)
-                    row.append(value)
+                    row.append(str(value))
 
             # get languages
             languages = [language.name for language in gloss.language.all()]
