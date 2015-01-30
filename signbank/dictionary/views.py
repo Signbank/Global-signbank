@@ -13,6 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_unicode
 
 import os
+import csv
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -438,7 +439,7 @@ def import_csv(request):
     #Propose changes
     if len(request.FILES) > 0:
 
-        changes = [{'idgloss':'TEST','field':'Usage instructions','original_value':'haha','new_value':'hihi'}];
+        changes = [];
         csv_lines = request.FILES['file'].read().split('\n');
 
         for nl, line in enumerate(csv_lines):
@@ -447,8 +448,10 @@ def import_csv(request):
             if nl == 0:
                 keys = line.split(',');
                 continue;
+            elif len(line) == 0:
+                continue;
 
-            values = line.split(',');
+            values = csv.reader([line]).next();
             value_dict = {};
 
             for nv,value in enumerate(values):
@@ -465,13 +468,33 @@ def import_csv(request):
 
             gloss = Gloss.objects.get(pk=pk);
 
-
             changes += compare_valuedict_to_gloss(value_dict,gloss);
 
         stage = 1;
 
     #Do changes
     elif len(request.POST) > 0:
+
+        for key, new_value in request.POST.items():
+
+            try:
+                pk, fieldname = key.split('.');
+
+            #In case there's no dot, this is not a value we set at the previous page
+            except ValueError:
+                continue;
+
+            gloss = Gloss.objects.get(pk=pk);
+
+            if gloss._meta.get_field_by_name(fieldname)[0].__class__.__name__ == 'NullBooleanField':
+
+                if new_value in ['true','True']:
+                    new_value = True;
+                else:
+                    new_value = False;
+
+            setattr(gloss,fieldname,new_value);
+            gloss.save();
 
         stage = 2;
 
