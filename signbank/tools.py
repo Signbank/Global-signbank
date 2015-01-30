@@ -37,20 +37,63 @@ def video_to_signbank(source_folder,gloss,extension):
 def compare_valuedict_to_gloss(valuedict,gloss):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
 
-    short_field_names = {field.verbose_name: field.name for field in gloss._meta.fields};
+    #Create an overview of all fields, sorted by their human name
+    fields = {field.verbose_name: field for field in gloss._meta.fields};
 
     differences = [];
 
-    for human_name, value in valuedict.items():
+    #Go through all values in the value dict, looking for differences with the gloss
+    for human_key, new_human_value in valuedict.items():
 
+        #Find the matching field in the gloss, and remember its 'real' name
         try:
-            gloss_value = getattr(gloss,short_field_names[human_name]);
-
-        #If there is no short name, then skip it for now
+            field = fields[human_key];
+            machine_key = field.name;
         except KeyError:
             continue;
 
-        if gloss_value != value:
-            differences.append({'idgloss':gloss.idgloss,'field':human_name,'original_value':gloss_value,'new_value':value})
+        #Try to translate the value to machine values if needed
+        if len(field.choices) > 0:
+            human_to_machine_values = {human_value: machine_value for machine_value, human_value in field.choices};
+            new_machine_value = human_to_machine_values[new_human_value];
+        elif field.__class__.__name__ == 'IntegerField':
+
+            try:
+                new_machine_value = int(new_human_value);
+            except ValueError:
+                new_human_value = 'None';
+                new_machine_value = None;
+        elif field.__class__.__name__ == 'NullBooleanField':
+
+            if new_human_value in ['True','true']:
+                new_machine_value = True;
+            else:
+                new_machine_value = False;
+
+        else:
+            new_machine_value = new_human_value
+
+        #Try to translate the key to machine keys if possible
+        try:
+            original_machine_value = getattr(gloss,machine_key);
+        except KeyError:
+            continue;
+
+        #Translate back the machine value from the gloss
+        try:
+            original_human_value = dict(field.choices)[original_machine_value]
+        except KeyError:
+            original_human_value = original_machine_value
+
+        #Check for change, and save your findings if there is one
+        if original_machine_value != new_machine_value:
+            differences.append({'pk':gloss.pk,
+                                'idgloss':gloss.idgloss,
+                                'machine_key':machine_key,
+                                'human_key':human_key,
+                                'original_machine_value':original_machine_value,
+                                'original_human_value':original_human_value,
+                                'new_machine_value':new_machine_value,
+                                'new_human_value':new_human_value})
 
     return differences
