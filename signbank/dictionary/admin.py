@@ -116,4 +116,4 @@ admin.site.register(Dialect, DialectAdmin)
 admin.site.register(Language, LanguageAdmin) 
 admin.site.register(Gloss, GlossAdmin) 
 admin.site.register(Keyword, KeywordAdmin) 
-
+admin.site.register(FieldChoice)
