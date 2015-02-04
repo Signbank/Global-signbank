@@ -1,5 +1,6 @@
 import sys
 import os
+from HTMLParser import HTMLParser
 
 #==========================
 # Constants
@@ -34,6 +35,11 @@ def video_to_signbank(source_folder,gloss,extension):
 
     return True
 
+def unescape(string):
+
+    return HTMLParser().unescape(string)
+
+
 def compare_valuedict_to_gloss(valuedict,gloss):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
 
@@ -55,7 +61,14 @@ def compare_valuedict_to_gloss(valuedict,gloss):
         #Try to translate the value to machine values if needed
         if len(field.choices) > 0:
             human_to_machine_values = {human_value: machine_value for machine_value, human_value in field.choices};
-            new_machine_value = human_to_machine_values[new_human_value];
+
+            try:
+                new_machine_value = human_to_machine_values[new_human_value];
+            except KeyError:
+                if new_human_value == '':
+                    new_human_value = 'None';
+                    new_machine_value = None;
+
         elif field.__class__.__name__ == 'IntegerField':
 
             try:
@@ -71,7 +84,10 @@ def compare_valuedict_to_gloss(valuedict,gloss):
                 new_machine_value = False;
 
         else:
-            new_machine_value = new_human_value
+            if new_human_value == 'None':
+                new_machine_value = None;
+            else:
+                new_machine_value = new_human_value
 
         #Try to translate the key to machine keys if possible
         try:
@@ -84,6 +100,13 @@ def compare_valuedict_to_gloss(valuedict,gloss):
             original_human_value = dict(field.choices)[original_machine_value]
         except KeyError:
             original_human_value = original_machine_value
+
+        #Remove any weird char
+        try:
+            new_machine_value = unescape(new_machine_value)
+            new_human_value = unescape(new_human_value)
+        except TypeError:
+            pass;
 
         #Check for change, and save your findings if there is one
         if original_machine_value != new_machine_value:
