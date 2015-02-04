@@ -81,7 +81,13 @@ class GlossListView(ListView):
                 #If it's not there, try the raw value
                 except AttributeError:
                     value = getattr(gloss,f.name)
-                    row.append(str(value))
+
+                    if isinstance(value,unicode):
+                        value = str(value.encode('ascii','xmlcharrefreplace'));
+                    elif not isinstance(value,str):
+                        value = str(value);
+
+                    row.append(value)
 
             # get languages
             languages = [language.name for language in gloss.language.all()]
