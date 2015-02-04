@@ -4,3 +4,4 @@ build/django
 *~
 .DS_Store
 *.pyc
+*.idea*
