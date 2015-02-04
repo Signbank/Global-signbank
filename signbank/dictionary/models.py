@@ -1150,3 +1150,15 @@ class Relation(models.Model):
     class Meta:
         ordering = ['source']
         
+class FieldChoice(models.Model):
+
+    field = models.CharField(max_length=50)
+    english_name = models.CharField(max_length=50)
+    machine_value = models.IntegerField()
+
+    def __str__(self):
+
+        return self.field + ': ' + self.english_name;
+
+    class Meta:
+        ordering = ['field']
