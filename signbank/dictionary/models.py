@@ -844,8 +844,8 @@ minor or insignificant ways that can be ignored.""")
     absOriPalm = models.CharField("Absolute Orientation: Palm", choices=absOriPalmChoices, null=True, blank=True, max_length=5) 
     absOriFing = models.CharField("Absolute Orientation: Fingers", choices=absOriFingChoices, null=True, blank=True, max_length=5) 
 
-    relOriMov = models.CharField("Relation Orientation: Movement", choices=relOriMovChoices, null=True, blank=True, max_length=5) 
-    relOriLoc = models.CharField("Relation Orientation: Location", choices=relOriLocChoices, null=True, blank=True, max_length=5) 
+    relOriMov = models.CharField("Relative Orientation: Movement", choices=relOriMovChoices, null=True, blank=True, max_length=5) 
+    relOriLoc = models.CharField("Relative Orientation: Location", choices=relOriLocChoices, null=True, blank=True, max_length=5) 
 
     handCh = models.CharField("Handshape Change", choices=handChChoices, null=True, blank=True, max_length=5) 
 
