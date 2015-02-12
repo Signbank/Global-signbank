@@ -702,6 +702,28 @@ namedEntChoices = (
                     ("20", 'Magazine'),
 )
 
+class FieldChoice(models.Model):
+
+    field = models.CharField(max_length=50)
+    english_name = models.CharField(max_length=50)
+    machine_value = models.IntegerField()
+
+    def __str__(self):
+
+        return self.field + ': ' + self.english_name + ' (' + str(self.machine_value) + ')';
+
+    class Meta:
+        ordering = ['field']
+
+def build_choice_list(field):
+
+    choice_list = [];
+
+    for choice in FieldChoice.objects.filter(field='Handedness'):
+        choice_list.append((choice.machine_value,choice.english_name));
+
+    return choice_list
+
 class Gloss(models.Model):
     
     class Meta:
@@ -796,7 +818,7 @@ minor or insignificant ways that can be ignored.""")
     
 
     # Phonology fields
-    handedness = models.CharField("Handedness", blank=True,  null=True, choices=handednessChoices, max_length=5)  
+    handedness = models.CharField("Handedness", blank=True,  null=True, choices=build_choice_list("Handedness"), max_length=5)
     
     domhndsh = models.CharField("Strong Hand", blank=True,  null=True, choices=handshapeChoices, max_length=5)  
     subhndsh = models.CharField("Weak Hand", null=True, choices=handshapeChoices, blank=True, max_length=5) 
@@ -1149,16 +1171,3 @@ class Relation(models.Model):
         
     class Meta:
         ordering = ['source']
-        
-class FieldChoice(models.Model):
-
-    field = models.CharField(max_length=50)
-    english_name = models.CharField(max_length=50)
-    machine_value = models.IntegerField()
-
-    def __str__(self):
-
-        return self.field + ': ' + self.english_name;
-
-    class Meta:
-        ordering = ['field']
