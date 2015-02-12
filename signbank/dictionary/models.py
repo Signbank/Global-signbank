@@ -719,7 +719,7 @@ def build_choice_list(field):
 
     choice_list = [];
 
-    for choice in FieldChoice.objects.filter(field='Handedness'):
+    for choice in FieldChoice.objects.filter(field=field):
         choice_list.append((choice.machine_value,choice.english_name));
 
     return choice_list
@@ -1136,7 +1136,7 @@ minor or insignificant ways that can be ignored.""")
             sorted_li = sorted(li,key=lambda x: x[1]);
 
             #Put it in another format
-            reformatted_li = [('_'+value,text) for value,text in sorted_li]
+            reformatted_li = [('_'+str(value),text) for value,text in sorted_li]
             choice_lists[fieldname] = OrderedDict(reformatted_li);
    
         return json.dumps(choice_lists)
