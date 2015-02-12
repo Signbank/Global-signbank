@@ -713,14 +713,14 @@ class FieldChoice(models.Model):
         return self.field + ': ' + self.english_name + ' (' + str(self.machine_value) + ')';
 
     class Meta:
-        ordering = ['field']
+        ordering = ['field','machine_value']
 
 def build_choice_list(field):
 
-    choice_list = [];
+    choice_list = [('0','No value set'),('1','N/A')];
 
     for choice in FieldChoice.objects.filter(field=field):
-        choice_list.append((choice.machine_value,choice.english_name));
+        choice_list.append((str(choice.machine_value),choice.english_name));
 
     return choice_list
 
@@ -738,7 +738,6 @@ class Gloss(models.Model):
                        ('view_advanced_properties', 'Include all properties in sign detail view'),
                         )
 
-        
     def __str__(self):
         return "%s-%s" % (self.sn, self.idgloss)
     
@@ -820,16 +819,16 @@ minor or insignificant ways that can be ignored.""")
     # Phonology fields
     handedness = models.CharField("Handedness", blank=True,  null=True, choices=build_choice_list("Handedness"), max_length=5)
     
-    domhndsh = models.CharField("Strong Hand", blank=True,  null=True, choices=handshapeChoices, max_length=5)  
-    subhndsh = models.CharField("Weak Hand", null=True, choices=handshapeChoices, blank=True, max_length=5) 
+    domhndsh = models.CharField("Strong Hand", blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
+    subhndsh = models.CharField("Weak Hand", null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
    
-    final_domhndsh = models.CharField("Final Dominant Handshape", blank=True,  null=True, choices=handshapeChoices, max_length=5)  
-    final_subhndsh = models.CharField("Final Subordinate Handshape", null=True, choices=handshapeChoices, blank=True, max_length=5) 
+    final_domhndsh = models.CharField("Final Dominant Handshape", blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
+    final_subhndsh = models.CharField("Final Subordinate Handshape", null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
  
-    locprim = models.CharField("Initial Primary Location", choices=locationChoices, null=True, blank=True,max_length=20) 
-    final_loc = models.IntegerField("Final Primary Location", choices=locationChoices, null=True, blank=True) 
+    locprim = models.CharField("Initial Primary Location", choices=build_choice_list("Location"), null=True, blank=True,max_length=20)
+    final_loc = models.IntegerField("Final Primary Location", choices=build_choice_list("Location"), null=True, blank=True)
     
-    locsecond = models.IntegerField("Secondary Location", choices=locationChoices, null=True, blank=True) 
+    locsecond = models.IntegerField("Secondary Location", choices=build_choice_list("Location"), null=True, blank=True)
     
     initial_secondary_loc = models.CharField("Initial Subordinate Location", max_length=20, choices=BSLsecondLocationChoices, null=True, blank=True) 
     final_secondary_loc = models.CharField("Final Subordinate Location", max_length=20, choices=BSLsecondLocationChoices, null=True, blank=True)      
@@ -861,23 +860,23 @@ minor or insignificant ways that can be ignored.""")
             
     StemSN = models.IntegerField(null=True, blank=True) 
 
-    relatArtic = models.CharField("Relation between Articulators", choices=relatArticChoices, null=True, blank=True, max_length=5) 
+    relatArtic = models.CharField("Relation between Articulators", choices=build_choice_list("RelatArtic"), null=True, blank=True, max_length=5)
 
-    absOriPalm = models.CharField("Absolute Orientation: Palm", choices=absOriPalmChoices, null=True, blank=True, max_length=5) 
-    absOriFing = models.CharField("Absolute Orientation: Fingers", choices=absOriFingChoices, null=True, blank=True, max_length=5) 
+    absOriPalm = models.CharField("Absolute Orientation: Palm", choices=build_choice_list("AbsOriPalm"), null=True, blank=True, max_length=5)
+    absOriFing = models.CharField("Absolute Orientation: Fingers", choices=build_choice_list("AbsOriFing"), null=True, blank=True, max_length=5)
 
-    relOriMov = models.CharField("Relative Orientation: Movement", choices=relOriMovChoices, null=True, blank=True, max_length=5) 
-    relOriLoc = models.CharField("Relative Orientation: Location", choices=relOriLocChoices, null=True, blank=True, max_length=5) 
+    relOriMov = models.CharField("Relative Orientation: Movement", choices=build_choice_list("RelOriMov"), null=True, blank=True, max_length=5)
+    relOriLoc = models.CharField("Relative Orientation: Location", choices=build_choice_list("RelOriLoc"), null=True, blank=True, max_length=5)
 
-    handCh = models.CharField("Handshape Change", choices=handChChoices, null=True, blank=True, max_length=5) 
+    handCh = models.CharField("Handshape Change", choices=build_choice_list("HandshapeChange"), null=True, blank=True, max_length=5)
 
     repeat = models.NullBooleanField("Repeated Movement", null=True, default=False)
     altern = models.NullBooleanField("Alternating Movement", null=True, default=False)
 
-    movSh = models.CharField("Movement Shape", choices=movShapeChoices, null=True, blank=True, max_length=5)     
-    movDir = models.CharField("Movement Direction", choices=movDirChoices, null=True, blank=True, max_length=5)     
-    movMan = models.CharField("Movement Manner", choices=movManChoices, null=True, blank=True, max_length=5)     
-    contType = models.CharField("Contact Type", choices=contTypeChoices, null=True, blank=True, max_length=5)     
+    movSh = models.CharField("Movement Shape", choices=build_choice_list("MovementShape"), null=True, blank=True, max_length=5)
+    movDir = models.CharField("Movement Direction", choices=build_choice_list("MovementDir"), null=True, blank=True, max_length=5)
+    movMan = models.CharField("Movement Manner", choices=build_choice_list("MovementMan"), null=True, blank=True, max_length=5)
+    contType = models.CharField("Contact Type", choices=build_choice_list("ContactType"), null=True, blank=True, max_length=5)
 
     phonOth = models.TextField("Phonology Other", null=True, blank=True)
 
