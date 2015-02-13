@@ -1,4 +1,4 @@
-import sys
+from settings.development import WSGI_FILE
 import os
 from HTMLParser import HTMLParser
 
@@ -120,3 +120,26 @@ def compare_valuedict_to_gloss(valuedict,gloss):
                                 'new_human_value':new_human_value})
 
     return differences
+
+def reload_signbank(request=None):
+    """Functions to clear the cache of Apache, also works as view"""
+
+    #Refresh the wsgi script
+    os.utime(WSGI_FILE,None);
+
+    #If this is an HTTP request, give an HTTP response
+    if request != None:
+
+        #Javascript to reload the page three times
+        js = """<script>
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", 'http://signbank.science.ru.nl', false );
+        xmlHttp.send( null );
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", 'http://signbank.science.ru.nl', false );
+        xmlHttp.send( null );
+        </script>OK"""
+
+        from django.http import HttpResponse
+
+        return HttpResponse(js);

@@ -84,3 +84,4 @@ XALLOWED_TAGS = [ '',
                 ]
 
 DATABASE_NAME = '/www2/signbank/live/repo/signbank/signbank.db';
+WSGI_FILE = '/var/www2/signbank/live/virtualenv/signbank/lib/python2.7/site-packages/signbank/wsgi.py'
