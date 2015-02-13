@@ -59,7 +59,11 @@ class GlossListView(ListView):
 #        fields = [f.name for f in Gloss._meta.fields]
         #We want to manually set which fields to export here
 
-        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'handCh', 'repeat', 'altern', 'movSh', 'movDir', 'movMan', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
+        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
+                      'domhndsh', 'subhndsh', 'locprim', 'relatArtic', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'handCh', 'repeat', 'altern',
+                      'movSh', 'movDir', 'movMan', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'tokNo', 'tokNoSgnr',
+                      'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
+                      'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
         writer = csv.writer(response)
@@ -163,45 +167,36 @@ class GlossListView(ListView):
             val = get['defspublished'] == 'yes'
 
             qs = qs.filter(definition__published=val)
-            
-    
-        ## phonology field filters
-        if get.has_key('domhndsh') and get['domhndsh'] != '':
-            val = get['domhndsh']
-            qs = qs.filter(domhndsh__exact=val)
-            
-            #print "C :", len(qs)
-            
-        if get.has_key('subhndsh') and get['subhndsh'] != '':
-            val = get['subhndsh']
-            qs = qs.filter(subhndsh__exact=val)
-            #print "D :", len(qs)
-            
-        if get.has_key('final_domhndsh') and get['final_domhndsh'] != '':
-            val = get['final_domhndsh']
-            qs = qs.filter(final_domhndsh__exact=val)
-            #print "E :", len(qs)
-            
-        if get.has_key('final_subhndsh') and get['final_subhndsh'] != '':
-            val = get['final_subhndsh']
-            qs = qs.filter(final_subhndsh__exact=val)  
-           # print "F :", len(qs)   
-            
-        if get.has_key('locprim') and get['locprim'] != '':
-            val = get['locprim']
-            qs = qs.filter(locprim__exact=val)
-            #print "G :", len(qs)
 
-        if get.has_key('locsecond') and get['locsecond'] != '':
-            val = get['locsecond']
-            qs = qs.filter(locsecond__exact=val)
-            
-            #print "H :", len(qs)     
 
-        if get.has_key('final_loc') and get['final_loc'] != '':
-            val = get['final_loc']
-            qs = qs.filter(final_loc__exact=val)   
-            
+        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
+                      'domhndsh', 'subhndsh', 'locprim', 'relatArtic', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'handCh', 'repeat', 'altern',
+                      'movSh', 'movDir', 'movMan', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'tokNo', 'tokNoSgnr',
+                      'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
+                      'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
+
+        #Language and basic property filters
+        vals = get.getlist('dialect', [])
+        if vals != []:
+            qs = qs.filter(dialect__in=vals)
+
+        vals = get.getlist('language', [])
+        if vals != []:
+            qs = qs.filter(language__in=vals)
+
+        if get.has_key('useInstr') and get['useInstr'] != '':
+            qs = qs.filter(useInstr__icontains=get['useInstr'])
+
+
+
+        ## phonology and semantics field filters
+        for fieldname in fieldnames:
+
+            if get.has_key(fieldname) and get[fieldname] != '':
+                key = fieldname+'__exact';
+                val = get[fieldname];
+                kwargs = {key:val};
+                qs = qs.filter(**kwargs);
         
         
         if get.has_key('initial_relative_orientation') and get['initial_relative_orientation'] != '':
@@ -245,22 +240,7 @@ class GlossListView(ListView):
                 qs = qs.filter(definition__text__icontains=val)
             else:
                 qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
-                
 
-        
-        
-        vals = get.getlist('dialect', [])
-        if vals != []:
-            qs = qs.filter(dialect__in=vals)
-            
-           # print "H :", len(qs)
-         
-        vals = get.getlist('language', [])
-        if vals != []:
-            qs = qs.filter(language__in=vals)
-            
-            #print "I :", len(qs)
-                     
         if get.has_key('tags') and get['tags'] != '':
             vals = get.getlist('tags')
             
