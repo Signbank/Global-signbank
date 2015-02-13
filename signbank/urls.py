@@ -41,7 +41,6 @@ urlpatterns = patterns('',
     url(r'^signs/dictionary/$', 'signbank.dictionary.views.search'),
     url(r'^signs/search/$', permission_required('dictionary.search_gloss')(GlossListView.as_view())),
     url(r'^signs/import_csv/$', 'signbank.dictionary.views.import_csv'),
-#    url(r'^signs/search/$', GlossListView.as_view(), name='admin_gloss_list'),
     url(r'^feedback/overview/$', 'signbank.feedback.views.showfeedback'),
                        
     # compatibility with old links - intercept and return 401
@@ -50,9 +49,9 @@ urlpatterns = patterns('',
    # (r'^accounts/login/', 'django.contrib.auth.views.login'),
 
     url(r'^accounts/', include('signbank.registration.urls')),
-
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/', include(admin.site.urls)),
+
     # special admin sub site
     url(r'^publisher/', include(publisher_admin.urls)),
     
@@ -60,6 +59,9 @@ urlpatterns = patterns('',
     url(r'^summernote/', include('django_summernote.urls')),
 
     url(r'^test/(?P<videofile>.*)$', TemplateView.as_view(template_name="test.html")),
+
+    url(r'reload_signbank/$','signbank.tools.reload_signbank'),
+
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
