@@ -283,9 +283,13 @@
             <tr><th>Annotation ID Gloss: English</th><td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td></tr>
             <tr><th>Keywords</th><td class='edit edit_text' id='keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>Annotation Instructions</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
-       </table>
+            <tr><th>Language</th><td class='edit edit_language' id='language'>{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>Dialect</th><td class='edit edit_dialect' id='dialect'>{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>Remarks</th><td class='edit edit_int'  id='sense'>{% value gloss.rmrks %}</td></tr>
+        </table>
 			 
     {% if perms.dictionary.view_advanced_properties %}
+        <!--   
     <div class="panel panel-default">
 
         <div class='panel-heading'>
@@ -294,20 +298,19 @@
             </div>
         </div>
             
-            
+   #Auslan fields not used for NGT
         <div id="basicProperties" class="panel-collapse collapse">
             <table class='table table-condensed'>
                 <tr><th>Sense Number</th><td class='edit edit_int'  id='sense'>{% value gloss.sense %}</td></tr>
                 <tr><th>Morphology</th><td class='edit edit_text' id='morph'>{% value gloss.morph %}</td></tr>
                 <tr><th>Stem Sign Number</th><td class='edit edit_text' id='StemSN'>{% value gloss.StemSN %}</td></tr>
                 <tr><th>Compound of</th><td class='edit edit_text' id='compound'>{% value gloss.compound %}</td></tr>
-                <tr><th>Language</th><td class='edit edit_language' id='language'>{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-                <tr><th>Dialect</th><td class='edit edit_dialect' id='dialect'>{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-                <tr><th>Remarks</th><td class='edit edit_int'  id='sense'>{% value gloss.rmrks %}</td></tr>
             </table>
-         </div>
+         </div>       
     </div>
-
+        -->
+        
+        
 	<div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
