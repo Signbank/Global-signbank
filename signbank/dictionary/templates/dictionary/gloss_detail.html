@@ -282,7 +282,7 @@
             <tr><th>Annotation ID Gloss:</th><td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td></tr>
             <tr><th>Annotation ID Gloss: English</th><td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td></tr>
             <tr><th>Keywords</th><td class='edit edit_text' id='keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>Usage Instructions</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
+            <tr><th>Annotation Instructions</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
        </table>
 			 
     {% if perms.dictionary.view_advanced_properties %}

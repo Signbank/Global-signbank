@@ -800,7 +800,7 @@ minor or insignificant ways that can be ignored.""")
     bslgloss = models.CharField("BSL gloss", max_length=50, blank=True) 
     bslloantf = models.NullBooleanField("BSL loan sign", null=True, blank=True)
  
-    useInstr = models.CharField("Usage instructions", max_length=50, blank=True) 
+    useInstr = models.CharField("Annotation instructions", max_length=50, blank=True) 
     rmrks = models.CharField("Remarks", max_length=50, blank=True) 
 
     ########
