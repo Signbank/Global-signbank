@@ -125,9 +125,9 @@ function clearForm(myFormElement) {
 
         <div  class="panel panel-default">
           <div class="panel-heading">Search by Phonology
-                (<a class='collapsetoggle' href="#" data-toggle="collapse"  data-target='#advsearchpanels'>Show</a></a>)</div>
+                (<a class='collapsetoggle' href="#" data-toggle="collapse"  data-target='#phon_search'>Show</a></a>)</div>
 
-          <div id='advsearchpanels' class='collapse'>
+          <div id='phon_search' class='collapse'>
           <table class='table'>
             <tr>
 
@@ -165,115 +165,53 @@ function clearForm(myFormElement) {
           </div>
         </div>
 
+        <div  class="panel panel-default">
+          <div class="panel-heading">Search by Semantics
+                (<a class='collapsetoggle' href="#" data-toggle="collapse"  data-target='#sem_search'>Show</a></a>)</div>
 
-        <!--
-        <div  class="panel panel-default">
-            <div class="panel-heading">Search by Tags
-                    {% if perms.dictionary.view_advanced_properties %}, Dialect and Language{% endif %}
-                (<a class='collapsetoggle' href="#" data-toggle="collapse"  data-target='#searchpanels'>Show</a></a>)</div>
-          
-            <div id='searchpanels' class='collapse'>
-            <table class='table'>
-                <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_tags'>Tagged</label>
-                            {{searchform.tags}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_nottags'>Not Tagged</label>
-                            {{searchform.nottags}}
-                        </div>
-                    </td>    
-                  </tr>
-                  
-                  {% if perms.dictionary.view_advanced_properties %}
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_dialect'>{{searchform.dialect.label}}</label>
-                            {{searchform.dialect}}
-                        </div>
-                    </td> 
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_language'>{{searchform.language.label}}</label>
-                            {{searchform.language}}
-                        </div>
-                    </td>
-                  </tr>
-                  {% endif %}
-            </table>
-            </div>
-          </div>
-              
-        <div  class="panel panel-default">
-          <div class="panel-heading">Search by Publication and Phonology
-                (<a class='collapsetoggle' href="#" data-toggle="collapse"  data-target='#advsearchpanels'>Show</a></a>)</div>
-          
-          <div id='advsearchpanels' class='collapse'>
+          <div id='sem_search' class='collapse'>
           <table class='table'>
             <tr>
-      
+
               <td>
-                <table>
-                    <tr><td><label for='id_inWeb'>{{searchform.inWeb.label}}</label></td><td>{{searchform.inWeb}}</td></tr>
-                    <tr><td><label for='id_hasvideo'>{{searchform.hasvideo.label}}</label></td><td>{{searchform.hasvideo}}</td></tr>
-                    <tr><td><label for='id_defspublished'>{{searchform.defspublished.label}}</label></td><td>{{searchform.defspublished}}</td></tr>
-                    <tr><td>&nbsp;</td></tr>
-                    <tr><td><label for='id_initial_relative_orientation'>{{searchform.initial_relative_orientation.label}}</label></td><td>{{searchform.initial_relative_orientation}}</td></tr>
-                    <tr><td><label for='id_final_relative_orientation'>{{searchform.final_relative_orientation.label}}</label></td><td>{{searchform.final_relative_orientation}}</td></tr>
-    <!--Ends after two lines
-                    <tr><td><label for='id_initial_palm_orientation'>{{searchform.initial_palm_orientation.label}}</label></td><td>{{searchform.initial_palm_orientation}}</td></tr>
-                    <tr><td><label for='id_final_palm_orientation'>{{searchform.final_palm_orientation.label}}</label></td><td>{{searchform.final_palm_orientation}}</td></tr>
-
-                    <tr><td><label for='id_initial_secondary_loc'>{{searchform.initial_secondary_loc.label}}</label></td><td>{{searchform.initial_secondary_loc}}</td></tr>
-                    <tr><td><label for='id_final_secondary_loc'>{{searchform.final_secondary_loc.label}}</label></td><td>{{searchform.final_secondary_loc}}</td></tr>
-
+                <table class='table'>
+                    <tr><td><label for='id_iconImg'>{{searchform.iconImg.label}}</label></td><td>{{searchform.iconImg}}</td></tr>
+                    <tr><td><label for='id_namEnt'>{{searchform.namEnt.label}}</label></td><td>{{searchform.namEnt}}</td></tr>
                 </table>
-              </td>
-              <td>
-                <table>
-                    <tr><td><label for='id_domhndsh'>{{searchform.domhndsh.label}}</label></td><td>{{searchform.domhndsh}}</td></tr>
-                    <tr><td><label for='id_subhndsh'>{{searchform.subhndsh.label}}</label></td><td>{{searchform.subhndsh}}</td></tr>
-                    <tr><td><label for='id_locprim'>{{searchform.locprim.label}}</label></td><td>{{searchform.locprim}}</td></tr>
-                    
-                    <!-- Ends after one line
-                    <tr><td><label for='id_locsecond'>{{searchform.locsecond.label}}</label></td><td>{{searchform.locsecond}}</td></tr>
 
-                    
-                    <tr><td><label for='id_final_domhndsh'>{{searchform.final_domhndsh.label}}</label></td><td>{{searchform.final_domhndsh}}</td></tr>
-                    <tr><td><label for='id_final_subhndsh'>{{searchform.final_subhndsh.label}}</label></td><td>{{searchform.final_subhndsh}}</td></tr>
-                    <tr><td><label for='id_final_loc'>{{searchform.final_loc.label}}</label></td><td>{{searchform.final_loc}}</td></tr>
-                </table>
               </td>
             </tr>
           </table>
+          </div>
         </div>
-        </div>
- 
-        <div  class="panel panel-default">
-            <div class="panel-heading">Search Definitions and Notes 
-                (<a class='collapsetoggle' href="#" data-toggle="collapse"  data-target='#searchdefs'>Show</a></a>)</div>
-             
-             
-             <div id='searchdefs' class='collapse'>
-                     
-                 <div class='input-group'>
-                    <label class='input-group-addon' for='id_defsearch'>{{searchform.defsearch.label}}</label>
-                    <input name='defsearch' class='form-control' {% if searchform.defsearch.value %}value='{{searchform.defsearch.value}}'{% endif %}>
-                 </div>
-                 <div class='input-group'>
-                     <label class='input-group-addon' for='id_defrole'>{{searchform.defrole.label}}</label>
-                     {{searchform.defrole}}
-                 </div>     
-             </div>  
-        </div>
- 
 
-        -->
+        <div  class="panel panel-default">
+          <div class="panel-heading">Search by Relation
+                (<a class='collapsetoggle' href="#" data-toggle="collapse"  data-target='#rel_search'>Show</a></a>)</div>
+
+          <div id='rel_search' class='collapse'>
+          <table class='table'>
+            <tr>
+
+                  <tr>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_relation'>{{searchform.relation.label}}</label>
+                            {{searchform.relation}}
+                        </div>
+                    </td>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_relationToForeignSign'>{{searchform.relationToForeignSign.label}}</label>
+                            {{searchform.relationToForeignSign}}
+                        </div>
+                    </td>
+                  </tr>
+
+            </tr>
+          </table>
+          </div>
+        </div>
 
         <div class='btn-group'>  
             <input class='btn btn-primary' type='submit' name='submit' value='Search'>

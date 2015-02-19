@@ -58,7 +58,10 @@ class GlossSearchForm(forms.ModelForm):
     
     defsearch = forms.CharField(label='Search Definition/Notes')
     defrole = forms.ChoiceField(label='Search Definition/Note Type', choices=ROLE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
-    
+
+    relation = forms.CharField(label='Search for glosses related to this gloss')
+    relationToForeignSign = forms.CharField(label='Search for a gloss from a foreign sign')
+
     class Meta:
         model = Gloss
         fields = ('idgloss', 'annotation_idgloss', 'morph', 'sense', 
