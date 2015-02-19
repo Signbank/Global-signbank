@@ -13,7 +13,7 @@
          if (window.location.search.match('editrelforeign')) {
              $('#relationsforeign').addClass('in');
          }         
-         elif (window.location.search.match('editrel')) {
+         else if (window.location.search.match('editrel')) {
              $('#relations').addClass('in');
          }
 
@@ -176,10 +176,9 @@ function configure_edit() {
 
      $('.edit_list').click(function() 
 	 {
-
 		 $(this).editable(edit_post_url, {
 		     type      : 'select',
-			 data      : choice_lists[$(this).attr('id')]
+		     data    : choice_lists[$(this).attr('id')] 
 		 });
 
 
