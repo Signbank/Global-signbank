@@ -887,7 +887,7 @@ minor or insignificant ways that can be ignored.""")
     #Semantic fields
 
     iconImg = models.CharField("Iconic Image", max_length=50, blank=True)     
-    namEnt = models.CharField("Named Entity", choices=namedEntChoices, null=True, blank=True, max_length=5)     
+    namEnt = models.CharField("Named Entity", choices=build_choice_list("NamedEntity"), null=True, blank=True, max_length=5)
 
     #Frequency fields
 
