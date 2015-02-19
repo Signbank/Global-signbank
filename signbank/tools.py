@@ -1,5 +1,6 @@
 from settings.development import WSGI_FILE
 import os
+import shutil
 from HTMLParser import HTMLParser
 
 #==========================
@@ -31,9 +32,15 @@ def video_to_signbank(source_folder,gloss,extension):
     #Move the file
     source = source_folder+annotation_id+extension;
     goal = destination_folder+annotation_id+'-'+pk+extension;
-    os.rename(source,goal);
 
-    return True
+    if os.path.isfile(goal):
+        overwritten = True;
+    else:
+        overwritten = False;
+
+    shutil.copy(source,goal);
+
+    return overwritten;
 
 def unescape(string):
 
