@@ -717,7 +717,7 @@ class FieldChoice(models.Model):
 
 def build_choice_list(field):
 
-    choice_list = [('0','No value set'),('1','N/A')];
+    choice_list = [('0','-'),('1','N/A')];
 
     for choice in FieldChoice.objects.filter(field=field):
         choice_list.append((str(choice.machine_value),choice.english_name));
