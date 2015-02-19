@@ -282,7 +282,14 @@ class GlossListView(ListView):
             relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
             potential_pks = [relation.gloss.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
-        
+
+        if get.has_key('relation') and get['relation'] != '':
+
+            potential_targets = Gloss.objects.filter(idgloss__icontains=get['relation'])
+            relations = Relation.objects.filter(target__in=potential_targets)
+            potential_pks = [relation.source.pk for relation in relations]
+            qs = qs.filter(pk__in=potential_pks)
+
        # print "Final :", len(qs)
         return qs
 
