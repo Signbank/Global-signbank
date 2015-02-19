@@ -276,7 +276,12 @@ class GlossListView(ListView):
             qs = [q for q in qs if q not in tqs]   
             
            # print "K :", len(qs)
-            
+
+        if get.has_key('relationToForeignSign') and get['relationToForeignSign'] != '':
+
+            relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
+            potential_pks = [relation.gloss.pk for relation in relations]
+            qs = qs.filter(pk__in=potential_pks)
         
        # print "Final :", len(qs)
         return qs
