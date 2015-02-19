@@ -22,7 +22,7 @@ def value(value):
     Return value unless it's None in which case we return 'No Value Set'
     """
     if value == None or value == '':
-        return 'No Value Set'
+        return '-'
     else:
         return value
  
