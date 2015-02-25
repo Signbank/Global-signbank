@@ -1,6 +1,7 @@
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.db.models import Q
+from django.db.models.fields import NullBooleanField
 from django.http import HttpResponse
 from django.core.exceptions import PermissionDenied
 import csv
@@ -188,15 +189,19 @@ class GlossListView(ListView):
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
 
-
         ## phonology and semantics field filters
         for fieldname in fieldnames:
 
             if get.has_key(fieldname) and get[fieldname] != '':
                 key = fieldname+'__exact';
                 val = get[fieldname];
-                kwargs = {key:val};
-                qs = qs.filter(**kwargs);
+
+                if isinstance(Gloss._meta.get_field(fieldname),NullBooleanField):
+                    val = {'1': None, '2': True, '3': False}[val];
+
+                if val != None:
+                    kwargs = {key:val};
+                    qs = qs.filter(**kwargs);
         
         
         if get.has_key('initial_relative_orientation') and get['initial_relative_orientation'] != '':
