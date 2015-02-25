@@ -72,7 +72,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
             try:
                 new_machine_value = human_to_machine_values[new_human_value];
             except KeyError:
-                if new_human_value == '':
+                if new_human_value in ['',' ']:
                     new_human_value = 'None';
                     new_machine_value = None;
 
