@@ -62,6 +62,9 @@ class GlossSearchForm(forms.ModelForm):
     relation = forms.CharField(label='Search for glosses related to this gloss')
     relationToForeignSign = forms.CharField(label='Search for a gloss from a foreign sign')
 
+    repeat = forms.NullBooleanField(label='Repeating Movement');
+    altern = forms.NullBooleanField(label='Alternating Movement')
+
     class Meta:
         model = Gloss
         fields = ('idgloss', 'annotation_idgloss', 'morph', 'sense', 
