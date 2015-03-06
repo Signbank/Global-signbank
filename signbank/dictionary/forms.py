@@ -44,11 +44,21 @@ class TagUpdateForm(forms.Form):
 YESNOCHOICES = (("unspecified", "Unspecified" ), ('yes', 'Yes'), ('no', 'No'))
 NULLBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
 
-ROLE_CHOICES = [('all', 'All')]
-ROLE_CHOICES.extend(defn_role_choices)
+RELATION_ROLE_CHOICES = (('','---------'),
+                         ('all', 'All'),
+                         ('homonym', 'Homonym'),
+                         ('synonym', 'Synonym'),
+                         ('variant', 'Variant'),
+                         ('antonym', 'Antonym'),
+                         ('hyponym', 'Hyponym'),
+                         ('hypernym', 'Hypernym'),
+                         ('seealso', 'See Also'),
+                         )
 
 class GlossSearchForm(forms.ModelForm):
-    
+
+    attrs_for_forms = {'class':'form-control'};
+
     search = forms.CharField(label="Search Gloss/SN")
     tags = forms.MultipleChoiceField(choices=[(t, t) for t in settings.ALLOWED_TAGS])
     nottags = forms.MultipleChoiceField(choices=[(t, t) for t in settings.ALLOWED_TAGS])
@@ -57,15 +67,21 @@ class GlossSearchForm(forms.ModelForm):
     defspublished = forms.ChoiceField(label="All Definitions Published", choices=YESNOCHOICES)
     
     defsearch = forms.CharField(label='Search Definition/Notes')
-    defrole = forms.ChoiceField(label='Search Definition/Note Type', choices=ROLE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+    #defrole = forms.ChoiceField(label='Search Definition/Note Type', choices=ROLE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
 
-    relation = forms.CharField(label='Search for glosses related to this gloss')
-    relationToForeignSign = forms.CharField(label='Search for a gloss from a foreign sign')
+    relation = forms.CharField(label='Search for glosses related to this gloss',widget=forms.TextInput(attrs=attrs_for_forms))
+    relationToForeignSign = forms.CharField(label='Search for a gloss from a foreign sign',widget=forms.TextInput(attrs=attrs_for_forms))
 
-    repeat = forms.ChoiceField(label='Repeating Movement',choices=NULLBOOLEANCHOICES);
-    altern = forms.ChoiceField(label='Alternating Movement',choices=NULLBOOLEANCHOICES)
+    hasRelationToForeignSign = forms.ChoiceField(label='Has relation to foreign sign',choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=attrs_for_forms))
+    hasRelation = forms.ChoiceField(label='Has this relation to another sign',choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=attrs_for_forms))
+
+    repeat = forms.ChoiceField(label='Repeating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=attrs_for_forms));
+    altern = forms.ChoiceField(label='Alternating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=attrs_for_forms));
 
     class Meta:
+
+        attrs_for_forms = {'class':'form-control'};
+
         model = Gloss
         fields = ('idgloss', 'annotation_idgloss', 'morph', 'sense', 
                    'sn', 'StemSN', 'comptf', 'compound', 'language', 'dialect',
@@ -81,7 +97,7 @@ class GlossSearchForm(forms.ModelForm):
                   'mouthing', 'phonetVar', 'iconImg','namEnt', 'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                   'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
         widgets = {
-                   'inWeb': forms.Select(choices=YESNOCHOICES),
+                   'inWeb': forms.Select(choices=YESNOCHOICES,attrs=attrs_for_forms),
                    }
     
 

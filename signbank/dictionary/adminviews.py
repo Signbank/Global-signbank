@@ -128,7 +128,7 @@ class GlossListView(ListView):
 
         
     def get_queryset(self):
-        
+
         # get query terms from self.request
         qs = Gloss.objects.all()
         
@@ -228,9 +228,9 @@ class GlossListView(ListView):
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val) 
             
-           # print "G :", len(qs)
-        # end of phonology filters
-        
+        if get.has_key('final_secondary_loc') and get['final_secondary_loc'] != '':
+            val = get['final_secondary_loc']
+            qs = qs.filter(final_secondary_loc__exact=val)
         
         if get.has_key('defsearch') and get['defsearch'] != '':
             
@@ -288,12 +288,34 @@ class GlossListView(ListView):
             potential_pks = [relation.gloss.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
 
+        if get.has_key('hasRelationToForeignSign') and get['hasRelationToForeignSign'] != '0':
+
+            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()];
+            print('pks_for_glosses',pks_for_glosses_with_relations)
+
+            if get['hasRelationToForeignSign'] == '1': #We only want glosses with a relation to a foreign sign
+                qs = qs.filter(pk__in=pks_for_glosses_with_relations)
+            elif get['hasRelationToForeignSign'] == '2': #We only want glosses without a relation to a foreign sign
+                qs = qs.exclude(pk__in=pks_for_glosses_with_relations)
+
         if get.has_key('relation') and get['relation'] != '':
 
             potential_targets = Gloss.objects.filter(idgloss__icontains=get['relation'])
             relations = Relation.objects.filter(target__in=potential_targets)
             potential_pks = [relation.source.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
+
+        if get.has_key('hasRelation') and get['hasRelation'] != '':
+
+            #Find all relations with this role
+            if get['hasRelation'] == 'all':
+                relations_with_this_role = Relation.objects.all();
+            else:
+                relations_with_this_role = Relation.objects.filter(role__exact=get['hasRelation']);
+
+            #Remember the pk of all glosses that take part in the collected relations
+            pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role];
+            qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
        # print "Final :", len(qs)
         return qs
