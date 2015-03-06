@@ -192,14 +192,14 @@ class GlossListView(ListView):
         ## phonology and semantics field filters
         for fieldname in fieldnames:
 
-            if get.has_key(fieldname) and get[fieldname] != '':
+            if get.has_key(fieldname):
                 key = fieldname+'__exact';
                 val = get[fieldname];
 
                 if isinstance(Gloss._meta.get_field(fieldname),NullBooleanField):
-                    val = {'1': None, '2': True, '3': False}[val];
+                    val = {'0':'','1': None, '2': True, '3': False}[val];
 
-                if val != None:
+                if val != '':
                     kwargs = {key:val};
                     qs = qs.filter(**kwargs);
         
