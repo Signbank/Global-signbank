@@ -350,7 +350,7 @@ class GlossDetailView(DetailView):
 	fields = {};
 
 	fields['phonology'] = ['handedness','domhndsh','subhndsh','locprim','relatArtic','absOriPalm','absOriFing',
-                  'relOriMov','relOriLoc','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType','phonOth', 'mouthG', 
+                  'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType','phonOth', 'mouthG',
                   'mouthing', 'phonetVar',];
 
 	fields['semantics'] = ['iconImg','namEnt'];
