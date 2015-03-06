@@ -42,8 +42,8 @@ class TagUpdateForm(forms.Form):
     delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
 
 YESNOCHOICES = (("unspecified", "Unspecified" ), ('yes', 'Yes'), ('no', 'No'))
-    
-    
+NULLBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
+
 ROLE_CHOICES = [('all', 'All')]
 ROLE_CHOICES.extend(defn_role_choices)
 
@@ -62,8 +62,8 @@ class GlossSearchForm(forms.ModelForm):
     relation = forms.CharField(label='Search for glosses related to this gloss')
     relationToForeignSign = forms.CharField(label='Search for a gloss from a foreign sign')
 
-    repeat = forms.NullBooleanField(label='Repeating Movement');
-    altern = forms.NullBooleanField(label='Alternating Movement')
+    repeat = forms.ChoiceField(label='Repeating Movement',choices=NULLBOOLEANCHOICES);
+    altern = forms.ChoiceField(label='Alternating Movement',choices=NULLBOOLEANCHOICES)
 
     class Meta:
         model = Gloss
