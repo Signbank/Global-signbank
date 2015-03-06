@@ -176,6 +176,7 @@ function clearForm(myFormElement) {
                 <table class='table'>
                     <tr><td><label for='id_iconImg'>{{searchform.iconImg.label}}</label></td><td>{{searchform.iconImg}}</td></tr>
                     <tr><td><label for='id_namEnt'>{{searchform.namEnt.label}}</label></td><td>{{searchform.namEnt}}</td></tr>
+
                 </table>
 
               </td>
@@ -200,11 +201,29 @@ function clearForm(myFormElement) {
                     </td>
                     <td>
                         <div class='input-group'>
+                            <label class='input-group-addon' for='id_hasRelation'>{{searchform.hasRelation.label}}</label>
+                            {{searchform.hasRelation}}
+                        </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                        <div class='input-group'>
                             <label class='input-group-addon' for='id_relationToForeignSign'>{{searchform.relationToForeignSign.label}}</label>
                             {{searchform.relationToForeignSign}}
                         </div>
                     </td>
+
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_hasRelationToForeignSign'>{{searchform.hasRelationToForeignSign.label}}</label>
+                            {{searchform.hasRelationToForeignSign}}
+                        </div>
+                    </td>
+
                   </tr>
+
 
             </tr>
           </table>
