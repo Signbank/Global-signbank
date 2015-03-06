@@ -93,7 +93,7 @@ class GlossSearchForm(forms.ModelForm):
                    'final_domhndsh', 'final_subhndsh', 'final_loc',
 
                   'handedness', 'useInstr','rmrks', 'relatArtic','absOriPalm','absOriFing',
-                  'relOriMov','relOriLoc','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType','phonOth', 'mouthG',
+                  'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType','phonOth', 'mouthG',
                   'mouthing', 'phonetVar', 'iconImg','namEnt', 'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                   'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
         widgets = {
