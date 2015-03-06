@@ -522,7 +522,7 @@
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#definitions'>Definitions/Notes</a>
+                <a data-toggle='collapse' data-parent='#definition' href='#definitions'>Notes</a>
             </div>
         </div>
         <div id='definitions' class='collapse'>
@@ -534,7 +534,7 @@
           <th style='width:1em'></th>
           <th style='width:3em'>Published</th>
           <th style='width:3em'>Index</th>
-          <th style='width:10em'>Role</th>
+          <th style='width:10em'>Type</th>
           <th>Text</th>
       </tr>
     {% for role in roles %}
@@ -551,11 +551,11 @@
                  <div class="modal-dialog modal-sm">
                     <div class="modal-content">
                         <div class='modal-header'>
-                            <h2 id='modalTitle'>Delete This Definition</h2>
+                            <h2 id='modalTitle'>Delete This Note</h2>
                         </div>
                         <div class='modal-body'>
                             <p><strong>{{def.get_role_display}}</strong> {{def.text}}</p>
-                            <p>This action will delete this definition/note. It cannot be undone.</p>
+                            <p>This action will delete this note. It cannot be undone.</p>
                          </div>
                       <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                           {% csrf_token %}
@@ -593,7 +593,7 @@
             <tr>
                 <td style='width:5em'><input class='form-control' name='count' type='number'></td>   
                 <td style='width:10em'>{{definitionform.role}}</td>
-                <td><input class='form-control' name='text' placeholder='Enter new definition/note'></td>
+                <td><input class='form-control' name='text' placeholder='Enter new note'></td>
             </tr>
             <tr>
                 <td></td>

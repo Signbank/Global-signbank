@@ -109,32 +109,22 @@ class Keyword(models.Model):
         return (trans, len(alltrans))
     
     
-defn_role_choices = (('general', 'General Definition'),
-                     ('note', 'Note'),
+defn_role_choices = (('note', 'Note'),
+                     ('privatenote', 'Private Note'),
                      ('todo', 'To Do'),
                      ('sugg', 'Suggestion for other gloss'),
-                     ('noun', 'As a Noun'),
-                     ('verb', 'As a Verb or Adjective'), 
-                     ('deictic', 'As a Pointing Sign'),
-                     ('interact', 'Interactive'),
-                     ('modifier', 'As Modifier'),
-                     ('question', 'As Question'),
-                     ('popexplain', 'Popular Explanation'),
-                     ('augment', 'Augmented Meaning'),
-                     ('privatenote', 'Private Note'),
-                     ('B92 sn', 'Sign Number in Brien 92'),
                      )
 
 
 class Definition(models.Model):
-    """An English text associated with an Auslan glosses"""
+    """An English text associated with a gloss. It's called a note in the web interface"""
     
     def __str__(self):
         return str(self.gloss)+"/"+self.role
         
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
-    role = models.CharField(max_length=20, choices=defn_role_choices)  
+    role = models.CharField("Type",max_length=20, choices=defn_role_choices)
     count = models.IntegerField()
     published = models.BooleanField(default=True)
 
