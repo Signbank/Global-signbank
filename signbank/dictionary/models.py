@@ -858,6 +858,8 @@ minor or insignificant ways that can be ignored.""")
     relOriMov = models.CharField("Relative Orientation: Movement", choices=build_choice_list("RelOriMov"), null=True, blank=True, max_length=5)
     relOriLoc = models.CharField("Relative Orientation: Location", choices=build_choice_list("RelOriLoc"), null=True, blank=True, max_length=5)
 
+    oriCh = models.CharField("Orientation change",choices=build_choice_list("OriChange"), null=True, blank=True, max_length=5)
+
     handCh = models.CharField("Handshape Change", choices=build_choice_list("HandshapeChange"), null=True, blank=True, max_length=5)
 
     repeat = models.NullBooleanField("Repeated Movement", null=True, default=False)
@@ -1116,7 +1118,7 @@ minor or insignificant ways that can be ignored.""")
         for fieldname in ['handedness','locprim','domhndsh','subhndsh',
 							'relatArtic','absOriPalm','absOriFing','relOriMov',
 							'relOriLoc','handCh','repeat','altern','movSh',
-							'movDir','movMan','contType','namEnt']:
+							'movDir','movMan','contType','namEnt','oriCh']:
 
             #Get the list of choices for this field
             li = self._meta.get_field(fieldname).choices;

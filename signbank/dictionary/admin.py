@@ -80,7 +80,7 @@ class GlossAdmin(VersionAdmin):
                                            'initial_secondary_loc', 'final_secondary_loc',
                                             'locprim', 'final_loc',
                                             'domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh', 
-                                            'relatArtic','absOriPalm','absOriFing','relOriMov','relOriLoc',
+                                            'relatArtic','absOriPalm','absOriFing','relOriMov','relOriLoc','oriCh',
                                             'handCh','repeat','altern','movSh','movDir','movMan','contType',
                                             'phonOth','mouthG','mouthing','phonetVar'), 'classes': ('collapse',)}, ),
                  ('Semantics', {'fields': ('iconImg','namEnt'), 'classes': ('collapse',)}),
