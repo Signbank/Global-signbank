@@ -69,11 +69,11 @@ class GlossSearchForm(forms.ModelForm):
     defsearch = forms.CharField(label='Search Definition/Notes')
     #defrole = forms.ChoiceField(label='Search Definition/Note Type', choices=ROLE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
 
-    relation = forms.CharField(label='Search for glosses related to this gloss',widget=forms.TextInput(attrs=attrs_for_forms))
-    relationToForeignSign = forms.CharField(label='Search for a gloss from a foreign sign',widget=forms.TextInput(attrs=attrs_for_forms))
+    relation = forms.CharField(label='Search for gloss of related signs',widget=forms.TextInput(attrs=attrs_for_forms))
+    relationToForeignSign = forms.CharField(label='Search gloss of foreign signs',widget=forms.TextInput(attrs=attrs_for_forms))
 
-    hasRelationToForeignSign = forms.ChoiceField(label='Has relation to foreign sign',choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=attrs_for_forms))
-    hasRelation = forms.ChoiceField(label='Has this relation to another sign',choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=attrs_for_forms))
+    hasRelationToForeignSign = forms.ChoiceField(label='Type of relation',choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=attrs_for_forms))
+    hasRelation = forms.ChoiceField(label='Related to foreign sign or not',choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=attrs_for_forms))
 
     repeat = forms.ChoiceField(label='Repeating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=attrs_for_forms));
     altern = forms.ChoiceField(label='Alternating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=attrs_for_forms));
