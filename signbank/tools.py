@@ -7,8 +7,8 @@ from HTMLParser import HTMLParser
 # Constants
 #==========================
 
-root = '/var/www2/signbank/live/';
-sb_video_folder = root+'writable/glossvideo/';
+ROOT = '/var/www2/signbank/live/';
+SB_VIDEO_FOLDER = ROOT+'writable/glossvideo/';
 
 #==========================
 # Functions
@@ -23,7 +23,7 @@ def video_to_signbank(source_folder,gloss,extension):
     #Figure out some names
     annotation_id = gloss.annotation_idgloss;
     pk = str(gloss.pk);
-    destination_folder = sb_video_folder+annotation_id[:2]+'/';
+    destination_folder = SB_VIDEO_FOLDER+annotation_id[:2]+'/';
 
     #Create the necessary subfolder if needed
     if not os.path.isdir(destination_folder):
@@ -38,9 +38,15 @@ def video_to_signbank(source_folder,gloss,extension):
     else:
         overwritten = False;
 
-    shutil.copy(source,goal);
+    try:
+        shutil.copy(source,goal);
+        was_allowed = True;
+    except IOError:
+        was_allowed = False;
 
-    return overwritten;
+    os.remove(source);
+
+    return overwritten,was_allowed;
 
 def unescape(string):
 
