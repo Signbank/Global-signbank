@@ -26,7 +26,7 @@ class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
     class Meta:
         model = Gloss
-        fields = ['idgloss', 'annotation_idgloss', 'sn']
+        fields = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en']
 
 
 class VideoUpdateForm(forms.Form):
