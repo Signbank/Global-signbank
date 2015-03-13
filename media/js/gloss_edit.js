@@ -81,11 +81,11 @@ function toggle_edit() {
     if ($('#enable_edit').hasClass('edit_enabled')) {
         disable_edit();
         $('#enable_edit').removeClass('edit_enabled');
-        $('#enable_edit').text('Enable Edit');
+        $('#enable_edit').text('Edit');
     } else {
         enable_edit();
         $('#enable_edit').addClass('edit_enabled');
-        $('#enable_edit').text('Disable Edit');
+        $('#enable_edit').text('Save');
     }
 }
 
