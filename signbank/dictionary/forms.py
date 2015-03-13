@@ -72,8 +72,8 @@ class GlossSearchForm(forms.ModelForm):
     relation = forms.CharField(label='Search for gloss of related signs',widget=forms.TextInput(attrs=attrs_for_forms))
     relationToForeignSign = forms.CharField(label='Search for gloss of foreign signs',widget=forms.TextInput(attrs=attrs_for_forms))
 
-    hasRelationToForeignSign = forms.ChoiceField(label='Type of relation',choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=attrs_for_forms))
-    hasRelation = forms.ChoiceField(label='Related to foreign sign or not',choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=attrs_for_forms))
+    hasRelationToForeignSign = forms.ChoiceField(label='Related to foreign sign or not',choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=attrs_for_forms))
+    hasRelation = forms.ChoiceField(label='Type of relation',choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=attrs_for_forms))
 
     repeat = forms.ChoiceField(label='Repeating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=attrs_for_forms));
     altern = forms.ChoiceField(label='Alternating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=attrs_for_forms));
