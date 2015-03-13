@@ -109,7 +109,7 @@ class DefinitionForm(forms.ModelForm):
     
     class Meta:
         model = Definition
-        fields = ('count', 'role', 'text')
+        fields = ('published','count', 'role', 'text')
         widgets = {
                    'role': forms.Select(attrs={'class': 'form-control'}),
                    }

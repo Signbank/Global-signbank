@@ -591,11 +591,15 @@
         {% csrf_token %}
          <table class='table'>
             <tr>
-                <td style='width:5em'><input class='form-control' name='count' type='number'></td>   
+                <td style="width:2em"></td>
+                <td style="width:7em"><input class='checkbox' name='published' type='checkbox'></td>
+                <td style='width:5em'><input class='form-control' name='count' type='number'></td>
                 <td style='width:10em'>{{definitionform.role}}</td>
                 <td><input class='form-control' name='text' placeholder='Enter new note'></td>
             </tr>
-            <tr>
+             <tr>
+                <td></td>
+                <td></td>
                 <td></td>
                 <td></td>
                 <td><input class='btn' type='submit' value='Save New'></td>
