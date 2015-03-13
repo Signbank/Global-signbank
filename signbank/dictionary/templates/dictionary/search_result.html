@@ -4,8 +4,8 @@
  
 
     <p>Welcome to the Sign Search section of the {{language}} SignBank. Here
-     you can search for a sign using an English keyword in the search box
-     above, or browse keywords starting with any letter below.</p>	
+     you can search for a sign using a Dutch translation in the search box
+     above, or browse words starting with any letter below.</p>	
     
     <p>
       {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
@@ -30,22 +30,18 @@
                 {% if ANON_SAFE_SEARCH %}three{% else %}two{% endif %} 
                 main reasons why there may be no match:</p>
             <ol>
-              <li>There really is no {{language}} sign for which that word is an good translation (you may need to 
+              <li>There really is no {{language}} sign in the database for which that word is an good translation <!-- (you may need to fingerspell the word)--></li>
 
-            fingerspell the word)</li>
-
-            <li>You have mis-typed the word or you have added unnecessary word endings. Follow these 
-
-            search tips:
+            <li>You have mis-typed the word or you have added unnecessary word endings. Follow these search tips:
             <ul>
              <li>type only the first few letters of a word</li>
 
-             <li>type words with no word endings like ‘ing’, ‘ed’, or ‘s’.</li>
+             <li>type words with no word endings like ‘-en’, ‘-end’, or ‘-t’.</li>
             </ul>
             {% if ANON_SAFE_SEARCH %}
             <li>The match is blocked in the public view of {{language}} Signbank because the word/sign is 
 
-            obscene or offensive in English or {{language}}, or both. (Schools and parents have repeatedly 
+            obscene or offensive in Dutch or {{language}}, or both. (Schools and parents have repeatedly 
 
             requested that these type of words/signs be only visible to registered users.) If you
             <a href="/accounts/login/">login or register 
@@ -63,7 +59,7 @@
          {% ifequal wordcount 1 %}
             <p>There is one word that fully or partially match your query. Please select the word below.</p>       
          {% else %}
-           <p>There are {{ wordcount }} words that fully or partially match your query. Please select a word from the list below.</p>
+           <p>There are {{ wordcount }} words that fully or partially match your query.</p>
          {% endifequal %}
         {% endifequal %}
  
@@ -83,7 +79,7 @@
               {% if not word.inWeb %}*{% endif %}  
             </p>
 
-            {% if forloop.counter|divisibleby:"10" %}
+            {% if forloop.counter|divisibleby:"25" %}
             </td> 
             <td valign="top">
             {% endif %}
