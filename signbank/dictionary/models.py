@@ -109,7 +109,7 @@ class Keyword(models.Model):
         return (trans, len(alltrans))
     
     
-defn_role_choices = (('note', 'Note'),
+DEFN_ROLE_CHOICES = (('note', 'Note'),
                      ('privatenote', 'Private Note'),
                      ('todo', 'To Do'),
                      ('sugg', 'Suggestion for other gloss'),
@@ -124,7 +124,7 @@ class Definition(models.Model):
         
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
-    role = models.CharField("Type",max_length=20, choices=defn_role_choices)
+    role = models.CharField("Type",max_length=20, choices=DEFN_ROLE_CHOICES)
     count = models.IntegerField()
     published = models.BooleanField(default=True)
 
@@ -1085,7 +1085,7 @@ minor or insignificant ways that can be ignored.""")
     def definition_role_choices_json(self):
         """Return JSON for the definition role choice list"""
         
-        return self.options_to_json(defn_role_choices)
+        return self.options_to_json(DEFN_ROLE_CHOICES)
     
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""

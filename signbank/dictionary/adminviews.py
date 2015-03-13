@@ -317,6 +317,26 @@ class GlossListView(ListView):
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role];
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
+        if get.has_key('definitionRole') and get['definitionRole'] != '':
+
+            #Find all definitions with this role
+            if get['definitionRole'] == 'all':
+                definitions_with_this_role = Definition.objects.all();
+            else:
+                definitions_with_this_role = Definition.objects.filter(role__exact=get['definitionRole']);
+
+            #Remember the pk of all glosses that are referenced in the collection definitions
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role];
+            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+
+        if get.has_key('definitionContains') and get['definitionContains'] != '':
+
+            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains']);
+
+            #Remember the pk of all glosses that are referenced in the collection definitions
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text];
+            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+
        # print "Final :", len(qs)
         return qs
 
