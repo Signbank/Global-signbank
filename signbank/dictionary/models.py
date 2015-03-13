@@ -815,7 +815,7 @@ minor or insignificant ways that can be ignored.""")
     final_domhndsh = models.CharField("Final Dominant Handshape", blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
     final_subhndsh = models.CharField("Final Subordinate Handshape", null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
  
-    locprim = models.CharField("Initial Primary Location", choices=build_choice_list("Location"), null=True, blank=True,max_length=20)
+    locprim = models.CharField("Location", choices=build_choice_list("Location"), null=True, blank=True,max_length=20)
     final_loc = models.IntegerField("Final Primary Location", choices=build_choice_list("Location"), null=True, blank=True)
     
     locsecond = models.IntegerField("Secondary Location", choices=build_choice_list("Location"), null=True, blank=True)
@@ -858,7 +858,7 @@ minor or insignificant ways that can be ignored.""")
     relOriMov = models.CharField("Relative Orientation: Movement", choices=build_choice_list("RelOriMov"), null=True, blank=True, max_length=5)
     relOriLoc = models.CharField("Relative Orientation: Location", choices=build_choice_list("RelOriLoc"), null=True, blank=True, max_length=5)
 
-    oriCh = models.CharField("Orientation change",choices=build_choice_list("OriChange"), null=True, blank=True, max_length=5)
+    oriCh = models.CharField("Orientation Change",choices=build_choice_list("OriChange"), null=True, blank=True, max_length=5)
 
     handCh = models.CharField("Handshape Change", choices=build_choice_list("HandshapeChange"), null=True, blank=True, max_length=5)
 
