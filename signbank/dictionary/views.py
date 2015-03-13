@@ -427,7 +427,11 @@ def import_videos(request):
         except ObjectDoesNotExist:
             return HttpResponse('Failed at '+filename+'. Could not find '+idgloss+'.');
 
-        overwritten = video_to_signbank(video_folder,gloss,extension);
+        overwritten, was_allowed = video_to_signbank(video_folder,gloss,extension);
+
+        if not was_allowed:
+            return HttpResponse('Failed two overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?');
+
         out += '<li>'+filename+'</li>';
 
         if overwritten:
