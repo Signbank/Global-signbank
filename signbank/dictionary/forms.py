@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.formtools.preview import FormPreview
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, defn_role_choices
+from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, DEFN_ROLE_CHOICES
 from django.conf import settings
 from tagging.models import Tag
 
@@ -55,6 +55,8 @@ RELATION_ROLE_CHOICES = (('','---------'),
                          ('seealso', 'See Also'),
                          )
 
+DEFN_ROLE_CHOICES = (('','---------'),('all','All')) + DEFN_ROLE_CHOICES;
+
 class GlossSearchForm(forms.ModelForm):
 
     attrs_for_forms = {'class':'form-control'};
@@ -78,6 +80,11 @@ class GlossSearchForm(forms.ModelForm):
     repeat = forms.ChoiceField(label='Repeating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=attrs_for_forms));
     altern = forms.ChoiceField(label='Alternating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=attrs_for_forms));
 
+    isNew = forms.ChoiceField(label='Is a proposed new sign',choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=attrs_for_forms))
+    inWeb = forms.ChoiceField(label='Is in Web dictionary',choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=attrs_for_forms))
+    definitionRole = forms.ChoiceField(label='Note type',choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=attrs_for_forms))
+    definitionContains = forms.CharField(label='Note contains',widget=forms.TextInput(attrs=attrs_for_forms))
+
     class Meta:
 
         attrs_for_forms = {'class':'form-control'};
@@ -96,9 +103,6 @@ class GlossSearchForm(forms.ModelForm):
                   'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType','phonOth', 'mouthG',
                   'mouthing', 'phonetVar', 'iconImg','namEnt', 'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                   'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
-        widgets = {
-                   'inWeb': forms.Select(choices=YESNOCHOICES,attrs=attrs_for_forms),
-                   }
     
 
 class DefinitionForm(forms.ModelForm):
