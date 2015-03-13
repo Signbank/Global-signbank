@@ -16,15 +16,15 @@
                  {% csrf_token %}
                  <table class='table'>
                      <tr>
-                         <th><label for='id_idgloss'>ID Gloss</label></th>
+                         <th><label for='id_idgloss'>Lemma ID Gloss</label></th>
                          <th><label for='id_annotation_idgloss'>Annotation ID Gloss</label></th>
-                         <th><label for='id_sn'>Sign Number</label></th>
+                         <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
                          <th></th>
                      </tr>
                      <tr>
                          <td>{{add_gloss_form.idgloss}}</td>
                          <td>{{add_gloss_form.annotation_idgloss}}</td>
-                         <td>{{add_gloss_form.sn}}</td>
+                         <td>{{add_gloss_form.annotation_idgloss_en}}</td>
                          <td><input class='btn btn-primary' type='submit' value='Add New Sign'></td>
                      </tr>
                  </table>
