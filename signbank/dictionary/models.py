@@ -1162,3 +1162,10 @@ class Relation(models.Model):
         
     class Meta:
         ordering = ['source']
+
+class MorphologyDefinition(models.Model):
+    """Tells something about morphology of a gloss""";
+
+    parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses");
+    role = models.CharField(max_length=5,choices=build_choice_list('MorphologyType'))
+    morpheme = models.ForeignKey(Gloss,related_name="morphemes");
