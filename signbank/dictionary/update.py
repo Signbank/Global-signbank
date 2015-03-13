@@ -408,13 +408,13 @@ def add_definition(request, glossid):
         
         if form.is_valid():
             
-            
+            published = form.cleaned_data['published']
             count = form.cleaned_data['count']
             role = form.cleaned_data['role']
             text = form.cleaned_data['text']
             
             # create definition, default to not published
-            defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=False)
+            defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
             defn.save()
             
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
