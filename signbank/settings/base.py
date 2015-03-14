@@ -204,9 +204,9 @@ ANON_TAG_SEARCH = False
 SIGN_NAVIGATION = True
 
 # which definition fields do we show and in what order?
-DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'diectic', 'modifier', 'question', 'augment', 'note']
+DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'deictic', 'modifier', 'question', 'augment', 'note']
 
-ADMIN_RESULT_FIELDS = ['sn', 'idgloss', 'annotation_idgloss', 'morph']
+ADMIN_RESULT_FIELDS = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'handedness', 'domhndsh', 'locprim']
 
 
 # location and URL for uploaded files
