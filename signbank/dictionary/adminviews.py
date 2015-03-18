@@ -356,6 +356,7 @@ class GlossDetailView(DetailView):
         context['videoform'] = VideoUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
+        context['morphologyform'] = MorphologyForm()
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
