@@ -428,6 +428,10 @@ def add_definition(request, glossid):
             
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
 
+def add_morphology_definition(request):
+
+    return HttpResponse('hoi');
+
 @permission_required('dictionary.change_gloss')
 def add_tag(request, glossid):
     """View to add a tag to a gloss"""
