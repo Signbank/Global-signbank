@@ -71,7 +71,7 @@
     <div class='pull-right'>
          <span id='edit_message'></span>&nbsp;
          <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>Delete Sign</button>
-         <button id='enable_edit' class='btn btn-default navbar-btn'>Enable Edit</button>
+         <button id='enable_edit' class='btn btn-default navbar-btn'>Edit</button>
          
          <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
              <div class="modal-dialog modal-sm">
@@ -343,23 +343,6 @@
         </div>
     </div>
     
- 
-   <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#frequency'>Frequency</a>
-            </div>
-        </div>
-        <div id='frequency' class='panel-collapse collapse'>
-            <table class='table table-condensed'>
-		{% for value,name,label,kind in frequency_fields %}
-		    <tr><th>{{label}}</th><td class="edit edit_text" id='{{name}}'>{% value value %}</td></tr>
-		{% endfor %}
-            
-            </table>
-        </div>
-    </div>
-
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
@@ -500,6 +483,23 @@
     </div>
     {% endif %}
 
+
+        <div class="panel panel-default">
+            <div class='panel-heading'>
+                <div class='panel-title'>
+                    <a data-toggle='collapse' data-parent='#definition' href='#frequency'>Frequency</a>
+                </div>
+            </div>
+            <div id='frequency' class='panel-collapse collapse'>
+                <table class='table table-condensed'>
+                    {% for value,name,label,kind in frequency_fields %}
+                    <tr><th>{{label}}</th><td class="edit edit_text" id='{{name}}'>{% value value %}</td></tr>
+                    {% endfor %}
+                    
+                </table>
+            </div>
+        </div>
+        
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>

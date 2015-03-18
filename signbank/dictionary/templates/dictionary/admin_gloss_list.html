@@ -134,25 +134,24 @@ function clearForm(myFormElement) {
                     <tr><td><label for='id_handedness'>{{searchform.handedness.label}}</label></td><td>{{searchform.handedness}}</td></tr>
                     <tr><td><label for='id_domhndsh'>{{searchform.domhndsh.label}}</label></td><td>{{searchform.domhndsh}}</td></tr>
                     <tr><td><label for='id_subhndsh'>{{searchform.subhndsh.label}}</label></td><td>{{searchform.subhndsh}}</td></tr>
-
-                    <tr><td><label for='id_locprim'>{{searchform.locprim.label}}</label></td><td>{{searchform.locprim}}</td></tr>
+                    <tr><td><label for='id_handCh'>{{searchform.handCh.label}}</label></td><td>{{searchform.handCh}}</td></tr>
+                    
                     <tr><td><label for='id_relatArtic'>{{searchform.relatArtic.label}}</label></td><td>{{searchform.relatArtic}}</td></tr>
-
+                    <tr><td><label for='id_locprim'>{{searchform.locprim.label}}</label></td><td>{{searchform.locprim}}</td></tr>
+                    
                     <tr><td><label for='id_absOriPalm'>{{searchform.absOriPalm.label}}</label></td><td>{{searchform.absOriPalm}}</td></tr>
                     <tr><td><label for='id_absOriFing'>{{searchform.absOriFing.label}}</label></td><td>{{searchform.absOriFing}}</td></tr>
                     <tr><td><label for='id_relOriMov'>{{searchform.relOriMov.label}}</label></td><td>{{searchform.relOriMov}}</td></tr>
                     <tr><td><label for='id_relOriLoc'>{{searchform.relOriLoc.label}}</label></td><td>{{searchform.relOriLoc}}</td></tr>
                     <tr><td><label for='id_oriCh'>{{searchform.oriCh.label}}</label></td><td>{{searchform.oriCh}}</td></tr>
 
-                    <tr><td><label for='id_handCh'>{{searchform.handCh.label}}</label></td><td>{{searchform.handCh}}</td></tr>
-                    <tr><td><label for='id_repeat'>{{searchform.repeat.label}}</label></td><td>{{searchform.repeat}}</td></tr>
-                    <tr><td><label for='id_altern'>{{searchform.altern.label}}</label></td><td>{{searchform.altern}}</td></tr>
-
+                    <tr><td><label for='id_contType'>{{searchform.contType.label}}</label></td><td>{{searchform.contType}}</td></tr>
                     <tr><td><label for='id_movSh'>{{searchform.movSh.label}}</label></td><td>{{searchform.movSh}}</td></tr>
                     <tr><td><label for='id_movDir'>{{searchform.movDir.label}}</label></td><td>{{searchform.movDir}}</td></tr>
                     <tr><td><label for='id_movMan'>{{searchform.movMan.label}}</label></td><td>{{searchform.movMan}}</td></tr>
-
-                    <tr><td><label for='id_contType'>{{searchform.contType.label}}</label></td><td>{{searchform.contType}}</td></tr>
+                    <tr><td><label for='id_repeat'>{{searchform.repeat.label}}</label></td><td>{{searchform.repeat}}</td></tr>
+                    <tr><td><label for='id_altern'>{{searchform.altern.label}}</label></td><td>{{searchform.altern}}</td></tr>
+                    
                     <tr><td><label for='id_phonOth'>{{searchform.phonOth.label}}</label></td><td>{{searchform.phonOth}}</td></tr>
                     <tr><td><label for='id_mouthG'>{{searchform.mouthG.label}}</label></td><td>{{searchform.mouthG}}</td></tr>
                     <tr><td><label for='id_mouthing'>{{searchform.mouthing.label}}</label></td><td>{{searchform.mouthing}}</td></tr>
@@ -310,13 +309,13 @@ function clearForm(myFormElement) {
                      <tr>
                          <th><label for='id_idgloss'>ID Gloss</label></th>
                          <th><label for='id_annotation_idgloss'>Annotation ID Gloss</label></th>
-                         <th><label for='id_sn'>Sign Number</label></th>
+                         <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
                          <th></th>
                      </tr>
                      <tr>
                          <td>{{add_gloss_form.idgloss}}</td>
                          <td>{{add_gloss_form.annotation_idgloss}}</td>
-                         <td>{{add_gloss_form.sn}}</td>
+                         <td>{{add_gloss_form.annotation_idgloss_en}}</td>
                          <td><input class='btn btn-primary' type='submit' value='Add New Sign'></td>
                      </tr>
                  </table>
@@ -340,7 +339,7 @@ function clearForm(myFormElement) {
          {% for name, value in object_list.0.admin_fields %}
            <th>{{ name }}</th>
          {% endfor %}
-        <th>Tags</th> 
+<!--        <th>Tags</th>        -->
       </tr>
     </thead>
     <tbody>
@@ -348,14 +347,18 @@ function clearForm(myFormElement) {
         <tr>
             
             {% for name, value in gloss.admin_fields %}
-              {% if forloop.first %}
-                <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{value}}</a></td>
-              {% else %}
-              <td>{{ value }}</td>
-              {% endif %}
-            {% endfor %}
-            
-            <td>{% for tag in gloss.tags %}<span class='tag'>{{tag}}</span> {% endfor %}</td>
+            {% if forloop.counter == 2 %}
+            <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{value}}</a></td>
+            {% elif forloop.first %}
+            <td>{{ value }}</td>
+            {% elif forloop.counter == 3 %}
+            <td>{{ value }}</td>
+            {% else %}
+            <td>{{ value }}</td>
+            {% endif %}  
+            {% endfor %} 
+
+<!--            <td>{% for tag in gloss.tags %}<span class='tag'>{{tag}}</span> {% endfor %}</td>      -->
             
         </tr>
     {% endfor %}
