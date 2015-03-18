@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.formtools.preview import FormPreview
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, DEFN_ROLE_CHOICES
+from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list
 from django.conf import settings
 from tagging.models import Tag
 
@@ -138,7 +138,16 @@ class RelationToForeignSignForm(forms.ModelForm):
         model = RelationToForeignSign
         fields = ['loan','other_lang','other_lang_gloss']
         widgets = {}
-        
+
+class MorphologyForm(forms.ModelForm):
+
+    parent_gloss = forms.CharField(label='Gloss')
+    role = forms.ChoiceField(label='Type',choices=build_choice_list('MorphologyType'))
+    morpheme = forms.CharField(label='Morpheme');
+
+    class Meta:
+        model = MorphologyDefinition;
+
 class CSVUploadForm(forms.Form):
 
     file = forms.FileField()
