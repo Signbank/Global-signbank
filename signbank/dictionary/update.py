@@ -5,6 +5,8 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
+from django.db.models.fields import NullBooleanField
+
 from signbank.log import debug
 from tagging.models import TaggedItem, Tag
 import os, shutil, re
@@ -152,7 +154,12 @@ def update_gloss(request, glossid):
             # - keywords
             # - videos
             # - tags
-            
+
+            #Translate the value if a boolean
+            if isinstance(gloss._meta.get_field_by_name(field)[0],NullBooleanField):
+                newvalue = value;
+                value = (value == 'Yes')
+
             # special value of 'notset' or -1 means remove the value
             if value == 'notset' or value == -1 or value == '':
                 gloss.__setattr__(field, None)
@@ -162,20 +169,22 @@ def update_gloss(request, glossid):
             
                 gloss.__setattr__(field, value)
                 gloss.save()
-                
-                f = Gloss._meta.get_field(field)
-                
-                
-                # for choice fields we want to return the 'display' version of 
-                # the value
-                valdict = dict(f.flatchoices)
-                # some fields take ints
-                if valdict.keys() != [] and type(valdict.keys()[0]) == int:
-                    newvalue = valdict.get(int(value), value)
-                else:
-                    # either it's not an int or there's no flatchoices
-                    # so here we use get with a default of the value itself
-                    newvalue = valdict.get(value, value)
+
+                #If the value is not a Boolean, return the new value
+                if not isinstance(value,bool):
+
+                    f = Gloss._meta.get_field(field)
+
+                    # for choice fields we want to return the 'display' version of
+                    # the value
+                    valdict = dict(f.flatchoices)
+                    # some fields take ints
+                    if valdict.keys() != [] and type(valdict.keys()[0]) == int:
+                        newvalue = valdict.get(int(value), value)
+                    else:
+                        # either it's not an int or there's no flatchoices
+                        # so here we use get with a default of the value itself
+                        newvalue = valdict.get(value, value)
         
         return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
