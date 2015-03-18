@@ -750,8 +750,16 @@ class Gloss(models.Model):
         result = []
         for field in settings.ADMIN_RESULT_FIELDS:
             fname = self._meta.get_field(field).verbose_name
-            result.append((fname, getattr(self, field)))
-            
+
+            #First, try to give the human readable choice value back
+            try:
+                result.append((fname, getattr(self, 'get_'+field+'_display')()))
+
+            #If that doesn't work, give the raw value back
+            except AttributeError:
+                result.append((fname, getattr(self, field)))
+
+
         return result
         
     
