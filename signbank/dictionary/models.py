@@ -729,7 +729,7 @@ class Gloss(models.Model):
                         )
 
     def __str__(self):
-        return "%s-%s" % (self.sn, self.idgloss)
+        return "%s" % (self.idgloss)
     
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
@@ -1177,3 +1177,7 @@ class MorphologyDefinition(models.Model):
     parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses");
     role = models.CharField(max_length=5,choices=build_choice_list('MorphologyType'))
     morpheme = models.ForeignKey(Gloss,related_name="morphemes");
+
+    def __str__(self):
+
+        return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss;
