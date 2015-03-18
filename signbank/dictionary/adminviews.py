@@ -390,6 +390,8 @@ class GlossDetailView(DetailView):
 
                 if field in ['phonOth','mouthG','mouthing','phonetVar','iconImg']:
                     kind = 'text';
+                elif field in ['repeat','altern']:
+                    kind = 'check';
                 else:
                     kind = 'list';
 
