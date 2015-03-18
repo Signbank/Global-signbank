@@ -57,6 +57,7 @@ function disable_edit() {
     $('#add_definition').hide();
     $('#add_relation_form').hide();
     $('#add_relationtoforeignsign_form').hide();
+    $('#add_morphologydefinition_form').hide();
     $('.definition_delete').hide();
     $('.relation_delete').hide();
     $('.relationtoforeignsign_delete').hide();
@@ -72,6 +73,7 @@ function enable_edit() {
     $('#add_definition').show();
     $('#add_relation_form').show();
     $('#add_relationtoforeignsign_form').show();
+    $('#add_morphologydefinition_form').show();
     $('.definition_delete').show();
     $('.relation_delete').show();
     $('.relationtoforeignsign_delete').show();

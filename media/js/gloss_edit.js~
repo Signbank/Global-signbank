@@ -57,6 +57,7 @@ function disable_edit() {
     $('#add_definition').hide();
     $('#add_relation_form').hide();
     $('#add_relationtoforeignsign_form').hide();
+    $('#add_morphologydefinition_form').hide();
     $('.definition_delete').hide();
     $('.relation_delete').hide();
     $('.relationtoforeignsign_delete').hide();
@@ -72,6 +73,7 @@ function enable_edit() {
     $('#add_definition').show();
     $('#add_relation_form').show();
     $('#add_relationtoforeignsign_form').show();
+    $('#add_morphologydefinition_form').show();
     $('.definition_delete').show();
     $('.relation_delete').show();
     $('.relationtoforeignsign_delete').show();
@@ -81,11 +83,11 @@ function toggle_edit() {
     if ($('#enable_edit').hasClass('edit_enabled')) {
         disable_edit();
         $('#enable_edit').removeClass('edit_enabled');
-        $('#enable_edit').text('Enable Edit');
+        $('#enable_edit').text('Edit');
     } else {
         enable_edit();
         $('#enable_edit').addClass('edit_enabled');
-        $('#enable_edit').text('Disable Edit');
+        $('#enable_edit').text('Save');
     }
 }
 
@@ -107,7 +109,7 @@ function configure_edit() {
     
     $.fn.editable.defaults['indicator'] = 'Saving...';
     $.fn.editable.defaults['tooltip'] = 'Click to edit...';
-    $.fn.editable.defaults['placeholder'] = 'No Value Set';
+    $.fn.editable.defaults['placeholder'] = '-';
     $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">Ok</button>';
     $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" type="cancel">Cancel</button>';
     $.fn.editable.defaults['width'] = 'none';

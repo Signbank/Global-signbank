@@ -309,7 +309,52 @@
          </div>       
     </div>
         -->
-        
+
+   <div class="panel panel-default">
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#morphology'>Morphology</a>
+            </div>
+        </div>
+        <div id='morphology' class='collapse'>
+
+               <table class='table table-condensed'>
+                  <tr>
+                      <th style='width:12em'>Type</th>
+                      <th style='width:12em'>Morpheme</th>
+                  </tr>
+
+                   {% for morphdef in gloss.parent_glosses.all %}
+                    <tr>
+                        <td class='edit edit_morphologydefinition_role' id='morphologydefinition_role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
+                        <td class='edit edit_morphologydefinition_morpheme' id='morphologydefinition_morpheme_{{morphdef.id}}'>{{morphdef.morpheme}}</td>
+                        <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>view</a>)</td></tr>
+                   {% endfor %}
+               </table>
+
+           {# spacing div to allow room for typeahead dropdown #}
+           <div style='height: 10em'></div>
+
+           {% if perms.dictionary.change_gloss %}
+           <form id='add_morphologydefinition_form' method='post' action='{% url 'dictionary:add_morphologydefinition' %}'>
+               {% csrf_token %}
+               <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
+               <table class='table table-condensed'>
+                   <tr>
+                       <td>{{morphologyform.role}}</td>
+                       <td><input class='form-control glosstypeahead' placeholder='SN/ID Gloss/Annotation ID Gloss' name='morphology'></td>
+                       <td><input class='btn btn-primary' value='Add Morphology Definition' type='submit'></td>
+                   </tr>
+               </table>
+            </form>
+            {% endif %}
+
+
+        </div>
+
+    </div>
+
+
         
 	<div class="panel panel-default">
         <div class='panel-heading'>
