@@ -10,16 +10,16 @@
       <input type="search" name="query" value="" maxlength="50">
       <button type="submit" data-theme="a" data-icon="search" data-inline="true">Sign Search</button>
       <div data-role="fieldcontain">
-  <fieldset data-role="controlgroup">
+<!--  <fieldset data-role="controlgroup">
   <input id="msb" type="checkbox" name="msb" value="1" class="custom" />
   <label for="msb">Search medical signs only</label>
-        </fieldset>
-      </div>
+        </fieldset>     -->
+      </div></div>
 
     </form> 
     </div>
     
-    <h2>Browse Keywords</h2>
+    <h2>Browse Translations</h2>
     {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
       <a data-role="button" data-inline="true" href="{% url 'root_page' %}dictionary/search?query={{letter}}" style="font-family: Consolas, Menlo, Monaco, 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace, serif;" >{{letter}}</a>
    {% endfor %}
@@ -41,10 +41,10 @@
         {% else %}
         {% ifequal wordcount 1 %}
            <h2>One Search Result for &ldquo;{{ query }}&rdquo;</h2>
-           <p>There is one word that fully or partially match your query (&ldquo;{{ query }}&rdquo;). Please select the word below.</p>
+           <p>There is one word that fully or partially match your query (&ldquo;{{ query }}&rdquo;).</p>
         {% else %}
            <h2>Search Results for &ldquo;{{ query }}&rdquo;</h2>
-           <p>There are {{ wordcount }} words that fully or partially match your query. Please select a word from the list below.</p>
+           <p>There are {{ wordcount }} words that fully or partially match your query.</p>
         {% endifequal %}
         {% endifequal %}
         
