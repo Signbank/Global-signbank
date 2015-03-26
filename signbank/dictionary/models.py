@@ -1123,10 +1123,11 @@ minor or insignificant ways that can be ignored.""")
  
         choice_lists = {}; 
 
+        #Start with your own choice lists
         for fieldname in ['handedness','locprim','domhndsh','subhndsh',
 							'relatArtic','absOriPalm','absOriFing','relOriMov',
 							'relOriLoc','handCh','repeat','altern','movSh',
-							'movDir','movMan','contType','namEnt','oriCh']:
+							'movDir','movMan','contType','namEnt','oriCh',]:
 
             #Get the list of choices for this field
             li = self._meta.get_field(fieldname).choices;
@@ -1137,7 +1138,10 @@ minor or insignificant ways that can be ignored.""")
             #Put it in another format
             reformatted_li = [('_'+str(value),text) for value,text in sorted_li]
             choice_lists[fieldname] = OrderedDict(reformatted_li);
-   
+
+        #Choice lists for other models
+        choice_lists['morphology_role'] = [human_value for machine_value,human_value in build_choice_list('MorphologyType')];
+
         return json.dumps(choice_lists)
 
 # register Gloss for tags

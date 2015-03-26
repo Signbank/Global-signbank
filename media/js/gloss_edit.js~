@@ -22,7 +22,7 @@
          }      
 
          if (window.location.search.match('editmorphdef')) {
-             $('#morphologydefinition').addClass('in');
+             $('#morphology').addClass('in');
          }      
          
      }  
@@ -179,6 +179,10 @@ function configure_edit() {
      $('.edit_relation_target').editable(edit_post_url, {
          type      : 'glosstypeahead'
      });
+     $('.edit_morpheme').editable(edit_post_url, {
+         type      : 'glosstypeahead'
+     });
+
 
      $('.edit_list').click(function() 
 	 {
