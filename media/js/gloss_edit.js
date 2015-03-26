@@ -20,6 +20,10 @@
          if (window.location.search.match('editdef')) {
              $('#definitions').addClass('in');
          }      
+
+         if (window.location.search.match('editmorphdef')) {
+             $('#morphology').addClass('in');
+         }      
          
      }  
           
