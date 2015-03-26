@@ -179,7 +179,13 @@ function configure_edit() {
      $('.edit_relation_target').editable(edit_post_url, {
          type      : 'glosstypeahead'
      });
-
+     $('.edit_morpheme').editable(edit_post_url, {
+         type      : 'glosstypeahead'
+     });
+     $('.edit_morphology_role').editable(edit_post_url, {
+         type      : 'select',
+         data      : choice_lists['morphology_role']
+     });
      $('.edit_list').click(function() 
 	 {
 		 $(this).editable(edit_post_url, {
