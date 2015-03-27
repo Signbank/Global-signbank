@@ -235,7 +235,7 @@ def update_relation(gloss, field, value):
         newvalue = rel.get_role_display()
     elif what == 'relationtarget':
         
-        target = gloss_from_identifer(value)
+        target = gloss_from_identifier(value)
         if target:
             rel.target = target
             rel.save()
@@ -479,7 +479,7 @@ def update_morphology_definition(gloss, field, value):
         newvalue = morph_def.get_role_display()
     elif what == 'morphology_definition_morpheme':
 
-        morpheme = gloss_from_identifer(value)
+        morpheme = gloss_from_identifier(value)
         if morpheme:
             morph_def.morpheme = morpheme
             morph_def.save()
