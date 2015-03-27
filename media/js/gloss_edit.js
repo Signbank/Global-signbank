@@ -65,6 +65,7 @@ function disable_edit() {
     $('.definition_delete').hide();
     $('.relation_delete').hide();
     $('.relationtoforeignsign_delete').hide();
+    $('.morphology-definition-delete').hide();
 };
 
 function enable_edit() {
@@ -81,6 +82,7 @@ function enable_edit() {
     $('.definition_delete').show();
     $('.relation_delete').show();
     $('.relationtoforeignsign_delete').show();
+    $('.morphology-definition-delete').show();
 };
 
 function toggle_edit() {
