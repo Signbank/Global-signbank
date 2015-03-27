@@ -48,6 +48,7 @@ def update_gloss(request, glossid):
 
         field = request.POST.get('id', '')
         value = request.POST.get('value', '')
+
         if len(value) == 0:
             value = ' '
 
@@ -81,7 +82,11 @@ def update_gloss(request, glossid):
         elif field.startswith('relation'):
             
             return update_relation(gloss, field, value)
-        
+
+        elif field.startswith('morphology-definition'):
+
+            return update_morphology_definition(gloss, field, value)
+
         elif field == 'language':
             # expecting possibly multiple values
 
@@ -449,6 +454,43 @@ def add_morphology_definition(request):
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     raise Http404('Incorrect request');
+
+def update_morphology_definition(gloss, field, value):
+    """Update one of the relations for this gloss"""
+
+    (what, morph_def_id) = field.split('_')
+    what = what.replace('-','_');
+
+    try:
+        morph_def = MorphologyDefinition.objects.get(id=morph_def_id)
+    except:
+        return HttpResponseBadRequest("Bad Morphology Definition ID '%s'" % morph_def_id, {'content-type': 'text/plain'})
+
+    if not morph_def.parent_gloss == gloss:
+        return HttpResponseBadRequest("Morphology Definition doesn't match gloss", {'content-type': 'text/plain'})
+
+    if what == 'morphology_definition_delete':
+        print "DELETE: ", morph_def
+        morph_def.delete()
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+    elif what == 'morphology_definition_role':
+        morph_def.role = value
+        morph_def.save()
+        newvalue = morph_def.get_role_display()
+    elif what == 'morphology_definition_morpheme':
+
+        morpheme = gloss_from_identifer(value)
+        if morpheme:
+            morph_def.morpheme = morpheme
+            morph_def.save()
+            newvalue = str(morpheme)
+        else:
+            return HttpResponseBadRequest("Badly formed gloss identifier '%s'" % value, {'content-type': 'text/plain'})
+    else:
+
+        return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
+
+    return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
 @permission_required('dictionary.change_gloss')
 def add_tag(request, glossid):

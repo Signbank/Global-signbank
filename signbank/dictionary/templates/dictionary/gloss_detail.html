@@ -326,8 +326,8 @@
 
                    {% for morphdef in gloss.parent_glosses.all %}
                     <tr>
-                        <td class='edit edit_morphology_role' id='morphologydefinition_role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
-                        <td class='edit edit_morpheme' id='morphologydefinition_morpheme_{{morphdef.id}}'>{{morphdef.morpheme}}</td>
+                        <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
+                        <td class='edit edit_morpheme' id='morphology-definition-morpheme_{{morphdef.id}}'>{{morphdef.morpheme}}</td>
                         <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>view</a>)</td></tr>
                    {% endfor %}
                </table>
