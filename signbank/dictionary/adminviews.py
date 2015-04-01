@@ -375,11 +375,11 @@ class GlossDetailView(DetailView):
 
 	fields = {};
 
-	fields['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','absOriPalm','absOriFing',
+	fields['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj','absOriPalm','absOriFing',
                   'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','movMan','repeat','altern','phonOth', 'mouthG',
                   'mouthing', 'phonetVar',];
 
-	fields['semantics'] = ['iconImg','namEnt'];
+	fields['semantics'] = ['iconImg','namEnt','semField'];
 
 	fields['frequency'] = ['tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                                'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO'];
@@ -394,7 +394,7 @@ class GlossDetailView(DetailView):
                 except AttributeError:
                     value = getattr(gl,field);
 
-                if field in ['phonOth','mouthG','mouthing','phonetVar','iconImg']:
+                if field in ['phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
                     kind = 'text';
                 elif field in ['repeat','altern']:
                     kind = 'check';
