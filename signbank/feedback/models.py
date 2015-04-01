@@ -4,6 +4,7 @@ from django.conf import settings
 from signbank.video.fields import VideoUploadToFLVField
 
 from signbank.dictionary.models import *
+from signbank.dictionary.models import Gloss
 # models to represent the feedback from users in the site
 
 import string
