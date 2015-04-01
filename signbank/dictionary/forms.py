@@ -96,13 +96,14 @@ class GlossSearchForm(forms.ModelForm):
                    'initial_relative_orientation', 'final_relative_orientation',
                    'initial_palm_orientation', 'final_palm_orientation', 
                    'initial_secondary_loc', 'final_secondary_loc',
-                   'domhndsh', 'subhndsh', 'locprim', 'locsecond',
+                   'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'locsecond',
                    'final_domhndsh', 'final_subhndsh', 'final_loc',
 
-                  'handedness', 'useInstr','rmrks', 'relatArtic','absOriPalm','absOriFing',
-                  'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType','phonOth', 'mouthG',
-                  'mouthing', 'phonetVar', 'iconImg','namEnt', 'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
-                  'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
+                   'handedness', 'useInstr','rmrks', 'relatArtic','absOriPalm','absOriFing',
+                   'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType','phonOth', 'mouthG',
+                   'mouthing', 'phonetVar', 'iconImg','namEnt', 'semField',
+                   'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
+                   'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
     
 
 class DefinitionForm(forms.ModelForm):
