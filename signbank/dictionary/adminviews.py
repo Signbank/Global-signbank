@@ -60,7 +60,7 @@ class GlossListView(ListView):
 #        fields = [f.name for f in Gloss._meta.fields]
         #We want to manually set which fields to export here
 
-        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
+        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'StemSN', 'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'oriCh', 'contType',
                       'movSh', 'movDir', 'movMan', 'repeat', 'altern', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'tokNo', 'tokNoSgnr',
                       'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
@@ -70,7 +70,7 @@ class GlossListView(ListView):
         writer = csv.writer(response)
         header = ['Signbank ID'] + [f.verbose_name for f in fields]
 
-        for extra_column in ['Languages','Dialects','Keywords','Relations to other signs','Relations to foreign signs',]:
+        for extra_column in ['Languages','Dialects','Keywords','Morphology','Relations to other signs','Relations to foreign signs',]:
             header.append(extra_column);
 
         writer.writerow(header)
@@ -105,7 +105,11 @@ class GlossListView(ListView):
             # get translations
             trans = [t.translation.text for t in gloss.translation_set.all()]
             row.append(", ".join(trans))
-    
+
+            # get morphology
+            morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+            row.append(", ".join(morphemes))
+
             # get relations to other signs
             relations = [relation.target.idgloss for relation in Relation.objects.filter(source=gloss)]
             row.append(", ".join(relations))
@@ -113,6 +117,7 @@ class GlossListView(ListView):
             # get relations to foreign signs
             relations = [relation.other_lang_gloss for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
             row.append(", ".join(relations))
+
 
             #Make it safe for weird chars
             safe_row = [];
