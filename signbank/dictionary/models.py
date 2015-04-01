@@ -825,7 +825,8 @@ minor or insignificant ways that can be ignored.""")
  
     locprim = models.CharField("Location", choices=build_choice_list("Location"), null=True, blank=True,max_length=20)
     final_loc = models.IntegerField("Final Primary Location", choices=build_choice_list("Location"), null=True, blank=True)
-    
+    locVirtObj = models.CharField("Virtual Object", blank=True, null=True, max_length=50)
+
     locsecond = models.IntegerField("Secondary Location", choices=build_choice_list("Location"), null=True, blank=True)
     
     initial_secondary_loc = models.CharField("Initial Subordinate Location", max_length=20, choices=BSLsecondLocationChoices, null=True, blank=True) 
@@ -888,6 +889,7 @@ minor or insignificant ways that can be ignored.""")
 
     iconImg = models.CharField("Iconic Image", max_length=50, blank=True)     
     namEnt = models.CharField("Named Entity", choices=build_choice_list("NamedEntity"), null=True, blank=True, max_length=5)
+    semField = models.CharField("Semantic Field", choices=build_choice_list("SemField"), null=True, blank=True, max_length=5)
 
     #Frequency fields
 
