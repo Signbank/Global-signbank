@@ -1129,7 +1129,7 @@ minor or insignificant ways that can be ignored.""")
         for fieldname in ['handedness','locprim','domhndsh','subhndsh',
 							'relatArtic','absOriPalm','absOriFing','relOriMov',
 							'relOriLoc','handCh','repeat','altern','movSh',
-							'movDir','movMan','contType','namEnt','oriCh',]:
+							'movDir','movMan','contType','namEnt','oriCh','semField']:
 
             #Get the list of choices for this field
             li = self._meta.get_field(fieldname).choices;
