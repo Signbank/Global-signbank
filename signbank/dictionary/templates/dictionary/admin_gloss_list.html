@@ -123,6 +123,25 @@ function clearForm(myFormElement) {
           </div>
 
         <div  class="panel panel-default">
+          <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">Search by Morphology</div>
+
+          <div id='morph_search' class='collapse'>
+          <table class='table'>
+            <tr>
+
+              <td>
+                <table class='table'>
+                    <tr><td><label for='id_handedness'>{{searchform.morpheme.label}}</label></td><td>{{searchform.morpheme}}</td></tr>
+                    <tr><td><label for='id_domhndsh'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
+                </table>
+
+              </td>
+            </tr>
+          </table>
+          </div>
+        </div>
+
+        <div  class="panel panel-default">
           <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">Search by Phonology</div>
 
           <div id='phon_search' class='collapse'>
