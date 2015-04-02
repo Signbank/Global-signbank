@@ -56,6 +56,7 @@ RELATION_ROLE_CHOICES = (('','---------'),
                          )
 
 DEFN_ROLE_CHOICES = (('','---------'),('all','All')) + DEFN_ROLE_CHOICES;
+MORPHEME_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphologyType');
 ATTRS_FOR_FORMS = {'class':'form-control'};
 
 
@@ -77,7 +78,7 @@ class GlossSearchForm(forms.ModelForm):
 
     hasRelationToForeignSign = forms.ChoiceField(label='Related to foreign sign or not',choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hasRelation = forms.ChoiceField(label='Type of relation',choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hasMorphemeOfType = forms.ChoiceField(label='Has morpheme type',choices=build_choice_list('MorphologyType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasMorphemeOfType = forms.ChoiceField(label='Has morpheme type',choices=MORPHEME_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     repeat = forms.ChoiceField(label='Repeating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
     altern = forms.ChoiceField(label='Alternating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
