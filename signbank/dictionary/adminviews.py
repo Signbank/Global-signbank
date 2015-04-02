@@ -322,6 +322,19 @@ class GlossListView(ListView):
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role];
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
+        if get.has_key('morpheme') and get['morpheme'] != '':
+
+            potential_morphemes = Gloss.objects.filter(idgloss__icontains=get['morpheme']);
+            potential_morphdefs = MorphologyDefinition.objects.filter(morpheme__in=[morpheme.pk for morpheme in potential_morphemes])
+            potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs];
+            qs = qs.filter(pk__in=potential_pks)
+
+        if get.has_key('hasMorphemeOfType') and get['hasMorphemeOfType'] != '':
+
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasMorphemeOfType']);
+            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role];
+            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
+
         if get.has_key('definitionRole') and get['definitionRole'] != '':
 
             #Find all definitions with this role
