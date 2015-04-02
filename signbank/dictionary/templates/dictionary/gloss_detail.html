@@ -277,7 +277,6 @@
 
         
         <table class='table table-condensed'>
-    <!--        <tr><th>Sign Number:</th><td class='edit edit_int' id='sn'>{% value gloss.sn %}</td></tr>   -->
             <tr><th>ID Gloss:</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
             <tr><th>Annotation ID Gloss:</th><td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td></tr>
             <tr><th>Annotation ID Gloss: English</th><td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td></tr>
@@ -285,7 +284,6 @@
             <tr><th>Annotation Instructions</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
             <tr><th>Language</th><td class='edit edit_language' id='language'>{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>Dialect</th><td class='edit edit_dialect' id='dialect'>{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
- <!--           <tr><th>Remarks</th><td class='edit edit_int'  id='sense'>{% value gloss.rmrks %}</td></tr> -->
         </table>
 			 
     {% if perms.dictionary.view_advanced_properties %}
