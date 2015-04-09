@@ -156,7 +156,7 @@ def word(request, keyword, n):
         video_form = None
 
     return render_to_response("dictionary/word.html",
-                              {'translation': trans,
+                              {'translation': trans.translation.text,
                                'viewname': 'words',
                                'definitions': trans.gloss.definitions(),
                                'gloss': trans.gloss,
