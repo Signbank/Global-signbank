@@ -1,7 +1,7 @@
 
 {% extends "baselayout.html" %}
 
-{% block pagetitle %}NGT: sign for {{ translation.translation }} {% endblock %}
+{% block pagetitle %}NGT: sign for {{ translation }} {% endblock %}
 
 
 {% block jqueryready %}
@@ -52,13 +52,13 @@
    
         <div class='pull-right'>
             {% ifequal viewname "words" %}
-            <span class='navbar-text'>Matches for the word <em>{{ translation.translation|safe }}</em></span>
+            <span class='navbar-text'>Matches for the word <em>{{ translation|safe }}</em></span>
             <div class='btn-group'>
             {% for i in matches %}
                 {% ifequal i n %}
                 <button type='button' class='btn btn-primary navbar-btn'>{{i}}</button>
                 {% else %}
-                <a type='button' class='btn btn-default navbar-btn' href="{{translation.translation|safe}}-{{i}}.html">{{i}}</a>
+                <a type='button' class='btn btn-default navbar-btn' href="{{translation|safe}}-{{i}}.html">{{i}}</a>
                 {% endifequal %}
             {% endfor %}
             </div>
@@ -97,7 +97,7 @@
             <div id="keywords">
                  <p><strong>Keywords:</strong>
                  {% for kwd in allkwds %}
-                   {% ifequal translation.translation kwd.translation %}<b>{{ kwd.translation }}</b>{% else %}{{ kwd.translation }}{% endifequal %}{% if not forloop.last %},{% endif %}
+                   {% ifequal translation kwd.translation.text %}<strong>{{ kwd.translation.text|safe }}</strong>{% else %}{{ kwd.translation.text|safe }}{% endifequal %}{% if not forloop.last %},{% endif %}
                  {% endfor %}
                  </p>
             </div>
@@ -105,7 +105,7 @@
             <div id="feedback">
                 <ul>
                     {% ifequal viewname "words" %}
-                    <li><a href="{% url 'root_page' %}feedback/sign/{{translation.translation}}-{{n}}.html?return=/dictionary/words/{{translation.translation}}-{{n}}.html">Provide feedback about this sign</a></li>
+                    <li><a href="{% url 'root_page' %}feedback/sign/{{translation}}-{{n}}.html?return=/dictionary/words/{{translation}}-{{n}}.html">Provide feedback about this sign</a></li>
                     {% else %}
                     <li><a href="{% url 'root_page' %}feedback/gloss/{{gloss.idgloss}}.html?return=/dictionary/gloss/{{gloss.idgloss}}.html&lastmatch={{lastmatch}}">Provide feedback about this sign</a></li>
                     {% endifequal %}
