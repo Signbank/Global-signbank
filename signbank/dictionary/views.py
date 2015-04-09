@@ -298,10 +298,10 @@ def search(request):
 
         if request.user.has_perm('dictionary.search_gloss'):
             # staff get to see all the words that have at least one translation
-            words = Keyword.objects.filter(text__istartswith=term, translation__isnull=False).distinct()
+            words = Keyword.objects.filter(text__icontains=term, translation__isnull=False).distinct()
         else:
             # regular users see either everything that's published
-            words = Keyword.objects.filter(text__istartswith=term,
+            words = Keyword.objects.filter(text__icontains=term,
                                             translation__gloss__inWeb__exact=True).distinct()
 
         try:
