@@ -12,7 +12,8 @@ CATEGORY_CHOICES = (('all', 'All Signs'),
 
 class UserSignSearchForm(forms.Form):
 
-    query = forms.CharField(label='Translations starting with', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    glossQuery = forms.CharField(label='Glosses containing', max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    query = forms.CharField(label='Translations containing', max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
     category = forms.ChoiceField(label='Search', choices=CATEGORY_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-control'}))
         
 
