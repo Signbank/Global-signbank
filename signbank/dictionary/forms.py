@@ -62,7 +62,7 @@ ATTRS_FOR_FORMS = {'class':'form-control'};
 
 class GlossSearchForm(forms.ModelForm):
 
-    search = forms.CharField(label="Search Gloss/SN")
+    search = forms.CharField(label="Search Gloss")
     tags = forms.MultipleChoiceField(choices=[(t, t) for t in settings.ALLOWED_TAGS])
     nottags = forms.MultipleChoiceField(choices=[(t, t) for t in settings.ALLOWED_TAGS])
     keyword = forms.CharField(label='Translations')
