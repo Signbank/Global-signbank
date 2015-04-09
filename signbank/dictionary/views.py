@@ -281,6 +281,12 @@ def search(request):
     form = UserSignSearchForm(request.GET.copy())
 
     if form.is_valid():
+
+        glossQuery = form.cleaned_data['glossQuery']
+
+        if glossQuery != '':
+            return HttpResponseRedirect('../../signs/search/?search='+glossQuery);
+
         # need to transcode the query to our encoding
         term = form.cleaned_data['query']
         category = form.cleaned_data['category']
