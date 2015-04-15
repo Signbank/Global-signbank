@@ -18,6 +18,7 @@ import csv
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
+from signbank.dictionary.update import update_keywords
 import forms
 
 from signbank.video.forms import VideoUploadForGlossForm
@@ -517,6 +518,14 @@ def import_csv(request):
 
             gloss = Gloss.objects.get(pk=pk);
 
+            #Updating the keywords is a special procedure, because it has relations to other parts of the database
+            if fieldname == 'Keywords':
+
+                update_keywords(gloss,None,new_value);
+                gloss.save();
+                continue;
+
+            #Replace the value for bools
             if gloss._meta.get_field_by_name(fieldname)[0].__class__.__name__ == 'NullBooleanField':
 
                 if new_value in ['true','True']:
@@ -524,6 +533,7 @@ def import_csv(request):
                 else:
                     new_value = False;
 
+            #The normal change and save procedure
             setattr(gloss,fieldname,new_value);
             gloss.save();
 
