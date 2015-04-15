@@ -64,7 +64,23 @@ def compare_valuedict_to_gloss(valuedict,gloss):
     #Go through all values in the value dict, looking for differences with the gloss
     for human_key, new_human_value in valuedict.items():
 
-        #Find the matching field in the gloss, and remember its 'real' name
+
+        #If these are not fields, but relations to other parts of the database, go look for differenes elsewhere
+        if human_key == 'Keywords':
+
+            current_keyword_string = str(', '.join([translation.translation.text for translation in gloss.translation_set.all()]));
+
+            if current_keyword_string != new_human_value:
+                differences.append({'pk':gloss.pk,
+                                    'idgloss':gloss.idgloss,
+                                    'machine_key':human_key,
+                                    'human_key':human_key,
+                                    'original_machine_value':current_keyword_string,
+                                    'original_human_value':current_keyword_string,
+                                    'new_machine_value':new_human_value,
+                                    'new_human_value':new_human_value})
+
+        #If not, find the matching field in the gloss, and remember its 'real' name
         try:
             field = fields[human_key];
             machine_key = field.name;
