@@ -91,205 +91,207 @@ function clearForm(myFormElement) {
             </table>
         </div>
 
-        <div  class="panel panel-default">
-            <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">Search by Language and Basic Properties</div>
+        <div class="panel-group">
+            <div  class="panel panel-default">
+                <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">Search by Language and Basic Properties</div>
 
-            <div id='searchpanels' class='collapse'>
-            <table class='table'>
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_language'>{{searchform.language.label}}</label>
-                            {{searchform.language}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_dialect'>{{searchform.dialect.label}}</label>
-                            {{searchform.dialect}}
-                        </div>
-                    </td>
-                  </tr>
+                <div id='searchpanels' class='collapse'>
+                <table class='table'>
+                      <tr>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_language'>{{searchform.language.label}}</label>
+                                {{searchform.language}}
+                            </div>
+                        </td>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_dialect'>{{searchform.dialect.label}}</label>
+                                {{searchform.dialect}}
+                            </div>
+                        </td>
+                      </tr>
 
-            </table>
+                </table>
 
-            <table class='table'>
-                <tr><td><label for='id_useInstr'>{{searchform.useInstr.label}}</label></td><td>{{searchform.useInstr}}</td></tr>
-            </table>
+                <table class='table'>
+                    <tr><td><label for='id_useInstr'>{{searchform.useInstr.label}}</label></td><td>{{searchform.useInstr}}</td></tr>
+                </table>
 
+                </div>
+              </div>
+
+            <div  class="panel panel-default">
+              <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">Search by Morphology</div>
+
+              <div id='morph_search' class='collapse'>
+              <table class='table'>
+                <tr>
+
+                  <td>
+                    <table class='table'>
+                        <tr><td><label for='id_handedness'>{{searchform.morpheme.label}}</label></td><td>{{searchform.morpheme}}</td></tr>
+                        <tr><td><label for='id_domhndsh'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
+                    </table>
+
+                  </td>
+                </tr>
+              </table>
+              </div>
             </div>
-          </div>
 
-        <div  class="panel panel-default">
-          <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">Search by Morphology</div>
+            <div  class="panel panel-default">
+              <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">Search by Phonology</div>
 
-          <div id='morph_search' class='collapse'>
-          <table class='table'>
-            <tr>
+              <div id='phon_search' class='collapse'>
+              <table class='table'>
+                <tr>
 
-              <td>
-                <table class='table'>
-                    <tr><td><label for='id_handedness'>{{searchform.morpheme.label}}</label></td><td>{{searchform.morpheme}}</td></tr>
-                    <tr><td><label for='id_domhndsh'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
-                </table>
+                  <td>
+                    <table class='table'>
+                        <tr><td><label for='id_handedness'>{{searchform.handedness.label}}</label></td><td>{{searchform.handedness}}</td></tr>
+                        <tr><td><label for='id_domhndsh'>{{searchform.domhndsh.label}}</label></td><td>{{searchform.domhndsh}}</td></tr>
+                        <tr><td><label for='id_subhndsh'>{{searchform.subhndsh.label}}</label></td><td>{{searchform.subhndsh}}</td></tr>
+                        <tr><td><label for='id_handCh'>{{searchform.handCh.label}}</label></td><td>{{searchform.handCh}}</td></tr>
 
-              </td>
-            </tr>
-          </table>
-          </div>
-        </div>
+                        <tr><td><label for='id_relatArtic'>{{searchform.relatArtic.label}}</label></td><td>{{searchform.relatArtic}}</td></tr>
+                        <tr><td><label for='id_locprim'>{{searchform.locprim.label}}</label></td><td>{{searchform.locprim}}</td></tr>
+                        <tr><td><label for='id_locVirtObj'>{{searchform.locVirtObj.label}}</label></td><td>{{searchform.locVirtObj}}</td></tr>
 
-        <div  class="panel panel-default">
-          <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">Search by Phonology</div>
+                        <tr><td><label for='id_absOriPalm'>{{searchform.absOriPalm.label}}</label></td><td>{{searchform.absOriPalm}}</td></tr>
+                        <tr><td><label for='id_absOriFing'>{{searchform.absOriFing.label}}</label></td><td>{{searchform.absOriFing}}</td></tr>
+                        <tr><td><label for='id_relOriMov'>{{searchform.relOriMov.label}}</label></td><td>{{searchform.relOriMov}}</td></tr>
+                        <tr><td><label for='id_relOriLoc'>{{searchform.relOriLoc.label}}</label></td><td>{{searchform.relOriLoc}}</td></tr>
+                        <tr><td><label for='id_oriCh'>{{searchform.oriCh.label}}</label></td><td>{{searchform.oriCh}}</td></tr>
 
-          <div id='phon_search' class='collapse'>
-          <table class='table'>
-            <tr>
+                        <tr><td><label for='id_contType'>{{searchform.contType.label}}</label></td><td>{{searchform.contType}}</td></tr>
+                        <tr><td><label for='id_movSh'>{{searchform.movSh.label}}</label></td><td>{{searchform.movSh}}</td></tr>
+                        <tr><td><label for='id_movDir'>{{searchform.movDir.label}}</label></td><td>{{searchform.movDir}}</td></tr>
+                        <tr><td><label for='id_movMan'>{{searchform.movMan.label}}</label></td><td>{{searchform.movMan}}</td></tr>
+                        <tr><td><label for='id_repeat'>{{searchform.repeat.label}}</label></td><td>{{searchform.repeat}}</td></tr>
+                        <tr><td><label for='id_altern'>{{searchform.altern.label}}</label></td><td>{{searchform.altern}}</td></tr>
 
-              <td>
-                <table class='table'>
-                    <tr><td><label for='id_handedness'>{{searchform.handedness.label}}</label></td><td>{{searchform.handedness}}</td></tr>
-                    <tr><td><label for='id_domhndsh'>{{searchform.domhndsh.label}}</label></td><td>{{searchform.domhndsh}}</td></tr>
-                    <tr><td><label for='id_subhndsh'>{{searchform.subhndsh.label}}</label></td><td>{{searchform.subhndsh}}</td></tr>
-                    <tr><td><label for='id_handCh'>{{searchform.handCh.label}}</label></td><td>{{searchform.handCh}}</td></tr>
-                    
-                    <tr><td><label for='id_relatArtic'>{{searchform.relatArtic.label}}</label></td><td>{{searchform.relatArtic}}</td></tr>
-                    <tr><td><label for='id_locprim'>{{searchform.locprim.label}}</label></td><td>{{searchform.locprim}}</td></tr>
-                    <tr><td><label for='id_locVirtObj'>{{searchform.locVirtObj.label}}</label></td><td>{{searchform.locVirtObj}}</td></tr>
+                        <tr><td><label for='id_phonOth'>{{searchform.phonOth.label}}</label></td><td>{{searchform.phonOth}}</td></tr>
+                        <tr><td><label for='id_mouthG'>{{searchform.mouthG.label}}</label></td><td>{{searchform.mouthG}}</td></tr>
+                        <tr><td><label for='id_mouthing'>{{searchform.mouthing.label}}</label></td><td>{{searchform.mouthing}}</td></tr>
+                        <tr><td><label for='id_phonetVar'>{{searchform.phonetVar.label}}</label></td><td>{{searchform.phonetVar}}</td></tr>
 
-                    <tr><td><label for='id_absOriPalm'>{{searchform.absOriPalm.label}}</label></td><td>{{searchform.absOriPalm}}</td></tr>
-                    <tr><td><label for='id_absOriFing'>{{searchform.absOriFing.label}}</label></td><td>{{searchform.absOriFing}}</td></tr>
-                    <tr><td><label for='id_relOriMov'>{{searchform.relOriMov.label}}</label></td><td>{{searchform.relOriMov}}</td></tr>
-                    <tr><td><label for='id_relOriLoc'>{{searchform.relOriLoc.label}}</label></td><td>{{searchform.relOriLoc}}</td></tr>
-                    <tr><td><label for='id_oriCh'>{{searchform.oriCh.label}}</label></td><td>{{searchform.oriCh}}</td></tr>
+                    </table>
 
-                    <tr><td><label for='id_contType'>{{searchform.contType.label}}</label></td><td>{{searchform.contType}}</td></tr>
-                    <tr><td><label for='id_movSh'>{{searchform.movSh.label}}</label></td><td>{{searchform.movSh}}</td></tr>
-                    <tr><td><label for='id_movDir'>{{searchform.movDir.label}}</label></td><td>{{searchform.movDir}}</td></tr>
-                    <tr><td><label for='id_movMan'>{{searchform.movMan.label}}</label></td><td>{{searchform.movMan}}</td></tr>
-                    <tr><td><label for='id_repeat'>{{searchform.repeat.label}}</label></td><td>{{searchform.repeat}}</td></tr>
-                    <tr><td><label for='id_altern'>{{searchform.altern.label}}</label></td><td>{{searchform.altern}}</td></tr>
-                    
-                    <tr><td><label for='id_phonOth'>{{searchform.phonOth.label}}</label></td><td>{{searchform.phonOth}}</td></tr>
-                    <tr><td><label for='id_mouthG'>{{searchform.mouthG.label}}</label></td><td>{{searchform.mouthG}}</td></tr>
-                    <tr><td><label for='id_mouthing'>{{searchform.mouthing.label}}</label></td><td>{{searchform.mouthing}}</td></tr>
-                    <tr><td><label for='id_phonetVar'>{{searchform.phonetVar.label}}</label></td><td>{{searchform.phonetVar}}</td></tr>
+                  </td>
+                </tr>
+              </table>
+              </div>
+            </div>
 
-                </table>
+            <div  class="panel panel-default">
+              <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">Search by Semantics</div>
 
-              </td>
-            </tr>
-          </table>
-          </div>
-        </div>
+              <div id='sem_search' class='collapse'>
+              <table class='table'>
+                <tr>
 
-        <div  class="panel panel-default">
-          <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">Search by Semantics</div>
+                  <td>
+                    <table class='table'>
+                        <tr><td><label for='id_iconImg'>{{searchform.iconImg.label}}</label></td><td>{{searchform.iconImg}}</td></tr>
+                        <tr><td><label for='id_namEnt'>{{searchform.namEnt.label}}</label></td><td>{{searchform.namEnt}}</td></tr>
+                        <tr><td><label for='id_semField'>{{searchform.semField.label}}</label></td><td>{{searchform.semField}}</td></tr>
 
-          <div id='sem_search' class='collapse'>
-          <table class='table'>
-            <tr>
+                    </table>
 
-              <td>
-                <table class='table'>
-                    <tr><td><label for='id_iconImg'>{{searchform.iconImg.label}}</label></td><td>{{searchform.iconImg}}</td></tr>
-                    <tr><td><label for='id_namEnt'>{{searchform.namEnt.label}}</label></td><td>{{searchform.namEnt}}</td></tr>
-                    <tr><td><label for='id_semField'>{{searchform.semField.label}}</label></td><td>{{searchform.semField}}</td></tr>
+                  </td>
+                </tr>
+              </table>
+              </div>
+            </div>
 
-                </table>
+            <div  class="panel panel-default">
+              <div class="panel-heading" data-toggle="collapse" data-target="#rel_search">Search by Relation</div>
 
-              </td>
-            </tr>
-          </table>
-          </div>
-        </div>
+              <div id='rel_search' class='collapse'>
+              <table class='table'>
+                <tr>
 
-        <div  class="panel panel-default">
-          <div class="panel-heading" data-toggle="collapse" data-target="#rel_search">Search by Relation</div>
+                      <tr>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_relation'>{{searchform.relation.label}}</label>
+                                {{searchform.relation}}
+                            </div>
+                        </td>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_hasRelation'>{{searchform.hasRelation.label}}</label>
+                                {{searchform.hasRelation}}
+                            </div>
+                        </td>
+                      </tr>
 
-          <div id='rel_search' class='collapse'>
-          <table class='table'>
-            <tr>
+                      <tr>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_relationToForeignSign'>{{searchform.relationToForeignSign.label}}</label>
+                                {{searchform.relationToForeignSign}}
+                            </div>
+                        </td>
 
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_relation'>{{searchform.relation.label}}</label>
-                            {{searchform.relation}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_hasRelation'>{{searchform.hasRelation.label}}</label>
-                            {{searchform.hasRelation}}
-                        </div>
-                    </td>
-                  </tr>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_hasRelationToForeignSign'>{{searchform.hasRelationToForeignSign.label}}</label>
+                                {{searchform.hasRelationToForeignSign}}
+                            </div>
+                        </td>
 
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_relationToForeignSign'>{{searchform.relationToForeignSign.label}}</label>
-                            {{searchform.relationToForeignSign}}
-                        </div>
-                    </td>
-
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_hasRelationToForeignSign'>{{searchform.hasRelationToForeignSign.label}}</label>
-                            {{searchform.hasRelationToForeignSign}}
-                        </div>
-                    </td>
-
-                  </tr>
+                      </tr>
 
 
-            </tr>
-          </table>
-          </div>
-        </div>
+                </tr>
+              </table>
+              </div>
+            </div>
 
-        <div  class="panel panel-default">
-          <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">Search by Publication Status and Notes</div>
+            <div  class="panel panel-default">
+              <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">Search by Publication Status and Notes</div>
 
-          <div id='pub_search' class='collapse'>
-          <table class='table'>
-            <tr>
+              <div id='pub_search' class='collapse'>
+              <table class='table'>
+                <tr>
 
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
-                            {{searchform.inWeb}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
-                            {{searchform.isNew}}
-                        </div>
-                    </td>
-                  </tr>
+                      <tr>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
+                                {{searchform.inWeb}}
+                            </div>
+                        </td>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
+                                {{searchform.isNew}}
+                            </div>
+                        </td>
+                      </tr>
 
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
-                            {{searchform.definitionRole}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
-                            {{searchform.definitionContains}}
-                        </div>
-                    </td>
-                  </tr>
+                      <tr>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
+                                {{searchform.definitionRole}}
+                            </div>
+                        </td>
+                        <td>
+                            <div class='input-group'>
+                                <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
+                                {{searchform.definitionContains}}
+                            </div>
+                        </td>
+                      </tr>
 
 
-            </tr>
-          </table>
-          </div>
+                </tr>
+              </table>
+              </div>
+            </div>
         </div>
 
         <div class='btn-group'>  
