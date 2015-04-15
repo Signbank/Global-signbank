@@ -144,11 +144,11 @@ function clearForm(myFormElement) {
               <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">Search by Phonology</div>
 
               <div id='phon_search' class='collapse'>
-              <table class='table'>
+              <table class='table table-condensed'>
                 <tr>
 
                   <td>
-                    <table class='table'>
+                    <table class='table table-condensed'>
                         <tr><td><label for='id_handedness'>{{searchform.handedness.label}}</label></td><td>{{searchform.handedness}}</td></tr>
                         <tr><td><label for='id_domhndsh'>{{searchform.domhndsh.label}}</label></td><td>{{searchform.domhndsh}}</td></tr>
                         <tr><td><label for='id_subhndsh'>{{searchform.subhndsh.label}}</label></td><td>{{searchform.subhndsh}}</td></tr>
@@ -294,7 +294,7 @@ function clearForm(myFormElement) {
             </div>
         </div>
 
-        <div class='btn-group'>  
+        <div class='btn-group'>
             <input class='btn btn-primary' type='submit' name='submit' value='Search'>
             {% if perms.dictionary.export_csv %}
             <input class='btn btn-default' type='submit' name='format' value='CSV'>
@@ -324,7 +324,7 @@ function clearForm(myFormElement) {
    {% if perms.dictionary.add_gloss %}
    <div  class="panel panel-default">
       <div class="panel-heading" data-toggle="collapse"  data-target='#add_gloss_form'>Add New Sign</div>
-      
+
          <div id='add_gloss_form' class='collapse'>
              <form action='{% url "dictionary:add_gloss" %}' method='post'>
                  {% csrf_token %}
