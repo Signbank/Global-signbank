@@ -354,7 +354,7 @@ function clearForm(myFormElement) {
 <p>Number of matches: {{page_obj.paginator.count}} out of {{glosscount}}.</p>
 
 {% if object_list %}
-<table class='table'>
+<table class='table table-condensed'>
     <thead>
       <tr>
          {% for name, value in object_list.0.admin_fields %}
