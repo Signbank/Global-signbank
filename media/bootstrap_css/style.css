@@ -167,6 +167,7 @@ body {
 
 #adminsearch #searchfields td {
     width: 50%;
+    border-top: 0px;
 }
 
 #adminsearch #searchpanels {
@@ -408,4 +409,5 @@ body {
 .tt-suggestion p {
   margin: 0;
 }
+
 
