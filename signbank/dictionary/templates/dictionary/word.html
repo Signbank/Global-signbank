@@ -84,7 +84,7 @@
                <div id="player">
                 {% if gloss.has_video %}
                   <iframe id='videoiframe' scrolling="no" frameborder='0' 
-                          src="{% url 'signbank.video.views.iframe' gloss.pk %}">
+                          src="/static/{{gloss.get_video}}">
                   </iframe>
                 {% else %}
                   <img id="novideo" src='{{ STATIC_URL }}images/no-video-ngt.png'>

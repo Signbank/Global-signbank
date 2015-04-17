@@ -78,6 +78,7 @@ body {
 
 #videocontainer {
    width: 465px;
+   /*margin: auto;*/
 }
 #videocontainer #player {
    margin: auto;
@@ -85,7 +86,7 @@ body {
    height:259px;
 /*   border-left: 6px solid black;
    border-right: 6px solid black;*/
-   background-color: #000;
+   background-color: white;
 }
 
 #novideo
@@ -420,4 +421,7 @@ body {
   margin: 0;
 }
 
-
+.col-md-4
+{
+	width: 100%
+}
