@@ -77,6 +77,8 @@ class GlossSearchForm(forms.ModelForm):
     relationToForeignSign = forms.CharField(label='Search for gloss of foreign signs',widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     morpheme = forms.CharField(label='Search for gloss with this as morpheme',widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
+    phonOth = forms.CharField(label='Phonology other',widget=forms.TextInput())
+
     hasRelationToForeignSign = forms.ChoiceField(label='Related to foreign sign or not',choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hasRelation = forms.ChoiceField(label='Type of relation',choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hasMorphemeOfType = forms.ChoiceField(label='Has morpheme type',choices=MORPHEME_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -88,6 +90,8 @@ class GlossSearchForm(forms.ModelForm):
     inWeb = forms.ChoiceField(label='Is in Web dictionary',choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole = forms.ChoiceField(label='Note type',choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionContains = forms.CharField(label='Note contains',widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+
+
 
     class Meta:
 
@@ -104,7 +108,7 @@ class GlossSearchForm(forms.ModelForm):
                    'final_domhndsh', 'final_subhndsh', 'final_loc',
 
                    'handedness', 'useInstr','rmrks', 'relatArtic','absOriPalm','absOriFing',
-                   'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType','phonOth', 'mouthG',
+                   'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType', 'mouthG',
                    'mouthing', 'phonetVar', 'iconImg','namEnt', 'semField',
                    'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                    'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
