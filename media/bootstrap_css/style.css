@@ -170,6 +170,16 @@ body {
     border-top: 0px;
 }
 
+#adminsearch .table
+{
+	margin-bottom: 5px;
+}
+
+#adminsearch .table-condensed .table-condensed
+{
+	margin-bottom: 0px;
+}
+
 #adminsearch #searchpanels {
     width: 100%;
 }
