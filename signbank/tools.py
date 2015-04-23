@@ -68,7 +68,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
         #If these are not fields, but relations to other parts of the database, go look for differenes elsewhere
         if human_key == 'Keywords':
 
-            current_keyword_string = str(', '.join([translation.translation.text for translation in gloss.translation_set.all()]));
+            current_keyword_string = str(', '.join([translation.translation.text.encode('utf-8') for translation in gloss.translation_set.all()]));
 
             if current_keyword_string != new_human_value:
                 differences.append({'pk':gloss.pk,
