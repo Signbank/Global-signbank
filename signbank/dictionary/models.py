@@ -29,8 +29,9 @@ class Translation(models.Model):
     index = models.IntegerField("Index")
     
     def __str__(self):
-        return unicode(self.gloss).encode('ascii','ignore')+"-"+unicode(self.translation).encode('ascii','ignore')
-    
+        #return unicode(self.gloss).encode('ascii','ignore')+"-"+unicode(self.translation).encode('ascii','ignore')
+        return self.gloss.idgloss.encode('utf-8') + '-' + self.translation.text.encode('utf-8')
+
     def get_absolute_url(self):
         """Return a URL for a view of this translation."""
         
