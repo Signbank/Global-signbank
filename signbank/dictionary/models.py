@@ -56,7 +56,7 @@ class Keyword(models.Model):
     """An english keyword that will be a translation of a sign"""
     
     def __str__(self):
-        return self.text
+        return self.text.encode('utf-8')
     
     text = models.CharField(max_length=100, unique=True)
     
