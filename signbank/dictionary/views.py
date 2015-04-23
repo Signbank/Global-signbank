@@ -478,7 +478,7 @@ def import_csv(request):
 
             #The first line contains the keys
             if nl == 0:
-                keys = line.split(',');
+                keys = line.strip().split(',');
                 continue;
             elif len(line) == 0:
                 continue;
