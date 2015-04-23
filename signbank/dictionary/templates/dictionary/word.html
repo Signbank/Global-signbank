@@ -80,10 +80,10 @@
 
     <div id="definitionblock">
         <div class='col-md-4'>
-            <div id="videocontainer">
-               <div id="player">
+            <div id="videocontainer" style="width: 700px; height: 366px;">
+               <div id="player" style="width: 700px;">
                 {% if gloss.has_video %}
-                  <iframe id='videoiframe' scrolling="no" frameborder='0' 
+                  <iframe id='videoiframe' class="larger_iframe" scrolling="no" frameborder='0' style="width: 635px; height: 358px;"
                           src="/static/{{gloss.get_video}}">
                   </iframe>
                 {% else %}

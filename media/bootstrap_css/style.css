@@ -77,12 +77,12 @@ body {
 }
 
 #videocontainer {
-   width: 465px;
-   /*margin: auto;*/
+   width: 450px;
+   margin: auto;
 }
 #videocontainer #player {
    margin: auto;
-   width:460px;
+   width:450px;
    height:259px;
 /*   border-left: 6px solid black;
    border-right: 6px solid black;*/
