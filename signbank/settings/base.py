@@ -188,8 +188,8 @@ SOUTH_TESTS_MIGRATE = False
 ## Settings controlling page contents
 
 # what do we call this signbank?
-LANGUAGE_NAME = "Auslan"
-COUNTRY_NAME = "Australia"
+LANGUAGE_NAME = "NGT"
+COUNTRY_NAME = "Netherlands"
 
 # do we implement safe search for anonymous users?
 # if True, any gloss that is tagged lexis:crude will be removed from
@@ -201,12 +201,12 @@ ANON_TAG_SEARCH = False
 
 
 # do we display the previous/next links to signs, requires gloss.sn to be used consistently
-SIGN_NAVIGATION = True
+SIGN_NAVIGATION = False
 
 # which definition fields do we show and in what order?
 DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'deictic', 'modifier', 'question', 'augment', 'note']
 
-ADMIN_RESULT_FIELDS = ['annotation_idgloss', 'annotation_idgloss_en', 'keyword', 'handedness', 'domhndsh', 'locprim']
+ADMIN_RESULT_FIELDS = ['annotation_idgloss', 'annotation_idgloss_en', 'handedness', 'domhndsh', 'subhndsh', 'locprim']
 
 
 # location and URL for uploaded files
@@ -232,7 +232,7 @@ GLOSS_VIDEO_DIRECTORY = "video"
 QUICK_UPDATE_GLOSS_FIELDS = ['language', 'dialect']
 
 # should we always require a login for viewing dictionary content
-ALWAYS_REQUIRE_LOGIN = False
+ALWAYS_REQUIRE_LOGIN = True
 
 # name of the primary css file, relative to the media directory
 PRIMARY_CSS = "bootstrap_css/test-server.css"
@@ -248,7 +248,7 @@ ACCOUNT_ACTIVATION_DAYS = 7
 # show the number signs page or an under construction page?
 SHOW_NUMBERSIGNS = True
 
-LOGIN_REDIRECT_URL = 'signs/dictionary'
+LOGIN_REDIRECT_URL = 'signs/search'
 
 
 # location of ffmpeg, used to convert uploaded videos
@@ -268,99 +268,6 @@ FORCE_LOWERCASE_TAGS = True
 
 # a list of tags we're allowed to use
 ALLOWED_TAGS = [ '', 
-                 'b92:directional',
-                 'b92:regional',
-                 'corpus:attested',
-                 'iconicity:obscure',
-                 'iconicity:opaque',
-                 'iconicity:translucent',
-                 'iconicity:transparent',
-                 'lexis:battinson',
-                 'lexis:classifier',
-                 'lexis:crude',
-                 'lexis:doubtlex',
-                 'lexis:fingerspell',
-                 'lexis:gensign',
-                 'lexis:marginal',
-                 'lexis:obsolete',
-                 'lexis:proper name',
-                 'lexis:regional',
-                 'lexis:restricted lexeme',
-                 'lexis:signed english',
-                 'lexis:signed english only',
-                 'lexis:technical',
-                 'lexis:varlex',
-                 'morph:begin directional sign',
-                 'morph:body locating',
-                 'morph:directional sign',
-                 'morph:end directional sign',
-                 'morph:locational and directional',
-                 'morph:orientating sign',
-                 'phonology:alternating',
-                 'phonology:dominant hand only',
-                 'phonology:double handed',
-                 'phonology:forearm rotation',
-                 'phonology:handshape change',
-                 'phonology:onehand',
-                 'phonology:parallel',
-                 'phonology:symmetrical',
-                 'phonology:two handed',
-                 'religion:anglican',
-                 'religion:catholic',
-                 'religion:catholic school',
-                 'religion:jehovas witness',
-                 'religion:other',
-                 'religion:religion',
-                 'semantic:animal',
-                 'semantic:arithmetic',
-                 'semantic:arts',
-                 'semantic:bodypart',
-                 'semantic:car',
-                 'semantic:city',
-                 'semantic:clothing',
-                 'semantic:color',
-                 'semantic:cooking',
-                 'semantic:day',
-                 'semantic:deaf',
-                 'semantic:drink',
-                 'semantic:education',
-                 'semantic:family',
-                 'semantic:feel',
-                 'semantic:food',
-                 'semantic:furniture',
-                 'semantic:government',
-                 'semantic:groom',
-                 'semantic:health',
-                 'semantic:judge',
-                 'semantic:language act',
-                 'semantic:law',
-                 'semantic:material',
-                 'semantic:metalg',
-                 'semantic:mind',
-                 'semantic:money',
-                 'semantic:nature',
-                 'semantic:number',
-                 'semantic:order',
-                 'semantic:people',
-                 'semantic:physical act',
-                 'semantic:quality',
-                 'semantic:quantity',
-                 'semantic:question',
-                 'semantic:recreation',
-                 'semantic:rooms',
-                 'semantic:salutation',
-                 'semantic:sensing',
-                 'semantic:sexuality',
-                 'semantic:shapes',
-                 'semantic:shopping',
-                 'semantic:sport',
-                 'semantic:telecommunications',
-                 'semantic:time',
-                 'semantic:travel',
-                 'semantic:utensil',
-                 'semantic:weather',
-                 'semantic:work',
-                 'school:state school',
                  'workflow:needs video',
                  'workflow:redo video',
                  'workflow:problematic',
