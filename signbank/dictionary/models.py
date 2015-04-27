@@ -22,7 +22,7 @@ from collections import OrderedDict
 
 
 class Translation(models.Model):
-    """An English translations of Auslan glosses"""
+    """An English translations of NGT glosses"""
      
     gloss = models.ForeignKey("Gloss")
     translation = models.ForeignKey("Keyword")
@@ -54,7 +54,7 @@ class Translation(models.Model):
     
     
 class Keyword(models.Model):
-    """An english keyword that will be a translation of a sign"""
+    """An English keyword that will be a translation of a sign"""
     
     def __str__(self):
         return self.text.encode('utf-8')
