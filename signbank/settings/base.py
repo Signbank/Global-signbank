@@ -206,7 +206,7 @@ SIGN_NAVIGATION = True
 # which definition fields do we show and in what order?
 DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'deictic', 'modifier', 'question', 'augment', 'note']
 
-ADMIN_RESULT_FIELDS = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'handedness', 'domhndsh', 'locprim']
+ADMIN_RESULT_FIELDS = ['annotation_idgloss', 'annotation_idgloss_en', 'keyword', 'handedness', 'domhndsh', 'locprim']
 
 
 # location and URL for uploaded files
