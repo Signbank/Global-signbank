@@ -80,8 +80,12 @@ function clearForm(myFormElement) {
             <table class='table' id='searchfields'>
                 <tr>
                     <td><div class='input-group'>
-                        <label class='input-group-addon' for='id_idgloss'>{{searchform.search.label}}</label>
+                        <label class='input-group-addon' for='id_annotation_idgloss'>{{searchform.search.label}}</label>
                         <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}></div>
+                    </td>
+                    <td><div class='input-group'>
+                        <label class='input-group-addon' for='id_annotation_idgloss_en'>{{searchform.englishGloss.label}}</label>
+                        <input name='englishGloss' class='form-control' {% if searchform.englishGloss.value %}value='{{searchform.englishGloss.value}}'{% endif %}></div>
                     </td>
                     <td><div class='input-group'>
                         <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
