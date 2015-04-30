@@ -80,8 +80,12 @@ function clearForm(myFormElement) {
             <table class='table' id='searchfields'>
                 <tr>
                     <td><div class='input-group'>
-                        <label class='input-group-addon' for='id_idgloss'>{{searchform.search.label}}</label>
+                        <label class='input-group-addon' for='id_annotation_idgloss'>{{searchform.search.label}}</label>
                         <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}></div>
+                    </td>
+                    <td><div class='input-group'>
+                        <label class='input-group-addon' for='id_annotation_idgloss_en'>{{searchform.englishGloss.label}}</label>
+                        <input name='englishGloss' class='form-control' {% if searchform.englishGloss.value %}value='{{searchform.englishGloss.value}}'{% endif %}></div>
                     </td>
                     <td><div class='input-group'>
                         <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
@@ -362,7 +366,7 @@ function clearForm(myFormElement) {
          {% for name, value in object_list.0.admin_fields %}
            <th>{{ name }}</th>
          {% endfor %}
-<!--        <th>Tags</th>        -->
+           <th>Tags</th>
       </tr>
     </thead>
     <tbody>
@@ -370,18 +374,16 @@ function clearForm(myFormElement) {
         <tr>
             
             {% for name, value in gloss.admin_fields %}
-            {% if forloop.counter == 2 %}
+            {% if forloop.first %}
             <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{value}}</a></td>
-            {% elif forloop.first %}
-            <td>{{ value }}</td>
-            {% elif forloop.counter == 3 %}
-            <td>{{ value }}</td>
+            {% elif forloop.counter == 2 %}
+            <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{value}}</a></td>
             {% else %}
             <td>{{ value }}</td>
             {% endif %}  
             {% endfor %} 
 
-<!--            <td>{% for tag in gloss.tags %}<span class='tag'>{{tag}}</span> {% endfor %}</td>      -->
+    <td>{% for tag in gloss.tags %}<span class='tag'>{{tag}}</span> {% endfor %}</td>
             
         </tr>
     {% endfor %}
