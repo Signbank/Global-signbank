@@ -63,7 +63,8 @@ ATTRS_FOR_FORMS = {'class':'form-control'};
 
 class GlossSearchForm(forms.ModelForm):
 
-    search = forms.CharField(label="Search Gloss")
+    search = forms.CharField(label="Dutch Gloss")
+    englishGloss = forms.CharField(label="English Gloss")
     tags = forms.MultipleChoiceField(choices=[(t, t) for t in settings.ALLOWED_TAGS])
     nottags = forms.MultipleChoiceField(choices=[(t, t) for t in settings.ALLOWED_TAGS])
     keyword = forms.CharField(label='Translations')
@@ -98,7 +99,7 @@ class GlossSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class':'form-control'};
 
         model = Gloss
-        fields = ('idgloss', 'annotation_idgloss', 'morph', 'sense', 
+        fields = ('idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'morph', 'sense', 
                    'sn', 'StemSN', 'comptf', 'compound', 'language', 'dialect',
                    'inWeb', 'isNew',
                    'initial_relative_orientation', 'final_relative_orientation',
