@@ -32,7 +32,7 @@ def find_children(page, currentURL):
         
         # remember if any of the children are the current page
         anyCurrent = (isCurrent or anyCurrent)
-        result.append({'url': page.url, 'title': page.title, 'children': children, 'current': isCurrent})
+        result.append({'url': page.url, 'title': page.title, 'children': children, 'current': isCurrent, 'group_required': page.group_required})
 
     return (result, anyCurrent)
     
