@@ -279,6 +279,9 @@ def gloss(request, idgloss):
 def search(request):
     """Handle keyword search form submission"""
 
+    if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0 and len(request.user.groups.filter(name="Editor")) == 0:
+        return HttpResponse('You are not allowed to see this page.')
+
     form = UserSignSearchForm(request.GET.copy())
 
     if form.is_valid():
@@ -455,7 +458,6 @@ def try_code(request):
 
     choicedict = {};
 
-
     for key,choices in choicedict.items():
 
         for machine_value,english_name in choices:
@@ -464,6 +466,9 @@ def try_code(request):
     return HttpResponse('OK');
 
 def import_csv(request):
+
+    if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
+        return HttpResponse('You are not allowed to see this page.')
 
     uploadform = forms.CSVUploadForm;
     changes = [];
