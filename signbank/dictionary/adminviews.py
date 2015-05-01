@@ -152,7 +152,11 @@ class GlossListView(ListView):
                     
             qs = qs.filter(query)
             #print "A: ", len(qs)
-            
+
+        if get.has_key('englishGloss') and get['englishGloss'] != '':
+            val = get['englishGloss']
+            qs = qs.filter(annotation_idgloss_en__istartswith=val)
+
         if get.has_key('keyword') and get['keyword'] != '':
             val = get['keyword']
             qs = qs.filter(translation__translation__text__istartswith=val)
