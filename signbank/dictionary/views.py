@@ -157,7 +157,7 @@ def word(request, keyword, n):
         video_form = None
 
     return render_to_response("dictionary/word.html",
-                              {'translation': trans.translation.text,
+                              {'translation': trans.translation.text.encode('utf-8'),
                                'viewname': 'words',
                                'definitions': trans.gloss.definitions(),
                                'gloss': trans.gloss,
@@ -170,7 +170,7 @@ def word(request, keyword, n):
                                # lastmatch is a construction of the url for this word
                                # view that we use to pass to gloss pages
                                # could do with being a fn call to generate this name here and elsewhere
-                               'lastmatch': unicode(trans.translation)+"-"+str(n),
+                               'lastmatch': trans.translation.text.encode('utf-8')+"-"+str(n),
                                'videofile': videourl,
                                'update_form': update_form,
                                'videoform': video_form,
