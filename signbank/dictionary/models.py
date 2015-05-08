@@ -1,4 +1,4 @@
-"""Models for the Auslan database.
+"""Models for the NGT database.
 
 These are refactored from the original database to 
 normalise the data and hopefully make it more
@@ -22,7 +22,7 @@ from collections import OrderedDict
 
 
 class Translation(models.Model):
-    """An English translations of NGT glosses"""
+    """A Dutch translation of NGT signs"""
      
     gloss = models.ForeignKey("Gloss")
     translation = models.ForeignKey("Keyword")
@@ -54,7 +54,7 @@ class Translation(models.Model):
     
     
 class Keyword(models.Model):
-    """An English keyword that will be a translation of a sign"""
+    """A Dutch keyword that is a possible translation equivalent of a sign"""
     
     def __str__(self):
         return self.text.encode('utf-8')
@@ -112,6 +112,7 @@ class Keyword(models.Model):
     
 DEFN_ROLE_CHOICES = (('note', 'Note'),
                      ('privatenote', 'Private Note'),
+                     ('phon', 'Phonology'),
                      ('todo', 'To Do'),
                      ('sugg', 'Suggestion for other gloss'),
                      )
