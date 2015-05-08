@@ -40,6 +40,7 @@ urlpatterns = patterns('',
     #Hardcoding a number of special urls:
     url(r'^signs/dictionary/$', 'signbank.dictionary.views.search'),
     url(r'^signs/search/$', permission_required('dictionary.search_gloss')(GlossListView.as_view())),
+    url(r'^signs/add/$', 'signbank.dictionary.views.add_new_sign'),
     url(r'^signs/import_csv/$', 'signbank.dictionary.views.import_csv'),
     url(r'^feedback/overview/$', 'signbank.feedback.views.showfeedback'),
                        
