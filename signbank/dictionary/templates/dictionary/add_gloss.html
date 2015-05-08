@@ -1,0 +1,39 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+   {% if perms.dictionary.add_gloss %}
+   <p>Please provide some initial data:</p>
+
+     <form action='{% url "dictionary:add_gloss" %}' method='post'>
+         {% csrf_token %}
+         <table class='table' style='width: 400px;'>
+             <tr>
+                 <th><label for='id_idgloss'>ID Gloss</label></th><td>{{add_gloss_form.idgloss}}</td>
+             </tr>
+             <tr>
+                 <th><label for='id_annotation_idgloss'>Annotation ID Gloss</label></th><td>{{add_gloss_form.annotation_idgloss}}</td>
+             </tr>
+             <tr>
+                 <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th><td>{{add_gloss_form.annotation_idgloss_en}}</td>
+             </tr>
+         </table>
+
+     <input class='btn btn-primary' type='submit' value='Add New Sign'>
+     </form>
+      {% endif %}
+
+</body>
+</html>
+
+{% endblock %}

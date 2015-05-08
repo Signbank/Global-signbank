@@ -465,6 +465,10 @@ def try_code(request):
 
     return HttpResponse('OK');
 
+def add_new_sign(request):
+
+    return render_to_response('dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()},context_instance=RequestContext(request));
+
 def import_csv(request):
 
     if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
