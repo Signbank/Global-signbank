@@ -21,6 +21,14 @@ def add_gloss(request):
     if request.method == "POST":
         
         form = GlossCreateForm(request.POST)
+
+        print(request.POST['annotation_idgloss'],Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'][0]))
+
+        if len(Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'])) != 0:
+            return render_to_response('dictionary/warning.html', {'warning':'Annotation ID Gloss not unique'},context_instance=RequestContext(request))
+        elif len(Gloss.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'])) != 0:
+            return render_to_response('dictionary/warning.html', {'warning':'English annotation ID gloss not unique'},context_instance=RequestContext(request))
+
         if form.is_valid():
             
             gloss = form.save()
