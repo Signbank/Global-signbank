@@ -373,8 +373,6 @@ def search(request):
     else:
         result_page = paginator.page(1)
 
-
-
     return render_to_response("dictionary/search_result.html",
                               {'query' : term,
                                'form': form,

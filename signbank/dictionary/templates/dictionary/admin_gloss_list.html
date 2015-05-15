@@ -364,20 +364,32 @@ function clearForm(myFormElement) {
     <thead>
       <tr>
          {% for name, value in object_list.0.admin_fields %}
+		 
+           {% if forloop.counter == 2 %}		
+           <th>{{ name }}</th><th>Keywords</th>		   
+		   {% else %}	   
            <th>{{ name }}</th>
+		   {% endif %}
+		   
          {% endfor %}
            <th>Tags</th>
       </tr>
     </thead>
     <tbody>
     {% for gloss in object_list %}
-        <tr>
-            
+        <tr>		
             {% for name, value in gloss.admin_fields %}
             {% if forloop.first %}
             <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{value}}</a></td>
             {% elif forloop.counter == 2 %}
             <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{value}}</a></td>
+
+			<td>
+			{% for translation in gloss.translation_set.all %}
+            {{ translation.translation }} 
+			{% endfor %}			
+			</td>
+		
             {% else %}
             <td>{{ value }}</td>
             {% endif %}  
