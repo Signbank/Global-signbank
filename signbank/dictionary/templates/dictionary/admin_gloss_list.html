@@ -363,39 +363,38 @@ function clearForm(myFormElement) {
 <table class='table table-condensed'>
     <thead>
       <tr>
-         {% for name, value in object_list.0.admin_fields %}
-		 
-           {% if forloop.counter == 2 %}		
-           <th>{{ name }}</th><th>Keywords</th>		   
-		   {% else %}	   
-           <th>{{ name }}</th>
-		   {% endif %}
-		   
-         {% endfor %}
+           <th>Annotation ID gloss: Dutch</th>
+           <th>Annotation ID gloss: English</th>
+           <th>Keywords</th>
+           <th>Handedness</th>
+           <th>Strong hand</th>
+           <th>Weak hand</th>
+           <th>Location</th>
            <th>Tags</th>
       </tr>
     </thead>
     <tbody>
     {% for gloss in object_list %}
         <tr>		
-            {% for name, value in gloss.admin_fields %}
-            {% if forloop.first %}
-            <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{value}}</a></td>
-            {% elif forloop.counter == 2 %}
-            <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{value}}</a></td>
+            <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></td>
+            <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></td>
 
 			<td>
 			{% for translation in gloss.translation_set.all %}
-            {{ translation.translation }} 
-			{% endfor %}			
+                {% if forloop.last %}
+                {{ translation.translation }}
+                {% else%}
+                {{ translation.translation }},
+                {% endif %}
+
+			{% endfor %}
 			</td>
 		
-            {% else %}
-            <td>{{ value }}</td>
-            {% endif %}  
-            {% endfor %} 
-
-    <td>{% for tag in gloss.tags %}<span class='tag'>{{tag}}</span> {% endfor %}</td>
+            <td>{{ gloss.get_handedness_display }}</td>
+            <td>{{ gloss.get_domhndsh_display }}</td>
+            <td>{{ gloss.get_subhndsh_display }}</td>
+            <td>{{ gloss.get_locprim_display }}</td>
+            <td>{% for tag in gloss.tags %}<span class='tag'>{{tag}}</span> {% endfor %}</td>
             
         </tr>
     {% endfor %}
