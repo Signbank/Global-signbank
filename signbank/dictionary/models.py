@@ -897,8 +897,8 @@ minor or insignificant ways that can be ignored.""")
 
     #Frequency fields
 
-    tokNo = models.IntegerField("Total Number of Occurrences",null=True, blank=True) 
-    tokNoSgnr = models.IntegerField("Total Number of Signers Using this Sign",null=True, blank=True) 
+    tokNo = models.IntegerField("Number of Occurrences",null=True, blank=True)
+    tokNoSgnr = models.IntegerField("Number of Signers",null=True, blank=True)
     tokNoA = models.IntegerField("Number of Occurrences in Amsterdam",null=True, blank=True) 
     tokNoV = models.IntegerField("Number of Occurrences in Voorburg",null=True, blank=True) 
     tokNoR = models.IntegerField("Number of Occurrences in Rotterdam",null=True, blank=True) 
