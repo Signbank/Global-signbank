@@ -398,7 +398,7 @@ class GlossDetailView(DetailView):
 
 	fields['semantics'] = ['iconImg','namEnt','semField'];
 
-	fields['frequency'] = ['tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
+	fields['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                                'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO'];
 
         for topic in ['phonology','semantics','frequency']:
