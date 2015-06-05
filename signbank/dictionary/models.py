@@ -709,12 +709,14 @@ class FieldChoice(models.Model):
 
 def build_choice_list(field):
 
-    choice_list = [('0','-'),('1','N/A')];
+    choice_list = [];
 
     for choice in FieldChoice.objects.filter(field=field):
         choice_list.append((str(choice.machine_value),choice.english_name));
 
-    return choice_list
+    choice_list = sorted(choice_list,key=lambda x: x[1]);
+
+    return [('0','-'),('1','N/A')] + choice_list;
 
 class Gloss(models.Model):
     
