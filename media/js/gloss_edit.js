@@ -27,7 +27,15 @@
          
      }  
           
-     $('#enable_edit').click(toggle_edit);
+     $('#enable_edit').click(function()
+	{
+		toggle_edit(false);
+	});
+
+     $('#save_and_next_btn').click(function()
+	{
+		toggle_edit(true);
+	});
      
      glosstypeahead($('.glosstypeahead'));
 
@@ -57,6 +65,7 @@ function disable_edit() {
     $('#edit_message').text(''); 
     $('.editform').hide();
     $('#delete_gloss_btn').hide();
+    $('#save_and_next_btn').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
     $('#add_relation_form').hide();
@@ -74,6 +83,7 @@ function enable_edit() {
     $('#edit_message').text('Click on red text to edit  '); 
     $('.editform').show();
     $('#delete_gloss_btn').show().addClass('btn-danger');
+    $('#save_and_next_btn').show().addClass('btn-danger');
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
     $('#add_relation_form').show();
@@ -85,11 +95,17 @@ function enable_edit() {
     $('.morphology-definition-delete').show();
 };
 
-function toggle_edit() {
+function toggle_edit(redirect_to_next) {
     if ($('#enable_edit').hasClass('edit_enabled')) {
         disable_edit();
         $('#enable_edit').removeClass('edit_enabled');
         $('#enable_edit').text('Edit');
+
+		if (redirect_to_next)
+		{
+			window.location.href = '/dictionary/gloss/'+next_gloss_id;
+		}
+
     } else {
         enable_edit();
         $('#enable_edit').addClass('edit_enabled');
