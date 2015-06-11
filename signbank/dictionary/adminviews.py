@@ -382,6 +382,7 @@ class GlossDetailView(DetailView):
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
+        context['nextglossid'] = Gloss.objects.get(annotation_idgloss=context['gloss']).admin_next_gloss().pk
         if settings.SIGN_NAVIGATION:
             context['glosscount'] = Gloss.objects.count()
             context['glossposn'] =  Gloss.objects.filter(sn__lt=context['gloss'].sn).count()+1
@@ -390,15 +391,15 @@ class GlossDetailView(DetailView):
         gl = context['gloss'];
         labels = gl.field_labels();
 
-	fields = {};
+        fields = {};
 
-	fields['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj','absOriPalm','absOriFing',
+        fields['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj','absOriPalm','absOriFing',
                   'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','movMan','repeat','altern','phonOth', 'mouthG',
                   'mouthing', 'phonetVar',];
 
-	fields['semantics'] = ['iconImg','namEnt','semField'];
+        fields['semantics'] = ['iconImg','namEnt','semField'];
 
-	fields['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
+        fields['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                                'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO'];
 
         for topic in ['phonology','semantics','frequency']:
