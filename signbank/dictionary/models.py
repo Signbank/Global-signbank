@@ -938,25 +938,35 @@ minor or insignificant ways that can be ignored.""")
         
     def next_dictionary_gloss(self, staff=False):
         """Find the next gloss in dictionary order"""
-        if self.sn == None:
-            return None
-        elif staff:
-            set =  Gloss.objects.filter(sn__gt=self.sn).order_by('sn')
+
+        if staff:
+            all_glosses_ordered =  Gloss.objects.all().order_by('annotation_idgloss')
         else:
-            set = Gloss.objects.filter(sn__gt=self.sn, inWeb__exact=True).order_by('sn')
-        if set:
-            return set[0]
+            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('annotation_idgloss')
+
+        if all_glosses_ordered:
+
+            foundit = False;
+
+            for gloss in all_glosses_ordered:
+                if gloss == self:
+                    foundit = True
+                elif foundit:
+                    return gloss;
+                    break;
+
         else:
             return None
  
     def prev_dictionary_gloss(self, staff=False):
-        """Find the previous gloss in dictionary order"""
+        """DEPRICATED!!!! Find the previous gloss in dictionary order"""
+
         if self.sn == None:
             return None
         elif staff:
-            set = Gloss.objects.filter(sn__lt=self.sn).order_by('-sn')
+            set = Gloss.objects.filter(sn__lt=self.sn).order_by('-annotation_idgloss')
         else:
-            set = Gloss.objects.filter(sn__lt=self.sn, inWeb__exact=True).order_by('-sn')
+            set = Gloss.objects.filter(sn__lt=self.sn, inWeb__exact=True).order_by('-annotation_idgloss')
         if set:
             return set[0]
         else:
