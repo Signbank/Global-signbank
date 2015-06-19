@@ -39,7 +39,7 @@ class TagUpdateForm(forms.Form):
     """Form to add a new tag to a gloss"""
 
     tag = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), 
-                            choices=[(t, t) for t in settings.ALLOWED_TAGS])
+                            choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
     delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
 
 YESNOCHOICES = (("unspecified", "Unspecified" ), ('yes', 'Yes'), ('no', 'No'))
@@ -65,8 +65,8 @@ class GlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label="Dutch Gloss")
     englishGloss = forms.CharField(label="English Gloss")
-    tags = forms.MultipleChoiceField(choices=[(t, t) for t in settings.ALLOWED_TAGS])
-    nottags = forms.MultipleChoiceField(choices=[(t, t) for t in settings.ALLOWED_TAGS])
+    tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
+    nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
     keyword = forms.CharField(label='Translations')
     hasvideo = forms.ChoiceField(label='Has Video', choices=YESNOCHOICES)
     defspublished = forms.ChoiceField(label="All Definitions Published", choices=YESNOCHOICES)

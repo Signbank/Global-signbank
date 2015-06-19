@@ -266,11 +266,4 @@ VIDEO_ASPECT_RATIO = 3.0/4.0
 
 FORCE_LOWERCASE_TAGS = True
 
-# a list of tags we're allowed to use
-ALLOWED_TAGS = [ '', 
-                 'workflow:needs video',
-                 'workflow:redo video',
-                 'workflow:problematic',
-                 ]
-
 
