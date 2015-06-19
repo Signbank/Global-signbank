@@ -394,7 +394,8 @@ function clearForm(myFormElement) {
             <td>{{ gloss.get_domhndsh_display }}</td>
             <td>{{ gloss.get_subhndsh_display }}</td>
             <td>{{ gloss.get_locprim_display }}</td>
-            <td>{% for tag in gloss.tags %}<span class='tag'>{{tag}}</span> {% endfor %}</td>
+            {% load underscore_to_space %}
+            <td>{% for tag in gloss.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
             
         </tr>
     {% endfor %}
