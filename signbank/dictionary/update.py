@@ -157,7 +157,7 @@ def update_gloss(request, glossid):
                 newvalue = 'No'
                 
         else:
-            
+            original_value = getattr(gloss,field)
 
             if not field in Gloss._meta.get_all_field_names():
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
@@ -193,13 +193,15 @@ def update_gloss(request, glossid):
                     valdict = dict(f.flatchoices)
                     # some fields take ints
                     if valdict.keys() != [] and type(valdict.keys()[0]) == int:
+                        original_value = valdict.get(int(original_value),original_value)
                         newvalue = valdict.get(int(value), value)
                     else:
                         # either it's not an int or there's no flatchoices
                         # so here we use get with a default of the value itself
+                        original_value = valdict.get(original_value,original_value)
                         newvalue = valdict.get(value, value)
         
-        return HttpResponse(newvalue, {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value)+' -> '+str(newvalue), {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""

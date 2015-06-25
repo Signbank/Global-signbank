@@ -1,6 +1,10 @@
 /**
  * @author Steve Cassidy
  */
+
+//Keep track of the original values of the changes made, so we can rewind it later if needed
+var original_values_for_changes_made = new Array();
+
  $(document).ready(function() {
      configure_edit();
      
@@ -209,7 +213,19 @@ function configure_edit() {
 		 $(this).editable(edit_post_url, {
 		     type      : 'select',
 		     data    : choice_lists[$(this).attr('id')],
-			 callback : function(value,settings) {console.log('Changed a value');}
+			 callback : function(value,settings) 
+                      {
+                          split_values = value.split(' -> ');
+			     original_value = split_values[0];
+                          new_value = split_values[1];
+			     id = $(this).attr('id');
+
+			     if (original_values_for_changes_made[id] == undefined)
+                          {
+	                          original_values_for_changes_made[id] = original_value;                          
+				     console.log(original_values_for_changes_made); 
+			     }
+                      }
 		 });
 
 
