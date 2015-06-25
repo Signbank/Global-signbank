@@ -113,7 +113,7 @@ function toggle_edit(redirect_to_next) {
     } else {
         enable_edit();
         $('#enable_edit').addClass('edit_enabled');
-        $('#enable_edit').text('Save');
+        $('#enable_edit').text('Turn off edit mode');
     }
 }
 

@@ -56,6 +56,11 @@
     });
 
     ajaxifyTagForm();
+
+	$('.btn').click(function()
+	{
+		alert('click');
+	});
      
  });
 
@@ -103,7 +108,7 @@ function toggle_edit(redirect_to_next) {
 
 		if (redirect_to_next)
 		{
-			window.location.href = '/dictionary/gloss/'+;
+			window.location.href = '/dictionary/gloss/'+next_gloss_id;
 		}
 
     } else {
@@ -208,7 +213,8 @@ function configure_edit() {
 	 {
 		 $(this).editable(edit_post_url, {
 		     type      : 'select',
-		     data    : choice_lists[$(this).attr('id')] 
+		     data    : choice_lists[$(this).attr('id')],
+			 callback : function(value,settings) {console.log('Changed a value');}
 		 });
 
 
