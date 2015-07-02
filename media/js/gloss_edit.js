@@ -41,7 +41,12 @@ var original_values_for_changes_made = new Array();
 		toggle_edit(true);
 	});
      
-     glosstypeahead($('.glosstypeahead'));
+    $('#rewind').click(function()
+	{
+		rewind();
+	});
+
+    glosstypeahead($('.glosstypeahead'));
 
 
     // setup requried for Ajax POST
@@ -69,7 +74,7 @@ function disable_edit() {
     $('#edit_message').text(''); 
     $('.editform').hide();
     $('#delete_gloss_btn').hide();
-    $('#save_and_next_btn').hide();
+    $('.button-to-appear-in-edit-mode').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
     $('#add_relation_form').hide();
@@ -87,7 +92,7 @@ function enable_edit() {
     $('#edit_message').text('Click on red text to edit  '); 
     $('.editform').show();
     $('#delete_gloss_btn').show().addClass('btn-danger');
-    $('#save_and_next_btn').show().addClass('btn-danger');
+    $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
     $('#add_relation_form').show();
@@ -215,10 +220,11 @@ function configure_edit() {
 		     data    : choice_lists[$(this).attr('id')],
 			 callback : function(value,settings) 
                       {
-                          split_values = value.split(' -> ');
+                          split_values = value.split(',');
 			     original_value = split_values[0];
                           new_value = split_values[1];
 			     id = $(this).attr('id');
+                          $(this).html(new_value);
 
 			     if (original_values_for_changes_made[id] == undefined)
                           {
@@ -380,10 +386,31 @@ function ajaxifyTagForm() {
         return false;
     });
 }
-    
-    
-     
 
+function post_key_and_value_after_n_seconds(key_to_post,value_to_post,n_seconds)
+{
+	setTimeout(function()
+	{
+		$.ajax({
+		  type: "POST",
+		  url: edit_post_url,
+		  data: {'id':key_to_post,'value':'_'+value_to_post},
+		});
 
-      
-      
+		console.log('send');
+
+	},n_seconds)
+}
+    
+function rewind()
+{
+	var c = 1;
+
+	for (key in original_values_for_changes_made)
+	{
+		console.log(key);
+		post_key_and_value_after_n_seconds(key,original_values_for_changes_made[key],c*1000);
+		c++;	
+	}
+
+}
