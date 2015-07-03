@@ -152,20 +152,25 @@ function configure_edit() {
                         };
      
     
-     $('.edit_text').editable(edit_post_url);    
+     $('.edit_text').editable(edit_post_url, {
+		 callback : update_view_and_remember_original_value
+	 });    
      $('.edit_int').editable(edit_post_url, {
          type      : 'positiveinteger',
          onerror : function(settings, original, xhr){
                           alert(xhr.responseText);
                           original.reset();
                     },
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_area').editable(edit_post_url, { 
-         type      : 'textarea'
+         type      : 'textarea',
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_role').editable(edit_post_url, { 
          type      : 'select',
-         data      : definition_role_choices
+         data      : definition_role_choices,
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_language').editable(edit_post_url, {
          type      : 'multiselect',
@@ -177,68 +182,77 @@ function configure_edit() {
      });     
      $('.edit_check').editable(edit_post_url, {
          type      : 'checkbox',
-         checkbox: { trueValue: 'Yes', falseValue: 'No' }
+         checkbox: { trueValue: 'Yes', falseValue: 'No' },
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_handshape').editable(edit_post_url, {
          type      : 'select',
-         data      : handshape_choices
+         data      : handshape_choices,
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_location').editable(edit_post_url, {
          type      : 'select',
-         data      : location_choices
+         data      : location_choices,
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_palm').editable(edit_post_url, {
          type      : 'select',
-         data      : palm_orientation_choices
+         data      : palm_orientation_choices,
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_relori').editable(edit_post_url, {
          type      : 'select',
-         data      : relative_orientation_choices
+         data      : relative_orientation_choices,
+		 callback : update_view_and_remember_original_value
      }); 
      $('.edit_sec_location').editable(edit_post_url, {
          type      : 'select',
-         data      : secondary_location_choices
+         data      : secondary_location_choices,
+		 callback : update_view_and_remember_original_value
      });                  
      $('.edit_relation_role').editable(edit_post_url, {
          type      : 'select',
-         data      : relation_role_choices
+         data      : relation_role_choices,
+		 callback : update_view_and_remember_original_value
      }); 
      $('.edit_relation_target').editable(edit_post_url, {
-         type      : 'glosstypeahead'
+         type      : 'glosstypeahead',
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_morpheme').editable(edit_post_url, {
-         type      : 'glosstypeahead'
+         type      : 'glosstypeahead',
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_morphology_role').editable(edit_post_url, {
          type      : 'select',
-         data      : choice_lists['morphology_role']
+         data      : choice_lists['morphology_role'],
+	 	 callback : update_view_and_remember_original_value
      });
      $('.edit_list').click(function() 
 	 {
 		 $(this).editable(edit_post_url, {
 		     type      : 'select',
 		     data    : choice_lists[$(this).attr('id')],
-			 callback : function(value,settings) 
-                      {
-                          split_values = value.split(',');
-			     original_value = split_values[0];
-                          new_value = split_values[1];
-			     id = $(this).attr('id');
-                          $(this).html(new_value);
-
-			     if (original_values_for_changes_made[id] == undefined)
-                          {
-	                          original_values_for_changes_made[id] = original_value;                          
-				     console.log(original_values_for_changes_made); 
-			     }
-                      }
+			 callback : update_view_and_remember_original_value
 		 });
-
-
      });
 
 }
 
+function update_view_and_remember_original_value(change_summary)
+{
+	split_values = change_summary.split(',');
+	original_value = split_values[0];
+  	new_value = split_values[1];
+	id = $(this).attr('id');
+  	$(this).html(new_value);
+
+	if (original_values_for_changes_made[id] == undefined)
+  	{
+    	original_values_for_changes_made[id] = original_value;                          
+		console.log(original_values_for_changes_made); 
+	}
+}
 
 var gloss_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -397,20 +411,28 @@ function post_key_and_value_after_n_seconds(key_to_post,value_to_post,n_seconds)
 		  data: {'id':key_to_post,'value':'_'+value_to_post},
 		});
 
-		console.log('send');
-
 	},n_seconds)
 }
     
+function delayed_reload(n_seconds)
+{
+	setTimeout(function()
+	{
+		location.reload();		
+	},n_seconds);
+}
+
 function rewind()
 {
 	var c = 1;
 
 	for (key in original_values_for_changes_made)
 	{
-		console.log(key);
-		post_key_and_value_after_n_seconds(key,original_values_for_changes_made[key],c*1000);
+		value = original_values_for_changes_made[key];
+		post_key_and_value_after_n_seconds(key,value,c*100);
 		c++;	
 	}
+
+	delayed_reload(c*100);
 
 }
