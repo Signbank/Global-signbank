@@ -303,6 +303,9 @@ function clearForm(myFormElement) {
             {% if perms.dictionary.export_csv %}
             <input class='btn btn-default' type='submit' name='format' value='CSV'>
             {% endif %}
+            {% if perms.dictionary.export_ecv %}
+            <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
+            {% endif %}
             <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='Reset'>
         </div>
 
