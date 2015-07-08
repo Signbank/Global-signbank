@@ -42,8 +42,122 @@ class GlossListView(ListView):
         # Look for a 'format=json' GET argument
         if self.request.GET.get('format') == 'CSV':
             return self.render_to_csv_response(context)
+        elif self.request.GET.get('export_ecv') == 'Export ECV':
+        	return self.render_to_ecv_export_response(context)
         else:
             return super(GlossListView, self).render_to_response(context)
+	
+	def render_to_ecv_export_response(self, context):
+        if not self.request.user.has_perm('dictionary.export_ecv'):
+            raise PermissionDenied
+
+        description  = 'DESCRIPTION'
+        language     = 'LANGUAGE'
+        lang_ref     = 'LANG_REF'
+        lang_id_nld  = 'nld'
+        lang_id_eng  = 'eng'
+        languages    = [lang_id_nld,lang_id_eng];
+        cv_entry_ml  = 'CV_ENTRY_ML'
+        cve_id       = 'CVE_ID'
+        cve_value    = 'CVE_VALUE'
+
+        topattributes = {'xmlns:xsi':"http://www.w3.org/2001/XMLSchema-instance",
+                         'DATE':str(DT.date.today())+ 'T'+str(DT.datetime.now().time()),
+                         'AUTHOR':'',
+                         'VERSION':'0.2',
+                         'xsi:noNamespaceSchemaLocation':"http://www.mpi.nl/tools/elan/EAFv2.8.xsd"}
+        top = ET.Element('CV_RESOURCE', topattributes)
+
+        ## define languages
+        langattributes = {'LANG_DEF':'http://cdb.iso.org/lg/CDB-00138502-001',
+                          'LANG_ID':lang_id_eng,
+                          'LANG_LABEL':'English (eng)'}
+        ET.SubElement(top, language, langattributes)
+
+        nllangattributes = {'LANG_DEF':'http://cdb.iso.org/lg/CDB-00138580-001',
+                            'LANG_ID':lang_id_nld,
+                            'LANG_LABEL':'Dutch (nld)'}
+        ET.SubElement(top, language, nllangattributes)
+
+
+        cv_element = ET.SubElement(top, 'CONTROLLED_VOCABULARY', {'CV_ID':'CNGT_RU-lexicon'})
+
+        ## description f0r cv_element
+        for lang in languages:
+            myattributes = {lang_ref: lang}
+            desc_element = ET.SubElement(cv_element, description, myattributes)
+            desc_element.text = 'The glosses CV for the CNGT (RU)'
+
+        for gloss in Gloss.objects.all():
+            glossid = 'gloss'+ str(gloss.pk)
+            myattributes = {cve_id: glossid}
+            cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
+
+            desc = self.get_ecv_descripion_for_gloss(gloss)
+
+            for lang in languages:
+                cve_value_element = ET.SubElement(cve_entry_element, cve_value, {description:desc, lang_ref:lang})
+                if lang is lang_id_eng:
+                    cve_value_element.text = self.get_value_for_ecv(gloss, 'annotation_idgloss_en')
+                elif lang is lang_id_nld:
+                    cve_value_element.text = self.get_value_for_ecv(gloss, 'annotation_idgloss')
+
+        tree = ET.ElementTree(top)
+
+        response = HttpResponse(content_type='text')
+        response['Content-Disposition'] = 'attachment; filename="NGTSignbank.ecv"'
+
+        tree.write(response, encoding ="utf-8",xml_declaration=True, method="xml")
+        return response
+
+    def get_ecv_descripion_for_gloss(self, gloss):
+
+        description_fields = ['handedness','domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir','movSh', 'tokNo',
+                      'tokNoSgnr'];
+
+        for f in description_fields:
+            value = self.get_value_for_ecv(gloss,f)
+
+            if f == 'handedness':
+                desc = value
+            elif f == 'domhndsh':
+                desc = desc+ ', ('+ value
+            elif f == 'subhndsh':
+                desc = desc+','+value
+            elif f == 'handCh':
+                desc = desc+'; '+value+')'
+            elif f == 'tokNo':
+                desc = desc+' ['+value
+            elif f == 'tokNoSgnr':
+                desc = desc+'/'+value+']'
+            else:
+                desc = desc+', '+value
+
+        trans = [t.translation.text for t in gloss.translation_set.all()]
+        for t in trans:
+            if isinstance(t, unicode):
+                value = str(t.encode('ascii','xmlcharrefreplace'));
+            desc = desc + (", ") + t
+
+        return desc
+
+    def get_value_for_ecv(self, gloss, fieldname):
+        try:
+            value = getattr(gloss, 'get_'+fieldname+'_display')()
+
+        except AttributeError:
+            value = getattr(gloss,fieldname)
+
+        if isinstance(value,unicode):
+            value = str(value.encode('ascii','xmlcharrefreplace'))
+        elif value is None:
+           value = " "
+        elif not isinstance(value,str):
+            value = str(value)
+
+        if value == '-':
+            value = ' '
+        return value
 
 
     # noinspection PyInterpreter,PyInterpreter
