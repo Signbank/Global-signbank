@@ -50,8 +50,8 @@ class GlossListView(ListView):
             return super(GlossListView, self).render_to_response(context)
 	
     def render_to_ecv_export_response(self, context):
-        if not self.request.user.has_perm('dictionary.export_ecv'):
-            raise PermissionDenied
+        # if not self.request.user.has_perm('dictionary.export_ecv'):
+        #     raise PermissionDenied
 
         description  = 'DESCRIPTION'
         language     = 'LANGUAGE'
@@ -110,6 +110,7 @@ class GlossListView(ListView):
         response['Content-Disposition'] = 'attachment; filename="NGTSignbank.ecv"'
 
         tree.write(response, encoding ="utf-8",xml_declaration=True, method="xml")
+
         return response
 
     def get_ecv_descripion_for_gloss(self, gloss):
