@@ -6,6 +6,8 @@ from django.http import HttpResponse
 from django.core.exceptions import PermissionDenied
 import csv
 import re
+import xml.etree.ElementTree as ET
+import datetime as DT
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -42,12 +44,12 @@ class GlossListView(ListView):
         # Look for a 'format=json' GET argument
         if self.request.GET.get('format') == 'CSV':
             return self.render_to_csv_response(context)
-        elif self.request.GET.get('export_ecv') == 'Export ECV':
-        	return self.render_to_ecv_export_response(context)
+        elif self.request.GET.get('export_ecv') == 'ECV':
+            return self.render_to_ecv_export_response(context)
         else:
             return super(GlossListView, self).render_to_response(context)
 	
-	def render_to_ecv_export_response(self, context):
+    def render_to_ecv_export_response(self, context):
         if not self.request.user.has_perm('dictionary.export_ecv'):
             raise PermissionDenied
 
