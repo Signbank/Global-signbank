@@ -14,6 +14,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
+from signbank.settings.development import ECV_FILE
 
 class GlossListView(ListView):
     
@@ -109,6 +110,7 @@ class GlossListView(ListView):
         response = HttpResponse(content_type='text')
         response['Content-Disposition'] = 'attachment; filename="NGTSignbank.ecv"'
 
+        tree.write(open(ECV_FILE, 'w'), encoding ="utf-8",xml_declaration=True, method="xml")
         tree.write(response, encoding ="utf-8",xml_declaration=True, method="xml")
 
         return response
