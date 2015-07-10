@@ -30,6 +30,8 @@
      var choice_lists = {{gloss.get_choice_lists|safe}};
     
     var csrf_token = '{{csrf_token}}';
+
+    var next_gloss_id = {{nextglossid}};
       
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
@@ -64,13 +66,15 @@
 
     {% if gloss.idgloss %}
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.idgloss}}.html">Public View</a>
+    <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>Delete Sign</button>
     {% endif %}
     
     {% if perms.dictionary.change_gloss %}
     
     <div class='pull-right'>
          <span id='edit_message'></span>&nbsp;
-         <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>Delete Sign</button>
+         <button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>
+         <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Edit next gloss</button>
          <button id='enable_edit' class='btn btn-default navbar-btn'>Edit</button>
          
          <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">

@@ -157,7 +157,7 @@ def update_gloss(request, glossid):
                 newvalue = 'No'
                 
         else:
-            
+            original_value = getattr(gloss,field)
 
             if not field in Gloss._meta.get_all_field_names():
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
@@ -199,7 +199,7 @@ def update_gloss(request, glossid):
                         # so here we use get with a default of the value itself
                         newvalue = valdict.get(value, value)
         
-        return HttpResponse(newvalue, {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value)+','+str(newvalue), {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""

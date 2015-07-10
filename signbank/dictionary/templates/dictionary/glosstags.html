@@ -8,7 +8,8 @@
           {% for tag in tag_list %}
             <li class='tagli'>
                <div class='tag'>
-                 <span class='tagname'>{{tag}}</span>
+                   {% load underscore_to_space %}
+                 <span class='tagname'>{{tag.name|underscore_to_space}}</span>
                  {% if perms.dictionary.change_gloss %}
                  <span class='tagcount'>
                      <a class='tagdelete editform'

@@ -1,6 +1,10 @@
 /**
  * @author Steve Cassidy
  */
+
+//Keep track of the original values of the changes made, so we can rewind it later if needed
+var original_values_for_changes_made = new Array();
+
  $(document).ready(function() {
      configure_edit();
      
@@ -27,9 +31,22 @@
          
      }  
           
-     $('#enable_edit').click(toggle_edit);
+     $('#enable_edit').click(function()
+	{
+		toggle_edit(false);
+	});
+
+     $('#save_and_next_btn').click(function()
+	{
+		toggle_edit(true);
+	});
      
-     glosstypeahead($('.glosstypeahead'));
+    $('#rewind').click(function()
+	{
+		rewind();
+	});
+
+    glosstypeahead($('.glosstypeahead'));
 
 
     // setup requried for Ajax POST
@@ -57,6 +74,7 @@ function disable_edit() {
     $('#edit_message').text(''); 
     $('.editform').hide();
     $('#delete_gloss_btn').hide();
+    $('.button-to-appear-in-edit-mode').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
     $('#add_relation_form').hide();
@@ -74,6 +92,7 @@ function enable_edit() {
     $('#edit_message').text('Click on red text to edit  '); 
     $('.editform').show();
     $('#delete_gloss_btn').show().addClass('btn-danger');
+    $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
     $('#add_relation_form').show();
@@ -85,15 +104,21 @@ function enable_edit() {
     $('.morphology-definition-delete').show();
 };
 
-function toggle_edit() {
+function toggle_edit(redirect_to_next) {
     if ($('#enable_edit').hasClass('edit_enabled')) {
         disable_edit();
         $('#enable_edit').removeClass('edit_enabled');
         $('#enable_edit').text('Edit');
+
+		if (redirect_to_next)
+		{
+			window.location.href = '/dictionary/gloss/'+next_gloss_id;
+		}
+
     } else {
         enable_edit();
         $('#enable_edit').addClass('edit_enabled');
-        $('#enable_edit').text('Save');
+        $('#enable_edit').text('Turn off edit mode');
     }
 }
 
@@ -127,20 +152,25 @@ function configure_edit() {
                         };
      
     
-     $('.edit_text').editable(edit_post_url);    
+     $('.edit_text').editable(edit_post_url, {
+		 callback : update_view_and_remember_original_value
+	 });    
      $('.edit_int').editable(edit_post_url, {
          type      : 'positiveinteger',
          onerror : function(settings, original, xhr){
                           alert(xhr.responseText);
                           original.reset();
                     },
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_area').editable(edit_post_url, { 
-         type      : 'textarea'
+         type      : 'textarea',
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_role').editable(edit_post_url, { 
          type      : 'select',
-         data      : definition_role_choices
+         data      : definition_role_choices,
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_language').editable(edit_post_url, {
          type      : 'multiselect',
@@ -152,54 +182,77 @@ function configure_edit() {
      });     
      $('.edit_check').editable(edit_post_url, {
          type      : 'checkbox',
-         checkbox: { trueValue: 'Yes', falseValue: 'No' }
+         checkbox: { trueValue: 'Yes', falseValue: 'No' },
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_handshape').editable(edit_post_url, {
          type      : 'select',
-         data      : handshape_choices
+         data      : handshape_choices,
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_location').editable(edit_post_url, {
          type      : 'select',
-         data      : location_choices
+         data      : location_choices,
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_palm').editable(edit_post_url, {
          type      : 'select',
-         data      : palm_orientation_choices
+         data      : palm_orientation_choices,
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_relori').editable(edit_post_url, {
          type      : 'select',
-         data      : relative_orientation_choices
+         data      : relative_orientation_choices,
+		 callback : update_view_and_remember_original_value
      }); 
      $('.edit_sec_location').editable(edit_post_url, {
          type      : 'select',
-         data      : secondary_location_choices
+         data      : secondary_location_choices,
+		 callback : update_view_and_remember_original_value
      });                  
      $('.edit_relation_role').editable(edit_post_url, {
          type      : 'select',
-         data      : relation_role_choices
+         data      : relation_role_choices,
+		 callback : update_view_and_remember_original_value
      }); 
      $('.edit_relation_target').editable(edit_post_url, {
-         type      : 'glosstypeahead'
+         type      : 'glosstypeahead',
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_morpheme').editable(edit_post_url, {
-         type      : 'glosstypeahead'
+         type      : 'glosstypeahead',
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_morphology_role').editable(edit_post_url, {
          type      : 'select',
-         data      : choice_lists['morphology_role']
+         data      : choice_lists['morphology_role'],
+	 	 callback : update_view_and_remember_original_value
      });
      $('.edit_list').click(function() 
 	 {
 		 $(this).editable(edit_post_url, {
 		     type      : 'select',
-		     data    : choice_lists[$(this).attr('id')] 
+		     data    : choice_lists[$(this).attr('id')],
+			 callback : update_view_and_remember_original_value
 		 });
-
-
      });
 
 }
 
+function update_view_and_remember_original_value(change_summary)
+{
+	split_values = change_summary.split(',');
+	original_value = split_values[0];
+  	new_value = split_values[1];
+	id = $(this).attr('id');
+  	$(this).html(new_value);
+
+	if (original_values_for_changes_made[id] == undefined)
+  	{
+    	original_values_for_changes_made[id] = original_value;                          
+		console.log(original_values_for_changes_made); 
+	}
+}
 
 var gloss_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -347,10 +400,39 @@ function ajaxifyTagForm() {
         return false;
     });
 }
-    
-    
-     
 
+function post_key_and_value_after_n_seconds(key_to_post,value_to_post,n_seconds)
+{
+	setTimeout(function()
+	{
+		$.ajax({
+		  type: "POST",
+		  url: edit_post_url,
+		  data: {'id':key_to_post,'value':'_'+value_to_post},
+		});
 
-      
-      
+	},n_seconds)
+}
+    
+function delayed_reload(n_seconds)
+{
+	setTimeout(function()
+	{
+		location.reload();		
+	},n_seconds);
+}
+
+function rewind()
+{
+	var c = 1;
+
+	for (key in original_values_for_changes_made)
+	{
+		value = original_values_for_changes_made[key];
+		post_key_and_value_after_n_seconds(key,value,c*100);
+		c++;	
+	}
+
+	delayed_reload(c*100);
+
+}
