@@ -726,6 +726,7 @@ class Gloss(models.Model):
         permissions = (('update_video', "Can Update Video"),
                        ('search_gloss', 'Can Search/View Full Gloss Details'),
                        ('export_csv', 'Can export sign details as CSV'),
+                       ('export_ecv', 'Can create an ECV export file of Signbank'),
                        ('can_publish', 'Can publish signs and definitions'),
                        ('can_delete_unpublished', 'Can delete unpub signs or defs'),
                        ('can_delete_published', 'Can delete pub signs and defs'),

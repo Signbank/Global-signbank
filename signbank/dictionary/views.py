@@ -422,7 +422,7 @@ def import_videos(request):
     video_folder = '/var/www2/signbank/live/writable/import_videos/';
 
     out = '<p>Imported</p><ul>';
-    overwritten_files = '<p>Overwritten</p><ul>';
+    overwritten_files = '<p>Of these files, these were overwritten</p><ul>';
 
     for filename in os.listdir(video_folder):
 
