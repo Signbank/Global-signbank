@@ -56,6 +56,7 @@ def update_gloss(request, glossid):
 
         field = request.POST.get('id', '')
         value = request.POST.get('value', '')
+        original_value = '' #will in most cases be set later, but can't be empty in case it is not set
 
         if len(value) == 0:
             value = ' '

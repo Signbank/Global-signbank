@@ -174,11 +174,11 @@ function configure_edit() {
      });
      $('.edit_language').editable(edit_post_url, {
          type      : 'multiselect',
-         data      : languages,
+         data      : languages
      });
      $('.edit_dialect').editable(edit_post_url, {
          type      : 'multiselect',
-         data      : dialects,
+         data      : dialects
      });     
      $('.edit_check').editable(edit_post_url, {
          type      : 'checkbox',
