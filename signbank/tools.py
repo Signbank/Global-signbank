@@ -44,8 +44,6 @@ def video_to_signbank(source_folder,gloss,extension):
     except IOError:
         was_allowed = False;
 
-    os.remove(source);
-
     return overwritten,was_allowed;
 
 def unescape(string):
