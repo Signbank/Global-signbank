@@ -26,7 +26,7 @@ DATABASES = {
 
 TIME_ZONE = 'Australia/Sydney'
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "nl"
 
 SITE_ID = 1
 USE_I18N = True
@@ -89,6 +89,7 @@ MIDDLEWARE_CLASSES = (
     'django_mobile.middleware.SetFlavourMiddleware',
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
+#    'django.middleware.locale.LocaleMiddleware',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -265,5 +266,3 @@ VIDEO_ASPECT_RATIO = 3.0/4.0
 # settings for django-tagging
 
 FORCE_LOWERCASE_TAGS = True
-
-
