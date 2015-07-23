@@ -26,7 +26,8 @@ DATABASES = {
 
 TIME_ZONE = 'Australia/Sydney'
 
-LANGUAGE_CODE = "nl"
+LANGUAGE_CODE = "en"
+LOCALE_PATHS = ['/var/www2/signbank/live/repo/signbank/conf/locale']
 
 SITE_ID = 1
 USE_I18N = True

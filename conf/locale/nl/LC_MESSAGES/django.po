@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-17 00:48+1000\n"
+"POT-Creation-Date: 2015-07-23 20:22+1000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1794,9 +1794,33 @@ msgstr ""
 msgid "More than one"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:290
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:283
+msgid "ID Gloss"
+msgstr "ID Gloss"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:284
+msgid "Annotation ID Gloss"
+msgstr "Annotatie ID Gloss"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:285
+msgid "Annotation ID Gloss: English"
+msgstr "Annotatie ID Gloss: Engels"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:286
+msgid "Translation equivalents in Dutch"
+msgstr "Vergelijkebare vertalingen in het Nederlands"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:287
+msgid "Annotation Instructions"
+msgstr "Annotatieinstructies"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:288
 msgid "Language"
 msgstr "Taal"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:289
+msgid "Dialect"
+msgstr "Dialect"
 
 #: signbank/pages/admin.py:14
 msgid ""
@@ -1962,4 +1986,3 @@ msgstr ""
 #: templates/admin/dictionary/gloss/change_form.html:18
 msgid "View on site"
 msgstr ""
-

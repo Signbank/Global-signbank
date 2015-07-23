@@ -278,17 +278,15 @@
 </div>
 
     <div class='panel-group' id="definition">
-        
 
-        
         <table class='table table-condensed'>
-            <tr><th>ID Gloss:</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
-            <tr><th>Annotation ID Gloss:</th><td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td></tr>
-            <tr><th>Annotation ID Gloss: English</th><td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td></tr>
-            <tr><th>Translation equivalents in Dutch</th><td class='edit edit_text' id='keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>Annotation Instructions</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
+            <tr><th>{% trans "ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
+            <tr><th>{% trans "Annotation ID Gloss" %}</th><td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td></tr>
+            <tr><th>{% trans "Annotation ID Gloss: English" %}</th><td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td></tr>
+            <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Annotation Instructions" %}</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
             <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language'>{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>Dialect</th><td class='edit edit_dialect' id='dialect'>{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
         </table>
 			 
     {% if perms.dictionary.view_advanced_properties %}
