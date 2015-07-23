@@ -16,8 +16,6 @@ import sys, os
 import json
 from collections import OrderedDict
 
-#from signbank.video.models import GlossVideo
-
 #from models_legacy import Sign
 
 
