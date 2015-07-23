@@ -259,41 +259,46 @@ function clearForm(myFormElement) {
 
               <div id='pub_search' class='collapse'>
               <table class='table'>
-                <tr>
+                  <tr>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
+                            {{searchform.inWeb}}
+                        </div>
+                    </td>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
+                            {{searchform.isNew}}
+                        </div>
+                    </td>
+                  </tr>
 
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
-                                {{searchform.inWeb}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
-                                {{searchform.isNew}}
-                            </div>
-                        </td>
-                      </tr>
+                  <tr>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
+                            {{searchform.definitionRole}}
+                        </div>
+                    </td>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
+                            {{searchform.definitionContains}}
+                        </div>
+                    </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          <div class='input-group'>
+                            <label class='input-group-addon' for='id_language'>{{searchform.tags.label}}</label>
+                            {{searchform.tags}}
+                          </div>
+                      </td>
+                  </tr>
 
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
-                                {{searchform.definitionRole}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
-                                {{searchform.definitionContains}}
-                            </div>
-                        </td>
-                      </tr>
-
-
-                </tr>
               </table>
+
               </div>
             </div>
         </div>
