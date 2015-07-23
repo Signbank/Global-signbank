@@ -43,7 +43,10 @@ urlpatterns = patterns('',
     url(r'^signs/add/$', 'signbank.dictionary.views.add_new_sign'),
     url(r'^signs/import_csv/$', 'signbank.dictionary.views.import_csv'),
     url(r'^feedback/overview/$', 'signbank.feedback.views.showfeedback'),
-                       
+
+    # A standard view for setting the language
+    url(r'^i18n/', include('django.conf.urls.i18n')),
+
     # compatibility with old links - intercept and return 401
     url(r'^index.cfm', TemplateView.as_view(template_name='compat.html')),
 

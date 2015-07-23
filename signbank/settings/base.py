@@ -28,6 +28,10 @@ TIME_ZONE = 'Australia/Sydney'
 
 LANGUAGE_CODE = "en"
 LOCALE_PATHS = ['/var/www2/signbank/live/repo/signbank/conf/locale']
+LANGUAGES = (
+  ('en', 'English'),
+  ('nl', 'Dutch'),
+)
 
 SITE_ID = 1
 USE_I18N = True
@@ -79,8 +83,9 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -90,7 +95,6 @@ MIDDLEWARE_CLASSES = (
     'django_mobile.middleware.SetFlavourMiddleware',
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
-#    'django.middleware.locale.LocaleMiddleware',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
