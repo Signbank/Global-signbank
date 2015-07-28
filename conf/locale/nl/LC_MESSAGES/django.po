@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-07-23 20:22+1000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2015-07-28 16:26+1000\n"
+"Last-Translator: Richard <r.bankl@let.ru.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -20,54 +20,58 @@ msgstr ""
 #: bootstrap_templates/registration/password_reset_complete.html:5
 #: bootstrap_templates/registration/password_reset_complete.html:9
 msgid "Password reset complete"
-msgstr ""
+msgstr "Wachtwoord opnieuw ingesteld"
 
 #: bootstrap_templates/registration/password_reset_complete.html:11
 msgid "Your password has been set.  You may go ahead and log in now."
-msgstr ""
+msgstr "Je wachtwoord is ingesteld. Je kunt nu inloggen"
 
 #: bootstrap_templates/registration/password_reset_complete.html:13
 msgid "Log in"
-msgstr ""
+msgstr "Inloggen"
 
 #: bootstrap_templates/registration/password_reset_confirm.html:5
 #: bootstrap_templates/registration/password_reset_form.html:4
 #: bootstrap_templates/registration/password_reset_form.html:6
 #: bootstrap_templates/registration/password_reset_form.html:10
 msgid "Password reset"
-msgstr ""
+msgstr "Wachtwoord opnieuw instellen"
 
 #: bootstrap_templates/registration/password_reset_confirm.html:13
 msgid "Enter new password"
-msgstr ""
+msgstr "Vul nieuw wachtwoord in"
 
 #: bootstrap_templates/registration/password_reset_confirm.html:15
 msgid ""
 "Please enter your new password twice so we can verify you typed it in "
 "correctly."
 msgstr ""
+"Vul je nieuwe wachtwoord twee keer in zodat we kunnen controleren of "
+"ze gelijk zijn."
 
 #: bootstrap_templates/registration/password_reset_confirm.html:19
 msgid "New password:"
-msgstr ""
+msgstr "Nieuw wachtwoord:"
 
 #: bootstrap_templates/registration/password_reset_confirm.html:22
 msgid "Confirm password:"
-msgstr ""
+msgstr "Bevestig nieuw wachtwoord: "
 
 #: bootstrap_templates/registration/password_reset_confirm.html:24
 msgid "Change my password"
-msgstr ""
+msgstr "Verander mijn wachtwoord: "
 
 #: bootstrap_templates/registration/password_reset_confirm.html:29
 msgid "Password reset unsuccessful"
-msgstr ""
+msgstr "Wachtwoord opnieuw instellen is mislukt"
 
 #: bootstrap_templates/registration/password_reset_confirm.html:31
 msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used.  Please request a new password reset."
 msgstr ""
+"De link om het wachtwoord opnieuw in te stellen is waarschijnlijk al een "
+"keer gebruikt. Vraag opnieuw een nieuw wachtwoord aan." 
 
 #: bootstrap_templates/registration/password_reset_email.html:2
 #, python-format
@@ -75,37 +79,41 @@ msgid ""
 "You're receiving this email because you requested a password reset for your "
 "user account at %(site_name)s."
 msgstr ""
+"Je ontvangt deze mail omdat je het wachtwoord voor je account op "
+"%(site_name)s opnieuw in wilt stellen"
 
 #: bootstrap_templates/registration/password_reset_email.html:4
 msgid "Please go to the following page and choose a new password:"
-msgstr ""
+msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen:"
 
 #: bootstrap_templates/registration/password_reset_email.html:9
 msgid "Thanks for using our site!"
-msgstr ""
+msgstr "Bedankt voor het gebruik van onze site! "
 
 #: bootstrap_templates/registration/password_reset_email.html:11
 #, python-format
 msgid "The %(site_name)s team"
-msgstr ""
+msgstr "Het %(site_name)s team"
 
 #: bootstrap_templates/registration/password_reset_form.html:4
 msgid "Home"
-msgstr ""
+msgstr "Home"
 
 #: bootstrap_templates/registration/password_reset_form.html:12
 msgid ""
 "Forgotten your password? Enter your e-mail address below, and we'll reset "
 "your password and e-mail the new one to you."
 msgstr ""
+"Wachtwoord vergeten? Vul hieronder je e-mailadres in om een nieuwe "
+"toegestuurd te krijgen."
 
 #: bootstrap_templates/registration/password_reset_form.html:17
 msgid "E-mail address:"
-msgstr ""
+msgstr "E-mailadres:"
 
 #: bootstrap_templates/registration/password_reset_form.html:17
 msgid "Reset my password"
-msgstr ""
+msgstr "Stel mijn wachtwoord opnieuw in"
 
 #: build/django/django/conf/global_settings.py:51
 msgid "Afrikaans"
@@ -113,39 +121,39 @@ msgstr ""
 
 #: build/django/django/conf/global_settings.py:52
 msgid "Arabic"
-msgstr ""
+msgstr "Arabisch"
 
 #: build/django/django/conf/global_settings.py:53
 msgid "Azerbaijani"
-msgstr ""
+msgstr "Azerbeidzjaans"
 
 #: build/django/django/conf/global_settings.py:54
 msgid "Bulgarian"
-msgstr ""
+msgstr "Bulgaars"
 
 #: build/django/django/conf/global_settings.py:55
 msgid "Belarusian"
-msgstr ""
+msgstr "Witrussisch"
 
 #: build/django/django/conf/global_settings.py:56
 msgid "Bengali"
-msgstr ""
+msgstr "Bengaals"
 
 #: build/django/django/conf/global_settings.py:57
 msgid "Breton"
-msgstr ""
+msgstr "Bretons"
 
 #: build/django/django/conf/global_settings.py:58
 msgid "Bosnian"
-msgstr ""
+msgstr "Bosnisch"
 
 #: build/django/django/conf/global_settings.py:59
 msgid "Catalan"
-msgstr ""
+msgstr "Catalaans"
 
 #: build/django/django/conf/global_settings.py:60
 msgid "Czech"
-msgstr ""
+msgstr "Tsjechisch"
 
 #: build/django/django/conf/global_settings.py:61
 msgid "Welsh"
@@ -153,23 +161,23 @@ msgstr ""
 
 #: build/django/django/conf/global_settings.py:62
 msgid "Danish"
-msgstr ""
+msgstr "Deens"
 
 #: build/django/django/conf/global_settings.py:63
 msgid "German"
-msgstr ""
+msgstr "Duits"
 
 #: build/django/django/conf/global_settings.py:64
 msgid "Greek"
-msgstr ""
+msgstr "Grieks"
 
 #: build/django/django/conf/global_settings.py:65
 msgid "English"
-msgstr ""
+msgstr "Engels"
 
 #: build/django/django/conf/global_settings.py:66
 msgid "British English"
-msgstr ""
+msgstr "Brits Engels"
 
 #: build/django/django/conf/global_settings.py:67
 msgid "Esperanto"
@@ -177,59 +185,59 @@ msgstr ""
 
 #: build/django/django/conf/global_settings.py:68
 msgid "Spanish"
-msgstr ""
+msgstr "Spaans"
 
 #: build/django/django/conf/global_settings.py:69
 msgid "Argentinian Spanish"
-msgstr ""
+msgstr "Argentijns Spaans"
 
 #: build/django/django/conf/global_settings.py:70
 msgid "Mexican Spanish"
-msgstr ""
+msgstr "Mexicaans Spaans"
 
 #: build/django/django/conf/global_settings.py:71
 msgid "Nicaraguan Spanish"
-msgstr ""
+msgstr "Nicaraguaans Spaans"
 
 #: build/django/django/conf/global_settings.py:72
 msgid "Venezuelan Spanish"
-msgstr ""
+msgstr "Venezuelaans Spaans"
 
 #: build/django/django/conf/global_settings.py:73
 msgid "Estonian"
-msgstr ""
+msgstr "Ests"
 
 #: build/django/django/conf/global_settings.py:74
 msgid "Basque"
-msgstr ""
+msgstr "Bsks"
 
 #: build/django/django/conf/global_settings.py:75
 msgid "Persian"
-msgstr ""
+msgstr "Perzisch"
 
 #: build/django/django/conf/global_settings.py:76
 msgid "Finnish"
-msgstr ""
+msgstr "Fins"
 
 #: build/django/django/conf/global_settings.py:77
 msgid "French"
-msgstr ""
+msgstr "Frans"
 
 #: build/django/django/conf/global_settings.py:78
 msgid "Frisian"
-msgstr ""
+msgstr "Fries"
 
 #: build/django/django/conf/global_settings.py:79
 msgid "Irish"
-msgstr ""
+msgstr "Iers"
 
 #: build/django/django/conf/global_settings.py:80
 msgid "Galician"
-msgstr ""
+msgstr "Galicisch"
 
 #: build/django/django/conf/global_settings.py:81
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebreeuws"
 
 #: build/django/django/conf/global_settings.py:82
 msgid "Hindi"
@@ -237,11 +245,11 @@ msgstr ""
 
 #: build/django/django/conf/global_settings.py:83
 msgid "Croatian"
-msgstr ""
+msgstr "Kroatisch"
 
 #: build/django/django/conf/global_settings.py:84
 msgid "Hungarian"
-msgstr ""
+msgstr "Hongaars"
 
 #: build/django/django/conf/global_settings.py:85
 msgid "Interlingua"
@@ -249,27 +257,27 @@ msgstr ""
 
 #: build/django/django/conf/global_settings.py:86
 msgid "Indonesian"
-msgstr ""
+msgstr "Indonesisch"
 
 #: build/django/django/conf/global_settings.py:87
 msgid "Icelandic"
-msgstr ""
+msgstr "IJslands"
 
 #: build/django/django/conf/global_settings.py:88
 msgid "Italian"
-msgstr ""
+msgstr "Italiaans"
 
 #: build/django/django/conf/global_settings.py:89
 msgid "Japanese"
-msgstr ""
+msgstr "Japans"
 
 #: build/django/django/conf/global_settings.py:90
 msgid "Georgian"
-msgstr ""
+msgstr "Georgisch"
 
 #: build/django/django/conf/global_settings.py:91
 msgid "Kazakh"
-msgstr ""
+msgstr "Kazachs"
 
 #: build/django/django/conf/global_settings.py:92
 msgid "Khmer"
@@ -281,103 +289,103 @@ msgstr ""
 
 #: build/django/django/conf/global_settings.py:94
 msgid "Korean"
-msgstr ""
+msgstr "Koreaans"
 
 #: build/django/django/conf/global_settings.py:95
 msgid "Luxembourgish"
-msgstr ""
+msgstr "Luxemburgs"
 
 #: build/django/django/conf/global_settings.py:96
 msgid "Lithuanian"
-msgstr ""
+msgstr "Litouws"
 
 #: build/django/django/conf/global_settings.py:97
 msgid "Latvian"
-msgstr ""
+msgstr "Lets"
 
 #: build/django/django/conf/global_settings.py:98
 msgid "Macedonian"
-msgstr ""
+msgstr "Macedonisch "
 
 #: build/django/django/conf/global_settings.py:99
 msgid "Malayalam"
-msgstr ""
+msgstr "Maleis"
 
 #: build/django/django/conf/global_settings.py:100
 msgid "Mongolian"
-msgstr ""
+msgstr "Mongools"
 
 #: build/django/django/conf/global_settings.py:101
 msgid "Burmese"
-msgstr ""
+msgstr "Burmees"
 
 #: build/django/django/conf/global_settings.py:102
 msgid "Norwegian Bokmal"
-msgstr ""
+msgstr "Noorweegs Bokmal"
 
 #: build/django/django/conf/global_settings.py:103
 msgid "Nepali"
-msgstr ""
+msgstr "Nepalees"
 
 #: build/django/django/conf/global_settings.py:104
 msgid "Dutch"
-msgstr ""
+msgstr "Nederlands"
 
 #: build/django/django/conf/global_settings.py:105
 msgid "Norwegian Nynorsk"
-msgstr ""
+msgstr "Noorweegs Nynorsk"
 
 #: build/django/django/conf/global_settings.py:106
 msgid "Ossetic"
-msgstr ""
+msgstr "Ossetisch"
 
 #: build/django/django/conf/global_settings.py:107
 msgid "Punjabi"
-msgstr ""
+msgstr "Punjaabs"
 
 #: build/django/django/conf/global_settings.py:108
 msgid "Polish"
-msgstr ""
+msgstr "Pools"
 
 #: build/django/django/conf/global_settings.py:109
 msgid "Portuguese"
-msgstr ""
+msgstr "Portugees"
 
 #: build/django/django/conf/global_settings.py:110
 msgid "Brazilian Portuguese"
-msgstr ""
+msgstr "Braziliaans Portugees"
 
 #: build/django/django/conf/global_settings.py:111
 msgid "Romanian"
-msgstr ""
+msgstr "Romaans"
 
 #: build/django/django/conf/global_settings.py:112
 msgid "Russian"
-msgstr ""
+msgstr "Russisch"
 
 #: build/django/django/conf/global_settings.py:113
 msgid "Slovak"
-msgstr ""
+msgstr "Slovaaks"
 
 #: build/django/django/conf/global_settings.py:114
 msgid "Slovenian"
-msgstr ""
+msgstr "Sloveens"
 
 #: build/django/django/conf/global_settings.py:115
 msgid "Albanian"
-msgstr ""
+msgstr "Albanees"
 
 #: build/django/django/conf/global_settings.py:116
 msgid "Serbian"
-msgstr ""
+msgstr "Servisch"
 
 #: build/django/django/conf/global_settings.py:117
 msgid "Serbian Latin"
-msgstr ""
+msgstr "Servisch Latijn"
 
 #: build/django/django/conf/global_settings.py:118
 msgid "Swedish"
-msgstr ""
+msgstr "Zweeds"
 
 #: build/django/django/conf/global_settings.py:119
 msgid "Swahili"
@@ -393,23 +401,23 @@ msgstr ""
 
 #: build/django/django/conf/global_settings.py:122
 msgid "Thai"
-msgstr ""
+msgstr "Thais"
 
 #: build/django/django/conf/global_settings.py:123
 msgid "Turkish"
-msgstr ""
+msgstr "Turks"
 
 #: build/django/django/conf/global_settings.py:124
 msgid "Tatar"
-msgstr ""
+msgstr "Tataars"
 
 #: build/django/django/conf/global_settings.py:125
 msgid "Udmurt"
-msgstr ""
+msgstr "Oedmoerts"
 
 #: build/django/django/conf/global_settings.py:126
 msgid "Ukrainian"
-msgstr ""
+msgstr "Oekraïens"
 
 #: build/django/django/conf/global_settings.py:127
 msgid "Urdu"
@@ -417,72 +425,74 @@ msgstr ""
 
 #: build/django/django/conf/global_settings.py:128
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamees"
 
 #: build/django/django/conf/global_settings.py:129
 msgid "Simplified Chinese"
-msgstr ""
+msgstr "Versimpeld Chinees"
 
 #: build/django/django/conf/global_settings.py:130
 msgid "Traditional Chinese"
-msgstr ""
+msgstr "Traditioneel Chinees"
 
 #: build/django/django/core/validators.py:19
 msgid "Enter a valid value."
-msgstr ""
+msgstr "Vul een geldige waarde in."
 
 #: build/django/django/core/validators.py:51
 #: build/django/django/forms/fields.py:644
 msgid "Enter a valid URL."
-msgstr ""
+msgstr "Vul een geldige URL in."
 
 #: build/django/django/core/validators.py:77
 msgid "Enter a valid integer."
-msgstr ""
+msgstr "Vul een geldig getal in."
 
 #: build/django/django/core/validators.py:81
 msgid "Enter a valid email address."
-msgstr ""
+msgstr "Vul een geldig e-mailadres in."
 
 #: build/django/django/core/validators.py:129
 msgid ""
 "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens."
 msgstr ""
+"Vul een geldige regel in, bestaande uit letters, cijfers, underscores of "
+"streepjes."
 
 #: build/django/django/core/validators.py:132
 #: build/django/django/core/validators.py:151
 msgid "Enter a valid IPv4 address."
-msgstr ""
+msgstr "Vul een geldig IPv4-adres in."
 
 #: build/django/django/core/validators.py:137
 #: build/django/django/core/validators.py:152
 msgid "Enter a valid IPv6 address."
-msgstr ""
+msgstr "Vul een geldig IPv6-adres in."
 
 #: build/django/django/core/validators.py:147
 #: build/django/django/core/validators.py:150
 msgid "Enter a valid IPv4 or IPv6 address."
-msgstr ""
+msgstr "Vul een geldig IPv4- of IPv6-adres in."
 
 #: build/django/django/core/validators.py:173
 #: build/django/django/db/models/fields/__init__.py:715
 msgid "Enter only digits separated by commas."
-msgstr ""
+msgstr "Vul alleen cijfers in, gescheiden door komma's"
 
 #: build/django/django/core/validators.py:179
 #, python-format
 msgid "Ensure this value is %(limit_value)s (it is %(show_value)s)."
-msgstr ""
+msgstr "Zorg dat deze waarde %(limit_value)s is (nu %(show_value)s)."
 
 #: build/django/django/core/validators.py:194
 #, python-format
 msgid "Ensure this value is less than or equal to %(limit_value)s."
-msgstr ""
+msgstr "Zorg dat deze waarde kleiner of gelijk aan %(limit_value)s is."
 
 #: build/django/django/core/validators.py:200
 #, python-format
 msgid "Ensure this value is greater than or equal to %(limit_value)s."
-msgstr ""
+msgstr "Zorg dat deze waarde groter of gelijk aan %(limit_value)s is."
 
 #: build/django/django/core/validators.py:208
 #, python-format
@@ -493,7 +503,11 @@ msgid_plural ""
 "Ensure this value has at least %(limit_value)d characters (it has "
 "%(show_value)d)."
 msgstr[0] ""
+"Zorg dat deze waarde tenminste %(limit_value)d teken heeft "
+"(heeft nu %(show_value)d)."
 msgstr[1] ""
+"Zorg dat deze waarde tenminste %(limit_value)d tekens heeft "
+"(heeft nu %(show_value)d)."
 
 #: build/django/django/core/validators.py:218
 #, python-format
@@ -504,70 +518,74 @@ msgid_plural ""
 "Ensure this value has at most %(limit_value)d characters (it has "
 "%(show_value)d)."
 msgstr[0] ""
+"Zorg dat deze waarde hooguit %(limit_value)d teken heeft "
+"(heeft nu %(show_value)d)."
 msgstr[1] ""
+"Zorg dat deze waarde hooguit %(limit_value)d tekens heeft "
+"(heeft nu %(show_value)d)."
 
 #: build/django/django/db/models/base.py:889
 #, python-format
 msgid "%(field_name)s must be unique for %(date_field)s %(lookup)s."
-msgstr ""
+msgstr "%(field_name)s moet uniek zijn voor %(date_field)s %(lookup)s."
 
 #: build/django/django/db/models/base.py:912
 #: build/django/django/forms/models.py:695
 msgid "and"
-msgstr ""
+msgstr "en"
 
 #: build/django/django/db/models/base.py:913
 #: build/django/django/db/models/fields/__init__.py:83
 #, python-format
 msgid "%(model_name)s with this %(field_label)s already exists."
-msgstr ""
+msgstr "%(model_name)s met dit %(field_label)s bestaat al"
 
 #: build/django/django/db/models/fields/__init__.py:80
 #, python-format
 msgid "Value %(value)r is not a valid choice."
-msgstr ""
+msgstr "Waarde %(value)r is geen geldige keuze."
 
 #: build/django/django/db/models/fields/__init__.py:81
 msgid "This field cannot be null."
-msgstr ""
+msgstr "Dit veld mag niet leeg zijn."
 
 #: build/django/django/db/models/fields/__init__.py:82
 msgid "This field cannot be blank."
-msgstr ""
+msgstr "Dit veld mag niet leeg zijn."
 
 #: build/django/django/db/models/fields/__init__.py:89
 #, python-format
 msgid "Field of type: %(field_type)s"
-msgstr ""
+msgstr "Veldtype: %(field_type)s"
 
 #: build/django/django/db/models/fields/__init__.py:573
 #: build/django/django/db/models/fields/__init__.py:1068
 msgid "Integer"
-msgstr ""
+msgstr "Geheel getal"
 
 #: build/django/django/db/models/fields/__init__.py:577
 #: build/django/django/db/models/fields/__init__.py:1066
 #, python-format
 msgid "'%(value)s' value must be an integer."
-msgstr ""
+msgstr "'%(value)s' waarde moet een geheel getal zijn."
 
 #: build/django/django/db/models/fields/__init__.py:628
 #, python-format
 msgid "'%(value)s' value must be either True or False."
-msgstr ""
+msgstr "'%(value)s' waarde moet True of False zijn."
 
 #: build/django/django/db/models/fields/__init__.py:630
 msgid "Boolean (Either True or False)"
-msgstr ""
+msgstr "Boolean (True of False)"
 
 #: build/django/django/db/models/fields/__init__.py:682
 #, python-format
 msgid "String (up to %(max_length)s)"
-msgstr ""
+msgstr "String (maximaal %(max_length)s tekens)"
 
 #: build/django/django/db/models/fields/__init__.py:710
 msgid "Comma-separated integers"
-msgstr ""
+msgstr "Komma-gescheiden gehele getallen"
 
 #: build/django/django/db/models/fields/__init__.py:724
 #, python-format
@@ -575,6 +593,8 @@ msgid ""
 "'%(value)s' value has an invalid date format. It must be in YYYY-MM-DD "
 "format."
 msgstr ""
+"'%(value)s' waarde is ongeldig als datumindeling, het moet in "
+"YYYY-MM-DD indeling."
 
 #: build/django/django/db/models/fields/__init__.py:726
 #: build/django/django/db/models/fields/__init__.py:820
@@ -583,10 +603,12 @@ msgid ""
 "'%(value)s' value has the correct format (YYYY-MM-DD) but it is an invalid "
 "date."
 msgstr ""
+"'%(value)s' waarde heeft de juiste indeling (YYYY-MM-DD) maar is een "
+"ongeldige datum."
 
 #: build/django/django/db/models/fields/__init__.py:729
 msgid "Date (without time)"
-msgstr ""
+msgstr "Datum (zonder tijd)"
 
 #: build/django/django/db/models/fields/__init__.py:818
 #, python-format
@@ -594,6 +616,8 @@ msgid ""
 "'%(value)s' value has an invalid format. It must be in YYYY-MM-DD HH:MM[:ss[."
 "uuuuuu]][TZ] format."
 msgstr ""
+"'%(value)s' waarde heeft een ongeldige indeling. De indeling moet zijn: "
+"YYYY-MM-DD HH:MM[:ss[.uuuuuu]][TZ]."
 
 #: build/django/django/db/models/fields/__init__.py:822
 #, python-format
@@ -601,36 +625,38 @@ msgid ""
 "'%(value)s' value has the correct format (YYYY-MM-DD HH:MM[:ss[.uuuuuu]]"
 "[TZ]) but it is an invalid date/time."
 msgstr ""
+"'%(value)s' waarde heeft de juiste indeling (YYYY-MM-DD HH:MM[:ss[.uuuuuu]]"
+"[TZ]), maar is een ongeldige datum/tijd."
 
 #: build/django/django/db/models/fields/__init__.py:826
 msgid "Date (with time)"
-msgstr ""
+msgstr "Datum (met tijd)"
 
 #: build/django/django/db/models/fields/__init__.py:926
 #, python-format
 msgid "'%(value)s' value must be a decimal number."
-msgstr ""
+msgstr "'%(value)s' waarde moet een decimaal getal zijn."
 
 #: build/django/django/db/models/fields/__init__.py:928
 msgid "Decimal number"
-msgstr ""
+msgstr "Decimaal getal"
 
 #: build/django/django/db/models/fields/__init__.py:988
 msgid "Email address"
-msgstr ""
+msgstr "E-mailadres"
 
 #: build/django/django/db/models/fields/__init__.py:1007
 msgid "File path"
-msgstr ""
+msgstr "Pad naar bestand"
 
 #: build/django/django/db/models/fields/__init__.py:1034
 #, python-format
 msgid "'%(value)s' value must be a float."
-msgstr ""
+msgstr "'%(value)s' waarde moet een float zijn (zwevendekommagetal)."
 
 #: build/django/django/db/models/fields/__init__.py:1036
 msgid "Floating point number"
-msgstr ""
+msgstr "Zwevendekommagetal"
 
 #: build/django/django/db/models/fields/__init__.py:1103
 msgid "Big (8 byte) integer"
@@ -638,41 +664,41 @@ msgstr ""
 
 #: build/django/django/db/models/fields/__init__.py:1117
 msgid "IPv4 address"
-msgstr ""
+msgstr "IPv4-adres"
 
 #: build/django/django/db/models/fields/__init__.py:1133
 msgid "IP address"
-msgstr ""
+msgstr "IP-adres"
 
 #: build/django/django/db/models/fields/__init__.py:1180
 #, python-format
 msgid "'%(value)s' value must be either None, True or False."
-msgstr ""
+msgstr "'%(value)s' waarde moet None, True of False zijn."
 
 #: build/django/django/db/models/fields/__init__.py:1182
 msgid "Boolean (Either True, False or None)"
-msgstr ""
+msgstr "Boolean (True, False of None)"
 
 #: build/django/django/db/models/fields/__init__.py:1234
 msgid "Positive integer"
-msgstr ""
+msgstr "Positief geheel getal"
 
 #: build/django/django/db/models/fields/__init__.py:1245
 msgid "Positive small integer"
-msgstr ""
+msgstr "Positief klein geheel getal"
 
 #: build/django/django/db/models/fields/__init__.py:1257
 #, python-format
 msgid "Slug (up to %(max_length)s)"
-msgstr ""
+msgstr "Regel (maximaal %(max_length)s)"
 
 #: build/django/django/db/models/fields/__init__.py:1275
 msgid "Small integer"
-msgstr ""
+msgstr "Klein geheel getal"
 
 #: build/django/django/db/models/fields/__init__.py:1281
 msgid "Text"
-msgstr ""
+msgstr "Tekst"
 
 #: build/django/django/db/models/fields/__init__.py:1299
 #, python-format
@@ -680,34 +706,37 @@ msgid ""
 "'%(value)s' value has an invalid format. It must be in HH:MM[:ss[.uuuuuu]] "
 "format."
 msgstr ""
+"'%(value)s' waarde heeft een ongeldige indeling, het moet in "
+"HH:MM[:ss[.uuuuuu]] indeling."
 
 #: build/django/django/db/models/fields/__init__.py:1301
 #, python-format
 msgid ""
 "'%(value)s' value has the correct format (HH:MM[:ss[.uuuuuu]]) but it is an "
 "invalid time."
-msgstr ""
+msgstr "'%(value)s' waarde heeft de juiste indeling (HH:MM[:ss[.uuuuuu]]) "
+"maar is ongeldig als tijd."
 
 #: build/django/django/db/models/fields/__init__.py:1304
 msgid "Time"
-msgstr ""
+msgstr "Tijd"
 
 #: build/django/django/db/models/fields/__init__.py:1373
 #: signbank/pages/admin.py:13 signbank/pages/models.py:10
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: build/django/django/db/models/fields/__init__.py:1389
 msgid "Raw binary data"
-msgstr ""
+msgstr "Raw binaire data"
 
 #: build/django/django/db/models/fields/files.py:217
 msgid "File"
-msgstr ""
+msgstr "Bestand"
 
 #: build/django/django/db/models/fields/files.py:324
 msgid "Image"
-msgstr ""
+msgstr "Afbeelding"
 
 #: build/django/django/db/models/fields/related.py:1147
 #, python-format
@@ -716,42 +745,42 @@ msgstr ""
 
 #: build/django/django/db/models/fields/related.py:1149
 msgid "Foreign Key (type determined by related field)"
-msgstr ""
+msgstr "%(model)s instantie met pk %(pk)r bestaan niet."
 
 #: build/django/django/db/models/fields/related.py:1290
 msgid "One-to-one relationship"
-msgstr ""
+msgstr "Een-op-een relatie"
 
 #: build/django/django/db/models/fields/related.py:1357
 msgid "Many-to-many relationship"
-msgstr ""
+msgstr "Veel-op-veel relatie"
 
 #: build/django/django/forms/fields.py:53
 msgid "This field is required."
-msgstr ""
+msgstr "Dit veld is verplicht."
 
 #: build/django/django/forms/fields.py:220
 msgid "Enter a whole number."
-msgstr ""
+msgstr "Vul een geheel getal in."
 
 #: build/django/django/forms/fields.py:261
 #: build/django/django/forms/fields.py:289
 msgid "Enter a number."
-msgstr ""
+msgstr "Vul een nummer in."
 
 #: build/django/django/forms/fields.py:291
 #, python-format
 msgid "Ensure that there are no more than %(max)s digit in total."
 msgid_plural "Ensure that there are no more than %(max)s digits in total."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Zorg dat er niet meer dan %(max)s cijfer is."
+msgstr[1] "Zorg dat er niet meer dan %(max)s cijfers zijn."
 
 #: build/django/django/forms/fields.py:295
 #, python-format
 msgid "Ensure that there are no more than %(max)s decimal place."
 msgid_plural "Ensure that there are no more than %(max)s decimal places."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Zorg dat er niet meer dan %(max)s cijfer achter de komma is."
+msgstr[1] "Zorg dat er niet meer dan %(max)s cijfers achter de komma zijn"
 
 #: build/django/django/forms/fields.py:299
 #, python-format
@@ -759,34 +788,35 @@ msgid ""
 "Ensure that there are no more than %(max)s digit before the decimal point."
 msgid_plural ""
 "Ensure that there are no more than %(max)s digits before the decimal point."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Zorg dat er niet meer dan %(max)s cijfer voor de komma is."
+msgstr[1] "Zorg dat er niet meer dan %(max)s cijfers voor de komma zijn."
 
 #: build/django/django/forms/fields.py:410
 #: build/django/django/forms/fields.py:1082
 msgid "Enter a valid date."
-msgstr ""
+msgstr "Vul een geldige datum in. "
 
 #: build/django/django/forms/fields.py:434
 #: build/django/django/forms/fields.py:1083
 msgid "Enter a valid time."
-msgstr ""
+msgstr "Vul een geldige tijd in."
 
 #: build/django/django/forms/fields.py:456
 msgid "Enter a valid date/time."
-msgstr ""
+msgstr "Vul een geldige datum/tijd in."
 
 #: build/django/django/forms/fields.py:533
 msgid "No file was submitted. Check the encoding type on the form."
 msgstr ""
+"Er werd geen bestand verstuurd. Controleer het coderingstype in het formulier."
 
 #: build/django/django/forms/fields.py:534
 msgid "No file was submitted."
-msgstr ""
+msgstr "Er werd geen bestand verstuurd."
 
 #: build/django/django/forms/fields.py:535
 msgid "The submitted file is empty."
-msgstr ""
+msgstr "Het verstuurde bestand is leeg."
 
 #: build/django/django/forms/fields.py:537
 #, python-format
@@ -794,76 +824,80 @@ msgid "Ensure this filename has at most %(max)d character (it has %(length)d)."
 msgid_plural ""
 "Ensure this filename has at most %(max)d characters (it has %(length)d)."
 msgstr[0] ""
+"Zorg dat de bestandsnaam hooguit %(max)d teken bevat (is nu %(length)d)."
 msgstr[1] ""
+"Zorg dat de bestandsnaam hooguit %(max)d tekens bevat (is nu %(length)d)."
 
 #: build/django/django/forms/fields.py:540
 msgid "Please either submit a file or check the clear checkbox, not both."
-msgstr ""
+msgstr "Verstuur een file of vink het clear-vakje aan, niet beide."
 
 #: build/django/django/forms/fields.py:601
 msgid ""
 "Upload a valid image. The file you uploaded was either not an image or a "
 "corrupted image."
 msgstr ""
+"Upload een geldige afbeelding. Het bestand dat werd geüpload is geen "
+"afbeelding, of een beschadigd bestand"
 
 #: build/django/django/forms/fields.py:751
 #: build/django/django/forms/fields.py:838
 #: build/django/django/forms/models.py:1154
 #, python-format
 msgid "Select a valid choice. %(value)s is not one of the available choices."
-msgstr ""
+msgstr "Selecteer een geldige keuze. %(value)s is niet beschikbaar als keuze."
 
 #: build/django/django/forms/fields.py:839
 #: build/django/django/forms/fields.py:951
 #: build/django/django/forms/models.py:1153
 msgid "Enter a list of values."
-msgstr ""
+msgstr "Voor een lijst met waardes in."
 
 #. Translators: This is the default suffix added to form field labels
 #: build/django/django/forms/forms.py:90
 msgid ":"
-msgstr ""
+msgstr ":"
 
 #: build/django/django/forms/forms.py:159
 #, python-format
 msgid "(Hidden field %(name)s) %(error)s"
-msgstr ""
+msgstr "(Verborgen veld %(name)s) %(error)s"
 
 #. Translators: If found as last label character, these punctuation
 #. characters will prevent the default label_suffix to be appended to the label
 #: build/django/django/forms/forms.py:530
 msgid ":?.!"
-msgstr ""
+msgstr ":?.!"
 
 #: build/django/django/forms/formsets.py:88
 msgid "ManagementForm data is missing or has been tampered with"
-msgstr ""
+msgstr "ManagementForm data ontbreekt of er is mee geknoeid. "
 
 #: build/django/django/forms/formsets.py:321
 #, python-format
 msgid "Please submit %d or fewer forms."
 msgid_plural "Please submit %d or fewer forms."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Verstuur %d of minder formulieren."
+msgstr[1] "Verstuur %d of minder formulieren."
 
 #: build/django/django/forms/formsets.py:350
 #: build/django/django/forms/formsets.py:352
 msgid "Order"
-msgstr ""
+msgstr "Volgorde"
 
 #: build/django/django/forms/formsets.py:354
 msgid "Delete"
-msgstr ""
+msgstr "Verwijder"
 
 #: build/django/django/forms/models.py:689
 #, python-format
 msgid "Please correct the duplicate data for %(field)s."
-msgstr ""
+msgstr "Corrigeer de dubbele gegevens voor %(field)s."
 
 #: build/django/django/forms/models.py:693
 #, python-format
 msgid "Please correct the duplicate data for %(field)s, which must be unique."
-msgstr ""
+msgstr "Corrigeer de dubbele gegevens voor %(field)s, moet uniek zijn."
 
 #: build/django/django/forms/models.py:699
 #, python-format
@@ -871,14 +905,16 @@ msgid ""
 "Please correct the duplicate data for %(field_name)s which must be unique "
 "for the %(lookup)s in %(date_field)s."
 msgstr ""
+"Corrigeer de dubbele gegevens voor %(field_name)s, moet uniek zijn voor "
+"de %(lookup)s in %(date_field)s."
 
 #: build/django/django/forms/models.py:707
 msgid "Please correct the duplicate values below."
-msgstr ""
+msgstr "Corrigeer de dubbele gegevens voor onderstaande waardes. "
 
 #: build/django/django/forms/models.py:995
 msgid "The inline foreign key did not match the parent instance primary key."
-msgstr ""
+msgstr "De inline foreign key komt niet overeen met de parent instance primary key."
 
 #: build/django/django/forms/models.py:1059
 msgid "Select a valid choice. That choice is not one of the available choices."
@@ -887,12 +923,14 @@ msgstr ""
 #: build/django/django/forms/models.py:1156
 #, python-format
 msgid "\"%(pk)s\" is not a valid value for a primary key."
-msgstr ""
+msgstr "\"%(pk)s\" is geen geldige waarde voor een primary key."
 
 #: build/django/django/forms/models.py:1167
 msgid ""
 "Hold down \"Control\", or \"Command\" on a Mac, to select more than one."
 msgstr ""
+"Houdt \"Control\", of \"Command\" op een Mac, ingedrukt om meer dan "
+"een te selecteren."
 
 #: build/django/django/forms/util.py:83
 #, python-format
@@ -900,34 +938,36 @@ msgid ""
 "%(datetime)s couldn't be interpreted in time zone %(current_timezone)s; it "
 "may be ambiguous or it may not exist."
 msgstr ""
+"%(datetime)s kon niet als tijdzone %(current_timezone)s worden "
+"geïnterpreteerd; het kan dubbelzinnig zijn of het bestaat niet. "
 
 #: build/django/django/forms/widgets.py:323
 msgid "Currently"
-msgstr ""
+msgstr "Huidig"
 
 #: build/django/django/forms/widgets.py:324
 msgid "Change"
-msgstr ""
+msgstr "Verander"
 
 #: build/django/django/forms/widgets.py:325
 msgid "Clear"
-msgstr ""
+msgstr "Wis"
 
 #: build/django/django/forms/widgets.py:543
 msgid "Unknown"
-msgstr ""
+msgstr "Onbekend"
 
 #: build/django/django/forms/widgets.py:544 build/django/tests/i18n/urls.py:9
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: build/django/django/forms/widgets.py:545 build/django/tests/i18n/urls.py:9
 msgid "No"
-msgstr ""
+msgstr "Nee"
 
 #: build/django/django/template/defaultfilters.py:784
 msgid "yes,no,maybe"
-msgstr ""
+msgstr "ja,nee,misschien"
 
 #: build/django/django/template/defaultfilters.py:812
 #: build/django/django/template/defaultfilters.py:824
@@ -980,115 +1020,115 @@ msgstr ""
 
 #: build/django/django/utils/dateformat.py:103
 msgid "midnight"
-msgstr ""
+msgstr "middernacht"
 
 #: build/django/django/utils/dateformat.py:105
 msgid "noon"
-msgstr ""
+msgstr "'s middags"
 
 #: build/django/django/utils/dates.py:6
 msgid "Monday"
-msgstr ""
+msgstr "maandag"
 
 #: build/django/django/utils/dates.py:6
 msgid "Tuesday"
-msgstr ""
+msgstr "dinsdag"
 
 #: build/django/django/utils/dates.py:6
 msgid "Wednesday"
-msgstr ""
+msgstr "woensdag"
 
 #: build/django/django/utils/dates.py:6
 msgid "Thursday"
-msgstr ""
+msgstr "donderdag"
 
 #: build/django/django/utils/dates.py:6
 msgid "Friday"
-msgstr ""
+msgstr "vrijdag"
 
 #: build/django/django/utils/dates.py:7
 msgid "Saturday"
-msgstr ""
+msgstr "zaterdag"
 
 #: build/django/django/utils/dates.py:7
 msgid "Sunday"
-msgstr ""
+msgstr "zondag"
 
 #: build/django/django/utils/dates.py:10
 msgid "Mon"
-msgstr ""
+msgstr "ma"
 
 #: build/django/django/utils/dates.py:10
 msgid "Tue"
-msgstr ""
+msgstr "di"
 
 #: build/django/django/utils/dates.py:10
 msgid "Wed"
-msgstr ""
+msgstr "wo"
 
 #: build/django/django/utils/dates.py:10
 msgid "Thu"
-msgstr ""
+msgstr "do"
 
 #: build/django/django/utils/dates.py:10
 msgid "Fri"
-msgstr ""
+msgstr "vrij"
 
 #: build/django/django/utils/dates.py:11
 msgid "Sat"
-msgstr ""
+msgstr "za"
 
 #: build/django/django/utils/dates.py:11
 msgid "Sun"
-msgstr ""
+msgstr "zo"
 
 #: build/django/django/utils/dates.py:18
 msgid "January"
-msgstr ""
+msgstr "januari"
 
 #: build/django/django/utils/dates.py:18
 msgid "February"
-msgstr ""
+msgstr "februari"
 
 #: build/django/django/utils/dates.py:18
 msgid "March"
-msgstr ""
+msgstr "maart"
 
 #: build/django/django/utils/dates.py:18
 msgid "April"
-msgstr ""
+msgstr "april"
 
 #: build/django/django/utils/dates.py:18
 msgid "May"
-msgstr ""
+msgstr "mei"
 
 #: build/django/django/utils/dates.py:18
 msgid "June"
-msgstr ""
+msgstr "juni"
 
 #: build/django/django/utils/dates.py:19
 msgid "July"
-msgstr ""
+msgstr "juli"
 
 #: build/django/django/utils/dates.py:19
 msgid "August"
-msgstr ""
+msgstr "augustus"
 
 #: build/django/django/utils/dates.py:19
 msgid "September"
-msgstr ""
+msgstr "september"
 
 #: build/django/django/utils/dates.py:19
 msgid "October"
-msgstr ""
+msgstr "oktober"
 
 #: build/django/django/utils/dates.py:19
 msgid "November"
-msgstr ""
+msgstr "november"
 
 #: build/django/django/utils/dates.py:20
 msgid "December"
-msgstr ""
+msgstr "december"
 
 #: build/django/django/utils/dates.py:23
 msgid "jan"
@@ -1100,7 +1140,7 @@ msgstr ""
 
 #: build/django/django/utils/dates.py:23
 msgid "mar"
-msgstr ""
+msgstr "mrt"
 
 #: build/django/django/utils/dates.py:23
 msgid "apr"
@@ -1108,7 +1148,7 @@ msgstr ""
 
 #: build/django/django/utils/dates.py:23
 msgid "may"
-msgstr ""
+msgstr "mei"
 
 #: build/django/django/utils/dates.py:23
 msgid "jun"
@@ -1128,7 +1168,7 @@ msgstr ""
 
 #: build/django/django/utils/dates.py:24
 msgid "oct"
-msgstr ""
+msgstr "okt"
 
 #: build/django/django/utils/dates.py:24
 msgid "nov"
@@ -1141,136 +1181,136 @@ msgstr ""
 #: build/django/django/utils/dates.py:31
 msgctxt "abbrev. month"
 msgid "Jan."
-msgstr ""
+msgstr "jan."
 
 #: build/django/django/utils/dates.py:32
 msgctxt "abbrev. month"
 msgid "Feb."
-msgstr ""
+msgstr "feb."
 
 #: build/django/django/utils/dates.py:33
 msgctxt "abbrev. month"
 msgid "March"
-msgstr ""
+msgstr "maart"
 
 #: build/django/django/utils/dates.py:34
 msgctxt "abbrev. month"
 msgid "April"
-msgstr ""
+msgstr "april"
 
 #: build/django/django/utils/dates.py:35
 msgctxt "abbrev. month"
 msgid "May"
-msgstr ""
+msgstr "mei"
 
 #: build/django/django/utils/dates.py:36
 msgctxt "abbrev. month"
 msgid "June"
-msgstr ""
+msgstr "juni"
 
 #: build/django/django/utils/dates.py:37
 msgctxt "abbrev. month"
 msgid "July"
-msgstr ""
+msgstr "juli"
 
 #: build/django/django/utils/dates.py:38
 msgctxt "abbrev. month"
 msgid "Aug."
-msgstr ""
+msgstr "aug."
 
 #: build/django/django/utils/dates.py:39
 msgctxt "abbrev. month"
 msgid "Sept."
-msgstr ""
+msgstr "sep."
 
 #: build/django/django/utils/dates.py:40
 msgctxt "abbrev. month"
 msgid "Oct."
-msgstr ""
+msgstr "okt."
 
 #: build/django/django/utils/dates.py:41
 msgctxt "abbrev. month"
 msgid "Nov."
-msgstr ""
+msgstr "nov."
 
 #: build/django/django/utils/dates.py:42
 msgctxt "abbrev. month"
 msgid "Dec."
-msgstr ""
+msgstr "dec."
 
 #: build/django/django/utils/dates.py:45
 msgctxt "alt. month"
 msgid "January"
-msgstr ""
+msgstr "januari"
 
 #: build/django/django/utils/dates.py:46
 msgctxt "alt. month"
 msgid "February"
-msgstr ""
+msgstr "februari"
 
 #: build/django/django/utils/dates.py:47
 msgctxt "alt. month"
 msgid "March"
-msgstr ""
+msgstr "maart"
 
 #: build/django/django/utils/dates.py:48
 msgctxt "alt. month"
 msgid "April"
-msgstr ""
+msgstr "april"
 
 #: build/django/django/utils/dates.py:49
 msgctxt "alt. month"
 msgid "May"
-msgstr ""
+msgstr "mei"
 
 #: build/django/django/utils/dates.py:50
 msgctxt "alt. month"
 msgid "June"
-msgstr ""
+msgstr "juni"
 
 #: build/django/django/utils/dates.py:51
 msgctxt "alt. month"
 msgid "July"
-msgstr ""
+msgstr "juli"
 
 #: build/django/django/utils/dates.py:52
 msgctxt "alt. month"
 msgid "August"
-msgstr ""
+msgstr "augustus"
 
 #: build/django/django/utils/dates.py:53
 msgctxt "alt. month"
 msgid "September"
-msgstr ""
+msgstr "september"
 
 #: build/django/django/utils/dates.py:54
 msgctxt "alt. month"
 msgid "October"
-msgstr ""
+msgstr "oktober"
 
 #: build/django/django/utils/dates.py:55
 msgctxt "alt. month"
 msgid "November"
-msgstr ""
+msgstr "november"
 
 #: build/django/django/utils/dates.py:56
 msgctxt "alt. month"
 msgid "December"
-msgstr ""
+msgstr "december"
 
 #: build/django/django/utils/image.py:108
 #, python-format
 msgid "Neither Pillow nor PIL could be imported: %s"
-msgstr ""
+msgstr "Zowel Pillow als PIL kon niet worden geïmporteerd: %s"
 
 #: build/django/django/utils/image.py:133
 #, python-format
 msgid "The '_imaging' module for the PIL could not be imported: %s"
-msgstr ""
+msgstr "De '_imaging' module voor de PIL kon niet worden geïmporteerd: %s"
 
 #: build/django/django/utils/ipv6.py:9
 msgid "This is not a valid IPv6 address."
-msgstr ""
+msgstr "Dit is geen geldig IPv6-adres."
 
 #: build/django/django/utils/text.py:69
 #, python-format
@@ -1280,95 +1320,95 @@ msgstr ""
 
 #: build/django/django/utils/text.py:224
 msgid "or"
-msgstr ""
+msgstr "of"
 
 #. Translators: This string is used as a separator between list elements
 #: build/django/django/utils/text.py:241
 #: build/django/django/utils/timesince.py:56
 msgid ", "
-msgstr ""
+msgstr ", "
 
 #: build/django/django/utils/timesince.py:24
 #, python-format
 msgid "%d year"
 msgid_plural "%d years"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d jaar"
+msgstr[1] "%d jaar"
 
 #: build/django/django/utils/timesince.py:25
 #, python-format
 msgid "%d month"
 msgid_plural "%d months"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d maand"
+msgstr[1] "%d maanden"
 
 #: build/django/django/utils/timesince.py:26
 #, python-format
 msgid "%d week"
 msgid_plural "%d weeks"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d week"
+msgstr[1] "%d weken"
 
 #: build/django/django/utils/timesince.py:27
 #, python-format
 msgid "%d day"
 msgid_plural "%d days"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d dag"
+msgstr[1] "%d dagen"
 
 #: build/django/django/utils/timesince.py:28
 #, python-format
 msgid "%d hour"
 msgid_plural "%d hours"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d uur"
+msgstr[1] "%d uur"
 
 #: build/django/django/utils/timesince.py:29
 #, python-format
 msgid "%d minute"
 msgid_plural "%d minutes"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d minuut"
+msgstr[1] "%d minuten"
 
 #: build/django/django/utils/timesince.py:45
 msgid "0 minutes"
-msgstr ""
+msgstr "0 minuten"
 
 #: build/django/django/views/static.py:53
 msgid "Directory indexes are not allowed here."
-msgstr ""
+msgstr "Directory indexen zijn hier niet toegestaan."
 
 #: build/django/django/views/static.py:55
 #, python-format
 msgid "\"%(path)s\" does not exist"
-msgstr ""
+msgstr "\"%(path)s\" bestaat niet"
 
 #: build/django/django/views/static.py:96
 #, python-format
 msgid "Index of %(directory)s"
-msgstr ""
+msgstr "Index van %(directory)s"
 
 #: build/django/django/views/generic/dates.py:42
 msgid "No year specified"
-msgstr ""
+msgstr "Geen jaar opgegeven"
 
 #: build/django/django/views/generic/dates.py:98
 msgid "No month specified"
-msgstr ""
+msgstr "Geen maand opgegeven"
 
 #: build/django/django/views/generic/dates.py:157
 msgid "No day specified"
-msgstr ""
+msgstr "Geen dag opgegeven"
 
 #: build/django/django/views/generic/dates.py:213
 msgid "No week specified"
-msgstr ""
+msgstr "Geen week opgegeven"
 
 #: build/django/django/views/generic/dates.py:368
 #: build/django/django/views/generic/dates.py:396
 #, python-format
 msgid "No %(verbose_name_plural)s available"
-msgstr ""
+msgstr "Geen %(verbose_name_plural)s beschikbaar"
 
 #: build/django/django/views/generic/dates.py:649
 #, python-format
@@ -1376,131 +1416,133 @@ msgid ""
 "Future %(verbose_name_plural)s not available because %(class_name)s."
 "allow_future is False."
 msgstr ""
+"Toekomstige %(verbose_name_plural)s is niet beschikbaar omdat %(class_name)s "
+"allow_future False is."
 
 #: build/django/django/views/generic/dates.py:681
 #, python-format
 msgid "Invalid date string '%(datestr)s' given format '%(format)s'"
-msgstr ""
+msgstr "Ongeldige datumstring '%(datestr)s' opgegeven, indeling '%(format)s'"
 
 #: build/django/django/views/generic/detail.py:54
 #, python-format
 msgid "No %(verbose_name)s found matching the query"
-msgstr ""
+msgstr "Geen %(verbose_name)s gevonden die de query matched"
 
 #: build/django/django/views/generic/list.py:54
 msgid "Page is not 'last', nor can it be converted to an int."
-msgstr ""
+msgstr "Pagina is niet 'last', kan ook niet worden omgezet in een int."
 
 #: build/django/django/views/generic/list.py:59
 #, python-format
 msgid "Invalid page (%(page_number)s): %(message)s"
-msgstr ""
+msgstr "Ongeldige pagina (%(page_number)s): %(message)s"
 
 #: build/django/django/views/generic/list.py:150
 #, python-format
 msgid "Empty list and '%(class_name)s.allow_empty' is False."
-msgstr ""
+msgstr "Lege lijst en '%(class_name)s.allow_empty' is False."
 
 #: build/django/tests/forms_tests/tests/test_regressions.py:30
 #: signbank/registration/forms.py:41
 msgid "Username"
-msgstr ""
+msgstr "Gebruikersnaam"
 
 #: build/django/tests/forms_tests/tests/test_regressions.py:44
 msgid "field_1"
-msgstr ""
+msgstr "veld_1"
 
 #: build/django/tests/forms_tests/tests/test_regressions.py:45
 msgid "field_2"
-msgstr ""
+msgstr "veld_2"
 
 #: build/django/tests/forms_tests/tests/test_regressions.py:80
 #: build/django/tests/i18n/tests.py:93 build/django/tests/i18n/tests.py:96
 #: build/django/tests/many_to_one/tests.py:426
 msgid "test"
-msgstr ""
+msgstr "test"
 
 #: build/django/tests/forms_tests/tests/test_util.py:39
 #: build/django/tests/forms_tests/tests/test_util.py:47
 msgid "Error."
-msgstr ""
+msgstr "Fout."
 
 #: build/django/tests/i18n/models.py:8
 msgid "Anything"
-msgstr ""
+msgstr "Wat dan ook"
 
 #: build/django/tests/i18n/models.py:17
 msgid "Company"
-msgstr ""
+msgstr "Bedrijf"
 
 #: build/django/tests/i18n/tests.py:73 build/django/tests/i18n/tests.py:82
 #: build/django/tests/i18n/tests.py:84 build/django/tests/i18n/tests.py:85
 #, python-format
 msgid "Add %(name)s"
-msgstr ""
+msgstr "Voeg %(name)s toe"
 
 #: build/django/tests/i18n/tests.py:88
 msgid "Some other string"
-msgstr ""
+msgstr "Een ander string"
 
 #: build/django/tests/i18n/tests.py:103
 #, python-format
 msgid "%d good result"
 msgid_plural "%d good results"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d treffer"
+msgstr[1] "%d treffers"
 
 #: build/django/tests/i18n/tests.py:105
 #, python-format
 msgctxt "Exclamation"
 msgid "%d good result"
 msgid_plural "%d good results"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d treffer"
+msgstr[1] "%d treffers"
 
 #: build/django/tests/i18n/tests.py:106
 msgid "good result"
 msgid_plural "good results"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d treffer"
+msgstr[1] "%d treffers"
 
 #: build/django/tests/i18n/tests.py:117 build/django/tests/i18n/tests.py:118
 #, python-format
 msgid "Hi %(name)s, %(num)d good result"
 msgid_plural "Hi %(name)s, %(num)d good results"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Dag %(name)s, %(num)d treffer"
+msgstr[1] "Dag %(name)s, %(num)d treffers"
 
 #: build/django/tests/i18n/tests.py:121 build/django/tests/i18n/tests.py:122
 #, python-format
 msgctxt "Greeting"
 msgid "Hi %(name)s, %(num)d good result"
 msgid_plural "Hi %(name)s, %(num)d good results"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Dag %(name)s, %(num)d treffer"
+msgstr[1] "Dag %(name)s, %(num)d treffers"
 
 #: build/django/tests/i18n/tests.py:145
 msgctxt "unexisting"
 msgid "May"
-msgstr ""
+msgstr "mei"
 
 #: build/django/tests/i18n/tests.py:146
 msgctxt "month name"
 msgid "May"
-msgstr ""
+msgstr "mei"
 
 #: build/django/tests/i18n/tests.py:147
 msgctxt "verb"
 msgid "May"
-msgstr ""
+msgstr "mei"
 
 #: build/django/tests/i18n/tests.py:148
 #, python-format
 msgctxt "search"
 msgid "%d result"
 msgid_plural "%d results"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d treffer"
+msgstr[1] "%d treffers"
 
 #: build/django/tests/i18n/tests.py:295
 msgid "Mac\rEOF\r"
@@ -1514,16 +1556,16 @@ msgstr ""
 
 #: build/django/tests/i18n/tests.py:999
 msgid "Date/time"
-msgstr ""
+msgstr "Datum/tijd"
 
 #. Translators: This comment should be extracted
 #: build/django/tests/i18n/commands/__init__.py:4
 msgid "This is a translatable string."
-msgstr ""
+msgstr "Dit is een vertaalbare string."
 
 #: build/django/tests/i18n/commands/__init__.py:7
 msgid "This is another translatable string."
-msgstr ""
+msgstr "Dit is een andere vertaalbare string"
 
 #: build/django/tests/i18n/commands/__init__.py:12
 #, python-format
@@ -1534,13 +1576,13 @@ msgstr[1] ""
 
 #: build/django/tests/i18n/commands/ignore_dir/ignored.html:2
 msgid "This should be ignored."
-msgstr ""
+msgstr "Dit moet genegeerd worden."
 
 #. Translators: Django comment block for translators
 #. string's meaning unveiled
 #: build/django/tests/i18n/commands/templates/test.html:5
 msgid "This literal should be included."
-msgstr ""
+msgstr "Deze literal moet worde opgenomen."
 
 #: build/django/tests/i18n/commands/templates/test.html:6
 msgid ""
@@ -1784,15 +1826,15 @@ msgstr ""
 
 #: signbank/dictionary/admin.py:42
 msgid "number of senses"
-msgstr ""
+msgstr "aantal betekenissen"
 
 #: signbank/dictionary/admin.py:55
 msgid "No Senses"
-msgstr ""
+msgstr "geen betekenissen"
 
 #: signbank/dictionary/admin.py:56
 msgid "More than one"
-msgstr ""
+msgstr "Meer dan een"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:283
 msgid "ID Gloss"
@@ -1808,7 +1850,7 @@ msgstr "Annotatie ID Gloss: Engels"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:286
 msgid "Translation equivalents in Dutch"
-msgstr "Vergelijkebare vertalingen in het Nederlands"
+msgstr "Vergelijkbare vertalingen in het Nederlands"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:287
 msgid "Annotation Instructions"
@@ -1843,11 +1885,11 @@ msgstr ""
 
 #: signbank/pages/models.py:11 signbank/pages/models.py:33
 msgid "title"
-msgstr ""
+msgstr "titel"
 
 #: signbank/pages/models.py:12
 msgid "content"
-msgstr ""
+msgstr "inhoud"
 
 #: signbank/pages/models.py:13
 msgid "template name"
@@ -1861,7 +1903,7 @@ msgstr ""
 
 #: signbank/pages/models.py:15
 msgid "publish"
-msgstr ""
+msgstr "publiceer"
 
 #: signbank/pages/models.py:15
 msgid "If this is checked, the page will be included in the site menus."
@@ -1889,7 +1931,7 @@ msgstr ""
 
 #: signbank/pages/models.py:21
 msgid "page"
-msgstr ""
+msgstr "pagina"
 
 #: signbank/pages/models.py:22
 msgid "pages"
@@ -1897,7 +1939,7 @@ msgstr ""
 
 #: signbank/pages/models.py:34
 msgid "number"
-msgstr ""
+msgstr "nummer"
 
 #: signbank/registration/forms.py:46
 msgid "Your Email Address"
@@ -1905,11 +1947,11 @@ msgstr ""
 
 #: signbank/registration/forms.py:48 signbank/registration/forms.py:284
 msgid "Password"
-msgstr ""
+msgstr "Wachtwoord"
 
 #: signbank/registration/forms.py:50
 msgid "Password (again)"
-msgstr ""
+msgstr "Wachtwoord (opnieuw)"
 
 #: signbank/registration/forms.py:62
 msgid "This username is already taken. Please choose another."
