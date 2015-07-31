@@ -89,9 +89,24 @@
 
 	<div class='nav navbar-right navbar-nav' id='language_picker'>
 		<form method="post" action="/i18n/setlang/">
+
 			{% csrf_token %}
-			<input class='nav navbar-nav navbar-right' type="image" name="language" value="en" src="/static/images/languages/gb.png"><br/>
-			<input class='nav nav-bar-nav navbar-right' type="image" name="language" value="nl" src="/static/images/languages/nl.png">
+			{% get_current_language as LANGUAGE %}
+
+			<input class='nav navbar-nav navbar-right' type="image" name="language" value="en" 
+
+		{% if LANGUAGE != "en" %}
+		style="opacity: 0.3;"
+		{% endif %}
+
+		src="/static/images/languages/gb.png"><br/>
+			<input class='nav nav-bar-nav navbar-right' type="image" name="language" value="nl" 
+
+		{% if LANGUAGE != "nl" %}
+		style="opacity: 0.3;"
+		{% endif %}
+
+		src="/static/images/languages/nl.png">
         </form>
 	</div>
 	
@@ -103,7 +118,7 @@
        
        <button type="submit" class="btn btn-default">{% trans "Sign search" %}</button>
     </form> 
-    
+
     <ul class='nav navbar-nav navbar-right'>
     {% if user.is_authenticated %}
       <li><a href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></li>
