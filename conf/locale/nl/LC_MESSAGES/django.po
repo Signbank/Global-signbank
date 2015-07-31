@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-23 20:22+1000\n"
+"POT-Creation-Date: 2015-07-31 23:40+1000\n"
 "PO-Revision-Date: 2015-07-28 16:26+1000\n"
 "Last-Translator: Richard <r.bankl@let.ru.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,22 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: bootstrap_templates/menu.html:99
+msgid "Search translation"
+msgstr ""
+
+#: bootstrap_templates/menu.html:101
+msgid "Sign search"
+msgstr ""
+
+#: bootstrap_templates/menu.html:106
+msgid "Logout"
+msgstr ""
+
+#: bootstrap_templates/menu.html:108
+msgid "Login"
+msgstr ""
 
 #: bootstrap_templates/registration/password_reset_complete.html:5
 #: bootstrap_templates/registration/password_reset_complete.html:9
@@ -46,8 +62,8 @@ msgid ""
 "Please enter your new password twice so we can verify you typed it in "
 "correctly."
 msgstr ""
-"Vul je nieuwe wachtwoord twee keer in zodat we kunnen controleren of "
-"ze gelijk zijn."
+"Vul je nieuwe wachtwoord twee keer in zodat we kunnen controleren of ze "
+"gelijk zijn."
 
 #: bootstrap_templates/registration/password_reset_confirm.html:19
 msgid "New password:"
@@ -71,7 +87,7 @@ msgid ""
 "used.  Please request a new password reset."
 msgstr ""
 "De link om het wachtwoord opnieuw in te stellen is waarschijnlijk al een "
-"keer gebruikt. Vraag opnieuw een nieuw wachtwoord aan." 
+"keer gebruikt. Vraag opnieuw een nieuw wachtwoord aan."
 
 #: bootstrap_templates/registration/password_reset_email.html:2
 #, python-format
@@ -503,11 +519,11 @@ msgid_plural ""
 "Ensure this value has at least %(limit_value)d characters (it has "
 "%(show_value)d)."
 msgstr[0] ""
-"Zorg dat deze waarde tenminste %(limit_value)d teken heeft "
-"(heeft nu %(show_value)d)."
+"Zorg dat deze waarde tenminste %(limit_value)d teken heeft (heeft nu "
+"%(show_value)d)."
 msgstr[1] ""
-"Zorg dat deze waarde tenminste %(limit_value)d tekens heeft "
-"(heeft nu %(show_value)d)."
+"Zorg dat deze waarde tenminste %(limit_value)d tekens heeft (heeft nu "
+"%(show_value)d)."
 
 #: build/django/django/core/validators.py:218
 #, python-format
@@ -518,11 +534,11 @@ msgid_plural ""
 "Ensure this value has at most %(limit_value)d characters (it has "
 "%(show_value)d)."
 msgstr[0] ""
-"Zorg dat deze waarde hooguit %(limit_value)d teken heeft "
-"(heeft nu %(show_value)d)."
+"Zorg dat deze waarde hooguit %(limit_value)d teken heeft (heeft nu "
+"%(show_value)d)."
 msgstr[1] ""
-"Zorg dat deze waarde hooguit %(limit_value)d tekens heeft "
-"(heeft nu %(show_value)d)."
+"Zorg dat deze waarde hooguit %(limit_value)d tekens heeft (heeft nu "
+"%(show_value)d)."
 
 #: build/django/django/db/models/base.py:889
 #, python-format
@@ -593,8 +609,8 @@ msgid ""
 "'%(value)s' value has an invalid date format. It must be in YYYY-MM-DD "
 "format."
 msgstr ""
-"'%(value)s' waarde is ongeldig als datumindeling, het moet in "
-"YYYY-MM-DD indeling."
+"'%(value)s' waarde is ongeldig als datumindeling, het moet in YYYY-MM-DD "
+"indeling."
 
 #: build/django/django/db/models/fields/__init__.py:726
 #: build/django/django/db/models/fields/__init__.py:820
@@ -616,8 +632,8 @@ msgid ""
 "'%(value)s' value has an invalid format. It must be in YYYY-MM-DD HH:MM[:ss[."
 "uuuuuu]][TZ] format."
 msgstr ""
-"'%(value)s' waarde heeft een ongeldige indeling. De indeling moet zijn: "
-"YYYY-MM-DD HH:MM[:ss[.uuuuuu]][TZ]."
+"'%(value)s' waarde heeft een ongeldige indeling. De indeling moet zijn: YYYY-"
+"MM-DD HH:MM[:ss[.uuuuuu]][TZ]."
 
 #: build/django/django/db/models/fields/__init__.py:822
 #, python-format
@@ -706,16 +722,17 @@ msgid ""
 "'%(value)s' value has an invalid format. It must be in HH:MM[:ss[.uuuuuu]] "
 "format."
 msgstr ""
-"'%(value)s' waarde heeft een ongeldige indeling, het moet in "
-"HH:MM[:ss[.uuuuuu]] indeling."
+"'%(value)s' waarde heeft een ongeldige indeling, het moet in HH:MM[:ss[."
+"uuuuuu]] indeling."
 
 #: build/django/django/db/models/fields/__init__.py:1301
 #, python-format
 msgid ""
 "'%(value)s' value has the correct format (HH:MM[:ss[.uuuuuu]]) but it is an "
 "invalid time."
-msgstr "'%(value)s' waarde heeft de juiste indeling (HH:MM[:ss[.uuuuuu]]) "
-"maar is ongeldig als tijd."
+msgstr ""
+"'%(value)s' waarde heeft de juiste indeling (HH:MM[:ss[.uuuuuu]]) maar is "
+"ongeldig als tijd."
 
 #: build/django/django/db/models/fields/__init__.py:1304
 msgid "Time"
@@ -808,7 +825,8 @@ msgstr "Vul een geldige datum/tijd in."
 #: build/django/django/forms/fields.py:533
 msgid "No file was submitted. Check the encoding type on the form."
 msgstr ""
-"Er werd geen bestand verstuurd. Controleer het coderingstype in het formulier."
+"Er werd geen bestand verstuurd. Controleer het coderingstype in het "
+"formulier."
 
 #: build/django/django/forms/fields.py:534
 msgid "No file was submitted."
@@ -905,8 +923,8 @@ msgid ""
 "Please correct the duplicate data for %(field_name)s which must be unique "
 "for the %(lookup)s in %(date_field)s."
 msgstr ""
-"Corrigeer de dubbele gegevens voor %(field_name)s, moet uniek zijn voor "
-"de %(lookup)s in %(date_field)s."
+"Corrigeer de dubbele gegevens voor %(field_name)s, moet uniek zijn voor de "
+"%(lookup)s in %(date_field)s."
 
 #: build/django/django/forms/models.py:707
 msgid "Please correct the duplicate values below."
@@ -914,7 +932,8 @@ msgstr "Corrigeer de dubbele gegevens voor onderstaande waardes. "
 
 #: build/django/django/forms/models.py:995
 msgid "The inline foreign key did not match the parent instance primary key."
-msgstr "De inline foreign key komt niet overeen met de parent instance primary key."
+msgstr ""
+"De inline foreign key komt niet overeen met de parent instance primary key."
 
 #: build/django/django/forms/models.py:1059
 msgid "Select a valid choice. That choice is not one of the available choices."
@@ -929,8 +948,8 @@ msgstr "\"%(pk)s\" is geen geldige waarde voor een primary key."
 msgid ""
 "Hold down \"Control\", or \"Command\" on a Mac, to select more than one."
 msgstr ""
-"Houdt \"Control\", of \"Command\" op een Mac, ingedrukt om meer dan "
-"een te selecteren."
+"Houdt \"Control\", of \"Command\" op een Mac, ingedrukt om meer dan een te "
+"selecteren."
 
 #: build/django/django/forms/util.py:83
 #, python-format
@@ -1836,13 +1855,28 @@ msgstr "geen betekenissen"
 msgid "More than one"
 msgstr "Meer dan een"
 
+#: signbank/dictionary/templates/dictionary/add_gloss.html:17
+msgid "Please provide some initial data"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/add_gloss.html:23
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:283
 msgid "ID Gloss"
 msgstr "ID Gloss"
 
+#: signbank/dictionary/templates/dictionary/add_gloss.html:26
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:284
 msgid "Annotation ID Gloss"
 msgstr "Annotatie ID Gloss"
+
+#: signbank/dictionary/templates/dictionary/add_gloss.html:29
+#, fuzzy
+msgid "Annotation ID Gloss (English)"
+msgstr "Annotatie ID Gloss: Engels"
+
+#: signbank/dictionary/templates/dictionary/add_gloss.html:33
+msgid "Add New Sign"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:285
 msgid "Annotation ID Gloss: English"
@@ -1863,6 +1897,113 @@ msgstr "Taal"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:289
 msgid "Dialect"
 msgstr "Dialect"
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:9
+msgid "Upload your changed CSV here:"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:14
+msgid "Submit"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:21
+msgid "The following changes were detected:"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:25
+#, python-format
+msgid ""
+"For %(change.idgloss)s, <em>%(change.human_key)s</em> changes from "
+"%(change.original_human_value)s (%(change.original_machine_value)s) to "
+"%(change.new_human_value)s (%(change.new_machine_value)s)."
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:30
+msgid "Make changes"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:34
+msgid "Changes are live."
+msgstr ""
+
+#. Translators: Welcome message
+#: signbank/dictionary/templates/dictionary/index.html:7
+#, python-format
+msgid ""
+"Welcome to the Sign Search section of the %(langauge)s SignBank. Here\n"
+"    you can search for a sign using a Dutch translation in the search box\n"
+"    above, or browse words starting with any letter below."
+msgstr ""
+
+#. Translators: Page title
+#: signbank/dictionary/templates/dictionary/word.html:5
+#, python-format
+msgid "NGT: sign for %(translation)s"
+msgstr ""
+
+#. Translators: Navigation
+#: signbank/dictionary/templates/dictionary/word.html:39
+msgid "Previous Sign"
+msgstr ""
+
+#. Translators: Sign x of n(signs)
+#: signbank/dictionary/templates/dictionary/word.html:43
+#, python-format
+msgid ""
+"Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the NGT "
+"Dictionary"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/word.html:48
+msgid "Next Sign"
+msgstr ""
+
+#. Translators: Navbar text
+#: signbank/dictionary/templates/dictionary/word.html:59
+#, python-format
+msgid "Matches for the word <em>%(translation|safe)s"
+msgstr ""
+
+#. Translators: Navigation
+#: signbank/dictionary/templates/dictionary/word.html:72
+msgid "Return to Matches"
+msgstr ""
+
+#. Translators: Navigation detailed view
+#: signbank/dictionary/templates/dictionary/word.html:81
+msgid "Detail View"
+msgstr ""
+
+#. Translators: Keywords
+#: signbank/dictionary/templates/dictionary/word.html:105
+msgid "Keywords:"
+msgstr ""
+
+#. Translators:
+#: signbank/dictionary/templates/dictionary/word.html:116
+#: signbank/dictionary/templates/dictionary/word.html:119
+msgid "Provide feedback about this sign"
+msgstr ""
+
+#. Translators: If sign is missing, report it
+#: signbank/dictionary/templates/dictionary/word.html:123
+msgid "Report a missing sign"
+msgstr ""
+
+#. Translators: Provide feedback about the site in general
+#: signbank/dictionary/templates/dictionary/word.html:125
+msgid "Provide general site feedback"
+msgstr ""
+
+#. Translators: Header4
+#: signbank/dictionary/templates/dictionary/word.html:132
+msgid "Sign Distribution"
+msgstr ""
+
+#. Translators: Header2
+#: signbank/dictionary/templates/dictionary/word.html:145
+msgid "Sign Definition"
+msgstr ""
 
 #: signbank/pages/admin.py:14
 msgid ""
