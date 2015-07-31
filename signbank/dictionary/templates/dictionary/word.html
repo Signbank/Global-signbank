@@ -1,7 +1,8 @@
-
 {% extends "baselayout.html" %}
+{% load i18n %}
 
-{% block pagetitle %}NGT: sign for {{ translation }} {% endblock %}
+{# Translators: Page title #}
+{% block pagetitle %}{% blocktrans %}NGT: sign for {{ translation }}{% endblocktrans %} {% endblock %}
 
 
 {% block jqueryready %}
@@ -34,15 +35,17 @@
             {% if SIGN_NAVIGATION %}
         
                 {% if navigation.prev %}
-                <a class='btn navbar-btn btn-default' href="{% url 'root_page' %}dictionary/gloss/{{navigation.prev.idgloss}}.html?lastmatch={{lastmatch}}">&laquo; <span class='hidden-xs'>Previous Sign</span></a>
+                {# Translators: Navigation  #}
+                <a class='btn navbar-btn btn-default' href="{% url 'root_page' %}dictionary/gloss/{{navigation.prev.idgloss}}.html?lastmatch={{lastmatch}}">&laquo; <span class='hidden-xs'>{% blocktrans %}Previous Sign{% endblocktrans %}</span></a>
            
                 {% endif %}
-            
-                <button class='btn navbar-btn'>Sign {{glossposn}} of {{glosscount}} <span class='hidden-xs'>in the NGT Dictionary</span></button>
+                {# Translators: Sign x of n(signs) #}
+                <button class='btn navbar-btn'>{% blocktrans %}Sign {{glossposn}} of {{glosscount}} <span class='hidden-xs'>in the NGT Dictionary{% endblocktrans %}</span></button>
             
                 {% if navigation.next %}
+                {# Translators: Navigation #}
                 <a class="btn navbar-btn btn-default"
-                   href="{% url 'root_page' %}dictionary/gloss/{{navigation.next.idgloss}}.html?lastmatch={{lastmatch}}"><span class='hidden-xs'>Next Sign</span> &raquo;</a>
+                   href="{% url 'root_page' %}dictionary/gloss/{{navigation.next.idgloss}}.html?lastmatch={{lastmatch}}"><span class='hidden-xs'>{% blocktrans %}Next Sign{% endblocktrans %}</span> &raquo;</a>
                 {% endif %}
              {% else %}
            
@@ -52,7 +55,8 @@
    
         <div class='pull-right'>
             {% ifequal viewname "words" %}
-            <span class='navbar-text'>Matches for the word <em>{{ translation|safe }}</em></span>
+            {# Translators: Navbar text #}
+            <span class='navbar-text'>{% blocktrans %}Matches for the word <em>{{ translation|safe }}{% endblocktrans %}</em></span>
             <div class='btn-group'>
             {% for i in matches %}
                 {% ifequal i n %}
@@ -64,7 +68,8 @@
             </div>
             {% else %}
                 {% if lastmatch %}
-                <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/words/{{lastmatch}}.html">Return to Matches</a>
+                {# Translators: Navigation  #}
+                <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/words/{{lastmatch}}.html">{% blocktrans %}Return to Matches{% endblocktrans %}</a>
                 {% endif %}
             {% endifequal %}
         </div>
@@ -72,7 +77,8 @@
     
         {% if perms.dictionary.search_gloss %}
         <div class='btn-group'>
-           <a id='editbutton' class='btn btn-default navbar-btn' href="{% url 'dictionary:admin_gloss_view' pk=gloss.id %}">Detail View</a>
+            {# Translators: Navigation detailed view  #}
+           <a id='editbutton' class='btn btn-default navbar-btn' href="{% url 'dictionary:admin_gloss_view' pk=gloss.id %}">{% blocktrans %}Detail View{% endblocktrans %}</a>
         </div>
         {% endif %}
     
@@ -95,7 +101,8 @@
         
         
             <div id="keywords">
-                 <p><strong>Keywords:</strong>
+                {# Translators: Keywords #}
+                 <p><strong>{% blocktrans %}Keywords:{% endblocktrans %}</strong>
                  {% for kwd in allkwds %}
                    {% ifequal translation kwd.translation.text %}<strong>{{ kwd.translation.text|safe }}</strong>{% else %}{{ kwd.translation.text|safe }}{% endifequal %}{% if not forloop.last %},{% endif %}
                  {% endfor %}
@@ -105,43 +112,37 @@
             <div id="feedback">
                 <ul>
                     {% ifequal viewname "words" %}
-                    <li><a href="{% url 'root_page' %}feedback/sign/{{translation}}-{{n}}.html?return=/dictionary/words/{{translation}}-{{n}}.html">Provide feedback about this sign</a></li>
+                    {# Translators:  #}
+                    <li><a href="{% url 'root_page' %}feedback/sign/{{translation}}-{{n}}.html?return=/dictionary/words/{{translation}}-{{n}}.html">{% blocktrans %}Provide feedback about this sign{% endblocktrans %}</a></li>
                     {% else %}
-                    <li><a href="{% url 'root_page' %}feedback/gloss/{{gloss.idgloss}}.html?return=/dictionary/gloss/{{gloss.idgloss}}.html&lastmatch={{lastmatch}}">Provide feedback about this sign</a></li>
+                    {# Translators:  #}
+                    <li><a href="{% url 'root_page' %}feedback/gloss/{{gloss.idgloss}}.html?return=/dictionary/gloss/{{gloss.idgloss}}.html&lastmatch={{lastmatch}}">{% blocktrans %}Provide feedback about this sign{% endblocktrans %}</a></li>
                     {% endifequal %}
 
-                    <li><a href="{% url 'root_page' %}feedback/missingsign.html">Report a missing sign</a></li>
-                    <li><a href="{% url 'root_page' %}feedback/generalfeedback.html">Provide general site feedback</a></li>
+                    {# Translators: If sign is missing, report it #}
+                    <li><a href="{% url 'root_page' %}feedback/missingsign.html">{% blocktrans %}Report a missing sign{% endblocktrans %}</a></li>
+                    {# Translators: Provide feedback about the site in general #}
+                    <li><a href="{% url 'root_page' %}feedback/generalfeedback.html">{% blocktrans %}Provide general site feedback{% endblocktrans %}</a></li>
                 </ul>
             </div>
 
-            {% if dialect_image %}
-            <div id="states">
-                <div>
-                    <img src="{{ STATIC_URL }}{{dialect_image}}" alt="States">
-                </div>
-            </div>
-            {% endif %}
-
             {% if gloss.dialect.all %}
             <div>
-                <h4>Sign Distribution</h4>
+                {# Translators: Header4 #}
+                <h4>{% blocktrans %}Sign Distribution{% endblocktrans %}</h4>
                 <ul>
-                {% ifequal dialect_image "images/maps/allstates.gif" %}
-                  <li>All States</li>
-                {% else %}
                     {% for dialect in gloss.dialect.all %}
                       <li>{{ dialect.name }}</li>
                     {% endfor %}
-                {% endifequal %}
-                </ul> 
+                </ul>
             </div>
             {% endif %}
         </div>
 
         {% if DEFINITION_FIELDS and gloss.published_definitions %}
         <div  class='col-md-8'>
-            <h2>Sign Definition</h2>
+            {# Translators: Header2 #}
+            <h2>{% blocktrans %}Sign Definition{% endblocktrans %}</h2>
 
             {% for deftype in DEFINITION_FIELDS %}
         
@@ -171,4 +172,3 @@
 </div>
 
 {% endblock %}
-

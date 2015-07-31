@@ -1,37 +1,37 @@
 {% extends 'baselayout.html' %}
 {% load stylesheet %}
 {% load bootstrap3 %}
+{% load i18n %}
 
 {% block content %}
 
 {% if stage == 0 %}
-    <div>Upload your changed CSV here:</div>
+    <div>{% blocktrans %}Upload your changed CSV here:{% endblocktrans %}</div>
 
     <form action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form }}
-        <input type="submit" value="Submit" />
+        <input type="submit" value="{% blocktrans %}Submit{% endblocktrans %}" />
     </form>
 
 {% elif stage == 1 %}
 
     <form action="" method="post">
         {% csrf_token %}
-        <div>The following changes were detected:</div>
+        <div>{% blocktrans %}The following changes were detected:{% endblocktrans %}</div>
         <ul>
         {% for change in changes %}
 
-            <li>For {{ change.idgloss }}, <em>{{ change.human_key }}</em> changes from {{ change.original_human_value }} ({{ change.original_machine_value }}) to {{change.new_human_value}} ({{ change.new_machine_value }}).</li>
+            <li>{% blocktrans %}For {{ change.idgloss }}, <em>{{ change.human_key }}</em> changes from {{ change.original_human_value }} ({{ change.original_machine_value }}) to {{change.new_human_value}} ({{ change.new_machine_value }}).{% endblocktrans %}</li>
             <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
         {% endfor %}
 
         </ul>
-        <input type="submit" value="Make changes" />
+        <input type="submit" value="{% blocktrans %}Make changes{% endblocktrans %}" />
     </form>
 
 {% elif stage == 2 %}
-
-    <p>Changes are live. {{ info }}</p>
+    <p>{% blocktrans %}Changes are live.{% endblocktrans %} {{ info }}</p>
 
 {% endif %}
 
