@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-31 23:40+1000\n"
+"POT-Creation-Date: 2015-08-01 00:00+1000\n"
 "PO-Revision-Date: 2015-07-28 16:26+1000\n"
 "Last-Translator: Richard <r.bankl@let.ru.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,21 +17,25 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: bootstrap_templates/menu.html:99
+#: bootstrap_templates/menu.html:100
+msgid "Search gloss"
+msgstr "Gebaar zoeken"
+
+#: bootstrap_templates/menu.html:102
 msgid "Search translation"
-msgstr ""
+msgstr "Vertaling zoeken"
 
-#: bootstrap_templates/menu.html:101
+#: bootstrap_templates/menu.html:104
 msgid "Sign search"
-msgstr ""
+msgstr "Gebaar zoeken"
 
-#: bootstrap_templates/menu.html:106
+#: bootstrap_templates/menu.html:109
 msgid "Logout"
-msgstr ""
+msgstr "Uitloggen"
 
-#: bootstrap_templates/menu.html:108
+#: bootstrap_templates/menu.html:111
 msgid "Login"
-msgstr ""
+msgstr "Inloggen"
 
 #: bootstrap_templates/registration/password_reset_complete.html:5
 #: bootstrap_templates/registration/password_reset_complete.html:9
@@ -1857,7 +1861,7 @@ msgstr "Meer dan een"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:17
 msgid "Please provide some initial data"
-msgstr ""
+msgstr "Geef hier wat data om mee te beginnen"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:23
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:283
@@ -1870,13 +1874,12 @@ msgid "Annotation ID Gloss"
 msgstr "Annotatie ID Gloss"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:29
-#, fuzzy
 msgid "Annotation ID Gloss (English)"
 msgstr "Annotatie ID Gloss: Engels"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:33
 msgid "Add New Sign"
-msgstr ""
+msgstr "Voeg nieuw gebaar toe"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:285
 msgid "Annotation ID Gloss: English"
