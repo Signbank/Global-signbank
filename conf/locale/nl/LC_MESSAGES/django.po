@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-01 00:00+1000\n"
+"POT-Creation-Date: 2015-08-01 00:44+1000\n"
 "PO-Revision-Date: 2015-07-28 16:26+1000\n"
 "Last-Translator: Richard <r.bankl@let.ru.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,10 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: bootstrap_templates/baselayout.html:46
+msgid "The NGT Signbank</span> is licensed under a "
+msgstr ""
 
 #: bootstrap_templates/menu.html:100
 msgid "Search gloss"
@@ -717,6 +721,7 @@ msgid "Small integer"
 msgstr "Klein geheel getal"
 
 #: build/django/django/db/models/fields/__init__.py:1281
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:638
 msgid "Text"
 msgstr "Tekst"
 
@@ -981,10 +986,18 @@ msgid "Unknown"
 msgstr "Onbekend"
 
 #: build/django/django/forms/widgets.py:544 build/django/tests/i18n/urls.py:9
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:404
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:603
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:611
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:678
 msgid "Yes"
 msgstr "Ja"
 
 #: build/django/django/forms/widgets.py:545 build/django/tests/i18n/urls.py:9
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:406
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:605
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:613
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:680
 msgid "No"
 msgstr "Nee"
 
@@ -1881,6 +1894,43 @@ msgstr "Annotatie ID Gloss: Engels"
 msgid "Add New Sign"
 msgstr "Voeg nieuw gebaar toe"
 
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:69
+msgid "Public View"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:70
+#, fuzzy
+msgid "Delete Sign"
+msgstr "Verwijder"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:78
+msgid "Edit next gloss"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:79
+msgid "Edit"
+msgstr ""
+
+#. Translators:
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:136
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:138
+#: signbank/dictionary/templates/dictionary/word.html:116
+#: signbank/dictionary/templates/dictionary/word.html:119
+msgid "Provide feedback about this sign"
+msgstr ""
+
+#. Translators: If sign is missing, report it
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:141
+#: signbank/dictionary/templates/dictionary/word.html:123
+msgid "Report a missing sign"
+msgstr ""
+
+#. Translators: Provide feedback about the site in general
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:142
+#: signbank/dictionary/templates/dictionary/word.html:125
+msgid "Provide general site feedback"
+msgstr ""
+
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:285
 msgid "Annotation ID Gloss: English"
 msgstr "Annotatie ID Gloss: Engels"
@@ -1900,6 +1950,129 @@ msgstr "Taal"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:289
 msgid "Dialect"
 msgstr "Dialect"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:317
+msgid "Morphology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:340
+msgid "Delete This Morphology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:344
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:527
+msgid "Are you sure you want to delete this? This cannot be undone."
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:377
+#, fuzzy
+msgid "SN/ID Gloss/Annotation ID Gloss"
+msgstr "Annotatie ID Gloss"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:378
+msgid "Add Morphology Definition"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:396
+msgid "Phonology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:436
+msgid "Relations to Other Signs"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:450
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:523
+msgid "Delete This Relation"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:462
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:534
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:665
+msgid "Cancel"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:503
+msgid "Relations to Foreign Signs"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:509
+msgid "Loan"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:510
+#, fuzzy
+msgid "Related Language"
+msgstr "Taal"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:511
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:559
+msgid "Gloss in related language"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:535
+#, fuzzy
+msgid "Confirm Delete"
+msgstr "Verwijder"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:558
+msgid "Related language"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:560
+msgid "Add Relation to Foreign Sign"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:577
+msgid "Frequency"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:592
+msgid "Publication Status"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:600
+msgid "In Web Dictionary"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:608
+#, fuzzy
+msgid "Proposed New Sign"
+msgstr "Voeg nieuw gebaar toe"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:625
+msgid "Notes"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:635
+#, fuzzy
+msgid "Published"
+msgstr "publiceer"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:636
+msgid "Index"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:637
+msgid "Type"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:654
+msgid "Delete This Note"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:658
+msgid "This action will delete this note. It cannot be undone."
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:704
+#, fuzzy
+msgid "Enter new note"
+msgstr "Vul nieuw wachtwoord in"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:711
+msgid "Save New"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:9
 msgid "Upload your changed CSV here:"
@@ -1980,22 +2153,6 @@ msgstr ""
 #. Translators: Keywords
 #: signbank/dictionary/templates/dictionary/word.html:105
 msgid "Keywords:"
-msgstr ""
-
-#. Translators:
-#: signbank/dictionary/templates/dictionary/word.html:116
-#: signbank/dictionary/templates/dictionary/word.html:119
-msgid "Provide feedback about this sign"
-msgstr ""
-
-#. Translators: If sign is missing, report it
-#: signbank/dictionary/templates/dictionary/word.html:123
-msgid "Report a missing sign"
-msgstr ""
-
-#. Translators: Provide feedback about the site in general
-#: signbank/dictionary/templates/dictionary/word.html:125
-msgid "Provide general site feedback"
 msgstr ""
 
 #. Translators: Header4
