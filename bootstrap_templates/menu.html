@@ -1,3 +1,6 @@
+{% load i18n %}
+
+
 <nav id='navbar' class="navbar navbar-default" role="navigation">
 
   <!-- Brand and toggle get grouped for better mobile display -->
@@ -94,7 +97,7 @@
 	
     <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="/dictionary/search">
        <div class="form-group">
-          <input class='form-control' placeholder='Search gloss' type="Text" name="glossQuery" value="{{ glossQuery }}" maxlength="50">
+          <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="glossQuery" value="{{ glossQuery }}" maxlength="50">
        </div>
           <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="query" value="{{ query }}" maxlength="50">
        
@@ -103,7 +106,7 @@
     
     <ul class='nav navbar-nav navbar-right'>
     {% if user.is_authenticated %}
-      <li><a href="{% url 'logout' %}">{% trans "Logout" %}({{ user.first_name }} {{ user.last_name }})</a></li>
+      <li><a href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></li>
     {% else %}
        <li><a href="/accounts/login/?next=/">{% trans "Login" %}</a></li>
     {% endif %} 
