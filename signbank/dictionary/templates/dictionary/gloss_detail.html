@@ -50,11 +50,11 @@
         {% if SIGN_NAVIGATION %}
         
             {% if navigation.prev %}
-            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo; Previous Sign
+            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %]
             </a>
             {% endif %}
             
-            <button class='btn navbar-btn'>Sign {{glossposn}} of {{glosscount}} in the NGT Dictionary</button>
+            <button class='btn navbar-btn'>{% trans "Sign {{glossposn}} of {{glosscount}} in the NGT Dictionary" %}</button>
             
             {% if navigation.next %}
             <a class="btn navbar-btn btn-default"
@@ -82,18 +82,18 @@
              <div class="modal-dialog modal-sm">
                 <div class="modal-content">
                     <div class='modal-header'>
-                        <h2 id='modalTitle'>Delete This Sign</h2>
+                        <h2 id='modalTitle'>{% trans "Delete This Sign" %}</h2>
                     </div>
                     <div class='modal-body'>
-                        <p>This action will delete this sign and all
-                        associated records. It cannot be undone.</p>
+                        <p>{% trans "This action will delete this sign and all
+                        associated records. It cannot be undone." %}</p>
                      </div>
                   <form action='{% url 'dictionary:update_gloss' gloss.id %}' method='post'>
                       {% csrf_token %}
                       <input type='hidden' name='id' value='deletegloss'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                         <input type="submit" class="btn btn-primary" value='Confirm Delete'>
                       </div>
                   </form>
