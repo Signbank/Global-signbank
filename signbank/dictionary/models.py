@@ -10,11 +10,14 @@ from django.db.models import Q
 from django.db import models
 from django.conf import settings
 from django.http import Http404 
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
 import tagging
 
 import sys, os
 import json
 from collections import OrderedDict
+
 
 #from models_legacy import Sign
 
@@ -1200,3 +1203,18 @@ class MorphologyDefinition(models.Model):
     def __str__(self):
 
         return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss;
+
+# This is the wrong location, but I can't think of a better one:
+
+class UserProfile(models.Model):
+    # This field is required.
+    user = models.OneToOneField(User,related_name="user_profile_user")
+
+    # Other fields here
+    last_used_language = models.CharField(max_length=2, default="en")
+
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+post_save.connect(create_user_profile, sender=User)

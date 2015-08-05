@@ -1,4 +1,5 @@
 from django.contrib import admin 
+from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
 from reversion.admin import VersionAdmin
 from tagging.models import TaggedItem
@@ -111,10 +112,23 @@ class DialectAdmin(VersionAdmin):
 class LanguageAdmin(VersionAdmin):
     model = Language
     inlines = [DialectInline]
-    
+
+# Define an inline admin descriptor for UserProfile model
+# which acts a bit like a singleton
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    can_delete = False
+    verbose_name_plural = 'profile'
+
+# Define a new User admin
+class UserAdmin(UserAdmin):
+    inlines = (UserProfileInline, )
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(Language, LanguageAdmin) 
 admin.site.register(Gloss, GlossAdmin) 
 admin.site.register(Keyword, KeywordAdmin) 
 admin.site.register(FieldChoice)
 admin.site.register(MorphologyDefinition)
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
