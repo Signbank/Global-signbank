@@ -456,3 +456,11 @@ def import_csv(request):
         stage = 0;
 
     return render_to_response('dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes},context_instance=RequestContext(request));
+
+def switch_to_language(request,language):
+
+    user_profile = request.user.get_profile()
+    user_profile.last_used_language = language
+    user_profile.save()
+
+    return HttpResponse('OK')
