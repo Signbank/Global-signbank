@@ -92,14 +92,14 @@
 
 			{% csrf_token %}
 
-			<input class='nav navbar-nav navbar-right' type="image" name="language" value="en" 
+			<input class='nav navbar-nav navbar-right flag-button' type="image" name="language" value="en"
 
 		{% if request.user.get_profile.last_used_language == "nl" %}
 		style="opacity: 0.3;"
 		{% endif %}
 
 		src="/static/images/languages/gb.png"><br/>
-			<input class='nav nav-bar-nav navbar-right' type="image" name="language" value="nl" 
+			<input class='nav nav-bar-nav navbar-right flag-button' type="image" name="language" value="nl"
 
 		{% if request.user.get_profile.last_used_language != "nl" %}
 		style="opacity: 0.3;"
@@ -128,4 +128,3 @@
 
   </div><!-- /.navbar-collapse -->
 </nav>
-

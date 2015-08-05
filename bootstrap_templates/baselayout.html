@@ -58,6 +58,24 @@
     <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.dataTables.min.js"></script>
 
     {% block extrajs %}{% endblock %}
+
+    <script type="text/javascript">
+    $(window).ready(function()
+    {
+        $(".flag-button").on("click", function(e)
+        {
+            console.log('click');
+            $.get('dictionary/switch_to_language/'+$(this).val());
+            $("#language_picker").submit(function(event)
+            {
+                return true;
+            });
+            $("#language_picker").submit();
+        });
+    })
+
+    </script>
+
   </body>
 </html>
     
