@@ -131,6 +131,8 @@ AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
 )
 
+AUTH_PROFILE_MODULE = 'dictionary.UserProfile'
+
 INTERNAL_IPS = ('127.0.0.1',)
 
 ROOT_URLCONF = 'signbank.urls'
