@@ -1,6 +1,7 @@
 # Django settings for signbank project.
 
 import os
+import socket
 
 BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 PROJECT_DIR = os.path.dirname(BASE_DIR)
@@ -17,12 +18,22 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '/var/www2/signbank/live/writable/database/signbank.db',
+hostname = socket.gethostname()
+
+if hostname == 'spitfire':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': '/var/www2/signbank/live/writable/database/signbank.db',
+        }
     }
-}
+elif hostname == 'wessel':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': '/home/wessel/repo/signbank/signbank.db',
+        }
+    }
 
 TIME_ZONE = 'Australia/Sydney'
 
