@@ -367,20 +367,20 @@ function clearForm(myFormElement) {
 
   
 
-<p>Number of matches: {{page_obj.paginator.count}} out of {{glosscount}}.</p>
+<p>{% trans Number of matches: %} {{page_obj.paginator.count}} {% trans out of %} {{glosscount}}.</p>
 
 {% if object_list %}
 <table class='table table-condensed'>
     <thead>
       <tr>
-           <th>Annotation ID gloss: Dutch</th>
-           <th>Annotation ID gloss: English</th>
-           <th>Translation equivalents</th>
-           <th>Handedness</th>
-           <th>Strong hand</th>
-           <th>Weak hand</th>
-           <th>Location</th>
-           <th style="width:255px;">Tags</th>
+           <th>{% trans Annotation ID gloss: Dutch %}</th>
+           <th>{% trans Annotation ID gloss: English %}</th>
+           <th>{% trans Translation equivalents %}</th>
+           <th>{% trans Handedness %}</th>
+           <th>{% trans Strong hand %}</th>
+           <th>{% trans Weak hand %}</th>
+           <th>{% trans Location %}</th>
+           <th style="width:255px;">{% trans Tags %}</th>
       </tr>
     </thead>
     <tbody>
