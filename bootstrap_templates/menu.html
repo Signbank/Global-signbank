@@ -1,3 +1,6 @@
+{% load i18n %}
+
+
 <nav id='navbar' class="navbar navbar-default" role="navigation">
 
   <!-- Brand and toggle get grouped for better mobile display -->
@@ -84,25 +87,45 @@
     </ul>
     {% endif %}-->
 
-  
+	<div class='nav navbar-right navbar-nav' id='language_picker'>
+		<form method="post" action="/i18n/setlang/">
+
+			{% csrf_token %}
+			{% get_current_language as LANGUAGE %}
+
+			<input class='nav navbar-nav navbar-right' type="image" name="language" value="en" 
+
+		{% if LANGUAGE != "en" %}
+		style="opacity: 0.3;"
+		{% endif %}
+
+		src="/static/images/languages/gb.png"><br/>
+			<input class='nav nav-bar-nav navbar-right' type="image" name="language" value="nl" 
+
+		{% if LANGUAGE != "nl" %}
+		style="opacity: 0.3;"
+		{% endif %}
+
+		src="/static/images/languages/nl.png">
+        </form>
+	</div>
+	
     <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="/dictionary/search">
        <div class="form-group">
-          <input class='form-control' placeholder='Search gloss' type="Text" name="glossQuery" value="{{ glossQuery }}" maxlength="50">
+          <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="glossQuery" value="{{ glossQuery }}" maxlength="50">
        </div>
-          <input class='form-control' placeholder='Search translation' type="Text" name="query" value="{{ query }}" maxlength="50">
+          <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="query" value="{{ query }}" maxlength="50">
        
-       <button type="submit" class="btn btn-default">Sign Search</button>
+       <button type="submit" class="btn btn-default">{% trans "Sign search" %}</button>
     </form> 
-    
-    
+
     <ul class='nav navbar-nav navbar-right'>
     {% if user.is_authenticated %}
-      <li><a href="{% url 'logout' %}">Logout ({{ user.first_name }} {{ user.last_name }})</a></li>
+      <li><a href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></li>
     {% else %}
-       <li><a href="/accounts/login/?next=/">Login</a></li>
+       <li><a href="/accounts/login/?next=/">{% trans "Login" %}</a></li>
     {% endif %} 
     </ul>
-  
 
   </div><!-- /.navbar-collapse -->
 </nav>

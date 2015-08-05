@@ -1,4 +1,5 @@
 {% extends "baselayout.html" %}
+{% load i18n %}
 {% load bootstrap3 %}
 {% block bootstrap3_title %}Signbank: Search Signs{% endblock %}
 {% block extrahead %}
@@ -97,7 +98,7 @@ function clearForm(myFormElement) {
 
         <div class="panel-group">
             <div  class="panel panel-default">
-                <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">Search by Language and Basic Properties</div>
+                <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Language and Basic Properties" %}</div>
 
                 <div id='searchpanels' class='collapse'>
                 <table class='table'>
@@ -126,7 +127,7 @@ function clearForm(myFormElement) {
               </div>
 
             <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">Search by Morphology</div>
+              <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
 
               <div id='morph_search' class='collapse'>
               <table class='table table-condensed'>
@@ -145,7 +146,7 @@ function clearForm(myFormElement) {
             </div>
 
             <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">Search by Phonology</div>
+              <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
 
               <div id='phon_search' class='collapse'>
               <table class='table table-condensed'>
@@ -189,7 +190,7 @@ function clearForm(myFormElement) {
             </div>
 
             <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">Search by Semantics</div>
+              <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">{% trans "Search by Semantics" %}</div>
 
               <div id='sem_search' class='collapse'>
               <table class='table table-condensed'>
@@ -210,7 +211,7 @@ function clearForm(myFormElement) {
             </div>
 
             <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#rel_search">Search by Relation</div>
+              <div class="panel-heading" data-toggle="collapse" data-target="#rel_search">{% trans "Search by Relation" %}</div>
 
               <div id='rel_search' class='collapse'>
               <table class='table'>
@@ -255,45 +256,50 @@ function clearForm(myFormElement) {
             </div>
 
             <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">Search by Publication Status and Notes</div>
+              <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
               <div id='pub_search' class='collapse'>
               <table class='table'>
-                <tr>
+                  <tr>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
+                            {{searchform.inWeb}}
+                        </div>
+                    </td>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
+                            {{searchform.isNew}}
+                        </div>
+                    </td>
+                  </tr>
 
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
-                                {{searchform.inWeb}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
-                                {{searchform.isNew}}
-                            </div>
-                        </td>
-                      </tr>
+                  <tr>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
+                            {{searchform.definitionRole}}
+                        </div>
+                    </td>
+                    <td>
+                        <div class='input-group'>
+                            <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
+                            {{searchform.definitionContains}}
+                        </div>
+                    </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          <div class='input-group'>
+                            <label class='input-group-addon' for='id_language'>{{searchform.tags.label}}</label>
+                            {{searchform.tags}}
+                          </div>
+                      </td>
+                  </tr>
 
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
-                                {{searchform.definitionRole}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
-                                {{searchform.definitionContains}}
-                            </div>
-                        </td>
-                      </tr>
-
-
-                </tr>
               </table>
+
               </div>
             </div>
         </div>

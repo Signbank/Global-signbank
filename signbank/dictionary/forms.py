@@ -65,7 +65,7 @@ class GlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label="Dutch Gloss")
     englishGloss = forms.CharField(label="English Gloss")
-    tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
+    tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
     nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
     keyword = forms.CharField(label='Translations')
     hasvideo = forms.ChoiceField(label='Has Video', choices=YESNOCHOICES)

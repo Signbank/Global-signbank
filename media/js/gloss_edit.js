@@ -153,7 +153,9 @@ function configure_edit() {
      
     
      $('.edit_text').editable(edit_post_url, {
-		 callback : update_view_and_remember_original_value
+		 // The callback below, created for issue #64, was turned off because the 
+         // comma as separator character in the response caused problems for some fields
+		 //callback : update_view_and_remember_original_value
 	 });    
      $('.edit_int').editable(edit_post_url, {
          type      : 'positiveinteger',
@@ -174,11 +176,13 @@ function configure_edit() {
      });
      $('.edit_language').editable(edit_post_url, {
          type      : 'multiselect',
-         data      : languages
+         data      : languages,
+		 callback : update_view_and_remember_original_value
      });
      $('.edit_dialect').editable(edit_post_url, {
          type      : 'multiselect',
-         data      : dialects
+         data      : dialects,
+		 callback : update_view_and_remember_original_value
      });     
      $('.edit_check').editable(edit_post_url, {
          type      : 'checkbox',

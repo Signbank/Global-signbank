@@ -56,3 +56,13 @@ html {
   
   background-image: url(images/ngt/black_02.gif);
 }
+
+#language_picker
+{
+	position: relative;
+	top: 11px;
+	left: 4px;
+	margin-left: -9px;
+	line-height: 15px;
+	cursor: pointer;
+}

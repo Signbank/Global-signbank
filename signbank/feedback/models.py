@@ -4,7 +4,7 @@ from django.conf import settings
 from signbank.video.fields import VideoUploadToFLVField
 
 from signbank.dictionary.models import *
-from signbank.dictionary.models import Gloss
+#from signbank.dictionary.models import Gloss
 # models to represent the feedback from users in the site
 
 import string
@@ -33,7 +33,7 @@ class InterpreterFeedback(models.Model):
         ordering = ['-date']
         permissions = (('view_interpreterfeedback', "Can View Interpreter Feedback"),)
 
-    gloss = models.ForeignKey(Gloss)
+    #gloss = models.ForeignKey(Gloss)
     comment = models.TextField('Note')
     user = models.ForeignKey(authmodels.User)
     date = models.DateTimeField(auto_now_add=True)

@@ -1,10 +1,12 @@
 {% extends "baselayout.html" %}
+{% load i18n %}
 
 {% block content %}
 
-    <p>Welcome to the Sign Search section of the {{langauge}} SignBank. Here
+    {# Translators: Welcome message #}
+    <p>{% blocktrans trimmed %}Welcome to the Sign Search section of the {{langauge}} SignBank. Here
     you can search for a sign using a Dutch translation in the search box
-    above, or browse words starting with any letter below. 
+    above, or browse words starting with any letter below.{% endblocktrans %}
    </p>
     
     <p>
@@ -18,7 +20,3 @@
 
 
 {% endblock %}
-
-
-
-
