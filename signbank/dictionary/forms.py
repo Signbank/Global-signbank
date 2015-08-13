@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.formtools.preview import FormPreview
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list
 from django.conf import settings
