@@ -597,6 +597,8 @@
         <div id="pubStatus" class="panel-collapse collapse">
         
             <table class='table table-condensed'>
+                <tr><th>{% trans "Creation Date" %}</th><td>{{gloss.creationDate}}</td></tr>
+
                 <tr><th>{% trans "In Web Dictionary" %}</th>
                     <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'>
                         {% if gloss.inWeb %}
