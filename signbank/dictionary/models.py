@@ -916,6 +916,7 @@ minor or insignificant ways that can be ignored.""")
     tokNoSgnrO = models.IntegerField("Number of Other Region Signers",null=True, blank=True) 
 
     creationDate = models.DateField('Creation date',default=datetime(2015,1,1))
+    creator = models.ForeignKey(User,null=True)
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]

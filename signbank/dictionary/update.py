@@ -30,6 +30,7 @@ def add_gloss(request):
             
             gloss = form.save()
             gloss.creationDate = datetime.now()
+            gloss.creator = request.user
             gloss.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
