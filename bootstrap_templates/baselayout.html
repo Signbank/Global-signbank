@@ -72,9 +72,25 @@
             });
             $("#language_picker").submit();
         });
+
+    	{% get_current_language as WEBSITE_LANGUAGE %}
+
+        //Use the form below to update the language when logging in (if needed)
+        {% if user.is_authenticated and user.get_profile.last_used_language != WEBSITE_LANGUAGE %}
+
+            $('#last_language_of_user_form').submit();
+
+        {% endif %}
     })
 
     </script>
+    <form id="last_language_of_user_form" method="post" action="/i18n/setlang/">
+
+        {% csrf_token %}
+
+        <input type="hidden" name="language" value="{{ user.get_profile.last_used_language }}">
+
+    </form>
 
   </body>
 </html>
