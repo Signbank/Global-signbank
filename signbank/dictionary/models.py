@@ -17,7 +17,7 @@ import tagging
 import sys, os
 import json
 from collections import OrderedDict
-
+from datetime import datetime
 
 #from models_legacy import Sign
 
@@ -914,6 +914,8 @@ minor or insignificant ways that can be ignored.""")
     tokNoSgnrGe = models.IntegerField("Number of Gestel Signers",null=True, blank=True) 
     tokNoSgnrGr = models.IntegerField("Number of Groningen Signers",null=True, blank=True) 
     tokNoSgnrO = models.IntegerField("Number of Other Region Signers",null=True, blank=True) 
+
+    creationDate = models.DateField('Creation date',default=datetime(2015,1,1))
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
