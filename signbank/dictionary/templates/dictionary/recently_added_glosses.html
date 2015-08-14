@@ -1,0 +1,26 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+    <table style="width:500px;" class="table table-condensed">
+        <tr><th style="width:180px;">{% trans "Gloss" %}</th><th style="width:180px;">{% trans "Creator" %}</th><th>{% trans "Creation date" %}</th></tr>
+        {% for gloss in glosses %}
+        <tr><td><a href="/dictionary/gloss/{{gloss.pk}}">{{ gloss.idgloss }}</a></td><td>{{ gloss.creator.first_name }} {{ gloss.creator.last_name}}</td><td>{{ gloss.creationDate }}</td></tr>
+        {% endfor %}
+    </table>
+
+</body>
+</html>
+
+{% endblock %}
