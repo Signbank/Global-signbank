@@ -14,7 +14,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.development import ECV_FILE
+from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE
 
 class GlossListView(ListView):
     
@@ -474,6 +474,16 @@ class GlossListView(ListView):
             #Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text];
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+
+        if get.has_key('createdBefore') and get['createdBefore'] != '':
+
+            created_before_date = DT.datetime.strptime(get['createdBefore'], "%m/%d/%Y").date()
+            qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE,created_before_date))
+
+        if get.has_key('createdAfter') and get['createdAfter'] != '':
+
+            created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
+            qs = qs.filter(creationDate__range=(created_after_date,DT.datetime.now()))
 
        # print "Final :", len(qs)
         return qs

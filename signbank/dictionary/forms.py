@@ -91,7 +91,8 @@ class GlossSearchForm(forms.ModelForm):
     definitionRole = forms.ChoiceField(label='Note type',choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionContains = forms.CharField(label='Note contains',widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-
+    createdBefore = forms.DateField(label='Created before')
+    createdAfter = forms.DateField(label='Created after')
 
     class Meta:
 
