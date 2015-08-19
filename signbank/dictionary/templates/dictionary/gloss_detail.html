@@ -58,7 +58,7 @@
             
             {% if navigation.next %}
             <a class="btn navbar-btn btn-default"
-               href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">Next Sign &raquo;</a>
+               href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
             {% endif %}
          {% else %}
            
@@ -148,8 +148,8 @@
     {% if perms.dictionary.change_gloss and perms.dictionary.update_video %}
     <div class='editform'>
         <fieldset>
-            <legend>Upload New Video</legend>
-            <p>We have {{gloss.count_videos}} videos for this sign.</p>
+            <legend>{% trans "Upload New Video" %}</legend>
+            <p>{% trans "We have {{gloss.count_videos}} videos for this sign." %}</p>
             <form action="/video/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
@@ -167,10 +167,10 @@
     
         {% if perms.dictionary.update_video and gloss.count_videos > 0 %}
         <fieldset>
-         <legend>Delete/Revert Video</legend>
+         <legend>{% trans "Delete/Revert Video" %}</legend>
             <table>
             <form action="/video/delete/{{gloss.pk}}" method='post'>
-            <tr><td><em>This will delete the most recent upload and restore the most recent earlier version.</em></td></tr>
+            <tr><td><em>{% trans "This will delete the most recent upload and restore the most recent earlier version." %} </em></td></tr>
             <tr><td>{% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete/Revert this video'></td></tr>
             </form>
            </table>
@@ -322,8 +322,8 @@
                <table class='table table-condensed'>
                   <tr>
                       <th style='width:2em'></th>
-                      <th style='width:12em'>Type</th>
-                      <th style='width:12em'>Morpheme</th>
+                      <th style='width:12em'>{% trans "Type" %}</th>
+                      <th style='width:12em'>{% trans "Morpheme" %}</th>
                   </tr>
 
                    {% for morphdef in gloss.parent_glosses.all %}
@@ -348,7 +348,7 @@
                                           <input type='hidden' name='id' value='morphology-definition-delete_{{morphdef.id}}'>
                                           <input type='hidden' name='value' value='confirmed'>
                                           <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                                             <input type="submit" class="btn btn-primary" value='Confirm Delete'>
                                           </div>
                                       </form>
@@ -362,7 +362,7 @@
 
                         <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
                         <td class='edit edit_morpheme' id='morphology-definition-morpheme_{{morphdef.id}}'>{{morphdef.morpheme}}</td>
-                        <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>view</a>)</td></tr>
+                        <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{% trans "view" %}</a>)</td></tr>
                    {% endfor %}
                </table>
 
@@ -374,7 +374,7 @@
                    <tr>
                        <td style="width:2em;"></td>
                        <td style="width:12em;">{{morphologyform.role}}</td>
-                       <td><input class='form-control glosstypeahead' placeholder='{% trans "SN/ID Gloss/Annotation ID Gloss" %}' name='morpheme_id'></td>
+                       <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss/Annotation ID Gloss" %}' name='morpheme_id'></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Morphology Definition" %}' type='submit'></td>
                    </tr>
                </table>
@@ -484,7 +484,7 @@
                    <table class='table table-condensed'>
                        <tr>
                            <td>{{relationform.role}}</td>
-                           <td><input class='form-control glosstypeahead' placeholder='SN/ID Gloss/Annotation ID Gloss' name='targetid'></td>
+                           <td><input class='form-control glosstypeahead' placeholder='ID Gloss/Annotation ID Gloss' name='targetid'></td>
                            <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
                        </tr>
                    </table>
@@ -529,7 +529,7 @@
                                       <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                                           {% csrf_token %}
                                           <input type='hidden' name='id' value='relationforeigndelete_{{rel.id}}'>
-                                          <input type='hidden' name='value' value='confirmed'>
+                                          <input type='hidden' name='value' value='{% trans "confirmed" %}'>
                                           <div class="modal-footer">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                                             <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
@@ -663,10 +663,10 @@
                       <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                           {% csrf_token %}
                           <input type='hidden' name='id' value='definitiondelete_{{def.id}}'>
-                          <input type='hidden' name='value' value='confirmed'>
+                          <input type='hidden' name='value' value='{% trans "confirmed" %}'>
                           <div class="modal-footer">
                             <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                            <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                           </div>
                       </form>
                           

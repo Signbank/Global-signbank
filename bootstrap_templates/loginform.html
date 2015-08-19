@@ -1,3 +1,5 @@
+{% load i18n %}
+
 {# login form should be shown when not logged in #}
 
 {% if not user.is_authenticated %}
@@ -7,9 +9,9 @@
   <form class='form-horizontal' id="loginform" name="login" method="post" action="/accounts/login/">
     {% csrf_token %}
     <fieldset id='signin'>
-    <legend>Sign In</legend>
+    <legend>{% trans "Sign In" %}</legend>
         <div class='form-group'>
-            <label for="email" class="col-sm-2 control-label">Email:</label>
+            <label for="email" class="col-sm-2 control-label">{% trans "Email:" %}</label>
             <div class="col-sm-10">
                 <input class="form-control" type="text" name="email">
             </div>
@@ -18,7 +20,7 @@
             {% endif %}
         </div>
         <div class='form-group'>          
-            <label for="password" class="col-sm-2 control-label">Password:</label> 
+            <label for="password" class="col-sm-2 control-label">{% trans "Password:" %}</label>
             <div class="col-sm-10">
                 <input  class="form-control" type="password" name="password" >
             </div>
@@ -29,7 +31,7 @@
     
         <div class="form-group">
            <div class="col-sm-offset-2 col-sm-10">
-             <button type="submit" class="btn btn-primary">Sign in</button>
+             <button type="submit" class="btn btn-primary">{% trans "Sign in" %}</button>
            </div>
         </div>
 
@@ -41,24 +43,24 @@
 
 {% if allow_registration %}
   <fieldset id='register'>
-     <legend>Register</legend>
+     <legend>{% trans "Register" %}</legend>
      
-    <p>Register for free to provide feedback on the Signbank.
-        <a class='btn btn-default' href="/accounts/register/">Register</a>
+    <p>{% trans "Register for free to provide feedback on the Signbank." %}
+        <a class='btn btn-default' href="/accounts/register/">{% trans "Register" %}</a>
     </p>
     </fieldset>
 {% endif %}
     
     <fieldset id='lostpw'>
-      <legend>Lost Password</legend>
-      <p>If you've lost or forgotten your password, enter your email 
-      address here and we'll reset it and send you a reminder.</p>
+      <legend>{% trans "Lost Password" %}</legend>
+      <p>{% trans "If you've lost or forgotten your password, enter your email
+      address here and we'll reset it and send you a reminder." %}</p>
 
       <form class='form-horizontal' id="passwordresetform" action="/accounts/password/reset/" method="POST">
           {% csrf_token %}
           <div class='form-group'>              
             <div class='form-group'>
-                <label for="email" class="col-sm-2 control-label">Email:</label>
+                <label for="email" class="col-sm-2 control-label">{% trans "Email:" %}</label>
                 <div class="col-sm-10">
                     <input class="form-control" type="text" name="email">
                 </div>
@@ -66,7 +68,7 @@
               
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-10">
-                   <button type="submit" class="btn btn-default">Request Password</button>
+                   <button type="submit" class="btn btn-default">{% trans "Request Password" %}</button>
                 </div>
             </div>
           </div>
