@@ -6,7 +6,7 @@ import socket
 hostname = socket.gethostname()
 
 if hostname == 'spitfire':
-    BASE_DIR = '/var/www2/signbank/live/repo/signbank/signbank/'
+    BASE_DIR = '/var/www2/signbank/live/repo/signbank/'
 else:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
@@ -28,7 +28,7 @@ if hostname == 'spitfire':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/var/www2/signbank/live/writable/database/signbank.db',
+            'NAME': '/var/www2/signbank/live/writable/database/updated.db',
         }
     }
 elif hostname == 'wessel':
@@ -42,7 +42,7 @@ elif hostname == 'wessel':
 TIME_ZONE = 'Australia/Sydney'
 
 LANGUAGE_CODE = "en"
-LOCALE_PATHS = [BASE_DIR+'signbank/conf/locale']
+LOCALE_PATHS = [BASE_DIR+'conf/locale']
 LANGUAGES = (
   ('en', 'English'),
   ('nl', 'Dutch'),
