@@ -1,5 +1,5 @@
 from signbank.settings.base import *
-
+from datetime import datetime
 
 TEMPLATE_DIRS = (
     os.path.join(PROJECT_DIR, 'bootstrap_templates'),
@@ -72,5 +72,6 @@ XALLOWED_TAGS = [ '',
                 ]
 
 DATABASE_NAME = '/www2/signbank/live/repo/signbank/signbank.db';
+EARLIEST_GLOSS_CREATION_DATE = datetime(2015,1,1)
 WSGI_FILE = '/var/www2/signbank/live/virtualenv/signbank/lib/python2.7/site-packages/signbank/wsgi.py'
 ECV_FILE = '/var/www2/signbank/live/writable/ecv/cngt.ecv'
