@@ -1,11 +1,11 @@
 {% extends "baselayout.html" %}
-
+{% load i18n %}
 {% block content %}
  
 
-    <p>Welcome to the Sign Search section of the {{language}} SignBank. Here
+    <p>{% trans "Welcome to the Sign Search section of the {{language}} SignBank. Here
      you can search for a sign using a Dutch translation in the search box
-     above, or browse words starting with any letter below.</p>	
+     above, or browse words starting with any letter below." %}</p>
     
     <p>
       {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
@@ -17,29 +17,29 @@
     <form class='form-inline' action="{% url 'dictionary:search' %}">
         <div class='form-group'><label for='query'>{{form.query.label}}</label> {{form.query}}</div>
         <div class='form-group'><label for='category'>{{form.category.label}}</label> {{form.category}}</div>
-        <div class='form-group'><input type='submit' class='btn btn-primary' value='Submit'></div>
+        <div class='form-group'><input type='submit' class='btn btn-primary' value='{% trans "Submit" %}'></div>
      </form>
     {% endif %}
 
 
         {% ifequal wordcount 0 %}
            {% if query %}
-            <p>There is no exact match to the word you typed.</p>            
+            <p>{% trans "There is no exact match to the word you typed." %}</p>
             
-            <p>There are 
+            <p>{% trans "There are
                 {% if ANON_SAFE_SEARCH %}three{% else %}two{% endif %} 
-                main reasons why there may be no match:</p>
+                main reasons why there may be no match:" %}</p>
             <ol>
-              <li>There really is no {{language}} sign in the database for which that word is an good translation <!-- (you may need to fingerspell the word)--></li>
+              <li>{% blocktrans %} There really is no {{language}} sign in the database for which that word is an good translation {% endblocktrans %} <!-- (you may need to fingerspell the word)--></li>
 
-            <li>You have mis-typed the word or you have added unnecessary word endings. Follow these search tips:
+            <li>{% trans "You have mis-typed the word or you have added unnecessary word endings. Follow these search tips:" %}
             <ul>
-             <li>type only the first few letters of a word</li>
+             <li>{% trans "type only the first few letters of a word" %}</li>
 
-             <li>type words with no word endings like ‘-en’, ‘-end’, or ‘-t’.</li>
+             <li>{% trans "type words with no word endings like ‘-en’, ‘-end’, or ‘-t’." %}</li>
             </ul>
             {% if ANON_SAFE_SEARCH %}
-            <li>The match is blocked in the public view of {{language}} Signbank because the word/sign is 
+            <li>{% blocktrans %} The match is blocked in the public view of {{language}} Signbank because the word/sign is
 
             obscene or offensive in Dutch or {{language}}, or both. (Schools and parents have repeatedly 
 
@@ -48,7 +48,7 @@
 
             with {{langauge}} Signbank</a>,  you will then be able to find these 
 
-            matching words/signs if they exist in {{language}}.</li>
+            matching words/signs if they exist in {{language}}. {% endblocktrans %}</li>
             {% endif %}
         </ul>
             
@@ -57,16 +57,16 @@
             
         {% else %}
          {% ifequal wordcount 1 %}
-            <p>There is one word that fully or partially match your query. Please select the word below.</p>       
+            <p>{% trans "There is one word that fully or partially match your query. Please select the word below." %}</p>
          {% else %}
-           <p>There are {{ wordcount }} words that fully or partially match your query.</p>
+           <p>{% blocktrans %} There are {{ wordcount }} words that fully or partially match your query. {% endblocktrans %}</p>
          {% endifequal %}
         {% endifequal %}
  
         
         {% if perms.dictionary.search_gloss and not wordcount == 0 %}
-        <p>Items marked * below are not in the web version of the dictionary and would not
-        appear in a regular (non staff) search.</p>
+        <p>{% trans "Items marked * below are not in the web version of the dictionary and would not
+        appear in a regular (non staff) search.| %}</p>
         {% endif %}
         
       <div id="searchresults">
@@ -91,12 +91,12 @@
        </div>
        
           {% if page.has_next or page.has_previous %} 
-          <p>Jump to results page: 
+          <p>{% trans "Jump to results page:" %}
           {% for p in paginator.page_range %}
              {% ifequal p page.number %}
-             <strong>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</strong>
+             <strong>{% ifequal p 0 %}{% trans "Start" %}{% else %}{{p}}{% endifequal %}</strong>
              {% else %}
-             <a href='?query={{query}}&page={{p}}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
+             <a href='?query={{query}}&page={{p}}'>{% ifequal p 0 %}{% trans "Start" %}{% else %}{{p}}{% endifequal %}</a>
              {% endifequal %}
           {% endfor %}
           </p>

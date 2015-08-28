@@ -5,7 +5,7 @@
 
 <html>
   <head>
-    <title>{% block bootstrap3_title %}Signbank{% endblock %}</title>
+    <title>{% block bootstrap3_title %}NGT Signbank{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap_css/style.css">
@@ -19,7 +19,7 @@
             
             <div id="leftcontentborder"></div>
             <div id="rightcontentborder"></div>
-            <div id='header'><h1>Signbank</h1>
+            <div id='header'><h1>NGT Signbank</h1>
                 <div id='logoholder' class='visible-lg visible-md visible-sm'></div>
             </div>
 
@@ -43,10 +43,10 @@
                   
                   <img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />
                   -->
-                  <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">{% trans "The NGT Signbank</span> is licensed under a " %}<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons BY-NC-SA 4.0 International License</a>.
+                  <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">{% trans "The NGT Signbank</span> is licensed under a " %}<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">{% trans "Creative Commons BY-NC-SA 4.0 International License" %}</a>.
               
               
-              <a href="{% url 'signbank.feedback.views.generalfeedback' %}">Provide feedback on the site</a>
+              <a href="{% url 'signbank.feedback.views.generalfeedback' %}">{% trans "Provide feedback on the site" %}</a>
           </div>
        </div>
     </div>
@@ -72,9 +72,25 @@
             });
             $("#language_picker").submit();
         });
+
+    	{% get_current_language as WEBSITE_LANGUAGE %}
+
+        //Use the form below to update the language when logging in (if needed)
+        {% if user.is_authenticated and user.get_profile.last_used_language != WEBSITE_LANGUAGE %}
+
+            $('#last_language_of_user_form').submit();
+
+        {% endif %}
     })
 
     </script>
+    <form id="last_language_of_user_form" method="post" action="/i18n/setlang/">
+
+        {% csrf_token %}
+
+        <input type="hidden" name="language" value="{{ user.get_profile.last_used_language }}">
+
+    </form>
 
   </body>
 </html>

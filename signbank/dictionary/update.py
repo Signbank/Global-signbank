@@ -1,15 +1,14 @@
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
 from django.template import Context, RequestContext, loader
-from django.http import Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.core.urlresolvers import reverse
-from django.conf import settings
+
 from django.contrib.auth.decorators import permission_required
 from django.db.models.fields import NullBooleanField
 
-from signbank.log import debug
 from tagging.models import TaggedItem, Tag
 import os, shutil, re
+from datetime import datetime
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -22,8 +21,6 @@ def add_gloss(request):
         
         form = GlossCreateForm(request.POST)
 
-        print(request.POST['annotation_idgloss'],Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'][0]))
-
         if len(Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'])) != 0:
             return render_to_response('dictionary/warning.html', {'warning':'Annotation ID Gloss not unique'},context_instance=RequestContext(request))
         elif len(Gloss.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'])) != 0:
@@ -32,7 +29,10 @@ def add_gloss(request):
         if form.is_valid():
             
             gloss = form.save()
-            
+            gloss.creationDate = datetime.now()
+            gloss.creator = request.user
+            gloss.save()
+
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
         else:
             return render_to_response('dictionary/add_gloss_form.html', 

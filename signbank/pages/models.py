@@ -9,7 +9,8 @@ from django.contrib.auth.models import Group
 class Page(models.Model):
     url = models.CharField(_('URL'), max_length=100, db_index=True)
     title = models.CharField(_('title'), max_length=200)
-    content = models.TextField(_('content'), blank=True)
+    content = models.TextField(_('English content'), blank=True)
+    content_dutch = models.TextField(_('Dutch content'), blank=True)
     template_name = models.CharField(_('template name'), max_length=70, blank=True,
         help_text=_("Example: 'pages/contact_page.html'. If this isn't provided, the system will use 'pages/default.html'."))
     publish = models.BooleanField(_('publish'), help_text=_("If this is checked, the page will be included in the site menus."))

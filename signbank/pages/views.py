@@ -58,7 +58,11 @@ def page(request, url='/'):
     # mark the title and content as already safe (since they are raw HTML
     # content in the first place).
     f.title = mark_safe(f.title)
-    f.content = mark_safe(f.content)
+
+    if request.LANGUAGE_CODE == 'nl':
+        f.content = mark_safe(f.content_dutch)
+    else:
+        f.content = mark_safe(f.content)
 
     c = RequestContext(request, {
         'page': f, 

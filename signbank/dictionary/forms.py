@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.formtools.preview import FormPreview
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list
 from django.conf import settings
@@ -92,7 +91,8 @@ class GlossSearchForm(forms.ModelForm):
     definitionRole = forms.ChoiceField(label='Note type',choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionContains = forms.CharField(label='Note contains',widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-
+    createdBefore = forms.DateField(label='Created before')
+    createdAfter = forms.DateField(label='Created after')
 
     class Meta:
 

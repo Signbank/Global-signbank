@@ -464,3 +464,7 @@ def switch_to_language(request,language):
     user_profile.save()
 
     return HttpResponse('OK')
+
+def recently_added_glosses(request):
+
+    return render_to_response('dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.all().order_by('creationDate').reverse()[:20]},context_instance=RequestContext(request))

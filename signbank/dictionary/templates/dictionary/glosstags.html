@@ -1,6 +1,8 @@
-    <div id='tags'>
+{% load i18n %}
+
+        <div id='tags'>
         <fieldset>
-      <legend>Tags</legend>
+      <legend>{% trans "Tags" %}</legend>
       {% load tagging_tags %}
       {% tags_for_object gloss as tag_list %}
       {% if tag_list %}
@@ -15,7 +17,7 @@
                      <a class='tagdelete editform'
                         id='{{tag.name}}'
                         href='{% url 'root_page' %}dictionary/update/tag/{{gloss.id}}' 
-                        title='delete this tag'>x</a>
+                        title='{% trans "delete this tag" %}'>x</a>
                  </span>
                  {% endif %}
                 </div>
@@ -31,7 +33,7 @@
                 method="post" enctype="multipart/form-data">
            {% csrf_token %}
            <table>
-           <tr><td>{{tagform.tag}}</td><td><input class='btn btn-primary' type='submit' value='Add Tag'></td></tr>
+           <tr><td>{{tagform.tag}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add Tag" %}'></td></tr>
            </table>
           </form>
       </div>

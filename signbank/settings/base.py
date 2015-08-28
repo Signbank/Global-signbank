@@ -3,7 +3,13 @@
 import os
 import socket
 
-BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+hostname = socket.gethostname()
+
+if hostname == 'spitfire':
+    BASE_DIR = '/var/www2/signbank/live/repo/signbank/signbank/'
+else:
+    BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+
 PROJECT_DIR = os.path.dirname(BASE_DIR)
 
 
@@ -17,8 +23,6 @@ ADMINS = (
 )
 
 MANAGERS = ADMINS
-
-hostname = socket.gethostname()
 
 if hostname == 'spitfire':
     DATABASES = {
@@ -38,7 +42,7 @@ elif hostname == 'wessel':
 TIME_ZONE = 'Australia/Sydney'
 
 LANGUAGE_CODE = "en"
-LOCALE_PATHS = ['/var/www2/signbank/live/repo/signbank/conf/locale']
+LOCALE_PATHS = [BASE_DIR+'signbank/conf/locale']
 LANGUAGES = (
   ('en', 'English'),
   ('nl', 'Dutch'),

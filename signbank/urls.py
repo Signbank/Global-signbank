@@ -42,6 +42,7 @@ urlpatterns = patterns('',
     url(r'^signs/search/$', permission_required('dictionary.search_gloss')(GlossListView.as_view())),
     url(r'^signs/add/$', 'signbank.dictionary.views.add_new_sign'),
     url(r'^signs/import_csv/$', 'signbank.dictionary.views.import_csv'),
+    url(r'^signs/recently_added/$', 'signbank.dictionary.views.recently_added_glosses'),
     url(r'^feedback/overview/$', 'signbank.feedback.views.showfeedback'),
 
     # A standard view for setting the language
