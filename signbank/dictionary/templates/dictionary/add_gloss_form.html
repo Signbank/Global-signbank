@@ -1,4 +1,5 @@
 {% extends "baselayout.html" %}
+{% load i18n %}
 {% load bootstrap3 %}
 {% block bootstrap3_title %}Signbank: Add Gloss{% endblock %}
 {% block extrahead %}
@@ -16,9 +17,9 @@
                  {% csrf_token %}
                  <table class='table'>
                      <tr>
-                         <th><label for='id_idgloss'>Lemma ID Gloss</label></th>
-                         <th><label for='id_annotation_idgloss'>Annotation ID Gloss</label></th>
-                         <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
+                         <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
+                         <th><label for='id_annotation_idgloss'>{% trans "Annotation ID Gloss" %}</label></th>
+                         <th><label for='id_annotation_idgloss_en'>{% trans "Annotation ID Gloss (English)" %}</label></th>
                          <th></th>
                      </tr>
                      <tr>

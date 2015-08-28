@@ -14,8 +14,8 @@
   {% endfor %}
 </div>
  
-        <p>Items marked * below are not in the web version of the dictionary and would not
-        appear in a regular (non staff) search.</p>
+        <p>{% trans "Items marked * below are not in the web version of the dictionary and would not
+        appear in a regular (non staff) search." %}</p>
  
         
       <div id="searchresults">
@@ -39,7 +39,7 @@
          </table>
    
           {% if page.has_next or page.has_previous %} 
-          <p>Jump to results page: 
+          <p>{% trans "Jump to results page:" %}
           {% for p in paginator.page_range %}
              {% ifequal p page.number %}
              <strong>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</strong>
