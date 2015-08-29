@@ -9,7 +9,7 @@
   <p>{% trans "The update to the gloss {{ gloss }} was successful" %}.</p>
 
 
-  <p>{% trans "Return to <a href="{{referer}}">the gloss page" %}</a></p>
+  <p>{% blocktrans %} "Return to <a href="{{referer}}">the gloss page" {% endblocktrans %}</a></p>
   
 {% else %}
     <p>{% trans "Errors in the update form: " %}</p>
