@@ -23,7 +23,7 @@ msgstr "Gebruik van NGT Signbank</span> valt onder een"
 
 #: bootstrap_templates/baselayout.html:46
 msgid "Creative Commons BY-NC-SA 4.0 International License"
-msgstr ""
+msgstr "Creative Commons BY-NC-SA 4.0 International-Licentie"
 
 #: bootstrap_templates/baselayout.html:49
 #, fuzzy
@@ -32,29 +32,29 @@ msgstr "Geef feedback over dit gebaar"
 
 #: bootstrap_templates/loginform.html:12
 msgid "Sign In"
-msgstr ""
+msgstr "Inloggen"
 
 #: bootstrap_templates/loginform.html:14 bootstrap_templates/loginform.html:63
 msgid "Email:"
-msgstr ""
+msgstr "Gebruikersnaam"
 
 #: bootstrap_templates/loginform.html:23
 #, fuzzy
 msgid "Password:"
-msgstr "Wachtwoord"
+msgstr "Wachtwoord:"
 
 #: bootstrap_templates/loginform.html:34
 #, fuzzy
 msgid "Sign in"
-msgstr "Gebaardefinitie"
+msgstr "Inloggen"
 
 #: bootstrap_templates/loginform.html:46 bootstrap_templates/loginform.html:49
 msgid "Register"
-msgstr ""
+msgstr "Aanmelden"
 
 #: bootstrap_templates/loginform.html:48
 msgid "Register for free to provide feedback on the Signbank."
-msgstr ""
+msgstr "Meld je gratis aan om feedback op Signbank te kunnen geven."
 
 #: bootstrap_templates/loginform.html:55
 #, fuzzy
@@ -124,11 +124,11 @@ msgstr "Nieuw wachtwoord:"
 
 #: bootstrap_templates/registration/password_reset_confirm.html:22
 msgid "Confirm password:"
-msgstr "Bevestig nieuw wachtwoord: "
+msgstr "Bevestig nieuw wachtwoord:"
 
 #: bootstrap_templates/registration/password_reset_confirm.html:24
 msgid "Change my password"
-msgstr "Verander mijn wachtwoord: "
+msgstr "Verander mijn wachtwoord:"
 
 #: bootstrap_templates/registration/password_reset_confirm.html:29
 msgid "Password reset unsuccessful"
@@ -162,7 +162,7 @@ msgstr "Bedankt voor het gebruik van onze site! "
 #: bootstrap_templates/registration/password_reset_email.html:11
 #, python-format
 msgid "The %(site_name)s team"
-msgstr "Het %(site_name)s team"
+msgstr "Het %(site_name)s-team"
 
 #: bootstrap_templates/registration/password_reset_form.html:4
 msgid "Home"
@@ -812,11 +812,11 @@ msgstr "Afbeelding"
 #: build/django/django/db/models/fields/related.py:1147
 #, python-format
 msgid "%(model)s instance with pk %(pk)r does not exist."
-msgstr ""
+msgstr "%(model)s-instantie met pk %(pk)r bestaat niet."
 
 #: build/django/django/db/models/fields/related.py:1149
 msgid "Foreign Key (type determined by related field)"
-msgstr "%(model)s instantie met pk %(pk)r bestaan niet."
+msgstr ""
 
 #: build/django/django/db/models/fields/related.py:1290
 msgid "One-to-one relationship"
@@ -1980,12 +1980,12 @@ msgstr "aantal betekenissen"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:387
 msgid "out of"
-msgstr ""
+msgstr "van"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:393
 #, fuzzy
 msgid "Annotation ID gloss: Dutch"
-msgstr "Annotatie-ID-Glos"
+msgstr "Annotatie-ID-Glos: Nederlands"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:394
 #, fuzzy
@@ -1999,24 +1999,24 @@ msgstr "Vergelijkbare vertalingen in het Nederlands"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:396
 msgid "Handedness"
-msgstr ""
+msgstr "Handigheid"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:397
 msgid "Strong hand"
-msgstr ""
+msgstr "Sterke hand"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:398
 msgid "Weak hand"
-msgstr ""
+msgstr "Zwakke hand"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:399
 msgid "Location"
-msgstr ""
+msgstr "Plaats"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:400
 #: signbank/dictionary/templates/dictionary/glosstags.html:5
 msgid "Tags"
-msgstr ""
+msgstr "Labels"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:57
 msgid "Sign {{glossposn}} of {{glosscount}} in the NGT Dictionary"
@@ -2056,7 +2056,7 @@ msgstr "Verwijder"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:668
 #: signbank/dictionary/templates/dictionary/update_video.html:78
 msgid "Cancel"
-msgstr ""
+msgstr "Annuleer"
 
 #. Translators:
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:136
@@ -2080,21 +2080,21 @@ msgstr "Geef algemene feedback op de site"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:151
 msgid "Upload New Video"
-msgstr ""
+msgstr "Nieuwe video uploaden"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:152
 msgid "We have {{gloss.count_videos}} videos for this sign."
-msgstr ""
+msgstr "We hebben {{gloss.count_videos}} video's voor dit gebaar"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:170
 msgid "Delete/Revert Video"
-msgstr ""
+msgstr "Verwijder video"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:173
 msgid ""
 "This will delete the most recent upload and restore the most recent earlier "
 "version."
-msgstr ""
+msgstr "Zo wordt de meest recente video verwijderd en de vorige versie getoond."
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:285
 msgid "Annotation ID Gloss: English"
@@ -2123,11 +2123,11 @@ msgstr "Morfologie"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:325
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:640
 msgid "Type"
-msgstr ""
+msgstr "Type"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:326
 msgid "Morpheme"
-msgstr ""
+msgstr "Morfeem"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:340
 msgid "Delete This Morphology"
@@ -2142,7 +2142,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:365
 msgid "view"
-msgstr ""
+msgstr "toon"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:377
 #, fuzzy
@@ -2214,12 +2214,12 @@ msgstr "Publicatiestatus"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:600
 msgid "Creation Date"
-msgstr ""
+msgstr "Aanmaakdatum"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:601
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
 msgid "Creator"
-msgstr ""
+msgstr "Toegevoegd door"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:603
 msgid "In Web Dictionary"
@@ -2264,7 +2264,7 @@ msgstr "Bewaar nieuw gebaar"
 #: signbank/dictionary/templates/dictionary/gloss_list.html:42
 #: signbank/dictionary/templates/dictionary/search_result.html:94
 msgid "Jump to results page:"
-msgstr ""
+msgstr "Ga naar de resultatenlijst"
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:20
 #, fuzzy
@@ -2273,7 +2273,7 @@ msgstr "Verwijder"
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:36
 msgid "Add Tag"
-msgstr ""
+msgstr "Voeg label toe"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:9
 msgid "Upload your changed CSV here:"
@@ -2312,7 +2312,7 @@ msgid ""
 "    you can search for a sign using a Dutch translation in the search box\n"
 "    above, or browse words starting with any letter below."
 msgstr ""
-"Welcome bij de Zoekafdeling van %(langauge)s SignBank. Hier\n"
+"Welcome bij de Zoekpagina van %(langauge)s SignBank. Hier\n"
 "    kun je zoeken naar een gebaar op basis van de Nederlandse vertaling\n"
 "    hierboven, of zoeken naar gebaren op basis van de beginletter van de "
 "vertaling\n"
@@ -2320,11 +2320,11 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
 msgid "Creation date"
-msgstr ""
+msgstr "Aanmaakdatum"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:27
 msgid "There is no exact match to the word you typed."
-msgstr ""
+msgstr "Er is geen resultaat dat precies overeenkomst met het zoekwoord."
 
 #: signbank/dictionary/templates/dictionary/search_result.html:33
 #, python-format
@@ -2332,20 +2332,24 @@ msgid ""
 " There really is no %(language)s sign in the database for which that word is "
 "an good translation "
 msgstr ""
+"Er is geen %(langauge)s-gebaar in de database waarvoor dat woord een "
+"goede vertaling is."
 
 #: signbank/dictionary/templates/dictionary/search_result.html:35
 msgid ""
 "You have mis-typed the word or you have added unnecessary word endings. "
 "Follow these search tips:"
 msgstr ""
+"Je hebt mogelijk een typefout gemaakt of een verbogen vorm van het woord gebruikt. "
+"Gebruik deze zoektips:"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:37
 msgid "type only the first few letters of a word"
-msgstr ""
+msgstr "type alleen de eerste letters van een woord"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:39
 msgid "type words with no word endings like ‘-en’, ‘-end’, or ‘-t’."
-msgstr ""
+msgstr "type woorden zonder uitgangen zoals '-t', '-en', '-de' of '-te'."
 
 #: signbank/dictionary/templates/dictionary/search_result.html:42
 #, python-format
@@ -2371,63 +2375,66 @@ msgid ""
 "There is one word that fully or partially match your query. Please select "
 "the word below."
 msgstr ""
+"Er is een woord dat (deels of helemaal) overeenkomt met je zoekopdracht."
+"Selecteer het woord hieronder."
 
 #: signbank/dictionary/templates/dictionary/search_result.html:62
 #, python-format
 msgid ""
 " There are %(wordcount)s words that fully or partially match your query. "
 msgstr ""
+" Er zijn %(wordcount)s woorden die (deels of helemaal) met je zoekopdracht overeenkomen."
 
 #: signbank/dictionary/templates/dictionary/search_result.html:97
 #: signbank/dictionary/templates/dictionary/search_result.html:99
 msgid "Start"
-msgstr ""
+msgstr "Start"
 
 #: signbank/dictionary/templates/dictionary/update_result.html:9
 msgid "The update to the gloss {{ gloss }} was successful"
-msgstr ""
+msgstr "De update van glos {{ gloss }} is gelukt"
 
 #: signbank/dictionary/templates/dictionary/update_result.html:12
 #, fuzzy
 msgid "Return to <a href="
-msgstr "Terug naar de zoekresultaten"
+msgstr "Terug naar <a href="
 
 #: signbank/dictionary/templates/dictionary/update_result.html:15
 msgid "Errors in the update form: "
-msgstr ""
+msgstr "Fouten in het updateformulier"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:43
 msgid "Update Video for Gloss <em>{{gloss.idgloss}}</em>"
-msgstr ""
+msgstr "Update de video voor glos <em>{{gloss.idgloss}}</em>"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:46
 msgid "Replacement of video cancelled."
-msgstr ""
+msgstr "Vervangen van video geannuleerd"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:48
 #: signbank/dictionary/templates/dictionary/update_video.html:54
 msgid "Close Window"
-msgstr ""
+msgstr "Sluit scherm"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:52
 msgid "Replacement of video completed."
-msgstr ""
+msgstr "Vervangen van video afgerond."
 
 #: signbank/dictionary/templates/dictionary/update_video.html:63
 msgid "Existing Video"
-msgstr ""
+msgstr "Bestaande video"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:63
 msgid "New Video"
-msgstr ""
+msgstr "Nieuwe video"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:76
 msgid "Confirm update of this video:"
-msgstr ""
+msgstr "Bevestig update van deze video:"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:93
 msgid "Upload Video"
-msgstr ""
+msgstr "Upload video"
 
 #. Translators: Page title
 #: signbank/dictionary/templates/dictionary/word.html:5
@@ -2489,12 +2496,14 @@ msgstr "Gebaardefinitie"
 msgid ""
 "Example: '/about/contact/'. Make sure to have leading and trailing slashes."
 msgstr ""
+"Voorbeeld: '/about/contact/'. Zorg dat je spaties aan begin en eind hebt."
 
 #: signbank/pages/admin.py:16
 msgid ""
 "This value must contain only letters, numbers, underscores, dashes or "
 "slashes."
 msgstr ""
+"Deze waarde mag alleen letters, cijfers, underscores, streepjes of slashes hebben."
 
 #: signbank/pages/admin.py:27
 msgid "Uploaded video will be converted to Flash"
@@ -2516,7 +2525,7 @@ msgstr "Engels"
 #: signbank/pages/models.py:13
 #, fuzzy
 msgid "Dutch content"
-msgstr "inhoud"
+msgstr "Nederlands"
 
 #: signbank/pages/models.py:14
 msgid "template name"
@@ -2527,6 +2536,8 @@ msgid ""
 "Example: 'pages/contact_page.html'. If this isn't provided, the system will "
 "use 'pages/default.html'."
 msgstr ""
+"Voorbeeld: 'pages/contact_page.html'. Als deze niet aanwezig is, zal het systeem "
+"'pages/default.html' gebruiken."
 
 #: signbank/pages/models.py:16
 msgid "publish"
@@ -2534,27 +2545,31 @@ msgstr "publiceer"
 
 #: signbank/pages/models.py:16
 msgid "If this is checked, the page will be included in the site menus."
-msgstr ""
+msgstr "Als dit is aangevinkt, wordt de pagina opgenomen in de menu's van de site."
 
 #: signbank/pages/models.py:17
 msgid ""
 "Leave blank for a top level menu entry.  Top level entries that have sub-"
 "pages should be empty as they will not be linked in the menu."
 msgstr ""
+"Laat leeg voor een top-levelmenuitem. Top-levelitems die subpagina's"
+"hebben moeten leeg blijven omdat ze niet in het menu gelinkt worden."
 
 #: signbank/pages/models.py:18
 msgid "ordering index"
-msgstr ""
+msgstr "sorteerindex"
 
 #: signbank/pages/models.py:18
 msgid "Used to order pages in the menu"
-msgstr ""
+msgstr "Gebruikt om pagina's in het menu te sorteren"
 
 #: signbank/pages/models.py:19
 msgid ""
 "This page will only be visible to members of these groups, leave blank to "
 "allow anyone to access."
 msgstr ""
+"Deze pagina is alleen zichtbaar voor leden van deze groepen, laat"
+"leeg om iedereen toegang te geven."
 
 #: signbank/pages/models.py:22
 msgid "page"
@@ -2582,35 +2597,36 @@ msgstr "Wachtwoord (opnieuw)"
 
 #: signbank/registration/forms.py:62
 msgid "This username is already taken. Please choose another."
-msgstr ""
+msgstr "Deze gebruikersnaam is al bezet. Kies een andere."
 
 #: signbank/registration/forms.py:72
 msgid "You must type the same password each time"
-msgstr ""
+msgstr "Je moet hetzelfde wachtwoord twee keer typen"
 
 #: signbank/registration/forms.py:101
 msgid "I have read and agree to the Terms of Service"
-msgstr ""
+msgstr "Ik heb de Gebruikersvoorwaarden gelezen en ga ermee akkoord."
 
 #: signbank/registration/forms.py:110
 msgid "You must agree to the terms to register"
-msgstr ""
+msgstr "Je moet de Gebruikersvoorwaarden accepteren om je aan te melden"
 
 #: signbank/registration/forms.py:129
 msgid ""
 "This email address is already in use. Please supply a different email "
 "address."
-msgstr ""
+msgstr "Dit emailadres is al in gebruik. Gebruik een ander emailadres."
 
 #: signbank/registration/forms.py:154
 msgid ""
 "Registration using free email addresses is prohibited. Please supply a "
 "different email address."
 msgstr ""
+"Aanmelden met een gratis emailadres is niet toegestaan. Geef een ander mailadres op."
 
 #: signbank/registration/forms.py:212
 msgid "What is your background?"
-msgstr ""
+msgstr "Wat is je achtergrond?"
 
 #: signbank/registration/forms.py:283
 msgid "Email"
@@ -2621,20 +2637,23 @@ msgid ""
 "Please enter a correct email and password. Note that password is case-"
 "sensitive."
 msgstr ""
+"Geef alsjeblieft een correct emailadres en wachtwoord op. Het wachtwoord "
+"is hoofdletter-gevoelig."
 
 #: signbank/registration/forms.py:306
 msgid "This account is inactive."
-msgstr ""
+msgstr "Deze account is niet actief."
 
 #: signbank/registration/forms.py:311
 msgid ""
 "Your Web browser doesn't appear to have cookies enabled. Cookies are "
 "required for logging in."
 msgstr ""
+"Je webbrowser accepteert nu geen cookies. Deze zijn nodig om in te loggen."
 
 #: signbank/registration/models.py:192
 msgid "user"
-msgstr ""
+msgstr "gebruiker"
 
 #: signbank/registration/models.py:193
 msgid "activation key"
@@ -2642,16 +2661,16 @@ msgstr ""
 
 #: signbank/registration/models.py:198
 msgid "registration profile"
-msgstr ""
+msgstr "registratieprofiel"
 
 #: signbank/registration/models.py:199
 msgid "registration profiles"
-msgstr ""
+msgstr "registratieprofielen"
 
 #: templates/admin/dictionary/gloss/change_form.html:15
 msgid "History"
-msgstr ""
+msgstr "Geschiedenis"
 
 #: templates/admin/dictionary/gloss/change_form.html:18
 msgid "View on site"
-msgstr ""
+msgstr "Bekijk op de site"

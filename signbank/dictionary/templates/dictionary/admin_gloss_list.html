@@ -402,7 +402,7 @@ function clearForm(myFormElement) {
     </thead>
     <tbody>
     {% for gloss in object_list %}
-        <tr>		
+        <tr {% if gloss.has_video %}class="success"{% endif %}>
             <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></td>
             <td><a href="/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></td>
 
