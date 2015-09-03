@@ -6,7 +6,9 @@ import socket
 hostname = socket.gethostname()
 
 if hostname == 'spitfire':
-    BASE_DIR = '/var/www2/signbank/live/repo/signbank/'
+    ROOT = '/var/www2/signbank/live/'
+    BASE_DIR = ROOT+'repo/signbank/'
+    WRITABLE_FOLDER = ROOT+'writable/'
 else:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
