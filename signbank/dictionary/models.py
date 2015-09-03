@@ -1197,15 +1197,15 @@ class Relation(models.Model):
         ordering = ['source']
 
 class MorphologyDefinition(models.Model):
-    """Tells something about morphology of a gloss""";
+    """Tells something about morphology of a gloss"""
 
-    parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses");
+    parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses")
     role = models.CharField(max_length=5,choices=build_choice_list('MorphologyType'))
-    morpheme = models.ForeignKey(Gloss,related_name="morphemes");
+    morpheme = models.ForeignKey(Gloss,related_name="morphemes")
 
     def __str__(self):
 
-        return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss;
+        return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
 
 # This is the wrong location, but I can't think of a better one:
 
@@ -1215,6 +1215,10 @@ class UserProfile(models.Model):
 
     # Other fields here
     last_used_language = models.CharField(max_length=2, default="en")
+
+    def __str__(self):
+
+        return 'Profile for '+str(self.user)
 
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

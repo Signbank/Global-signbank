@@ -132,3 +132,5 @@ admin.site.register(FieldChoice)
 admin.site.register(MorphologyDefinition)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+
+admin.site.register(UserProfile)
