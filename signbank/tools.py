@@ -157,16 +157,7 @@ def reload_signbank(request=None):
     #If this is an HTTP request, give an HTTP response
     if request != None:
 
-        #Javascript to reload the page three times
-        js = """<script>
-        xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", 'http://signbank.science.ru.nl', false );
-        xmlHttp.send( null );
-        xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", 'http://signbank.science.ru.nl', false );
-        xmlHttp.send( null );
-        </script>OK"""
+        from django.template import RequestContext
+        from django.shortcuts import render_to_response
 
-        from django.http import HttpResponse
-
-        return HttpResponse(js);
+        return render_to_response('reload_signbank.html',context_instance=RequestContext(request))
