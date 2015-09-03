@@ -8,7 +8,10 @@ from forms import VideoUploadForm, VideoUploadForGlossForm
 from convertvideo import extract_frame
 import django_mobile
 
+import os
+
 from signbank.dictionary.models import Gloss
+from signbank.settings.development import GLOSS_VIDEO_DIRECTORY, WRITABLE_FOLDER
 
 def addvideo(request):
     """View to present a video upload form and process
@@ -34,9 +37,18 @@ def addvideo(request):
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing video for this sign
-            oldvids = GlossVideo.objects.filter(gloss=gloss)
-            for v in oldvids:
-                v.reversion()
+            goal_location = WRITABLE_FOLDER+GLOSS_VIDEO_DIRECTORY + '/' + gloss.idgloss[:2] + '/' + gloss.idgloss + '-' + str(gloss.pk) + '.mp4'
+            if os.path.isfile(goal_location):
+                backup_id = 1
+                made_backup = False
+
+                while not made_backup:
+
+                    if not os.path.isfile(goal_location+'_'+str(backup_id)):
+                        os.rename(goal_location,goal_location+'_'+str(backup_id))
+                        made_backup = True
+                    else:
+                        backup_id += 1
 
             video = GlossVideo(videofile=vfile, gloss=gloss)
             video.save()
