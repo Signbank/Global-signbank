@@ -54,7 +54,7 @@
             </a>
             {% endif %}
             
-            <button class='btn navbar-btn'>{% trans "Sign {{glossposn}} of {{glosscount}} in the NGT Dictionary" %}</button>
+            <button class='btn navbar-btn'>{% blocktrans %}"Sign {{glossposn}} of {{glosscount}} in the NGT Dictionary" {% endblocktrans %}</button>
             
             {% if navigation.next %}
             <a class="btn navbar-btn btn-default"
@@ -149,7 +149,7 @@
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Video" %}</legend>
-            <p>{% trans "We have {{gloss.count_videos}} videos for this sign." %}</p>
+            <p>{% blocktrans %}"We have {{gloss.count_videos}} videos for this sign." {% endblocktrans %}</p>
             <form action="/video/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
@@ -451,8 +451,8 @@
                                         </div>
                                         <div class='modal-body'>
                                             
-                                            <p>{% trans "This action will delete the <strong>{{rel.get_role_display}}</strong>
-                                                 relation between {{rel.source}} and {{rel.target}}. It cannot be undone." %}</p>
+                                            <p>{% blocktrans %}"This action will delete the <strong>{{rel.get_role_display}}</strong>
+                                                 relation between {{rel.source}} and {{rel.target}}. It cannot be undone." {% endblocktrans %}</p>
                                          </div>
                                       <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                                           {% csrf_token %}
