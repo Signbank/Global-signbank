@@ -149,7 +149,7 @@
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Video" %}</legend>
-            <p>{% blocktrans %}"We have {{gloss.count_videos}} videos for this sign." {% endblocktrans %}</p>
+            <p>{% blocktrans %} We have {{gloss.count_videos}} videos for this sign. {% endblocktrans %}</p>
             <form action="/video/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
@@ -451,8 +451,8 @@
                                         </div>
                                         <div class='modal-body'>
                                             
-                                            <p>{% blocktrans %}"This action will delete the <strong>{{rel.get_role_display}}</strong>
-                                                 relation between {{rel.source}} and {{rel.target}}. It cannot be undone." {% endblocktrans %}</p>
+                                            <p>{% blocktrans %} This action will delete the <strong>{{rel.get_role_display}}</strong>
+                                                 relation between {{rel.source}} and {{rel.target}}. It cannot be undone. {% endblocktrans %}</p>
                                          </div>
                                       <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                                           {% csrf_token %}
