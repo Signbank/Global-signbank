@@ -13,7 +13,6 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('url', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
             ('title', self.gf('django.db.models.fields.CharField')(max_length=200)),
-            ('title_dutch', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('content', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('content_dutch', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('template_name', self.gf('django.db.models.fields.CharField')(max_length=70, blank=True)),
@@ -86,7 +85,6 @@ class Migration(SchemaMigration):
             'publish': ('django.db.models.fields.BooleanField', [], {}),
             'template_name': ('django.db.models.fields.CharField', [], {'max_length': '70', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'title_dutch': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'url': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})
         },
         u'pages.pagevideo': {
