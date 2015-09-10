@@ -57,11 +57,14 @@ def page(request, url='/'):
     # To avoid having to always use the "|safe" filter in flatpage templates,
     # mark the title and content as already safe (since they are raw HTML
     # content in the first place).
-    f.title = mark_safe(f.title)
+
+    print(f.title,f.title_dutch)
 
     if request.LANGUAGE_CODE == 'nl':
+        f.title = mark_safe(f.title_dutch)
         f.content = mark_safe(f.content_dutch)
     else:
+        f.title = mark_safe(f.title)
         f.content = mark_safe(f.content)
 
     c = RequestContext(request, {
