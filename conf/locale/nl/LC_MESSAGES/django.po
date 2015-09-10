@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-28 23:13+1000\n"
+"POT-Creation-Date: 2015-09-10 18:04+1000\n"
 "PO-Revision-Date: 2015-07-28 16:26+1000\n"
 "Last-Translator: Richard <r.bankl@let.ru.nl>\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -2019,7 +2019,8 @@ msgid "Tags"
 msgstr "Labels"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:57
-msgid "Sign {{glossposn}} of {{glosscount}} in the NGT Dictionary"
+#, fuzzy, python-format
+msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
 msgstr "Gebaar {{glossposn}} van {{glosscount}} in NGT Signbank"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:61
@@ -2083,7 +2084,8 @@ msgid "Upload New Video"
 msgstr "Nieuwe video uploaden"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:152
-msgid "We have {{gloss.count_videos}} videos for this sign."
+#, fuzzy, python-format
+msgid " We have %(gloss.count_videos)s videos for this sign. "
 msgstr "We hebben {{gloss.count_videos}} video's voor dit gebaar"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:170
@@ -2094,7 +2096,8 @@ msgstr "Verwijder video"
 msgid ""
 "This will delete the most recent upload and restore the most recent earlier "
 "version."
-msgstr "Zo wordt de meest recente video verwijderd en de vorige versie getoond."
+msgstr ""
+"Zo wordt de meest recente video verwijderd en de vorige versie getoond."
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:285
 msgid "Annotation ID Gloss: English"
@@ -2165,6 +2168,14 @@ msgstr "Relaties met andere gebaren"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:523
 msgid "Delete This Relation"
 msgstr "Verwijder deze relatie"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:454
+#, python-format
+msgid ""
+" This action will delete the <strong>%(rel.get_role_display)s</strong>\n"
+"                                                 relation between "
+"%(rel.source)s and %(rel.target)s. It cannot be undone. "
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:503
 msgid "Relations to Foreign Signs"
@@ -2332,16 +2343,16 @@ msgid ""
 " There really is no %(language)s sign in the database for which that word is "
 "an good translation "
 msgstr ""
-"Er is geen %(langauge)s-gebaar in de database waarvoor dat woord een "
-"goede vertaling is."
+"Er is geen %(langauge)s-gebaar in de database waarvoor dat woord een goede "
+"vertaling is."
 
 #: signbank/dictionary/templates/dictionary/search_result.html:35
 msgid ""
 "You have mis-typed the word or you have added unnecessary word endings. "
 "Follow these search tips:"
 msgstr ""
-"Je hebt mogelijk een typefout gemaakt of een verbogen vorm van het woord gebruikt. "
-"Gebruik deze zoektips:"
+"Je hebt mogelijk een typefout gemaakt of een verbogen vorm van het woord "
+"gebruikt. Gebruik deze zoektips:"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:37
 msgid "type only the first few letters of a word"
@@ -2383,7 +2394,8 @@ msgstr ""
 msgid ""
 " There are %(wordcount)s words that fully or partially match your query. "
 msgstr ""
-" Er zijn %(wordcount)s woorden die (deels of helemaal) met je zoekopdracht overeenkomen."
+" Er zijn %(wordcount)s woorden die (deels of helemaal) met je zoekopdracht "
+"overeenkomen."
 
 #: signbank/dictionary/templates/dictionary/search_result.html:97
 #: signbank/dictionary/templates/dictionary/search_result.html:99
@@ -2395,9 +2407,9 @@ msgid "The update to the gloss {{ gloss }} was successful"
 msgstr "De update van glos {{ gloss }} is gelukt"
 
 #: signbank/dictionary/templates/dictionary/update_result.html:12
-#, fuzzy
-msgid "Return to <a href="
-msgstr "Terug naar <a href="
+#, python-format
+msgid " Return to <a href=\"%(referer)s\">the gloss page. "
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/update_result.html:15
 msgid "Errors in the update form: "
@@ -2503,7 +2515,8 @@ msgid ""
 "This value must contain only letters, numbers, underscores, dashes or "
 "slashes."
 msgstr ""
-"Deze waarde mag alleen letters, cijfers, underscores, streepjes of slashes hebben."
+"Deze waarde mag alleen letters, cijfers, underscores, streepjes of slashes "
+"hebben."
 
 #: signbank/pages/admin.py:27
 msgid "Uploaded video will be converted to Flash"
@@ -2536,8 +2549,8 @@ msgid ""
 "Example: 'pages/contact_page.html'. If this isn't provided, the system will "
 "use 'pages/default.html'."
 msgstr ""
-"Voorbeeld: 'pages/contact_page.html'. Als deze niet aanwezig is, zal het systeem "
-"'pages/default.html' gebruiken."
+"Voorbeeld: 'pages/contact_page.html'. Als deze niet aanwezig is, zal het "
+"systeem 'pages/default.html' gebruiken."
 
 #: signbank/pages/models.py:16
 msgid "publish"
@@ -2545,15 +2558,16 @@ msgstr "publiceer"
 
 #: signbank/pages/models.py:16
 msgid "If this is checked, the page will be included in the site menus."
-msgstr "Als dit is aangevinkt, wordt de pagina opgenomen in de menu's van de site."
+msgstr ""
+"Als dit is aangevinkt, wordt de pagina opgenomen in de menu's van de site."
 
 #: signbank/pages/models.py:17
 msgid ""
 "Leave blank for a top level menu entry.  Top level entries that have sub-"
 "pages should be empty as they will not be linked in the menu."
 msgstr ""
-"Laat leeg voor een top-levelmenuitem. Top-levelitems die subpagina's"
-"hebben moeten leeg blijven omdat ze niet in het menu gelinkt worden."
+"Laat leeg voor een top-levelmenuitem. Top-levelitems die subpagina'shebben "
+"moeten leeg blijven omdat ze niet in het menu gelinkt worden."
 
 #: signbank/pages/models.py:18
 msgid "ordering index"
@@ -2568,8 +2582,8 @@ msgid ""
 "This page will only be visible to members of these groups, leave blank to "
 "allow anyone to access."
 msgstr ""
-"Deze pagina is alleen zichtbaar voor leden van deze groepen, laat"
-"leeg om iedereen toegang te geven."
+"Deze pagina is alleen zichtbaar voor leden van deze groepen, laatleeg om "
+"iedereen toegang te geven."
 
 #: signbank/pages/models.py:22
 msgid "page"
@@ -2622,7 +2636,8 @@ msgid ""
 "Registration using free email addresses is prohibited. Please supply a "
 "different email address."
 msgstr ""
-"Aanmelden met een gratis emailadres is niet toegestaan. Geef een ander mailadres op."
+"Aanmelden met een gratis emailadres is niet toegestaan. Geef een ander "
+"mailadres op."
 
 #: signbank/registration/forms.py:212
 msgid "What is your background?"
@@ -2637,8 +2652,8 @@ msgid ""
 "Please enter a correct email and password. Note that password is case-"
 "sensitive."
 msgstr ""
-"Geef alsjeblieft een correct emailadres en wachtwoord op. Het wachtwoord "
-"is hoofdletter-gevoelig."
+"Geef alsjeblieft een correct emailadres en wachtwoord op. Het wachtwoord is "
+"hoofdletter-gevoelig."
 
 #: signbank/registration/forms.py:306
 msgid "This account is inactive."
@@ -2674,3 +2689,7 @@ msgstr "Geschiedenis"
 #: templates/admin/dictionary/gloss/change_form.html:18
 msgid "View on site"
 msgstr "Bekijk op de site"
+
+#, fuzzy
+#~ msgid "Return to <a href="
+#~ msgstr "Terug naar <a href="
