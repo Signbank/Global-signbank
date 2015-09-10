@@ -30,7 +30,7 @@ if hostname == 'spitfire':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/var/www2/signbank/live/writable/database/updated.db',
+            'NAME': '/var/www2/signbank/live/writable/database/signbank.db',
         }
     }
 elif hostname == 'wessel':
