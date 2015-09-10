@@ -8,7 +8,8 @@ from django.contrib.auth.models import Group
 
 class Page(models.Model):
     url = models.CharField(_('URL'), max_length=100, db_index=True)
-    title = models.CharField(_('title'), max_length=200)
+    title = models.CharField(_('English title'), max_length=200)
+    title_dutch = models.CharField(_('Dutch title'), max_length=200)
     content = models.TextField(_('English content'), blank=True)
     content_dutch = models.TextField(_('Dutch content'), blank=True)
     template_name = models.CharField(_('template name'), max_length=70, blank=True,
