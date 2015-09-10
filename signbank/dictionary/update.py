@@ -237,7 +237,7 @@ def update_relation(gloss, field, value):
     if what == 'relationdelete':
         print "DELETE: ", rel
         rel.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrel')
     elif what == 'relationrole':
         rel.role = value
         rel.save()
@@ -274,7 +274,7 @@ def update_relationtoforeignsign(gloss, field, value):
     if what == 'relationforeigndelete':
         print "DELETE: ", rel
         rel.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
     elif what == 'relationforeign_loan':
         rel.loan = value == 'YES';
         rel.save();
@@ -481,7 +481,7 @@ def update_morphology_definition(gloss, field, value):
     if what == 'morphology_definition_delete':
         print "DELETE: ", morph_def
         morph_def.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morphology_definition_role':
         morph_def.role = value
         morph_def.save()
