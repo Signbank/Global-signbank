@@ -13,7 +13,7 @@
 </head>
 <body>
 
-    <table style="width:500px;" class="table table-condensed">
+    <table class="table table-condensed">
         <tr><th style="width:180px;">{% trans "Annotation ID Gloss" %}</th><th style="width:180px;">{% trans "Annotation ID Gloss (English)" %}</th><th style="width:180px;">{% trans "Creator" %}</th><th>{% trans "Creation date" %}</th></tr>
         {% for gloss in glosses %}
         <tr><td><a href="/dictionary/gloss/{{gloss.pk}}">{{gloss.annotation_idgloss}}</a></td><td><a href="/dictionary/gloss/{{gloss.pk}}">{{gloss.annotation_idgloss_en}}</a></td><td>{{ gloss.creator.first_name }} {{ gloss.creator.last_name}}</td><td>{{ gloss.creationDate }}</td></tr>
