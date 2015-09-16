@@ -2341,9 +2341,9 @@ msgstr "Er is geen resultaat dat precies overeenkomst met het zoekwoord."
 #, python-format
 msgid ""
 " There really is no %(language)s sign in the database for which that word is "
-"an good translation "
+"a good translation "
 msgstr ""
-"Er is geen %(langauge)s-gebaar in de database waarvoor dat woord een goede "
+"Er is geen %(language)s-gebaar in de database waarvoor dat woord een goede "
 "vertaling is."
 
 #: signbank/dictionary/templates/dictionary/search_result.html:35
