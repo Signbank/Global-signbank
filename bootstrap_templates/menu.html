@@ -111,6 +111,11 @@
 		{% endif %}
 
 		src="/static/images/languages/gb.png"><br/>
+        <input name="language" type="hidden" value="en">
+        </form>
+		<form method="post" action="/i18n/setlang/">
+
+			{% csrf_token %}
 			<input class='nav nav-bar-nav navbar-right flag-button' type="image" name="language" value="nl"
 
 		{% if LANGUAGE != "nl" %}
@@ -118,6 +123,7 @@
 		{% endif %}
 
 		src="/static/images/languages/nl.png">
+            <input name="language" type="hidden" value="nl">
         </form>
 	</div>
 	
