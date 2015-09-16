@@ -64,15 +64,23 @@
     {
         $(".flag-button").on("click", function(e)
         {
-            console.log('klik');
-            $.get('dictionary/switch_to_language/'+$(this).val());
 
-            //$("#language_picker").submit(function(event)
-            //{
-            //    return false;
-            //});
+            {% if user.is_authenticated and user.get_profile.last_used_language != WEBSITE_LANGUAGE %}
 
-            //$("#language_picker").submit();
+                $.ajax('dictionary/switch_to_language/'+$(this).val(),'html');
+
+                $("#language_picker").submit(function(event)
+                {
+                    return false;
+                });
+
+
+                setTimeout(function()
+                {
+                    location.reload();
+                },500);
+
+            {% endif %}
 
         });
 
