@@ -264,7 +264,7 @@ PRIMARY_CSS = "bootstrap_css/test-server.css"
 
 
 # do we allow people to register for the site
-ALLOW_REGISTRATION = True
+ALLOW_REGISTRATION = False
 
 ACCOUNT_ACTIVATION_DAYS = 7
 
