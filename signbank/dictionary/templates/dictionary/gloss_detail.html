@@ -94,7 +94,7 @@
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                        <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                       </div>
                   </form>
                       
@@ -349,7 +349,7 @@
                                           <input type='hidden' name='value' value='confirmed'>
                                           <div class="modal-footer">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                            <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                           </div>
                                       </form>
 
@@ -451,8 +451,7 @@
                                         </div>
                                         <div class='modal-body'>
                                             
-                                            <p>{% blocktrans %} This action will delete the <strong>{{rel.get_role_display}}</strong>
-                                                 relation between {{rel.source}} and {{rel.target}}. It cannot be undone. {% endblocktrans %}</p>
+                                            <p>{% blocktrans %} This action will delete the {{rel.get_role_display}} relation between {{rel.source}} and {{rel.target}}. It cannot be undone. {% endblocktrans %}</p>
                                          </div>
                                       <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                                           {% csrf_token %}
@@ -460,7 +459,7 @@
                                           <input type='hidden' name='value' value='confirmed'>
                                           <div class="modal-footer">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                            <input type="submit" class="btn btn-primary" value='Confirm Delete'>
+                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                           </div>
                                       </form>
                                           

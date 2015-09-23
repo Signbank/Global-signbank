@@ -2176,6 +2176,7 @@ msgid ""
 "                                                 relation between "
 "%(rel.source)s and %(rel.target)s. It cannot be undone. "
 msgstr ""
+"Zo wordt de %(rel.get_role_display)s-relatie tussen %(rel.soource)s en %(rel.target)s verwijderd. Dit kan niet ongedaan gemaakt worden."
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:503
 msgid "Relations to Foreign Signs"
@@ -2213,7 +2214,7 @@ msgstr "Verwante taal"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:560
 msgid "Add Relation to Foreign Sign"
-msgstr "Voeg relatie naar een gebaar uit een andere taal toe"
+msgstr "Voeg relatie toe"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:577
 msgid "Frequency"
