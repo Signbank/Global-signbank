@@ -1995,7 +1995,7 @@ msgstr "Annotatie-ID-Glos: Engels"
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:395
 #, fuzzy
 msgid "Translation equivalents"
-msgstr "Vergelijkbare vertalingen in het Nederlands"
+msgstr "Mogelijke vertalingen in het Nederlands"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:396
 msgid "Handedness"
@@ -2105,7 +2105,7 @@ msgstr "Annotatie-ID-Glos: Engels"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:286
 msgid "Translation equivalents in Dutch"
-msgstr "Vergelijkbare vertalingen in het Nederlands"
+msgstr "Mogelijke vertalingen in het Nederlands"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:287
 msgid "Annotation Instructions"
@@ -2179,7 +2179,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:503
 msgid "Relations to Foreign Signs"
-msgstr "Relatie met vreemde gebaren"
+msgstr "Relaties met gebaren uit andere talen"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:509
 msgid "Loan"
@@ -2239,7 +2239,7 @@ msgstr "In woordenboek"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:611
 #, fuzzy
 msgid "Proposed New Sign"
-msgstr "Voeg nieuw gebaar toe"
+msgstr "Voorstel voor nieuw gebaar"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:628
 msgid "Notes"
