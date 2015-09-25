@@ -85,8 +85,7 @@
                         <h2 id='modalTitle'>{% trans "Delete This Sign" %}</h2>
                     </div>
                     <div class='modal-body'>
-                        <p>{% trans "This action will delete this sign and all
-                        associated records. It cannot be undone." %}</p>
+                        <p>{% trans "This action will delete this sign and all associated records. It cannot be undone." %}</p>
                      </div>
                   <form action='{% url 'dictionary:update_gloss' gloss.id %}' method='post'>
                       {% csrf_token %}
@@ -417,7 +416,7 @@
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#semantics'>Semantics</a>
+                <a data-toggle='collapse' data-parent='#definition' href='#semantics'>{% trans "Semantics" %}</a>
             </div>
         </div>
         <div id='semantics' class='panel-collapse collapse'>

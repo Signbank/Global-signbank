@@ -53,8 +53,7 @@
     
     <fieldset id='lostpw'>
       <legend>{% trans "Lost Password" %}</legend>
-      <p>{% trans "If you've lost or forgotten your password, enter your email
-      address here and we'll reset it and send you a reminder." %}</p>
+      <p>{% trans "If you've lost or forgotten your password, enter your email address here and we'll reset it and send you a reminder." %}</p>
 
       <form class='form-horizontal' id="passwordresetform" action="/accounts/password/reset/" method="POST">
           {% csrf_token %}
