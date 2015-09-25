@@ -104,7 +104,7 @@ from django.views.decorators.cache import never_cache
 from django.contrib.sites.models import Site, RequestSite
 
 
-def mylogin(request, template_name='registration/login.html', redirect_field_name=REDIRECT_FIELD_NAME):
+def mylogin(request, template_name='registration/login.html', redirect_field_name='/signs/recently_added/'):
     "Displays the login form and handles the login action."
     
     redirect_to = request.REQUEST.get(redirect_field_name, '')
