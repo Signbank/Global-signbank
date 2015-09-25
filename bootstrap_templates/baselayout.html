@@ -67,6 +67,9 @@
 
             {% if user.is_authenticated and user.get_profile.last_used_language != WEBSITE_LANGUAGE %}
 
+                //When the user is logged in, we don't want to submit the form, but instead save
+                //the user preference and reload
+
                 $.ajax('dictionary/switch_to_language/'+$(this).val(),'html');
 
                 $("#language_picker").submit(function(event)
@@ -74,7 +77,7 @@
                     return false;
                 });
 
-
+                //The reload is on a timeout, because it happened to fast on Firefox
                 setTimeout(function()
                 {
                     location.reload();
