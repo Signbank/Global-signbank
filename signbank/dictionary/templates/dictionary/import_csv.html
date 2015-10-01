@@ -22,7 +22,10 @@
         <ul>
         {% for change in changes %}
 
-            <li>{% blocktrans %}For {{ change.idgloss }}, <em>{{ change.human_key }}</em> changes from {{ change.original_human_value }} ({{ change.original_machine_value }}) to {{change.new_human_value}} ({{ change.new_machine_value }}).{% endblocktrans %}</li>
+            {% blocktrans with idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+                <li>For {{ idgloss }}, <em>{{ human_key }}</em> changes from {{ original_human_value }} ({{ original_machine_value }}) to {{new_human_value}} ({{ new_machine_value }}).</li>
+            {% endblocktrans %}
+
             <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
         {% endfor %}
 
