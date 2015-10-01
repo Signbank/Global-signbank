@@ -70,7 +70,7 @@
                 //When the user is logged in, we don't want to submit the form, but instead save
                 //the user preference and reload
 
-                $.ajax('dictionary/switch_to_language/'+$(this).val(),'html');
+                $.ajax('/dictionary/switch_to_language/'+$(this).val(),'html');
 
                 $("#language_picker").submit(function(event)
                 {
