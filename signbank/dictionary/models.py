@@ -1216,11 +1216,22 @@ class UserProfile(models.Model):
     # Other fields here
     last_used_language = models.CharField(max_length=2, default="en")
 
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            try:
+                p = UserProfile.objects.get(user=self.user)
+                self.pk = p.pk
+            except UserProfile.DoesNotExist:
+                pass
+
+        super(UserProfile, self).save(*args, **kwargs)
+
     def __str__(self):
 
         return 'Profile for '+str(self.user)
 
 def create_user_profile(sender, instance, created, **kwargs):
+
     if created:
         UserProfile.objects.create(user=instance)
 
