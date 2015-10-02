@@ -62,6 +62,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
     #Go through all values in the value dict, looking for differences with the gloss
     for human_key, new_human_value in valuedict.items():
 
+        new_human_value = new_human_value.trim()
 
         #If these are not fields, but relations to other parts of the database, go look for differenes elsewhere
         if human_key == 'Keywords':
