@@ -200,7 +200,7 @@ def update_gloss(request, glossid):
                         # so here we use get with a default of the value itself
                         newvalue = valdict.get(value, value)
         
-        return HttpResponse(str(original_value)+','+str(newvalue), {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value)+'\t'+str(newvalue), {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""

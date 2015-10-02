@@ -153,9 +153,7 @@ function configure_edit() {
      
     
      $('.edit_text').editable(edit_post_url, {
-		 // The callback below, created for issue #64, was turned off because the 
-         // comma as separator character in the response caused problems for some fields
-		 //callback : update_view_and_remember_original_value
+		 callback : update_view_and_remember_original_value
 	 });    
      $('.edit_int').editable(edit_post_url, {
          type      : 'positiveinteger',
@@ -245,7 +243,7 @@ function configure_edit() {
 
 function update_view_and_remember_original_value(change_summary)
 {
-	split_values = change_summary.split(',');
+	split_values = change_summary.split('\t');
 	original_value = split_values[0];
   	new_value = split_values[1];
 	id = $(this).attr('id');
