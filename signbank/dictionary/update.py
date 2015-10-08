@@ -179,10 +179,21 @@ def update_gloss(request, glossid):
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
-            else: 
-            
+
+            #Regular field updating
+            else:
+
+                #Remember the old video path if you're changing the name
+                if field == 'idgloss':
+                    old_video_path = gloss.get_video_path()
+
                 gloss.__setattr__(field, value)
                 gloss.save()
+
+                #Update the video location if you're changing the name
+                if field == 'idgloss':
+                    new_video_path = gloss.get_video_path()
+                    shutil.copyfile(settings.MEDIA_ROOT+'/'+old_video_path,settings.MEDIA_ROOT+'/'+new_video_path)
 
                 #If the value is not a Boolean, return the new value
                 if not isinstance(value,bool):
@@ -535,8 +546,3 @@ def add_tag(request, glossid):
             print form.as_table()
             
     return response
-
-
-
-
-

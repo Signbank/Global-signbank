@@ -1009,11 +1009,15 @@ minor or insignificant ways that can be ignored.""")
             if len(homophones) > 0:   
                 return homophones[0].target
         return self
-                
+
+    def get_video_path(self):
+
+        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
+
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
-        video_path = 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)+'.mp4';
+        video_path = self.get_video_path()
 
         if os.path.isfile(settings.MEDIA_ROOT+'/'+video_path):
             return video_path;
