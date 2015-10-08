@@ -50,6 +50,8 @@ def unescape(string):
 
     return HTMLParser().unescape(string)
 
+class MachineValueNotFoundError(Exception):
+    pass
 
 def compare_valuedict_to_gloss(valuedict,gloss):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
@@ -93,10 +95,17 @@ def compare_valuedict_to_gloss(valuedict,gloss):
             try:
                 new_machine_value = human_to_machine_values[new_human_value];
             except KeyError:
+
+                #If you can't find a corresponding human value, maybe it's empty
                 if new_human_value in ['',' ']:
                     new_human_value = 'None';
                     new_machine_value = None;
 
+                #If not, stop trying
+                else:
+                    raise MachineValueNotFoundError('At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key)
+
+        #Do something special for integers and booleans
         elif field.__class__.__name__ == 'IntegerField':
 
             try:
@@ -111,6 +120,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
             else:
                 new_machine_value = False;
 
+        #If all the above does not apply, this is a None value or plain text
         else:
             if new_human_value == 'None':
                 new_machine_value = None;
