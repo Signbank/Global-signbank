@@ -508,7 +508,13 @@ class GlossDetailView(DetailView):
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
-        context['nextglossid'] = Gloss.objects.get(annotation_idgloss=context['gloss']).admin_next_gloss().pk
+
+        next_gloss = Gloss.objects.get(idgloss=context['gloss']).admin_next_gloss()
+        if next_gloss == None:
+            context['nextglossid'] = context['gloss']
+        else:
+            context['nextglossid'] = next_gloss.pk
+
         if settings.SIGN_NAVIGATION:
             context['glosscount'] = Gloss.objects.count()
             context['glossposn'] =  Gloss.objects.filter(sn__lt=context['gloss'].sn).count()+1
