@@ -22,7 +22,7 @@ from signbank.dictionary.update import update_keywords
 import forms
 
 from signbank.video.forms import VideoUploadForGlossForm
-from signbank.tools import video_to_signbank, compare_valuedict_to_gloss
+from signbank.tools import video_to_signbank, compare_valuedict_to_gloss, MachineValueNotFoundError
 
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
@@ -411,7 +411,10 @@ def import_csv(request):
 
             gloss = Gloss.objects.get(pk=pk);
 
-            changes += compare_valuedict_to_gloss(value_dict,gloss);
+            try:
+                changes += compare_valuedict_to_gloss(value_dict,gloss);
+            except MachineValueNotFoundError as e:
+                error = e
 
         stage = 1;
 
@@ -455,7 +458,7 @@ def import_csv(request):
 
         stage = 0;
 
-    return render_to_response('dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes},context_instance=RequestContext(request));
+    return render_to_response('dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,'error':error},context_instance=RequestContext(request));
 
 def switch_to_language(request,language):
 
