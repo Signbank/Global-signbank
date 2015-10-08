@@ -289,7 +289,7 @@ def search(request):
         glossQuery = form.cleaned_data['glossQuery']
         term = form.cleaned_data['query']
 
-        return HttpResponseRedirect('../../signs/search/?search='+glossQuery+'&keyword='+term);
+        return HttpResponseRedirect('../../signs/search/?search='+glossQuery+'&keyword='+term)
 
 from django.db.models.loading import get_model, get_apps, get_models
 from django.core import serializers
@@ -323,100 +323,102 @@ def missing_video_view(request):
 
 def import_videos(request):
 
-    video_folder = '/var/www2/signbank/live/writable/import_videos/';
+    video_folder = '/var/www2/signbank/live/writable/import_videos/'
 
-    out = '<p>Imported</p><ul>';
-    overwritten_files = '<p>Of these files, these were overwritten</p><ul>';
+    out = '<p>Imported</p><ul>'
+    overwritten_files = '<p>Of these files, these were overwritten</p><ul>'
 
     for filename in os.listdir(video_folder):
 
-        parts = filename.split('.');
-        idgloss = '.'.join(parts[:-1]);
-        extension = parts[-1];
+        parts = filename.split('.')
+        idgloss = '.'.join(parts[:-1])
+        extension = parts[-1]
 
         try:
-            gloss = Gloss.objects.get(annotation_idgloss=idgloss);
+            gloss = Gloss.objects.get(annotation_idgloss=idgloss)
         except ObjectDoesNotExist:
-            return HttpResponse('Failed at '+filename+'. Could not find '+idgloss+'.');
+            return HttpResponse('Failed at '+filename+'. Could not find '+idgloss+'.')
 
-        overwritten, was_allowed = video_to_signbank(video_folder,gloss,extension);
+        overwritten, was_allowed = video_to_signbank(video_folder,gloss,extension)
 
         if not was_allowed:
-            return HttpResponse('Failed two overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?');
+            return HttpResponse('Failed two overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?')
 
-        out += '<li>'+filename+'</li>';
+        out += '<li>'+filename+'</li>'
 
         if overwritten:
-            overwritten_files += '<li>'+filename+'</li>';
+            overwritten_files += '<li>'+filename+'</li>'
 
-    out += '</ul>';
-    overwritten_files += '</ul>';
+    out += '</ul>'
+    overwritten_files += '</ul>'
 
-    return HttpResponse(out+overwritten_files);
+    return HttpResponse(out+overwritten_files)
 
 def try_code(request):
 
-    """A view for the developer to try out things""";
+    """A view for the developer to try out things"""
 
-    choicedict = {};
+    choicedict = {}
 
     for key,choices in choicedict.items():
 
         for machine_value,english_name in choices:
-            FieldChoice(english_name=english_name,field=key,machine_value=machine_value).save();
+            FieldChoice(english_name=english_name,field=key,machine_value=machine_value).save()
 
-    return HttpResponse('OK');
+    return HttpResponse('OK')
 
 def add_new_sign(request):
 
-    return render_to_response('dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()},context_instance=RequestContext(request));
+    return render_to_response('dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()},context_instance=RequestContext(request))
 
 def import_csv(request):
 
     if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
         return HttpResponse('You are not allowed to see this page.')
 
-    uploadform = forms.CSVUploadForm;
-    changes = [];
-
+    uploadform = forms.CSVUploadForm
+    changes = []
+    error = False
+    
+    
     #Propose changes
     if len(request.FILES) > 0:
 
-        changes = [];
-        csv_lines = request.FILES['file'].read().split('\n');
+        changes = []
+        csv_lines = request.FILES['file'].read().split('\n')
 
         for nl, line in enumerate(csv_lines):
 
             #The first line contains the keys
             if nl == 0:
-                keys = line.strip().split(',');
-                continue;
+                keys = line.strip().split(',')
+                continue
             elif len(line) == 0:
-                continue;
+                continue
 
-            values = csv.reader([line]).next();
-            value_dict = {};
+            values = csv.reader([line]).next()
+            value_dict = {}
 
             for nv,value in enumerate(values):
 
                 try:
-                    value_dict[keys[nv]] = value;
+                    value_dict[keys[nv]] = value
                 except IndexError:
-                    pass;
+                    pass
 
             try:
-                pk = int(value_dict['Signbank ID']);
+                pk = int(value_dict['Signbank ID'])
             except ValueError:
-                continue;
+                continue
 
-            gloss = Gloss.objects.get(pk=pk);
+            gloss = Gloss.objects.get(pk=pk)
 
             try:
-                changes += compare_valuedict_to_gloss(value_dict,gloss);
+                changes += compare_valuedict_to_gloss(value_dict,gloss)
             except MachineValueNotFoundError as e:
                 error = e
 
-        stage = 1;
+        stage = 1
 
     #Do changes
     elif len(request.POST) > 0:
@@ -424,41 +426,41 @@ def import_csv(request):
         for key, new_value in request.POST.items():
 
             try:
-                pk, fieldname = key.split('.');
+                pk, fieldname = key.split('.')
 
             #In case there's no dot, this is not a value we set at the previous page
             except ValueError:
-                continue;
+                continue
 
-            gloss = Gloss.objects.get(pk=pk);
+            gloss = Gloss.objects.get(pk=pk)
 
             #Updating the keywords is a special procedure, because it has relations to other parts of the database
             if fieldname == 'Keywords':
 
-                update_keywords(gloss,None,new_value);
-                gloss.save();
-                continue;
+                update_keywords(gloss,None,new_value)
+                gloss.save()
+                continue
 
             #Replace the value for bools
             if gloss._meta.get_field_by_name(fieldname)[0].__class__.__name__ == 'NullBooleanField':
 
                 if new_value in ['true','True']:
-                    new_value = True;
+                    new_value = True
                 else:
-                    new_value = False;
+                    new_value = False
 
             #The normal change and save procedure
-            setattr(gloss,fieldname,new_value);
-            gloss.save();
+            setattr(gloss,fieldname,new_value)
+            gloss.save()
 
-        stage = 2;
+        stage = 2
 
     #Show uploadform
     else:
 
-        stage = 0;
+        stage = 0
 
-    return render_to_response('dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,'error':error},context_instance=RequestContext(request));
+    return render_to_response('dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,'error':error},context_instance=RequestContext(request))
 
 def switch_to_language(request,language):
 
