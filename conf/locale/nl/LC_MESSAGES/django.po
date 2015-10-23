@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-23 01:45+1100\n"
+"POT-Creation-Date: 2015-10-23 18:45+1100\n"
 "PO-Revision-Date: 2015-07-28 16:26+1000\n"
 "Last-Translator: Richard <r.bankl@let.ru.nl>\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -1926,19 +1926,325 @@ msgstr "geen betekenissen"
 msgid "More than one"
 msgstr "Meer dan een"
 
+#: signbank/dictionary/models.py:773
+#: signbank/dictionary/templates/dictionary/add_gloss.html:23
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:282
+msgid "ID Gloss"
+msgstr "ID-Glos"
+
+#: signbank/dictionary/models.py:778
+#, fuzzy
+msgid "Annotation ID Gloss: Dutch"
+msgstr "Annotatie-ID-Glos: Nederlands"
+
+#: signbank/dictionary/models.py:786
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:284
+msgid "Annotation ID Gloss: English"
+msgstr "Annotatie-ID-Glos: Engels"
+
+#: signbank/dictionary/models.py:797
+msgid "BSL sign"
+msgstr ""
+
+#: signbank/dictionary/models.py:798
+msgid "ASL sign"
+msgstr ""
+
+#: signbank/dictionary/models.py:801
+#, fuzzy
+msgid "ASL gloss"
+msgstr "Glos zoeken"
+
+#: signbank/dictionary/models.py:802
+msgid "ASL loan sign"
+msgstr ""
+
+#: signbank/dictionary/models.py:805
+#, fuzzy
+msgid "BSL gloss"
+msgstr "Glos zoeken"
+
+#: signbank/dictionary/models.py:806
+msgid "BSL loan sign"
+msgstr ""
+
+#: signbank/dictionary/models.py:808
+#, fuzzy
+msgid "Annotation instructions"
+msgstr "Annotatieinstructies"
+
+#: signbank/dictionary/models.py:809
+msgid "Remarks"
+msgstr ""
+
+#: signbank/dictionary/models.py:817
+msgid "Blend of"
+msgstr ""
+
+#: signbank/dictionary/models.py:818
+msgid "Blend"
+msgstr ""
+
+#: signbank/dictionary/models.py:820
+msgid "Compound of"
+msgstr ""
+
+#: signbank/dictionary/models.py:821
+#, fuzzy
+msgid "Compound"
+msgstr "Bedrijf"
+
 #: signbank/dictionary/models.py:825
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:396
 msgid "Handedness"
 msgstr "Handigheid"
 
+#: signbank/dictionary/models.py:827
+#, fuzzy
+msgid "Strong Hand"
+msgstr "Sterke hand"
+
+#: signbank/dictionary/models.py:828
+#, fuzzy
+msgid "Weak Hand"
+msgstr "Zwakke hand"
+
+#: signbank/dictionary/models.py:830
+msgid "Final Dominant Handshape"
+msgstr ""
+
+#: signbank/dictionary/models.py:831
+msgid "Final Subordinate Handshape"
+msgstr ""
+
+#: signbank/dictionary/models.py:833
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:399
+msgid "Location"
+msgstr "Plaats"
+
+#: signbank/dictionary/models.py:834
+msgid "Final Primary Location"
+msgstr ""
+
+#: signbank/dictionary/models.py:835
+msgid "Virtual Object"
+msgstr ""
+
+#: signbank/dictionary/models.py:837
+#, fuzzy
+msgid "Secondary Location"
+msgstr "Plaats"
+
+#: signbank/dictionary/models.py:839
+msgid "Initial Subordinate Location"
+msgstr ""
+
+#: signbank/dictionary/models.py:840
+msgid "Final Subordinate Location"
+msgstr ""
+
+#: signbank/dictionary/models.py:842
+msgid "Initial Palm Orientation"
+msgstr ""
+
+#: signbank/dictionary/models.py:843
+msgid "Final Palm Orientation"
+msgstr ""
+
+#: signbank/dictionary/models.py:845
+msgid "Initial Interacting Dominant Hand Part"
+msgstr ""
+
+#: signbank/dictionary/models.py:846
+msgid "Final Interacting Dominant Hand Part"
+msgstr ""
+
+#: signbank/dictionary/models.py:849
+#, fuzzy
+msgid "In the Web dictionary"
+msgstr "In woordenboek"
+
+#: signbank/dictionary/models.py:850
+#, fuzzy
+msgid "Is this a proposed new sign?"
+msgstr "Voorstel voor nieuw gebaar"
+
+#: signbank/dictionary/models.py:854
+msgid "Morphemic Analysis"
+msgstr ""
+
+#: signbank/dictionary/models.py:856
+msgid "Signed English definition available"
+msgstr ""
+
+#: signbank/dictionary/models.py:857
+msgid "Signed English gloss"
+msgstr ""
+
+#: signbank/dictionary/models.py:859
+#, fuzzy
+msgid "Sense Number"
+msgstr "nummer"
+
+#: signbank/dictionary/models.py:862
+#, fuzzy
+msgid "Sign Number"
+msgstr "nummer"
+
+#: signbank/dictionary/models.py:869
+msgid "Relation between Articulators"
+msgstr ""
+
+#: signbank/dictionary/models.py:871
+msgid "Absolute Orientation: Palm"
+msgstr ""
+
+#: signbank/dictionary/models.py:872
+msgid "Absolute Orientation: Fingers"
+msgstr ""
+
+#: signbank/dictionary/models.py:874
+msgid "Relative Orientation: Movement"
+msgstr ""
+
+#: signbank/dictionary/models.py:875
+msgid "Relative Orientation: Location"
+msgstr ""
+
+#: signbank/dictionary/models.py:877
+#, fuzzy
+msgid "Orientation Change"
+msgstr "Aanmaakdatum"
+
+#: signbank/dictionary/models.py:879
+msgid "Handshape Change"
+msgstr ""
+
+#: signbank/dictionary/models.py:881
+msgid "Repeated Movement"
+msgstr ""
+
+#: signbank/dictionary/models.py:882
+msgid "Alternating Movement"
+msgstr ""
+
+#: signbank/dictionary/models.py:884
+msgid "Movement Shape"
+msgstr ""
+
+#: signbank/dictionary/models.py:885
+msgid "Movement Direction"
+msgstr ""
+
+#: signbank/dictionary/models.py:886
+msgid "Movement Manner"
+msgstr ""
+
+#: signbank/dictionary/models.py:887
+msgid "Contact Type"
+msgstr ""
+
+#: signbank/dictionary/models.py:889
+#, fuzzy
+msgid "Phonology Other"
+msgstr "Fonologie"
+
+#: signbank/dictionary/models.py:891
+msgid "Mouth Gesture"
+msgstr ""
+
+#: signbank/dictionary/models.py:892
+#, fuzzy
+msgid "Mouthing"
+msgstr "Wat dan ook"
+
+#: signbank/dictionary/models.py:893
+msgid "Phonetic Variation"
+msgstr ""
+
+#: signbank/dictionary/models.py:897
+msgid "Iconic Image"
+msgstr ""
+
+#: signbank/dictionary/models.py:898
+msgid "Named Entity"
+msgstr ""
+
+#: signbank/dictionary/models.py:899
+#, fuzzy
+msgid "Semantic Field"
+msgstr "Zoek op Semantiek"
+
+#: signbank/dictionary/models.py:903
+#, fuzzy
+msgid "Number of Occurrences"
+msgstr "aantal betekenissen"
+
+#: signbank/dictionary/models.py:904
+#, fuzzy
+msgid "Number of Signers"
+msgstr "aantal betekenissen"
+
+#: signbank/dictionary/models.py:905
+msgid "Number of Occurrences in Amsterdam"
+msgstr ""
+
+#: signbank/dictionary/models.py:906
+msgid "Number of Occurrences in Voorburg"
+msgstr ""
+
+#: signbank/dictionary/models.py:907
+msgid "Number of Occurrences in Rotterdam"
+msgstr ""
+
+#: signbank/dictionary/models.py:908
+msgid "Number of Occurrences in Gestel"
+msgstr ""
+
+#: signbank/dictionary/models.py:909
+msgid "Number of Occurrences in Groningen"
+msgstr ""
+
+#: signbank/dictionary/models.py:910
+msgid "Number of Occurrences in Other Regions"
+msgstr ""
+
+#: signbank/dictionary/models.py:912
+#, fuzzy
+msgid "Number of Amsterdam Signers"
+msgstr "aantal betekenissen"
+
+#: signbank/dictionary/models.py:913
+msgid "Number of Voorburg Signers"
+msgstr ""
+
+#: signbank/dictionary/models.py:914
+#, fuzzy
+msgid "Number of Rotterdam Signers"
+msgstr "aantal betekenissen"
+
+#: signbank/dictionary/models.py:915
+#, fuzzy
+msgid "Number of Gestel Signers"
+msgstr "aantal betekenissen"
+
+#: signbank/dictionary/models.py:916
+#, fuzzy
+msgid "Number of Groningen Signers"
+msgstr "aantal betekenissen"
+
+#: signbank/dictionary/models.py:917
+msgid "Number of Other Region Signers"
+msgstr ""
+
+#: signbank/dictionary/models.py:919
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+msgid "Creation date"
+msgstr "Aanmaakdatum"
+
 #: signbank/dictionary/templates/dictionary/add_gloss.html:17
 msgid "Please provide some initial data"
 msgstr "Geef hier wat data om mee te beginnen"
-
-#: signbank/dictionary/templates/dictionary/add_gloss.html:23
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:282
-msgid "ID Gloss"
-msgstr "ID-Glos"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:26
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:21
@@ -2018,10 +2324,6 @@ msgstr "Sterke hand"
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:398
 msgid "Weak hand"
 msgstr "Zwakke hand"
-
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:399
-msgid "Location"
-msgstr "Plaats"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:400
 #: signbank/dictionary/templates/dictionary/glosstags.html:5
@@ -2125,10 +2427,6 @@ msgid ""
 "version."
 msgstr ""
 "Zo wordt de meest recente video verwijderd en de vorige versie getoond."
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:284
-msgid "Annotation ID Gloss: English"
-msgstr "Annotatie-ID-Glos: Engels"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:285
 msgid "Translation equivalents in Dutch"
@@ -2357,10 +2655,6 @@ msgstr ""
 "    hierboven, of zoeken naar gebaren op basis van de beginletter van de "
 "vertaling\n"
 "    hieronder."
-
-#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
-msgid "Creation date"
-msgstr "Aanmaakdatum"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:27
 msgid "There is no exact match to the word you typed."
