@@ -539,11 +539,43 @@ class GlossDetailView(DetailView):
 
             for field in fields[topic]:
 
-                try:
-                    value = getattr(gl,'get_'+field+'_display');
-                except AttributeError:
-                    value = getattr(gl,field);
+                #First, find the correct field choice category
+                if field in ['domhndsh','subhndsh','final_domdndsh','final_subhndsh']:
+                    field_category = 'Handshape'
+                elif field in ['locprim','final_loc','loc_second']:
+                    field_category = 'Location'
+                elif field == 'handCh':
+                    field_category = 'handshapeChange'
+                elif field == 'oriCh':
+                    field_category = 'oriChange'
+                elif field == 'movSh':
+                    field_category = 'MovementShape'
+                elif field == 'movDir':
+                    field_category = 'MovementDir'
+                elif field == 'movMan':
+                    field_category = 'MovementMan'
+                elif field == 'contType':
+                    field_category = 'ContactType'
+                elif field == 'namEnt':
+                    field_category = 'NamedEntity'
+                else:
+                    field_category = field
 
+                #Take the human value in the language we are using
+                machine_value = getattr(gl,field);
+
+                try:
+                    selected_field_choice = FieldChoice.objects.filter(field__iexact=field_category)[0]
+
+                    if self.request.LANGUAGE_CODE == 'en':
+                        human_value = selected_field_choice.english_name
+                    elif self.request.LANGUAGE_CODE == 'nl':
+                        human_value = selected_field_choice.dutch_name
+
+                except IndexError:
+                    human_value = machine_value
+
+                #And add the kind of field
                 if field in ['phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
                     kind = 'text';
                 elif field in ['repeat','altern']:
@@ -551,7 +583,7 @@ class GlossDetailView(DetailView):
                 else:
                     kind = 'list';
 
-                context[topic+'_fields'].append([value,field,labels[field],kind]);
+                context[topic+'_fields'].append([human_value,field,labels[field],kind]);
 
         return context
         
