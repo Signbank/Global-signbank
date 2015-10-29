@@ -1144,7 +1144,7 @@ minor or insignificant ways that can be ignored.""")
 
         return json.dumps(d)
     
-    def get_choice_lists(self):
+    def get_choice_lists(self,language='en'):
         """Return JSON for the location choice list"""
  
         choice_lists = {}; 
@@ -1157,6 +1157,9 @@ minor or insignificant ways that can be ignored.""")
 
             #Get the list of choices for this field
             li = self._meta.get_field(fieldname).choices;
+
+            if language != 'en':
+                li = [(key,'Dutch') for key, value in li]
 
             #Sort the list
             sorted_li = sorted(li,key=lambda x: x[1]);
@@ -1184,6 +1187,31 @@ RELATION_ROLE_CHOICES = (('homonym', 'Homonym'),
                          ('hypernym', 'Hypernym'),
                          ('seealso', 'See Also'),
                          )
+
+def fieldname_to_category(fieldname):
+
+    if fieldname in ['domhndsh','subhndsh','final_domdndsh','final_subhndsh']:
+        field_category = 'Handshape'
+    elif fieldname in ['locprim','final_loc','loc_second']:
+        field_category = 'Location'
+    elif fieldname == 'handCh':
+        field_category = 'handshapeChange'
+    elif fieldname == 'oriCh':
+        field_category = 'oriChange'
+    elif fieldname == 'movSh':
+        field_category = 'MovementShape'
+    elif fieldname == 'movDir':
+        field_category = 'MovementDir'
+    elif fieldname == 'movMan':
+        field_category = 'MovementMan'
+    elif fieldname == 'contType':
+        field_category = 'ContactType'
+    elif fieldname == 'namEnt':
+        field_category = 'NamedEntity'
+    else:
+        field_category = fieldname
+
+    return field_category
 
 class Relation(models.Model):
     """A relation between two glosses"""
