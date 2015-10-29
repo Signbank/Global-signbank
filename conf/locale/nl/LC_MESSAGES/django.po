@@ -1920,7 +1920,7 @@ msgstr "aantal betekenissen"
 
 #: signbank/dictionary/admin.py:56
 msgid "No Senses"
-msgstr "geen betekenissen"
+msgstr "Geen betekenissen"
 
 #: signbank/dictionary/admin.py:57
 msgid "More than one"
@@ -1944,11 +1944,11 @@ msgstr "Annotatie-ID-Glos: Engels"
 
 #: signbank/dictionary/models.py:797
 msgid "BSL sign"
-msgstr ""
+msgstr "BSL-gebaar"
 
 #: signbank/dictionary/models.py:798
 msgid "ASL sign"
-msgstr ""
+msgstr "ASL-gebaar"
 
 #: signbank/dictionary/models.py:801
 #, fuzzy
@@ -1957,7 +1957,7 @@ msgstr "Glos zoeken"
 
 #: signbank/dictionary/models.py:802
 msgid "ASL loan sign"
-msgstr ""
+msgstr "Leengebaar uit ASL"
 
 #: signbank/dictionary/models.py:805
 #, fuzzy
@@ -1966,7 +1966,7 @@ msgstr "Glos zoeken"
 
 #: signbank/dictionary/models.py:806
 msgid "BSL loan sign"
-msgstr ""
+msgstr "Leengebaar uit BSL"
 
 #: signbank/dictionary/models.py:808
 #, fuzzy
@@ -1975,11 +1975,11 @@ msgstr "Annotatieinstructies"
 
 #: signbank/dictionary/models.py:809
 msgid "Remarks"
-msgstr ""
+msgstr "Opmerkingen"
 
 #: signbank/dictionary/models.py:817
 msgid "Blend of"
-msgstr ""
+msgstr "Blend van"
 
 #: signbank/dictionary/models.py:818
 msgid "Blend"
@@ -1987,7 +1987,7 @@ msgstr ""
 
 #: signbank/dictionary/models.py:820
 msgid "Compound of"
-msgstr ""
+msgstr "Samenstelling van"
 
 #: signbank/dictionary/models.py:821
 #, fuzzy
@@ -2028,7 +2028,7 @@ msgstr ""
 
 #: signbank/dictionary/models.py:835
 msgid "Virtual Object"
-msgstr ""
+msgstr "Virtueel object"
 
 #: signbank/dictionary/models.py:837
 #, fuzzy
@@ -2093,149 +2093,149 @@ msgstr "nummer"
 
 #: signbank/dictionary/models.py:869
 msgid "Relation between Articulators"
-msgstr ""
+msgstr "Relatie tussen articulatoren"
 
 #: signbank/dictionary/models.py:871
 msgid "Absolute Orientation: Palm"
-msgstr ""
+msgstr "Absolute oriëntatie: palm"
 
 #: signbank/dictionary/models.py:872
 msgid "Absolute Orientation: Fingers"
-msgstr ""
+msgstr "Absolute oriëntatie: vingers"
 
 #: signbank/dictionary/models.py:874
 msgid "Relative Orientation: Movement"
-msgstr ""
+msgstr "Relatieve oriëntatie: beweging"
 
 #: signbank/dictionary/models.py:875
 msgid "Relative Orientation: Location"
-msgstr ""
+msgstr "Relatieve oriëntatie: locatie"
 
 #: signbank/dictionary/models.py:877
 #, fuzzy
 msgid "Orientation Change"
-msgstr "Aanmaakdatum"
+msgstr "Oriëntatieverandering"
 
 #: signbank/dictionary/models.py:879
 msgid "Handshape Change"
-msgstr ""
+msgstr "Handvormverandering"
 
 #: signbank/dictionary/models.py:881
 msgid "Repeated Movement"
-msgstr ""
+msgstr "Herhaalde beweging"
 
 #: signbank/dictionary/models.py:882
 msgid "Alternating Movement"
-msgstr ""
+msgstr "Alternerende beweging"
 
 #: signbank/dictionary/models.py:884
 msgid "Movement Shape"
-msgstr ""
+msgstr "Vorm van de beweging"
 
 #: signbank/dictionary/models.py:885
 msgid "Movement Direction"
-msgstr ""
+msgstr "Richting van de beweging"
 
 #: signbank/dictionary/models.py:886
 msgid "Movement Manner"
-msgstr ""
+msgstr "Manier van bewegen"
 
 #: signbank/dictionary/models.py:887
 msgid "Contact Type"
-msgstr ""
+msgstr "Type contact"
 
 #: signbank/dictionary/models.py:889
 #, fuzzy
 msgid "Phonology Other"
-msgstr "Fonologie"
+msgstr "Fonologie: overig"
 
 #: signbank/dictionary/models.py:891
 msgid "Mouth Gesture"
-msgstr ""
+msgstr "Orale component"
 
 #: signbank/dictionary/models.py:892
 #, fuzzy
 msgid "Mouthing"
-msgstr "Wat dan ook"
+msgstr "Gesproken component"
 
 #: signbank/dictionary/models.py:893
 msgid "Phonetic Variation"
-msgstr ""
+msgstr "Fonetische variatie"
 
 #: signbank/dictionary/models.py:897
 msgid "Iconic Image"
-msgstr ""
+msgstr "Iconisch beeld"
 
 #: signbank/dictionary/models.py:898
 msgid "Named Entity"
-msgstr ""
+msgstr "Naamtype"
 
 #: signbank/dictionary/models.py:899
 #, fuzzy
 msgid "Semantic Field"
-msgstr "Zoek op Semantiek"
+msgstr "Semantisch veld"
 
 #: signbank/dictionary/models.py:903
 #, fuzzy
 msgid "Number of Occurrences"
-msgstr "aantal betekenissen"
+msgstr "Aantal voorkomens"
 
 #: signbank/dictionary/models.py:904
 #, fuzzy
 msgid "Number of Signers"
-msgstr "aantal betekenissen"
+msgstr "Aantal gebaarders"
 
 #: signbank/dictionary/models.py:905
 msgid "Number of Occurrences in Amsterdam"
-msgstr ""
+msgstr "Aantal voorkomens in Amsterdam"
 
 #: signbank/dictionary/models.py:906
 msgid "Number of Occurrences in Voorburg"
-msgstr ""
+msgstr "Aantal voorkomens in Voorburg"
 
 #: signbank/dictionary/models.py:907
 msgid "Number of Occurrences in Rotterdam"
-msgstr ""
+msgstr "Aantal voorkomens in Rotterdam"
 
 #: signbank/dictionary/models.py:908
 msgid "Number of Occurrences in Gestel"
-msgstr ""
+msgstr "Aantal voorkomens in Gestel"
 
 #: signbank/dictionary/models.py:909
 msgid "Number of Occurrences in Groningen"
-msgstr ""
+msgstr "Aantal voorkomens in Groningen"
 
 #: signbank/dictionary/models.py:910
 msgid "Number of Occurrences in Other Regions"
-msgstr ""
+msgstr "Aantal voorkomens in andere regio's"
 
 #: signbank/dictionary/models.py:912
 #, fuzzy
 msgid "Number of Amsterdam Signers"
-msgstr "aantal betekenissen"
+msgstr "Aantal gebaarders uit Amsterdam"
 
 #: signbank/dictionary/models.py:913
 msgid "Number of Voorburg Signers"
-msgstr ""
+msgstr "Aantal gebaarders uit Voorburg"
 
 #: signbank/dictionary/models.py:914
 #, fuzzy
 msgid "Number of Rotterdam Signers"
-msgstr "aantal betekenissen"
+msgstr "Aantal gebaarders uit Rotterdam"
 
 #: signbank/dictionary/models.py:915
 #, fuzzy
 msgid "Number of Gestel Signers"
-msgstr "aantal betekenissen"
+msgstr "Aantal gebaarders uit Gestel"
 
 #: signbank/dictionary/models.py:916
 #, fuzzy
 msgid "Number of Groningen Signers"
-msgstr "aantal betekenissen"
+msgstr "Aantal gebaarders uit Groningen"
 
 #: signbank/dictionary/models.py:917
 msgid "Number of Other Region Signers"
-msgstr ""
+msgstr "Aantal gebaarders uit andere regio's"
 
 #: signbank/dictionary/models.py:919
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
@@ -2287,7 +2287,7 @@ msgstr "Zoek op Semantiek"
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:214
 #, fuzzy
 msgid "Search by Relation"
-msgstr "Vertaling zoeken"
+msgstr "Zoek op Relaties"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:259
 msgid "Search by Publication Status and Notes"
@@ -2296,7 +2296,7 @@ msgstr "Zoek op Publicatiestatus en Aantekeningen"
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:387
 #, fuzzy
 msgid "Number of matches:"
-msgstr "aantal betekenissen"
+msgstr "Aantal hits:"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:387
 msgid "out of"
