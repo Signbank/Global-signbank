@@ -204,19 +204,25 @@ def update_gloss(request, glossid):
                 #If the value is not a Boolean, return the new value
                 if not isinstance(value,bool):
 
-                    f = Gloss._meta.get_field(field)
-
-                    # for choice fields we want to return the 'display' version of
-                    # the value
-                    valdict = dict(f.flatchoices)
-                    # some fields take ints
-                    if valdict.keys() != [] and type(valdict.keys()[0]) == int:
-                        newvalue = valdict.get(int(value), value)
+                    #Try to get the human value in the correct language
+                    if value == '0':
+                        newvalue = '-'
+                    elif value == '1':
+                        newvalue = 'N/A'
                     else:
-                        # either it's not an int or there's no flatchoices
-                        # so here we use get with a default of the value itself
-                        newvalue = valdict.get(value, value)
-        
+
+                        try:
+                            field_category = fieldname_to_category(field)
+                            selected_field_choice = FieldChoice.objects.filter(field__iexact=field_category,machine_value=value)[0]
+
+                            if request.LANGUAGE_CODE == 'en':
+                                newvalue = selected_field_choice.english_name
+                            elif request.LANGUAGE_CODE == 'nl':
+                                newvalue = selected_field_choice.dutch_name
+
+                        except (IndexError, ValueError):
+                            newvalue = value
+
         return HttpResponse(str(original_value)+'\t'+str(newvalue), {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
