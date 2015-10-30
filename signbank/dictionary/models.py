@@ -1144,7 +1144,7 @@ minor or insignificant ways that can be ignored.""")
 
         return json.dumps(d)
     
-    def get_choice_lists(self,language='en'):
+    def get_choice_lists(self):
         """Return JSON for the location choice list"""
  
         choice_lists = {}; 
@@ -1157,9 +1157,6 @@ minor or insignificant ways that can be ignored.""")
 
             #Get the list of choices for this field
             li = self._meta.get_field(fieldname).choices;
-
-            if language != 'en':
-                li = [(key,'Dutch') for key, value in li]
 
             #Sort the list
             sorted_li = sorted(li,key=lambda x: x[1]);

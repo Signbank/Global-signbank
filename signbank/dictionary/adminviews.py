@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.db.models.fields import NullBooleanField
 from django.http import HttpResponse
 from django.core.exceptions import PermissionDenied
+from collections import OrderedDict
 import csv
 import re
 import xml.etree.ElementTree as ET
@@ -534,27 +535,47 @@ class GlossDetailView(DetailView):
         fields['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                                'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO'];
 
+        context['choice_lists'] = {}
+
+        #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['phonology','semantics','frequency']:
             context[topic+'_fields'] = [];
 
             for field in fields[topic]:
 
+                #Get and save the choice list for this field
                 field_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+
+                if len(choice_list) > 0:
+
+                    if self.request.LANGUAGE_CODE == 'en':
+                        raw_choice_list = [('_'+str(choice.machine_value),str(choice.english_name)) for choice in choice_list]
+                    elif self.request.LANGUAGE_CODE == 'nl':
+                        raw_choice_list = [('_'+str(choice.machine_value),str(choice.dutch_name)) for choice in choice_list]
+
+                    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
+                    context['choice_lists'][field] = OrderedDict(sorted_choice_list)
 
                 #Take the human value in the language we are using
                 machine_value = getattr(gl,field);
 
-                try:
-                    #selected_field_choice = FieldChoice.objects.filter(field__iexact=field_category,machine_value__iexact=machine_value)[0]
-                    selected_field_choice = FieldChoice.objects.filter(field__iexact=field_category)[0]
+                if machine_value == '0':
+                    human_value = '-'
+                elif machine_value == '1':
+                    human_value = 'N/A'
+                else:
 
-                    if self.request.LANGUAGE_CODE == 'en':
-                        human_value = selected_field_choice.english_name
-                    elif self.request.LANGUAGE_CODE == 'nl':
-                        human_value = selected_field_choice.dutch_name
+                    try:
+                        selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
 
-                except (IndexError, ValueError):
-                    human_value = machine_value
+                        if self.request.LANGUAGE_CODE == 'en':
+                            human_value = selected_field_choice.english_name
+                        elif self.request.LANGUAGE_CODE == 'nl':
+                            human_value = selected_field_choice.dutch_name
+
+                    except (IndexError, ValueError):
+                        human_value = machine_value
 
                 #And add the kind of field
                 if field in ['phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
@@ -566,7 +587,8 @@ class GlossDetailView(DetailView):
 
                 context[topic+'_fields'].append([human_value,field,labels[field],kind]);
 
-        context['choice_lists'] = gl.get_choice_lists()
+        #context['choice_lists'] = gl.get_choice_lists()
+        context['choice_lists'] = json.dumps(context['choice_lists'])
 
         return context
         
