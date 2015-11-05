@@ -22,7 +22,7 @@ class GlossListView(ListView):
     model = Gloss
     template_name = 'dictionary/admin_gloss_list.html'
     paginate_by = 500
-    
+    only_export_ecv = False #Used to call the 'export ecv' functionality of this view without the need for an extra GET parameter
     
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -46,7 +46,7 @@ class GlossListView(ListView):
         # Look for a 'format=json' GET argument
         if self.request.GET.get('format') == 'CSV':
             return self.render_to_csv_response(context)
-        elif self.request.GET.get('export_ecv') == 'ECV':
+        elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
             return self.render_to_ecv_export_response(context)
         else:
             return super(GlossListView, self).render_to_response(context)

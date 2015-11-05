@@ -30,6 +30,7 @@ urlpatterns = patterns('',
     url(r'^update/relationtoforeignsign/$', 'signbank.dictionary.update.add_relationtoforeignsign', name='add_relationtoforeignsign'),
     url(r'^update/morphologydefinition/$', 'signbank.dictionary.update.add_morphology_definition', name='add_morphologydefinition'),
     url(r'^update/gloss/', 'signbank.dictionary.update.add_gloss', name='add_gloss'),
+    url(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
 
     url(r'^switch_to_language/(?P<language>..)$', 'signbank.dictionary.views.switch_to_language',name='switch_to_language'),
     url(r'^recently_added_glosses/$', 'signbank.dictionary.views.recently_added_glosses',name='recently_added_glosses'),
