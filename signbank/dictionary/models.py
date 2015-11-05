@@ -1237,6 +1237,14 @@ class MorphologyDefinition(models.Model):
 
         return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
 
+class OtherVideo(models.Model):
+    """Videos of or related to a gloss, often created by another project"""
+
+    parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses")
+    type = models.CharField(max_length=5,choices=build_choice_list('OtherVideoType'))
+    alternative_gloss = models.CharField(max_length=50)
+    path = models.CharField(max_length=100)
+
 # This is the wrong location, but I can't think of a better one:
 
 class UserProfile(models.Model):
