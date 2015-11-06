@@ -118,13 +118,13 @@ function toggle_edit(redirect_to_next) {
     } else {
         enable_edit();
         $('#enable_edit').addClass('edit_enabled');
-        $('#enable_edit').text('Turn off edit mode');
+        $('#enable_edit').text(turn_off_edit_mode_str);
     }
 }
 
 
 function delete_gloss() {
-    alert("Delete this gloss?");
+    alert(delete_this_gloss_str);
 }
 
 $.editable.addInputType('positiveinteger', {

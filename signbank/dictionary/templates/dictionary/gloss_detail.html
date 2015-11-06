@@ -16,7 +16,10 @@
     {% if perms.dictionary.change_gloss %}
     
     <script type='text/javascript'>
-    
+
+     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
+     var delete_this_gloss_str = '{% trans "Delete this gloss" %}'
+
      var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
      var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
      var handshape_choices = {{gloss.handshape_choices_json|safe}}
