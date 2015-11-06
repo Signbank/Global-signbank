@@ -2309,12 +2309,11 @@ msgid "Delete this gloss"
 msgstr "Verwijder deze glos"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:60
-#, fuzzy, python-format
+#, python-format
 msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
-msgstr "Gebaar {{glossposn}} van {{glosscount}} in NGT Signbank"
+msgstr "\"Gebaar %(glossposn)s van %(glosscount)s in NGT Signbank\" "
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:64
-#, fuzzy
 msgid "Next Sign &raquo;"
 msgstr "Volgende gebaar"
 
@@ -2387,9 +2386,9 @@ msgid "Upload New Video"
 msgstr "Nieuwe video uploaden"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:154
-#, fuzzy, python-format
+#, python-format
 msgid " We have %(gloss.count_videos)s videos for this sign. "
-msgstr "We hebben {{gloss.count_videos}} video's voor dit gebaar"
+msgstr "We hebben %(gloss.count_videos)s video's voor dit gebaar"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:172
 msgid "Delete/Revert Video"
@@ -2627,7 +2626,7 @@ msgid "There is no exact match to the word you typed."
 msgstr "Er is geen resultaat dat precies overeenkomst met het zoekwoord."
 
 #: signbank/dictionary/templates/dictionary/search_result.html:33
-#, fuzzy, python-format
+#, python-format
 msgid ""
 " There really is no %(language)s sign in the database for which that word is "
 "an good translation "
