@@ -1240,7 +1240,7 @@ class MorphologyDefinition(models.Model):
 class OtherVideo(models.Model):
     """Videos of or related to a gloss, often created by another project"""
 
-    parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses")
+    parent_gloss = models.ForeignKey(Gloss, related_name="Gloss depicted")
     type = models.CharField(max_length=5,choices=build_choice_list('OtherVideoType'))
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
