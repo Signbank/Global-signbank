@@ -548,14 +548,7 @@ class GlossDetailView(DetailView):
                 choice_list = FieldChoice.objects.filter(field__iexact=field_category)
 
                 if len(choice_list) > 0:
-
-                    if self.request.LANGUAGE_CODE == 'en':
-                        raw_choice_list = [('_'+str(choice.machine_value),str(choice.english_name)) for choice in choice_list]
-                    elif self.request.LANGUAGE_CODE == 'nl':
-                        raw_choice_list = [('_'+str(choice.machine_value),str(choice.dutch_name)) for choice in choice_list]
-
-                    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
-                    context['choice_lists'][field] = OrderedDict(sorted_choice_list)
+                    context['choice_lists'][field] = choicelist_queryset_to_translated_ordered_dict (choice_list,self.request.LANGUAGE_CODE)
 
                 #Take the human value in the language we are using
                 machine_value = getattr(gl,field);
@@ -587,6 +580,24 @@ class GlossDetailView(DetailView):
 
                 context[topic+'_fields'].append([human_value,field,labels[field],kind]);
 
+        #Gather the OtherVideos
+        context['other_videos'] = []
+        other_video_type_choice_list = FieldChoice.objects.filter(field__iexact='OtherVideoType')
+
+        for other_video in gl.othervideo_set.all():
+
+            selected_field_choice = other_video_type_choice_list.filter(machine_value=other_video.type)[0]
+
+            if self.request.LANGUAGE_CODE == 'en':
+                human_value_video_type = selected_field_choice.english_name
+            elif self.request.LANGUAGE_CODE == 'nl':
+                human_value_video_type = selected_field_choice.dutch_name
+
+            context['other_videos'].append([other_video.path, human_value_video_type, other_video.alternative_gloss])
+
+        #Save the other_video_type choices
+        context['choice_lists']['other_video_type'] = choicelist_queryset_to_translated_ordered_dict(other_video_type_choice_list,self.request.LANGUAGE_CODE)
+
         #context['choice_lists'] = gl.get_choice_lists()
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
@@ -608,3 +619,13 @@ def gloss_ajax_complete(request, prefix):
         result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn, 'pk': "%s (%s)" % (g.idgloss, g.pk)})
     
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+
+def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
+
+    if language_code == 'en':
+        raw_choice_list = [('_'+str(choice.machine_value),str(choice.english_name)) for choice in queryset]
+    elif language_code == 'nl':
+        raw_choice_list = [('_'+str(choice.machine_value),str(choice.dutch_name)) for choice in queryset]
+
+    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
+    return OrderedDict(sorted_choice_list)
