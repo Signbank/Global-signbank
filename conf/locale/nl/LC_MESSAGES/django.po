@@ -2483,12 +2483,12 @@ msgid "Delete This Relation"
 msgstr "Verwijder deze relatie"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:347
-#, fuzzy, python-format
+#, python-format
 msgid ""
 " This action will delete the %(rel.get_role_display)s relation between "
 "%(rel.source)s and %(rel.target)s. It cannot be undone. "
 msgstr ""
-"Zo wordt de %(rel.get_role_display)s-relatie tussen %(rel.soource)s en "
+"Zo wordt de %(rel.get_role_display)s-relatie tussen %(rel.source)s en "
 "%(rel.target)s verwijderd. Dit kan niet ongedaan gemaakt worden."
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:397
