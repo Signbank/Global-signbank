@@ -96,6 +96,10 @@ def update_gloss(request, glossid):
 
             return update_morphology_definition(gloss, field, value)
 
+        elif field.startswith('other-video'):
+
+            return update_other_video(request,gloss, field, value)
+
         elif field == 'language':
             # expecting possibly multiple values
 
@@ -334,7 +338,6 @@ def gloss_from_identifier(value):
     else:
         return None
             
-            
 
 def update_definition(request, gloss, field, value):
     """Update one of the definition fields"""
@@ -379,6 +382,37 @@ def update_definition(request, gloss, field, value):
 
     return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
+def update_other_video(request,gloss,field,value):
+
+    action_or_fieldname, other_video_id = field.split('_')
+
+    try:
+        other_video = OtherVideo.objects.get(id=other_video_id)
+    except:
+        return HttpResponseBadRequest("Bad OtherVideo ID '%s'" % other_video, {'content-type': 'text/plain'})
+
+    if not other_video.parent_gloss == gloss:
+        return HttpResponseBadRequest("OtherVideo doesn't match gloss", {'content-type': 'text/plain'})
+
+    if action_or_fieldname == 'other-video-delete':
+        pass
+    elif action_or_fieldname == 'other-video-type':
+        other_video.type = value
+
+        #Translate the value
+        selected_field_choice = FieldChoice.objects.filter(field__iexact='OtherVideoType',machine_value=value)[0]
+
+        if request.LANGUAGE_CODE == 'en':
+            value = selected_field_choice.english_name
+        elif request.LANGUAGE_CODE == 'nl':
+            value = selected_field_choice.dutch_name
+
+    elif action_or_fieldname == 'other-video-alternative-gloss':
+        other_video.alternative_gloss = value
+
+    other_video.save()
+
+    return HttpResponse(value, {'content-type': 'text/plain'})
 
 def add_relation(request):
     """Add a new relation instance"""

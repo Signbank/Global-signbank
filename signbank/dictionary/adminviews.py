@@ -593,10 +593,10 @@ class GlossDetailView(DetailView):
             elif self.request.LANGUAGE_CODE == 'nl':
                 human_value_video_type = selected_field_choice.dutch_name
 
-            context['other_videos'].append([other_video.path, human_value_video_type, other_video.alternative_gloss])
+            context['other_videos'].append([other_video.pk, other_video.path, human_value_video_type, other_video.alternative_gloss])
 
-        #Save the other_video_type choices
-        context['choice_lists']['other_video_type'] = choicelist_queryset_to_translated_ordered_dict(other_video_type_choice_list,self.request.LANGUAGE_CODE)
+            #Save the other_video_type choices (same for every other_video, but necessary because they all have other ids)
+            context['choice_lists']['other-video-type_'+str(other_video.pk)] = choicelist_queryset_to_translated_ordered_dict(other_video_type_choice_list,self.request.LANGUAGE_CODE)
 
         #context['choice_lists'] = gl.get_choice_lists()
         context['choice_lists'] = json.dumps(context['choice_lists'])

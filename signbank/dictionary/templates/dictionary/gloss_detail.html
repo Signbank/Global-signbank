@@ -634,11 +634,11 @@
                   <th style='width:12em'>{% trans "Alternative gloss" %}</th>
               </tr>
 
-               {% for path,type,alternative_gloss in other_videos %}
+               {% for pk,path,type,alternative_gloss in other_videos %}
                <tr>
                     <td>{{ path }}</td>
-                    <td class='edit edit_list' id='other_video_type'>{{ type }}</td>
-                    <td class='edit edit_text' id=''>{{ alternative_gloss }}</td>
+                    <td class='edit edit_list' id='other-video-type_{{ pk }}'>{{ type }}</td>
+                    <td class='edit edit_text' id='other-video-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
                 </tr>
                {% endfor %}
 
