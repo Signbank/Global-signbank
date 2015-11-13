@@ -108,7 +108,7 @@ function toggle_edit(redirect_to_next) {
     if ($('#enable_edit').hasClass('edit_enabled')) {
         disable_edit();
         $('#enable_edit').removeClass('edit_enabled');
-        $('#enable_edit').text('Edit');
+        $('#enable_edit').text(edit_mode_str);
 
 		if (redirect_to_next)
 		{
@@ -138,7 +138,7 @@ $.editable.addInputType('positiveinteger', {
 
 function configure_edit() {
     
-    $.fn.editable.defaults['indicator'] = 'Saving...';
+    $.fn.editable.defaults['indicator'] = saving_str;
     $.fn.editable.defaults['tooltip'] = 'Click to edit...';
     $.fn.editable.defaults['placeholder'] = '-';
     $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">Ok</button>';

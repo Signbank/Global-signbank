@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-06 23:46+1100\n"
+"POT-Creation-Date: 2015-11-13 23:46+1100\n"
 "PO-Revision-Date: 2015-07-28 16:26+1000\n"
 "Last-Translator: Richard <r.bankl@let.ru.nl>\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -93,6 +93,11 @@ msgstr "Uitloggen"
 #: bootstrap_templates/menu.html:143
 msgid "Login"
 msgstr "Inloggen"
+
+#: bootstrap_templates/pages/default.html:9
+#, fuzzy
+msgid "Edit Page"
+msgstr "Bewerk"
 
 #: bootstrap_templates/registration/password_reset_complete.html:5
 #: bootstrap_templates/registration/password_reset_complete.html:9
@@ -774,7 +779,7 @@ msgid "Small integer"
 msgstr "Klein geheel getal"
 
 #: build/django/django/db/models/fields/__init__.py:1281
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:642
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:537
 msgid "Text"
 msgstr "Tekst"
 
@@ -994,7 +999,8 @@ msgstr "Corrigeer de dubbele gegevens voor onderstaande waardes. "
 
 #: build/django/django/forms/models.py:995
 msgid "The inline foreign key did not match the parent instance primary key."
-msgstr "De inline foreign key komt niet overeen met de parent instance primary key."
+msgstr ""
+"De inline foreign key komt niet overeen met de parent instance primary key."
 
 #: build/django/django/forms/models.py:1059
 msgid "Select a valid choice. That choice is not one of the available choices."
@@ -1038,18 +1044,18 @@ msgid "Unknown"
 msgstr "Onbekend"
 
 #: build/django/django/forms/widgets.py:544 build/django/tests/i18n/urls.py:9
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:406
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:607
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:615
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:682
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:295
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:502
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:510
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:577
 msgid "Yes"
 msgstr "Ja"
 
 #: build/django/django/forms/widgets.py:545 build/django/tests/i18n/urls.py:9
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:408
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:609
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:617
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:684
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:297
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:504
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:512
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:579
 msgid "No"
 msgstr "Nee"
 
@@ -1926,7 +1932,7 @@ msgstr "Meer dan een"
 
 #: signbank/dictionary/models.py:774
 #: signbank/dictionary/templates/dictionary/add_gloss.html:23
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:285
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:194
 msgid "ID Gloss"
 msgstr "ID-Glos"
 
@@ -1935,7 +1941,7 @@ msgid "Annotation ID Gloss: Dutch"
 msgstr "Annotatie-ID-Glos: Nederlands"
 
 #: signbank/dictionary/models.py:787
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:287
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:196
 msgid "Annotation ID Gloss: English"
 msgstr "Annotatie-ID-Glos: Engels"
 
@@ -2224,7 +2230,7 @@ msgstr "Geef hier wat data om mee te beginnen"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:26
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:21
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:286
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:195
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
 msgid "Annotation ID Gloss"
 msgstr "Annotatie-ID-Glos"
@@ -2301,176 +2307,182 @@ msgid "Tags"
 msgstr "Labels"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:20
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:84
+msgid "Edit"
+msgstr "Bewerk"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:21
 msgid "Turn off edit mode"
 msgstr "Zet edit-stand uit"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:21
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:22
 msgid "Delete this gloss"
 msgstr "Verwijder deze glos"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:60
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:23
+msgid "Saving..."
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:62
 #, python-format
 msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
 msgstr "\"Gebaar %(glossposn)s van %(glosscount)s in NGT Signbank\" "
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:64
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:66
 msgid "Next Sign &raquo;"
 msgstr "Volgende gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:72
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:74
 msgid "Public View"
 msgstr "Publieke Versie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:73
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:75
 msgid "Delete Sign"
 msgstr "Verwijder gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:81
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:83
 msgid "Edit next gloss"
 msgstr "Bewerk volgende glos"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:82
-msgid "Edit"
-msgstr "Bewerk"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:88
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:90
 msgid "Delete This Sign"
 msgstr "Verwijder dit gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:91
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:93
 msgid ""
 "This action will delete this sign and all associated records. It cannot be "
 "undone."
 msgstr ""
 "Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:98
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:353
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:463
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:535
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:669
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:100
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:243
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:354
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:428
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:564
 #: signbank/dictionary/templates/dictionary/update_video.html:78
 msgid "Cancel"
 msgstr "Annuleer"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:99
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:354
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:464
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:536
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:670
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:101
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:244
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:355
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:429
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:565
 msgid "Confirm Delete"
 msgstr "Bevestig verwijderen"
 
 #. Translators:
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:138
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:140
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:142
 #: signbank/dictionary/templates/dictionary/word.html:116
 #: signbank/dictionary/templates/dictionary/word.html:119
 msgid "Provide feedback about this sign"
 msgstr "Geef feedback over dit gebaar"
 
 #. Translators: If sign is missing, report it
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:143
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:145
 #: signbank/dictionary/templates/dictionary/word.html:123
 msgid "Report a missing sign"
 msgstr "Geef een ontbrekend gebaar door"
 
 #. Translators: Provide feedback about the site in general
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:144
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:146
 #: signbank/dictionary/templates/dictionary/word.html:125
 msgid "Provide general site feedback"
 msgstr "Geef algemene feedback op de site"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:153
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:155
 msgid "Upload New Video"
 msgstr "Nieuwe video uploaden"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:154
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:156
 #, python-format
 msgid " We have %(gloss.count_videos)s videos for this sign. "
 msgstr "We hebben %(gloss.count_videos)s video's voor dit gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:172
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:174
 msgid "Delete/Revert Video"
 msgstr "Verwijder video"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:175
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:177
 msgid ""
 "This will delete the most recent upload and restore the most recent earlier "
 "version."
 msgstr ""
 "Zo wordt de meest recente video verwijderd en de vorige versie getoond."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:288
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:197
 msgid "Translation equivalents in Dutch"
 msgstr "Mogelijke vertalingen in het Nederlands"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:289
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:198
 msgid "Annotation Instructions"
 msgstr "Annotatieinstructies"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:290
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:199
 msgid "Language"
 msgstr "Taal"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:291
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:200
 msgid "Dialect"
 msgstr "Dialect"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:319
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:209
 msgid "Morphology"
 msgstr "Morfologie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:327
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:641
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:217
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:536
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:635
 msgid "Type"
 msgstr "Type"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:328
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:218
 msgid "Morpheme"
 msgstr "Morfeem"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:342
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:232
 msgid "Delete This Morphology"
 msgstr "Verwijder deze morfologische informatie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:346
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:528
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:236
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:421
 msgid "Are you sure you want to delete this? This cannot be undone."
 msgstr ""
 "Weet je zeker dat je dit wilt verwijderen? Het kan niet ongedaan gemaakt "
 "worden."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:367
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:257
 msgid "view"
 msgstr "toon"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:379
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:269
 msgid "ID Gloss/Annotation ID Gloss"
 msgstr "ID-glos/Annotatie-ID-Glos"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:380
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:270
 msgid "Add Morphology Definition"
 msgstr "Voeg morfologiedefinitie toe"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:398
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:287
 msgid "Phonology"
 msgstr "Fonologie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:422
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:312
 msgid "Semantics"
 msgstr "Semantiek"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:438
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:329
 msgid "Relations to Other Signs"
 msgstr "Relaties met andere gebaren"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:452
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:524
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:343
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:417
 msgid "Delete This Relation"
 msgstr "Verwijder deze relatie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:456
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:347
 #, fuzzy, python-format
 msgid ""
 " This action will delete the %(rel.get_role_display)s relation between "
@@ -2479,89 +2491,103 @@ msgstr ""
 "Zo wordt de %(rel.get_role_display)s-relatie tussen %(rel.soource)s en "
 "%(rel.target)s verwijderd. Dit kan niet ongedaan gemaakt worden."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:504
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:397
 msgid "Relations to Foreign Signs"
 msgstr "Relaties met gebaren uit andere talen"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:510
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:403
 msgid "Loan"
 msgstr "Leenwoord"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:511
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:404
 msgid "Related Language"
 msgstr "Verwante taal"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:512
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:560
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:405
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:453
 msgid "Gloss in related language"
 msgstr "Glos in een verwante taal"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:533
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:667
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:426
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:562
 msgid "confirmed"
 msgstr "Verwijder"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:559
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:452
 msgid "Related language"
 msgstr "Verwante taal"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:561
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:454
 msgid "Add Relation to Foreign Sign"
 msgstr "Voeg relatie toe"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:578
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:471
 msgid "Frequency"
 msgstr "Frequentie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:593
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:488
 msgid "Publication Status"
 msgstr "Publicatiestatus"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:601
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:496
 msgid "Creation Date"
 msgstr "Aanmaakdatum"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:602
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:497
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
 msgid "Creator"
 msgstr "Toegevoegd door"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:604
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:499
 msgid "In Web Dictionary"
 msgstr "In woordenboek"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:612
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:507
 msgid "Proposed New Sign"
 msgstr "Voorstel voor nieuw gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:629
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:524
 msgid "Notes"
 msgstr "Aantekeningen"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:639
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:534
 msgid "Published"
 msgstr "Gepubliceerd"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:640
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:535
 msgid "Index"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:658
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:553
 msgid "Delete This Note"
 msgstr "Verwijder deze aantekening"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:662
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:557
 msgid "This action will delete this note. It cannot be undone."
 msgstr ""
 "Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:708
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:603
 msgid "Enter new note"
 msgstr "Vul nieuwe aantekening in"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:715
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:610
 msgid "Save New"
 msgstr "Bewaar nieuw gebaar"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:627
+msgid "Other videos"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:634
+#, fuzzy
+msgid "Video"
+msgstr "Nieuwe video"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:636
+#, fuzzy
+msgid "Alternative gloss"
+msgstr "Verwijder deze glos"
 
 #: signbank/dictionary/templates/dictionary/gloss_list.html:42
 #: signbank/dictionary/templates/dictionary/search_result.html:94
@@ -2848,7 +2874,8 @@ msgstr "publiceer"
 
 #: signbank/pages/models.py:17
 msgid "If this is checked, the page will be included in the site menus."
-msgstr "Als dit is aangevinkt, wordt de pagina opgenomen in de menu's van de site."
+msgstr ""
+"Als dit is aangevinkt, wordt de pagina opgenomen in de menu's van de site."
 
 #: signbank/pages/models.py:18
 msgid ""
