@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.translation import ugettext_lazy as _
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list
 from django.conf import settings
@@ -11,9 +12,9 @@ CATEGORY_CHOICES = (('all', 'All Signs'),
 
 class UserSignSearchForm(forms.Form):
 
-    glossQuery = forms.CharField(label='Glosses containing', max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    query = forms.CharField(label='Translations containing', max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    category = forms.ChoiceField(label='Search', choices=CATEGORY_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-control'}))
+    glossQuery = forms.CharField(label=_(u'Glosses containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    query = forms.CharField(label=_(u'Translations containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    category = forms.ChoiceField(label=_(u'Search'), choices=CATEGORY_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-control'}))
         
 
 class GlossModelForm(forms.ModelForm):
@@ -62,37 +63,37 @@ ATTRS_FOR_FORMS = {'class':'form-control'};
 
 class GlossSearchForm(forms.ModelForm):
 
-    search = forms.CharField(label="Dutch Gloss")
-    englishGloss = forms.CharField(label="English Gloss")
+    search = forms.CharField(label=_("Dutch Gloss"))
+    englishGloss = forms.CharField(label=_("English Gloss"))
     tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
     nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
-    keyword = forms.CharField(label='Translations')
-    hasvideo = forms.ChoiceField(label='Has Video', choices=YESNOCHOICES)
-    defspublished = forms.ChoiceField(label="All Definitions Published", choices=YESNOCHOICES)
+    keyword = forms.CharField(label=_(u'Translations'))
+    hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=YESNOCHOICES)
+    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
     
-    defsearch = forms.CharField(label='Search Definition/Notes')
-    #defrole = forms.ChoiceField(label='Search Definition/Note Type', choices=ROLE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+    defsearch = forms.CharField(label=_(u'Search Definition/Notes'))
+    #defrole = forms.ChoiceField(label=_(u'Search Definition/Note Type'), choices=ROLE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
 
-    relation = forms.CharField(label='Search for gloss of related signs',widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    relationToForeignSign = forms.CharField(label='Search for gloss of foreign signs',widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    morpheme = forms.CharField(label='Search for gloss with this as morpheme',widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    relation = forms.CharField(label=_(u'Search for gloss of related signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    relationToForeignSign = forms.CharField(label=_(u'Search for gloss of foreign signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    morpheme = forms.CharField(label=_(u'Search for gloss with this as morpheme'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-    phonOth = forms.CharField(label='Phonology other',widget=forms.TextInput())
+    phonOth = forms.CharField(label=_(u'Phonology other'),widget=forms.TextInput())
 
-    hasRelationToForeignSign = forms.ChoiceField(label='Related to foreign sign or not',choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hasRelation = forms.ChoiceField(label='Type of relation',choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hasMorphemeOfType = forms.ChoiceField(label='Has morpheme type',choices=MORPHEME_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasRelationToForeignSign = forms.ChoiceField(label=_(u'Related to foreign sign or not'),choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasRelation = forms.ChoiceField(label=_(u'Type of relation'),choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasMorphemeOfType = forms.ChoiceField(label=_(u'Has morpheme type'),choices=MORPHEME_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
-    repeat = forms.ChoiceField(label='Repeating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
-    altern = forms.ChoiceField(label='Alternating Movement',choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
+    repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
+    altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
 
-    isNew = forms.ChoiceField(label='Is a proposed new sign',choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    inWeb = forms.ChoiceField(label='Is in Web dictionary',choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    definitionRole = forms.ChoiceField(label='Note type',choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    definitionContains = forms.CharField(label='Note contains',widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    inWeb = forms.ChoiceField(label=_(u'Is in Web dictionary'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    definitionRole = forms.ChoiceField(label=_(u'Note type'),choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    definitionContains = forms.CharField(label=_(u'Note contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-    createdBefore = forms.DateField(label='Created before')
-    createdAfter = forms.DateField(label='Created after')
+    createdBefore = forms.DateField(label=_(u'Created before'))
+    createdAfter = forms.DateField(label=_(u'Created after'))
 
     class Meta:
 
@@ -126,8 +127,8 @@ class DefinitionForm(forms.ModelForm):
         
 class RelationForm(forms.ModelForm):
     
-    sourceid = forms.CharField(label='Source Gloss')
-    targetid = forms.CharField(label='Target Gloss')
+    sourceid = forms.CharField(label=_(u'Source Gloss'))
+    targetid = forms.CharField(label=_(u'Target Gloss'))
     
     class Meta:
         model = Relation
@@ -139,10 +140,10 @@ class RelationForm(forms.ModelForm):
         
 class RelationToForeignSignForm(forms.ModelForm):
 
-    sourceid = forms.CharField(label='Source Gloss')    
-    #loan = forms.CharField(label='Loan')
-    other_lang = forms.CharField(label='Related Language')
-    other_lang_gloss = forms.CharField(label='Gloss in Related Language')
+    sourceid = forms.CharField(label=_(u'Source Gloss'))
+    #loan = forms.CharField(label=_(u'Loan'))
+    other_lang = forms.CharField(label=_(u'Related Language'))
+    other_lang_gloss = forms.CharField(label=_(u'Gloss in Related Language'))
     
     class Meta:
         model = RelationToForeignSign
@@ -151,9 +152,9 @@ class RelationToForeignSignForm(forms.ModelForm):
 
 class MorphologyForm(forms.ModelForm):
 
-    parent_gloss_id = forms.CharField(label='Parent Gloss')
-    role = forms.ChoiceField(label='Type',choices=build_choice_list('MorphologyType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    morpheme_id = forms.CharField(label='Morpheme');
+    parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
+    role = forms.ChoiceField(label=_(u'Type'),choices=build_choice_list('MorphologyType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    morpheme_id = forms.CharField(label=_(u'Morpheme'));
 
     class Meta:
         model = MorphologyDefinition;
