@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-17 00:18+1100\n"
+"POT-Creation-Date: 2015-11-17 09:14+1100\n"
 "PO-Revision-Date: 2015-07-28 16:26+1000\n"
 "Last-Translator: Richard <r.bankl@let.ru.nl>\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -95,9 +95,8 @@ msgid "Login"
 msgstr "Inloggen"
 
 #: bootstrap_templates/pages/default.html:9
-#, fuzzy
 msgid "Edit Page"
-msgstr "Bewerk"
+msgstr "Bewerk pagina"
 
 #: bootstrap_templates/registration/password_reset_complete.html:5
 #: bootstrap_templates/registration/password_reset_complete.html:9
@@ -1935,32 +1934,26 @@ msgid "Glosses containing"
 msgstr "Glossen met"
 
 #: signbank/dictionary/forms.py:16
-#, fuzzy
 msgid "Translations containing"
 msgstr "Vertaling bevat"
 
 #: signbank/dictionary/forms.py:17
-#, fuzzy
 msgid "Search"
 msgstr "Zoeken"
 
 #: signbank/dictionary/forms.py:66
-#, fuzzy
 msgid "Dutch Gloss"
 msgstr "Nederlandse glos"
 
 #: signbank/dictionary/forms.py:67
-#, fuzzy
 msgid "English Gloss"
 msgstr "Engelse glos"
 
 #: signbank/dictionary/forms.py:70
-#, fuzzy
 msgid "Translations"
 msgstr "Mogelijke vertalingen"
 
 #: signbank/dictionary/forms.py:71
-#, fuzzy
 msgid "Has Video"
 msgstr "Video beschikbaar"
 
@@ -1969,7 +1962,6 @@ msgid "All Definitions Published"
 msgstr "Alle definities gepubliceerd"
 
 #: signbank/dictionary/forms.py:74
-#, fuzzy
 msgid "Search Definition/Notes"
 msgstr "Zoek Definitie/Aantekeningen"
 
@@ -1978,21 +1970,18 @@ msgid "Search for gloss of related signs"
 msgstr "Zoek op glos van een verwant gebaar"
 
 #: signbank/dictionary/forms.py:78
-#, fuzzy
 msgid "Search for gloss of foreign signs"
-msgstr "Zoek op glos in een andere gebarentaal"
+msgstr "Zoek op de glos in een andere gebarentaal"
 
 #: signbank/dictionary/forms.py:79
 msgid "Search for gloss with this as morpheme"
 msgstr "Zoek voor een glos met dit morfeem"
 
 #: signbank/dictionary/forms.py:81
-#, fuzzy
 msgid "Phonology other"
 msgstr "Fonologie: overig"
 
 #: signbank/dictionary/forms.py:83
-#, fuzzy
 msgid "Related to foreign sign or not"
 msgstr "Relaties met gebaren uit andere talen"
 
@@ -2005,7 +1994,6 @@ msgid "Has morpheme type"
 msgstr "Heeft morfeem-type"
 
 #: signbank/dictionary/forms.py:87
-#, fuzzy
 msgid "Repeating Movement"
 msgstr "Herhaalde beweging"
 
@@ -2014,12 +2002,10 @@ msgid "Alternating Movement"
 msgstr "Alternerende beweging"
 
 #: signbank/dictionary/forms.py:90
-#, fuzzy
 msgid "Is a proposed new sign"
 msgstr "Voorstel voor nieuw gebaar"
 
 #: signbank/dictionary/forms.py:91
-#, fuzzy
 msgid "Is in Web dictionary"
 msgstr "In woordenboek"
 
@@ -2032,22 +2018,18 @@ msgid "Note contains"
 msgstr "Aantekening bevat"
 
 #: signbank/dictionary/forms.py:95
-#, fuzzy
 msgid "Created before"
 msgstr "Toegevoegd vóór"
 
 #: signbank/dictionary/forms.py:96
-#, fuzzy
 msgid "Created after"
 msgstr "Aangemaakt na"
 
 #: signbank/dictionary/forms.py:130 signbank/dictionary/forms.py:143
-#, fuzzy
 msgid "Source Gloss"
 msgstr "Bron-glos"
 
 #: signbank/dictionary/forms.py:131
-#, fuzzy
 msgid "Target Gloss"
 msgstr "Doel-glos"
 
@@ -2057,12 +2039,10 @@ msgid "Related Language"
 msgstr "Verwante taal"
 
 #: signbank/dictionary/forms.py:146
-#, fuzzy
 msgid "Gloss in Related Language"
 msgstr "Glos in een verwante taal"
 
 #: signbank/dictionary/forms.py:155
-#, fuzzy
 msgid "Parent Gloss"
 msgstr "Ouder-glos"
 
@@ -2375,16 +2355,15 @@ msgstr "Geef hier wat data om mee te beginnen"
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:21
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:195
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
-#, fuzzy
 msgid "Annotation ID Gloss (Dutch)"
-msgstr "Annotatie-ID-Glos: Nederlands"
+msgstr "Annotatie-ID-Glos (Nederlands)"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:29
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:22
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:196
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
 msgid "Annotation ID Gloss (English)"
-msgstr "Annotatie-ID-Glos: Engels"
+msgstr "Annotatie-ID-Glos (Engels)"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:33
 msgid "Add New Sign"
@@ -2711,12 +2690,10 @@ msgid "Other videos"
 msgstr "Andere video's"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:634
-#, fuzzy
 msgid "Video"
-msgstr "Nieuwe video"
+msgstr "video"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:636
-#, fuzzy
 msgid "Alternative gloss"
 msgstr "Alternatieve glos"
 
