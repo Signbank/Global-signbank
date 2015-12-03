@@ -12,6 +12,7 @@ from datetime import datetime
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
+from signbank.settings.development import OTHER_VIDEOS_DIRECTORY
 
 @permission_required('dictionary.add_gloss')
 def add_gloss(request):
@@ -518,6 +519,35 @@ def add_morphology_definition(request):
             morphdef.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+
+    raise Http404('Incorrect request');
+
+def add_othervideo(request):
+
+    if request.method == "POST":
+
+        form = OtherVideoForm(request.POST,request.FILES)
+
+        if form.is_valid():
+
+            #Create the folder if needed
+            goal_directory = OTHER_VIDEOS_DIRECTORY+request.POST['gloss'] + '/'
+            goal_path = goal_directory + request.FILES['file'].name
+
+            if not os.path.isdir(goal_directory):
+                os.mkdir(goal_directory)
+
+            with open(goal_path, 'wb+') as destination:
+
+                #Save the file
+                for chunk in request.FILES['file'].chunks():
+                        destination.write(chunk)
+
+                #Save the database record
+                parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
+                OtherVideo(path=goal_path,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
+
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']}))
 
     raise Http404('Incorrect request');
 

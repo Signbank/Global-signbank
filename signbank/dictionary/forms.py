@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list
+from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list, OtherVideo
 from django.conf import settings
 from tagging.models import Tag
 
@@ -159,6 +159,17 @@ class MorphologyForm(forms.ModelForm):
     class Meta:
         model = MorphologyDefinition;
         fields = ['role'];
+
+class OtherVideoForm(forms.ModelForm):
+
+    gloss = forms.CharField()
+    file = forms.FileField()
+    type = forms.ChoiceField(choices=build_choice_list('OtherVideoType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    alternative_gloss = forms.TextInput()
+
+    class Meta:
+        model = OtherVideo
+        fields = ['type']
 
 class CSVUploadForm(forms.Form):
 
