@@ -38,7 +38,7 @@ SIGN_NAVIGATION = False
 
 
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
-
+OTHER_VIDEOS_DIRECTORY = '/var/www2/signbank/live/writable/othervideos/'
 
 LOGGING = {
     'version': 1,

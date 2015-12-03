@@ -638,7 +638,7 @@
 
                {% for pk,path,type,alternative_gloss in other_videos %}
                <tr>
-                    <td>{{ path }}</td>
+                    <td><a href="{{ path }}">Download</a></td>
                     <td class='edit edit_list' id='other-video-type_{{ pk }}'>{{ type }}</td>
                     <td class='edit edit_text' id='other-video-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
                 </tr>
@@ -647,19 +647,22 @@
            </table>
 
             {% if perms.dictionary.change_gloss %}
-            <form id='add_other_video' method="POST">
+            <form id='add_other_video' action='{% url "dictionary:add_othervideo" %}' method="POST" enctype="multipart/form-data">
+
+               <input type='hidden' name='gloss' value='{{gloss.pk}}'>
+
                 <fieldset>
                 {% csrf_token %}
                  <table class='table'>
                     <tr>
-                        <td></td>
-                        <td></td>
-                        <td><input class='form-control' placeholder='{% trans "Alternative gloss" %}' name='other_vide_alternative_gloss' type='text'></td>
+                        <td><input class='form-control' placeholder='{% trans "Upload video" %}' name='file' type='file'></td>
+                        <td>{{othervideoform.type}}</td>
+                        <td><input class='form-control' placeholder='{% trans "Alternative gloss" %}' name='alternative_gloss' type='text'></td>
                     </tr>
                      <tr>
                         <td></td>
                         <td></td>
-                        <td><input class='btn' type='submit' value='{% trans "Save New" %}'></td>
+                        <td><input class='btn' type='submit' value='{% trans "Save new other video" %}'></td>
                     </tr>
                  </table>
             </fieldset>

@@ -15,7 +15,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE
+from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY
 
 class GlossListView(ListView):
     
@@ -506,6 +506,7 @@ class GlossDetailView(DetailView):
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
         context['morphologyform'] = MorphologyForm()
+        context['othervideoform'] = OtherVideoForm()
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
@@ -593,7 +594,8 @@ class GlossDetailView(DetailView):
             elif self.request.LANGUAGE_CODE == 'nl':
                 human_value_video_type = selected_field_choice.dutch_name
 
-            context['other_videos'].append([other_video.pk, other_video.path, human_value_video_type, other_video.alternative_gloss])
+            path = other_video.path.replace(OTHER_VIDEOS_DIRECTORY,'/media/othervideos/')
+            context['other_videos'].append([other_video.pk, path, human_value_video_type, other_video.alternative_gloss])
 
             #Save the other_video_type choices (same for every other_video, but necessary because they all have other ids)
             context['choice_lists']['other-video-type_'+str(other_video.pk)] = choicelist_queryset_to_translated_ordered_dict(other_video_type_choice_list,self.request.LANGUAGE_CODE)
