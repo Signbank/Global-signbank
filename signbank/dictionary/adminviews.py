@@ -8,6 +8,7 @@ from collections import OrderedDict
 import csv
 import re
 import xml.etree.ElementTree as ET
+from xml.dom import minidom
 import datetime as DT
 
 from signbank.dictionary.models import *
@@ -103,13 +104,12 @@ class GlossListView(ListView):
                 elif lang is lang_id_nld:
                     cve_value_element.text = self.get_value_for_ecv(gloss, 'annotation_idgloss')
 
-        tree = ET.ElementTree(top)
+        xmlstr = minidom.parseString(ET.tostring(top,'utf-8')).toprettyxml(indent="   ")
+        with open(ECV_FILE, "w") as f:
+            f.write(xmlstr.encode('utf-8'))
 
-        # response = HttpResponse(content_type='text')
-        # response['Content-Disposition'] = 'attachment; filename="NGTSignbank.ecv"'
-
-        tree.write(open(ECV_FILE, 'w'), encoding ="utf-8",xml_declaration=True, method="xml")
-        # tree.write(response, encoding ="utf-8",xml_declaration=True, method="xml")
+#        tree = ET.ElementTree(top)
+#        tree.write(open(ECV_FILE, 'w'), encoding ="utf-8",xml_declaration=True, method="xml")
 
         return HttpResponse('OK')
 
