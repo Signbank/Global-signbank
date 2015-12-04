@@ -705,7 +705,7 @@ class FieldChoice(models.Model):
 
     def __str__(self):
 
-        return self.field + ': ' + self.english_name + ' (' + str(self.machine_value) + ')';
+        return self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')';
 
     class Meta:
         ordering = ['field','machine_value']
