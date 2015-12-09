@@ -401,12 +401,18 @@ def update_other_video(request,gloss,field,value):
         other_video.type = value
 
         #Translate the value
-        selected_field_choice = FieldChoice.objects.filter(field__iexact='OtherVideoType',machine_value=value)[0]
+        if value == '0':
+            value = '-'
+        elif value == '1':
+            value = 'N/A'
+        else:
 
-        if request.LANGUAGE_CODE == 'en':
-            value = selected_field_choice.english_name
-        elif request.LANGUAGE_CODE == 'nl':
-            value = selected_field_choice.dutch_name
+            selected_field_choice = FieldChoice.objects.filter(field__iexact='OtherVideoType',machine_value=value)[0]
+
+            if request.LANGUAGE_CODE == 'en':
+                value = selected_field_choice.english_name
+            elif request.LANGUAGE_CODE == 'nl':
+                value = selected_field_choice.dutch_name
 
     elif action_or_fieldname == 'other-video-alternative-gloss':
         other_video.alternative_gloss = value
@@ -547,7 +553,7 @@ def add_othervideo(request):
                 parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
                 OtherVideo(path=goal_path,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']})+'?editothervideo')
 
     raise Http404('Incorrect request');
 

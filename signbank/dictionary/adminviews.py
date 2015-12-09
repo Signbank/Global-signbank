@@ -587,12 +587,18 @@ class GlossDetailView(DetailView):
 
         for other_video in gl.othervideo_set.all():
 
-            selected_field_choice = other_video_type_choice_list.filter(machine_value=other_video.type)[0]
+            if int(other_video.type) == 0:
+                human_value_video_type = '-'
+            elif int(other_video.type) == 1:
+                human_value_video_type = 'N/A'
+            else:
 
-            if self.request.LANGUAGE_CODE == 'en':
-                human_value_video_type = selected_field_choice.english_name
-            elif self.request.LANGUAGE_CODE == 'nl':
-                human_value_video_type = selected_field_choice.dutch_name
+                selected_field_choice = other_video_type_choice_list.filter(machine_value=other_video.type)[0]
+
+                if self.request.LANGUAGE_CODE == 'en':
+                    human_value_video_type = selected_field_choice.english_name
+                elif self.request.LANGUAGE_CODE == 'nl':
+                    human_value_video_type = selected_field_choice.dutch_name
 
             path = other_video.path.replace(OTHER_VIDEOS_DIRECTORY,'/media/othervideos/')
             context['other_videos'].append([other_video.pk, path, human_value_video_type, other_video.alternative_gloss])

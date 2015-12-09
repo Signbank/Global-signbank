@@ -631,6 +631,7 @@
 
            <table class='table table-condensed'>
               <tr>
+                  <th style='width:2em'></th>
                   <th style='width:12em'>{% trans "Video" %}</th>
                   <th style='width:12em'>{% trans "Type" %}</th>
                   <th style='width:12em'>{% trans "Alternative gloss" %}</th>
@@ -638,6 +639,35 @@
 
                {% for pk,path,type,alternative_gloss in other_videos %}
                <tr>
+                     <td>
+                        <span class='glyphicon glyphicon-trash other-video-delete' data-toggle='modal' data-target='#delete_other_video_{{pk}}'></span>
+
+                         <div class="modal fade" id="delete_other_video_{{pk}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                             <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class='modal-header'>
+                                        <h2 id='modalTitle'>{% trans "Delete This Other Video" %}</h2>
+                                    </div>
+                                    <div class='modal-body'>
+
+                                        <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                     </div>
+                                  <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                      {% csrf_token %}
+                                      <input type='hidden' name='id' value='other-video-delete_{{pk}}'>
+                                      <input type='hidden' name='value' value='confirmed'>
+                                      <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                      </div>
+                                  </form>
+
+                                </div>
+                              </div>
+                         </div>
+
+                    </td>
+
                     <td><a href="{{ path }}">Download</a></td>
                     <td class='edit edit_list' id='other-video-type_{{ pk }}'>{{ type }}</td>
                     <td class='edit edit_text' id='other-video-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>

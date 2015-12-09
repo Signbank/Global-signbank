@@ -28,7 +28,10 @@ var original_values_for_changes_made = new Array();
          if (window.location.search.match('editmorphdef')) {
              $('#morphology').addClass('in');
          }      
-         
+
+         if (window.location.search.match('editothervideo')) {
+             $('#othervideos').addClass('in');
+         }
      }  
           
      $('#enable_edit').click(function()
@@ -83,6 +86,7 @@ function disable_edit() {
     $('#add_other_video').hide();
     $('.definition_delete').hide();
     $('.relation_delete').hide();
+    $('.other-video-delete').hide();
     $('.relationtoforeignsign_delete').hide();
     $('.morphology-definition-delete').hide();
 };
@@ -102,6 +106,7 @@ function enable_edit() {
     $('#add_other_video').show();
     $('.definition_delete').show();
     $('.relation_delete').show();
+    $('.other-video-delete').show();
     $('.relationtoforeignsign_delete').show();
     $('.morphology-definition-delete').show();
 };
