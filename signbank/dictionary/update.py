@@ -396,7 +396,9 @@ def update_other_video(request,gloss,field,value):
         return HttpResponseBadRequest("OtherVideo doesn't match gloss", {'content-type': 'text/plain'})
 
     if action_or_fieldname == 'other-video-delete':
-        pass
+        other_video.delete()
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'?editothervideo')
+
     elif action_or_fieldname == 'other-video-type':
         other_video.type = value
 
