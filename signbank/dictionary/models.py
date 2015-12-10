@@ -12,7 +12,7 @@ from django.conf import settings
 from django.http import Http404 
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
-from django.utils.translation import gettext as _
+from django.utils.translation import ugettext_lazy as _
 import tagging
 
 import sys, os
