@@ -703,9 +703,10 @@ class FieldChoice(models.Model):
     dutch_name = models.CharField(max_length=50)
     machine_value = models.IntegerField()
 
-    def __str__(self):
+    def __unicode__(self):
 
-        return self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')';
+        name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
+        return name.encode('ascii',errors='replace');
 
     class Meta:
         ordering = ['field','machine_value']
