@@ -289,4 +289,4 @@ VIDEO_ASPECT_RATIO = 3.0/4.0
 
 # settings for django-tagging
 
-FORCE_LOWERCASE_TAGS = True
+FORCE_LOWERCASE_TAGS = False
