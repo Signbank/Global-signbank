@@ -185,7 +185,7 @@ class GlossListView(ListView):
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
         writer = csv.writer(response)
-        header = ['Signbank ID'] + [f.verbose_name for f in fields]
+        header = ['Signbank ID'] + [unicode(f.verbose_name) for f in fields]
 
         for extra_column in ['Languages','Dialects','Keywords','Morphology','Relations to other signs','Relations to foreign signs',]:
             header.append(extra_column);
