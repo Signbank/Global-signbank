@@ -35,7 +35,7 @@ msgstr "Inloggen"
 
 #: bootstrap_templates/loginform.html:14 signbank/registration/forms.py:283
 msgid "Email"
-msgstr ""
+msgstr "E-mail"
 
 #: bootstrap_templates/loginform.html:20 signbank/registration/forms.py:48
 #: signbank/registration/forms.py:284
@@ -828,7 +828,7 @@ msgstr "%(model)s-instantie met pk %(pk)r bestaat niet."
 
 #: build/django/django/db/models/fields/related.py:1149
 msgid "Foreign Key (type determined by related field)"
-msgstr ""
+msgstr "Foreign key (type bepaald door verwant veld)"
 
 #: build/django/django/db/models/fields/related.py:1290
 msgid "One-to-one relationship"
@@ -2111,7 +2111,7 @@ msgstr "Blend van"
 
 #: signbank/dictionary/models.py:819
 msgid "Blend"
-msgstr ""
+msgstr "Blend"
 
 #: signbank/dictionary/models.py:821
 msgid "Compound of"
@@ -2193,7 +2193,7 @@ msgstr "Voorstel voor nieuw gebaar?"
 
 #: signbank/dictionary/models.py:855
 msgid "Morphemic Analysis"
-msgstr ""
+msgstr "Morfeemanalyse"
 
 #: signbank/dictionary/models.py:857
 msgid "Signed English definition available"
@@ -2205,7 +2205,7 @@ msgstr ""
 
 #: signbank/dictionary/models.py:860
 msgid "Sense Number"
-msgstr "Betekenisnummer"
+msgstr ""
 
 #: signbank/dictionary/models.py:863
 msgid "Sign Number"
@@ -2402,11 +2402,11 @@ msgstr "Zoek op Publicatiestatus en Aantekeningen"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:333
 msgid "Reset"
-msgstr ""
+msgstr "Reset"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:337
 msgid "Results per page"
-msgstr ""
+msgstr "Hits per pagina"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:387
 msgid "Number of matches:"
@@ -2456,7 +2456,7 @@ msgstr "Verwijder deze glos"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:23
 msgid "Saving..."
-msgstr ""
+msgstr "Opslaan..."
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:62
 #, python-format
@@ -2861,7 +2861,7 @@ msgstr "De update van glos {{ gloss }} is gelukt"
 #: signbank/dictionary/templates/dictionary/update_result.html:12
 #, python-format
 msgid " Return to <a href=\"%(referer)s\">the gloss page. "
-msgstr ""
+msgstr " Ga terug naar <a href=\"%(referer)s\">de glos-pagina. "
 
 #: signbank/dictionary/templates/dictionary/update_result.html:15
 msgid "Errors in the update form: "
