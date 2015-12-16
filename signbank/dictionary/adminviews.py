@@ -178,8 +178,8 @@ class GlossListView(ListView):
         #We want to manually set which fields to export here
 
         fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'StemSN', 'rmrks', 'handedness',
-                      'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'oriCh', 'contType',
-                      'movSh', 'movDir', 'movMan', 'repeat', 'altern', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'semField', 'tokNo',
+                      'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc', 'oriCh', 'contType',
+                      'movSh', 'movDir', 'repeat', 'altern', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'semField', 'tokNo',
                       'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
                       'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
@@ -297,8 +297,8 @@ class GlossListView(ListView):
 
 
         fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
-                      'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic', 'absOriPalm', 'absOriFing', 'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
-                      'movSh', 'movDir', 'movMan', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'semField', 'tokNo', 'tokNoSgnr',
+                      'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
+                      'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'namEnt', 'semField', 'tokNo', 'tokNoSgnr',
                       'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
                       'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
 
@@ -527,8 +527,8 @@ class GlossDetailView(DetailView):
 
         fields = {};
 
-        fields['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj','absOriPalm','absOriFing',
-                  'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','movMan','repeat','altern','phonOth', 'mouthG',
+        fields['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
+                  'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
                   'mouthing', 'phonetVar',];
 
         fields['semantics'] = ['iconImg','namEnt','semField'];
@@ -631,9 +631,9 @@ def gloss_ajax_complete(request, prefix):
 def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
 
     if language_code == 'en':
-        raw_choice_list = [('_'+str(choice.machine_value),str(choice.english_name)) for choice in queryset]
+        raw_choice_list = [('_'+str(choice.machine_value),unicode(choice.english_name)) for choice in queryset]
     elif language_code == 'nl':
-        raw_choice_list = [('_'+str(choice.machine_value),str(choice.dutch_name)) for choice in queryset]
+        raw_choice_list = [('_'+str(choice.machine_value),unicode(choice.dutch_name)) for choice in queryset]
 
     sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
     return OrderedDict(sorted_choice_list)
