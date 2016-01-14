@@ -100,33 +100,6 @@
     </ul>
     {% endif %}-->
 
-	<div class='nav navbar-right navbar-nav' id='language_picker'>
-		<form method="post" action="/i18n/setlang/">
-
-			{% csrf_token %}
-			<input class='nav navbar-nav navbar-right flag-button' type="image" name="language" value="en"
-
-		{% if LANGUAGE != "en" %}
-		style="opacity: 0.3;"
-		{% endif %}
-
-		src="/static/images/languages/gb.png"><br/>
-        <input name="language" type="hidden" value="en">
-        </form>
-		<form method="post" action="/i18n/setlang/">
-
-			{% csrf_token %}
-			<input class='nav nav-bar-nav navbar-right flag-button' type="image" name="language" value="nl"
-
-		{% if LANGUAGE != "nl" %}
-		style="opacity: 0.3;"
-		{% endif %}
-
-		src="/static/images/languages/nl.png">
-            <input name="language" type="hidden" value="nl">
-        </form>
-	</div>
-	
     <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="/dictionary/search">
        <div class="form-group">
           <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="glossQuery" value="{{ glossQuery }}" maxlength="50">
@@ -146,3 +119,5 @@
 
   </div><!-- /.navbar-collapse -->
 </nav>
+
+<div id="minimalistic_language_picker"></div>

@@ -10,6 +10,9 @@
     <link href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap_css/style.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}{% primary_css %}">
+
+    <link rel="stylesheet" href="{{STATIC_URL}}css/minimalistic_language_picker.css">
+
     <link rel="icon" type="image/png" href="{{ STATIC_URL }}images/favicon.png">
     {% block extrahead %}{% endblock %}
   </head>
@@ -54,7 +57,8 @@
     
     <script src='{{ STATIC_URL}}js/jquery-1.11.0.min.js'></script>
     <script src='{{ STATIC_URL}}bootstrap/js/bootstrap.min.js'></script>
-    
+    <script type="text/javascript" src="{{STATIC_URL}}js/minimalistic_language_picker.js"></script>
+
     <!-- DataTables -->
     <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.dataTables.min.js"></script>
 
@@ -63,20 +67,24 @@
     <script type="text/javascript">
     $(window).ready(function()
     {
-        $(".flag-button").on("click", function(e)
-        {
 
-            {% if user.is_authenticated and user.get_profile.last_used_language != WEBSITE_LANGUAGE %}
+    	{% get_current_language as WEBSITE_LANGUAGE %}
+
+        //Use the form below to update the language when logging in (if needed)
+        {% if user.is_authenticated and user.get_profile.last_used_language != WEBSITE_LANGUAGE %}
+
+            $('#change_language_form').submit();
+
+        {% endif %}
+
+    	$('#minimalistic_language_picker').minimalistic_language_picker(['en','nl','cn'],'{{WEBSITE_LANGUAGE}}','{{ STATIC_URL }}images/languages/',function(chosen_language)
+    	{
+            {% if user.is_authenticated and user.get_profile.last_used_language != chosen_language %}
 
                 //When the user is logged in, we don't want to submit the form, but instead save
                 //the user preference and reload
 
-                $.ajax('/dictionary/switch_to_language/'+$(this).val(),'html');
-
-                $("#language_picker").submit(function(event)
-                {
-                    return false;
-                });
+                $.ajax('/dictionary/switch_to_language/'+chosen_language,'html');
 
                 //The reload is on a timeout, because it happened to fast on Firefox
                 setTimeout(function()
@@ -84,26 +92,22 @@
                     location.reload();
                 },500);
 
+            {% else %}
+
+                $("#change_language_input_field").val(chosen_language);
+                $("#change_language_form").submit();
+
             {% endif %}
 
-        });
-
-    	{% get_current_language as WEBSITE_LANGUAGE %}
-
-        //Use the form below to update the language when logging in (if needed)
-        {% if user.is_authenticated and user.get_profile.last_used_language != WEBSITE_LANGUAGE %}
-
-            $('#last_language_of_user_form').submit();
-
-        {% endif %}
+    	});
     })
 
     </script>
-    <form id="last_language_of_user_form" method="post" action="/i18n/setlang/">
+    <form id="change_language_form" method="post" action="/i18n/setlang/">
 
         {% csrf_token %}
 
-        <input type="hidden" name="language" value="{{ user.get_profile.last_used_language }}">
+        <input id="change_language_input_field" type="hidden" name="language" value="{{ user.get_profile.last_used_language }}">
 
     </form>
 
