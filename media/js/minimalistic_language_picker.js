@@ -21,7 +21,7 @@ jQuery.fn.minimalistic_language_picker = function(languages,chosen_language,imag
 
     $(this).mouseleave(function()
     {
-    	$(this).show_chosen_language();
+    	//$(this).show_chosen_language();
     });
 };
 
@@ -32,7 +32,7 @@ jQuery.fn.show_chosen_language = function()
 
     //The layout below is Signbank specific
     $(this).css('margin-right',9);
-    $(this).css('margin-top',-59);
+    $(this).css('margin-top',-53);
 
     var image_root = $(this).attr('image_root');
     var chosen_language = $(this).attr('chosen_language');
@@ -42,12 +42,13 @@ jQuery.fn.show_chosen_language = function()
 jQuery.fn.show_all_languages = function(callback)
 {
     //Preparatory work
-    var SPACE_BETWEEN_FLAGS = 21;
+    var SPACE_BETWEEN_FLAGS = 4;
+    var HEIGHT_OF_FLAGS = 11;
     $(this).addClass('active_language_picker'); //Changes layout
 
     //The layout below is Signbank specific
     $(this).css('margin-right',2);
-    $(this).css('margin-top',-61);
+    $(this).css('margin-top',-60);
 
     //Take data from the element
     var image_root = $(this).attr('image_root');
@@ -55,7 +56,7 @@ jQuery.fn.show_all_languages = function(callback)
     var chosen_language = $(this).attr('chosen_language');
 
     //Define vars needed later
-    var html_content = '<img style="margin-bottom:10px;" class="flagbutton flag_of_chosen_language" src="'+image_root+chosen_language+'.png">';
+    var html_content = '<img style="margin-bottom:'+SPACE_BETWEEN_FLAGS+'px;" class="flagbutton flag_of_chosen_language" src="'+image_root+chosen_language+'.png">';
     var current_language_code;
     var current_amount_of_pixels_down = 0;
     var nr_of_flags_processed = 1;
@@ -70,10 +71,10 @@ jQuery.fn.show_all_languages = function(callback)
         }
 
         current_language_code = all_languages[language_index];
-        current_amount_of_pixels_down = nr_of_flags_processed * SPACE_BETWEEN_FLAGS;
+        current_amount_of_pixels_down = nr_of_flags_processed * (HEIGHT_OF_FLAGS + SPACE_BETWEEN_FLAGS);
 
         //Give a bottom margin to all flags but the last
-        var margin_bottom = 'margin-bottom:10px';
+        var margin_bottom = 'margin-bottom:'+SPACE_BETWEEN_FLAGS+'px';
 
         if (language_index == all_languages.length-1)
         {
@@ -96,7 +97,7 @@ jQuery.fn.show_all_languages = function(callback)
     }
 
     //Also grow the height of the picker
-    var picker_height = (22 * all_languages.length) + 10;
+    var picker_height = ((SPACE_BETWEEN_FLAGS+HEIGHT_OF_FLAGS) * all_languages.length) + 10;
     $(this).animate({'height':picker_height},400);
 
     //Move a flag up when clicked flag is clicked

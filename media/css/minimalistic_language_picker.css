@@ -3,6 +3,7 @@
 	cursor:pointer;
 	position: relative;
 	top: 0px;
+	vertical-align: top;
 }
 
 .flag_of_chosen_language
@@ -20,4 +21,5 @@
 	height: 11px;
 	width: 30px;
 	background-color: white;
+	line-height: 11px;
 }
