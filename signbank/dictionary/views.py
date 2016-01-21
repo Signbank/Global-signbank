@@ -358,14 +358,14 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    choicedict = {}
+    result = ''
 
-    for key,choices in choicedict.items():
+    for gloss in Gloss.objects.all():
 
-        for machine_value,english_name in choices:
-            FieldChoice(english_name=english_name,field=key,machine_value=machine_value).save()
+        if len(gloss.annotation_idgloss) < 2:
+            result += '!'+str(gloss)
 
-    return HttpResponse('OK')
+    return HttpResponse(result)
 
 def add_new_sign(request):
 
