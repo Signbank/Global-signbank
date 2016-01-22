@@ -89,7 +89,9 @@
                 //The reload is on a timeout, because it happened to fast on Firefox
                 setTimeout(function()
                 {
-                    location.reload();
+                    $("#change_language_input_field").val(chosen_language);
+                    $("#change_language_form").submit();
+
                 },500);
 
             {% else %}

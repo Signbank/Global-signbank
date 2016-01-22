@@ -21,7 +21,7 @@ jQuery.fn.minimalistic_language_picker = function(languages,chosen_language,imag
 
     $(this).mouseleave(function()
     {
-    	//$(this).show_chosen_language();
+    	$(this).show_chosen_language();
     });
 };
 
