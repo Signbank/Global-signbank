@@ -48,6 +48,7 @@ LOCALE_PATHS = [BASE_DIR+'conf/locale']
 LANGUAGES = (
   ('en', 'English'),
   ('nl', 'Dutch'),
+  ('cn', 'Chinese')
 )
 
 SITE_ID = 1
