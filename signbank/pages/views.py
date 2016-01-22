@@ -4,9 +4,11 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.views.decorators.csrf import csrf_protect
 
 DEFAULT_TEMPLATE = 'pages/default.html'
 
+@csrf_protect
 def page(request, url='/'):
     """
     Flat page view.
@@ -68,9 +70,8 @@ def page(request, url='/'):
         f.content = mark_safe(f.content)
 
     c = RequestContext(request, {
-        'page': f, 
+        'page': f,
     })
+
     response = HttpResponse(t.render(c))
     return response
-
-    
