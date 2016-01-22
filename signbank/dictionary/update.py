@@ -14,6 +14,8 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.settings.development import OTHER_VIDEOS_DIRECTORY
 
+from django.utils.translation import ugettext_lazy as _
+
 @permission_required('dictionary.add_gloss')
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
@@ -22,12 +24,12 @@ def add_gloss(request):
         
         form = GlossCreateForm(request.POST)
 
-        if len(Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'])) != 0:
-            return render_to_response('dictionary/warning.html', {'warning':'Annotation ID Gloss not unique'},context_instance=RequestContext(request))
-        elif len(Gloss.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'])) != 0:
-            return render_to_response('dictionary/warning.html', {'warning':'English annotation ID gloss not unique'},context_instance=RequestContext(request))
+        if len(Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
+            return render_to_response('dictionary/warning.html', {'warning':_('Annotation ID Gloss not unique.')},context_instance=RequestContext(request))
+        elif len(Gloss.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
+            return render_to_response('dictionary/warning.html', {'warning':_('English annotation ID gloss not unique.')},context_instance=RequestContext(request))
         elif len(request.POST['annotation_idgloss']) < 1:
-            return render_to_response('dictionary/warning.html', {'warning':'Dutch annotation ID gloss cannot be empty.'},context_instance=RequestContext(request))
+            return render_to_response('dictionary/warning.html', {'warning':_('Dutch annotation ID gloss cannot be empty.')},context_instance=RequestContext(request))
 
         if form.is_valid():
             

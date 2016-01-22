@@ -1,9 +1,10 @@
 {% extends "baselayout.html" %}
+{% load i18n %}
 
 {% block content %}
 
     {{warning}}
 
-    <p><a onClick="history.go(-1);return true;">Click here to go back.</a></p>
+    <p><a onClick="history.go(-1);return true;">{% trans "Click here to go back." %}</a></p>
 
 {% endblock %}
