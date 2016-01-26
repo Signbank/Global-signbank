@@ -279,8 +279,8 @@ def gloss(request, idgloss):
 def search(request):
     """Handle keyword search form submission"""
 
-    if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0 and len(request.user.groups.filter(name="Editor")) == 0:
-        return HttpResponse('You are not allowed to see this page.')
+#    if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0 and len(request.user.groups.filter(name="Editor")) == 0:
+#        return HttpResponse('You are not allowed to see this page.')
 
     form = UserSignSearchForm(request.GET.copy())
 
