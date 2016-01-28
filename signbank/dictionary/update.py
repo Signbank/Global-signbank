@@ -204,7 +204,7 @@ def update_gloss(request, glossid):
                     new_video_path = gloss.get_video_path()
 
                     try:
-                        shutil.copyfile(settings.MEDIA_ROOT+'/'+old_video_path,settings.MEDIA_ROOT+'/'+new_video_path)
+                        shutil.move(settings.MEDIA_ROOT+'/'+old_video_path,settings.MEDIA_ROOT+'/'+new_video_path)
 
                     #You don't have to do this if there's no video
                     except IOError:
