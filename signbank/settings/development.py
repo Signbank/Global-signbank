@@ -5,9 +5,6 @@ TEMPLATE_DIRS = (
     os.path.join(PROJECT_DIR, 'bootstrap_templates'),
 )
 
-# show emails on the console
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
 #PRIMARY_CSS = "bootstrap_css/bsl.css"
 #PRIMARY_CSS = "bootstrap_css/auslan.css"
 PRIMARY_CSS = "bootstrap_css/ngt.css"

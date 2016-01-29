@@ -18,8 +18,6 @@ PROJECT_DIR = os.path.dirname(BASE_DIR)
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-EMAIL_HOST = ""
-
 ADMINS = (
      ('Wessel Stoop', 'w.stoop@let.ru.nl'),
 )

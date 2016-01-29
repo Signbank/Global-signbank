@@ -355,15 +355,24 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    result = ''
-    all_id_gloss_ens = [gloss.annotation_idgloss_en for gloss in Gloss.objects.all()]
+    # result = ''
+    # all_id_gloss_ens = [gloss.annotation_idgloss_en for gloss in Gloss.objects.all()]
+    #
+    # for gloss in Gloss.objects.all():
+    #
+    #     if gloss.annotation_idgloss_en == '' and all_id_gloss_ens.count(gloss.annotation_idgloss_en) > 1:
+    #         result += str(gloss)+', '
 
-    for gloss in Gloss.objects.all():
+#########################
 
-        if gloss.annotation_idgloss_en == '' and all_id_gloss_ens.count(gloss.annotation_idgloss_en) > 1:
-            result += str(gloss)+', '
+    from django.core.mail import send_mail
 
-    return HttpResponse(result)
+    send_mail('Subject here', 'Here is the message.', 'wstoop@science.ru.nl',
+        ['w.stoop@let.ru.nl'], fail_silently=False)
+
+    result = 'OK'
+
+    return HttpResponse('OK')
 
 def add_new_sign(request):
 
