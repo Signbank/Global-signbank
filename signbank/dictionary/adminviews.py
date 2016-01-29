@@ -16,7 +16,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY
+from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, LANGUAGES
 
 class GlossListView(ListView):
     
@@ -595,10 +595,17 @@ class GlossDetailView(DetailView):
 
                 selected_field_choice = other_video_type_choice_list.filter(machine_value=other_video.type)[0]
 
-                if self.request.LANGUAGE_CODE == 'en':
-                    human_value_video_type = selected_field_choice.english_name
-                elif self.request.LANGUAGE_CODE == 'nl':
-                    human_value_video_type = selected_field_choice.dutch_name
+                codes_to_adjectives = dict(settings.LANGUAGES)
+
+                if self.request.LANGUAGE_CODE not in codes_to_adjectives.keys():
+                    adjective = 'english'
+                else:
+                    adjective = codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
+
+                try:
+                    human_value_video_type = getattr(selected_field_choice,adjective+'_name')
+                except AttributeError:
+                    human_value_video_type = getattr(selected_field_choice,'english_name')
 
             path = other_video.path.replace(OTHER_VIDEOS_DIRECTORY,'/media/othervideos/')
             context['other_videos'].append([other_video.pk, path, human_value_video_type, other_video.alternative_gloss])
@@ -630,10 +637,18 @@ def gloss_ajax_complete(request, prefix):
 
 def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
 
-    if language_code == 'en':
-        raw_choice_list = [('_'+str(choice.machine_value),unicode(choice.english_name)) for choice in queryset]
-    elif language_code == 'nl':
-        raw_choice_list = [('_'+str(choice.machine_value),unicode(choice.dutch_name)) for choice in queryset]
+    codes_to_adjectives = dict(settings.LANGUAGES)
+
+    if language_code not in codes_to_adjectives.keys():
+        adjective = 'english'
+    else:
+        adjective = codes_to_adjectives[language_code].lower()
+
+    try:
+        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
+    except AttributeError:
+        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,'english_name'))) for choice in queryset]
 
     sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
+
     return OrderedDict(sorted_choice_list)
