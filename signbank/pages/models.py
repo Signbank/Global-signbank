@@ -15,7 +15,7 @@ class Page(models.Model):
 
     content = models.TextField(_('English content'), blank=True)
     content_dutch = models.TextField(_('Dutch content'), blank=True)
-    content_chinese = models.TextField(-('Chinese content'), blank=True)
+    content_chinese = models.TextField(_('Chinese content'), blank=True)
 
     template_name = models.CharField(_('template name'), max_length=70, blank=True,
         help_text=_("Example: 'pages/contact_page.html'. If this isn't provided, the system will use 'pages/default.html'."))

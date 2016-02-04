@@ -45,7 +45,7 @@ class PageVideoInline(admin.TabularInline):
 class PageAdmin(SummernoteModelAdmin):
     form = PageForm
     fieldsets = (
-        (None, {'fields': ('url', 'title', 'title_dutch', 'parent', 'index', 'publish', 'content', 'content_dutch' )}),
+        (None, {'fields': ('url', 'title', 'title_dutch', 'title_chinese', 'parent', 'index', 'publish', 'content', 'content_dutch', 'content_chinese')}),
         (_('Advanced options'), {'classes': ('collapse',), 'fields': ('group_required', 'template_name')}),
     )
     list_display = ('url', 'title', 'parent', 'index')
