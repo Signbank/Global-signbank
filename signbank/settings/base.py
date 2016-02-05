@@ -59,11 +59,6 @@ MEDIA_ROOT = '/var/www2/signbank/live/repo/signbank/media'
 MEDIA_URL = '/media/'
 MEDIA_MOBILE_URL = MEDIA_URL
 
-
-# Ditto for static files from the Auslan site (css, etc) with trailing slash
-AUSLAN_STATIC_PREFIX = "/static/"
-
-
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.

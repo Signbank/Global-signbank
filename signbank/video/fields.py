@@ -173,7 +173,7 @@ class VideoUploadToFLVField(forms.FileField):
             # notify the admins, attaching the offending file
             msgtxt = "Error: %s\n\nCommand: %s\n\n" % (errormsg, " ".join(ffmpeg))
             
-            message = EmailMessage("Video conversion failed on Auslan",
+            message = EmailMessage("Video conversion failed",
                                    msgtxt,
                                    to=[a[1] for a in settings.ADMINS])
             message.attach_file(sourcefile)
