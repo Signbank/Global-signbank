@@ -365,6 +365,18 @@ locationChoices = ( ('0', 'No Value Set'),
                     ('86', 'Shoulder contra > shoulder ipsi'),
                     ('87', 'Mouth + cheek'))
 
+# these are values for prim2ndloc fin2ndloc introduced for BSL, the names might change
+BSLsecondLocationChoices = (
+                    ('notset', 'No Value Set'),
+                    ('0', 'N/A'),
+                    ('back', 'Back'),
+                    ('palm', 'Palm'),
+                    ('radial', 'Radial'),
+                    ('ulnar', 'Ulnar'),
+                    ('fingertip(s)', 'Fingertips'),
+                    ('root', 'Root')
+                    )
+
 palmOrientationChoices = (
                     ('notset', 'No Value Set'),
                     ('prone','Prone'),
