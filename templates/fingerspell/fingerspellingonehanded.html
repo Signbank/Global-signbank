@@ -1,94 +1,0 @@
-
-{% extends "baselayout.html" %}
- 
-{% block extrahead %}
-    
-    <script type="text/javascript" src="{{ STATIC_URL }}js/fingerspelling.js"></script>
-
-{% endblock %}
-
-{% block jqueryready %} 
-
-  $('#inputarea').submit( function() {     fingerspell_play("{{ STATIC_URL }}images/", onehanded);     return false;    });     $('#replay').click( function() { fingerspell_play("{{ STATIC_URL }}images/", onehanded);} );    /* fill out the table of signs */  $("#fstable td").fingerspellimage("{{ STATIC_URL }}images/", onehanded);
-  
-{% endblock %}
-
-
-{% block content %} 
-<div id="fingerspellblock">
-<div id="leftblock"> 
-  <div id="handcontainer">
-    <div id="handimage">
-      <img id="mainimg" src="{{ STATIC_URL }}images/twohanded/transition.jpg" alt=""> 
-    </div>
-    <div id="replay">REPLAY</div>
-  </div>
-    
-  <div id="fsinput" data-role="collapsible">    <h2>Enter text</h2>
-  <form id="inputarea">
-    <p><input type="text" id="text" size="20"/><input type='submit' value='Show'/> 
-    </p>
-  </form>
-
-<form name='speedform'>   <fieldset data-role="controlgroup" data-type="horizontal" >   <legend>Playback Speed</legend>      <input type='radio' name='speed' id='speed-slow' value='1500'><label for='speed-slow'>Slow</label>      <input type='radio' name='speed' id='speed-medium' value='1000' checked><label for='speed-medium'>Medium</label>      <input type='radio' name='speed' id='speed-fast' value='500'><label for='speed-fast'>Fast</label>         </fieldset>   </form>
-  </div>
-</div> 
-
-<div id="fingerspellright">
-<table id="fstable">
- <tr>
-   <td id="A"></td>
-   <td id="B"></td>
-   <td id="C"></td>
-   <td id="D"></td>
-   <td id="E"></td>
- </tr>
- <tr>
-   <td id="F"></td>
-   <td id="G"></td>
-   <td id="H"></td>
-   <td id="I"></td>
-   <td id="J"></td>
- </tr>
- <tr>
-   <td id="K"></td>
-   <td id="L"></td>
-   <td id="M"></td>
-   <td id="N"></td>
-   <td id="O"></td>
- </tr>
- <tr>
-   <td id="P"></td>
-   <td id="Q"></td>
-   <td id="R"></td>
-   <td id="S"></td>
-   <td id="T"></td>
- </tr>
- <tr>
-   <td id="U"></td>
-   <td id="V"></td>
-   <td id="W"></td>
-   <td id="X"></td>
-   <td id="Y"></td>
- </tr>
- <tr>
-   <td class='blank'></td>
-   <td colspan='3' class='blank'><p>Click on images to view.</p></td>
-   <td id="Z"></td>
- </tr>
-</table>
-
-  <div id="info">
-    <p>This is the American Sign Language
-    one-handed manual alphabet which is used in the United States and Canada. It
-    is also used in many other countries and regions of the world, but usually
-    with local variations and additions.</p>
-    
-    <p>Return to <a href="twohanded.html" data-ajax='false'>two handed finger spelling</a></p>
-  </div>
-</div>
-
-</div>
-{% endblock %}
-
-
