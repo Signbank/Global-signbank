@@ -2,12 +2,12 @@ from signbank.settings.base import *
 from datetime import datetime
 
 TEMPLATE_DIRS = (
-    os.path.join(PROJECT_DIR, 'bootstrap_templates'),
+    os.path.join(PROJECT_DIR, 'templates'),
 )
 
 #PRIMARY_CSS = "bootstrap_css/bsl.css"
 #PRIMARY_CSS = "bootstrap_css/auslan.css"
-PRIMARY_CSS = "bootstrap_css/ngt.css"
+PRIMARY_CSS = "css/ngt.css"
 
 
 # defines the aspect ratio for videos
