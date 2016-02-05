@@ -39,7 +39,7 @@ elif hostname == 'wessel':
         }
     }
 
-TIME_ZONE = 'Australia/Sydney'
+TIME_ZONE = 'Europe/Amsterdam'
 
 LANGUAGE_CODE = "en"
 LOCALE_PATHS = [BASE_DIR+'conf/locale']
