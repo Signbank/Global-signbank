@@ -20,7 +20,8 @@
      var edit_mode_str = '{% trans "Edit" %}'
      var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
      var delete_this_gloss_str = '{% trans "Delete this gloss" %}'
-     var saving_str = '{% trans "Saving..."%}'
+     var saving_str = '{% trans "Saving..." %}'
+     var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}'
 
      var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
      var definition_role_choices = {{gloss.definition_role_choices_json|safe}}

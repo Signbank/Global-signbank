@@ -153,9 +153,17 @@ function configure_edit() {
     $.fn.editable.defaults['width'] = 'none';
     $.fn.editable.defaults['height'] = 'none';
     $.fn.editable.defaults['submitdata'] = {'csrfmiddlewaretoken': csrf_token};
-    $.fn.editable.defaults['onerror']  = function(settings, original, xhr){
-                          alert("There was an error processing this change: " + xhr.responseText );
-                          original.reset();
+    $.fn.editable.defaults['onerror']  = function(settings, original, xhr)
+                        {
+                            if (xhr.responseText.indexOf('UNIQUE constraint failed') > -1)
+                            {
+                                alert(idgloss_already_exists_str);
+                            }
+                            else
+                            {
+                                alert("There was an error processing this change: " + xhr.responseText );
+                            }
+                              original.reset();
                         };
      
     
