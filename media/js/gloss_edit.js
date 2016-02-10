@@ -202,26 +202,6 @@ function configure_edit() {
          checkbox: { trueValue: 'Yes', falseValue: 'No' },
 		 callback : update_view_and_remember_original_value
      });
-     $('.edit_handshape').editable(edit_post_url, {
-         type      : 'select',
-         data      : handshape_choices,
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_location').editable(edit_post_url, {
-         type      : 'select',
-         data      : location_choices,
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_palm').editable(edit_post_url, {
-         type      : 'select',
-         data      : palm_orientation_choices,
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_relori').editable(edit_post_url, {
-         type      : 'select',
-         data      : relative_orientation_choices,
-		 callback : update_view_and_remember_original_value
-     }); 
      $('.edit_relation_role').editable(edit_post_url, {
          type      : 'select',
          data      : relation_role_choices,
