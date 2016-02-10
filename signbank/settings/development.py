@@ -5,8 +5,6 @@ TEMPLATE_DIRS = (
     os.path.join(PROJECT_DIR, 'templates'),
 )
 
-#PRIMARY_CSS = "bootstrap_css/bsl.css"
-#PRIMARY_CSS = "bootstrap_css/auslan.css"
 PRIMARY_CSS = "css/ngt.css"
 
 
