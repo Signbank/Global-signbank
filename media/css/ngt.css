@@ -57,7 +57,16 @@ html {
   background-image: url(images/ngt/black_02.gif);
 }
 
-/* New one */
+#username_link
+{
+    margin-right: 17px;
+}
+
+.hamburger_button
+{
+    margin-right: 35px;
+}
+
 #minimalistic_language_picker
 {
     margin-top: -53px;
