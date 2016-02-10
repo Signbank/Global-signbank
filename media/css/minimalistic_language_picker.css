@@ -1,0 +1,25 @@
+.flagbutton
+{
+	cursor:pointer;
+	position: relative;
+	top: 0px;
+	vertical-align: top;
+}
+
+.flag_of_chosen_language
+{
+	z-index: 1;
+}
+
+.active_language_picker
+{
+	border: solid 1px grey;
+	padding: 6px;
+	border-radius: 6px;
+	margin-right: 0px;
+	margin-top: -3px;
+	height: 11px;
+	width: 30px;
+	background-color: white;
+	line-height: 11px;
+}

@@ -1,0 +1,223 @@
+@import url('tags.css');
+
+#header {
+    background-color: #333;
+}
+
+#header h1 {
+	color: #FFFF66;
+	font-family: "Arial Rounded MT Bold", "Arial Rounded", serif;
+    text-shadow: 0 0px 0 #000;
+}
+
+.ui-body-c {
+	/* white background to match our dialect maps */
+	background: #fff;
+	}
+
+#content {
+	margin: 0em;
+	padding: 0em;	
+}
+ 
+
+#footer {
+	padding: 1em;
+	float: left;
+	clear: both;
+	font-size: smaller; 
+	position: relative; 
+	top: 3px;
+	font-weight: normal;
+	margin-left: 1em;
+	margin-right: 0em;
+}
+
+/* === WORD PAGE === */
+
+/* force centering of control group buttons (needed for jq-mobile 1.1.1) */
+.ui-controlgroup-horizontal {
+  display: table;
+  margin: 0 auto;
+}
+
+#matches {
+	text-align: center;
+}
+
+#matches h2 {
+	font-weight: bold;
+	font-size: 1em;
+	margin: 0px 0px 5px 0px;
+}
+
+#matches ul li a {
+	font-family: "Menlo", monospace;
+}
+
+#matcheslinks {
+	font-size: small;
+	margin-left: auto;
+	margin-right: auto;
+}
+/* adjust padding on buttons to make them narrower
+   and stop them wrapping on small phone screens
+   when we have long text */
+#signs .ui-btn-inner {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+#keywords {
+	text-align: center;
+}
+#keywords p {
+	margin: 0.5em 0px 1em 0px;
+}
+
+#signinfo {
+	font-size: small;
+	margin: 0 auto;
+	text-align: center;
+}
+
+.sign-position {
+	color: #777;
+}
+
+.sign-position em {
+	font-style: normal;
+	color: #333;
+}
+
+#states {
+	text-align: center;
+}
+
+#videocontainer { 
+	margin: auto;
+	text-align: center;
+	padding-left: -15px;
+	padding-right: -15px;
+}
+
+/* size the video frame so that it fits within the iPhone screen */
+#videocontainer iframe {
+    height: 218px;
+    width: 290px;
+}
+
+/* ditto for the 'no video' image */
+#videocontainer img {
+    height: 218px;
+    width: 290px;
+}
+
+
+/*
+#info-wrapper, #footer-info-wrapper {
+	max-width: 800px;
+	margin: 0 auto;
+}
+*/
+
+video {
+  image-fit: fill;
+  max-width: 100%;
+  height: auto;
+}
+
+h3 {
+	color: #444;
+}
+
+
+/* styles for finger spelling pages */
+
+#fingerspellblock {
+}
+
+#handcontainer {
+}
+
+#handcontainer #handimage {
+   margin: auto;
+   width: 192px;
+   height:144px;
+   border: 6px solid black;
+}
+
+#replay {
+	display: none;
+}
+ 
+#handimage {
+  position: relative;
+  height: 192px;
+  width:  144px;
+  background-color: #4b62ae; 
+}
+
+
+/* images are 192x144 centre them in the above div */
+#mainimg {
+  position: absolute;
+  top: 0px; /* (240 - 144)/2  */
+  left: 0px;  /* (300 - 192)/2 */
+  display: block;
+  margin: auto;
+}
+
+#fingerspellright {
+   float: left;
+}
+
+#fstable td {
+  margin-right: -1em;
+}
+#fstable img {
+  width: 50px;
+}
+#fstable td div {
+  margin-top: -1.4em; 
+  font-size: large;
+  color: #fff;
+  text-align: center;
+}
+
+#info { 
+   clear: both;
+}
+
+
+/* special style for numbersigns page */
+
+/* we can't do without the rectangle for the video
+   player but we can make it small and white */
+#numbersigns #videocontainer {  
+	width: 10px;
+	background-color: white;
+}
+
+#numbersigns  .projekktor {
+    background-color:#fff;
+}
+    
+#numbersigns #leftblock {
+	clear: both;
+}
+
+#numbersigns #numsigntable { 
+   float: left;
+   margin-left: 0px;
+   border-collapse: collapse;
+   border-spacing: 0px;
+
+}
+#numsigntable td, #numsigntable tr {
+	margin: 0;
+	padding: 0;
+	border: 1px solid black;  
+	/* bg colour matches that of images */
+    background-color: #d5dab2;
+}
+
