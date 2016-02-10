@@ -365,18 +365,6 @@ locationChoices = ( ('0', 'No Value Set'),
                     ('86', 'Shoulder contra > shoulder ipsi'),
                     ('87', 'Mouth + cheek'))
 
-# these are values for prim2ndloc fin2ndloc introduced for BSL, the names might change
-BSLsecondLocationChoices = (
-                    ('notset', 'No Value Set'),
-                    ('0', 'N/A'),
-                    ('back', 'Back'),
-                    ('palm', 'Palm'),
-                    ('radial', 'Radial'),
-                    ('ulnar', 'Ulnar'),
-                    ('fingertip(s)', 'Fingertips'),
-                    ('root', 'Root')
-                    )
-
 palmOrientationChoices = (
                     ('notset', 'No Value Set'),
                     ('prone','Prone'),
@@ -839,8 +827,8 @@ minor or insignificant ways that can be ignored.""")
 
     locsecond = models.IntegerField(_("Secondary Location"), choices=build_choice_list("Location"), null=True, blank=True)
     
-    initial_secondary_loc = models.CharField(_("Initial Subordinate Location"), max_length=20, choices=BSLsecondLocationChoices, null=True, blank=True)
-    final_secondary_loc = models.CharField(_("Final Subordinate Location"), max_length=20, choices=BSLsecondLocationChoices, null=True, blank=True)
+    initial_secondary_loc = models.CharField(_("Initial Subordinate Location"), max_length=20, null=True, blank=True)
+    final_secondary_loc = models.CharField(_("Final Subordinate Location"), max_length=20, null=True, blank=True)
     
     initial_palm_orientation = models.CharField(_("Initial Palm Orientation"), max_length=20, null=True, blank=True, choices=palmOrientationChoices)
     final_palm_orientation = models.CharField(_("Final Palm Orientation"), max_length=20, null=True, blank=True, choices=palmOrientationChoices)
@@ -1111,18 +1099,12 @@ minor or insignificant ways that can be ignored.""")
         """Return JSON for the relative orientation choice list"""
         
         return self.options_to_json(relOrientationChoices)
-    
-    def secondary_location_choices_json(self):
-        """Return JSON for the secondary location (BSL) choice list"""
-        
-        return self.options_to_json(BSLsecondLocationChoices)
-    
-     
+
     def definition_role_choices_json(self):
         """Return JSON for the definition role choice list"""
-        
+
         return self.options_to_json(DEFN_ROLE_CHOICES)
-    
+
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""
         

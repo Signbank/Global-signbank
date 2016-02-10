@@ -222,11 +222,6 @@ function configure_edit() {
          data      : relative_orientation_choices,
 		 callback : update_view_and_remember_original_value
      }); 
-     $('.edit_sec_location').editable(edit_post_url, {
-         type      : 'select',
-         data      : secondary_location_choices,
-		 callback : update_view_and_remember_original_value
-     });                  
      $('.edit_relation_role').editable(edit_post_url, {
          type      : 'select',
          data      : relation_role_choices,
