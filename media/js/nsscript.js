@@ -30,15 +30,15 @@ function playNS(n) {
         // reset the currentNS image to unselected
         if (currentNS>=0) {
             img = document.getElementById(clips[currentNS]);
-            img.src = "{% auslan_static_prefix %}img/"+clips[currentNS]+".jpg";
+            img.src = "{{ STATIC_URL }}img/"+clips[currentNS]+".jpg";
         }
         // remember what we're playing and replace the image with selected
         currentNS = n
         img = document.getElementById(clips[n]);
-        img.src = "{% auslan_static_prefix %}img/"+clips[n]+"_select.jpg";
+        img.src = "{{ STATIC_URL }}img/"+clips[n]+"_select.jpg";
         
         fp = document.getElementById("FlowPlayer");
-        fpconfig['videoFile']  = "{% auslan_static_prefix %}flash/" + clips[n] + ".flv";
+        fpconfig['videoFile']  = "{{ STATIC_URL }}flash/" + clips[n] + ".flv";
         fp.setConfig(fpconfig);
         fp.DoPlay();
     }

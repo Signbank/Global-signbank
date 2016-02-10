@@ -7,7 +7,7 @@
 {% for video in page.pagevideo_set.all %}
 <track>
  <title>{{video.title}}</title>
- <location>{% auslan_media_prefix %}{{video.video}}</location>
+ <location>{{ STATIC_URL }}{{video.video}}</location>
  <annotation>This is an annotation</annotation>
 </track>
 {% endfor %}
