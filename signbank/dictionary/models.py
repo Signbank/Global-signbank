@@ -20,9 +20,6 @@ import json
 from collections import OrderedDict
 from datetime import datetime
 
-#from models_legacy import Sign
-
-
 class Translation(models.Model):
     """A Dutch translation of NGT signs"""
      
