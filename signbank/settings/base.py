@@ -9,6 +9,10 @@ if hostname == 'spitfire':
     ROOT = '/var/www2/signbank/live/'
     BASE_DIR = ROOT+'repo/signbank/'
     WRITABLE_FOLDER = ROOT+'writable/'
+elif hostname == 'applejack':
+    ROOT = '/scratch2/www/ASL-signbank/'
+    BASE_DIR = ROOT+'repo/NGT-signbank/'
+    WRITABLE_FOLDER = ROOT+'writable/'
 else:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
@@ -36,6 +40,13 @@ elif hostname == 'wessel':
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': '/home/wessel/repo/signbank/signbank.db',
+        }
+    }
+elif hostname == 'applejack':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': '/scratch2/www/ASL-signbank/writable/database/signbank.db',
         }
     }
 
