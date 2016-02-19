@@ -105,7 +105,7 @@
     })
 
     </script>
-    <form id="change_language_form" method="post" action="/i18n/setlang/">
+    <form id="change_language_form" method="post" action="{{ URL }}/i18n/setlang/">
         {% csrf_token %}
         <input id="change_language_input_field" type="hidden" name="language" value="{{ user.get_profile.last_used_language }}">
 
