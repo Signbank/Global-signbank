@@ -1,26 +1,10 @@
 # Django settings for signbank project.
-
-import os
-import socket
 from signbank.settings.server_specific import *
-
-hostname = socket.gethostname()
-
-if hostname == 'spitfire':
-    ROOT = '/var/www2/signbank/live/'
-    BASE_DIR = ROOT+'repo/signbank/'
-    WRITABLE_FOLDER = ROOT+'writable/'
-elif hostname == 'applejack':
-    ROOT = '/scratch2/www/ASL-signbank/'
-    BASE_DIR = ROOT+'repo/NGT-signbank/'
-    WRITABLE_FOLDER = ROOT+'writable/'
-else:
-    BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-
-PROJECT_DIR = os.path.dirname(BASE_DIR)
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
+PROJECT_DIR = os.path.dirname(BASE_DIR)
 
 ADMINS = (
      ('Wessel Stoop', 'w.stoop@let.ru.nl'),
@@ -134,7 +118,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEMPLATE_DIRS = (
-    os.path.join(PROJECT_DIR, 'templates'),
+    os.path.join(PROJECT_DIR, 'templates/'+SIGNBANK_VERSION_CODE+'-templates'),
 )
 
 # add the Email backend to allow logins using email as username
