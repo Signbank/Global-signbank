@@ -23,7 +23,7 @@
 
         {% if item.children %} 
         <li class='dropdown'>
-             <a href="{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
+             <a href="{{ URL }}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
              	{% if LANGUAGE == "nl" %}
                  {{item.title_dutch}}
              	{% elif LANGUAGE == "en" %}
@@ -32,7 +32,7 @@
                  <b class="caret"></b></a>
              <ul class="dropdown-menu">
              {% for subitem in item.children %}
-                <li {% if subitem.current %}class='active'{% endif %}><a href="{{subitem.url}}">
+                <li {% if subitem.current %}class='active'{% endif %}><a href="{{ URL }}{{subitem.url}}">
              	{% if LANGUAGE == "nl" %}
                  {{subitem.title_dutch}}
              	{% elif LANGUAGE == "en" %}
@@ -43,7 +43,7 @@
              </ul> 
         </li>
       {% else %}
-        <li><a href="{{item.url}}">{{item.title}}</a></li>
+        <li><a href="{{ URL }}{{item.url}}">{{item.title}}</a></li>
       {% endif %}
     {% endfor %}
 
@@ -100,7 +100,7 @@
     </ul>
     {% endif %}-->
 
-    <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="/dictionary/search">
+    <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}/dictionary/search">
        <div class="form-group">
           <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="glossQuery" value="{{ glossQuery }}" maxlength="50">
        </div>
@@ -113,7 +113,7 @@
     {% if user.is_authenticated %}
       <li><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></li>
     {% else %}
-       <li><a href="/accounts/login/?next=/">{% trans "Login" %}</a></li>
+       <li><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></li>
     {% endif %} 
     </ul>
 
