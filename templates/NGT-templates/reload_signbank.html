@@ -1,0 +1,25 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+
+{% block content %}
+
+<script>
+    xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "GET", 'http://signbank.science.ru.nl', false );
+    xmlHttp.send( null );
+    xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "GET", 'http://signbank.science.ru.nl', false );
+    xmlHttp.send( null );
+</script>
+
+<p>Reload successful. Some things you might want to do now:</p>
+<ul>
+    <li><a href="/reload_signbank">Reload this page</a></li>
+    <li><a href="/">Go to the homepage</a></li>
+    <li><a href="/signs/search">Go to the search page</a></li>
+</ul>
+
+{% endblock %}
+

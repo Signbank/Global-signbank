@@ -1,0 +1,123 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE %}
+
+<nav id='navbar' class="navbar navbar-default" role="navigation">
+
+  <!-- Brand and toggle get grouped for better mobile display -->
+  <div class="navbar-header">
+    <button type="button" class="navbar-toggle hamburger_button" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+  </div>
+
+
+  <!-- Collect the nav links, forms, and other content for toggling -->
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+    <ul class="nav navbar-nav">
+    {# add in the top level menu items from pages #}
+    {% for item in menu %}
+
+        {% if item.children %} 
+        <li class='dropdown'>
+             <a href="{{ URL }}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
+             	{% if LANGUAGE == "nl" %}
+                 {{item.title_dutch}}
+             	{% elif LANGUAGE == "en" %}
+                 {{item.title}}
+             	{% endif %}
+                 <b class="caret"></b></a>
+             <ul class="dropdown-menu">
+             {% for subitem in item.children %}
+                <li {% if subitem.current %}class='active'{% endif %}><a href="{{ URL }}{{subitem.url}}">
+             	{% if LANGUAGE == "nl" %}
+                 {{subitem.title_dutch}}
+             	{% elif LANGUAGE == "en" %}
+                 {{subitem.title}}
+             	{% endif %}
+                </a></li>
+             {% endfor %} 
+             </ul> 
+        </li>
+      {% else %}
+        <li><a href="{{ URL }}{{item.url}}">{{item.title}}</a></li>
+      {% endif %}
+    {% endfor %}
+
+    </ul>
+    
+    <!--<ul class='nav navbar-nav'>
+        <li class='dropdown'>
+            <a class='dropdown-toggle' data-toggle='dropdown'>Signbank <b class="caret"></b></a>
+            <ul class='dropdown-menu'>
+                <li><a href="/dictionary/">Dictionary</a></li>                
+            </ul>
+        </li>
+        
+    </ul>
+
+    {% if perms.dictionary.search_gloss %}
+    ul class="nav navbar-nav">
+       <li class='dropdown'>
+             <a class="dropdown-toggle" data-toggle="dropdown"
+                {% if '/feedback/show.html' in request.path %}class="active"{% endif %}
+                {% if '/attachments/' in request.path %}class="active"{% endif %}>
+                Staff <b class="caret"></b>
+             </a>
+             <ul class='dropdown-menu'> 
+                
+              <li {% if '/dictionary/list/' in request.path %}class='active'{% endif %}>
+                   <a href="{% url 'dictionary:admin_gloss_list' %}">Search Signs</a></li>
+    
+              {% if perms.feedback.delete_generalfeedback %}
+              <li {% if '/feedback/show.html' in request.path %}class="active"{% endif %}>
+                   <a href="{% url 'signbank.feedback.views.showfeedback' %}">View Feedback</a></li>
+              {% endif %}
+              
+              {% if perms.feedback.delete_interpreterfeedback %}
+                   
+              <li {% if '/feedback/interpreter.html' in request.path %}class="active"{% endif %}>
+                    <a href="{% url 'intnotelist' %}">Interpreter Feedback</a></li>
+                
+              {% endif %}
+              
+              {% if perms.attachments.add_attachment %}
+              <li {% if '/attachments/' in request.path %}class="active"{% endif %}>
+                   <a href="{% url 'attachments' %}">File Attachments</a></li>
+              {% endif %}
+              
+              {% if user.is_staff %}
+              <li><a href="/publisher">Users/Pages</a></li>
+              {% endif %}
+                      
+                      
+             </ul>
+        </li>
+    
+    </ul>
+    {% endif %}-->
+
+    <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}/dictionary/search">
+       <div class="form-group">
+          <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="glossQuery" value="{{ glossQuery }}" maxlength="50">
+       </div>
+          <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="query" value="{{ query }}" maxlength="50">
+       
+       <button type="submit" class="btn btn-default">{% trans "Sign search" %}</button>
+    </form> 
+
+    <ul class='nav navbar-nav navbar-right'>
+    {% if user.is_authenticated %}
+      <li><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></li>
+    {% else %}
+       <li><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></li>
+    {% endif %} 
+    </ul>
+
+  </div><!-- /.navbar-collapse -->
+</nav>
+
+<div id="minimalistic_language_picker"></div>
