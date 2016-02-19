@@ -2,6 +2,7 @@
 
 import os
 import socket
+from signbank.settings.server_specific import *
 
 hostname = socket.gethostname()
 
@@ -17,7 +18,6 @@ else:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 PROJECT_DIR = os.path.dirname(BASE_DIR)
-
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -67,7 +67,7 @@ USE_TZ = True
 
 
 MEDIA_ROOT = '/var/www2/signbank/live/repo/signbank/media'
-MEDIA_URL = '/media/'
+MEDIA_URL = URL+'/media/'
 MEDIA_MOBILE_URL = MEDIA_URL
 
 # Absolute path to the directory static files should be collected to.
@@ -78,7 +78,7 @@ STATIC_ROOT = ''
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+STATIC_URL = URL+'/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -128,6 +128,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",
     "django.contrib.auth.context_processors.auth",
     "django.contrib.messages.context_processors.messages",
+    "signbank.context_processors.url",
     "signbank.pages.context_processors.menu",
     "django_mobile.context_processors.flavour",
 )
@@ -278,7 +279,7 @@ ACCOUNT_ACTIVATION_DAYS = 7
 # show the number signs page or an under construction page?
 SHOW_NUMBERSIGNS = True
 
-LOGIN_REDIRECT_URL = '/signs/recently_added/'
+LOGIN_REDIRECT_URL = URL+'/signs/recently_added/'
 
 
 # location of ffmpeg, used to convert uploaded videos

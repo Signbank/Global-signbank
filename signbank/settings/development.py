@@ -1,4 +1,5 @@
 from signbank.settings.base import *
+from signbank.settings.server_specific import *
 from datetime import datetime
 
 TEMPLATE_DIRS = (
