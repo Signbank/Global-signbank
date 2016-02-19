@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
 from reversion.admin import VersionAdmin
-from tagging.models import TaggedItem
+from signbank.settings.server_specific import FIELDS
 
 class KeywordAdmin(VersionAdmin):
     search_fields = ['^text']
@@ -79,18 +79,9 @@ class GlossAdmin(VersionAdmin):
                                     'sn', 'StemSN', 'comptf', 'compound', 'language', 'dialect','rmrks')}, ),
                  ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate'),
                                        'classes': ('collapse',)}, ),
-                 ('Phonology', {'fields': ('handedness','initial_palm_orientation', 'final_palm_orientation', 
-                                           'initial_relative_orientation', 'final_relative_orientation',
-                                           'initial_secondary_loc', 'final_secondary_loc',
-                                            'locprim', 'locVirtObj','final_loc',
-                                            'domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh', 
-                                            'relatArtic','absOriPalm','absOriFing','relOriMov','relOriLoc','oriCh',
-                                            'handCh','repeat','altern','movSh','movDir','movMan','contType',
-                                            'phonOth','mouthG','mouthing','phonetVar'), 'classes': ('collapse',)}, ),
-                 ('Semantics', {'fields': ('iconImg','namEnt','semField'), 'classes': ('collapse',)}),
-                 ('Frequency', {'fields': ('tokNo', 'tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV',
-                                           'tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe','tokNoGr','tokNoSgnrGr',
-                                           'tokNoO','tokNoSgnrO'), 'classes': ('collapse',)}), 
+                 ('Phonology', {'fields': FIELDS['phonology'], 'classes': ('collapse',)}, ),
+                 ('Semantics', {'fields': FIELDS['semantics'], 'classes': ('collapse',)}),
+                 ('Frequency', {'fields': FIELDS['frequency'], 'classes': ('collapse',)}),
                 ('Obsolete Fields', {'fields': ('inittext', ), 'classes': ('collapse',)}),
               )
     save_on_top = True

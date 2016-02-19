@@ -16,7 +16,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, LANGUAGES
+from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, FIELDS
 
 class GlossListView(ListView):
     
@@ -525,24 +525,13 @@ class GlossDetailView(DetailView):
         gl = context['gloss'];
         labels = gl.field_labels();
 
-        fields = {};
-
-        fields['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
-                  'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
-                  'mouthing', 'phonetVar',];
-
-        fields['semantics'] = ['iconImg','namEnt','semField'];
-
-        fields['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
-                               'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO'];
-
         context['choice_lists'] = {}
 
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['phonology','semantics','frequency']:
             context[topic+'_fields'] = [];
 
-            for field in fields[topic]:
+            for field in FIELDS[topic]:
 
                 #Get and save the choice list for this field
                 field_category = fieldname_to_category(field)
