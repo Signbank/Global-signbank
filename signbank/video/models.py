@@ -9,8 +9,11 @@ import sys, os, time, shutil
 from convertvideo import extract_frame, convert_video, ffmpeg
 
 from django.core.files.storage import FileSystemStorage
-import signbank.dictionary.models
-#from signbank.dictionary.models import Gloss
+
+try:
+    import signbank.dictionary.models.Gloss
+except ImportError:
+    from signbank.dictionary.models import Gloss
 
 class VideoPosterMixin:
     """Base class for video models that adds a method
@@ -128,8 +131,11 @@ class GlossVideo(models.Model, VideoPosterMixin):
     """A video that represents a particular idgloss"""
 
     videofile = models.FileField("video file", upload_to=settings.GLOSS_VIDEO_DIRECTORY, storage=storage)
-    gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
-#    gloss = models.ForeignKey(Gloss)    
+
+    try:
+        gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
+    except NameError:
+        gloss = models.ForeignKey(Gloss)
     
     
     ## video version, version = 0 is always the one that will be displayed
