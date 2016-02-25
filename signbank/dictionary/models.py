@@ -380,11 +380,23 @@ minor or insignificant ways that can be ignored.""")
     mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
     phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True,)
 
+    locPrimLH = models.CharField(_("Placement Active Articulator LH"), null=True, blank=True, max_length=5)
+    locFocSite = models.CharField(_("Placement Focal Site RH"), null=True, blank=True, max_length=5)
+    locFocSiteLH = models.CharField(_("Placement Focal site LH"), null=True, blank=True, max_length=5)
+    initArtOri = models.CharField(_("Orientation RH (initial)"), null=True, blank=True, max_length=5)
+    finArtOri = models.CharField(_("Orientation RH (final)"), null=True, blank=True, max_length=5)
+    initArtOriLH = models.CharField(_("Orientation LH (initial)"), null=True, blank=True, max_length=5)
+    finArtOriLH = models.CharField(_("Orientation LH (final)"), null=True, blank=True, max_length=5)
+
     #Semantic fields
 
     iconImg = models.CharField(_("Iconic Image"), max_length=50, blank=True)
     namEnt = models.CharField(_("Named Entity"), choices=build_choice_list("NamedEntity"), null=True, blank=True, max_length=5)
     semField = models.CharField(_("Semantic Field"), choices=build_choice_list("SemField"), null=True, blank=True, max_length=5)
+
+    wordClass = models.CharField(_("Word class 1"), null=True, blank=True, max_length=5)
+    wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5)
+    derivHist = models.CharField(_("Derivation history"), max_length=50, blank=True)
 
     #Frequency fields
 
