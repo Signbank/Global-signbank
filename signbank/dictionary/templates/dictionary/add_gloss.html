@@ -26,7 +26,20 @@
                  <th><label for='id_annotation_idgloss'>{% trans "Annotation ID Gloss (Dutch)" %}</label></th><td>{{add_gloss_form.annotation_idgloss}}</td>
              </tr>
              <tr>
-                 <th><label for='id_annotation_idgloss_en'>{% trans "Annotation ID Gloss (English)" %}</label></th><td>{{add_gloss_form.annotation_idgloss_en}}</td>
+                 <th><label for='id_annotation_idgloss_en'>
+                     {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+                        {% trans "Annotation ID Gloss (English)" %}
+                     {% endif %}
+                     </label>
+                 </th><td>
+                     {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+                        {{add_gloss_form.annotation_idgloss_en}}
+                     {% else %}
+                        {{add_gloss_form.annotation_idgloss_en}}
+                         <input name="annotation_idgloss_en" type="hidden" value="#not active#">
+                     {% endif %}
+
+                    </td>
              </tr>
          </table>
 
