@@ -724,7 +724,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User,related_name="user_profile_user")
 
     # Other fields here
-    last_used_language = models.CharField(max_length=2, default="en")
+    last_used_language = models.CharField(max_length=5, default="en")
 
     def save(self, *args, **kwargs):
         if not self.pk:
