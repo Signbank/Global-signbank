@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
 from reversion.admin import VersionAdmin
-from signbank.settings.server_specific import FIELDS
+from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
 
 class KeywordAdmin(VersionAdmin):
     search_fields = ['^text']
@@ -86,7 +86,13 @@ class GlossAdmin(VersionAdmin):
               )
     save_on_top = True
     save_as = True
-    list_display = ['idgloss', 'annotation_idgloss', 'morph', 'sense', 'sn']
+
+    list_display = ['idgloss','annotation_idgloss']
+
+    if SEPARATE_ENGLISH_IDGLOSS_FIELD:
+        list_display += 'annotation_idgloss_en'
+
+    list_display += ['morph', 'sense', 'sn']
     search_fields = ['^idgloss', '=sn', '^annotation_idgloss']
     list_filter = ['language', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
     inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherVideoInline ]

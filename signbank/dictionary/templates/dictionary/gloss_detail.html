@@ -189,7 +189,11 @@
         <table class='table table-condensed'>
             <tr><th>{% trans "ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
             <tr><th>{% trans "Annotation ID Gloss (Dutch)" %}</th><td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td></tr>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
             <tr><th>{% trans "Annotation ID Gloss (English)" %}</th><td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td></tr>
+            {% endif %}
+
             <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Annotation Instructions" %}</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
             <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language'>{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>

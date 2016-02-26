@@ -16,7 +16,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, FIELDS
+from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
 
 class GlossListView(ListView):
     
@@ -604,6 +604,8 @@ class GlossDetailView(DetailView):
 
         #context['choice_lists'] = gl.get_choice_lists()
         context['choice_lists'] = json.dumps(context['choice_lists'])
+
+        context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
         return context
         
