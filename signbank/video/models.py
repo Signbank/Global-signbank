@@ -10,11 +10,6 @@ from convertvideo import extract_frame, convert_video, ffmpeg
 
 from django.core.files.storage import FileSystemStorage
 
-try:
-    import signbank.dictionary.models.Gloss
-except ImportError:
-    from signbank.dictionary.models import Gloss
-
 class VideoPosterMixin:
     """Base class for video models that adds a method
     for generating poster images
@@ -133,8 +128,10 @@ class GlossVideo(models.Model, VideoPosterMixin):
     videofile = models.FileField("video file", upload_to=settings.GLOSS_VIDEO_DIRECTORY, storage=storage)
 
     try:
+        import signbank.dictionary.models
         gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
-    except NameError:
+    except (NameError,AttributeError,ImportError):
+        from signbank.dictionary.models import *
         gloss = models.ForeignKey(Gloss)
     
     
