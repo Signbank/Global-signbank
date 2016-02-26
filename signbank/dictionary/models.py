@@ -201,7 +201,7 @@ def build_choice_list(field):
 
     choice_list = [];
 
-    for choice in FieldChoice.objects.filter(field=field):
+    for choice in FieldChoice.objects.filter(field__iexact=field):
         choice_list.append((str(choice.machine_value),choice.english_name));
 
     choice_list = sorted(choice_list,key=lambda x: x[1]);
