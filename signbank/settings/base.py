@@ -36,13 +36,7 @@ elif hostname == 'applejack':
 
 TIME_ZONE = 'Europe/Amsterdam'
 
-LANGUAGE_CODE = "en"
 LOCALE_PATHS = [BASE_DIR+'conf/locale']
-LANGUAGES = (
-  ('en', 'English'),
-  ('nl', 'Dutch'),
-  ('cn', 'Chinese')
-)
 
 SITE_ID = 1
 USE_I18N = True
@@ -50,7 +44,7 @@ USE_L10N = True
 USE_TZ = True
 
 
-MEDIA_ROOT = '/var/www2/signbank/live/repo/signbank/media'
+MEDIA_ROOT = BASE_DIR+'media/'
 MEDIA_URL = URL+'/media/'
 MEDIA_MOBILE_URL = MEDIA_URL
 
