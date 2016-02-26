@@ -115,7 +115,7 @@
 
         <div id="player">
           <iframe id='videoiframe' scrolling="no" frameborder='0'
-		   src="/static/{{gloss.get_video}}">
+		   src="{{URL}}/static/{{gloss.get_video}}">
 
           </iframe>
         </div>
@@ -150,7 +150,7 @@
         <fieldset>
             <legend>{% trans "Upload New Video" %}</legend>
             <p>{% blocktrans %} We have {{gloss.count_videos}} videos for this sign. {% endblocktrans %}</p>
-            <form action="/video/upload/" method="post" enctype="multipart/form-data">
+            <form action="{{URL}}/video/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -169,7 +169,7 @@
         <fieldset>
          <legend>{% trans "Delete/Revert Video" %}</legend>
             <table>
-            <form action="/video/delete/{{gloss.pk}}" method='post'>
+            <form action="{{URL}}/video/delete/{{gloss.pk}}" method='post'>
             <tr><td><em>{% trans "This will delete the most recent upload and restore the most recent earlier version." %} </em></td></tr>
             <tr><td>{% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete/Revert this video'></td></tr>
             </form>
