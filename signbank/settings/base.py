@@ -30,7 +30,7 @@ elif hostname == 'applejack':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/scratch2/www/ASL-signbank/writable/database/signbank.db',
+            'NAME': '/www/signbank/live/writable/database/signbank.db',
         }
     }
 

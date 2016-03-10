@@ -16,11 +16,20 @@ else:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 #Influences which template and css folder are used
-SIGNBANK_VERSION_CODE = '' #'ASL'
+SIGNBANK_VERSION_CODE = 'NGT' #'ASL'
 
 URL = '' #'/asl-signbank'
 
+LANGUAGES = (
+  ('en', 'English'),
+  ('nl', 'Dutch'),
+  ('cn', 'Chinese')
+)
+LANGUAGE_CODE = "en"
+
 FIELDS = {}
+
+SEPARATE_ENGLISH_IDGLOSS_FIELD = False
 
 FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
@@ -30,3 +39,5 @@ FIELDS['semantics'] = ['iconImg','namEnt','semField']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                        'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
+
+ECV_FILE = '/scratch2/www/ASL-signbank/writable/ecv/asl.ecv'
