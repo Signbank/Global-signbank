@@ -90,7 +90,7 @@ class GlossAdmin(VersionAdmin):
     list_display = ['idgloss','annotation_idgloss']
 
     if SEPARATE_ENGLISH_IDGLOSS_FIELD:
-        list_display += 'annotation_idgloss_en'
+        list_display += ['annotation_idgloss_en']
 
     list_display += ['morph', 'sense', 'sn']
     search_fields = ['^idgloss', '=sn', '^annotation_idgloss']
