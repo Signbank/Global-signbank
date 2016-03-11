@@ -1,4 +1,4 @@
-from settings.base import WSGI_FILE
+from settings.base import WSGI_FILE, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY
 import os
 import shutil
 from HTMLParser import HTMLParser
@@ -7,8 +7,7 @@ from HTMLParser import HTMLParser
 # Constants
 #==========================
 
-ROOT = '/var/www2/signbank/live/';
-SB_VIDEO_FOLDER = ROOT+'writable/glossvideo/';
+SB_VIDEO_FOLDER = WRITABLE_FOLDER+GLOSS_VIDEO_DIRECTORY+'/'
 
 #==========================
 # Functions

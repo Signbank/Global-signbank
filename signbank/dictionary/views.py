@@ -320,12 +320,10 @@ def missing_video_view(request):
 
 def import_videos(request):
 
-    video_folder = '/var/www2/signbank/live/writable/import_videos/'
-
     out = '<p>Imported</p><ul>'
     overwritten_files = '<p>Of these files, these were overwritten</p><ul>'
 
-    for filename in os.listdir(video_folder):
+    for filename in os.listdir(settings.VIDEOS_TO_IMPORT_FOLDER):
 
         parts = filename.split('.')
         idgloss = '.'.join(parts[:-1])
@@ -336,7 +334,7 @@ def import_videos(request):
         except ObjectDoesNotExist:
             return HttpResponse('Failed at '+filename+'. Could not find '+idgloss+'.')
 
-        overwritten, was_allowed = video_to_signbank(video_folder,gloss,extension)
+        overwritten, was_allowed = video_to_signbank(settings.VIDEOS_TO_IMPORT_FOLDER,gloss,extension)
 
         if not was_allowed:
             return HttpResponse('Failed two overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?')
