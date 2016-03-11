@@ -16,7 +16,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.development import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
+from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
 
 class GlossListView(ListView):
     

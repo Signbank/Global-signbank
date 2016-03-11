@@ -1,24 +1,19 @@
-import os
-import socket
+ROOT = '/var/www2/signbank/live/'
+BASE_DIR = ROOT+'repo/signbank/'
+WRITABLE_FOLDER = ROOT+'writable/'
 
-hostname = socket.gethostname()
+DATABASES = {'default':
+                {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': WRITABLE_FOLDER+'database/signbank.db',
+                }
+            }
 
-#This should be cleaned up
-if hostname == 'spitfire':
-    ROOT = '/var/www2/signbank/live/'
-    BASE_DIR = ROOT+'repo/signbank/'
-    WRITABLE_FOLDER = ROOT+'writable/'
-elif hostname == 'applejack':
-    ROOT = '/scratch2/www/ASL-signbank/'
-    BASE_DIR = ROOT+'repo/NGT-signbank/'
-    WRITABLE_FOLDER = ROOT+'writable/'
-else:
-    BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 
 #Influences which template and css folder are used
-SIGNBANK_VERSION_CODE = 'NGT' #'ASL'
-
-URL = '' #'/asl-signbank'
+SIGNBANK_VERSION_CODE = 'NGT'
+URL = ''
 
 LANGUAGES = (
   ('en', 'English'),
@@ -27,9 +22,9 @@ LANGUAGES = (
 )
 LANGUAGE_CODE = "en"
 
-FIELDS = {}
-
 SEPARATE_ENGLISH_IDGLOSS_FIELD = False
+
+FIELDS = {}
 
 FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
@@ -40,4 +35,7 @@ FIELDS['semantics'] = ['iconImg','namEnt','semField']
 FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                        'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
 
-ECV_FILE = '/scratch2/www/ASL-signbank/writable/ecv/asl.ecv'
+ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
+GLOSS_VIDEO_DIRECTORY = 'glossvideo'
+OTHER_VIDEOS_DIRECTORY = WRITABLE_FOLDER+'othervideos/'
+WSGI_FILE = ROOT+'virtualenv/signbank/lib/python2.7/site-packages/signbank/wsgi.py'

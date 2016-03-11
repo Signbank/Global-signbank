@@ -12,7 +12,7 @@ from datetime import datetime
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
-from signbank.settings.development import OTHER_VIDEOS_DIRECTORY
+from signbank.settings.base import OTHER_VIDEOS_DIRECTORY
 
 from django.utils.translation import ugettext_lazy as _
 

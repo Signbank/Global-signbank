@@ -1,4 +1,4 @@
-from settings.development import WSGI_FILE
+from settings.base import WSGI_FILE
 import os
 import shutil
 from HTMLParser import HTMLParser

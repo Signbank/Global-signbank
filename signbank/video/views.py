@@ -11,7 +11,7 @@ import django_mobile
 import os
 
 from signbank.dictionary.models import Gloss
-from signbank.settings.development import GLOSS_VIDEO_DIRECTORY, WRITABLE_FOLDER
+from signbank.settings.base import GLOSS_VIDEO_DIRECTORY, WRITABLE_FOLDER
 
 def addvideo(request):
     """View to present a video upload form and process
