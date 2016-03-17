@@ -1,3 +1,12 @@
+NEW
+------------------------------------------------------
+1. Make backup of the old database
+2. source /www/signbank/live/virtualenv/signbank/bin/activate
+3.  python bin/develop.py schemamigration dictionary --auto
+
+OLD
+-------------------------------------------------------------
+
 To change something to the models for signbank.science.ru.nl:
 1. Clone a local copy (the production database is locked by Apache)
 2. Clone the database
@@ -10,3 +19,4 @@ To change something to the models for signbank.science.ru.nl:
 7. Make sure the migrations are added to the repo
 
 Note: when updating FieldChoice, make sure Gloss temporarily does not use it, otherwise you will get errors
+
