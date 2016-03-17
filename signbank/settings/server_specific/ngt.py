@@ -1,4 +1,11 @@
-ROOT = '/var/www2/signbank/live/'
+import socket
+hostname = socket.gethostname()
+
+if hostname == 'spitfire':
+    ROOT = '/var/www2/signbank/live/'
+else:
+    ROOT = '/www/signbank/live/'
+
 BASE_DIR = ROOT+'repo/signbank/'
 WRITABLE_FOLDER = ROOT+'writable/'
 
