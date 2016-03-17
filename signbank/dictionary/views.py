@@ -353,15 +353,42 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    result = ''
+    import json
+
+    result = {}
     all_id_gloss_ens = [gloss.annotation_idgloss_en for gloss in Gloss.objects.all()]
 
     for gloss in Gloss.objects.all():
 
-        if gloss.annotation_idgloss_en == '' or all_id_gloss_ens.count(gloss.annotation_idgloss_en) > 1:
-            result += str(gloss)+', '
+        if gloss.creator not in [None,'']:
+            result[gloss.idgloss] = gloss.creator.username
 
-    return HttpResponse(result+'.')
+    return HttpResponse(json.dumps(result))
+
+def import_authors(request):
+
+    """In a few cases the authors were delivered separately; this imports a json file and adds it to the correct glossess"""
+
+    import json
+
+    JSON_FILE_LOCATION = '/var/www2/signbank/live/repo/signbank/signbank/dictionary/migrations/authors.json'
+    author_data = json.load(open(JSON_FILE_LOCATION))
+    result = ''
+
+    for gloss in Gloss.objects.all():
+
+        #Try to find an author for this gloss
+        try:
+            author_name = author_data[gloss.idgloss]
+        except KeyError:
+            continue
+
+        author = User.objects.filter(username=author_name)[0]
+        result += str(author)
+
+        gloss.creator.add(author)
+
+    return HttpResponse('OKS')
 
 def add_new_sign(request):
 
