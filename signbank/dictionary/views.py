@@ -371,7 +371,7 @@ def import_authors(request):
 
     import json
 
-    JSON_FILE_LOCATION = '/var/www2/signbank/live/repo/signbank/signbank/dictionary/migrations/authors.json'
+    JSON_FILE_LOCATION = '/scratch2/www/ASL-signbank/repo/NGT-signbank/signbank/dictionary/migrations/asl_authors.json'
     author_data = json.load(open(JSON_FILE_LOCATION))
     result = ''
 
@@ -379,14 +379,15 @@ def import_authors(request):
 
         #Try to find an author for this gloss
         try:
-            author_name = author_data[gloss.idgloss]
+            author_names = author_data[gloss.idgloss]
         except KeyError:
             continue
 
-        author = User.objects.filter(username=author_name)[0]
-        result += str(author)
+        for author_name in author_names:
+            author = User.objects.filter(username=author_name)[0]
+            result += str(author)
 
-        gloss.creator.add(author)
+            gloss.creator.add(author)
 
     return HttpResponse('OKS')
 
