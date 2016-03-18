@@ -17,8 +17,9 @@ URL = '/asl-signbank'
 
 LANGUAGES = (
   ('en', 'English'),
+  ('en_US', 'American English')
 )
-LANGUAGE_CODE = "en"
+LANGUAGE_CODE = "en_US"
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = False
 
