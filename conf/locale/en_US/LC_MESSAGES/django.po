@@ -229,7 +229,7 @@ msgstr ""
 
 #: signbank/dictionary/models.py:315
 msgid "Strong Hand"
-msgstr ""
+msgstr "Dominant Handshape"
 
 #: signbank/dictionary/models.py:316
 msgid "Weak Hand"
