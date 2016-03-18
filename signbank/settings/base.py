@@ -210,9 +210,6 @@ VIDEO_UPLOAD_LOCATION = "upload"
 # path to store uploaded attachments relative to MEDIA_ROOT
 ATTACHMENT_LOCATION = 'attachments'
 
-# within MEDIA_ROOT we store newly uploaded videos in this directory
-GLOSS_VIDEO_DIRECTORY = "video"
-
 # which fields from the Gloss model should be included in the quick update form on the sign view
 QUICK_UPDATE_GLOSS_FIELDS = ['language', 'dialect']
 
