@@ -494,7 +494,17 @@
         
             <table class='table table-condensed'>
                 <tr><th>{% trans "Creation Date" %}</th><td>{{gloss.creationDate}}</td></tr>
-                <tr><th>{% trans "Creator" %}</th><td>{{gloss.creator.first_name}} {{gloss.creator.last_name}}</td></tr>
+                <tr><th>{% trans "Creator" %}</th>
+                    <td>
+                        {% for creator in gloss.creator.all %}
+                            {% if forloop.last %}
+                                {{creator.first_name}} {{creator.last_name}}
+                            {% else %}
+                                {{creator.first_name}} {{creator.last_name}},
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
 
                 <tr><th>{% trans "In Web Dictionary" %}</th>
                     <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'>
