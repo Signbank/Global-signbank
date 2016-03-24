@@ -131,8 +131,8 @@ class GlossVideo(models.Model, VideoPosterMixin):
         import signbank.dictionary.models
         gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
     except (NameError,AttributeError,ImportError):
-#        from signbank.dictionary.models import *
-        from signbank.dictionary.models import Gloss
+        from signbank.dictionary.models import *
+#        from signbank.dictionary.models import Gloss
         gloss = models.ForeignKey(Gloss)
     
     
