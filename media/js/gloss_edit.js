@@ -89,6 +89,21 @@ function disable_edit() {
     $('.other-video-delete').hide();
     $('.relationtoforeignsign_delete').hide();
     $('.morphology-definition-delete').hide();
+
+    //To prevent RSI
+    $('.edit').each(function()
+    {
+        if ($(this).html() == '------')
+        {
+            $(this).html('-');
+        }
+    });
+
+    $('input').each(function()
+    {
+        $(this).html('-')
+    });
+
 };
 
 function enable_edit() {
@@ -109,10 +124,20 @@ function enable_edit() {
     $('.other-video-delete').show();
     $('.relationtoforeignsign_delete').show();
     $('.morphology-definition-delete').show();
+
+    //To prevent RSI
+    $('.edit').each(function()
+    {
+        if ($(this).html() == '-')
+        {
+            $(this).html('------')
+        }
+    });
 };
 
 function toggle_edit(redirect_to_next) {
-    if ($('#enable_edit').hasClass('edit_enabled')) {
+    if ($('#enable_edit').hasClass('edit_enabled'))
+    {
         disable_edit();
         $('#enable_edit').removeClass('edit_enabled');
         $('#enable_edit').text(edit_mode_str);

@@ -290,15 +290,7 @@
         <div id='phonology' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in phonology_fields %}
-		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>
-                {% if kind == "check" and value %}
-                    {% trans "Yes" %}
-                {% elif kind == "check" %}
-                    {% trans "No" %}
-                {% else %}
-                    {% value value %}
-                {% endif %}
-            </td></tr>
+		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
 		{% endfor %}
 
             </table>
