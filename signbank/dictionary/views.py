@@ -353,17 +353,17 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    import json
-
-    result = {}
-    all_id_gloss_ens = [gloss.annotation_idgloss_en for gloss in Gloss.objects.all()]
+    result = ''
+    all_id_glosses = []
 
     for gloss in Gloss.objects.all():
 
-        if gloss.creator not in [None,'']:
-            result[gloss.idgloss] = gloss.creator.username
+        if gloss.idgloss in all_id_glosses:
+            result += ' '.join([str(gloss.idgloss),str(gloss.annotation_idgloss),str(gloss.annotation_idgloss_en)]) + '<br>'
 
-    return HttpResponse(json.dumps(result))
+        all_id_glosses.append(gloss.idgloss)
+
+    return HttpResponse(result)
 
 def import_authors(request):
 
