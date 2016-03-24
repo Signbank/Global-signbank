@@ -2,7 +2,7 @@ NEW
 ------------------------------------------------------
 1. Make backup of the old database
 2. source /www/signbank/live/virtualenv/signbank/bin/activate
-3.  python bin/develop.py schemamigration dictionary --auto
+3. python bin/develop.py schemamigration dictionary --auto
 
 OLD
 -------------------------------------------------------------
