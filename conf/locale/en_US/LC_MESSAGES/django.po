@@ -225,7 +225,7 @@ msgstr ""
 #: signbank/dictionary/models.py:313
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:393
 msgid "Handedness"
-msgstr ""
+msgstr "Type-of-2-handed signs"
 
 #: signbank/dictionary/models.py:315
 msgid "Strong Hand"
@@ -233,7 +233,7 @@ msgstr "Dominant Handshape"
 
 #: signbank/dictionary/models.py:316
 msgid "Weak Hand"
-msgstr ""
+msgstr "Nondominant Handshape"
 
 #: signbank/dictionary/models.py:318
 msgid "Final Dominant Handshape"
@@ -246,7 +246,7 @@ msgstr ""
 #: signbank/dictionary/models.py:321
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:396
 msgid "Location"
-msgstr ""
+msgstr "Placement Active Articulator RH"
 
 #: signbank/dictionary/models.py:322
 msgid "Final Primary Location"
@@ -414,7 +414,7 @@ msgstr ""
 
 #: signbank/dictionary/models.py:395
 msgid "Semantic Field"
-msgstr ""
+msgstr "Thematic category"
 
 #: signbank/dictionary/models.py:397
 msgid "Word class 1"
@@ -583,11 +583,11 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:394
 msgid "Strong hand"
-msgstr ""
+msgstr "Dominant Handshape"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:395
 msgid "Weak hand"
-msgstr ""
+msgstr "Nondominant Handshape"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:397
 #: signbank/dictionary/templates/dictionary/glosstags.html:5
