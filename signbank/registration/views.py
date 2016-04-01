@@ -12,6 +12,7 @@ from django.template import RequestContext
 from forms import RegistrationForm, EmailAuthenticationForm
 from models import RegistrationProfile
 
+from datetime import date
 
 def activate(request, activation_key, template_name='registration/activate.html'):
     """
@@ -110,17 +111,29 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
     redirect_to = request.REQUEST.get(redirect_field_name, '')
     if request.method == "POST":
         form = EmailAuthenticationForm(data=request.POST)
-        if form.is_valid(): 
-            # Light security check -- make sure redirect_to isn't garbage.
-            if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
-                redirect_to = settings.LOGIN_REDIRECT_URL
-            from django.contrib.auth import login
-            login(request, form.get_user())
-            if request.session.test_cookie_worked():
-                request.session.delete_test_cookie()
-            return HttpResponseRedirect(redirect_to)
+        if form.is_valid():
+
+            #Count the number of logins
+            profile = form.get_user().get_profile()
+            profile.number_of_logins += 1
+            profile.save()
+
+            #Expiry date cannot be in the past
+            if profile.expiry_date != None and date.today() > profile.expiry_date:
+                form = EmailAuthenticationForm(request)
+
+            else:
+                # Light security check -- make sure redirect_to isn't garbage.
+                if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
+                    redirect_to = settings.LOGIN_REDIRECT_URL
+                from django.contrib.auth import login
+                login(request, form.get_user())
+                if request.session.test_cookie_worked():
+                    request.session.delete_test_cookie()
+                return HttpResponseRedirect(redirect_to)
     else:
         form = EmailAuthenticationForm(request)
+
     request.session.set_test_cookie()
     if Site._meta.installed:
         current_site = Site.objects.get_current()
