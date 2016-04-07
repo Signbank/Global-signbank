@@ -24,6 +24,9 @@ import forms
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import video_to_signbank, compare_valuedict_to_gloss, MachineValueNotFoundError
 
+from signbank.settings.base import LANGUAGE_CODE
+from django.utils.translation import override
+
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
 
@@ -465,17 +468,19 @@ def import_csv(request):
                 gloss.save()
                 continue
 
-            #Replace the value for bools
-            if gloss._meta.get_field_by_name(fieldname)[0].__class__.__name__ == 'NullBooleanField':
+            with override(LANGUAGE_CODE):
 
-                if new_value in ['true','True']:
-                    new_value = True
-                else:
-                    new_value = False
+                #Replace the value for bools
+                if gloss._meta.get_field_by_name(fieldname)[0].__class__.__name__ == 'NullBooleanField':
 
-            #The normal change and save procedure
-            setattr(gloss,fieldname,new_value)
-            gloss.save()
+                    if new_value in ['true','True']:
+                        new_value = True
+                    else:
+                        new_value = False
+
+                #The normal change and save procedure
+                setattr(gloss,fieldname,new_value)
+                gloss.save()
 
         stage = 2
 

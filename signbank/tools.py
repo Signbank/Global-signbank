@@ -3,6 +3,9 @@ import os
 import shutil
 from HTMLParser import HTMLParser
 
+from signbank.settings.base import LANGUAGE_CODE
+from django.utils.translation import override
+
 #==========================
 # Constants
 #==========================
@@ -56,105 +59,106 @@ def compare_valuedict_to_gloss(valuedict,gloss):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
 
     #Create an overview of all fields, sorted by their human name
-    fields = {field.verbose_name: field for field in gloss._meta.fields};
+    with override(LANGUAGE_CODE):
+        fields = {field.verbose_name: field for field in gloss._meta.fields};
 
-    differences = [];
+        differences = [];
 
-    #Go through all values in the value dict, looking for differences with the gloss
-    for human_key, new_human_value in valuedict.items():
+        #Go through all values in the value dict, looking for differences with the gloss
+        for human_key, new_human_value in valuedict.items():
 
-        new_human_value = new_human_value.strip()
+            new_human_value = new_human_value.strip()
 
-        #If these are not fields, but relations to other parts of the database, go look for differenes elsewhere
-        if human_key == 'Keywords':
+            #If these are not fields, but relations to other parts of the database, go look for differenes elsewhere
+            if human_key == 'Keywords':
 
-            current_keyword_string = str(', '.join([translation.translation.text.encode('utf-8') for translation in gloss.translation_set.all()]));
+                current_keyword_string = str(', '.join([translation.translation.text.encode('utf-8') for translation in gloss.translation_set.all()]));
 
-            if current_keyword_string != new_human_value:
-                differences.append({'pk':gloss.pk,
-                                    'idgloss':gloss.idgloss,
-                                    'machine_key':human_key,
-                                    'human_key':human_key,
-                                    'original_machine_value':current_keyword_string,
-                                    'original_human_value':current_keyword_string,
-                                    'new_machine_value':new_human_value,
-                                    'new_human_value':new_human_value})
+                if current_keyword_string != new_human_value:
+                    differences.append({'pk':gloss.pk,
+                                        'idgloss':gloss.idgloss,
+                                        'machine_key':human_key,
+                                        'human_key':human_key,
+                                        'original_machine_value':current_keyword_string,
+                                        'original_human_value':current_keyword_string,
+                                        'new_machine_value':new_human_value,
+                                        'new_human_value':new_human_value})
 
-        #If not, find the matching field in the gloss, and remember its 'real' name
-        try:
-            field = fields[human_key];
-            machine_key = field.name;
-        except KeyError:
-            continue;
-
-        #Try to translate the value to machine values if needed
-        if len(field.choices) > 0:
-            human_to_machine_values = {human_value: machine_value for machine_value, human_value in field.choices};
-
+            #If not, find the matching field in the gloss, and remember its 'real' name
             try:
-                new_machine_value = human_to_machine_values[new_human_value];
+                field = fields[human_key];
+                machine_key = field.name;
             except KeyError:
+                continue;
 
-                #If you can't find a corresponding human value, maybe it's empty
-                if new_human_value in ['',' ']:
+            #Try to translate the value to machine values if needed
+            if len(field.choices) > 0:
+                human_to_machine_values = {human_value: machine_value for machine_value, human_value in field.choices};
+
+                try:
+                    new_machine_value = human_to_machine_values[new_human_value];
+                except KeyError:
+
+                    #If you can't find a corresponding human value, maybe it's empty
+                    if new_human_value in ['',' ']:
+                        new_human_value = 'None';
+                        new_machine_value = None;
+
+                    #If not, stop trying
+                    else:
+                        raise MachineValueNotFoundError('At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key)
+
+            #Do something special for integers and booleans
+            elif field.__class__.__name__ == 'IntegerField':
+
+                try:
+                    new_machine_value = int(new_human_value);
+                except ValueError:
                     new_human_value = 'None';
                     new_machine_value = None;
+            elif field.__class__.__name__ == 'NullBooleanField':
 
-                #If not, stop trying
+                if new_human_value in ['True','true']:
+                    new_machine_value = True;
                 else:
-                    raise MachineValueNotFoundError('At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key)
+                    new_machine_value = False;
 
-        #Do something special for integers and booleans
-        elif field.__class__.__name__ == 'IntegerField':
+            #If all the above does not apply, this is a None value or plain text
+            else:
+                if new_human_value == 'None':
+                    new_machine_value = None;
+                else:
+                    new_machine_value = new_human_value
 
+            #Try to translate the key to machine keys if possible
             try:
-                new_machine_value = int(new_human_value);
-            except ValueError:
-                new_human_value = 'None';
-                new_machine_value = None;
-        elif field.__class__.__name__ == 'NullBooleanField':
+                original_machine_value = getattr(gloss,machine_key);
+            except KeyError:
+                continue;
 
-            if new_human_value in ['True','true']:
-                new_machine_value = True;
-            else:
-                new_machine_value = False;
+            #Translate back the machine value from the gloss
+            try:
+                original_human_value = dict(field.choices)[original_machine_value]
+            except KeyError:
+                original_human_value = original_machine_value
 
-        #If all the above does not apply, this is a None value or plain text
-        else:
-            if new_human_value == 'None':
-                new_machine_value = None;
-            else:
-                new_machine_value = new_human_value
+            #Remove any weird char
+            try:
+                new_machine_value = unescape(new_machine_value)
+                new_human_value = unescape(new_human_value)
+            except TypeError:
+                pass;
 
-        #Try to translate the key to machine keys if possible
-        try:
-            original_machine_value = getattr(gloss,machine_key);
-        except KeyError:
-            continue;
-
-        #Translate back the machine value from the gloss
-        try:
-            original_human_value = dict(field.choices)[original_machine_value]
-        except KeyError:
-            original_human_value = original_machine_value
-
-        #Remove any weird char
-        try:
-            new_machine_value = unescape(new_machine_value)
-            new_human_value = unescape(new_human_value)
-        except TypeError:
-            pass;
-
-        #Check for change, and save your findings if there is one
-        if original_machine_value != new_machine_value:
-            differences.append({'pk':gloss.pk,
-                                'idgloss':gloss.idgloss,
-                                'machine_key':machine_key,
-                                'human_key':human_key,
-                                'original_machine_value':original_machine_value,
-                                'original_human_value':original_human_value,
-                                'new_machine_value':new_machine_value,
-                                'new_human_value':new_human_value})
+            #Check for change, and save your findings if there is one
+            if original_machine_value != new_machine_value:
+                differences.append({'pk':gloss.pk,
+                                    'idgloss':gloss.idgloss,
+                                    'machine_key':machine_key,
+                                    'human_key':human_key,
+                                    'original_machine_value':original_machine_value,
+                                    'original_human_value':original_human_value,
+                                    'new_machine_value':new_machine_value,
+                                    'new_human_value':new_human_value})
 
     return differences
 
