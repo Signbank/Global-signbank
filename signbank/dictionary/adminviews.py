@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.db.models.fields import NullBooleanField
 from django.http import HttpResponse
 from django.core.exceptions import PermissionDenied
+from django.utils.translation import override
 from collections import OrderedDict
 import csv
 import re
@@ -16,7 +17,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
+from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE
 
 class GlossListView(ListView):
     
@@ -185,7 +186,9 @@ class GlossListView(ListView):
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
         writer = csv.writer(response)
-        header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii','ignore') for f in fields]
+
+        with override(LANGUAGE_CODE):
+            header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii','ignore') for f in fields]
 
         for extra_column in ['Languages','Dialects','Keywords','Morphology','Relations to other signs','Relations to foreign signs',]:
             header.append(extra_column);
