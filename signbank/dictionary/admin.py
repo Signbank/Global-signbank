@@ -124,11 +124,15 @@ class UserProfileInline(admin.StackedInline):
 class UserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
+class FieldChoiceAdmin(VersionAdmin):
+
+    list_display = ['english_name','dutch_name','machine_value','field']
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(Language, LanguageAdmin) 
 admin.site.register(Gloss, GlossAdmin) 
 admin.site.register(Keyword, KeywordAdmin) 
-admin.site.register(FieldChoice)
+admin.site.register(FieldChoice,FieldChoiceAdmin)
 admin.site.register(MorphologyDefinition)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
