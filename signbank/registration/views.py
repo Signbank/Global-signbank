@@ -8,6 +8,7 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.translation import ugettext_lazy as _
 
 from forms import RegistrationForm, EmailAuthenticationForm
 from models import RegistrationProfile
@@ -109,6 +110,8 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
     "Displays the login form and handles the login action."
     
     redirect_to = request.REQUEST.get(redirect_field_name, '')
+    error_message = ''
+
     if request.method == "POST":
         form = EmailAuthenticationForm(data=request.POST)
         if form.is_valid():
@@ -121,6 +124,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
             #Expiry date cannot be in the past
             if profile.expiry_date != None and date.today() > profile.expiry_date:
                 form = EmailAuthenticationForm(request)
+                error_message = _('This account has expired. Please contact o.crasborn@let.ru.nl.')
 
             else:
                 # Light security check -- make sure redirect_to isn't garbage.
@@ -131,6 +135,9 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
                 if request.session.test_cookie_worked():
                     request.session.delete_test_cookie()
                 return HttpResponseRedirect(redirect_to)
+        else:
+            error_message = _('The username or password is incorrect.')
+
     else:
         form = EmailAuthenticationForm(request)
 
@@ -145,6 +152,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         'site': current_site,
         'site_name': current_site.name,
         'allow_registration': settings.ALLOW_REGISTRATION,
+        'error_message': error_message
     }, context_instance=RequestContext(request))
 mylogin = never_cache(mylogin)
     

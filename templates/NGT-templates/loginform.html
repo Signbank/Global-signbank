@@ -33,6 +33,11 @@
 
   </form>
 
+{% if error_message %}
+<div class='alert alert-danger'>{{error_message}}</div>
+{% endif %}
+
+
 {% if allow_registration %}
   <fieldset id='register'>
      <legend>{% trans "Register" %}</legend>
