@@ -127,6 +127,7 @@ class UserAdmin(UserAdmin):
 class FieldChoiceAdmin(VersionAdmin):
 
     list_display = ['english_name','dutch_name','machine_value','field']
+    list_filter = ['field']
 
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(Language, LanguageAdmin) 
