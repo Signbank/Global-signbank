@@ -125,9 +125,17 @@ class UserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
 class FieldChoiceAdmin(VersionAdmin):
-
+    readonly_fields=['machine_value']
     list_display = ['english_name','dutch_name','machine_value','field']
     list_filter = ['field']
+
+    def save_model(self, request, obj, form, change):
+
+        if obj.machine_value == None:
+            highest_machine_value = max([field_choice.machine_value for field_choice in FieldChoice.objects.filter(field=obj.field)])
+            obj.machine_value= highest_machine_value+1
+
+        obj.save()
 
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(Language, LanguageAdmin) 
