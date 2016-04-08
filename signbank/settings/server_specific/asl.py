@@ -13,7 +13,7 @@ ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 
 #Influences which template and css folder are used
 SIGNBANK_VERSION_CODE = 'ASL'
-URL = '/asl-signbank'
+URL = 'http://applejack.science.ru.nl/asl-signbank'
 
 LANGUAGES = (
   ('en_US', 'American English'),

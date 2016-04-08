@@ -20,7 +20,7 @@ ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 
 #Influences which template and css folder are used
 SIGNBANK_VERSION_CODE = 'NGT'
-URL = ''
+URL = 'http://signbank.science.ru.nl/'
 
 LANGUAGES = (
   ('en', 'English'),
@@ -41,8 +41,6 @@ FIELDS['semantics'] = ['iconImg','namEnt','semField']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                        'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
-
-URL = 'http://signbank.science.ru.nl/'
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'

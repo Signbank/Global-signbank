@@ -33,8 +33,6 @@ FIELDS['semantics'] = ['iconImg','namEnt','semField']
 FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                        'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
 
-URL = ''
-
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 OTHER_VIDEOS_DIRECTORY = WRITABLE_FOLDER+'othervideos/'
