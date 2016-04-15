@@ -43,6 +43,7 @@ urlpatterns = patterns('',
     url(r'^missingvideo.html$', 'signbank.dictionary.views.missing_video_view'),
 
     url(r'^import_videos/$', 'signbank.dictionary.views.import_videos'),
+    url(r'^import_other_videos/$', 'signbank.dictionary.views.import_other_videos'),
 
     # Admin views
     url(r'^try/$', 'signbank.dictionary.views.try_code'), #A view for the developer to try out some things

@@ -13,6 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_unicode
 
 import os
+import shutil
 import csv
 
 from signbank.dictionary.models import *
@@ -24,7 +25,7 @@ import forms
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import video_to_signbank, compare_valuedict_to_gloss, MachineValueNotFoundError
 
-from signbank.settings.base import LANGUAGE_CODE
+from signbank.settings.base import LANGUAGE_CODE, OTHER_VIDEOS_TO_IMPORT_FOLDER, OTHER_VIDEOS_DIRECTORY, STATIC_URL
 from django.utils.translation import override
 
 def login_required_config(f):
@@ -351,6 +352,50 @@ def import_videos(request):
     overwritten_files += '</ul>'
 
     return HttpResponse(out+overwritten_files)
+
+def import_other_videos(request):
+
+    output = ''
+
+    for n,row in enumerate(csv.reader(open(OTHER_VIDEOS_TO_IMPORT_FOLDER+'index.csv'))):
+
+        #Skip the header
+        if n == 0:
+            continue
+
+        #Create an other video for this
+        idgloss, file_name, other_video_type, alternative_gloss = row
+
+        for field_choice in FieldChoice.objects.filter(field='OtherVideoType'):
+            if field_choice.english_name == other_video_type:
+                other_video_type_machine_value = field_choice.machine_value
+
+        parent_gloss = Gloss.objects.filter(idgloss=idgloss)[0]
+
+        other_video = OtherVideo()
+        other_video.parent_gloss = parent_gloss
+        other_video.alternative_gloss = alternative_gloss
+        other_video.path = STATIC_URL+'othervideos/'+str(parent_gloss.pk)+'/'+file_name
+
+        try:
+            other_video.type = other_video_type_machine_value
+        except UnboundLocalError:
+            pass
+
+        #Copy the file
+        goal_folder = OTHER_VIDEOS_DIRECTORY+str(parent_gloss.pk)+'/'
+
+        try:
+            os.mkdir(goal_folder)
+        except OSError:
+            pass #Do nothing if the folder exists already
+
+        shutil.copyfile(OTHER_VIDEOS_TO_IMPORT_FOLDER+file_name,goal_folder+file_name)
+
+        #Copy at the end, so it only goes through if there was no crash before
+        other_video.save()
+
+    return HttpResponse('OK')
 
 def try_code(request):
 
