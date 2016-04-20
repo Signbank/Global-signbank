@@ -301,7 +301,6 @@ minor or insignificant ways that can be ignored.""")
     # one or more regional dialects that this gloss is used in
     dialect = models.ManyToManyField(Dialect)
     
-    
     blend = models.CharField(_("Blend of"), max_length=100, null=True, blank=True) # This field type is a guess.
     blendtf = models.NullBooleanField(_("Blend"), null=True, blank=True)
     
@@ -418,6 +417,7 @@ minor or insignificant ways that can be ignored.""")
 
     creationDate = models.DateField(_('Creation date'),default=datetime(2015,1,1))
     creator = models.ManyToManyField(User,null=True)
+    alternative_id = models.CharField(max_length=50,null=True,blank=True)
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]

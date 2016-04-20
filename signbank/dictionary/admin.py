@@ -77,7 +77,7 @@ class SenseNumberListFilter(SimpleListFilter):
 class GlossAdmin(VersionAdmin):
     fieldsets = ((None, {'fields': ('idgloss', 'annotation_idgloss', 'annotation_idgloss_en','useInstr','morph', 'sense', 
                                     'sn', 'StemSN', 'comptf', 'compound', 'language', 'dialect','rmrks')}, ),
-                 ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate'),
+                 ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate','alternative_id'),
                                        'classes': ('collapse',)}, ),
                  ('Phonology', {'fields': FIELDS['phonology'], 'classes': ('collapse',)}, ),
                  ('Semantics', {'fields': FIELDS['semantics'], 'classes': ('collapse',)}),
