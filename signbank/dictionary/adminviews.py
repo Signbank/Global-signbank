@@ -555,10 +555,10 @@ class GlossDetailView(DetailView):
                     try:
                         selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
 
-                        if self.request.LANGUAGE_CODE == 'en':
-                            human_value = selected_field_choice.english_name
-                        elif self.request.LANGUAGE_CODE == 'nl':
+                        if self.request.LANGUAGE_CODE == 'nl':
                             human_value = selected_field_choice.dutch_name
+                        else:
+                            human_value = selected_field_choice.english_name
 
                     except (IndexError, ValueError):
                         human_value = machine_value
