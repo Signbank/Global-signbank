@@ -355,16 +355,24 @@ def import_videos(request):
 
 def import_other_videos(request):
 
-    output = ''
+    #First do some checks
+    if not os.path.isfile(OTHER_VIDEOS_TO_IMPORT_FOLDER+'index.csv'):
+        return HttpResponse('The required file index.csv is not present')
 
     for n,row in enumerate(csv.reader(open(OTHER_VIDEOS_TO_IMPORT_FOLDER+'index.csv'))):
 
         #Skip the header
         if n == 0:
-            continue
+            if row == ['Idgloss','filename','type','alternative_gloss']:
+                continue
+            else:
+                return HttpResponse('The header of index.csv is not Idgloss,filename,type,alternative_gloss')
 
         #Create an other video for this
-        idgloss, file_name, other_video_type, alternative_gloss = row
+        try:
+            idgloss, file_name, other_video_type, alternative_gloss = row
+        except ValueError:
+            return HttpResponse('Line '+str(n)+' does not seem to have the correct amount of items')
 
         for field_choice in FieldChoice.objects.filter(field='OtherVideoType'):
             if field_choice.english_name == other_video_type:
