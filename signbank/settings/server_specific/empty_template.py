@@ -35,6 +35,7 @@ FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNo
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
+GLOSS_IMAGE_DIRECTORY = 'glossimage'
 OTHER_VIDEOS_DIRECTORY = WRITABLE_FOLDER+'othervideos/'
 WSGI_FILE = ROOT+'signbank/wsgi.py'
 VIDEOS_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_videos/'

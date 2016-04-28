@@ -1,7 +1,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import Context, RequestContext, loader
 from django.http import Http404
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.db.models import Q
@@ -25,7 +25,7 @@ import forms
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import video_to_signbank, compare_valuedict_to_gloss, MachineValueNotFoundError
 
-from signbank.settings.base import LANGUAGE_CODE, OTHER_VIDEOS_TO_IMPORT_FOLDER, OTHER_VIDEOS_DIRECTORY, STATIC_URL
+from signbank.settings.base import LANGUAGE_CODE, OTHER_VIDEOS_TO_IMPORT_FOLDER, OTHER_VIDEOS_DIRECTORY, STATIC_URL, WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY
 from django.utils.translation import override
 
 def login_required_config(f):
@@ -555,3 +555,64 @@ def switch_to_language(request,language):
 def recently_added_glosses(request):
 
     return render_to_response('dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()},context_instance=RequestContext(request))
+
+def add_image(request):
+
+    if request.method == 'POST':
+
+        form = ImageUploadForGlossForm(request.POST, request.FILES)
+
+        if form.is_valid():
+
+            gloss_id = form.cleaned_data['gloss_id']
+            gloss = get_object_or_404(Gloss, pk=gloss_id)
+
+            imagefile = form.cleaned_data['imagefile']
+            extension = '.'+imagefile.name.split('.')[-1]
+
+            # construct a filename for the image, use sn
+            # if present, otherwise use idgloss+gloss id
+            if gloss.sn != None:
+                imagefile.name = str(gloss.sn) + extension
+            else:
+                imagefile.name = gloss.idgloss + "-" + str(gloss.pk) + extension
+
+            redirect_url = form.cleaned_data['redirect']
+
+            # deal with any existing image for this sign
+            goal_path =  WRITABLE_FOLDER+GLOSS_IMAGE_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
+            goal_location = goal_path + gloss.idgloss + '-' + str(gloss.pk) + extension
+
+            if os.path.isfile(goal_location):
+                backup_id = 1
+                made_backup = False
+
+                while not made_backup:
+
+                    if not os.path.isfile(goal_location+'_'+str(backup_id)):
+                        os.rename(goal_location,goal_location+'_'+str(backup_id))
+                        made_backup = True
+                    else:
+                        backup_id += 1
+
+            #First make the dir if needed
+            try:
+                os.mkdir(goal_path)
+            except OSError:
+                pass
+
+            with open(goal_location, 'wb+') as destination:
+                for chunk in imagefile.chunks():
+                    destination.write(chunk)
+
+            return redirect(redirect_url)
+
+    # if we can't process the form, just redirect back to the
+    # referring page, should just be the case of hitting
+    # Upload without choosing a file but could be
+    # a malicious request, if no referrer, go back to root
+    if request.META.has_key('HTTP_REFERER'):
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
+    return redirect(url)

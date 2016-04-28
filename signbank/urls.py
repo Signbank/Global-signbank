@@ -7,6 +7,7 @@ from django.views.generic import TemplateView
 
 from signbank.dictionary.models import Gloss
 from signbank.dictionary.adminviews import GlossListView, GlossDetailView
+from signbank.dictionary.views import add_image
 
 from django.contrib import admin
 admin.autodiscover()
@@ -27,6 +28,8 @@ urlpatterns = patterns('',
     url(r'^feedback/', include('signbank.feedback.urls')),
     url(r'^attachments/', include('signbank.attachments.urls')),
     url(r'^video/', include('signbank.video.urls')),
+
+    url(r'^image/upload/', add_image),
 
     #(r'^register.html', 'signbank.views.index'),
     url(r'^logout.html', 'django.contrib.auth.views.logout',
