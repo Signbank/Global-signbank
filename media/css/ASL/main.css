@@ -74,3 +74,8 @@ html {
     margin-right: 8px;
     position: relative;
 }
+
+legend
+{
+    padding-top: 25px;
+}
