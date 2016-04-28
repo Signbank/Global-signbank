@@ -174,3 +174,10 @@ class OtherVideoForm(forms.ModelForm):
 class CSVUploadForm(forms.Form):
 
     file = forms.FileField()
+
+class ImageUploadForGlossForm(forms.Form):
+    """Form for video upload for a particular gloss"""
+
+    imagefile = forms.FileField(label="Upload Image")
+    gloss_id = forms.CharField(widget=forms.HiddenInput)
+    redirect = forms.CharField(widget=forms.HiddenInput, required=False)

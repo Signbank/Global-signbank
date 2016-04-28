@@ -179,6 +179,27 @@
     </div>
     {% endif %}
 
+    {% if perms.dictionary.change_gloss %}
+    <div class='editform'>
+        <fieldset>
+            <legend>{% trans "Upload New Citation Form Image" %}</legend>
+            <form action="{{URL}}/image/upload/" method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+            <table id="staffops">
+              <tr>
+                  <td>{{imageform.imagefile}}</td>
+              </tr>
+              <tr>
+                  <td><input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
+                      <input class='btn btn-primary' type='submit' value='Upload Citation Form Image'/></td>
+              </tr>
+            </table>
+            </form>
+        </fieldset>
+    </div>
+    {% endif %}
+
 
   {% include "dictionary/glosstags.html" %}
 
