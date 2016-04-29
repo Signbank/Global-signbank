@@ -160,11 +160,11 @@ class MorphologyForm(forms.ModelForm):
         model = MorphologyDefinition;
         fields = ['role'];
 
-class OtherVideoForm(forms.ModelForm):
+class OtherMediaForm(forms.ModelForm):
 
     gloss = forms.CharField()
     file = forms.FileField()
-    type = forms.ChoiceField(choices=build_choice_list('OtherVideoType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    type = forms.ChoiceField(choices=build_choice_list('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     alternative_gloss = forms.TextInput()
 
     class Meta:

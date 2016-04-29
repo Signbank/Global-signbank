@@ -12,7 +12,7 @@ from datetime import datetime
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
-from signbank.settings.base import OTHER_VIDEOS_DIRECTORY
+from signbank.settings.base import OTHER_MEDIA_DIRECTORY
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -101,9 +101,9 @@ def update_gloss(request, glossid):
 
             return update_morphology_definition(gloss, field, value)
 
-        elif field.startswith('other-video'):
+        elif field.startswith('other-media'):
 
-            return update_other_video(request,gloss, field, value)
+            return update_other_media(request,gloss, field, value)
 
         elif field == 'language':
             # expecting possibly multiple values
@@ -387,24 +387,24 @@ def update_definition(request, gloss, field, value):
 
     return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
-def update_other_video(request,gloss,field,value):
+def update_other_media(request,gloss,field,value):
 
-    action_or_fieldname, other_video_id = field.split('_')
+    action_or_fieldname, other_media_id = field.split('_')
 
     try:
-        other_video = OtherVideo.objects.get(id=other_video_id)
+        other_media = OtherVideo.objects.get(id=other_media_id)
     except:
-        return HttpResponseBadRequest("Bad OtherVideo ID '%s'" % other_video, {'content-type': 'text/plain'})
+        return HttpResponseBadRequest("Bad OtherMedia ID '%s'" % other_media, {'content-type': 'text/plain'})
 
-    if not other_video.parent_gloss == gloss:
-        return HttpResponseBadRequest("OtherVideo doesn't match gloss", {'content-type': 'text/plain'})
+    if not other_media.parent_gloss == gloss:
+        return HttpResponseBadRequest("OtherMedia doesn't match gloss", {'content-type': 'text/plain'})
 
-    if action_or_fieldname == 'other-video-delete':
-        other_video.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'?editothervideo')
+    if action_or_fieldname == 'other-media-delete':
+        other_media.delete()
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'?editothermedia')
 
-    elif action_or_fieldname == 'other-video-type':
-        other_video.type = value
+    elif action_or_fieldname == 'other-media-type':
+        other_media.type = value
 
         #Translate the value
         if value == '0':
@@ -413,17 +413,17 @@ def update_other_video(request,gloss,field,value):
             value = 'N/A'
         else:
 
-            selected_field_choice = FieldChoice.objects.filter(field__iexact='OtherVideoType',machine_value=value)[0]
+            selected_field_choice = FieldChoice.objects.filter(field__iexact='OtherMediaType',machine_value=value)[0]
 
             if request.LANGUAGE_CODE == 'en':
                 value = selected_field_choice.english_name
             elif request.LANGUAGE_CODE == 'nl':
                 value = selected_field_choice.dutch_name
 
-    elif action_or_fieldname == 'other-video-alternative-gloss':
-        other_video.alternative_gloss = value
+    elif action_or_fieldname == 'other-media-alternative-gloss':
+        other_media.alternative_gloss = value
 
-    other_video.save()
+    other_media.save()
 
     return HttpResponse(value, {'content-type': 'text/plain'})
 
@@ -534,16 +534,16 @@ def add_morphology_definition(request):
 
     raise Http404('Incorrect request');
 
-def add_othervideo(request):
+def add_othermedia(request):
 
     if request.method == "POST":
 
-        form = OtherVideoForm(request.POST,request.FILES)
+        form = OtherMediaForm(request.POST,request.FILES)
 
         if form.is_valid():
 
             #Create the folder if needed
-            goal_directory = OTHER_VIDEOS_DIRECTORY+request.POST['gloss'] + '/'
+            goal_directory = OTHER_MEDIA_DIRECTORY+request.POST['gloss'] + '/'
             goal_path = goal_directory + request.FILES['file'].name
 
             if not os.path.isdir(goal_directory):
@@ -559,7 +559,7 @@ def add_othervideo(request):
                 parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
                 OtherVideo(path=goal_path,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']})+'?editothervideo')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 
     raise Http404('Incorrect request');
 

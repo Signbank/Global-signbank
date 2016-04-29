@@ -649,14 +649,14 @@
     
     </div>
 
-     <!-- Other videos -->
+     <!-- Other media -->
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#othervideos' href='#othervideos'>{% trans "Other media" %}</a>
+                <a data-toggle='collapse' data-parent='#othermedia' href='#othermedia'>{% trans "Other media" %}</a>
             </div>
         </div>
-        <div id='othervideos' class='collapse'>
+        <div id='othermedia' class='collapse'>
 
            <table class='table table-condensed'>
               <tr>
@@ -666,16 +666,16 @@
                   <th style='width:12em'>{% trans "Alternative gloss" %}</th>
               </tr>
 
-               {% for pk,path,type,alternative_gloss in other_videos %}
+               {% for pk,path,type,alternative_gloss in other_media %}
                <tr>
                      <td>
-                        <span class='glyphicon glyphicon-trash other-video-delete' data-toggle='modal' data-target='#delete_other_video_{{pk}}'></span>
+                        <span class='glyphicon glyphicon-trash other-video-delete' data-toggle='modal' data-target='#delete_other_media_{{pk}}'></span>
 
-                         <div class="modal fade" id="delete_other_video_{{pk}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                         <div class="modal fade" id="delete_other_media_{{pk}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
                              <div class="modal-dialog modal-sm">
                                 <div class="modal-content">
                                     <div class='modal-header'>
-                                        <h2 id='modalTitle'>{% trans "Delete This Other Video" %}</h2>
+                                        <h2 id='modalTitle'>{% trans "Delete This Media" %}</h2>
                                     </div>
                                     <div class='modal-body'>
 
@@ -683,7 +683,7 @@
                                      </div>
                                   <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                                       {% csrf_token %}
-                                      <input type='hidden' name='id' value='other-video-delete_{{pk}}'>
+                                      <input type='hidden' name='id' value='other-media-delete_{{pk}}'>
                                       <input type='hidden' name='value' value='confirmed'>
                                       <div class="modal-footer">
                                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
@@ -698,15 +698,15 @@
                     </td>
 
                     <td><a href="{{ path }}">Download</a></td>
-                    <td class='edit edit_list' id='other-video-type_{{ pk }}'>{{ type }}</td>
-                    <td class='edit edit_text' id='other-video-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
+                    <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
+                    <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
                 </tr>
                {% endfor %}
 
            </table>
 
             {% if perms.dictionary.change_gloss %}
-            <form id='add_other_video' action='{% url "dictionary:add_othervideo" %}' method="POST" enctype="multipart/form-data">
+            <form id='add_other_media' action='{% url "dictionary:add_othermedia" %}' method="POST" enctype="multipart/form-data">
 
                <input type='hidden' name='gloss' value='{{gloss.pk}}'>
 
@@ -714,8 +714,8 @@
                 {% csrf_token %}
                  <table class='table'>
                     <tr>
-                        <td><input class='form-control' placeholder='{% trans "Upload video" %}' name='file' type='file'></td>
-                        <td>{{othervideoform.type}}</td>
+                        <td><input class='form-control' placeholder='{% trans "Upload media" %}' name='file' type='file'></td>
+                        <td>{{othermediaform.type}}</td>
                         <td><input class='form-control' placeholder='{% trans "Alternative gloss" %}' name='alternative_gloss' type='text'></td>
                     </tr>
                      <tr>

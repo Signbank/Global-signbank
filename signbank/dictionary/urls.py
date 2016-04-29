@@ -29,7 +29,7 @@ urlpatterns = patterns('',
     url(r'^update/relation/$', 'signbank.dictionary.update.add_relation', name='add_relation'),
     url(r'^update/relationtoforeignsign/$', 'signbank.dictionary.update.add_relationtoforeignsign', name='add_relationtoforeignsign'),
     url(r'^update/morphologydefinition/$', 'signbank.dictionary.update.add_morphology_definition', name='add_morphologydefinition'),
-    url(r'^update/othervideo/', 'signbank.dictionary.update.add_othervideo', name='add_othervideo'),
+    url(r'^update/othermedia/', 'signbank.dictionary.update.add_othermedia', name='add_othermedia'),
     url(r'^update/gloss/', 'signbank.dictionary.update.add_gloss', name='add_gloss'),
     url(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
 
@@ -43,7 +43,7 @@ urlpatterns = patterns('',
     url(r'^missingvideo.html$', 'signbank.dictionary.views.missing_video_view'),
 
     url(r'^import_videos/$', 'signbank.dictionary.views.import_videos'),
-    url(r'^import_other_videos/$', 'signbank.dictionary.views.import_other_videos'),
+    url(r'^import_other_media/$', 'signbank.dictionary.views.import_other_media'),
 
     # Admin views
     url(r'^try/$', 'signbank.dictionary.views.try_code'), #A view for the developer to try out some things

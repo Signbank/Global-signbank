@@ -17,7 +17,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_VIDEOS_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE
+from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_MEDIA_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE
 
 class GlossListView(ListView):
     
@@ -510,7 +510,7 @@ class GlossDetailView(DetailView):
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
         context['morphologyform'] = MorphologyForm()
-        context['othervideoform'] = OtherVideoForm()
+        context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
@@ -574,19 +574,19 @@ class GlossDetailView(DetailView):
 
                 context[topic+'_fields'].append([human_value,field,labels[field],kind]);
 
-        #Gather the OtherVideos
-        context['other_videos'] = []
-        other_video_type_choice_list = FieldChoice.objects.filter(field__iexact='OtherVideoType')
+        #Gather the OtherMedia
+        context['other_media'] = []
+        other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
 
-        for other_video in gl.othervideo_set.all():
+        for other_media in gl.othervideo_set.all():
 
-            if int(other_video.type) == 0:
-                human_value_video_type = '-'
-            elif int(other_video.type) == 1:
-                human_value_video_type = 'N/A'
+            if int(other_media.type) == 0:
+                human_value_media_type = '-'
+            elif int(other_media.type) == 1:
+                human_value_media_type = 'N/A'
             else:
 
-                selected_field_choice = other_video_type_choice_list.filter(machine_value=other_video.type)[0]
+                selected_field_choice = other_media_type_choice_list.filter(machine_value=other_media.type)[0]
 
                 codes_to_adjectives = dict(settings.LANGUAGES)
 
@@ -596,15 +596,15 @@ class GlossDetailView(DetailView):
                     adjective = codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
 
                 try:
-                    human_value_video_type = getattr(selected_field_choice,adjective+'_name')
+                    human_value_media_type = getattr(selected_field_choice,adjective+'_name')
                 except AttributeError:
-                    human_value_video_type = getattr(selected_field_choice,'english_name')
+                    human_value_media_type = getattr(selected_field_choice,'english_name')
 
-            path = other_video.path.replace(OTHER_VIDEOS_DIRECTORY,'/media/othervideos/')
-            context['other_videos'].append([other_video.pk, path, human_value_video_type, other_video.alternative_gloss])
+            path = other_media.path.replace(OTHER_MEDIA_DIRECTORY,'/media/othermedia/')
+            context['other_media'].append([other_media.pk, path, human_value_media_type, other_media.alternative_gloss])
 
-            #Save the other_video_type choices (same for every other_video, but necessary because they all have other ids)
-            context['choice_lists']['other-video-type_'+str(other_video.pk)] = choicelist_queryset_to_translated_ordered_dict(other_video_type_choice_list,self.request.LANGUAGE_CODE)
+            #Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
+            context['choice_lists']['other-media-type_'+str(other_media.pk)] = choicelist_queryset_to_translated_ordered_dict(other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
         #context['choice_lists'] = gl.get_choice_lists()
         context['choice_lists'] = json.dumps(context['choice_lists'])

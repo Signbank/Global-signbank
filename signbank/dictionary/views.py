@@ -25,7 +25,7 @@ import forms
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import video_to_signbank, compare_valuedict_to_gloss, MachineValueNotFoundError
 
-from signbank.settings.base import LANGUAGE_CODE, OTHER_VIDEOS_TO_IMPORT_FOLDER, OTHER_VIDEOS_DIRECTORY, STATIC_URL, WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY
+from signbank.settings.base import LANGUAGE_CODE, OTHER_MEDIA_TO_IMPORT_FOLDER, OTHER_MEDIA_DIRECTORY, STATIC_URL, WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY
 from django.utils.translation import override
 
 def login_required_config(f):
@@ -353,13 +353,13 @@ def import_videos(request):
 
     return HttpResponse(out+overwritten_files)
 
-def import_other_videos(request):
+def import_other_media(request):
 
     #First do some checks
-    if not os.path.isfile(OTHER_VIDEOS_TO_IMPORT_FOLDER+'index.csv'):
+    if not os.path.isfile(OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'):
         return HttpResponse('The required file index.csv is not present')
 
-    for n,row in enumerate(csv.reader(open(OTHER_VIDEOS_TO_IMPORT_FOLDER+'index.csv'))):
+    for n,row in enumerate(csv.reader(open(OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'))):
 
         #Skip the header
         if n == 0:
@@ -370,38 +370,38 @@ def import_other_videos(request):
 
         #Create an other video for this
         try:
-            idgloss, file_name, other_video_type, alternative_gloss = row
+            idgloss, file_name, other_media_type, alternative_gloss = row
         except ValueError:
             return HttpResponse('Line '+str(n)+' does not seem to have the correct amount of items')
 
-        for field_choice in FieldChoice.objects.filter(field='OtherVideoType'):
-            if field_choice.english_name == other_video_type:
-                other_video_type_machine_value = field_choice.machine_value
+        for field_choice in FieldChoice.objects.filter(field='OtherMediaType'):
+            if field_choice.english_name == other_media_type:
+                other_media_type_machine_value = field_choice.machine_value
 
         parent_gloss = Gloss.objects.filter(idgloss=idgloss)[0]
 
-        other_video = OtherVideo()
-        other_video.parent_gloss = parent_gloss
-        other_video.alternative_gloss = alternative_gloss
-        other_video.path = STATIC_URL+'othervideos/'+str(parent_gloss.pk)+'/'+file_name
+        other_media = OtherVideo()
+        other_media.parent_gloss = parent_gloss
+        other_media.alternative_gloss = alternative_gloss
+        other_media.path = STATIC_URL+'othermedia/'+str(parent_gloss.pk)+'/'+file_name
 
         try:
-            other_video.type = other_video_type_machine_value
+            other_media.type = other_media_type_machine_value
         except UnboundLocalError:
             pass
 
         #Copy the file
-        goal_folder = OTHER_VIDEOS_DIRECTORY+str(parent_gloss.pk)+'/'
+        goal_folder = OTHER_MEDIA_DIRECTORY+str(parent_gloss.pk)+'/'
 
         try:
             os.mkdir(goal_folder)
         except OSError:
             pass #Do nothing if the folder exists already
 
-        shutil.copyfile(OTHER_VIDEOS_TO_IMPORT_FOLDER+file_name,goal_folder+file_name)
+        shutil.copyfile(OTHER_MEDIA_TO_IMPORT_FOLDER+file_name,goal_folder+file_name)
 
         #Copy at the end, so it only goes through if there was no crash before
-        other_video.save()
+        other_media.save()
 
     return HttpResponse('OK')
 
