@@ -129,7 +129,13 @@
     {% endif %}
     
     </div>
-    
+
+    <div>
+        {% if gloss.get_image_path %}
+            <img class="citation_form_image" src="{{STATIC_URL}}{{gloss.get_image_path}}">
+        {% endif %}
+    </div>
+
     <div id="feedback">
         <ul>
             {% ifequal viewname "words" %}

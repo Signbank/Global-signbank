@@ -498,6 +498,16 @@ minor or insignificant ways that can be ignored.""")
                 return root.homophones()
         return []
 
+    def get_image_path(self):
+        """Returns the path within the writable and static folder"""
+
+        foldername = self.idgloss[:2]+'/'
+        filename_without_extension = self.idgloss+'-'+str(self.pk)
+
+        for filename in os.listdir(settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername):
+
+            if filename_without_extension in filename:
+                return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
 
     def get_video_gloss(self):
         """Work out the gloss that might have the video for this sign, usually the sign number but
