@@ -504,10 +504,13 @@ minor or insignificant ways that can be ignored.""")
         foldername = self.idgloss[:2]+'/'
         filename_without_extension = self.idgloss+'-'+str(self.pk)
 
-        for filename in os.listdir(settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername):
+        try:
+            for filename in os.listdir(settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername):
 
-            if filename_without_extension in filename:
-                return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+                if filename_without_extension in filename:
+                    return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+        except OSError:
+            return None
 
     def get_video_gloss(self):
         """Work out the gloss that might have the video for this sign, usually the sign number but
