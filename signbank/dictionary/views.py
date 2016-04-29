@@ -583,23 +583,15 @@ def add_image(request):
             goal_path =  WRITABLE_FOLDER+GLOSS_IMAGE_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
             goal_location = goal_path + gloss.idgloss + '-' + str(gloss.pk) + extension
 
-            if os.path.isfile(goal_location):
-                backup_id = 1
-                made_backup = False
-
-                while not made_backup:
-
-                    if not os.path.isfile(goal_location+'_'+str(backup_id)):
-                        os.rename(goal_location,goal_location+'_'+str(backup_id))
-                        made_backup = True
-                    else:
-                        backup_id += 1
-
             #First make the dir if needed
             try:
                 os.mkdir(goal_path)
             except OSError:
                 pass
+
+            #Remove previous video
+            if gloss.get_image_path():
+                os.remove(WRITABLE_FOLDER+gloss.get_image_path())
 
             with open(goal_location, 'wb+') as destination:
                 for chunk in imagefile.chunks():
