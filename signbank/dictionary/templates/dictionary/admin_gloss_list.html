@@ -84,10 +84,14 @@ function clearForm(myFormElement) {
                         <label class='input-group-addon' for='id_annotation_idgloss'>{{searchform.search.label}}</label>
                         <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}></div>
                     </td>
+                    {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
                     <td><div class='input-group'>
+
                         <label class='input-group-addon' for='id_annotation_idgloss_en'>{{searchform.englishGloss.label}}</label>
                         <input name='englishGloss' class='form-control' {% if searchform.englishGloss.value %}value='{{searchform.englishGloss.value}}'{% endif %}></div>
                     </td>
+                    {% endif %}
+
                     <td><div class='input-group'>
                         <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
                         <input name='keyword' class='form-control' {% if searchform.keyword.value %}value='{{searchform.keyword.value}}'{% endif %}></div>

@@ -44,7 +44,7 @@ msgstr ""
 
 #: signbank/dictionary/forms.py:66
 msgid "Dutch Gloss"
-msgstr ""
+msgstr "Gloss"
 
 #: signbank/dictionary/forms.py:67
 msgid "English Gloss"
