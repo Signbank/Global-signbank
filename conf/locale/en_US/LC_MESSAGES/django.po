@@ -571,7 +571,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:390
 msgid "Annotation ID gloss: Dutch"
-msgstr ""
+msgstr "Annotation ID gloss"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:391
 msgid "Annotation ID gloss: English"
@@ -706,7 +706,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:197
 msgid "Translation equivalents in Dutch"
-msgstr ""
+msgstr "Translation equivalents"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:198
 msgid "Annotation Instructions"

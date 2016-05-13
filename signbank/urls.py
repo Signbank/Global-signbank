@@ -33,7 +33,7 @@ urlpatterns = patterns('',
 
     #(r'^register.html', 'signbank.views.index'),
     url(r'^logout.html', 'django.contrib.auth.views.logout',
-                       {'next_page': "/"}, "logout"),
+                       {'next_page': settings.URL}, "logout"),
 
     url(r'^spell/twohanded.html$', TemplateView.as_view(template_name='fingerspell/fingerspellingtwohanded.html')),
     url(r'^spell/practice.html$', TemplateView.as_view(template_name='fingerspell/fingerspellingpractice.html')),
