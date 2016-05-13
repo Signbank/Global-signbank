@@ -45,6 +45,11 @@
 
 {% block content %}
 
+{% if request.GET.warning %}
+<div class="alert alert-warning">{{ request.GET.warning }}</div>
+{% endif %}
+
+
 <div id="signinfo" class='navbar navbar-default navbar-collapse'>
    
     <div class='btn-group'>
