@@ -739,7 +739,7 @@ class UserProfile(models.Model):
     # Other fields here
     last_used_language = models.CharField(max_length=5, default="en")
     expiry_date = models.DateField(null=True, blank=True)
-    number_of_logins = models.IntegerField()
+    number_of_logins = models.IntegerField(null=True,default=0)
 
     def save(self, *args, **kwargs):
         if not self.pk:
