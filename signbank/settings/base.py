@@ -303,3 +303,4 @@ XALLOWED_TAGS = [ '',
                 ]
 
 EARLIEST_GLOSS_CREATION_DATE = datetime(2015,1,1)
+SUPPORTED_CITATION_IMAGE_EXTENSIONS = ['.jpg','.jpeg','.png']

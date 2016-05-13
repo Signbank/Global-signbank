@@ -25,7 +25,7 @@ import forms
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import video_to_signbank, compare_valuedict_to_gloss, MachineValueNotFoundError
 
-from signbank.settings.base import LANGUAGE_CODE, OTHER_MEDIA_TO_IMPORT_FOLDER, OTHER_MEDIA_DIRECTORY, STATIC_URL, WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY
+import signbank.settings
 from django.utils.translation import override
 
 def login_required_config(f):
@@ -356,10 +356,10 @@ def import_videos(request):
 def import_other_media(request):
 
     #First do some checks
-    if not os.path.isfile(OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'):
+    if not os.path.isfile(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'):
         return HttpResponse('The required file index.csv is not present')
 
-    for n,row in enumerate(csv.reader(open(OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'))):
+    for n,row in enumerate(csv.reader(open(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'))):
 
         #Skip the header
         if n == 0:
@@ -383,7 +383,7 @@ def import_other_media(request):
         other_media = OtherVideo()
         other_media.parent_gloss = parent_gloss
         other_media.alternative_gloss = alternative_gloss
-        other_media.path = STATIC_URL+'othermedia/'+str(parent_gloss.pk)+'/'+file_name
+        other_media.path = settings.STATIC_URL+'othermedia/'+str(parent_gloss.pk)+'/'+file_name
 
         try:
             other_media.type = other_media_type_machine_value
@@ -391,14 +391,14 @@ def import_other_media(request):
             pass
 
         #Copy the file
-        goal_folder = OTHER_MEDIA_DIRECTORY+str(parent_gloss.pk)+'/'
+        goal_folder = settings.OTHER_MEDIA_DIRECTORY+str(parent_gloss.pk)+'/'
 
         try:
             os.mkdir(goal_folder)
         except OSError:
             pass #Do nothing if the folder exists already
 
-        shutil.copyfile(OTHER_MEDIA_TO_IMPORT_FOLDER+file_name,goal_folder+file_name)
+        shutil.copyfile(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+file_name,goal_folder+file_name)
 
         #Copy at the end, so it only goes through if there was no crash before
         other_media.save()
@@ -521,7 +521,7 @@ def import_csv(request):
                 gloss.save()
                 continue
 
-            with override(LANGUAGE_CODE):
+            with override(settings.LANGUAGE_CODE):
 
                 #Replace the value for bools
                 if gloss._meta.get_field_by_name(fieldname)[0].__class__.__name__ == 'NullBooleanField':
@@ -558,6 +558,11 @@ def recently_added_glosses(request):
 
 def add_image(request):
 
+    if request.META.has_key('HTTP_REFERER'):
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
+
     if request.method == 'POST':
 
         form = ImageUploadForGlossForm(request.POST, request.FILES)
@@ -570,6 +575,9 @@ def add_image(request):
             imagefile = form.cleaned_data['imagefile']
             extension = '.'+imagefile.name.split('.')[-1]
 
+            if extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+                return redirect(url+'&warning="File extension not supported! Please convert to png or jpg"')
+
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
             if gloss.sn != None:
@@ -580,7 +588,7 @@ def add_image(request):
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing image for this sign
-            goal_path =  WRITABLE_FOLDER+GLOSS_IMAGE_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
+            goal_path =  settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
             goal_location = goal_path + gloss.idgloss + '-' + str(gloss.pk) + extension
 
             #First make the dir if needed
@@ -591,7 +599,7 @@ def add_image(request):
 
             #Remove previous video
             if gloss.get_image_path():
-                os.remove(WRITABLE_FOLDER+gloss.get_image_path())
+                os.remove(settings.WRITABLE_FOLDER+gloss.get_image_path())
 
             with open(goal_location, 'wb+') as destination:
                 for chunk in imagefile.chunks():
@@ -603,8 +611,4 @@ def add_image(request):
     # referring page, should just be the case of hitting
     # Upload without choosing a file but could be
     # a malicious request, if no referrer, go back to root
-    if request.META.has_key('HTTP_REFERER'):
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
     return redirect(url)
