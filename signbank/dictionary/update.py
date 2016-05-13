@@ -12,6 +12,7 @@ from datetime import datetime
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
+import signbank.settings
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY
 
 from django.utils.translation import ugettext_lazy as _
@@ -21,7 +22,11 @@ def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
     
     if request.method == "POST":
-        
+
+        if not settings.SEPARATE_ENGLISH_IDGLOSS_FIELD:
+            request.POST = request.POST.copy() #Make it mutable
+            request.POST['annotation_idgloss_en'] = request.POST['annotation_idgloss']
+
         form = GlossCreateForm(request.POST)
 
         if len(Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
@@ -40,7 +45,7 @@ def add_gloss(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
         else:
-            return render_to_response('dictionary/add_gloss_form.html', 
+            return render_to_response('dictionary/add_gloss_form.html',
                                       {'add_gloss_form': form},
                                       context_instance=RequestContext(request))
         

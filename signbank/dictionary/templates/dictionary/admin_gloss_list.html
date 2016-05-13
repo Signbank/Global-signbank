@@ -392,7 +392,11 @@ function clearForm(myFormElement) {
     <thead>
       <tr>
            <th>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
            <th>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
            <th>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
            <th>{% trans "Strong hand" %}</th>
@@ -405,7 +409,10 @@ function clearForm(myFormElement) {
     {% for gloss in object_list %}
         <tr {% if gloss.has_video %}class="success"{% endif %}>
             <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></td>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
             <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></td>
+            {% endif %}
 
 			<td>
 			{% for translation in gloss.translation_set.all %}
