@@ -1,7 +1,3 @@
-bin/
-pybin/
-media/
-signbank/settings/server_specific/
 .hg/*
 .hgignore
 build/django
