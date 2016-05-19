@@ -64,6 +64,9 @@ ATTRS_FOR_FORMS = {'class':'form-control'};
 class GlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Dutch Gloss"))
+    # ============= EK: ====================
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="idgloss")
+    # ======================================
     englishGloss = forms.CharField(label=_("English Gloss"))
     tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
     nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])

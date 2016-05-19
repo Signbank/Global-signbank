@@ -132,8 +132,8 @@ class GlossVideo(models.Model, VideoPosterMixin):
         gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
     except (NameError,AttributeError,ImportError):
         from signbank.dictionary.models import *
-#        from signbank.dictionary.models import Gloss
-        gloss = models.ForeignKey(Gloss)
+        from signbank.dictionary.models import Gloss
+#        gloss = models.ForeignKey(Gloss)
     
     
     ## video version, version = 0 is always the one that will be displayed

@@ -1,4 +1,4 @@
-{% extends "baselayout.html" %}
+﻿{% extends "baselayout.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
 {% block bootstrap3_title %}Signbank: Search Signs{% endblock %}
@@ -67,6 +67,24 @@ function clearForm(myFormElement) {
     }
     return(false);
 }
+// ---------------------------------------------------------
+// Name:  do_sort_column
+// Goal:  set the value of the hidden [sortOrder] field 
+//        and then submit the form (adminsearch) again
+// History: ERK 18/May/2016
+// ---------------------------------------------------------
+function do_sort_column(field_name, action, frmName) {
+  var sOrder = field_name;  // Second attempt: use field [sortOrder] inside forms.py::GlossSearchForm
+  if (action == 'desc') {
+    sOrder = '-' + sOrder;
+  } else if (action == 'del') {
+    sOrder = 'idgloss';
+  }
+  // Also to the [sortOrder] field
+  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
+  // Submit the form with the indicated name
+  $("#" + frmName).submit();
+}
    </script>
 {% endblock %}
 
@@ -76,7 +94,11 @@ function clearForm(myFormElement) {
 
 <div id='searchformwell' class='well'>
     <form name='adminsearch' id='adminsearch'>
-        
+        <!-- EK: A sort-order specification is in a hidden form field -->
+        <div class="hidden">
+          <input name='sortOrder' class='form-control' value='idgloss' >
+        </div>
+        <!-- ===================================================== -->
         <div>
             <table class='table' id='searchfields'>
                 <tr>
@@ -323,7 +345,8 @@ function clearForm(myFormElement) {
         </div>
 
         <div class='btn-group'>
-            <input class='btn btn-primary' type='submit' name='submit' value='{% trans "Search" %}'>
+            <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
+            <input class='btn btn-primary' type='submit' name='submit_button' value='{% trans "Search" %}'>
             {% if perms.dictionary.export_csv %}
             <input class='btn btn-default' type='submit' name='format' value='CSV'>
             {% endif %}
@@ -404,6 +427,30 @@ function clearForm(myFormElement) {
            <th>{% trans "Location" %}</th>
            <th style="width:255px;">{% trans "Tags" %}</th>
       </tr>
+      <!-- EK: provide a second header row that contains clickable sort-order buttons -->
+      <tr>
+           {% with "annotation_idgloss annotation_idgloss_en translation handedness domhndsh subhndsh locprim" as head_fields %}
+           {% for field in head_fields.split  %}
+           {% if SEPARATE_ENGLISH_IDGLOSS_FIELD or field != annotation_idgloss_en %}
+           {% with minfield="-"|add:field %}
+           <th>
+             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+             </a>
+             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+             </a>
+             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
+               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
+             {% endif %}
+           </th>
+           {% endwith %}
+           {% endif %}
+           {% endfor %}
+           {% endwith %}
+           <th style="width:255px;"></th>
+      </tr>
+      <!-- ==========================================================================  -->
     </thead>
     <tbody>
     {% for gloss in object_list %}
