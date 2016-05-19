@@ -1,0 +1,491 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <Name>signbank</Name>
+    <RootNamespace>signbank</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <PythonRunWebServerCommandArguments>runserver %SERVER_PORT% $(CommandLineArguments)</PythonRunWebServerCommandArguments>
+    <PythonDebugWebServerCommandArguments>runserver --noreload %SERVER_PORT% $(CommandLineArguments)</PythonDebugWebServerCommandArguments>
+    <CommandLineArguments>runserver</CommandLineArguments>
+    <InterpreterId>{aa2edc92-1982-41f1-920f-bfa84ef1e916}</InterpreterId>
+    <InterpreterVersion>2.7</InterpreterVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{1d56ef0d-11b2-42a5-9992-55a254d0a9ae}</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <ProjectTypeGuids>{5F0BE9CA-D677-4A4D-8806-6076C0FAAD37};{349c5851-65df-11da-9384-00065b846f21};{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <StartupFile>pybin\develop.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <LaunchProvider>Django launcher</LaunchProvider>
+    <OutputPath>.</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="pybin\develop.py" />
+    <Compile Include="pybin\staging.py" />
+    <Compile Include="pybin\runtests.py" />
+    <Compile Include="pybin\production.py" />
+    <Compile Include="bin\wfastcgi.py" />
+    <Compile Include="signbank\context_processors.py" />
+    <Compile Include="signbank\adminsite.py" />
+    <Compile Include="signbank\autorefresh.py" />
+    <Compile Include="signbank\settings\server_specific\ngt_win.py" />
+    <Compile Include="signbank\tools.py" />
+    <Compile Include="signbank\urls.py" />
+    <Compile Include="signbank\log.py" />
+    <Compile Include="signbank\wsgi.py" />
+    <Compile Include="signbank\__init__.py" />
+    <Compile Include="signbank\video\tests.py" />
+    <Compile Include="signbank\video\admin.py" />
+    <Compile Include="signbank\video\fields.py" />
+    <Compile Include="signbank\video\forms.py" />
+    <Compile Include="signbank\video\convertvideo.py" />
+    <Compile Include="signbank\video\models.py" />
+    <Compile Include="signbank\video\views.py" />
+    <Compile Include="signbank\video\urls.py" />
+    <Compile Include="signbank\video\__init__.py" />
+    <Compile Include="signbank\video\management\__init__.py" />
+    <Compile Include="signbank\video\management\commands\makejpeg.py" />
+    <Compile Include="signbank\video\management\commands\convertvideo.py" />
+    <Compile Include="signbank\video\management\commands\importvideo.py" />
+    <Compile Include="signbank\video\management\commands\__init__.py" />
+    <Compile Include="signbank\video\migrations\0007_auto__del_field_glossvideo_gloss_sn.py" />
+    <Compile Include="signbank\video\migrations\0006_copy_gloss_sn.py" />
+    <Compile Include="signbank\video\migrations\0003_auto__add_glossvideo.py" />
+    <Compile Include="signbank\video\migrations\0001_initial.py" />
+    <Compile Include="signbank\video\migrations\0005_auto__add_field_glossvideo_gloss.py" />
+    <Compile Include="signbank\video\migrations\0004_auto__add_field_glossvideo_version.py" />
+    <Compile Include="signbank\video\migrations\__init__.py" />
+    <Compile Include="signbank\video\migrations\0002_auto__del_videoset__del_videofile__del_field_video_geometry__del_field.py" />
+    <Compile Include="signbank\pages\admin.py" />
+    <Compile Include="signbank\pages\middleware.py" />
+    <Compile Include="signbank\pages\context_processors.py" />
+    <Compile Include="signbank\pages\models.py" />
+    <Compile Include="signbank\pages\views.py" />
+    <Compile Include="signbank\pages\urls.py" />
+    <Compile Include="signbank\pages\__init__.py" />
+    <Compile Include="signbank\pages\migrations\0003_auto__add_field_page_title_chinese__add_field_page_content_chinese.py" />
+    <Compile Include="signbank\pages\migrations\0001_initial.py" />
+    <Compile Include="signbank\pages\migrations\__init__.py" />
+    <Compile Include="signbank\pages\migrations\0002_auto__add_field_page_title_dutch.py" />
+    <Compile Include="signbank\registration\forms.py" />
+    <Compile Include="signbank\registration\models.py" />
+    <Compile Include="signbank\registration\views.py" />
+    <Compile Include="signbank\registration\urls.py" />
+    <Compile Include="signbank\registration\__init__.py" />
+    <Compile Include="signbank\registration\migrations\0001_initial.py" />
+    <Compile Include="signbank\registration\migrations\0002_auto__chg_field_userprofile_postcode.py" />
+    <Compile Include="signbank\registration\migrations\__init__.py" />
+    <Compile Include="signbank\registration\bin\delete_expired_users.py" />
+    <Compile Include="signbank\attachments\admin.py" />
+    <Compile Include="signbank\attachments\models.py" />
+    <Compile Include="signbank\attachments\views.py" />
+    <Compile Include="signbank\attachments\urls.py" />
+    <Compile Include="signbank\attachments\__init__.py" />
+    <Compile Include="signbank\attachments\management\__init__.py" />
+    <Compile Include="signbank\attachments\management\commands\import_attachments.py" />
+    <Compile Include="signbank\attachments\management\commands\__init__.py" />
+    <Compile Include="signbank\attachments\migrations\0001_initial.py" />
+    <Compile Include="signbank\attachments\migrations\__init__.py" />
+    <Compile Include="signbank\dictionary\update.py" />
+    <Compile Include="signbank\dictionary\admin.py" />
+    <Compile Include="signbank\dictionary\adminviews.py" />
+    <Compile Include="signbank\dictionary\tagviews.py" />
+    <Compile Include="signbank\dictionary\forms.py" />
+    <Compile Include="signbank\dictionary\models.py" />
+    <Compile Include="signbank\dictionary\views.py" />
+    <Compile Include="signbank\dictionary\urls.py" />
+    <Compile Include="signbank\dictionary\__init__.py" />
+    <Compile Include="signbank\dictionary\templatetags\stylesheet.py" />
+    <Compile Include="signbank\dictionary\templatetags\__init__.py" />
+    <Compile Include="signbank\dictionary\templatetags\underscore_to_space.py" />
+    <Compile Include="signbank\dictionary\management\__init__.py" />
+    <Compile Include="signbank\dictionary\management\commands\glossurls.py" />
+    <Compile Include="signbank\dictionary\management\commands\ingest_csv.py" />
+    <Compile Include="signbank\dictionary\management\commands\permissions.py" />
+    <Compile Include="signbank\dictionary\management\commands\__init__.py" />
+    <Compile Include="signbank\dictionary\migrations\0005_auto__add_field_gloss_locPrimLH__add_field_gloss_locFocSite__add_field.py" />
+    <Compile Include="signbank\dictionary\migrations\0006_auto__chg_field_userprofile_last_used_language__del_field_gloss_creato.py" />
+    <Compile Include="signbank\dictionary\migrations\0002_auto__add_field_fieldchoice_dutch_name.py" />
+    <Compile Include="signbank\dictionary\migrations\0007_auto__add_unique_gloss_idgloss.py" />
+    <Compile Include="signbank\dictionary\migrations\0001_initial.py" />
+    <Compile Include="signbank\dictionary\migrations\0004_auto__add_field_fieldchoice_chinese_name__add_unique_gloss_annotation_.py" />
+    <Compile Include="signbank\dictionary\migrations\0003_auto__add_othervideo.py" />
+    <Compile Include="signbank\dictionary\migrations\__init__.py" />
+    <Compile Include="signbank\dictionary\migrations\0009_auto__add_field_gloss_alternative_id.py" />
+    <Compile Include="signbank\dictionary\migrations\0008_auto__add_field_userprofile_expiry_date__add_field_userprofile_number_.py" />
+    <Compile Include="signbank\dictionary\migrations\import_ngt\get_choices.py" />
+    <Compile Include="signbank\dictionary\migrations\import_ngt\value_translations.py" />
+    <Compile Include="signbank\dictionary\migrations\import_ngt\import_ngt.py" />
+    <Compile Include="signbank\feedback\admin.py" />
+    <Compile Include="signbank\feedback\models.py" />
+    <Compile Include="signbank\feedback\views.py" />
+    <Compile Include="signbank\feedback\urls.py" />
+    <Compile Include="signbank\feedback\__init__.py" />
+    <Compile Include="signbank\feedback\migrations\0001_initial.py" />
+    <Compile Include="signbank\feedback\migrations\0002_auto__add_interpreterfeedback.py" />
+    <Compile Include="signbank\feedback\migrations\__init__.py" />
+    <Compile Include="signbank\settings\base.py" />
+    <Compile Include="signbank\settings\__init__.py" />
+    <Compile Include="signbank\settings\server_specific\empty_template.py" />
+    <Compile Include="signbank\settings\server_specific\ngt.py" />
+    <Compile Include="signbank\settings\server_specific\asl.py" />
+    <Compile Include="signbank\settings\server_specific\__init__.py" />
+    <Compile Include="obj\Debug\attach_server.py" />
+    <Compile Include="obj\Debug\visualstudio_py_util.py" />
+    <Compile Include="obj\Debug\visualstudio_py_debugger.py" />
+    <Compile Include="obj\Debug\visualstudio_py_repl.py" />
+    <Compile Include="obj\Debug\__main__.py" />
+    <Compile Include="obj\Debug\__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="pybin" />
+    <Folder Include="templates" />
+    <Folder Include="bin" />
+    <Folder Include="signbank" />
+    <Folder Include="doc" />
+    <Folder Include="media" />
+    <Folder Include="obj" />
+    <Folder Include="conf" />
+    <Folder Include="templates\ASL-templates" />
+    <Folder Include="templates\NGT-templates" />
+    <Folder Include="templates\ASL-templates\pages" />
+    <Folder Include="templates\ASL-templates\mobile" />
+    <Folder Include="templates\ASL-templates\registration" />
+    <Folder Include="templates\ASL-templates\mobile\numbersigns" />
+    <Folder Include="templates\NGT-templates\pages" />
+    <Folder Include="templates\NGT-templates\mobile" />
+    <Folder Include="templates\NGT-templates\registration" />
+    <Folder Include="templates\NGT-templates\mobile\numbersigns" />
+    <Folder Include="signbank\video" />
+    <Folder Include="signbank\pages" />
+    <Folder Include="signbank\registration" />
+    <Folder Include="signbank\attachments" />
+    <Folder Include="signbank\dictionary" />
+    <Folder Include="signbank\feedback" />
+    <Folder Include="signbank\settings" />
+    <Folder Include="signbank\video\management" />
+    <Folder Include="signbank\video\migrations" />
+    <Folder Include="signbank\video\templates" />
+    <Folder Include="signbank\video\testmedia" />
+    <Folder Include="signbank\video\management\commands" />
+    <Folder Include="signbank\pages\migrations" />
+    <Folder Include="signbank\pages\templates" />
+    <Folder Include="signbank\pages\templates\pages" />
+    <Folder Include="signbank\pages\templates\mobile" />
+    <Folder Include="signbank\pages\templates\mobile\pages" />
+    <Folder Include="signbank\registration\migrations" />
+    <Folder Include="signbank\registration\templates" />
+    <Folder Include="signbank\registration\bin" />
+    <Folder Include="signbank\registration\locale" />
+    <Folder Include="signbank\registration\templates\registration" />
+    <Folder Include="signbank\registration\locale\de" />
+    <Folder Include="signbank\registration\locale\fr" />
+    <Folder Include="signbank\registration\locale\en" />
+    <Folder Include="signbank\registration\locale\de\LC_MESSAGES" />
+    <Folder Include="signbank\registration\locale\fr\LC_MESSAGES" />
+    <Folder Include="signbank\registration\locale\en\LC_MESSAGES" />
+    <Folder Include="signbank\attachments\management" />
+    <Folder Include="signbank\attachments\migrations" />
+    <Folder Include="signbank\attachments\templates" />
+    <Folder Include="signbank\attachments\management\commands" />
+    <Folder Include="signbank\dictionary\templatetags" />
+    <Folder Include="signbank\dictionary\management" />
+    <Folder Include="signbank\dictionary\migrations" />
+    <Folder Include="signbank\dictionary\templates" />
+    <Folder Include="signbank\dictionary\fixtures" />
+    <Folder Include="signbank\dictionary\management\commands" />
+    <Folder Include="signbank\dictionary\migrations\import_ngt" />
+    <Folder Include="signbank\dictionary\templates\mobile" />
+    <Folder Include="signbank\dictionary\templates\dictionary" />
+    <Folder Include="signbank\dictionary\templates\mobile\dictionary" />
+    <Folder Include="signbank\feedback\migrations" />
+    <Folder Include="signbank\feedback\templates" />
+    <Folder Include="signbank\feedback\templates\feedback" />
+    <Folder Include="signbank\settings\server_specific" />
+    <Folder Include="media\admin" />
+    <Folder Include="media\django_summernote" />
+    <Folder Include="media\ecv" />
+    <Folder Include="media\glossvideo" />
+    <Folder Include="media\othermedia" />
+    <Folder Include="media\numbersigns" />
+    <Folder Include="media\handshapes" />
+    <Folder Include="media\images" />
+    <Folder Include="media\wymeditor" />
+    <Folder Include="media\bootstrap" />
+    <Folder Include="media\css" />
+    <Folder Include="media\jquery-mobile" />
+    <Folder Include="media\js" />
+    <Folder Include="media\handshapes\large" />
+    <Folder Include="media\images\NGT" />
+    <Folder Include="media\images\ASL" />
+    <Folder Include="media\images\languages" />
+    <Folder Include="media\images\feedback" />
+    <Folder Include="media\wymeditor\lang" />
+    <Folder Include="media\wymeditor\iframe" />
+    <Folder Include="media\wymeditor\skins" />
+    <Folder Include="media\wymeditor\plugins" />
+    <Folder Include="media\wymeditor\iframe\default" />
+    <Folder Include="media\wymeditor\skins\default" />
+    <Folder Include="media\wymeditor\skins\minimal" />
+    <Folder Include="media\wymeditor\skins\compact" />
+    <Folder Include="media\wymeditor\skins\silver" />
+    <Folder Include="media\wymeditor\skins\twopanels" />
+    <Folder Include="media\wymeditor\skins\minimal\images" />
+    <Folder Include="media\wymeditor\skins\silver\images" />
+    <Folder Include="media\wymeditor\plugins\fullscreen" />
+    <Folder Include="media\wymeditor\plugins\tidy" />
+    <Folder Include="media\wymeditor\plugins\embed" />
+    <Folder Include="media\wymeditor\plugins\resizable" />
+    <Folder Include="media\wymeditor\plugins\hovertools" />
+    <Folder Include="media\bootstrap\fonts" />
+    <Folder Include="media\bootstrap\css" />
+    <Folder Include="media\bootstrap\js" />
+    <Folder Include="media\css\NGT" />
+    <Folder Include="media\css\ASL" />
+    <Folder Include="media\jquery-mobile\images" />
+    <Folder Include="media\jquery-mobile\images\icons-png" />
+    <Folder Include="media\jquery-mobile\images\icons-svg" />
+    <Folder Include="obj\Debug" />
+    <Folder Include="conf\locale" />
+    <Folder Include="conf\locale\cn" />
+    <Folder Include="conf\locale\nl" />
+    <Folder Include="conf\locale\en_US" />
+    <Folder Include="conf\locale\cn\LC_MESSAGES" />
+    <Folder Include="conf\locale\nl\LC_MESSAGES" />
+    <Folder Include="conf\locale\en_US\LC_MESSAGES" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="requirements.txt" />
+    <Content Include="media\wymeditor\iframe\default\wymiframe.css" />
+    <Content Include="media\wymeditor\skins\default\skin.css" />
+    <Content Include="media\wymeditor\skins\minimal\skin.css" />
+    <Content Include="media\wymeditor\skins\compact\skin.css" />
+    <Content Include="media\wymeditor\skins\silver\skin.css" />
+    <Content Include="media\wymeditor\skins\twopanels\skin.css" />
+    <Content Include="media\bootstrap\css\bootstrap.min.css" />
+    <Content Include="media\bootstrap\css\bootstrap-theme.css" />
+    <Content Include="media\bootstrap\css\bootstrap.css" />
+    <Content Include="media\bootstrap\css\bootstrap-theme.min.css" />
+    <Content Include="media\css\tagmanager.css" />
+    <Content Include="media\css\minimalistic_language_picker.css" />
+    <Content Include="media\css\mobile.css" />
+    <Content Include="media\css\style.css" />
+    <Content Include="media\css\NGT\main.css" />
+    <Content Include="media\css\ASL\main.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.inline-svg-1.4.2.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile-1.4.2.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.icons-1.4.2.min.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.external-png-1.4.2.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.theme-1.4.2.min.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.structure-1.4.2.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.inline-svg-1.4.2.min.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.structure-1.4.2.min.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile-1.4.2.min.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.inline-png-1.4.2.min.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.theme-1.4.2.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.icons-1.4.2.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.inline-png-1.4.2.css" />
+    <Content Include="media\jquery-mobile\jquery.mobile.external-png-1.4.2.min.css" />
+    <Content Include="media\wymeditor\jquery.wymeditor.pack.js" />
+    <Content Include="media\wymeditor\jquery.wymeditor.js" />
+    <Content Include="media\wymeditor\jquery.wymeditor.min.js" />
+    <Content Include="media\wymeditor\lang\it.js" />
+    <Content Include="media\wymeditor\lang\en.js" />
+    <Content Include="media\wymeditor\lang\hr.js" />
+    <Content Include="media\wymeditor\lang\tr.js" />
+    <Content Include="media\wymeditor\lang\ru.js" />
+    <Content Include="media\wymeditor\lang\cs.js" />
+    <Content Include="media\wymeditor\lang\bg.js" />
+    <Content Include="media\wymeditor\lang\nn.js" />
+    <Content Include="media\wymeditor\lang\fa.js" />
+    <Content Include="media\wymeditor\lang\fi.js" />
+    <Content Include="media\wymeditor\lang\sv.js" />
+    <Content Include="media\wymeditor\lang\pt.js" />
+    <Content Include="media\wymeditor\lang\de.js" />
+    <Content Include="media\wymeditor\lang\pl.js" />
+    <Content Include="media\wymeditor\lang\he.js" />
+    <Content Include="media\wymeditor\lang\pt-br.js" />
+    <Content Include="media\wymeditor\lang\ca.js" />
+    <Content Include="media\wymeditor\lang\es.js" />
+    <Content Include="media\wymeditor\lang\zh_cn.js" />
+    <Content Include="media\wymeditor\lang\hu.js" />
+    <Content Include="media\wymeditor\lang\fr.js" />
+    <Content Include="media\wymeditor\lang\nb.js" />
+    <Content Include="media\wymeditor\lang\nl.js" />
+    <Content Include="media\wymeditor\skins\default\skin.js" />
+    <Content Include="media\wymeditor\skins\minimal\skin.js" />
+    <Content Include="media\wymeditor\skins\compact\skin.js" />
+    <Content Include="media\wymeditor\skins\silver\skin.js" />
+    <Content Include="media\wymeditor\skins\twopanels\skin.js" />
+    <Content Include="media\wymeditor\plugins\fullscreen\jquery.wymeditor.fullscreen.js" />
+    <Content Include="media\wymeditor\plugins\tidy\jquery.wymeditor.tidy.js" />
+    <Content Include="media\wymeditor\plugins\embed\jquery.wymeditor.embed.js" />
+    <Content Include="media\wymeditor\plugins\resizable\jquery.wymeditor.resizable.js" />
+    <Content Include="media\wymeditor\plugins\hovertools\jquery.wymeditor.hovertools.js" />
+    <Content Include="media\bootstrap\js\bootstrap.js" />
+    <Content Include="media\bootstrap\js\bootstrap.min.js" />
+    <Content Include="media\jquery-mobile\jquery.mobile-1.4.2.min.js" />
+    <Content Include="media\jquery-mobile\jquery.mobile-1.4.2.js" />
+    <Content Include="media\js\tagmanager.js" />
+    <Content Include="media\js\jquery.jeditable.mini.js" />
+    <Content Include="media\js\jquery.dataTables.min.js" />
+    <Content Include="media\js\jquery.confirm-1.3.js" />
+    <Content Include="media\js\typeahead.bundle.min.js" />
+    <Content Include="media\js\fspractice.js" />
+    <Content Include="media\js\jquery.jeditable.checkbox.js" />
+    <Content Include="media\js\nsscript.js" />
+    <Content Include="media\js\fingerspelling.js" />
+    <Content Include="media\js\minimalistic_language_picker.js" />
+    <Content Include="media\js\numbersigns.js" />
+    <Content Include="media\js\jquery-1.11.0.min.js" />
+    <Content Include="media\js\gloss_edit.js" />
+    <Content Include="templates\ASL-templates\500.html" />
+    <Content Include="templates\ASL-templates\loginform.html" />
+    <Content Include="templates\ASL-templates\reload_signbank.html" />
+    <Content Include="templates\ASL-templates\404.html" />
+    <Content Include="templates\ASL-templates\searchlayout.html" />
+    <Content Include="templates\ASL-templates\compat.html" />
+    <Content Include="templates\ASL-templates\plain.html" />
+    <Content Include="templates\ASL-templates\403.html" />
+    <Content Include="templates\ASL-templates\menu.html" />
+    <Content Include="templates\ASL-templates\baselayout.html" />
+    <Content Include="templates\ASL-templates\pages\default.html" />
+    <Content Include="templates\ASL-templates\pages\mainpage.html" />
+    <Content Include="templates\ASL-templates\mobile\loginform.html" />
+    <Content Include="templates\ASL-templates\mobile\baselayout.html" />
+    <Content Include="templates\ASL-templates\mobile\numbersigns\numbersigns.html" />
+    <Content Include="templates\ASL-templates\registration\password_reset_confirm.html" />
+    <Content Include="templates\ASL-templates\registration\password_reset_complete.html" />
+    <Content Include="templates\ASL-templates\registration\password_reset_email.html" />
+    <Content Include="templates\ASL-templates\registration\password_reset_done.html" />
+    <Content Include="templates\ASL-templates\registration\password_reset_form.html" />
+    <Content Include="templates\NGT-templates\500.html" />
+    <Content Include="templates\NGT-templates\loginform.html" />
+    <Content Include="templates\NGT-templates\reload_signbank.html" />
+    <Content Include="templates\NGT-templates\404.html" />
+    <Content Include="templates\NGT-templates\searchlayout.html" />
+    <Content Include="templates\NGT-templates\compat.html" />
+    <Content Include="templates\NGT-templates\plain.html" />
+    <Content Include="templates\NGT-templates\403.html" />
+    <Content Include="templates\NGT-templates\menu.html" />
+    <Content Include="templates\NGT-templates\baselayout.html" />
+    <Content Include="templates\NGT-templates\pages\default.html" />
+    <Content Include="templates\NGT-templates\pages\mainpage.html" />
+    <Content Include="templates\NGT-templates\mobile\loginform.html" />
+    <Content Include="templates\NGT-templates\mobile\baselayout.html" />
+    <Content Include="templates\NGT-templates\mobile\numbersigns\numbersigns.html" />
+    <Content Include="templates\NGT-templates\registration\password_reset_confirm.html" />
+    <Content Include="templates\NGT-templates\registration\password_reset_complete.html" />
+    <Content Include="templates\NGT-templates\registration\password_reset_email.html" />
+    <Content Include="templates\NGT-templates\registration\password_reset_done.html" />
+    <Content Include="templates\NGT-templates\registration\password_reset_form.html" />
+    <Content Include="signbank\video\templates\iframe.html" />
+    <Content Include="signbank\video\templates\addvideo.html" />
+    <Content Include="signbank\pages\templates\pages\medical.html" />
+    <Content Include="signbank\pages\templates\pages\howhelp.html" />
+    <Content Include="signbank\pages\templates\pages\default.html" />
+    <Content Include="signbank\pages\templates\pages\mainpage.html" />
+    <Content Include="signbank\pages\templates\mobile\pages\mainpage.html" />
+    <Content Include="signbank\registration\templates\registration\registration_form.html" />
+    <Content Include="signbank\registration\templates\registration\login.html" />
+    <Content Include="signbank\registration\templates\registration\activate.html" />
+    <Content Include="signbank\registration\templates\registration\registration_complete.html" />
+    <Content Include="signbank\registration\templates\registration\logout.html" />
+    <Content Include="signbank\attachments\templates\list.html" />
+    <Content Include="signbank\dictionary\templates\mobile\dictionary\word.html" />
+    <Content Include="signbank\dictionary\templates\mobile\dictionary\search_result.html" />
+    <Content Include="signbank\dictionary\templates\mobile\dictionary\index.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\update_video.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\admin_gloss_list.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\gloss_list.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\add_gloss_form.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\gloss_detail.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\word.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\recently_added_glosses.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\import_csv.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\missingvideo.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\search_result.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\warning.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\update_result.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\add_gloss.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\glosstags.html" />
+    <Content Include="signbank\dictionary\templates\dictionary\index.html" />
+    <Content Include="signbank\feedback\templates\feedback\viewsignfeedback.html" />
+    <Content Include="signbank\feedback\templates\feedback\interpreter.html" />
+    <Content Include="signbank\feedback\templates\feedback\generalfeedbacksummary.html" />
+    <Content Include="signbank\feedback\templates\feedback\missingsign.html" />
+    <Content Include="signbank\feedback\templates\feedback\generalfeedback.html" />
+    <Content Include="signbank\feedback\templates\feedback\signfeedback.html" />
+    <Content Include="signbank\feedback\templates\feedback\index.html" />
+    <Content Include="signbank\feedback\templates\feedback\show.html" />
+    <Content Include="doc\usage.html" />
+    <Content Include="media\maintenance.html" />
+    <Content Include="media\wymeditor\iframe\default\wymiframe.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="D:\env\signbank\py27-django161\">
+      <Id>{aa2edc92-1982-41f1-920f-bfa84ef1e916}</Id>
+      <BaseInterpreter>{9a7a9026-48c1-4688-9d5d-e5699d47d074}</BaseInterpreter>
+      <Version>2.7</Version>
+      <Description>py27-django161 (Python 64-bit 2.7)</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <LibraryPath>Lib\</LibraryPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>Amd64</Architecture>
+    </Interpreter>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.Django.targets" />
+  <!-- Specify pre- and post-build commands in the BeforeBuild and 
+       AfterBuild targets below. -->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <AutoAssignPort>True</AutoAssignPort>
+          <UseCustomServer>True</UseCustomServer>
+          <CustomServerUrl>http://localhost</CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}" User="">
+        <WebProjectProperties>
+          <StartPageUrl>
+          </StartPageUrl>
+          <StartAction>CurrentPage</StartAction>
+          <AspNetDebugging>True</AspNetDebugging>
+          <SilverlightDebugging>False</SilverlightDebugging>
+          <NativeDebugging>False</NativeDebugging>
+          <SQLDebugging>False</SQLDebugging>
+          <ExternalProgram>
+          </ExternalProgram>
+          <StartExternalURL>
+          </StartExternalURL>
+          <StartCmdLineArguments>
+          </StartCmdLineArguments>
+          <StartWorkingDirectory>
+          </StartWorkingDirectory>
+          <EnableENC>False</EnableENC>
+          <AlwaysStartWebServerOnDebug>False</AlwaysStartWebServerOnDebug>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

@@ -1,0 +1,2 @@
+D:/env/signbank/py27-django161/lib/site-packages/django/contrib/admin/static/admin
+../../../virtualenv/signbank/lib/python2.7/site-packages/django/contrib/admin/static/admin
