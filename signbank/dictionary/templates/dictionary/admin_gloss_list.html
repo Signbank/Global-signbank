@@ -454,7 +454,17 @@ function do_sort_column(field_name, action, frmName) {
     </thead>
     <tbody>
     {% for gloss in object_list %}
-        <tr {% if gloss.has_video %}class="success"{% endif %}>
+        <!-- <tr {% if gloss.has_video %}class="success"{% endif %}> -->
+        <tr {% if gloss.is_wrong_sign %}
+                class="danger"
+            {% else %}
+                {% if not gloss.has_video %}
+                    class="warning"
+                {% else %}
+                    {% if gloss.isNew %}class="info"{% endif %}
+                {% endif %}
+            {% endif %}>
+
             <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></td>
 
             {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
