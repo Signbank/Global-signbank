@@ -2533,7 +2533,7 @@ msgid "Morphology"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:232
-msgid "Delete This Morphology"
+msgid "Delete This Morpheme"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:236
@@ -2551,7 +2551,7 @@ msgid "ID Gloss/Annotation ID Gloss"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:270
-msgid "Add Morphology Definition"
+msgid "Add Morpheme"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:287

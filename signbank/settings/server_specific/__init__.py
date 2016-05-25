@@ -1,1 +1,1 @@
-from ngt import *
+from ngt_win import *

@@ -2570,8 +2570,8 @@ msgid "Morphology"
 msgstr "Morfologie"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:232
-msgid "Delete This Morphology"
-msgstr "Verwijder deze morfologische informatie"
+msgid "Delete This Morpheme"
+msgstr "Verwijder deze morfeem"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:236
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:421
@@ -2590,8 +2590,8 @@ msgid "ID Gloss/Annotation ID Gloss"
 msgstr "ID-glos/Annotatie-ID-Glos"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:270
-msgid "Add Morphology Definition"
-msgstr "Voeg morfologiedefinitie toe"
+msgid "Add Morpheme"
+msgstr "Voeg morfeem toe"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:287
 msgid "Phonology"
