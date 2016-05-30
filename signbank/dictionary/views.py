@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from tagging.models import Tag, TaggedItem
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.utils.http import urlquote
 from django.utils.encoding import smart_unicode
 
 import os
@@ -288,7 +288,11 @@ def search(request):
     if form.is_valid():
 
         glossQuery = form.cleaned_data['glossQuery']
+        # Issue #153: make sure + and - signs are translated correctly into the search URL
+        glossQuery = urlquote(glossQuery)
         term = form.cleaned_data['query']
+        # Issue #153: do the same with the Translation, encoded by 'query'
+        term = urlquote(term)
 
         return HttpResponseRedirect('../../signs/search/?search='+glossQuery+'&keyword='+term)
 
