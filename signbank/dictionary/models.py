@@ -572,26 +572,6 @@ minor or insignificant ways that can be ignored.""")
         
         return self.get_video() != None
 
-    # --------------------------------------------------------------------------------------------
-    # Name :    has_tag
-    # Goal :    Check if this instance has a tag (defined in database) with the indicated name
-    # History:
-    # 25/may/2016   ERK Created
-    # --------------------------------------------------------------------------------------------
-    def has_tag(self, tagname):
-        """Test to see if tag with @sTagName is set for this dictionary item"""
-        tag_list = tagging.models.Tag.objects.get_for_object(self).filter(name=tagname)
-        return len(tag_list) > 0
-
-    # --------------------------------------------------------------------------------------------
-    # Name :    is_wrong_sign
-    # Goal :    Test if dictionary entry has [video:_wrong_sign] associated with it
-    # History:
-    # 25/may/2016   ERK Created
-    # --------------------------------------------------------------------------------------------
-    def is_wrong_sign(self):
-        return self.has_tag("video:_wrong_sign")
-
     def published_definitions(self):
         """Return a query set of just the published definitions for this gloss
         also filter out those fields not in DEFINITION_FIELDS"""

@@ -1,6 +1,8 @@
 ﻿{% extends "baselayout.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
 {% block bootstrap3_title %}Signbank: Search Signs{% endblock %}
 {% block extrahead %}
 {% endblock %}
@@ -454,16 +456,17 @@ function do_sort_column(field_name, action, frmName) {
     </thead>
     <tbody>
     {% for gloss in object_list %}
-        <!-- <tr {% if gloss.has_video %}class="success"{% endif %}> -->
-        <tr {% if gloss.is_wrong_sign %}
-                class="danger"
+            <!-- EK: the color depends on: (1) tag for wrong sign, (2) availability of video, and (3) gloss database value for 'isNew' -->
+            {% tags_for_object gloss as tag_list %}
+            {% if tag_list|wrong_sign %}
+                <tr class="danger">
+            {% elif not gloss.has_video %}
+                <tr class="warning">
+            {% elif gloss.isNew %}
+                <tr class="info">
             {% else %}
-                {% if not gloss.has_video %}
-                    class="warning"
-                {% else %}
-                    {% if gloss.isNew %}class="info"{% endif %}
-                {% endif %}
-            {% endif %}>
+                <tr>
+            {% endif %}
 
             <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></td>
 
