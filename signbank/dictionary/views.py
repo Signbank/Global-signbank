@@ -596,7 +596,10 @@ def add_image(request):
                 params = {'warning':'File extension not supported! Please convert to png or jpg'}
                 return redirect(add_params_to_url(url,params))
 
+            elif imagefile._size > settings.MAXIMUM_UPLOAD_SIZE:
 
+                params = {'warning':'Uploaded file too large!'}
+                return redirect(add_params_to_url(url,params))
 
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
