@@ -28,6 +28,9 @@ from signbank.tools import video_to_signbank, compare_valuedict_to_gloss, Machin
 import signbank.settings
 from django.utils.translation import override
 
+import urlparse
+from urllib import urlencode
+
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
 
@@ -560,6 +563,15 @@ def recently_added_glosses(request):
 
     return render_to_response('dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()},context_instance=RequestContext(request))
 
+def add_params_to_url(url,params):
+    url_parts = list(urlparse.urlparse(url))
+    query = dict(urlparse.parse_qsl(url_parts[4]))
+    query.update(params)
+    url = urlparse.urlunparse(url_parts)
+
+    url_parts[4] = urlencode(query)
+    return urlparse.urlunparse(url_parts)
+
 def add_image(request):
 
     if request.META.has_key('HTTP_REFERER'):
@@ -580,7 +592,11 @@ def add_image(request):
             extension = '.'+imagefile.name.split('.')[-1]
 
             if extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
-                return redirect(url+'&warning="File extension not supported! Please convert to png or jpg"')
+
+                params = {'warning':'File extension not supported! Please convert to png or jpg'}
+                return redirect(add_params_to_url(url,params))
+
+
 
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
