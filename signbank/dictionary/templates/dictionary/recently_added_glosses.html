@@ -2,6 +2,8 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 {% load i18n %}
+{% load tagging_tags %}
+{% load wrong_sign %}
 
 {% block content %}
 
@@ -17,8 +19,17 @@
         <tr><th style="width:180px;">{% trans "Annotation ID Gloss (Dutch)" %}</th><th style="width:180px;">{% trans "Annotation ID Gloss (English)" %}</th><th style="width:180px;">{% trans "Creator" %}</th><th>{% trans "Creation date" %}</th></tr>
 
         {% for gloss in glosses %}
-        <!-- <tr {% if gloss.has_video %}class="success"{% endif %}> -->
-        <tr {% if not gloss.has_video %}class="danger"{% endif %}>
+        <!-- Apply three-way coloring: (1) tag for wrong sign, (2) availability of video, and (3) gloss database value for 'isNew' -->
+        {% tags_for_object gloss as tag_list %}
+        {% if tag_list|wrong_sign %}
+            <tr class="danger">
+        {% elif not gloss.has_video %}
+            <tr class="warning">
+        {% elif gloss.isNew %}
+            <tr class="info">
+        {% else %}
+            <tr>
+        {% endif %}
             <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}">{{gloss.annotation_idgloss}}</a></td>
             <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}">{{gloss.annotation_idgloss_en}}</a></td>
             <td>
