@@ -252,57 +252,62 @@ class GlossListView(ListView):
     
         return response
 
-  # ------------------------------------------------------------------------------------------------------------
-    # Name :  order_queryset_bySortOrder
-    # Goal :  change the sort-order of the query set, depending on the form field [sortOrder]
-    # Note :  the value of [sortOrder] is 'idgloss' by default
-    #         [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_gloss_list.html
-    #         Its value is changed by clicking the up/down buttons in the second row of the search result table
-    # History:
-    # 18/May/2016 ERK Created
-    # ------------------------------------------------------------------------------------------------------------
-    def order_queryset_bySortOrder(self, qs):
-        # Helper: get the string value (element '1') corresponding to a number (element '0') in a list number-string tuples
-        def getStringFromTupleList(lstTuples, number):
-          sBack = [tup[1] for tup in lstTuples if tup[0] == number]
-          return sBack
+    def order_queryset_by_sort_order(self, qs):
+        """Change the sort-order of the query set, depending on the form field [sortOrder]
+
+        The value of [sortOrder] is 'idgloss' by default.
+        [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_gloss_list.html
+        Its value is changed by clicking the up/down buttons in the second row of the search result table
+        """
+
+        def get_string_from_tuple_list(lstTuples, number):
+            """Get the string value corresponding to a number in a list of number-string tuples"""
+            sBack = [tup[1] for tup in lstTuples if tup[0] == number]
+            return sBack
+
         # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
-        def order_queryset_byTupleList(qs, sOrder, sListName):
-          # Get a list of tuples for this sort-order
-          tpList = build_choice_list(sListName)
-          # Determine sort order: ascending is default
-          bReversed = False
-          # Check for a starting '-' sign, which means descending order
-          if (sOrder[0:1] == '-'):
-            sOrder = sOrder[1:]
-            bReversed = True # descending order
-          # Order the list of tuples alphabetically
-          # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
-          tpList = sorted(tpList, key=operator.itemgetter(1))
-          # Order by the string-values in the tuple list
-          return sorted(qs, key=lambda x: getStringFromTupleList(tpList, getattr(x, sOrder)), reverse=bReversed)
+        def order_queryset_by_tuple_list(qs, sOrder, sListName):
+            """Order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]"""
+
+            # Get a list of tuples for this sort-order
+            tpList = build_choice_list(sListName)
+            # Determine sort order: ascending is default
+            bReversed = False
+            if (sOrder[0:1] == '-'):
+                # A starting '-' sign means: descending order
+                sOrder = sOrder[1:]
+                bReversed = True
+
+            # Order the list of tuples alphabetically
+            # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
+            tpList = sorted(tpList, key=operator.itemgetter(1))
+            # Order by the string-values in the tuple list
+            return sorted(qs, key=lambda x: get_string_from_tuple_list(tpList, getattr(x, sOrder)), reverse=bReversed)
         
         # Set the default sort order
         sOrder = 'idgloss'    # Default sort order if nothing is specified
         # See if the form contains any sort-order information
         get = self.request.GET
         if (get.has_key('sortOrder') and get['sortOrder'] != ''):
-          # Take the user-indicated sort order
-          sOrder = get['sortOrder']
+            # Take the user-indicated sort order
+            sOrder = get['sortOrder']
+
         # The ordering method depends on the kind of field:
         # (1) text fields are ordered straightforwardly
         # (2) fields made from a choice_list need special treatment
         if (sOrder.endswith('handedness')):
-          ordered = order_queryset_byTupleList(qs, sOrder, "Handedness")
+            ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness")
         elif (sOrder.endswith('domhndsh') or sOrder.endswith('subhndsh')):
-          ordered = order_queryset_byTupleList(qs, sOrder, "Handshape")
+            ordered = order_queryset_by_tuple_list(qs, sOrder, "Handshape")
         elif (sOrder.endswith('locprim')):
-          ordered = order_queryset_byTupleList(qs, sOrder, "Location")
+            ordered = order_queryset_by_tuple_list(qs, sOrder, "Location")
         else:
-          # Use straightforward ordering on field [sOrder]
-          ordered = qs.order_by(sOrder)
+            # Use straightforward ordering on field [sOrder]
+            ordered = qs.order_by(sOrder)
+
         # return the ordered list
-        return ordered        
+        return ordered
+
     def get_queryset(self):
 
         # get query terms from self.request
@@ -540,9 +545,10 @@ class GlossListView(ListView):
             created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(created_after_date,DT.datetime.now()))
 
-       # print "Final :", len(qs)
+        # print "Final :", len(qs)
         # Sort the queryset by the parameters given
-        qs = self.order_queryset_bySortOrder(qs)
+        qs = self.order_queryset_by_sort_order(qs)
+
         # Return the resulting filtered and sorted queryset
         return qs
 

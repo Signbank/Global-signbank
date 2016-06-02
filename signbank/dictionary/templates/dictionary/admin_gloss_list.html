@@ -69,24 +69,31 @@ function clearForm(myFormElement) {
     }
     return(false);
 }
-// ---------------------------------------------------------
-// Name:  do_sort_column
-// Goal:  set the value of the hidden [sortOrder] field 
-//        and then submit the form (adminsearch) again
-// History: ERK 18/May/2016
-// ---------------------------------------------------------
+
+/**
+ * @param {string} field_name - name of the field to sort on
+ * @param {string} action     - one of: desc, asc, del
+ * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
+ * @returns {void}
+ */
 function do_sort_column(field_name, action, frmName) {
-  var sOrder = field_name;  // Second attempt: use field [sortOrder] inside forms.py::GlossSearchForm
+  // Combine @field_name and @action into [sOrder]
+  var sOrder = field_name;
   if (action == 'desc') {
+    // Descending sort order is signified by a '-' prefix
     sOrder = '-' + sOrder;
   } else if (action == 'del') {
+    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
     sOrder = 'idgloss';
   }
-  // Also to the [sortOrder] field
+
+  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
   $("#" + frmName + " input[name='sortOrder']").val(sOrder);
+
   // Submit the form with the indicated name
   $("#" + frmName).submit();
 }
+
    </script>
 {% endblock %}
 
@@ -96,11 +103,10 @@ function do_sort_column(field_name, action, frmName) {
 
 <div id='searchformwell' class='well'>
     <form name='adminsearch' id='adminsearch'>
-        <!-- EK: A sort-order specification is in a hidden form field -->
+        <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
         <div class="hidden">
           <input name='sortOrder' class='form-control' value='idgloss' >
         </div>
-        <!-- ===================================================== -->
         <div>
             <table class='table' id='searchfields'>
                 <tr>
@@ -429,7 +435,7 @@ function do_sort_column(field_name, action, frmName) {
            <th>{% trans "Location" %}</th>
            <th style="width:255px;">{% trans "Tags" %}</th>
       </tr>
-      <!-- EK: provide a second header row that contains clickable sort-order buttons -->
+      <!-- EK: this second header row contains clickable sort-order buttons -->
       <tr>
            {% with "annotation_idgloss annotation_idgloss_en translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
@@ -452,7 +458,6 @@ function do_sort_column(field_name, action, frmName) {
            {% endwith %}
            <th style="width:255px;"></th>
       </tr>
-      <!-- ==========================================================================  -->
     </thead>
     <tbody>
     {% for gloss in object_list %}
