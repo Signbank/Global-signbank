@@ -417,14 +417,21 @@ def try_code(request):
     """A view for the developer to try out things"""
 
     result = ''
-    all_id_glosses = []
+    # all_id_glosses = []
+    #
+    # for gloss in Gloss.objects.all():
+    #
+    #     if gloss.idgloss in all_id_glosses:
+    #         result += ' '.join([str(gloss.idgloss),str(gloss.annotation_idgloss),str(gloss.annotation_idgloss_en)]) + '<br>'
+    #
+    #     all_id_glosses.append(gloss.idgloss)
 
-    for gloss in Gloss.objects.all():
+    for othermedia in OtherMedia.objects.all():
 
-        if gloss.idgloss in all_id_glosses:
-            result += ' '.join([str(gloss.idgloss),str(gloss.annotation_idgloss),str(gloss.annotation_idgloss_en)]) + '<br>'
+        othermedia.path = othermedia.path.replace('/var/www2/signbank/live/writable/othermedia/','')
+        othermedia.save()
 
-        all_id_glosses.append(gloss.idgloss)
+        result+= ' '+othermedia.path
 
     return HttpResponse(result)
 
