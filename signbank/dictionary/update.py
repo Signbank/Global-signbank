@@ -562,7 +562,7 @@ def add_othermedia(request):
 
                 #Save the database record
                 parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
-                OtherMedia(path=goal_path,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
+                OtherMedia(path=request.POST['gloss']+'/'+request.FILES['file'].name,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 

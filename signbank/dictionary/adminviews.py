@@ -660,7 +660,7 @@ class GlossDetailView(DetailView):
                 except AttributeError:
                     human_value_media_type = getattr(selected_field_choice,'english_name')
 
-            path = other_media.path.replace(OTHER_MEDIA_DIRECTORY,'/media/othermedia/')
+            path = settings.STATIC_URL+'othermedia/'+other_media.path
             context['other_media'].append([other_media.pk, path, human_value_media_type, other_media.alternative_gloss])
 
             #Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
