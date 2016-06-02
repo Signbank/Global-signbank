@@ -722,7 +722,7 @@ class MorphologyDefinition(models.Model):
 
         return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
 
-class OtherVideo(models.Model):
+class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""
 
     parent_gloss = models.ForeignKey(Gloss)

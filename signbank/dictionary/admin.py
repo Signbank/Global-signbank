@@ -33,8 +33,8 @@ class RelationInline(admin.TabularInline):
     verbose_name_plural = "Relations to other Glosses"
     extra = 1
 
-class OtherVideoInline(admin.TabularInline):
-    model = OtherVideo
+class OtherMediaInline(admin.TabularInline):
+    model = OtherMedia
     extra = 1
 
 from django.utils.translation import ugettext_lazy as _
@@ -95,7 +95,7 @@ class GlossAdmin(VersionAdmin):
     list_display += ['morph', 'sense', 'sn']
     search_fields = ['^idgloss', '=sn', '^annotation_idgloss']
     list_filter = ['language', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
-    inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherVideoInline ]
+    inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 
 
 class RegistrationProfileAdmin(admin.ModelAdmin):

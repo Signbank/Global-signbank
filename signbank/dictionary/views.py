@@ -387,7 +387,7 @@ def import_other_media(request):
 
         parent_gloss = Gloss.objects.filter(idgloss=idgloss)[0]
 
-        other_media = OtherVideo()
+        other_media = OtherMedia()
         other_media.parent_gloss = parent_gloss
         other_media.alternative_gloss = alternative_gloss
         other_media.path = settings.STATIC_URL+'othermedia/'+str(parent_gloss.pk)+'/'+file_name

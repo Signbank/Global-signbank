@@ -632,7 +632,7 @@ class GlossDetailView(DetailView):
         context['other_media'] = []
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
 
-        for other_media in gl.othervideo_set.all():
+        for other_media in gl.othermedia_set.all():
 
             if int(other_media.type) == 0:
                 human_value_media_type = '-'

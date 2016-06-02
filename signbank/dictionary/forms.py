@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list, OtherVideo
+from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list, OtherMedia
 from django.conf import settings
 from tagging.models import Tag
 
@@ -171,7 +171,7 @@ class OtherMediaForm(forms.ModelForm):
     alternative_gloss = forms.TextInput()
 
     class Meta:
-        model = OtherVideo
+        model = OtherMedia
         fields = ['type']
 
 class CSVUploadForm(forms.Form):
