@@ -9,6 +9,9 @@ urlpatterns = patterns('',
     (r'^missingsign.html', 'signbank.feedback.views.missingsign'), 
     (r'^generalfeedback.html', 'signbank.feedback.views.generalfeedback'),
     
+    (r'^missing/$', 'signbank.feedback.views.missingsign'),
+    (r'^site/$', 'signbank.feedback.views.generalfeedback'),
+
     (r'^sign/(?P<keyword>.+)-(?P<n>\d+).html$',  'signbank.feedback.views.signfeedback'),
    
     (r'^gloss/(?P<glossid>.+).html$',  'signbank.feedback.views.glossfeedback'),
