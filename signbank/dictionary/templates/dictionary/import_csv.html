@@ -21,7 +21,11 @@
 
         {% if error %}
 
-            {{ error }}
+            <ul>
+            {% for e in error %}
+                <li>{{ e }}</li>
+            {% endfor %}
+            </ul>
 
         {% else %}
 

@@ -505,12 +505,23 @@ def import_csv(request):
             except ValueError:
                 continue
 
-            gloss = Gloss.objects.get(pk=pk)
+            try:
+                gloss = Gloss.objects.get(pk=pk)
+            except ObjectDoesNotExist as e:
+
+                if not error:
+                    error = [e]
+                else:
+                    error.append('Could not find gloss for ID '+str(pk))
 
             try:
                 changes += compare_valuedict_to_gloss(value_dict,gloss)
             except MachineValueNotFoundError as e:
-                error = e
+
+                if not error:
+                    error = [e]
+                else:
+                    error.append(e)
 
         stage = 1
 
