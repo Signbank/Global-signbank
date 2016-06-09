@@ -42,7 +42,8 @@ urlpatterns = patterns('',
     
     url(r'^missingvideo.html$', 'signbank.dictionary.views.missing_video_view'),
 
-    url(r'^import_videos/$', 'signbank.dictionary.views.import_videos'),
+    url(r'^import_images/$', 'signbank.dictionary.views.import_media',{'video':False}),
+    url(r'^import_videos/$', 'signbank.dictionary.views.import_media',{'video':True}),
     url(r'^import_other_media/$', 'signbank.dictionary.views.import_other_media'),
 
     # Admin views

@@ -23,7 +23,7 @@ from signbank.dictionary.update import update_keywords
 import forms
 
 from signbank.video.forms import VideoUploadForGlossForm
-from signbank.tools import video_to_signbank, compare_valuedict_to_gloss, MachineValueNotFoundError
+from signbank.tools import save_media, compare_valuedict_to_gloss, MachineValueNotFoundError
 
 import signbank.settings
 from django.utils.translation import override
@@ -329,12 +329,20 @@ def missing_video_view(request):
     return render_to_response("dictionary/missingvideo.html",
                               {'glosses': glosses})
 
-def import_videos(request):
+def import_media(request,video):
 
     out = '<p>Imported</p><ul>'
     overwritten_files = '<p>Of these files, these were overwritten</p><ul>'
 
-    for filename in os.listdir(settings.VIDEOS_TO_IMPORT_FOLDER):
+    if video:
+        import_folder = settings.VIDEOS_TO_IMPORT_FOLDER
+        goal_directory = settings.GLOSS_VIDEO_DIRECTORY
+    else:
+        import_folder = settings.IMAGES_TO_IMPORT_FOLDER
+        goal_directory = settings.GLOSS_IMAGE_DIRECTORY
+
+
+    for filename in os.listdir(import_folder):
 
         parts = filename.split('.')
         idgloss = '.'.join(parts[:-1])
@@ -345,7 +353,7 @@ def import_videos(request):
         except ObjectDoesNotExist:
             return HttpResponse('Failed at '+filename+'. Could not find '+idgloss+'.')
 
-        overwritten, was_allowed = video_to_signbank(settings.VIDEOS_TO_IMPORT_FOLDER,gloss,extension)
+        overwritten, was_allowed = save_media(import_folder,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
         if not was_allowed:
             return HttpResponse('Failed two overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?')
