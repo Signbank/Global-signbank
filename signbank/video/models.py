@@ -122,6 +122,28 @@ class GlossVideoStorage(FileSystemStorage):
 
 storage = GlossVideoStorage()
 
+
+class GlossVideoHistory(models.Model):
+    """History of video uploading and deletion"""
+
+    action      = models.CharField("Video History Action",max_length=6)      # Can be 'upload' or 'delete'
+    user        = models.CharField("Video History User", max_length=20)      # identifier of the user
+    datestamp   = models.DateTimeField("Data and time of action")            # When was this action done?
+    uploadfile  = models.TextField("User upload path")                       # Full local video upload path
+
+    # Link to the corresponding entry in dictionary.models.Gloss
+    try:
+        import signbank.dictionary.models
+        gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
+    except (NameError, AttributeError, ImportError):
+        try:
+            from signbank.dictionary.models import *
+            gloss = models.ForeignKey(Gloss)
+        except:
+            from signbank.dictionary.models import Gloss
+            gloss = models.ForeignKey(Gloss)
+
+
 class GlossVideo(models.Model, VideoPosterMixin):
     """A video that represents a particular idgloss"""
 
@@ -131,10 +153,17 @@ class GlossVideo(models.Model, VideoPosterMixin):
         import signbank.dictionary.models
         gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
     except (NameError,AttributeError,ImportError):
-        from signbank.dictionary.models import *
-#        from signbank.dictionary.models import Gloss
-        gloss = models.ForeignKey(Gloss)
-    
+        # EK: Old code has ONE level of try-except:
+        #        from signbank.dictionary.models import *
+        #        # from signbank.dictionary.models import Gloss
+        #        gloss = models.ForeignKey(Gloss)
+        # EK: New code has TWO levels of try-except:
+        try:
+            from signbank.dictionary.models import *
+            gloss = models.ForeignKey(Gloss)
+        except:
+            from signbank.dictionary.models import Gloss
+            gloss = models.ForeignKey(Gloss)
     
     ## video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
