@@ -9,6 +9,9 @@ import sys, os, time, shutil
 from convertvideo import extract_frame, convert_video, ffmpeg
 
 from django.core.files.storage import FileSystemStorage
+from django.contrib.auth import models as authmodels
+# from django.contrib.auth.models import User
+from datetime import datetime
 
 class VideoPosterMixin:
     """Base class for video models that adds a method
@@ -122,16 +125,31 @@ class GlossVideoStorage(FileSystemStorage):
 
 storage = GlossVideoStorage()
 
+# The 'action' choices are used in the GlossVideoHistory class
+ACTION_CHOICES = (('delete', 'delete'),
+                  ('upload', 'upload'),
+                  ('rename', 'rename'),
+                  ('watch', 'watch'),
+                  )
+
 
 class GlossVideoHistory(models.Model):
     """History of video uploading and deletion"""
 
-    action      = models.CharField("Video History Action",max_length=6)      # Can be 'upload' or 'delete'
-    user        = models.CharField("Video History User", max_length=20)      # identifier of the user
-    datestamp   = models.DateTimeField("Data and time of action")            # When was this action done?
-    uploadfile  = models.TextField("User upload path")                       # Full local video upload path
+    action = models.CharField("Video History Action",max_length=6, choices=ACTION_CHOICES, default='watch')
+    # When was this action done?
+    datestamp = models.DateTimeField("Date and time of action", auto_now_add=True)  # WAS: default=datetime.now()
+    # See 'vfile' in video.views.addvideo
+    uploadfile = models.TextField("User upload path", default='(not specified)')
+    # See 'goal_location' in addvideo
+    goal_location = models.TextField("Full target path", default='(not specified)')
 
-    # Link to the corresponding entry in dictionary.models.Gloss
+    # WAS: Many-to-many link: to the user that has uploaded or deleted this video
+    # WAS: actor = models.ManyToManyField("", User)
+    # The user that has uploaded or deleted this video
+    actor = models.ForeignKey(authmodels.User)
+
+    # One-to-many link: to the Gloss in dictionary.models.Gloss
     try:
         import signbank.dictionary.models
         gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
@@ -142,6 +160,15 @@ class GlossVideoHistory(models.Model):
         except:
             from signbank.dictionary.models import Gloss
             gloss = models.ForeignKey(Gloss)
+
+    def __unicode__(self):
+
+        # Basic feedback from one History item: gloss-action-date
+        name = self.gloss.idgloss + ': ' + self.action + ', (' + str(self.datestamp) + ')'
+        return name.encode('ascii', errors='replace');
+
+    class Meta:
+        ordering = ['datestamp']
 
 
 class GlossVideo(models.Model, VideoPosterMixin):
