@@ -154,12 +154,9 @@ class GlossVideoHistory(models.Model):
         import signbank.dictionary.models
         gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
     except (NameError, AttributeError, ImportError):
-        try:
-            from signbank.dictionary.models import *
-            gloss = models.ForeignKey(Gloss)
-        except:
-            from signbank.dictionary.models import Gloss
-            gloss = models.ForeignKey(Gloss)
+        # from signbank.dictionary.models import Gloss
+        from signbank.dictionary.models import *
+        gloss = models.ForeignKey(Gloss)
 
     def __unicode__(self):
 
@@ -180,18 +177,10 @@ class GlossVideo(models.Model, VideoPosterMixin):
         import signbank.dictionary.models
         gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
     except (NameError,AttributeError,ImportError):
-        # EK: Old code has ONE level of try-except:
-        #        from signbank.dictionary.models import *
-        #        # from signbank.dictionary.models import Gloss
-        #        gloss = models.ForeignKey(Gloss)
-        # EK: New code has TWO levels of try-except:
-        try:
-            from signbank.dictionary.models import *
-            gloss = models.ForeignKey(Gloss)
-        except:
-            from signbank.dictionary.models import Gloss
-            gloss = models.ForeignKey(Gloss)
-    
+        #from signbank.dictionary.models import Gloss
+        from signbank.dictionary.models import *
+        gloss = models.ForeignKey(Gloss)
+
     ## video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
     # for this gloss
