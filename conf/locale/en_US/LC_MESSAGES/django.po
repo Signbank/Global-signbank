@@ -618,7 +618,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:58
 #, python-format
 msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
-msgstr ""
+msgstr "\"Sign %(glossposn)s of %(glosscount)s in the ASL Dictionary\" "
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:62
 msgid "Next Sign &raquo;"
@@ -1060,7 +1060,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/word.html:5
 #, python-format
 msgid "NGT: sign for %(translation)s"
-msgstr ""
+msgstr "ASL: sign for %(translation)s"
 
 #. Translators: Navigation
 #: signbank/dictionary/templates/dictionary/word.html:39
@@ -1073,7 +1073,7 @@ msgstr ""
 msgid ""
 "Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the NGT "
 "Dictionary"
-msgstr ""
+msgstr "Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the ASL Dictionary "
 
 #: signbank/dictionary/templates/dictionary/word.html:48
 msgid "Next Sign"
@@ -1302,7 +1302,7 @@ msgstr ""
 #: templates/ASL-templates/baselayout.html:50
 #: templates/NGT-templates/baselayout.html:50
 msgid "The NGT Signbank</span> is licensed under a "
-msgstr ""
+msgstr "The ASL Signbank is licensed under a "
 
 #: templates/ASL-templates/baselayout.html:50
 #: templates/NGT-templates/baselayout.html:50
