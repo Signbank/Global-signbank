@@ -36,6 +36,8 @@ def save_media(source_folder,goal_folder,gloss,extension):
     except IOError:
         was_allowed = False
 
+    os.remove(source)
+
     return overwritten,was_allowed
 
 def unescape(string):

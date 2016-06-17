@@ -333,6 +333,7 @@ def import_media(request,video):
 
     out = '<p>Imported</p><ul>'
     overwritten_files = '<p>Of these files, these were overwritten</p><ul>'
+    errors = []
 
     if video:
         import_folder = settings.VIDEOS_TO_IMPORT_FOLDER
@@ -351,22 +352,33 @@ def import_media(request,video):
         try:
             gloss = Gloss.objects.get(annotation_idgloss=idgloss)
         except ObjectDoesNotExist:
-            return HttpResponse('Failed at '+filename+'. Could not find '+idgloss+'.')
+            errors.append('Failed at '+filename+'. Could not find '+idgloss+'.')
+            continue
 
         overwritten, was_allowed = save_media(import_folder,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
         if not was_allowed:
-            return HttpResponse('Failed two overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?')
+            errors.append('Failed two overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?')
+            continue
 
         out += '<li>'+filename+'</li>'
+
 
         if overwritten:
             overwritten_files += '<li>'+filename+'</li>'
 
-    out += '</ul>'
     overwritten_files += '</ul>'
+    out += '</ul>'+overwritten_files
 
-    return HttpResponse(out+overwritten_files)
+    if len(errors) > 0:
+        out += '<p>Errors</p><ul>'
+
+        for error in errors:
+            out += '<li>'+error+'</li>'
+
+        out += '</ul>'
+
+    return HttpResponse(out)
 
 def import_other_media(request):
 
