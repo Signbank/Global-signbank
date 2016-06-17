@@ -382,55 +382,80 @@ def import_media(request,video):
 
 def import_other_media(request):
 
+    errors = []
+
     #First do some checks
     if not os.path.isfile(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'):
-        return HttpResponse('The required file index.csv is not present')
+        errors.append('The required file index.csv is not present')
+    else:
 
-    for n,row in enumerate(csv.reader(open(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'))):
+        for n,row in enumerate(csv.reader(open(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'))):
 
-        #Skip the header
-        if n == 0:
-            if row == ['Idgloss','filename','type','alternative_gloss']:
+            #Skip the header
+            if n == 0:
+                if row == ['Idgloss','filename','type','alternative_gloss']:
+                    continue
+                else:
+                    errors.append('The header of index.csv is not Idgloss,filename,type,alternative_gloss')
+                    continue
+
+            #Create an other video for this
+            try:
+                idgloss, file_name, other_media_type, alternative_gloss = row
+            except ValueError:
+                errors.append('Line '+str(n)+' does not seem to have the correct amount of items')
                 continue
-            else:
-                return HttpResponse('The header of index.csv is not Idgloss,filename,type,alternative_gloss')
 
-        #Create an other video for this
-        try:
-            idgloss, file_name, other_media_type, alternative_gloss = row
-        except ValueError:
-            return HttpResponse('Line '+str(n)+' does not seem to have the correct amount of items')
+            for field_choice in FieldChoice.objects.filter(field='OtherMediaType'):
+                if field_choice.english_name == other_media_type:
+                    other_media_type_machine_value = field_choice.machine_value
 
-        for field_choice in FieldChoice.objects.filter(field='OtherMediaType'):
-            if field_choice.english_name == other_media_type:
-                other_media_type_machine_value = field_choice.machine_value
+            parent_gloss = Gloss.objects.filter(idgloss=idgloss)[0]
 
-        parent_gloss = Gloss.objects.filter(idgloss=idgloss)[0]
+            other_media = OtherMedia()
+            other_media.parent_gloss = parent_gloss
+            other_media.alternative_gloss = alternative_gloss
+            other_media.path = settings.STATIC_URL+'othermedia/'+str(parent_gloss.pk)+'/'+file_name
 
-        other_media = OtherMedia()
-        other_media.parent_gloss = parent_gloss
-        other_media.alternative_gloss = alternative_gloss
-        other_media.path = settings.STATIC_URL+'othermedia/'+str(parent_gloss.pk)+'/'+file_name
+            try:
+                other_media.type = other_media_type_machine_value
+            except UnboundLocalError:
+                pass
 
-        try:
-            other_media.type = other_media_type_machine_value
-        except UnboundLocalError:
-            pass
+            #Copy the file
+            goal_folder = settings.OTHER_MEDIA_DIRECTORY+str(parent_gloss.pk)+'/'
 
-        #Copy the file
-        goal_folder = settings.OTHER_MEDIA_DIRECTORY+str(parent_gloss.pk)+'/'
+            try:
+                os.mkdir(goal_folder)
+            except OSError:
+                pass #Do nothing if the folder exists already
 
-        try:
-            os.mkdir(goal_folder)
-        except OSError:
-            pass #Do nothing if the folder exists already
+            source = settings.OTHER_MEDIA_TO_IMPORT_FOLDER+file_name
 
-        shutil.copyfile(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+file_name,goal_folder+file_name)
+            try:
+                shutil.copyfile(source,goal_folder+file_name)
+            except IOError:
+                errors.append('File '+source+' not present')
 
-        #Copy at the end, so it only goes through if there was no crash before
-        other_media.save()
+            #Copy at the end, so it only goes through if there was no crash before
+            other_media.save()
 
-    return HttpResponse('OK')
+            try:
+                os.remove(source)
+            except OSError:
+                pass
+
+    if len(errors) == 0:
+        return HttpResponse('OK')
+    else:
+        output = '<p>Errors</p><ul>'
+
+        for error in errors:
+            output += '<li>'+error+'</li>'
+
+        output += '</ul>'
+
+        return HttpResponse(output)
 
 def try_code(request):
 
