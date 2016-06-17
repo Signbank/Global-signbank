@@ -338,7 +338,8 @@ class GlossListView(ListView):
             qs = qs.filter(translation__translation__text__istartswith=val)
             
           
-        if get.has_key('inWeb') and get['inWeb'] != 'unspecified':
+        if get.has_key('inWeb') and get['inWeb'] != '0':
+            # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['inWeb'] == 'yes'
             qs = qs.filter(inWeb__exact=val)
             #print "B :", len(qs)

@@ -3,8 +3,10 @@ from django.template import Context, RequestContext
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
-from models import Video, GlossVideo
+from models import Video, GlossVideo, GlossVideoHistory
 from forms import VideoUploadForm, VideoUploadForGlossForm
+# from django.contrib.auth.models import User
+# from datetime import datetime as DT
 from convertvideo import extract_frame
 import django_mobile
 
@@ -47,11 +49,20 @@ def addvideo(request):
                     if not os.path.isfile(goal_location+'_'+str(backup_id)):
                         os.rename(goal_location,goal_location+'_'+str(backup_id))
                         made_backup = True
+                        # Issue #162: log the upload history
+                        log_entry = GlossVideoHistory(action="rename", gloss=gloss, actor=request.user,
+                                                      uploadfile=vfile, goal_location=goal_location+'_'+str(backup_id))
+                        log_entry.save()
                     else:
                         backup_id += 1
 
             video = GlossVideo(videofile=vfile, gloss=gloss)
             video.save()
+
+            # Issue #162: log the upload history
+            log_entry = GlossVideoHistory(action="upload", gloss=gloss, actor=request.user,
+                                          uploadfile=vfile, goal_location=goal_location)
+            log_entry.save()
         
             # TODO: provide some feedback that it worked (if
             # immediate display of video isn't working)
@@ -80,6 +91,10 @@ def deletevideo(request, videoid):
             # this will remove the most recent video, ie it's equivalent
             # to delete if version=0
             v.reversion(revert=True)
+
+        # Issue #162: log the deletion history
+        log_entry = GlossVideoHistory(action="delete", gloss=gloss, actor=request.user)
+        log_entry.save()
 
     # TODO: provide some feedback that it worked (if
     # immediate non-display of video isn't working)
