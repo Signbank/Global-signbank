@@ -37,10 +37,12 @@ FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
           'mouthing', 'phonetVar',]
 
-FIELDS['semantics'] = ['iconImg','namEnt','semField']
+FIELDS['semantics'] = ['iconImg','namEnt','semField', 'wordClass']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                        'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
+
+FIELDS['other'] = ['wordClass']
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
