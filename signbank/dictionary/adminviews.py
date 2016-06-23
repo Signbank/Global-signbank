@@ -592,6 +592,18 @@ class GlossDetailView(DetailView):
 
         context['choice_lists'] = {}
 
+        # Add the choice_lists in the 'other' section (such as: wordClass)
+        for topic in ['other']:
+            for field in FIELDS[topic]:
+
+                # Get and save the choice list for this field
+                field_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+
+                if len(choice_list) > 0:
+                    context['choice_lists'][field] = choicelist_queryset_to_translated_ordered_dict(choice_list,
+                                                                                                    self.request.LANGUAGE_CODE)
+
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['phonology','semantics','frequency']:
             context[topic+'_fields'] = [];

@@ -30,6 +30,8 @@ FIELDS['semantics'] = ['semField','wordClass','wordClass2','derivHist']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
+FIELDS['other'] = []
+
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
