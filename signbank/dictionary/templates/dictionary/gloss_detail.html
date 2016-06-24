@@ -28,7 +28,7 @@
      var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
      var languages = {{gloss.language_choices|safe}};
      var dialects = {{gloss.dialect_choices|safe}};
-    
+
      var choice_lists = {{choice_lists|safe}};
     
     var csrf_token = '{{csrf_token}}';
@@ -226,6 +226,11 @@
 
             <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Annotation Instructions" %}</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
+        <!-- Temporary solution until we implement a more generic 'MAIN' section display -->
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+            <tr><th>{% trans "Word class" %}</th><td class='edit edit_list' id='wordClass'>{% value gloss.wordClass %}</td></tr>
+            {% endif %}
+        <!-- End of temporary solution -->
             <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language'>{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
         </table>
