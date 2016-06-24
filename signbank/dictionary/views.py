@@ -518,8 +518,7 @@ def import_csv(request):
     uploadform = forms.CSVUploadForm
     changes = []
     error = False
-    
-    
+
     #Propose changes
     if len(request.FILES) > 0:
 
@@ -554,10 +553,14 @@ def import_csv(request):
                 gloss = Gloss.objects.get(pk=pk)
             except ObjectDoesNotExist as e:
 
+                e = 'Could not find gloss for ID '+str(pk)
+
                 if not error:
                     error = [e]
                 else:
-                    error.append('Could not find gloss for ID '+str(pk))
+                    error.append(e)
+
+                continue
 
             try:
                 changes += compare_valuedict_to_gloss(value_dict,gloss)
