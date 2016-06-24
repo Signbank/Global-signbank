@@ -425,3 +425,9 @@ body {
 {
 	width: 100%
 }
+
+.thumbnail
+{
+  height:100px;
+  margin-bottom: 0px;
+}

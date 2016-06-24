@@ -404,6 +404,7 @@ function do_sort_column(field_name, action, frmName) {
 <table class='table table-condensed'>
     <thead>
       <tr>
+          <th></th>
            <th>{% trans "Annotation ID gloss: Dutch" %}</th>
 
             {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
@@ -419,6 +420,7 @@ function do_sort_column(field_name, action, frmName) {
       </tr>
       <!-- EK: this second header row contains clickable sort-order buttons -->
       <tr>
+          <th></th>
            {% with "annotation_idgloss annotation_idgloss_en translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD or field != annotation_idgloss_en %}
@@ -455,23 +457,25 @@ function do_sort_column(field_name, action, frmName) {
                 <tr>
             {% endif %}
 
-            <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></td>
+      <td>{%if gloss.get_image_path != None %}<img class="thumbnail" src="{{STATIC_URL}}{{gloss.get_image_path}}">{% endif %}</td>
 
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-            <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></td>
-            {% endif %}
+      <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></td>
 
-			<td>
-			{% for translation in gloss.translation_set.all %}
+      {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+      <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></td>
+      {% endif %}
+
+      <td>
+      {% for translation in gloss.translation_set.all %}
                 {% if forloop.last %}
                 {{ translation.translation }}
                 {% else%}
                 {{ translation.translation }},
                 {% endif %}
 
-			{% endfor %}
-			</td>
-		
+      {% endfor %}
+      </td>
+    
             <td>{{ gloss.get_handedness_display }}</td>
             <td>{{ gloss.get_domhndsh_display }}</td>
             <td>{{ gloss.get_subhndsh_display }}</td>
