@@ -31,10 +31,26 @@ class GlossListView(ListView):
         # Call the base implementation first to get a context
         context = super(GlossListView, self).get_context_data(**kwargs)
         # Add in a QuerySet of all the books
-        context['searchform'] = GlossSearchForm(self.request.GET)
+
+        search_form = GlossSearchForm(self.request.GET)
+
+        context['searchform'] = search_form
         context['glosscount'] = Gloss.objects.all().count()
         context['add_gloss_form'] = GlossCreateForm()
         context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
+
+        context['input_names_fields_and_labels'] = {}
+
+        for topic in ['phonology']:
+
+            context['input_names_fields_and_labels'][topic] = []
+
+            for fieldname in settings.FIELDS[topic]:
+                field = search_form[fieldname]
+                label = field.label
+
+                context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
+
         return context
     
     
