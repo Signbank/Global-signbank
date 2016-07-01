@@ -41,7 +41,7 @@ class GlossListView(ListView):
 
         context['input_names_fields_and_labels'] = {}
 
-        for topic in ['phonology']:
+        for topic in ['phonology','semantics']:
 
             context['input_names_fields_and_labels'][topic] = []
 

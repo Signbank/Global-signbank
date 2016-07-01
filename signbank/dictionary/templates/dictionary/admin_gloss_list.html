@@ -211,9 +211,13 @@ function do_sort_column(field_name, action, frmName) {
 
                   <td>
                     <table class='table table-condensed'>
-                        <tr><td><label for='id_iconImg'>{{searchform.iconImg.label}}</label></td><td>{{searchform.iconImg}}</td></tr>
-                        <tr><td><label for='id_namEnt'>{{searchform.namEnt.label}}</label></td><td>{{searchform.namEnt}}</td></tr>
-                        <tr><td><label for='id_semField'>{{searchform.semField.label}}</label></td><td>{{searchform.semField}}</td></tr>
+                        {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
+
+                            <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+
+                        {% endfor %}
+
+
 
                     </table>
 
