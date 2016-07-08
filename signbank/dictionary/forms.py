@@ -116,7 +116,7 @@ class GlossSearchForm(forms.ModelForm):
                    'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType', 'mouthG',
                    'mouthing', 'phonetVar',
 
-                   'iconImg','namEnt', 'semField', 'wordClass', 'wordClass2', 'derivHist',
+                   'iconImg','iconType','namEnt', 'semField', 'wordClass', 'wordClass2', 'derivHist', 'lexCatNotes',
 
                    'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                    'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
