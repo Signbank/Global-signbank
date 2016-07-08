@@ -693,6 +693,8 @@ def fieldname_to_category(fieldname):
         field_category = 'ContactType'
     elif fieldname == 'namEnt':
         field_category = 'NamedEntity'
+    elif fieldname == 'iconType':
+        field_category = 'iconicity'
     else:
         field_category = fieldname
 
