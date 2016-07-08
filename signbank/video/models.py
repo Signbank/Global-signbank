@@ -13,6 +13,13 @@ from django.contrib.auth import models as authmodels
 # from django.contrib.auth.models import User
 from datetime import datetime
 
+from signbank.dictionary.models import *
+
+if sys.argv[0] == 'mod_wsgi':
+    from signbank.dictionary.models import *
+else:
+    from signbank.dictionary.models import Gloss
+
 class VideoPosterMixin:
     """Base class for video models that adds a method
     for generating poster images
@@ -150,13 +157,7 @@ class GlossVideoHistory(models.Model):
     actor = models.ForeignKey(authmodels.User)
 
     # One-to-many link: to the Gloss in dictionary.models.Gloss
-    try:
-        import signbank.dictionary.models
-        gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
-    except (NameError, AttributeError, ImportError):
-        # from signbank.dictionary.models import Gloss
-        from signbank.dictionary.models import *
-        gloss = models.ForeignKey(Gloss)
+    gloss = models.ForeignKey(Gloss)
 
     def __unicode__(self):
 
@@ -173,13 +174,7 @@ class GlossVideo(models.Model, VideoPosterMixin):
 
     videofile = models.FileField("video file", upload_to=settings.GLOSS_VIDEO_DIRECTORY, storage=storage)
 
-    try:
-        import signbank.dictionary.models
-        gloss = models.ForeignKey(signbank.dictionary.models.Gloss)
-    except (NameError,AttributeError,ImportError):
-        #from signbank.dictionary.models import Gloss
-        from signbank.dictionary.models import *
-        gloss = models.ForeignKey(Gloss)
+    gloss = models.ForeignKey(Gloss)
 
     ## video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
