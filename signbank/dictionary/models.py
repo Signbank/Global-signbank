@@ -390,12 +390,15 @@ minor or insignificant ways that can be ignored.""")
     #Semantic fields
 
     iconImg = models.CharField(_("Iconic Image"), max_length=50, blank=True)
+    iconType = models.CharField(_("Type of iconicity"), choices=build_choice_list("iconicity"), null=True, blank=True, max_length=5)
+
     namEnt = models.CharField(_("Named Entity"), choices=build_choice_list("NamedEntity"), null=True, blank=True, max_length=5)
     semField = models.CharField(_("Semantic Field"), choices=build_choice_list("SemField"), null=True, blank=True, max_length=5)
 
     wordClass = models.CharField(_("Word class 1"), null=True, blank=True, max_length=5)
     wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5)
-    derivHist = models.CharField(_("Derivation history"), max_length=50, blank=True)
+    derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50, blank=True)
+    lexCatNotes = models.CharField(_("Lexical category notes"),null=True, blank=True, max_length=300)
 
     #Frequency fields
 
@@ -690,6 +693,8 @@ def fieldname_to_category(fieldname):
         field_category = 'ContactType'
     elif fieldname == 'namEnt':
         field_category = 'NamedEntity'
+    elif fieldname == 'iconType':
+        field_category = 'iconicity'
     else:
         field_category = fieldname
 

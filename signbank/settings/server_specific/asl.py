@@ -26,7 +26,7 @@ FIELDS = {}
 
 FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','final_domhndsh','final_subhndsh','locprim','locPrimLH','locFocSite','locFocSiteLH','initArtOri','finArtOri','initArtOriLH','finArtOriLH']
 
-FIELDS['semantics'] = ['semField','wordClass','wordClass2','derivHist']
+FIELDS['semantics'] = ['semField','wordClass','wordClass2','derivHist','iconType','lexCatNotes']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
