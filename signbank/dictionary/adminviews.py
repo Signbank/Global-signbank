@@ -5,6 +5,7 @@ from django.db.models.fields import NullBooleanField
 from django.http import HttpResponse
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import override
+
 from collections import OrderedDict
 import csv
 import operator
@@ -563,6 +564,20 @@ class GlossListView(ListView):
             created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(created_after_date,DT.datetime.now()))
 
+        # Saving querysets results to sessions, these results can then be used elsewhere (like in gloss_detail)
+        # Flush the previous queryset (just in case)
+        self.request.session['search_results'] = None
+
+        # Make sure that the QuerySet has filters applied (user is searching for something instead of showing all results [objects.all()])
+        if hasattr(qs.query.where, 'children') and len(qs.query.where.children) > 0:
+
+            items = []
+
+            for item in qs:
+                items.append(dict(id = item.id, gloss = item.idgloss))
+
+            self.request.session['search_results'] = items
+
         # print "Final :", len(qs)
         # Sort the queryset by the parameters given
         qs = self.order_queryset_by_sort_order(qs)
@@ -703,7 +718,11 @@ class GlossDetailView(DetailView):
 
         return context
         
-        
+def gloss_ajax_search_results(request):
+    """Returns a JSON list of glosses that match the previous search stored in sessions"""
+
+    return HttpResponse(json.dumps(request.session['search_results']))
+
 def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""

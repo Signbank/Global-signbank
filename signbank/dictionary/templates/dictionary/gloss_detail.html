@@ -17,24 +17,59 @@
     
     <script type='text/javascript'>
 
-     var edit_mode_str = '{% trans "Edit" %}'
-     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
-     var delete_this_gloss_str = '{% trans "Delete this gloss" %}'
-     var saving_str = '{% trans "Saving..." %}'
-     var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}'
+    var edit_mode_str = '{% trans "Edit" %}'
+    var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
+    var delete_this_gloss_str = '{% trans "Delete this gloss" %}'
+    var saving_str = '{% trans "Saving..." %}'
+    var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}'
 
-     var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
-     var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
-     var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
-     var languages = {{gloss.language_choices|safe}};
-     var dialects = {{gloss.dialect_choices|safe}};
+    var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
+    var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
+    var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
+    var languages = {{gloss.language_choices|safe}};
+    var dialects = {{gloss.dialect_choices|safe}};
 
-     var choice_lists = {{choice_lists|safe}};
-    
+    var choice_lists = {{choice_lists|safe}};
     var csrf_token = '{{csrf_token}}';
-
     var next_gloss_id = {{nextglossid}};
-      
+
+    // This script gets and inserts the users last searched items on the gloss page
+    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+    var req = $.ajax({
+        url: search_results_url,
+        dataType: "json",
+        context: document.body
+    })
+    req.done(function(json_data) {
+        for (var key in json_data) {
+            if (json_data.hasOwnProperty(key)) {
+                var a = document.createElement("a");
+                a.setAttribute("class", "btn btn-default");
+                a.style["float"] = "none";
+                a.href = "/dictionary/gloss/" + json_data[key].id + "/";
+                a.id = json_data[key].id;
+                var linktext = document.createTextNode(json_data[key].gloss);
+                a.appendChild(linktext);
+                $( "#results-inline" ).append(a);
+            }
+        }
+        /* Determine the active button (if any), center the horizontal list according to the active button */
+        // Make sure that we are showing search results
+        if ($('#results-inline').length > 0) {
+            // Setting a button active according to which glosses page we are on. A.id should equal to gloss.id.
+            $('#results-inline #{{ gloss.id }}').addClass('active');
+            var scrollPanel = $('#searchresults');
+            var activeButton = $('#results-inline a.active');
+            // Make sure that activeButton exists
+            if (activeButton.length > 0) {
+                // Calculating the left offset position so that the button is centered
+                var leftOffset = activeButton.offset().left - scrollPanel.offset().left - (scrollPanel.width() / 2) + (activeButton.width() / 2);
+                // Scrolling to the active button
+                $('#searchresults').scrollLeft(leftOffset);
+            }
+        }
+    });
+
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
     
@@ -44,6 +79,14 @@
 
 
 {% block content %}
+
+<div id="searchresults" style="overflow-y:hidden;">
+    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    <strong>{% blocktrans %}Search results{% endblocktrans %}</strong>
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
+    </div>
+    {% endif %}
+</div>
 
 {% if request.GET.warning %}
 <div class="alert alert-warning">{{ request.GET.warning }}</div>
