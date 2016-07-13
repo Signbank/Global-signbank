@@ -461,7 +461,7 @@ function do_sort_column(field_name, action, frmName) {
                 <tr>
             {% endif %}
 
-      <td>{%if gloss.get_image_path != None %}<img class="thumbnail" src="{{STATIC_URL}}{{gloss.get_image_path}}">{% endif %}</td>
+      <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container"><img class="thumbnail" src="{{STATIC_URL}}{{gloss.get_image_path}}"></div>{% endif %}</td>
 
       <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></td>
 
