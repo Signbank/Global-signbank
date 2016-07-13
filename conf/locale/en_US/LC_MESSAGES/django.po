@@ -168,7 +168,7 @@ msgstr "Lemma ID"
 #: signbank/dictionary/models.py:266
 #, fuzzy
 msgid "Annotation ID Gloss: Dutch"
-msgstr "Lemma ID"
+msgstr "Annotation ID Gloss"
 
 #: signbank/dictionary/models.py:274
 msgid "Annotation ID Gloss: English"
@@ -491,15 +491,15 @@ msgstr ""
 
 #: signbank/dictionary/update.py:28
 msgid "Annotation ID Gloss not unique."
-msgstr "Lemma ID"
+msgstr "Annotation ID Gloss not unique"
 
 #: signbank/dictionary/update.py:30
 msgid "English annotation ID gloss not unique."
-msgstr "Annotation lemma ID not unique"
+msgstr "Annotation ID gloss not unique"
 
 #: signbank/dictionary/update.py:32
 msgid "Dutch annotation ID gloss cannot be empty."
-msgstr "Annotation lemma ID cannot be empty."
+msgstr "Annotation ID gloss cannot be empty."
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:17
 msgid "Please provide some initial data"
@@ -510,14 +510,14 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:191
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
 msgid "Annotation ID Gloss (Dutch)"
-msgstr "Annotation lemma ID"
+msgstr "Annotation ID Gloss"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:29
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:22
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:194
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
 msgid "Annotation ID Gloss (English)"
-msgstr "Annotation lemma ID"
+msgstr "Annotation ID Gloss"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:33
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:354
@@ -571,7 +571,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:390
 msgid "Annotation ID gloss: Dutch"
-msgstr "Annotation lemma ID"
+msgstr "Annotation ID gloss"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:391
 msgid "Annotation ID gloss: English"
