@@ -15,10 +15,22 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'dictionary', ['Morpheme'])
 
+        # Adding M2M table for field morphemePart on 'Gloss'
+        m2m_table_name = db.shorten_name(u'dictionary_gloss_morphemePart')
+        db.create_table(m2m_table_name, (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('gloss', models.ForeignKey(orm[u'dictionary.gloss'], null=False)),
+            ('morpheme', models.ForeignKey(orm[u'dictionary.morpheme'], null=False))
+        ))
+        db.create_unique(m2m_table_name, ['gloss_id', 'morpheme_id'])
+
 
     def backwards(self, orm):
         # Deleting model 'Morpheme'
         db.delete_table(u'dictionary_morpheme')
+
+        # Removing M2M table for field morphemePart on 'Gloss'
+        db.delete_table(db.shorten_name(u'dictionary_gloss_morphemePart'))
 
 
     models = {
@@ -235,7 +247,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'UserProfile'},
             'expiry_date': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'last_used_language': ('django.db.models.fields.CharField', [], {'default': "'en'", 'max_length': '5'}),
+            'last_used_language': ('django.db.models.fields.CharField', [], {'default': "'en-us'", 'max_length': '5'}),
             'number_of_logins': ('django.db.models.fields.IntegerField', [], {'default': '0', 'null': 'True'}),
             'user': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'user_profile_user'", 'unique': 'True', 'to': u"orm['auth.User']"})
         }
