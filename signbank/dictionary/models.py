@@ -727,6 +727,13 @@ class MorphologyDefinition(models.Model):
 
         return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
 
+class Morpheme(Gloss):
+    """A morpheme definition uses all the fields of a gloss, but adds its own characteristics"""
+
+    # Fields that are specific for morphemes, and not so much for 'words' (=Gloss)
+    role = models.CharField(max_length=5,choices=build_choice_list('MorphologyType'))
+
+
 class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""
 
