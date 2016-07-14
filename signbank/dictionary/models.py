@@ -341,7 +341,7 @@ minor or insignificant ways that can be ignored.""")
     morph = models.CharField(_("Morphemic Analysis"), max_length=50, blank=True)
 
     # zero or more morphemes that are used in this sign-word (=gloss) #175
-    morpheme = models.ManyToManyField(Morpheme, blank=True)
+    morphemePart = models.ManyToManyField('Morpheme', blank=True)
 
     sedefinetf = models.TextField(_("Signed English definition available"), null=True, blank=True)  # TODO: should be boolean
     segloss = models.CharField(_("Signed English gloss"), max_length=50, blank=True,  null=True)
