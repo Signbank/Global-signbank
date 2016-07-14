@@ -36,10 +36,12 @@ urlpatterns = patterns('',
     url(r'^switch_to_language/(?P<language>..)$', 'signbank.dictionary.views.switch_to_language',name='switch_to_language'),
     url(r'^recently_added_glosses/$', 'signbank.dictionary.views.recently_added_glosses',name='recently_added_glosses'),
 
+    # Ajax urls
     url(r'^ajax/keyword/(?P<prefix>.*)$', 'signbank.dictionary.views.keyword_value_list'),
     url(r'^ajax/tags/$', 'signbank.dictionary.tagviews.taglist_json'),
     url(r'^ajax/gloss/(?P<prefix>.*)$', 'signbank.dictionary.adminviews.gloss_ajax_complete', name='gloss_complete'),
-    
+    url(r'^ajax/searchresults/$','signbank.dictionary.adminviews.gloss_ajax_search_results', name='ajax_search_results'),
+
     url(r'^missingvideo.html$', 'signbank.dictionary.views.missing_video_view'),
 
     url(r'^import_images/$', 'signbank.dictionary.views.import_media',{'video':False}),
