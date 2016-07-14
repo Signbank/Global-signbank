@@ -340,6 +340,9 @@ minor or insignificant ways that can be ignored.""")
 
     morph = models.CharField(_("Morphemic Analysis"), max_length=50, blank=True)
 
+    # zero or more morphemes that are used in this sign-word (=gloss) #175
+    morpheme = models.ManyToManyField(Morpheme, blank=True)
+
     sedefinetf = models.TextField(_("Signed English definition available"), null=True, blank=True)  # TODO: should be boolean
     segloss = models.CharField(_("Signed English gloss"), max_length=50, blank=True,  null=True)
 
@@ -728,10 +731,15 @@ class MorphologyDefinition(models.Model):
         return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
 
 class Morpheme(Gloss):
-    """A morpheme definition uses all the fields of a gloss, but adds its own characteristics"""
+    """A morpheme definition uses all the fields of a gloss, but adds its own characteristics (#174)"""
 
-    # Fields that are specific for morphemes, and not so much for 'words' (=Gloss)
-    role = models.CharField(max_length=5,choices=build_choice_list('MorphologyType'))
+    # Fields that are specific for morphemes, and not so much for 'sign-words' (=Gloss) as a whole
+    # (1) optional morpheme-type field (not to be confused with MorphologyType from MorphologyDefinition)
+    mrpType = models.CharField(max_length=5,blank=True,  null=True, choices=build_choice_list('MorphemeType'))
+
+    def __str__(self):
+        """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
+        return "%s+M" % (self.idgloss)
 
 
 class OtherMedia(models.Model):
