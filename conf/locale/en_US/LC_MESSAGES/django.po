@@ -543,7 +543,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:190
 msgid "Search by Semantics"
-msgstr ""
+msgstr "Search by Syntax & Semantics"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:211
 msgid "Search by Relation"
@@ -766,7 +766,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:312
 msgid "Semantics"
-msgstr ""
+msgstr "Syntax & Semantics"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:329
 msgid "Relations to Other Signs"
