@@ -742,6 +742,37 @@ class Morpheme(Gloss):
         return "%s+M" % (self.idgloss)
 
 
+    def admin_next_morpheme(self):
+        """next morpheme in the admin view, shortcut for next_dictionary_morpheme with staff=True"""
+
+        return self.next_dictionary_morpheme(True)
+
+
+    def next_dictionary_morpheme(self, staff=False):
+        """Find the next morpheme in dictionary order"""
+
+        if staff:
+            all_morphemes_ordered = Morpheme.objects.all().order_by('annotation_idgloss')
+        else:
+            all_morphemes_ordered = Morpheme.objects.filter(inWeb__exact=True).order_by('annotation_idgloss')
+
+        if all_morphemes_ordered:
+
+            foundit = False;
+
+            for morpheme in all_morphemes_ordered:
+                if morpheme == self:
+                    foundit = True
+                elif foundit:
+                    return morpheme;
+                    break;
+
+        else:
+            return None
+
+
+
+
 class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""
 

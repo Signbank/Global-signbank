@@ -717,6 +717,143 @@ class GlossDetailView(DetailView):
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
         return context
+
+
+class MorphemeDetailView(DetailView):
+    model = Morpheme
+    context_object_name = 'morpheme'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(MorphemeDetailView, self).get_context_data(**kwargs)
+        # Add in a QuerySet of all the books
+        context['tagform'] = TagUpdateForm()
+        context['videoform'] = VideoUploadForGlossForm()
+        context['imageform'] = ImageUploadForGlossForm()
+        context['definitionform'] = DefinitionForm()
+        context['relationform'] = RelationForm()
+        context['morphologyform'] = MorphologyForm()
+        context['othermediaform'] = OtherMediaForm()
+        context['navigation'] = context['morpheme'].navigation(True)
+        context['interpform'] = InterpreterFeedbackForm()
+        context['SIGN_NAVIGATION'] = settings.SIGN_NAVIGATION
+
+        try:
+            # Note: setting idgloss to context['morpheme'] is not enough; the ".idgloss" needs to be specified
+            next_morpheme = Morpheme.objects.get(idgloss=context['morpheme'].idgloss).admin_next_morpheme()
+        except:
+            next_morpheme = None
+        if next_morpheme == None:
+            context['nextmorphemeid'] = context['morpheme'].pk
+        else:
+            context['nextmorphemeid'] = next_morpheme.pk
+
+        if settings.SIGN_NAVIGATION:
+            context['glosscount'] = Morpheme.objects.count()
+            context['glossposn'] = Morpheme.objects.filter(sn__lt=context['morpheme'].sn).count() + 1
+
+        # Pass info about which fields we want to see
+        gl = context['morpheme'];
+        labels = gl.field_labels();
+
+        context['choice_lists'] = {}
+
+        # Add the choice_lists in the 'other' section (such as: wordClass)
+        for topic in ['other']:
+            for field in FIELDS[topic]:
+
+                # Get and save the choice list for this field
+                field_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+
+                if len(choice_list) > 0:
+                    context['choice_lists'][field] = choicelist_queryset_to_translated_ordered_dict(choice_list,
+                                                                                                    self.request.LANGUAGE_CODE)
+
+        # Translate the machine values to human values in the correct language, and save the choice lists along the way
+        for topic in ['phonology', 'semantics', 'frequency']:
+            context[topic + '_fields'] = [];
+
+            for field in FIELDS[topic]:
+
+                # Get and save the choice list for this field
+                field_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+
+                if len(choice_list) > 0:
+                    context['choice_lists'][field] = choicelist_queryset_to_translated_ordered_dict(choice_list,
+                                                                                                    self.request.LANGUAGE_CODE)
+
+                # Take the human value in the language we are using
+                machine_value = getattr(gl, field);
+
+                if machine_value == '0':
+                    human_value = '-'
+                elif machine_value == '1':
+                    human_value = 'N/A'
+                else:
+
+                    try:
+                        selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
+
+                        if self.request.LANGUAGE_CODE == 'nl':
+                            human_value = selected_field_choice.dutch_name
+                        else:
+                            human_value = selected_field_choice.english_name
+
+                    except (IndexError, ValueError):
+                        human_value = machine_value
+
+                # And add the kind of field
+                if field in ['phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'locVirtObj']:
+                    kind = 'text';
+                elif field in ['repeat', 'altern']:
+                    kind = 'check';
+                else:
+                    kind = 'list';
+
+                context[topic + '_fields'].append([human_value, field, labels[field], kind]);
+
+        # Gather the OtherMedia
+        context['other_media'] = []
+        other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
+
+        for other_media in gl.othermedia_set.all():
+
+            if int(other_media.type) == 0:
+                human_value_media_type = '-'
+            elif int(other_media.type) == 1:
+                human_value_media_type = 'N/A'
+            else:
+
+                selected_field_choice = other_media_type_choice_list.filter(machine_value=other_media.type)[0]
+
+                codes_to_adjectives = dict(settings.LANGUAGES)
+
+                if self.request.LANGUAGE_CODE not in codes_to_adjectives.keys():
+                    adjective = 'english'
+                else:
+                    adjective = codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
+
+                try:
+                    human_value_media_type = getattr(selected_field_choice, adjective + '_name')
+                except AttributeError:
+                    human_value_media_type = getattr(selected_field_choice, 'english_name')
+
+            path = settings.STATIC_URL + 'othermedia/' + other_media.path
+            context['other_media'].append([other_media.pk, path, human_value_media_type, other_media.alternative_gloss])
+
+            # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
+            context['choice_lists'][
+                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_ordered_dict(
+                other_media_type_choice_list, self.request.LANGUAGE_CODE)
+
+        # context['choice_lists'] = gl.get_choice_lists()
+        context['choice_lists'] = json.dumps(context['choice_lists'])
+
+        context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
+
+        return context
         
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""

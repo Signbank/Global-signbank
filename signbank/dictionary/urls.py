@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeDetailView
 
 
 urlpatterns = patterns('',
@@ -24,13 +24,16 @@ urlpatterns = patterns('',
 
     url(r'^search/$', 'signbank.dictionary.views.search', name="search"),
     url(r'^update/gloss/(?P<glossid>\d+)$', 'signbank.dictionary.update.update_gloss', name='update_gloss'),
+    url(r'^update/morpheme/(?P<morphemeid>\d+)$', 'signbank.dictionary.update.update_morpheme', name='update_morpheme'),
     url(r'^update/tag/(?P<glossid>\d+)$', 'signbank.dictionary.update.add_tag', name='add_tag'),
+    url(r'^update/morphemetag/(?P<morphemeid>\d+)$', 'signbank.dictionary.update.add_morphemetag', name='add_morphemetag'),
     url(r'^update/definition/(?P<glossid>\d+)$', 'signbank.dictionary.update.add_definition', name='add_definition'),
     url(r'^update/relation/$', 'signbank.dictionary.update.add_relation', name='add_relation'),
     url(r'^update/relationtoforeignsign/$', 'signbank.dictionary.update.add_relationtoforeignsign', name='add_relationtoforeignsign'),
     url(r'^update/morphologydefinition/$', 'signbank.dictionary.update.add_morphology_definition', name='add_morphologydefinition'),
     url(r'^update/othermedia/', 'signbank.dictionary.update.add_othermedia', name='add_othermedia'),
     url(r'^update/gloss/', 'signbank.dictionary.update.add_gloss', name='add_gloss'),
+    url(r'^update/morpheme/', 'signbank.dictionary.update.add_morpheme', name='add_morpheme'),
     url(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
 
     url(r'^switch_to_language/(?P<language>..)$', 'signbank.dictionary.views.switch_to_language',name='switch_to_language'),
@@ -54,7 +57,7 @@ urlpatterns = patterns('',
 
     url(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
     url(r'^gloss/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(GlossDetailView.as_view()), name='admin_gloss_view'),
-
+    url(r'^morpheme/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(MorphemeDetailView.as_view()), name='admin_morpheme_view'),
 )
 
 

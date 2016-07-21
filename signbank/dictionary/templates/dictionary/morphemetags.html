@@ -1,0 +1,42 @@
+{% load i18n %}
+
+        <div id='tags'>
+        <fieldset>
+      <legend>{% trans "Tags" %}</legend>
+      {% load tagging_tags %}
+      {% tags_for_object morpheme as tag_list %}
+      {% if tag_list %}
+          <ul class='taglist'>
+          {% for tag in tag_list %}
+            <li class='tagli'>
+               <div class='tag'>
+                   {% load underscore_to_space %}
+                 <span class='tagname'>{{tag.name|underscore_to_space}}</span>
+                 {% if perms.dictionary.change_morpheme %}
+                 <span class='tagcount'>
+                     <a class='tagdelete editform'
+                        id='{{tag.name}}'
+                        href='{% url 'root_page' %}dictionary/update/tag/{{morpheme.id}}'
+                        title='{% trans "delete this tag" %}'>x</a>
+                 </span>
+                 {% endif %}
+                </div>
+            </li>
+          {% endfor %}
+          </ul>
+      {% endif %}
+      {% if perms.dictionary.change_morpheme %}
+      <div id="tagcontainer"></div>
+      <div class='editform'>
+          <form id='tagaddform' 
+                action="{% url 'root_page' %}dictionary/update/morphemetag/{{morpheme.id}}"
+                method="post" enctype="multipart/form-data">
+           {% csrf_token %}
+           <table>
+           <tr><td>{{tagform.tag}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add morpheme Tag" %}'></td></tr>
+           </table>
+          </form>
+      </div>
+      {% endif %}
+      </fieldset>
+    </div>

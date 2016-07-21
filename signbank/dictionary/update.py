@@ -605,6 +605,237 @@ def update_morphology_definition(gloss, field, value):
 
     return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
+
+def add_morpheme(request):
+    """Create a new morpheme and redirect to the edit view"""
+
+    if request.method == "POST":
+
+        if not settings.SEPARATE_ENGLISH_IDGLOSS_FIELD:
+            request.POST = request.POST.copy()  # Make it mutable
+            request.POST['annotation_idgloss_en'] = request.POST['annotation_idgloss']
+
+        form = MorphemeCreateForm(request.POST)
+
+        if len(Morpheme.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
+            return render_to_response('dictionary/warning.html', {'warning': _('Annotation ID Gloss not unique.')},
+                                      context_instance=RequestContext(request))
+        elif len(Morpheme.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
+            return render_to_response('dictionary/warning.html',
+                                      {'warning': _('English annotation ID gloss not unique.')},
+                                      context_instance=RequestContext(request))
+        elif len(request.POST['annotation_idgloss']) < 1:
+            return render_to_response('dictionary/warning.html',
+                                      {'warning': _('Dutch annotation ID gloss cannot be empty.')},
+                                      context_instance=RequestContext(request))
+
+        if form.is_valid():
+
+            morpheme = form.save()
+            morpheme.creationDate = datetime.now()
+            morpheme.creator.add(request.user)
+            morpheme.save()
+
+            return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}) + '?edit')
+        else:
+            return render_to_response('dictionary/add_morpheme_form.html',
+                                      {'add_morpheme_form': form},
+                                      context_instance=RequestContext(request))
+
+    return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
+
+
+def update_morpheme(request, morphemeid):
+    """View to update a morpheme model from the jeditable jquery form
+    We are sent one field and value at a time, return the new value
+    once we've updated it."""
+
+    if not request.user.has_perm('dictionary.change_morpheme'):
+        return HttpResponseForbidden("Morpheme Update Not Allowed")
+
+    if request.method == "POST":
+
+        morpheme = get_object_or_404(Morpheme, id=morphemeid)
+
+        field = request.POST.get('id', '')
+        value = request.POST.get('value', '')
+        original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
+
+        if len(value) == 0:
+            value = ' '
+
+        elif value[0] == '_':
+            value = value[1:];
+
+        values = request.POST.getlist('value[]')  # in case we need multiple values
+
+        # validate
+        # field is a valid field
+        # value is a valid value for field
+
+        if field == 'deletemorpheme':
+            if value == 'confirmed':
+                # delete the morpheme and redirect back to morpheme list
+                morpheme.delete()
+                return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
+
+        if field.startswith('definition'):
+
+            return update_definition(request, morpheme, field, value)
+
+        elif field == 'keywords':
+
+            return update_keywords(morpheme, field, value)
+
+        elif field.startswith('relationforeign'):
+
+            return update_relationtoforeignsign(morpheme, field, value)
+
+        elif field.startswith('relation'):
+
+            return update_relation(morpheme, field, value)
+
+        elif field.startswith('morphology-definition'):
+
+            return update_morphology_definition(morpheme, field, value)
+
+        elif field.startswith('other-media'):
+
+            return update_other_media(request, morpheme, field, value)
+
+        elif field == 'language':
+            # expecting possibly multiple values
+
+            try:
+                morpheme.language.clear()
+                for value in values:
+                    lang = Language.objects.get(name=value)
+                    morpheme.language.add(lang)
+                    morpheme.save()
+                newvalue = ", ".join([str(g) for g in morpheme.language.all()])
+            except:
+                return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
+
+        elif field == 'dialect':
+            # expecting possibly multiple values
+
+            try:
+                morpheme.dialect.clear()
+                for value in values:
+                    lang = Dialect.objects.get(name=value)
+                    morpheme.dialect.add(lang)
+                    morpheme.save()
+                newvalue = ", ".join([str(g.name) for g in morpheme.dialect.all()])
+            except:
+                return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
+
+        elif field == "sn":
+            # sign number must be unique, return error message if this SN is
+            # already taken
+
+            if value == '':
+                morpheme.__setattr__(field, None)
+                morpheme.save()
+                newvalue = ''
+            else:
+                try:
+                    value = int(value)
+                except:
+                    return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
+
+                existing_morpheme = Morpheme.objects.filter(sn__exact=value)
+                if existing_morpheme.count() > 0:
+                    g = existing_morpheme[0].idgloss
+                    return HttpResponseBadRequest("SN value already taken for morpheme %s" % g,
+                                                  {'content-type': 'text/plain'})
+                else:
+                    morpheme.sn = value
+                    morpheme.save()
+                    newvalue = value
+
+
+        elif field == 'inWeb':
+            # only modify if we have publish permission
+            if request.user.has_perm('dictionary.can_publish'):
+                morpheme.inWeb = (value == 'Yes')
+                morpheme.save()
+
+            if morpheme.inWeb:
+                newvalue = 'Yes'
+            else:
+                newvalue = 'No'
+
+        else:
+            original_value = getattr(morpheme, field)
+
+            if not field in Morpheme._meta.get_all_field_names():
+                return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
+
+            # special cases
+            # - Foreign Key fields (Language, Dialect)
+            # - keywords
+            # - videos
+            # - tags
+
+            # Translate the value if a boolean
+            if isinstance(morpheme._meta.get_field_by_name(field)[0], NullBooleanField):
+                newvalue = value;
+                value = (value == 'Yes')
+
+            # special value of 'notset' or -1 means remove the value
+            if value == 'notset' or value == -1 or value == '':
+                morpheme.__setattr__(field, None)
+                morpheme.save()
+                newvalue = ''
+
+            # Regular field updating
+            else:
+
+                # Remember the old video path if you're changing the name
+                if field == 'idgloss':
+                    old_video_path = morpheme.get_video_path()
+
+                morpheme.__setattr__(field, value)
+                morpheme.save()
+
+                # Update the video location if you're changing the name
+                if field == 'idgloss':
+                    new_video_path = morpheme.get_video_path()
+
+                    try:
+                        shutil.move(settings.MEDIA_ROOT + '/' + old_video_path,
+                                    settings.MEDIA_ROOT + '/' + new_video_path)
+
+                    # You don't have to do this if there's no video
+                    except IOError:
+                        pass
+
+                # If the value is not a Boolean, return the new value
+                if not isinstance(value, bool):
+
+                    # Try to get the human value in the correct language
+                    if value == '0':
+                        newvalue = '-'
+                    elif value == '1':
+                        newvalue = 'N/A'
+                    else:
+
+                        try:
+                            field_category = fieldname_to_category(field)
+                            selected_field_choice = \
+                            FieldChoice.objects.filter(field__iexact=field_category, machine_value=value)[0]
+
+                            if request.LANGUAGE_CODE == 'en':
+                                newvalue = selected_field_choice.english_name
+                            elif request.LANGUAGE_CODE == 'nl':
+                                newvalue = selected_field_choice.dutch_name
+
+                        except (IndexError, ValueError):
+                            newvalue = value
+
+        return HttpResponse(str(original_value) + '\t' + str(newvalue), {'content-type': 'text/plain'})
+
+
 @permission_required('dictionary.change_gloss')
 def add_tag(request, glossid):
     """View to add a tag to a gloss"""
@@ -638,4 +869,39 @@ def add_tag(request, glossid):
             print "invalid form"
             print form.as_table()
             
+    return response
+
+
+def add_morphemetag(request, morphemeid):
+    """View to add a tag to a morpheme"""
+
+    # default response
+    response = HttpResponse('invalid', {'content-type': 'text/plain'})
+
+    if request.method == "POST":
+        thismorpheme= get_object_or_404(Morpheme, id=morphemeid)
+
+        form = TagUpdateForm(request.POST)
+        if form.is_valid():
+
+            tag = form.cleaned_data['tag']
+
+            if form.cleaned_data['delete']:
+                # get the relevant TaggedItem
+                ti = get_object_or_404(TaggedItem, object_id=thismorpheme.id, tag__name=tag)
+                ti.delete()
+                response = HttpResponse('deleted', {'content-type': 'text/plain'})
+            else:
+                # we need to wrap the tag name in quotes since it might contain spaces
+                Tag.objects.add_morphemetag(thismorpheme, '"%s"' % tag)
+                # response is new HTML for the tag list and form
+                response = render_to_response('dictionary/morphemetags.html',
+                                              {'morpheme': thismorpheme,
+                                               'tagform': TagUpdateForm(),
+                                               },
+                                              context_instance=RequestContext(request))
+        else:
+            print "invalid form"
+            print form.as_table()
+
     return response

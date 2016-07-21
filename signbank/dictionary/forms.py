@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list, OtherMedia
+from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list, OtherMedia
 from django.conf import settings
 from tagging.models import Tag
 
@@ -27,6 +27,20 @@ class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
     class Meta:
         model = Gloss
+        fields = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en']
+
+
+class MorphemeModelForm(forms.ModelForm):
+    class Meta:
+        model = Morpheme
+        # fields are defined in settings.py
+        fields = settings.QUICK_UPDATE_GLOSS_FIELDS
+
+
+class MorphemeCreateForm(forms.ModelForm):
+    """Form for creating a new morpheme from scratch"""
+    class Meta:
+        model = Morpheme
         fields = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en']
 
 
