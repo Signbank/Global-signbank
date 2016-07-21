@@ -51,6 +51,8 @@ urlpatterns = patterns('',
     url(r'^import_videos/$', 'signbank.dictionary.views.import_media',{'video':True}),
     url(r'^import_other_media/$', 'signbank.dictionary.views.import_other_media'),
 
+    url(r'update_cngt_counts/$', 'signbank.dictionary.views.update_cngt_counts'),
+
     # Admin views
     url(r'^try/$', 'signbank.dictionary.views.try_code'), #A view for the developer to try out some things
     url(r'^import_authors/$', 'signbank.dictionary.views.import_authors'),
