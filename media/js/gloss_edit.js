@@ -144,7 +144,13 @@ function toggle_edit(redirect_to_next) {
 
 		if (redirect_to_next)
 		{
-			window.location.href = '/dictionary/gloss/'+next_gloss_id;
+		    // Check if this is a gloss or a morpheme
+		    if (!next_gloss_id || next_gloss_id === undefined)
+		    {
+			    window.location.href = '/dictionary/morpheme/'+next_morpheme_id;
+		    } else {
+			    window.location.href = '/dictionary/gloss/'+next_gloss_id;
+		    }
 		}
 
     } else {

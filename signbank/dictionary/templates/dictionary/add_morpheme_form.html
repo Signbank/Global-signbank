@@ -1,0 +1,41 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Add Morpheme{% endblock %}
+{% block extrahead %}
+{% endblock %}
+ 
+ 
+{% block content %}
+
+ 
+   {% if perms.dictionary.add_morpheme %}
+
+        {{add_morpheme_form.non_field_errors}}
+         <div id='add_morpheme_form'>
+             <form action='{% url "dictionary:add_morpheme" %}' method='post'>
+                 {% csrf_token %}
+                 <table class='table'>
+                     <tr>
+                         <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
+                         <th><label for='id_annotation_idgloss'>{% trans "Annotation ID Gloss (Dutch)" %}</label></th>
+                         <th><label for='id_annotation_idgloss_en'>{% trans "Annotation ID Gloss (English)" %}</label></th>
+                         <th></th>
+                     </tr>
+                     <tr>
+                         <td>{{add_morpheme_form.idgloss}}</td>
+                         <td>{{add_morpheme_form.annotation_idgloss}}</td>
+                         <td>{{add_morpheme_form.annotation_idgloss_en}}</td>
+                         <td><input class='btn btn-primary' type='submit' value='Add New Morpheme'></td>
+                     </tr>
+                 </table>
+                 
+             </form>
+             {% if add_morpheme_form.sn.errors %}
+             <h2>Error</h2>
+                 <p>A sign with that Sign Number already exists. Please choose a different Sign Number.</p>
+             {% endif %}
+        </div>
+      {% endif %}
+      
+{% endblock %}

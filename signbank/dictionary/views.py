@@ -513,6 +513,13 @@ def add_new_sign(request):
 
     return render_to_response('dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()},context_instance=RequestContext(request))
 
+def add_new_morpheme(request):
+
+    oForm = {'add_morpheme_form':MorphemeCreateForm()}
+    oContext = RequestContext(request)
+    oBack = render_to_response('dictionary/add_morpheme.html', oForm, context_instance=oContext)
+    return oBack
+
 def import_csv(request):
 
     if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
