@@ -31,8 +31,7 @@ from django.utils.translation import override
 import urlparse
 from urllib import urlencode
 
-#import CNGT_scripts
-#from CNGT_scripts.python.signCounter import SignCounter
+from CNGT_scripts.python.signCounter import SignCounter
 
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
@@ -714,8 +713,47 @@ def add_image(request):
 
 def update_cngt_counts(request):
 
-    from CNGT_scripts.python.signCounter import SignCounter
+    #Run the counter script
     sign_counter = SignCounter(settings.CNGT_METADATA_LOCATION,
                                settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT,
-                               os.listdir(settings.CNGT_EAF_FILES_LOCATION)
+                               [settings.CNGT_EAF_FILES_LOCATION+f for f in  os.listdir(settings.CNGT_EAF_FILES_LOCATION)]
                                )
+
+    sign_counter.run()
+    counts = sign_counter.get_result()
+
+    #Save the results to Signbank
+    location_to_fieldname_letter = {'Amsterdam': 'A', 'Voorburg': 'V', 'Rotterdam': 'R',
+                                    'Gestel': 'Ge', 'Groningen': 'Gr', 'Mixed': 'O'}
+
+    glosses_not_in_signbank = []
+
+    for idgloss, frequency_info in counts.items():
+
+        #Collect the gloss needed
+        try:
+            gloss = Gloss.objects.get(idgloss=idgloss)
+        except ObjectDoesNotExist:
+
+            if idgloss != None:
+                glosses_not_in_signbank.append(idgloss)
+
+            continue
+
+        #Save general frequency info
+        gloss.tokNo = frequency_info['frequency']
+        gloss.tokNoSgnr = frequency_info['numberOfSigners']
+
+        #Put all frequency info in a single dict
+        frequencies_per_region = dict(i.items()[0] for i in frequency_info['frequenciesPerRegion'])
+
+        #Iterate to them, and add to gloss
+        for region, frequency in frequencies_per_region.items():
+
+            attribute_name = 'tokNo' + location_to_fieldname_letter[region]
+            setattr(gloss,attribute_name,frequency)
+
+        gloss.save()
+
+    glosses_not_in_signbank_str = '</li><li>'.join(glosses_not_in_signbank)
+    return HttpResponse('<p>No glosses were found for these names:</p><ul><li>'+glosses_not_in_signbank_str+'</li></ul>')
