@@ -8,5 +8,5 @@ build/django
 *.mo
 
 media/css/.DS_Store
-
 media/css/.DS_Store
+media/glossimage
