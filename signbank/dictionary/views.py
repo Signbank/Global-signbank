@@ -23,6 +23,7 @@ from signbank.dictionary.update import update_keywords
 import forms
 
 from signbank.video.forms import VideoUploadForGlossForm
+import signbank.tools
 from signbank.tools import save_media, compare_valuedict_to_gloss, MachineValueNotFoundError
 
 import signbank.settings
@@ -473,12 +474,7 @@ def try_code(request):
     #
     #     all_id_glosses.append(gloss.idgloss)
 
-    for othermedia in OtherMedia.objects.all():
-
-        othermedia.path = othermedia.path.replace('/var/www2/signbank/live/writable/othermedia/','')
-        othermedia.save()
-
-        result+= ' '+othermedia.path
+    result = str(signbank.tools.get_static_urls_of_files_in_writable_folder('glossvideo',since_timestamp=1462060800))
 
     return HttpResponse(result)
 

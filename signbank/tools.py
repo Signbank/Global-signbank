@@ -3,6 +3,7 @@ import os
 import shutil
 from HTMLParser import HTMLParser
 
+import signbank.settings
 from signbank.settings.base import LANGUAGE_CODE
 from django.utils.translation import override
 
@@ -167,3 +168,16 @@ def reload_signbank(request=None):
         from django.shortcuts import render_to_response
 
         return render_to_response('reload_signbank.html',context_instance=RequestContext(request))
+
+def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
+
+    full_root_path = signbank.settings.server_specific.WRITABLE_FOLDER+root_folder+'/'
+    static_urls = []
+
+    for subfolder_name in os.listdir(full_root_path):
+        for filename in os.listdir(full_root_path+subfolder_name):
+
+            if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
+                static_urls.append(signbank.settings.base.STATIC_URL+root_folder+'/'+subfolder_name+'/'+filename)
+
+    return static_urls
