@@ -37,7 +37,7 @@ FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
           'mouthing', 'phonetVar',]
 
-FIELDS['semantics'] = ['iconImg','namEnt','semField']
+FIELDS['semantics'] = ['iconImg','namEnt','semField','valence']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                        'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
@@ -53,5 +53,5 @@ IMAGES_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_images/'
 VIDEOS_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_videos/'
 OTHER_MEDIA_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_other_media/'
 
-CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/CNGT0000-CNGT0099/'
+CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/CNGT0000-CNGT0099/'
 CNGT_METADATA_LOCATION = ROOT+'virtualenv/signbank/CNGT_MetadataEnglish_OtherResearchers.csv'
