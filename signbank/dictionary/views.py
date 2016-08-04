@@ -32,8 +32,6 @@ from django.utils.translation import override
 import urlparse
 from urllib import urlencode
 
-from CNGT_scripts.python.signCounter import SignCounter
-
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
 
@@ -710,6 +708,11 @@ def add_image(request):
 def update_cngt_counts(request):
 
     #Run the counter script
+    try:
+        from CNGT_scripts.python.signCounter import SignCounter
+    except ImportError:
+        return HttpResponse('Counter script not present')
+
     sign_counter = SignCounter(settings.CNGT_METADATA_LOCATION,
                                settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT,
                                [settings.CNGT_EAF_FILES_LOCATION+f for f in  os.listdir(settings.CNGT_EAF_FILES_LOCATION)]
