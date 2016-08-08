@@ -285,26 +285,27 @@
    <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#morphologydefinition' href='#morphology'>{% trans "Morphology" %}</a>
+                <a data-toggle='collapse' data-parent='#morphologydefinition' href='#morphology'>{% trans "Appears in" %}</a>
             </div>
         </div>
         <div id='morphology' class='collapse'>
 
+               {% if morpheme.gloss_links.count > 0 %}
                <table class='table table-condensed'>
                   <tr>
                       <th style='width:2em'></th>
-                      <th style='width:12em'>{% trans "Type" %}</th>
-                      <th style='width:12em'>{% trans "Morpheme" %}</th>
+                      <th style='width:12em'>{% trans "Word class" %}</th>
+                      <th style='width:12em'>{% trans "Gloss" %}</th>
                   </tr>
 
-                   {% for morphdef in morpheme.parent_glosses.all %}
+                   {% for morphgloss in morpheme.gloss_links %}
 
 
                    <tr>
                          <td>
-                            <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphdef.id}}'></span>
+                            <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphgloss.id}}'></span>
 
-                             <div class="modal fade" id="delete_morphology-definition_modal_{{morphdef.id}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                             <div class="modal fade" id="delete_morphology-definition_modal_{{morphgloss.id}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
                                     <div class="modal-content">
                                         <div class='modal-header'>
@@ -316,7 +317,7 @@
                                          </div>
                                       <form action='{% url "dictionary:update_morpheme" morpheme.id %}' method='post'>
                                           {% csrf_token %}
-                                          <input type='hidden' name='id' value='morphology-definition-delete_{{morphdef.id}}'>
+                                          <input type='hidden' name='id' value='morphology-definition-delete_{{morphgloss.id}}'>
                                           <input type='hidden' name='value' value='confirmed'>
                                           <div class="modal-footer">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
@@ -331,26 +332,14 @@
                         </td>
 
 
-                        <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
-                        <td class='edit edit_morpheme' id='morphology-definition-morpheme_{{morphdef.id}}'>{{morphdef.morpheme}}</td>
-                        <td>(<a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.morpheme.pk %}'>{% trans "view" %}</a>)</td></tr>
+                        <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphgloss.id}}'>{{morphgloss.get_role_display}}</td>
+                        <td class='edit edit_morpheme' id='morphology-definition-morpheme_{{morphgloss.id}}'>{{morphgloss.morpheme}}</td>
+                        <td>(<a href='{% url "dictionary:admin_morpheme_view" pk=morphgloss.morpheme.pk %}'>{% trans "view" %}</a>)</td></tr>
                    {% endfor %}
                </table>
-
-           {% if perms.dictionary.change_morpheme %}
-           <form id='add_morphologydefinition_form' method='post' action='{% url 'dictionary:add_morphologydefinition' %}'>
-               {% csrf_token %}
-               <input type='hidden' name='parent_morpheme_id' value='{{morpheme.pk}}'>
-               <table class='table table-condensed'>
-                   <tr>
-                       <td style="width:2em;"></td>
-                       <td style="width:12em;">{{morphologyform.role}}</td>
-                       <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss/Annotation ID Gloss" %}' name='morpheme_id'></td>
-                       <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
-                   </tr>
-               </table>
-            </form>
-            {% endif %}
+               {% else %}
+               <p>{% trans "This morpheme does not occur in any gloss" %}</p>
+               {% endif %}
 
            {# spacing div to allow room for typeahead dropdown #}
            <div style='height: 10em'></div>

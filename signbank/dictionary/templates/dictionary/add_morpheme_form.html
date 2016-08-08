@@ -36,6 +36,8 @@
                  <p>A sign with that Sign Number already exists. Please choose a different Sign Number.</p>
              {% endif %}
         </div>
-      {% endif %}
+   {% else %}
+   <p>{% trans "You are not authorized to add a morpheme" %}</p>
+   {% endif %}
       
 {% endblock %}

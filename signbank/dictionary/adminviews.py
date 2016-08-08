@@ -21,6 +21,63 @@ from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_MEDIA_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE
 
+
+def order_queryset_by_sort_order(get, qs):
+    """Change the sort-order of the query set, depending on the form field [sortOrder]
+
+    This function is used both by GlossListView as well as by MorphemeListView.
+    The value of [sortOrder] is 'idgloss' by default.
+    [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_gloss_list.html
+    Its value is changed by clicking the up/down buttons in the second row of the search result table
+    """
+
+    def get_string_from_tuple_list(lstTuples, number):
+        """Get the string value corresponding to a number in a list of number-string tuples"""
+        sBack = [tup[1] for tup in lstTuples if tup[0] == number]
+        return sBack
+
+    # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
+    def order_queryset_by_tuple_list(qs, sOrder, sListName):
+        """Order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]"""
+
+        # Get a list of tuples for this sort-order
+        tpList = build_choice_list(sListName)
+        # Determine sort order: ascending is default
+        bReversed = False
+        if (sOrder[0:1] == '-'):
+            # A starting '-' sign means: descending order
+            sOrder = sOrder[1:]
+            bReversed = True
+
+        # Order the list of tuples alphabetically
+        # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
+        tpList = sorted(tpList, key=operator.itemgetter(1))
+        # Order by the string-values in the tuple list
+        return sorted(qs, key=lambda x: get_string_from_tuple_list(tpList, getattr(x, sOrder)), reverse=bReversed)
+
+    # Set the default sort order
+    sOrder = 'idgloss'  # Default sort order if nothing is specified
+    # See if the form contains any sort-order information
+    if (get.has_key('sortOrder') and get['sortOrder'] != ''):
+        # Take the user-indicated sort order
+        sOrder = get['sortOrder']
+
+    # The ordering method depends on the kind of field:
+    # (1) text fields are ordered straightforwardly
+    # (2) fields made from a choice_list need special treatment
+    if (sOrder.endswith('handedness')):
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness")
+    elif (sOrder.endswith('domhndsh') or sOrder.endswith('subhndsh')):
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Handshape")
+    elif (sOrder.endswith('locprim')):
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Location")
+    else:
+        # Use straightforward ordering on field [sOrder]
+        ordered = qs.order_by(sOrder)
+
+    # return the ordered list
+    return ordered
+
 class GlossListView(ListView):
     
     model = Gloss
@@ -36,7 +93,7 @@ class GlossListView(ListView):
         search_form = GlossSearchForm(self.request.GET)
 
         context['searchform'] = search_form
-        context['glosscount'] = Gloss.objects.all().count()
+        context['glosscount'] = Gloss.none_morpheme_objects()   # Only count the none-morpheme glosses
         context['add_gloss_form'] = GlossCreateForm()
         context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
 
@@ -109,7 +166,8 @@ class GlossListView(ListView):
             desc_element = ET.SubElement(cv_element, description, myattributes)
             desc_element.text = 'The glosses CV for the CNGT (RU)'
 
-        for gloss in Gloss.objects.all():
+        # Make sure we iterate only over the none-Morpheme glosses
+        for gloss in Gloss.none_morpheme_objects():
             glossid = 'gloss'+ str(gloss.pk)
             myattributes = {cve_id: glossid}
             cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
@@ -270,67 +328,12 @@ class GlossListView(ListView):
     
         return response
 
-    def order_queryset_by_sort_order(self, qs):
-        """Change the sort-order of the query set, depending on the form field [sortOrder]
-
-        The value of [sortOrder] is 'idgloss' by default.
-        [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_gloss_list.html
-        Its value is changed by clicking the up/down buttons in the second row of the search result table
-        """
-
-        def get_string_from_tuple_list(lstTuples, number):
-            """Get the string value corresponding to a number in a list of number-string tuples"""
-            sBack = [tup[1] for tup in lstTuples if tup[0] == number]
-            return sBack
-
-        # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
-        def order_queryset_by_tuple_list(qs, sOrder, sListName):
-            """Order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]"""
-
-            # Get a list of tuples for this sort-order
-            tpList = build_choice_list(sListName)
-            # Determine sort order: ascending is default
-            bReversed = False
-            if (sOrder[0:1] == '-'):
-                # A starting '-' sign means: descending order
-                sOrder = sOrder[1:]
-                bReversed = True
-
-            # Order the list of tuples alphabetically
-            # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
-            tpList = sorted(tpList, key=operator.itemgetter(1))
-            # Order by the string-values in the tuple list
-            return sorted(qs, key=lambda x: get_string_from_tuple_list(tpList, getattr(x, sOrder)), reverse=bReversed)
-        
-        # Set the default sort order
-        sOrder = 'idgloss'    # Default sort order if nothing is specified
-        # See if the form contains any sort-order information
-        get = self.request.GET
-        if (get.has_key('sortOrder') and get['sortOrder'] != ''):
-            # Take the user-indicated sort order
-            sOrder = get['sortOrder']
-
-        # The ordering method depends on the kind of field:
-        # (1) text fields are ordered straightforwardly
-        # (2) fields made from a choice_list need special treatment
-        if (sOrder.endswith('handedness')):
-            ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness")
-        elif (sOrder.endswith('domhndsh') or sOrder.endswith('subhndsh')):
-            ordered = order_queryset_by_tuple_list(qs, sOrder, "Handshape")
-        elif (sOrder.endswith('locprim')):
-            ordered = order_queryset_by_tuple_list(qs, sOrder, "Location")
-        else:
-            # Use straightforward ordering on field [sOrder]
-            ordered = qs.order_by(sOrder)
-
-        # return the ordered list
-        return ordered
 
     def get_queryset(self):
 
-        # get query terms from self.request
-        qs = Gloss.objects.all()
-        
+        # Get all the GLOSS items that are not member of the sub-class Morpheme
+        qs = Gloss.none_morpheme_objects()
+
         #print "QS:", len(qs)
         
         get = self.request.GET
@@ -580,12 +583,10 @@ class GlossListView(ListView):
 
         # print "Final :", len(qs)
         # Sort the queryset by the parameters given
-        qs = self.order_queryset_by_sort_order(qs)
+        qs = order_queryset_by_sort_order(self.request.GET, qs)
 
         # Return the resulting filtered and sorted queryset
         return qs
-
-
 
 
 class GlossDetailView(DetailView):
@@ -602,7 +603,7 @@ class GlossDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
-        context['morphologyform'] = MorphologyForm()
+        context['morphologyform'] = GlossMorphologyForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
@@ -719,6 +720,299 @@ class GlossDetailView(DetailView):
         return context
 
 
+class MorphemeListView(ListView):
+    """The morpheme list view basically copies the gloss list view"""
+
+    model = Morpheme
+    template_name = 'dictionary/admin_morpheme_list.html'
+    paginate_by = 500
+
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(MorphemeListView, self).get_context_data(**kwargs)
+        # Add in a QuerySet of all the books
+
+        search_form = MorphemeSearchForm(self.request.GET)
+
+        context['searchform'] = search_form
+        context['glosscount'] = Morpheme.objects.all().count()
+        context['add_morpheme_form'] = MorphemeCreateForm()
+        context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
+
+        context['input_names_fields_and_labels'] = {}
+
+        for topic in ['phonology', 'semantics']:
+
+            context['input_names_fields_and_labels'][topic] = []
+
+            for fieldname in settings.FIELDS[topic]:
+                field = search_form[fieldname]
+                label = field.label
+
+                context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
+
+        return context
+
+
+    def get_paginate_by(self, queryset):
+        """
+        Paginate by specified value in querystring, or use default class property value.
+        """
+        return self.request.GET.get('paginate_by', self.paginate_by)
+
+
+    def get_queryset(self):
+        # get query terms from self.request
+        qs = Morpheme.objects.all()
+
+        # print "QS:", len(qs)
+
+        get = self.request.GET
+
+        if get.has_key('search') and get['search'] != '':
+            val = get['search']
+            query = Q(idgloss__istartswith=val) | \
+                    Q(annotation_idgloss__istartswith=val)
+
+            if re.match('^\d+$', val):
+                query = query | Q(sn__exact=val)
+
+            qs = qs.filter(query)
+            # print "A: ", len(qs)
+
+        if get.has_key('englishGloss') and get['englishGloss'] != '':
+            val = get['englishGloss']
+            qs = qs.filter(annotation_idgloss_en__istartswith=val)
+
+        if get.has_key('keyword') and get['keyword'] != '':
+            val = get['keyword']
+            qs = qs.filter(translation__translation__text__istartswith=val)
+
+        if get.has_key('inWeb') and get['inWeb'] != '0':
+            # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
+            val = get['inWeb'] == 'yes'
+            qs = qs.filter(inWeb__exact=val)
+            # print "B :", len(qs)
+
+        if get.has_key('hasvideo') and get['hasvideo'] != 'unspecified':
+            val = get['hasvideo'] == 'no'
+
+            qs = qs.filter(glossvideo__isnull=val)
+
+        if get.has_key('defspublished') and get['defspublished'] != 'unspecified':
+            val = get['defspublished'] == 'yes'
+
+            qs = qs.filter(definition__published=val)
+
+        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN',
+                      'compound', 'rmrks', 'handedness',
+                      'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic', 'relOriMov', 'relOriLoc', 'oriCh',
+                      'handCh', 'repeat', 'altern',
+                      'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'iconType',
+                      'namEnt', 'semField', 'valence',
+                      'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO',
+                      'tokNoSgnrA',
+                      'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
+
+        # Language and basic property filters
+        vals = get.getlist('dialect', [])
+        if vals != []:
+            qs = qs.filter(dialect__in=vals)
+
+        vals = get.getlist('language', [])
+        if vals != []:
+            qs = qs.filter(language__in=vals)
+
+        if get.has_key('useInstr') and get['useInstr'] != '':
+            qs = qs.filter(useInstr__icontains=get['useInstr'])
+
+        ## phonology and semantics field filters
+        for fieldname in fieldnames:
+
+            if get.has_key(fieldname):
+                key = fieldname + '__exact';
+                val = get[fieldname];
+
+                if isinstance(Gloss._meta.get_field(fieldname), NullBooleanField):
+                    val = {'0': '', '1': None, '2': True, '3': False}[val];
+
+                if val != '':
+                    kwargs = {key: val};
+                    qs = qs.filter(**kwargs);
+
+        if get.has_key('initial_relative_orientation') and get['initial_relative_orientation'] != '':
+            val = get['initial_relative_orientation']
+            qs = qs.filter(initial_relative_orientation__exact=val)
+
+        if get.has_key('final_relative_orientation') and get['final_relative_orientation'] != '':
+            val = get['final_relative_orientation']
+            qs = qs.filter(final_relative_orientation__exact=val)
+
+        if get.has_key('initial_palm_orientation') and get['initial_palm_orientation'] != '':
+            val = get['initial_palm_orientation']
+            qs = qs.filter(initial_palm_orientation__exact=val)
+
+        if get.has_key('final_palm_orientation') and get['final_palm_orientation'] != '':
+            val = get['final_palm_orientation']
+            qs = qs.filter(final_palm_orientation__exact=val)
+
+        if get.has_key('initial_secondary_loc') and get['initial_secondary_loc'] != '':
+            val = get['initial_secondary_loc']
+            qs = qs.filter(initial_secondary_loc__exact=val)
+
+        if get.has_key('final_secondary_loc') and get['final_secondary_loc'] != '':
+            val = get['final_secondary_loc']
+            qs = qs.filter(final_secondary_loc__exact=val)
+
+        if get.has_key('final_secondary_loc') and get['final_secondary_loc'] != '':
+            val = get['final_secondary_loc']
+            qs = qs.filter(final_secondary_loc__exact=val)
+
+        if get.has_key('defsearch') and get['defsearch'] != '':
+
+            val = get['defsearch']
+
+            if get.has_key('defrole'):
+                role = get['defrole']
+            else:
+                role = 'all'
+
+            if role == 'all':
+                qs = qs.filter(definition__text__icontains=val)
+            else:
+                qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
+
+        if get.has_key('tags') and get['tags'] != '':
+            vals = get.getlist('tags')
+
+            tags = []
+            for t in vals:
+                tags.extend(Tag.objects.filter(name=t))
+
+            # search is an implicit AND so intersection
+            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
+
+            # intersection
+            qs = qs & tqs
+
+            # print "J :", len(qs)
+
+        qs = qs.distinct()
+
+        if get.has_key('nottags') and get['nottags'] != '':
+            vals = get.getlist('nottags')
+
+            # print "NOT TAGS: ", vals
+
+            tags = []
+            for t in vals:
+                tags.extend(Tag.objects.filter(name=t))
+
+            # search is an implicit AND so intersection
+            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
+
+            # print "NOT", tags, len(tqs)
+            # exclude all of tqs from qs
+            qs = [q for q in qs if q not in tqs]
+
+            # print "K :", len(qs)
+
+        if get.has_key('relationToForeignSign') and get['relationToForeignSign'] != '':
+            relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
+            potential_pks = [relation.gloss.pk for relation in relations]
+            qs = qs.filter(pk__in=potential_pks)
+
+        if get.has_key('hasRelationToForeignSign') and get['hasRelationToForeignSign'] != '0':
+
+            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()];
+            print('pks_for_glosses', pks_for_glosses_with_relations)
+
+            if get['hasRelationToForeignSign'] == '1':  # We only want glosses with a relation to a foreign sign
+                qs = qs.filter(pk__in=pks_for_glosses_with_relations)
+            elif get['hasRelationToForeignSign'] == '2':  # We only want glosses without a relation to a foreign sign
+                qs = qs.exclude(pk__in=pks_for_glosses_with_relations)
+
+        if get.has_key('relation') and get['relation'] != '':
+            potential_targets = Gloss.objects.filter(idgloss__icontains=get['relation'])
+            relations = Relation.objects.filter(target__in=potential_targets)
+            potential_pks = [relation.source.pk for relation in relations]
+            qs = qs.filter(pk__in=potential_pks)
+
+        if get.has_key('hasRelation') and get['hasRelation'] != '':
+
+            # Find all relations with this role
+            if get['hasRelation'] == 'all':
+                relations_with_this_role = Relation.objects.all();
+            else:
+                relations_with_this_role = Relation.objects.filter(role__exact=get['hasRelation']);
+
+            # Remember the pk of all glosses that take part in the collected relations
+            pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role];
+            qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
+
+        if get.has_key('morpheme') and get['morpheme'] != '':
+            potential_morphemes = Gloss.objects.filter(idgloss__icontains=get['morpheme']);
+            potential_morphdefs = MorphologyDefinition.objects.filter(
+                morpheme__in=[morpheme.pk for morpheme in potential_morphemes])
+            potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs];
+            qs = qs.filter(pk__in=potential_pks)
+
+        if get.has_key('hasMorphemeOfType') and get['hasMorphemeOfType'] != '':
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasMorphemeOfType']);
+            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in
+                                                                morphdefs_with_correct_role];
+            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
+
+        if get.has_key('definitionRole') and get['definitionRole'] != '':
+
+            # Find all definitions with this role
+            if get['definitionRole'] == 'all':
+                definitions_with_this_role = Definition.objects.all();
+            else:
+                definitions_with_this_role = Definition.objects.filter(role__exact=get['definitionRole']);
+
+            # Remember the pk of all glosses that are referenced in the collection definitions
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role];
+            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+
+        if get.has_key('definitionContains') and get['definitionContains'] != '':
+            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains']);
+
+            # Remember the pk of all glosses that are referenced in the collection definitions
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text];
+            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+
+        if get.has_key('createdBefore') and get['createdBefore'] != '':
+            created_before_date = DT.datetime.strptime(get['createdBefore'], "%m/%d/%Y").date()
+            qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
+
+        if get.has_key('createdAfter') and get['createdAfter'] != '':
+            created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
+            qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
+
+        # Saving querysets results to sessions, these results can then be used elsewhere (like in gloss_detail)
+        # Flush the previous queryset (just in case)
+        self.request.session['search_results'] = None
+
+        # Make sure that the QuerySet has filters applied (user is searching for something instead of showing all results [objects.all()])
+        if hasattr(qs.query.where, 'children') and len(qs.query.where.children) > 0:
+
+            items = []
+
+            for item in qs:
+                items.append(dict(id=item.id, gloss=item.idgloss))
+
+            self.request.session['search_results'] = items
+
+        # print "Final :", len(qs)
+        # Sort the queryset by the parameters given
+        qs = order_queryset_by_sort_order(self.request.GET, qs)
+
+        # Return the resulting filtered and sorted queryset
+        return qs
+
+
 class MorphemeDetailView(DetailView):
     model = Morpheme
     context_object_name = 'morpheme'
@@ -732,11 +1026,15 @@ class MorphemeDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
-        context['morphologyform'] = MorphologyForm()
+        context['morphologyform'] = MorphemeMorphologyForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['morpheme'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION'] = settings.SIGN_NAVIGATION
+
+        # Get the set of all the Gloss signs that point to me
+        context['glosslinks'] = Gloss.objects.filter(morphemePart__id=context['morpheme'].id)
+        # context['glosslinks'] = self.gloss_set.all()
 
         try:
             # Note: setting idgloss to context['morpheme'] is not enough; the ".idgloss" needs to be specified

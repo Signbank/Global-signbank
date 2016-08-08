@@ -520,7 +520,29 @@ def add_definition(request, glossid):
 def add_morphology_definition(request):
 
     if request.method == "POST":
-        form = MorphologyForm(request.POST)
+        form = GlossMorphologyForm(request.POST)
+
+        if form.is_valid():
+
+            parent_gloss = form.cleaned_data['parent_gloss_id']
+            role = form.cleaned_data['role']
+            morpheme_id = form.cleaned_data['morpheme_id']
+            morpheme = gloss_from_identifier(morpheme_id)
+
+            thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
+
+            # create definition, default to not published
+            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
+            morphdef.save()
+
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+
+    raise Http404('Incorrect request');
+
+def add_morphemeappearance(request):
+
+    if request.method == "POST":
+        form = GlossMorphologyForm(request.POST)
 
         if form.is_valid():
 

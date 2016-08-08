@@ -521,6 +521,24 @@ def add_new_sign(request):
 
     return render_to_response('dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()},context_instance=RequestContext(request))
 
+
+@login_required_config
+def search_morpheme(request):
+    """Handle morpheme search form submission"""
+
+    form = UserMorphemeSearchForm(request.GET.copy())
+
+    if form.is_valid():
+
+        morphQuery = form.cleaned_data['morphQuery']
+        # Issue #153: make sure + and - signs are translated correctly into the search URL
+        morphQuery = urlquote(morphQuery)
+        term = form.cleaned_data['query']
+        # Issue #153: do the same with the Translation, encoded by 'query'
+        term = urlquote(term)
+
+        return HttpResponseRedirect('../../morphemes/search/?search='+morphQuery+'&keyword='+term)
+
 def add_new_morpheme(request):
 
     oForm = {'add_morpheme_form':MorphemeCreateForm()}
