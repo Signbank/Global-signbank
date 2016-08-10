@@ -35,6 +35,7 @@ FIELDS['other'] = []
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
+CROP_GLOSS_IMAGES = False
 OTHER_MEDIA_DIRECTORY = WRITABLE_FOLDER+'othermedia/'
 WSGI_FILE = ROOT+'signbank/wsgi.py'
 IMAGES_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_images/'

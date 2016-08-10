@@ -430,7 +430,13 @@ body {
 .thumbnail
 {
   height:115px;
-  margin: -8px -50px -8px -50px
+  margin: auto;
+  padding: 0px;
+}
+
+.cropped_thumbnail
+{
+  margin: -4px -50px -8px -50px
 }
 
 .thumbnail_container
