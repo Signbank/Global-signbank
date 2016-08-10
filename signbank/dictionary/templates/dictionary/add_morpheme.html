@@ -43,7 +43,9 @@
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Morpheme" %}'>
      </form>
-      {% endif %}
+   {% else %}
+   <p>{% trans "You are not authorized to add a morpheme" %}</p>
+   {% endif %}
 
 </body>
 </html>

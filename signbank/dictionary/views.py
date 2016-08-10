@@ -463,8 +463,7 @@ def try_code(request):
     """A view for the developer to try out things"""
 
     result = ''
-    # all_id_glosses = []
-    #
+
     # for gloss in Gloss.objects.all():
     #
     #     if gloss.idgloss in all_id_glosses:
@@ -472,7 +471,23 @@ def try_code(request):
     #
     #     all_id_glosses.append(gloss.idgloss)
 
-    result = str(signbank.tools.get_static_urls_of_files_in_writable_folder('glossvideo',since_timestamp=1462060800))
+    # for n, line in enumerate(open('/var/www2/signbank/live/repo/signbank/signbank/dictionary/ID-glossen-classifier-en-SHAPEconstructies.csv')):
+    #
+    #     if n == 0:
+    #         continue
+    #
+    #     signbank_id, idgloss, annotation_id_gloss, annotation_id_gloss_en, strong_hand = line.strip().split(',')
+    #     machine_value = FieldChoice.objects.get(english_name=strong_hand,field='Handshape').machine_value
+    #     g = Gloss()
+    #     g.idgloss = idgloss
+    #     g.annotation_idgloss = annotation_id_gloss
+    #     g.annotation_idgloss_en = annotation_id_gloss_en
+    #     g.domhndsh = machine_value
+    #     g.save()
+
+    for gloss in Gloss.objects.filter(relOriMov=1):
+        gloss.relOriMov = 6
+        gloss.save()
 
     return HttpResponse(result)
 
@@ -505,6 +520,24 @@ def import_authors(request):
 def add_new_sign(request):
 
     return render_to_response('dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()},context_instance=RequestContext(request))
+
+
+@login_required_config
+def search_morpheme(request):
+    """Handle morpheme search form submission"""
+
+    form = UserMorphemeSearchForm(request.GET.copy())
+
+    if form.is_valid():
+
+        morphQuery = form.cleaned_data['morphQuery']
+        # Issue #153: make sure + and - signs are translated correctly into the search URL
+        morphQuery = urlquote(morphQuery)
+        term = form.cleaned_data['query']
+        # Issue #153: do the same with the Translation, encoded by 'query'
+        term = urlquote(term)
+
+        return HttpResponseRedirect('../../morphemes/search/?search='+morphQuery+'&keyword='+term)
 
 def add_new_morpheme(request):
 

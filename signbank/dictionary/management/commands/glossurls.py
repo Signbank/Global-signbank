@@ -12,6 +12,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
+        # TODO: decide whether this should be reduced to Gloss.none_morpheme_objects()
         for gloss in Gloss.objects.all():
             print gloss.id, gloss.get_video_url()
             

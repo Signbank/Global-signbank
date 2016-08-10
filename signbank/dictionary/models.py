@@ -437,6 +437,11 @@ minor or insignificant ways that can be ignored.""")
         result['next'] = self.next_dictionary_gloss(is_staff)
         result['prev'] = self.prev_dictionary_gloss(is_staff)
         return result
+
+    @staticmethod
+    def none_morpheme_objects():
+        """Get all the GLOSS objects, but excluding the MORPHEME ones"""
+        return Gloss.objects.filter(morpheme=None)
     
     def admin_next_gloss(self):
         """next gloss in the admin view, shortcut for next_dictionary_gloss with staff=True"""
@@ -453,7 +458,8 @@ minor or insignificant ways that can be ignored.""")
         """Find the next gloss in dictionary order"""
 
         if staff:
-            all_glosses_ordered =  Gloss.objects.all().order_by('annotation_idgloss')
+            # Make sure we only include the none-Morpheme glosses
+            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('annotation_idgloss')
         else:
             all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('annotation_idgloss')
 

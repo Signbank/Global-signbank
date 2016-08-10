@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
 from signbank.dictionary.models import Gloss
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeListView
 from signbank.dictionary.views import add_image
 
 from django.contrib import admin
@@ -46,6 +46,8 @@ urlpatterns = patterns('',
     url(r'^signs/add/$', 'signbank.dictionary.views.add_new_sign'),
     url(r'^signs/import_csv/$', 'signbank.dictionary.views.import_csv'),
     url(r'^signs/recently_added/$', 'signbank.dictionary.views.recently_added_glosses'),
+    url(r'^morphemes/dictionary/$', 'signbank.dictionary.views.search_morpheme'),
+    url(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),
     url(r'^morphemes/add/$', 'signbank.dictionary.views.add_new_morpheme'),
     url(r'^feedback/overview/$', 'signbank.feedback.views.showfeedback'),
 
