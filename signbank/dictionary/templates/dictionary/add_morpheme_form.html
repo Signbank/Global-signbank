@@ -20,12 +20,14 @@
                          <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
                          <th><label for='id_annotation_idgloss'>{% trans "Annotation ID Gloss (Dutch)" %}</label></th>
                          <th><label for='id_annotation_idgloss_en'>{% trans "Annotation ID Gloss (English)" %}</label></th>
+                         <th><label for='id_mrptype'>{% trans "Morpheme type" %}</label></th>
                          <th></th>
                      </tr>
                      <tr>
                          <td>{{add_morpheme_form.idgloss}}</td>
                          <td>{{add_morpheme_form.annotation_idgloss}}</td>
                          <td>{{add_morpheme_form.annotation_idgloss_en}}</td>
+                         <td>{{add_morpheme_form.mrptype}}</td>
                          <td><input class='btn btn-primary' type='submit' value='Add New Morpheme'></td>
                      </tr>
                  </table>

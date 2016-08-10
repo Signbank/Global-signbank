@@ -93,7 +93,7 @@ class GlossListView(ListView):
         search_form = GlossSearchForm(self.request.GET)
 
         context['searchform'] = search_form
-        context['glosscount'] = Gloss.none_morpheme_objects()   # Only count the none-morpheme glosses
+        context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
         context['add_gloss_form'] = GlossCreateForm()
         context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
 
@@ -593,7 +593,7 @@ class GlossDetailView(DetailView):
     
     model = Gloss
     context_object_name = 'gloss'
-    
+
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
@@ -604,6 +604,7 @@ class GlossDetailView(DetailView):
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
         context['morphologyform'] = GlossMorphologyForm()
+        context['morphemeform'] = GlossMorphemeForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
@@ -1166,6 +1167,8 @@ def gloss_ajax_complete(request, prefix):
     query = Q(idgloss__istartswith=prefix) | \
             Q(annotation_idgloss__istartswith=prefix) | \
             Q(sn__startswith=prefix)
+    # TODO: possibly reduce the possibilities of [Gloss.objects] to exclude Morphemes??
+    # Suggestion: qs = Gloss.none_morpheme_objects.filter(query) -- if that works
     qs = Gloss.objects.filter(query)
 
     result = []
@@ -1173,6 +1176,24 @@ def gloss_ajax_complete(request, prefix):
         result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn, 'pk': "%s (%s)" % (g.idgloss, g.pk)})
     
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+
+
+def morph_ajax_complete(request, prefix):
+    """Return a list of morphs matching the search term
+    as a JSON structure suitable for typeahead."""
+
+    query = Q(idgloss__istartswith=prefix) | \
+            Q(annotation_idgloss__istartswith=prefix) | \
+            Q(sn__startswith=prefix)
+    qs = Morpheme.objects.filter(query)
+
+    result = []
+    for g in qs:
+        result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn,
+                       'pk': "%s (%s)" % (g.idgloss, g.pk)})
+
+    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+
 
 def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
 

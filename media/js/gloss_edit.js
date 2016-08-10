@@ -50,6 +50,7 @@ var original_values_for_changes_made = new Array();
 	});
 
     glosstypeahead($('.glosstypeahead'));
+    morphtypeahead($('.morphtypeahead'));
 
 
     // setup requried for Ajax POST
@@ -242,8 +243,17 @@ function configure_edit() {
          type      : 'glosstypeahead',
 		 callback : update_view_and_remember_original_value
      });
-     $('.edit_morpheme').editable(edit_post_url, {
+     $('.edit_compoundpart').editable(edit_post_url, {
          type      : 'glosstypeahead',
+		 callback : update_view_and_remember_original_value
+     });
+     $('.edit_morpheme').editable(edit_post_url, {
+         type      : 'morphtypeahead',
+		 callback : update_view_and_remember_original_value
+     });
+     $('.edit_mrptype').editable(edit_post_url, {
+         type      : 'select',
+         data      : mrptype_choices,
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_morphology_role').editable(edit_post_url, {
@@ -282,7 +292,7 @@ var gloss_bloodhound = new Bloodhound({
       queryTokenizer: Bloodhound.tokenizers.whitespace,
       remote: '/dictionary/ajax/gloss/%QUERY'
     });
-     
+
 gloss_bloodhound.initialize();
 
 function glosstypeahead(target) {
@@ -312,7 +322,47 @@ $.editable.addInputType('glosstypeahead', {
    }, 
 });
 
-/* 
+/*
+ *  Mimic the 'gloss' typeahead facility for 'morpheme', which is a subset of the glosses
+ *  (as defined by the 'Morpheme' model, which takes Gloss as basis)
+ */
+
+var morph_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: '/dictionary/ajax/morph/%QUERY'
+    });
+
+morph_bloodhound.initialize();
+
+function morphtypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'morphtarget',
+          displayKey: 'pk',
+          source: morph_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(gloss) {
+                  return("<p><strong>" + gloss.idgloss + "</strong> (SN: " + gloss.sn + ")</p>");
+              }
+          }
+      });
+};
+
+
+$.editable.addInputType('morphtypeahead', {
+
+   element: function(settings, original) {
+      var input = $('<input type="text" class="morphtypeahead">');
+      $(this).append(input);
+
+      morphtypeahead(input);
+
+      return (input);
+   },
+});
+
+/*
  * http://stackoverflow.com/questions/1597756/is-there-a-jquery-jeditable-multi-select-plugin
  */
 

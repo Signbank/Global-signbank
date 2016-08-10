@@ -290,7 +290,7 @@
         </div>
         <div id='morphology' class='collapse'>
 
-               {% if morpheme.gloss_links.count > 0 %}
+               {% if morpheme.gloss_set.count > 0 %}
                <table class='table table-condensed'>
                   <tr>
                       <th style='width:2em'></th>
@@ -298,7 +298,7 @@
                       <th style='width:12em'>{% trans "Gloss" %}</th>
                   </tr>
 
-                   {% for morphgloss in morpheme.gloss_links %}
+                   {% for morphgloss in morpheme.gloss_set.all %}
 
 
                    <tr>

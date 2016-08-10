@@ -39,6 +39,10 @@
                  <input id="id_annotation_idgloss_en" maxlength="30" name="annotation_idgloss_en" type="hidden" value="unused">
                  {% endif %}
              </tr>
+             <tr>
+                 <th><label for='id_mrptype'>{% trans "Morpheme type" %}</label></th>
+                 <td class="edit edit_mrptype" id="id_mrptype">{% for tp in morpheme.mrptype.all %}{{tp.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+             </tr>
          </table>
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Morpheme" %}'>

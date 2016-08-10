@@ -28,6 +28,7 @@
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
     var languages = {{gloss.language_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
+    var mrptype_choices = {{gloss.language_choices|safe}};
 
     var choice_lists = {{choice_lists|safe}};
     var csrf_token = '{{csrf_token}}';
@@ -289,11 +290,13 @@
         </div>
         <div id='morphology' class='collapse'>
 
+            <!-- List the glosses that serve as compound parts of 'me', and allow Adding/Deleting these parts -->
+            {% if gloss.parent_glosses.count > 0 %}
                <table class='table table-condensed'>
                   <tr>
                       <th style='width:2em'></th>
                       <th style='width:12em'>{% trans "Type" %}</th>
-                      <th style='width:12em'>{% trans "Morpheme" %}</th>
+                      <th style='width:12em'>{% trans "Component sign" %}</th>
                   </tr>
 
                    {% for morphdef in gloss.parent_glosses.all %}
@@ -331,13 +334,16 @@
 
 
                         <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
-                        <td class='edit edit_morpheme' id='morphology-definition-morpheme_{{morphdef.id}}'>{{morphdef.morpheme}}</td>
+                        <td class='edit edit_compoundpart' id='morphology-definition-morpheme_{{morphdef.id}}'>{{morphdef.morpheme}}</td>
                         <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{% trans "view" %}</a>)</td></tr>
                    {% endfor %}
                </table>
+            {% else %}
+            <p><i>({% trans "If this is a compound, use [Edit] to define its components" %})</i></p>
+            {% endif %}
 
            {% if perms.dictionary.change_gloss %}
-           <form id='add_morphologydefinition_form' method='post' action='{% url 'dictionary:add_morphologydefinition' %}'>
+           <form id='add_morphologydefinition_form' method='post' action="{% url 'dictionary:add_morphologydefinition' %}">
                {% csrf_token %}
                <input type='hidden' name='parent_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
@@ -345,15 +351,66 @@
                        <td style="width:2em;"></td>
                        <td style="width:12em;">{{morphologyform.role}}</td>
                        <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss/Annotation ID Gloss" %}' name='morpheme_id'></td>
+                       <td><input class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
+                   </tr>
+               </table>
+           </form>
+            {% endif %}
+
+
+            <!-- Show a read-only list of glosses in which this gloss occurs as compound part(ERK, issue #177) -->
+            {% if gloss.morphemes.count > 0 %}
+            <table class='table table-condensed'>
+                <tr>
+                    <th style='width:2em'></th>
+                    <th style='width:12em'>{% trans "Type" %}</th>
+                    <th style='width:12em'>{% trans "Compound sign" %}</th>
+                </tr>
+                {% for morphdef in gloss.morphemes.all %}
+                <tr>
+                    <td style="width:2em;"></td>
+                    <td style='width:12em' class='edit_morphology_role' id='compound-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
+                    <td class='edit_compoundpart' id='compound-definition-morpheme_{{morphdef.id}}'>{{morphdef.parent_gloss}}</td>
+                    <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphdef.parent_gloss.pk %}'>{% trans "view" %}</a>)</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p><i>({% trans "This gloss is not defined as part of a compound" %})</i></p>
+            {% endif %}
+
+            <!-- Editable list of morphemes (see model "Morpheme") used in this Gloss (ERK, issue #177) -->
+            {% if gloss.morphemePart.all > 0 %}
+            <table class='table table-condensed'>
+                <tr>
+                    <th style='width:2em'></th>
+                    <th style='width:12em'>{% trans "Morpheme" %}</th>
+                </tr>
+                {% for morpheme in gloss.morphemePart.all %}
+                <tr>
+                    <td style="width:2em;"></td>
+                    <td class='edit_morpheme' id='morpheme-definition_{{morpheme.id}}'>{{morpheme}}</td>
+                    <td>(<a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.pk %}'>{% trans "view" %}</a>)</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p><i>({% trans "Use [Edit] to define any morphemes used in this sign" %})</i></p>
+            {% endif %}
+
+            <!-- Facilitate adding and deleting morphemes that are used in this sign -->
+           {% if perms.dictionary.change_gloss %}
+           <form id='add_morphemedefinition_form' method='post' action="{% url 'dictionary:add_morphemedefinition' glossid=gloss.id %}">
+               {% csrf_token %}
+               <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
+               <table class='table table-condensed'>
+                   <tr>
+                       <td style="width:2em;"></td>
+                       <td><input class='form-control morphtypeahead' placeholder='{% trans "ID Morpheme/Annotation ID Morpheme" %}' name='morph_id'></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
                    </tr>
                </table>
-            </form>
-
-            <!-- TODO: Add read-only list of glosses in which this gloss occurs as compound part(ERK, issue #177) -->
-
-            <!-- TODO: Add editable list of morphemes used in this Gloss (ERK, issue #177) -->
-
+           </form>
             {% endif %}
 
            {# spacing div to allow room for typeahead dropdown #}
@@ -676,7 +733,7 @@
 
 
             {% if perms.dictionary.change_gloss %}
-            <form id='add_definition' action='{% url 'dictionary:add_definition' gloss.id %}' method="POST">
+            <form id='add_definition' action='{% url "dictionary:add_definition" gloss.id %}' method="POST">
                 <fieldset>
                 {% csrf_token %}
                  <table class='table'>

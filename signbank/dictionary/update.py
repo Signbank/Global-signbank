@@ -347,7 +347,25 @@ def gloss_from_identifier(value):
         return target
     else:
         return None
-            
+
+
+def morph_from_identifier(value):
+    """Given an id of the form idgloss (pk) return the
+    relevant Morpheme or None if none is found"""
+
+    match = re.match('(.*) \((\d+)\)', value)
+    if match:
+        print "MATCH: ", match
+        idgloss = match.group(1)
+        pk = match.group(2)
+        print "INFO: ", idgloss, pk
+
+        target = Morpheme.objects.get(pk=int(pk))
+        print "TARGET: ", target
+        return target
+    else:
+        return None
+
 
 def update_definition(request, gloss, field, value):
     """Update one of the definition fields"""
@@ -534,6 +552,29 @@ def add_morphology_definition(request):
             # create definition, default to not published
             morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
+
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+
+    raise Http404('Incorrect request');
+
+# Add a 'morpheme' (according to the Morpheme model)
+def add_morpheme_definition(request, glossid):
+
+    if request.method == "POST":
+        form = GlossMorphemeForm(request.POST)
+
+        if form.is_valid():
+
+            thisgloss = get_object_or_404(Gloss, pk=glossid)
+            host_gloss = form.cleaned_data['host_gloss_id']
+            morph_id = form.cleaned_data['morph_id']
+            morph = morph_from_identifier(morph_id)
+
+            if morph != None:
+
+                # Add this morpheme to the "morphemePart" field of the gloss instance
+                thisgloss.morphemePart.add(morph)
+                thisgloss.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
