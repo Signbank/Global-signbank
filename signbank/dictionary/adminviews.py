@@ -609,7 +609,7 @@ class GlossDetailView(DetailView):
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
 
-        next_gloss = Gloss.objects.get(idgloss=context['gloss']).admin_next_gloss()
+        next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
         if next_gloss == None:
             context['nextglossid'] = context['gloss']
         else:

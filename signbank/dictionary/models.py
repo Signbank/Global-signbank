@@ -539,7 +539,8 @@ minor or insignificant ways that can be ignored.""")
 
     def get_video_path(self):
 
-        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
+        idgloss = self.idgloss.encode('ascii','ignore')
+        return 'glossvideo/'+idgloss[:2]+'/'+idgloss+'-'+str(self.pk)+'.mp4'
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
