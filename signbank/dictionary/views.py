@@ -792,8 +792,11 @@ def update_cngt_counts(request,folder_index=None):
         #Iterate to them, and add to gloss
         for region, frequency in frequency_info['frequenciesPerRegion'].items():
 
-            attribute_name = 'tokNo' + location_to_fieldname_letter[region]
-            setattr(gloss,attribute_name,frequency)
+            try:
+                attribute_name = 'tokNo' + location_to_fieldname_letter[region]
+                setattr(gloss,attribute_name,frequency)
+            except KeyError:
+                continue
 
         gloss.save()
 
