@@ -738,7 +738,7 @@ def add_image(request):
     # a malicious request, if no referrer, go back to root
     return redirect(url)
 
-def update_cngt_counts(request):
+def update_cngt_counts(request,folder_index=None):
 
     #Run the counter script
     try:
@@ -746,10 +746,23 @@ def update_cngt_counts(request):
     except ImportError:
         return HttpResponse('Counter script not present')
 
+    folder_paths = []
+
+    for foldername in os.listdir(settings.CNGT_EAF_FILES_LOCATION):
+        if '.xml' not in foldername:
+            folder_paths.append(settings.CNGT_EAF_FILES_LOCATION+foldername+'/')
+
+    if folder_index != None:
+        folder_paths = [folder_paths[int(folder_index)]]
+
+    eaf_file_paths = []
+
+    for folder_path in folder_paths:
+        eaf_file_paths += [folder_path + f for f in os.listdir(folder_path)]
+
     sign_counter = SignCounter(settings.CNGT_METADATA_LOCATION,
-                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT,
-                               [settings.CNGT_EAF_FILES_LOCATION+f for f in  os.listdir(settings.CNGT_EAF_FILES_LOCATION)]
-                               )
+                               eaf_file_paths,
+                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT)
 
     sign_counter.run()
     counts = sign_counter.get_result()
