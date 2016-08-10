@@ -746,7 +746,7 @@ class Morpheme(Gloss):
 
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
-        return "%s+M" % (self.idgloss)
+        return "%s (%s)" % (self.idgloss, self.get_mrpType_display())
 
 
     def admin_next_morpheme(self):
@@ -778,6 +778,19 @@ class Morpheme(Gloss):
             return None
 
 
+    def mrptype_choices(self):
+        """Return JSON for mrptype choices"""
+
+        # Get the list of choices for this field
+        li = self._meta.get_field("mrpType").choices;
+
+        # Sort the list
+        sorted_li = sorted(li, key=lambda x: x[1]);
+
+        # Put it in another format
+        reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
+
+        return json.dumps(reformatted_li)
 
 
 class OtherMedia(models.Model):

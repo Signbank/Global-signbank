@@ -50,7 +50,7 @@ class MorphemeCreateForm(forms.ModelForm):
     """Form for creating a new morpheme from scratch"""
     class Meta:
         model = Morpheme
-        fields = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en']
+        fields = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'mrpType']
 
 
 class VideoUpdateForm(forms.Form):
@@ -252,6 +252,7 @@ class RelationToForeignSignForm(forms.ModelForm):
         fields = ['loan','other_lang','other_lang_gloss']
         widgets = {}
 
+
 class GlossMorphologyForm(forms.ModelForm):
     """Morphology specification of a Gloss"""
 
@@ -262,6 +263,14 @@ class GlossMorphologyForm(forms.ModelForm):
     class Meta:
         model = MorphologyDefinition;
         fields = ['role'];
+
+
+class GlossMorphemeForm(forms.Form):
+    """Specify [morphemePart] components belonging to a Gloss"""
+
+    host_gloss_id = forms.CharField(label=_(u'Host Gloss'))
+    morph_id = forms.CharField(label=_(u'Morpheme'))
+
 
 class MorphemeMorphologyForm(forms.ModelForm):
     """Morphology specification for a Morpheme"""
