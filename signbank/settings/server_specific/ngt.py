@@ -47,6 +47,7 @@ FIELDS['other'] = ['wordClass']
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
+CROP_GLOSS_IMAGES = True
 OTHER_MEDIA_DIRECTORY = WRITABLE_FOLDER+'othermedia/'
 WSGI_FILE = ROOT+'virtualenv/signbank/lib/python2.7/site-packages/signbank/wsgi.py'
 IMAGES_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_images/'

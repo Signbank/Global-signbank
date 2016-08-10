@@ -430,6 +430,11 @@ body {
 .thumbnail
 {
   height:115px;
+  margin: auto;
+}
+
+.cropped_thumbnail
+{
   margin: -8px -50px -8px -50px
 }
 
