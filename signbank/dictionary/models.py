@@ -705,6 +705,8 @@ def fieldname_to_category(fieldname):
         field_category = 'NamedEntity'
     elif fieldname == 'iconType':
         field_category = 'iconicity'
+    elif fieldname == 'mrpType':
+        field_category = 'MorphemeType'
     else:
         field_category = fieldname
 

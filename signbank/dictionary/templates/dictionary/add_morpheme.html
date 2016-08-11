@@ -3,6 +3,26 @@
 {% load bootstrap3 %}
 {% load i18n %}
 
+{% block extrajs %}
+
+    {% if perms.dictionary.change_gloss %}
+
+    <script type="text/javascript">
+
+    var csrf_token = '{{csrf_token}}';
+    var choice_lists = {{choice_lists|safe}};
+    var mrp_data = choice_lists['mrpType'];
+    $("#id_mrptype select").html("");
+    $.each(mrp_data, function(key, value) {
+        $("#id_mrptype select").append($('<option>', { value : key }).text(value));
+    });
+
+    </script>
+
+    {% endif %}
+{% endblock %}
+
+
 {% block content %}
 
 <!DOCTYPE html>
@@ -40,8 +60,8 @@
                  {% endif %}
              </tr>
              <tr>
-                 <th><label for='id_mrptype'>{% trans "Morpheme type" %}</label></th>
-                 <td class="edit edit_mrptype" id="id_mrptype">{% for tp in morpheme.mrptype.all %}{{tp.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <th>{% trans "Morpheme type" %}</th>
+                <td class="edit edit_list" id='id_mrptype'><select></select></td>
              </tr>
          </table>
 

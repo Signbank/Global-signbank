@@ -270,6 +270,12 @@ function configure_edit() {
 		 });
      });
 
+    // Attempt (ERK)
+    $('.edit_list_always').editable(edit_post_url, {
+        type    : 'select',
+        data    : choice_lists[$(this).attr('id')],
+        callback: update_view_and_remember_original_value
+    });
 }
 
 function update_view_and_remember_original_value(change_summary)
