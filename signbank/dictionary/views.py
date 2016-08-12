@@ -11,6 +11,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlquote
 from django.utils.encoding import smart_unicode
+from collections import OrderedDict
 
 import os
 import shutil
@@ -546,8 +547,50 @@ def add_new_morpheme(request):
 
     oForm = {'add_morpheme_form':MorphemeCreateForm()}
     oContext = RequestContext(request)
+
+    # Add essential information to the context
+    oContext['morph_fields'] = []
+    oContext['choice_lists'] = {}
+    field = 'mrpType'
+    # Get and save the choice list for this field
+    field_category = fieldname_to_category(field)
+    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+
+    if len(choice_list) > 0:
+        oContext['choice_lists'][field] = choicelist_queryset_to_translated_ordered_dict(choice_list,
+                                                                                        request.LANGUAGE_CODE)
+    oContext['mrp_list'] = json.dumps(oContext['choice_lists']['mrpType'])
+    oContext['choice_lists'] = json.dumps(oContext['choice_lists'])
+
+    # And add the kind of field
+    kind = 'list';
+
+    oContext['morph_fields'].append(['(Make a choice)', field, "Morpheme type", kind]);
+
+    # Continue
     oBack = render_to_response('dictionary/add_morpheme.html', oForm, context_instance=oContext)
     return oBack
+
+def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
+
+    codes_to_adjectives = dict(settings.LANGUAGES)
+
+    if language_code not in codes_to_adjectives.keys():
+        adjective = 'english'
+    else:
+        adjective = codes_to_adjectives[language_code].lower()
+
+    try:
+        raw_choice_list = [('_'+str(choice.machine_value), unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
+    except AttributeError:
+        raw_choice_list = [('_'+str(choice.machine_value), unicode(getattr(choice,'english_name'))) for choice in queryset]
+
+    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
+
+    ordered_choice_list = OrderedDict(sorted_choice_list)
+
+    return ordered_choice_list
+
 
 def import_csv(request):
 
