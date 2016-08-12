@@ -686,9 +686,18 @@ def import_csv(request):
                     else:
                         new_value = False
 
+                #Remember this for renaming the video later
+                if fieldname == 'idgloss':
+                    video_path_before = settings.WRITABLE_FOLDER+gloss.get_video_path()
+
                 #The normal change and save procedure
                 setattr(gloss,fieldname,new_value)
                 gloss.save()
+
+                #Also update the video if needed
+                if fieldname == 'idgloss':
+                    video_path_after = settings.WRITABLE_FOLDER+gloss.get_video_path()
+                    os.rename(video_path_before,video_path_after)
 
         stage = 2
 
