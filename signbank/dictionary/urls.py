@@ -58,7 +58,10 @@ urlpatterns = patterns('',
     url(r'update_cngt_counts/$', 'signbank.dictionary.views.update_cngt_counts'),
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', 'signbank.dictionary.views.update_cngt_counts'),
 
-   # Admin views
+   url(r'package/$', 'signbank.dictionary.views.package'),
+    #url(r'package/$','signbank.dictionary.views.package'),
+
+    # Admin views
     url(r'^try/$', 'signbank.dictionary.views.try_code'), #A view for the developer to try out some things
     url(r'^import_authors/$', 'signbank.dictionary.views.import_authors'),
 

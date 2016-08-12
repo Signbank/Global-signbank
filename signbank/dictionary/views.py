@@ -15,6 +15,7 @@ from django.utils.encoding import smart_unicode
 import os
 import shutil
 import csv
+import time
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -31,6 +32,8 @@ from django.utils.translation import override
 
 import urlparse
 from urllib import urlencode
+from wsgiref.util import FileWrapper
+
 
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
@@ -802,3 +805,26 @@ def update_cngt_counts(request,folder_index=None):
 
     glosses_not_in_signbank_str = '</li><li>'.join(glosses_not_in_signbank)
     return HttpResponse('<p>No glosses were found for these names:</p><ul><li>'+glosses_not_in_signbank_str+'</li></ul>')
+
+def package(request):
+
+    first_part_of_file_name = 'signbank_pa'
+
+    # :)
+    if 'since_timestamp' in request.GET:
+        first_part_of_file_name += 'tch'
+        since_timestamp = int(request.GET['since_timestamp'])
+    else:
+        first_part_of_file_name += 'ckage'
+        since_timestamp = None
+
+    archive_file_name = '.'.join([first_part_of_file_name,str(int(time.time())),'zip'])
+    archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
+    collected_data = {'video_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossvideo',since_timestamp),
+                      'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossimage',since_timestamp)}
+
+    signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
+
+    response = HttpResponse(FileWrapper(open(archive_file_path)), content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename='+archive_file_name
+    return response

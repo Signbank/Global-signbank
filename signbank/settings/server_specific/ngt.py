@@ -53,6 +53,7 @@ WSGI_FILE = ROOT+'virtualenv/signbank/lib/python2.7/site-packages/signbank/wsgi.
 IMAGES_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_images/'
 VIDEOS_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_videos/'
 OTHER_MEDIA_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_other_media/'
+SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 
 CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'
 CNGT_METADATA_LOCATION = ROOT+'virtualenv/signbank/CNGT_MetadataEnglish_OtherResearchers.csv'
