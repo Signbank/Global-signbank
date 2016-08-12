@@ -2,6 +2,8 @@ from settings.base import WSGI_FILE, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY
 import os
 import shutil
 from HTMLParser import HTMLParser
+from zipfile import ZipFile
+import json
 
 import signbank.settings
 from signbank.settings.base import LANGUAGE_CODE
@@ -181,3 +183,20 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
                 static_urls.append(signbank.settings.base.STATIC_URL+root_folder+'/'+subfolder_name+'/'+filename)
 
     return static_urls
+
+def create_zip_with_json_files(data_per_file,output_path):
+
+    """Creates a zip file filled with the output of the functions supplied.
+
+    Data should either be a json string or a list, which will be transformed to json."""
+
+    INDENTATION_CHARS = 4
+
+    zip = ZipFile(output_path,'w')
+
+    for filename, data in data_per_file.items():
+
+        if isinstance(data,list):
+            output = json.dumps(data,indent=INDENTATION_CHARS)
+
+        zip.writestr(filename+'.json',output)
