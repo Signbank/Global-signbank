@@ -851,17 +851,20 @@ def update_cngt_counts(request,folder_index=None):
 
 def package(request):
 
+    # :)
     first_part_of_file_name = 'signbank_pa'
 
-    # :)
+    timestamp_part_of_file_name = str(int(time.time()))
+
     if 'since_timestamp' in request.GET:
         first_part_of_file_name += 'tch'
         since_timestamp = int(request.GET['since_timestamp'])
+        timestamp_part_of_file_name = request.GET['since_timestamp']+'-'+timestamp_part_of_file_name
     else:
         first_part_of_file_name += 'ckage'
         since_timestamp = None
 
-    archive_file_name = '.'.join([first_part_of_file_name,str(int(time.time())),'zip'])
+    archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
     collected_data = {'video_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossvideo',since_timestamp),
                       'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossimage',since_timestamp)}
