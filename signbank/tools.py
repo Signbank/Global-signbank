@@ -64,6 +64,10 @@ def compare_valuedict_to_gloss(valuedict,gloss):
 
             new_human_value = new_human_value.strip()
 
+            #This fixes a casing problem that sometimes shows up
+            if human_key.lower() == 'id gloss':
+                human_key = 'ID Gloss'
+
             #If these are not fields, but relations to other parts of the database, go look for differenes elsewhere
             if human_key == 'Keywords':
 
