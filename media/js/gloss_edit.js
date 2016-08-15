@@ -256,6 +256,11 @@ function configure_edit() {
          data      : mrptype_choices,
 		 callback : update_view_and_remember_original_value
      });
+     $('.edit_wordclass').editable(edit_post_url, {
+         type      : 'select',
+         data      : wordclass_choices,
+		 callback : update_view_and_remember_original_value
+     });
      $('.edit_morphology_role').editable(edit_post_url, {
          type      : 'select',
          data      : choice_lists['morphology_role'],

@@ -398,8 +398,9 @@ minor or insignificant ways that can be ignored.""")
     namEnt = models.CharField(_("Named Entity"), choices=build_choice_list("NamedEntity"), null=True, blank=True, max_length=5)
     semField = models.CharField(_("Semantic Field"), choices=build_choice_list("SemField"), null=True, blank=True, max_length=5)
 
-    wordClass = models.CharField(_("Word class 1"), null=True, blank=True, max_length=5)
-    wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5)
+    # Adaptation (ERK): supplement wordClass and wordClass2 with [, choices=build_choice_list('WordClass')]
+    wordClass = models.CharField(_("Word class 1"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
+    wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50, blank=True)
     lexCatNotes = models.CharField(_("Lexical category notes"),null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
@@ -623,8 +624,22 @@ minor or insignificant ways that can be ignored.""")
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""
         
-        return self.options_to_json(RELATION_ROLE_CHOICES)    
-    
+        return self.options_to_json(RELATION_ROLE_CHOICES)
+
+    def wordclass_choices(self):
+        """Return JSON for wordclass choices"""
+
+        # Get the list of choices for this field
+        li = self._meta.get_field("wordClass").choices;
+
+        # Sort the list
+        sorted_li = sorted(li, key=lambda x: x[1]);
+
+        # Put it in another format
+        reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
+
+        return json.dumps(OrderedDict(reformatted_li))
+
     def language_choices(self):
         """Return JSON for langauge choices"""
         
@@ -708,6 +723,8 @@ def fieldname_to_category(fieldname):
         field_category = 'iconicity'
     elif fieldname == 'mrpType':
         field_category = 'MorphemeType'
+    elif fieldname in ['wordClass', 'wordClass2']:
+        field_category = 'WordClass'
     else:
         field_category = fieldname
 
