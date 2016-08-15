@@ -28,6 +28,7 @@
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
     var languages = {{morpheme.language_choices|safe}};
     var dialects = {{morpheme.dialect_choices|safe}};
+    var mrptype_choices = {{morpheme.mrptype_choices|safe}};
 
     var choice_lists = {{choice_lists|safe}};
     var csrf_token = '{{csrf_token}}';
@@ -270,6 +271,10 @@
 
             <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords'>{% for trn in morpheme.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Annotation Instructions" %}</th><td class='edit edit_text' id='useInstr'>{% value morpheme.useInstr %}</td></tr>
+            <tr>
+                <th>{% trans "Morpheme type" %}</th>
+                <td class='edit edit_mrptype' id='mrpType'>{{ morpheme.get_mrpType_display }}</td>
+            </tr>
         <!-- Temporary solution until we implement a more generic 'MAIN' section display -->
             {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
             <tr><th>{% trans "Word class" %}</th><td class='edit edit_list' id='wordClass'>{% value morpheme.wordClass %}</td></tr>

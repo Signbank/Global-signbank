@@ -793,7 +793,7 @@ class Morpheme(Gloss):
         # Put it in another format
         reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
 
-        return json.dumps(reformatted_li)
+        return json.dumps(OrderedDict(reformatted_li))
 
 
 class OtherMedia(models.Model):
