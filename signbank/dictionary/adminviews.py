@@ -612,7 +612,7 @@ class GlossDetailView(DetailView):
 
         next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
         if next_gloss == None:
-            context['nextglossid'] = context['gloss']
+            context['nextglossid'] = context['gloss'].pk #context['gloss']
         else:
             context['nextglossid'] = next_gloss.pk
 
