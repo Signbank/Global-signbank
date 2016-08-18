@@ -531,7 +531,7 @@ minor or insignificant ways that can be ignored.""")
 
     def get_video_path(self):
 
-        idgloss = self.idgloss.encode('ascii','ignore')
+        idgloss = self.idgloss.encode('utf-8')
         return 'glossvideo/'+idgloss[:2]+'/'+idgloss+'-'+str(self.pk)+'.mp4'
 
     def get_video(self):
