@@ -550,16 +550,21 @@ def add_new_morpheme(request):
 
     # Add essential information to the context
     oContext['morph_fields'] = []
-    oContext['choice_lists'] = {}
+    oChoiceLists = {}
+    oContext['choice_lists'] = oChoiceLists
     field = 'mrpType'
     # Get and save the choice list for this field
     field_category = fieldname_to_category(field)
     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
 
     if len(choice_list) > 0:
-        oContext['choice_lists'][field] = choicelist_queryset_to_translated_ordered_dict(choice_list,
-                                                                                        request.LANGUAGE_CODE)
-    oContext['mrp_list'] = json.dumps(oContext['choice_lists']['mrpType'])
+        ordered_dict = choicelist_queryset_to_translated_ordered_dict(choice_list, request.LANGUAGE_CODE)
+        oChoiceLists[field] = ordered_dict
+        oContext['choice_lists'] = oChoiceLists
+        oContext['mrp_list'] = json.dumps(ordered_dict)
+    else:
+        oContext['mrp_list'] = {}
+
     oContext['choice_lists'] = json.dumps(oContext['choice_lists'])
 
     # And add the kind of field
