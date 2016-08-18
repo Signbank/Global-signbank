@@ -28,7 +28,8 @@
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
     var languages = {{gloss.language_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
-    var mrptype_choices = {{gloss.language_choices|safe}};
+    var mrptype_choices = {};
+    var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
     var choice_lists = {{choice_lists|safe}};
     var csrf_token = '{{csrf_token}}';
@@ -262,21 +263,59 @@
 
         <table class='table table-condensed'>
             <tr><th>{% trans "ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
-            <tr><th>{% trans "Annotation ID Gloss (Dutch)" %}</th><td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td></tr>
+            <tr><th>{% trans "Annotation ID Gloss (Dutch)" %}</th>
+                <td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td>
+                <td>
+                    {% if gloss.morphemePart.all.count > 0 %}
+                    {% for morphdef in gloss.morphemePart.all %}
+                    <span>{% value morphdef.annotation_idgloss %}</span>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if gloss.parent_glosses.all.count > 0 %}
+                    {% for component in gloss.parent_glosses.all %}
+                    <span>{% value component.morpheme.annotation_idgloss %}</span>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if gloss.morphemePart.all.count == 0 and gloss.parent_glosses.all.count == 0 %}
+                    <i>({% trans "No morphemes defined" %})</i>
+                    {% endif %}
+                </td>
+            </tr>
 
             {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-            <tr><th>{% trans "Annotation ID Gloss (English)" %}</th><td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td></tr>
+            <tr><th>{% trans "Annotation ID Gloss (English)" %}</th>
+                <td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td>
+                <td>
+                    {% if gloss.morphemePart.all.count > 0 %}
+                    {% for morphdef in gloss.morphemePart.all %}
+                    <span>{% value morphdef.annotation_idgloss_en %}</span>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if gloss.parent_glosses.all.count > 0 %}
+                    {% for component in gloss.parent_glosses.all %}
+                    <span>{% value component.morpheme.annotation_idgloss_en %}</span>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if gloss.morphemePart.all.count == 0 and gloss.parent_glosses.all.count == 0 %}
+                    <i>({% trans "No morphemes defined" %})</i>
+                    {% endif %}
+                </td>
+            </tr>
             {% endif %}
 
-            <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>{% trans "Annotation Instructions" %}</th><td class='edit edit_text' id='useInstr'>{% value gloss.useInstr %}</td></tr>
+            <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords' colspan="2">{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Annotation Instructions" %}</th><td class='edit edit_text' id='useInstr' colspan="2">{% value gloss.useInstr %}</td></tr>
         <!-- Temporary solution until we implement a more generic 'MAIN' section display -->
             {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-            <tr><th>{% trans "Word class" %}</th><td class='edit edit_list' id='wordClass'>{% value gloss.wordClass %}</td></tr>
+            <tr><th>{% trans "Word class" %}</th><td class='edit edit_wordclass' id='wordClass' colspan="2">{{ gloss.get_wordClass_display }}</td></tr>
             {% endif %}
         <!-- End of temporary solution -->
-            <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language'>{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language' colspan="2">{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
         </table>
 			 
    {% if perms.dictionary.view_advanced_properties %}
@@ -380,7 +419,7 @@
             {% endif %}
 
             <!-- Editable list of morphemes (see model "Morpheme") used in this Gloss (ERK, issue #177) -->
-            {% if gloss.morphemePart.all > 0 %}
+            {% if gloss.morphemePart.all.count > 0 %}
             <table class='table table-condensed'>
                 <tr>
                     <th style='width:2em'></th>

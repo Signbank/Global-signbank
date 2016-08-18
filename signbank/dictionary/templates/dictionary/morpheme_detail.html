@@ -28,6 +28,8 @@
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
     var languages = {{morpheme.language_choices|safe}};
     var dialects = {{morpheme.dialect_choices|safe}};
+    var mrptype_choices = {{morpheme.mrptype_choices|safe}};
+    var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 
     var choice_lists = {{choice_lists|safe}};
     var csrf_token = '{{csrf_token}}';
@@ -270,9 +272,20 @@
 
             <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords'>{% for trn in morpheme.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Annotation Instructions" %}</th><td class='edit edit_text' id='useInstr'>{% value morpheme.useInstr %}</td></tr>
+            <tr>
+                <th>{% trans "Morpheme type" %}</th>
+                <td class='edit edit_mrptype' id='mrpType'>{{ morpheme.get_mrpType_display }}</td>
+            </tr>
         <!-- Temporary solution until we implement a more generic 'MAIN' section display -->
             {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-            <tr><th>{% trans "Word class" %}</th><td class='edit edit_list' id='wordClass'>{% value morpheme.wordClass %}</td></tr>
+            <tr>
+                <th>{% trans "From word class" %}</th>
+                <td class='edit edit_wordclass' id='wordClass'>{{ morpheme.get_wordClass_display }}</td>
+            </tr>
+            <tr>
+                <th>{% trans "To word class" %}</th>
+                <td class='edit edit_wordclass' id='wordClass2'>{{ morpheme.get_wordClass2_display }}</td>
+            </tr>
             {% endif %}
         <!-- End of temporary solution -->
             <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language'>{% for lang in morpheme.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
@@ -290,56 +303,27 @@
         </div>
         <div id='morphology' class='collapse'>
 
-               {% if morpheme.gloss_set.count > 0 %}
-               <table class='table table-condensed'>
-                  <tr>
-                      <th style='width:2em'></th>
-                      <th style='width:12em'>{% trans "Word class" %}</th>
-                      <th style='width:12em'>{% trans "Gloss" %}</th>
-                  </tr>
+            <!-- Show a read-only list of glosses in which this gloss occurs as compound part(ERK, issue #177) -->
+            {% if morpheme.gloss_set.count > 0 %}
+            <table class='table table-condensed'>
+                <tr>
+                    <th style='width:2em'></th>
+                    <th style='width:12em'>{% trans "Word class" %}</th>
+                    <th style='width:12em'>{% trans "Gloss" %}</th>
+                </tr>
 
-                   {% for morphgloss in morpheme.gloss_set.all %}
-
-
-                   <tr>
-                         <td>
-                            <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphgloss.id}}'></span>
-
-                             <div class="modal fade" id="delete_morphology-definition_modal_{{morphgloss.id}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
-                                 <div class="modal-dialog modal-sm">
-                                    <div class="modal-content">
-                                        <div class='modal-header'>
-                                            <h2 id='modalTitle'>{% trans "Delete This Morpheme" %}</h2>
-                                        </div>
-                                        <div class='modal-body'>
-
-                                            <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
-                                         </div>
-                                      <form action='{% url "dictionary:update_morpheme" morpheme.id %}' method='post'>
-                                          {% csrf_token %}
-                                          <input type='hidden' name='id' value='morphology-definition-delete_{{morphgloss.id}}'>
-                                          <input type='hidden' name='value' value='confirmed'>
-                                          <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                                          </div>
-                                      </form>
-
-                                    </div>
-                                  </div>
-                             </div>
-
-                        </td>
-
-
-                        <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphgloss.id}}'>{{morphgloss.get_role_display}}</td>
-                        <td class='edit edit_morpheme' id='morphology-definition-morpheme_{{morphgloss.id}}'>{{morphgloss.morpheme}}</td>
-                        <td>(<a href='{% url "dictionary:admin_morpheme_view" pk=morphgloss.morpheme.pk %}'>{% trans "view" %}</a>)</td></tr>
-                   {% endfor %}
-               </table>
-               {% else %}
-               <p>{% trans "This morpheme does not occur in any gloss" %}</p>
-               {% endif %}
+                {% for morphgloss in morpheme.gloss_set.all %}
+                <tr>
+                    <th style='width:2em'></th>
+                    <td style='width:12em' id='morphology-definition-wordclass_{{morphgloss.id}}'>{{morphgloss.get_wordClass_display}}</td>
+                    <td id='morphology-definition-morpheme_{{morphgloss.id}}'>{{morphgloss}}</td>
+                    <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphgloss.pk %}'>{% trans "view" %}</a>)</td>
+                </tr>
+                {% endfor %}
+            </table>
+           {% else %}
+            <p>{% trans "This morpheme does not occur in any gloss" %}</p>
+           {% endif %}
 
            {# spacing div to allow room for typeahead dropdown #}
            <div style='height: 10em'></div>

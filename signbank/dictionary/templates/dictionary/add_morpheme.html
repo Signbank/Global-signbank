@@ -12,9 +12,9 @@
     var csrf_token = '{{csrf_token}}';
     var choice_lists = {{choice_lists|safe}};
     var mrp_data = choice_lists['mrpType'];
-    $("#id_mrptype select").html("");
+    $("#id_mrptype").html("");
     $.each(mrp_data, function(key, value) {
-        $("#id_mrptype select").append($('<option>', { value : key }).text(value));
+        $("#id_mrptype").append($('<option>', { value : key }).text(value));
     });
 
     </script>
@@ -61,7 +61,7 @@
              </tr>
              <tr>
                 <th>{% trans "Morpheme type" %}</th>
-                <td class="edit edit_list" id='id_mrptype'><select></select></td>
+                <td class="edit edit_list"><select id='id_mrptype' name='mrpType'></select></td>
              </tr>
          </table>
 

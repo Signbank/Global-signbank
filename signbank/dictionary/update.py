@@ -691,6 +691,8 @@ def add_morpheme(request):
             return render_to_response('dictionary/warning.html',
                                       {'warning': _('Dutch annotation ID gloss cannot be empty.')},
                                       context_instance=RequestContext(request))
+        # extract the user-chosen mrpType, converting it to...?
+        mrpType = request.POST['mrpType']
 
         if form.is_valid():
 
