@@ -1,11 +1,3 @@
-"""Models for the NGT database.
-
-These are refactored from the original database to 
-normalise the data and hopefully make it more
-manageable.  
-
-"""
-
 from django.db.models import Q
 from django.db import models
 from django.conf import settings
@@ -548,9 +540,9 @@ minor or insignificant ways that can be ignored.""")
         video_path = self.get_video_path()
 
         if os.path.isfile(settings.MEDIA_ROOT+'/'+video_path):
-            return video_path;
+            return video_path
         else:
-            return None;
+            return None
 
         video_with_gloss = self.get_video_gloss()
         
