@@ -315,16 +315,21 @@ minor or insignificant ways that can be ignored.""")
 
     locsecond = models.IntegerField(_("Secondary Location"), choices=build_choice_list("Location"), null=True, blank=True)
     
-    initial_secondary_loc = models.CharField(_("Initial Subordinate Location"), max_length=20, null=True, blank=True)
-    final_secondary_loc = models.CharField(_("Final Subordinate Location"), max_length=20, null=True, blank=True)
+    initial_secondary_loc = models.CharField(_("Initial Subordinate Location"), choices=build_choice_list("Location"), max_length=20, null=True, blank=True)
+    final_secondary_loc = models.CharField(_("Final Subordinate Location"), choices=build_choice_list("Location"), max_length=20, null=True, blank=True)
     
     initial_palm_orientation = models.CharField(_("Initial Palm Orientation"), max_length=20, null=True, blank=True)
     final_palm_orientation = models.CharField(_("Final Palm Orientation"), max_length=20, null=True, blank=True)
   
     initial_relative_orientation = models.CharField(_("Initial Interacting Dominant Hand Part"), null=True, max_length=20, blank=True)
     final_relative_orientation = models.CharField(_("Final Interacting Dominant Hand Part"), null=True, max_length=20, blank=True)
- 
-    
+
+    domSF = models.CharField("Dominant hand - Selected Fingers", choices=build_choice_list("DominantHandSelectedFingers"), null=True, blank=True, max_length=5)
+    domFlex = models.CharField("Dominant hand - Flexion", choices=build_choice_list("DominantHandFlexion"), null=True, blank=True, max_length=5)
+    oriChAbd = models.NullBooleanField(_("Abduction change"), null=True, blank=True)
+    oriChFlex = models.NullBooleanField(_("Flexion change"), null=True, blank=True)
+
+
     inWeb = models.NullBooleanField(_("In the Web dictionary"), default=False)
     isNew = models.NullBooleanField(_("Is this a proposed new sign?"), null=True, default=False)
     
@@ -374,7 +379,7 @@ minor or insignificant ways that can be ignored.""")
     mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
     phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True,)
 
-    locPrimLH = models.CharField(_("Placement Active Articulator LH"), null=True, blank=True, max_length=5)
+    locPrimLH = models.CharField(_("Placement Active Articulator LH"), choices=build_choice_list("Location"), null=True, blank=True, max_length=5)
     locFocSite = models.CharField(_("Placement Focal Site RH"), null=True, blank=True, max_length=5)
     locFocSiteLH = models.CharField(_("Placement Focal site LH"), null=True, blank=True, max_length=5)
     initArtOri = models.CharField(_("Orientation RH (initial)"), null=True, blank=True, max_length=5)
@@ -695,7 +700,7 @@ def fieldname_to_category(fieldname):
 
     if fieldname in ['domhndsh','subhndsh','final_domdndsh','final_subhndsh']:
         field_category = 'Handshape'
-    elif fieldname in ['locprim','final_loc','loc_second']:
+    elif fieldname in ['locprim','locPrimLH','final_loc','loc_second','initial_secondary_loc','final_secondary_loc']:
         field_category = 'Location'
     elif fieldname == 'handCh':
         field_category = 'handshapeChange'
@@ -715,6 +720,10 @@ def fieldname_to_category(fieldname):
         field_category = 'iconicity'
     elif fieldname == 'mrpType':
         field_category = 'MorphemeType'
+    elif fieldname == 'domFlex':
+        field_category = 'DominantHandFlexion'
+    elif fieldname == 'domSF':
+        field_category = 'DominantHandSelectedFingers'
     elif fieldname in ['wordClass', 'wordClass2']:
         field_category = 'WordClass'
     else:

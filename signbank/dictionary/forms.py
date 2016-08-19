@@ -103,6 +103,9 @@ class GlossSearchForm(forms.ModelForm):
     relationToForeignSign = forms.CharField(label=_(u'Search for gloss of foreign signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     morpheme = forms.CharField(label=_(u'Search for gloss with this as morpheme'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
+    oriChAbd = forms.ChoiceField(label=_(u'Abduction change'),choices=NULLBOOLEANCHOICES)
+    oriChFlex = forms.ChoiceField(label=_(u'Flexion change'),choices=NULLBOOLEANCHOICES)
+
     phonOth = forms.CharField(label=_(u'Phonology other'),widget=forms.TextInput())
 
     hasRelationToForeignSign = forms.ChoiceField(label=_(u'Related to foreign sign or not'),choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -138,7 +141,7 @@ class GlossSearchForm(forms.ModelForm):
 
                    'handedness', 'useInstr','rmrks', 'relatArtic','absOriPalm','absOriFing',
                    'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType', 'mouthG',
-                   'mouthing', 'phonetVar',
+                   'mouthing', 'phonetVar', 'domSF', 'domFlex', 'oriChAbd', 'oriChFlex',
 
                    'iconImg','iconType','namEnt', 'semField', 'wordClass', 'wordClass2', 'derivHist', 'lexCatNotes', 'valence',
 
