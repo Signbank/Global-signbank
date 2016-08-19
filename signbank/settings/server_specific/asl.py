@@ -24,10 +24,12 @@ SEPARATE_ENGLISH_IDGLOSS_FIELD = False
 
 FIELDS = {}
 
+FIELDS['main'] = ['semField']
+
 FIELDS['phonology'] = ['handedness','locPrimLH','initial_secondary_loc','final_secondary_loc','domSF','domFlex',
                        'oriChAbd','oriChFlex','subhndsh','movSh']
 
-FIELDS['semantics'] = ['semField','wordClass','wordClass2','lexCatNotes','derivHist','iconType']
+FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconType']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 

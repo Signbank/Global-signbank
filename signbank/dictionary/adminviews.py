@@ -641,7 +641,7 @@ class GlossDetailView(DetailView):
                                                                                                     self.request.LANGUAGE_CODE)
 
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
-        for topic in ['phonology','semantics','frequency']:
+        for topic in ['main','phonology','semantics','frequency']:
             context[topic+'_fields'] = [];
 
             for field in FIELDS[topic]:
@@ -674,7 +674,7 @@ class GlossDetailView(DetailView):
                         human_value = machine_value
 
                 #And add the kind of field
-                if field in ['phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
+                if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
                     kind = 'text';
                 elif field in ['repeat','altern','oriChAbd','oriChFlex']:
                     kind = 'check';
