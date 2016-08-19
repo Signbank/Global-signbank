@@ -863,6 +863,47 @@ def update_cngt_counts(request,folder_index=None):
     glosses_not_in_signbank_str = '</li><li>'.join(glosses_not_in_signbank)
     return HttpResponse('<p>No glosses were found for these names:</p><ul><li>'+glosses_not_in_signbank_str+'</li></ul>')
 
+def get_unused_videos(request):
+
+    videos_with_unused_pk = []
+    videos_where_pk_does_match_idgloss = []
+    videos_with_unusual_file_names = []
+
+    for dir_name in os.listdir(settings.WRITABLE_FOLDER+settings.GLOSS_VIDEO_DIRECTORY):
+
+        dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_VIDEO_DIRECTORY+'/'+dir_name+'/'
+
+        for file_name in os.listdir(dir_path):
+
+            try:
+                items = file_name.replace('.mp4','').split('-')
+                pk = int(items[-1])
+                idgloss = '-'.join(items[:-1])
+            except ValueError:
+                videos_with_unusual_file_names.append(file_name)
+                continue
+
+            try:
+                if Gloss.objects.get(pk=pk).idgloss != idgloss:
+                    videos_where_pk_does_match_idgloss.append(file_name)
+            except ObjectDoesNotExist:
+                videos_with_unused_pk.append(file_name)
+                continue
+
+    result = '<p>For these videos, the pk does not match the idgloss:</p><ul>'
+    result += ''.join(['<li>'+video+'</li>' for video in videos_where_pk_does_match_idgloss])
+    result += '</ul></p>'
+
+    result += '<p>These videos have unusual file names:</p><ul>'
+    result += ''.join(['<li>'+video+'</li>' for video in videos_with_unusual_file_names])
+    result += '</ul></p>'
+
+    result += '<p>These videos have unused pks:</p><ul>'
+    result += ''.join(['<li>'+video+'</li>' for video in videos_with_unused_pk])
+    result += '</ul></p>'
+
+    return HttpResponse(result)
+
 def package(request):
 
     # :)
