@@ -225,7 +225,7 @@ msgstr ""
 #: signbank/dictionary/models.py:313
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:393
 msgid "Handedness"
-msgstr "Type-of-2-handed signs"
+msgstr ""
 
 #: signbank/dictionary/models.py:315
 msgid "Strong Hand"
@@ -246,7 +246,7 @@ msgstr ""
 #: signbank/dictionary/models.py:321
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:396
 msgid "Location"
-msgstr "Placement Active Articulator RH"
+msgstr "Location - major"
 
 #: signbank/dictionary/models.py:322
 msgid "Final Primary Location"
@@ -262,11 +262,11 @@ msgstr ""
 
 #: signbank/dictionary/models.py:327
 msgid "Initial Subordinate Location"
-msgstr ""
+msgstr "Location - minor 1"
 
 #: signbank/dictionary/models.py:328
 msgid "Final Subordinate Location"
-msgstr ""
+msgstr "Location - minor 2"
 
 #: signbank/dictionary/models.py:330
 msgid "Initial Palm Orientation"
@@ -346,7 +346,7 @@ msgstr ""
 
 #: signbank/dictionary/models.py:372
 msgid "Movement Shape"
-msgstr ""
+msgstr "Path movement"
 
 #: signbank/dictionary/models.py:373
 msgid "Movement Direction"
@@ -378,7 +378,7 @@ msgstr ""
 
 #: signbank/dictionary/models.py:383
 msgid "Placement Active Articulator LH"
-msgstr ""
+msgstr "Location - major"
 
 #: signbank/dictionary/models.py:384
 msgid "Placement Focal Site RH"
@@ -718,7 +718,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:200
 msgid "Dialect"
-msgstr ""
+msgstr "Regional dialect"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:209
 msgid "Morphology"
@@ -766,7 +766,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:312
 msgid "Semantics"
-msgstr "Syntax & Semantics"
+msgstr "Morphosyntax"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:329
 msgid "Relations to Other Signs"
