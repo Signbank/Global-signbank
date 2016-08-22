@@ -440,6 +440,10 @@ minor or insignificant ways that can be ignored.""")
     def none_morpheme_objects():
         """Get all the GLOSS objects, but excluding the MORPHEME ones"""
         return Gloss.objects.filter(morpheme=None)
+
+    def is_morpheme(self):
+        """Test if this instance is a Morpheme or (just) a Gloss"""
+        return hasattr(self, 'morpheme')
     
     def admin_next_gloss(self):
         """next gloss in the admin view, shortcut for next_dictionary_gloss with staff=True"""

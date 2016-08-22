@@ -448,3 +448,10 @@ body {
     border: 1px solid #ddd;
     border-radius: 4px;
 }
+
+.morpheme_style {
+  color: black;
+}
+.morpheme_style:hover {
+  color: darkred;
+}

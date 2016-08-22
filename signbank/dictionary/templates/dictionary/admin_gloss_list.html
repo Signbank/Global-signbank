@@ -94,6 +94,26 @@ function do_sort_column(field_name, action, frmName) {
   $("#" + frmName).submit();
 }
 
+/**
+ * @returns {void}
+ */
+function do_adminsearch(el) {
+ var sSearchType = $(el).attr('value');
+  $("#adminsearch input[name='search_type']").val(sSearchType);
+  switch(sSearchType) {
+    case "morpheme":
+        $("#adminsearch").attr('action', '{{URL}}/morphemes/search/');
+        break;
+    case "sign":
+        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        break;
+    case "sign_or_morpheme":
+        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        break;
+  }
+  document.getElementById('adminsearch').submit();
+}
+
    </script>
 {% endblock %}
 
@@ -102,10 +122,11 @@ function do_sort_column(field_name, action, frmName) {
 
 
 <div id='searchformwell' class='well'>
-    <form name='adminsearch' id='adminsearch'>
+    <form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
         <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
         <div class="hidden">
-          <input name='sortOrder' class='form-control' value='idgloss' >
+            <input name='sortOrder' class='form-control' value='idgloss' >
+            <input name='search_type' class='form-control' value='sign'>
         </div>
         <div>
             <table class='table' id='searchfields'>
@@ -340,7 +361,16 @@ function do_sort_column(field_name, action, frmName) {
 
         <div class='btn-group'>
             <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
-            <input class='btn btn-primary' type='submit' name='submit_button' value='{% trans "Search" %}'>
+            <div class="btn-group">
+                <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
+                    <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="sign">{% trans "Search sign" %}</span>&nbsp;<span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-left">
+                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
+                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search morpheme" %}</a></li>
+                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
+                </ul>
+            </div>
             {% if perms.dictionary.export_csv %}
             <input class='btn btn-default' type='submit' name='format' value='CSV'>
             {% endif %}
@@ -465,11 +495,16 @@ function do_sort_column(field_name, action, frmName) {
           <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{STATIC_URL}}{{gloss.get_image_path}}"></div>{% endif %}
       </td>
 
-      <td><div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
+      <td>
+          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
+          <div style="background: lightgray; border-radius: 1em;"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
+          {% else %}
+          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
+          {% endif %}
           {% if gloss.morphemePart.all.count > 0 %}
           <div class="morpheme_in_gloss">
           {% for morphdef in gloss.morphemePart.all %}
-          <span>{{ morphdef.annotation_idgloss }}</span>
+          <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}</a></span>
           {% endfor %}
           </div>
           {% endif %}
@@ -477,7 +512,7 @@ function do_sort_column(field_name, action, frmName) {
           {% if gloss.parent_glosses.all.count > 0 %}
           <div class="component_in_gloss">
           {% for component in gloss.parent_glosses.all %}
-          <span>{{ component.morpheme.annotation_idgloss }}</span>
+          <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a></span>
           {% endfor %}
           </div>
           {% endif %}

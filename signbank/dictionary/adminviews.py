@@ -2,7 +2,8 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.db.models import Q
 from django.db.models.fields import NullBooleanField
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import override
 
@@ -84,16 +85,25 @@ class GlossListView(ListView):
     template_name = 'dictionary/admin_gloss_list.html'
     paginate_by = 500
     only_export_ecv = False #Used to call the 'export ecv' functionality of this view without the need for an extra GET parameter
+    search_type = 'sign'
     
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(GlossListView, self).get_context_data(**kwargs)
         # Add in a QuerySet of all the books
 
+        # Retrieve the search_type,so that we know whether the search should be restricted to Gloss or not
+        if 'search_type' in self.request.GET:
+            self.search_type = self.request.GET['search_type']
+
         search_form = GlossSearchForm(self.request.GET)
 
         context['searchform'] = search_form
-        context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
+        if self.search_type == 'sign':
+            context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
+        else:
+            context['glosscount'] = Gloss.objects.count()  # Count the glosses + morphemes
+
         context['add_gloss_form'] = GlossCreateForm()
         context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
 
@@ -332,14 +342,25 @@ class GlossListView(ListView):
 
     def get_queryset(self):
 
-        # Get all the GLOSS items that are not member of the sub-class Morpheme
-        qs = Gloss.none_morpheme_objects()
+        get = self.request.GET
+
+        if 'search_type' in get:
+            self.search_type = get['search_type']
+        else:
+            self.search_type = 'sign'
+
+        setattr(self.request, 'search_type', self.search_type)
+
+
+        if self.search_type == 'sign':
+            # Get all the GLOSS items that are not member of the sub-class Morpheme
+            qs = Gloss.none_morpheme_objects()
+        else:
+            qs = Gloss.objects.all()
 
         #print "QS:", len(qs)
         
-        get = self.request.GET
- 
-        
+
         if get.has_key('search') and get['search'] != '':
             val = get['search']
             query = Q(idgloss__istartswith=val) | \
