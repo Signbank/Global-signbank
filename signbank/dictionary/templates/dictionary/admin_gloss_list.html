@@ -465,10 +465,43 @@ function do_sort_column(field_name, action, frmName) {
           <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{STATIC_URL}}{{gloss.get_image_path}}"></div>{% endif %}
       </td>
 
-      <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></td>
+      <td><div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
+          {% if gloss.morphemePart.all.count > 0 %}
+          <div class="morpheme_in_gloss">
+          {% for morphdef in gloss.morphemePart.all %}
+          <span>{{ morphdef.annotation_idgloss }}</span>
+          {% endfor %}
+          </div>
+          {% endif %}
+
+          {% if gloss.parent_glosses.all.count > 0 %}
+          <div class="component_in_gloss">
+          {% for component in gloss.parent_glosses.all %}
+          <span>{{ component.morpheme.annotation_idgloss }}</span>
+          {% endfor %}
+          </div>
+          {% endif %}
+
+      </td>
 
       {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-      <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></td>
+      <td><div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
+          {% if gloss.morphemePart.all.count > 0 %}
+          <div class="morpheme_in_gloss">
+          {% for morphdef in gloss.morphemePart.all %}
+          <span>{{ morphdef.annotation_idgloss_en }}</span>
+          {% endfor %}
+          </div>
+          {% endif %}
+
+          {% if gloss.parent_glosses.all.count > 0 %}
+          <div class="component_in_gloss">
+          {% for component in gloss.parent_glosses.all %}
+          <span>{{ component.morpheme.annotation_idgloss_en }}</span>
+          {% endfor %}
+          </div>
+          {% endif %}
+      </td>
       {% endif %}
 
       <td>
