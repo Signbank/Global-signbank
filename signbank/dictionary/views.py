@@ -558,7 +558,7 @@ def add_new_morpheme(request):
     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
 
     if len(choice_list) > 0:
-        ordered_dict = choicelist_queryset_to_translated_ordered_dict(choice_list, request.LANGUAGE_CODE)
+        ordered_dict = choicelist_queryset_to_translated_ordered_dict_without_underscore(choice_list, request.LANGUAGE_CODE)
         oChoiceLists[field] = ordered_dict
         oContext['choice_lists'] = oChoiceLists
         oContext['mrp_list'] = json.dumps(ordered_dict)
@@ -576,7 +576,7 @@ def add_new_morpheme(request):
     oBack = render_to_response('dictionary/add_morpheme.html', oForm, context_instance=oContext)
     return oBack
 
-def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
+def choicelist_queryset_to_translated_ordered_dict_without_underscore(queryset,language_code):
 
     codes_to_adjectives = dict(settings.LANGUAGES)
 
@@ -586,11 +586,11 @@ def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
         adjective = codes_to_adjectives[language_code].lower()
 
     try:
-        raw_choice_list = [('_'+str(choice.machine_value), unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
+        raw_choice_list = [(str(choice.machine_value), unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
     except AttributeError:
-        raw_choice_list = [('_'+str(choice.machine_value), unicode(getattr(choice,'english_name'))) for choice in queryset]
+        raw_choice_list = [(str(choice.machine_value), unicode(getattr(choice,'english_name'))) for choice in queryset]
 
-    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
+    sorted_choice_list = [('0','-'),('1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
 
     ordered_choice_list = OrderedDict(sorted_choice_list)
 
