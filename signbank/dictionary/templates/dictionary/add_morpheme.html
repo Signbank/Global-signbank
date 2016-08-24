@@ -14,7 +14,8 @@
     var mrp_data = choice_lists['mrpType'];
     $("#id_mrptype").html("");
     $.each(mrp_data, function(key, value) {
-        $("#id_mrptype").append($('<option>', { value : key }).text(value));
+        var number_only = key.substring(1);
+        $("#id_mrptype").append($('<option>', { value : number_only }).text(value));
     });
 
     </script>
