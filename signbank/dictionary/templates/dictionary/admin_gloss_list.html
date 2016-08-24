@@ -175,8 +175,6 @@ function do_adminsearch(el) {
                 </table>
 
                 <table class='table'>
-                    <tr><td><label for='id_useInstr'>{{searchform.useInstr.label}}</label></td><td>{{searchform.useInstr}}</td></tr>
-
                     {% for fieldname,field,label in input_names_fields_and_labels.main %}
 
                         <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
