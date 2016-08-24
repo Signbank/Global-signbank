@@ -308,14 +308,14 @@
             {% endif %}
 
             <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords' colspan="2">{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>{% trans "Annotation Instructions" %}</th><td class='edit edit_text' id='useInstr' colspan="2">{% value gloss.useInstr %}</td></tr>
-        <!-- Temporary solution until we implement a more generic 'MAIN' section display -->
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-            <tr><th>{% trans "Word class" %}</th><td class='edit edit_wordclass' id='wordClass' colspan="2">{{ gloss.get_wordClass_display }}</td></tr>
-            {% endif %}
-        <!-- End of temporary solution -->
+
+            {% for value,name,label,kind in main_fields %}
+                <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
+            {% endfor %}
+
             <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language' colspan="2">{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+
         </table>
 			 
    {% if perms.dictionary.view_advanced_properties %}

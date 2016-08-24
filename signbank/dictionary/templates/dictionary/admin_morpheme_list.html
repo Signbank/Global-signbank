@@ -94,6 +94,29 @@ function do_sort_column(field_name, action, frmName) {
   $("#" + frmName).submit();
 }
 
+
+/**
+ * @returns {void}
+ */
+function do_adminsearch(el) {
+ var sSearchType = $(el).attr('value');
+  $("#adminsearch input[name='search_type']").val(sSearchType);
+  switch(sSearchType) {
+    case "morpheme":
+        $("#adminsearch").attr('action', '{{URL}}/morphemes/search/');
+        break;
+    case "sign":
+        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        break;
+    case "sign_or_morpheme":
+        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        break;
+  }
+  document.getElementById('adminsearch').submit();
+}
+
+
+
    </script>
 {% endblock %}
 
@@ -105,7 +128,8 @@ function do_sort_column(field_name, action, frmName) {
     <form name='adminsearch' id='adminsearch'>
         <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
         <div class="hidden">
-          <input name='sortOrder' class='form-control' value='idgloss' >
+            <input name='sortOrder' class='form-control' value='idgloss' >
+            <input name='search_type' class='form-control' value='sign'>
         </div>
         <div>
             <table class='table' id='searchfields'>
@@ -340,7 +364,16 @@ function do_sort_column(field_name, action, frmName) {
 
         <div class='btn-group'>
             <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
-            <input class='btn btn-primary' type='submit' name='submit_button' value='{% trans "Search" %}'>
+            <div class="btn-group">
+                <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
+                    <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="morpheme">{% trans "Search morpheme" %}</span>&nbsp;<span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-left">
+                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
+                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search morpheme" %}</a></li>
+                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
+                </ul>
+            </div>
             {% if perms.dictionary.export_csv %}
             <input class='btn btn-default' type='submit' name='format' value='CSV'>
             {% endif %}

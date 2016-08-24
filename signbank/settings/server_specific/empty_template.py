@@ -24,6 +24,8 @@ SEPARATE_ENGLISH_IDGLOSS_FIELD = False
 
 FIELDS = {}
 
+FIELDS['main'] = ['useInstr','wordClass']
+
 FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
           'mouthing', 'phonetVar',]
