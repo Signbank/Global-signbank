@@ -44,8 +44,6 @@ FIELDS['semantics'] = ['iconImg','namEnt','semField','valence']
 FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                        'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
 
-FIELDS['other'] = ['wordClass']
-
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'

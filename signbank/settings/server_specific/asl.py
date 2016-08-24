@@ -33,8 +33,6 @@ FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconT
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
-FIELDS['other'] = []
-
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
