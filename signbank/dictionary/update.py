@@ -230,10 +230,10 @@ def update_gloss(request, glossid):
                             field_category = fieldname_to_category(field)
                             selected_field_choice = FieldChoice.objects.filter(field__iexact=field_category,machine_value=value)[0]
 
-                            if request.LANGUAGE_CODE == 'en':
-                                newvalue = selected_field_choice.english_name
-                            elif request.LANGUAGE_CODE == 'nl':
+                            if request.LANGUAGE_CODE == 'nl':
                                 newvalue = selected_field_choice.dutch_name
+                            else:
+                                newvalue = selected_field_choice.english_name
 
                         except (IndexError, ValueError):
                             newvalue = value
