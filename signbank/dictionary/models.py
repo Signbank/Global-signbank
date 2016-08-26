@@ -216,8 +216,11 @@ class Gloss(models.Model):
                         )
 
     def __str__(self):
-        return "%s" % (self.idgloss)
-    
+        return unicode(self.idgloss.encode('utf-8'))
+
+    def __unicode__(self):
+        return unicode(self.idgloss)
+
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
         
@@ -519,8 +522,11 @@ minor or insignificant ways that can be ignored.""")
         foldername = self.idgloss[:2]+'/'
         filename_without_extension = self.idgloss+'-'+str(self.pk)
 
+        dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername
+        dir_path = dir_path.encode('utf-8')
+
         try:
-            for filename in os.listdir(settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername):
+            for filename in os.listdir(dir_path):
 
                 if filename_without_extension in filename:
                     return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
@@ -772,7 +778,6 @@ class Morpheme(Gloss):
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
         return "%s (%s)" % (self.idgloss, self.get_mrpType_display())
-
 
     def admin_next_morpheme(self):
         """next morpheme in the admin view, shortcut for next_dictionary_morpheme with staff=True"""

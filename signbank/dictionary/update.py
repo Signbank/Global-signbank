@@ -75,7 +75,7 @@ def update_gloss(request, glossid):
             value = value[1:];
         
         values = request.POST.getlist('value[]')   # in case we need multiple values 
-        
+
         # validate
         # field is a valid field
         # value is a valid value for field
@@ -172,6 +172,7 @@ def update_gloss(request, glossid):
                 newvalue = 'No'
                 
         else:
+
             original_value = getattr(gloss,field)
 
             if not field in Gloss._meta.get_all_field_names():
@@ -201,7 +202,7 @@ def update_gloss(request, glossid):
                 if field == 'idgloss':
                     old_video_path = gloss.get_video_path()
 
-                gloss.__setattr__(field, value)
+                setattr(gloss,field,value)
                 gloss.save()
 
                 #Update the video location if you're changing the name
@@ -237,7 +238,7 @@ def update_gloss(request, glossid):
                         except (IndexError, ValueError):
                             newvalue = value
 
-        return HttpResponse(str(original_value)+'\t'+str(newvalue), {'content-type': 'text/plain'})
+        return HttpResponse(unicode(original_value)+unicode('\t')+unicode(newvalue), {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
