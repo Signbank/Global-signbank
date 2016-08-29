@@ -463,3 +463,12 @@ body {
     background: lightgray;
     border-radius: 0.5em;
 }
+
+/* Appearance of morphemes and compound parts in detail view */
+.gloss_detail_morpheme {
+    font-style: italic;
+}
+.gloss_detail_component {
+    /* No special matters */
+    font-size: smaller;
+}
