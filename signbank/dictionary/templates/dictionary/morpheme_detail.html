@@ -315,8 +315,7 @@
                 <tr>
                     <th style='width:2em'></th>
                     <td style='width:12em' id='morphology-definition-wordclass_{{morphgloss.id}}'>{{morphgloss.get_wordClass_display}}</td>
-                    <td id='morphology-definition-morpheme_{{morphgloss.id}}'>{{morphgloss}}</td>
-                    <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphgloss.pk %}'>{% trans "view" %}</a>)</td>
+                    <td id='morphology-definition-morpheme_{{morphgloss.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphgloss.pk %}'>{{morphgloss}}</a></td>
                 </tr>
                 {% endfor %}
             </table>
