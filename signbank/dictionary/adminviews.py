@@ -99,6 +99,7 @@ class GlossListView(ListView):
         search_form = GlossSearchForm(self.request.GET)
 
         context['searchform'] = search_form
+        context['search_type'] = self.search_type
         if self.search_type == 'sign':
             context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
         else:

@@ -368,7 +368,13 @@ function do_adminsearch(el) {
             <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
             <div class="btn-group">
                 <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
-                    <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="sign">{% trans "Search sign" %}</span>&nbsp;<span class="caret"></span>
+                    <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="sign">
+                        {% if search_type == 'sign' %}
+                        {% trans "Search sign" %}
+                        {% else %}
+                        {% trans "Search sign or morpheme" %}
+                        {% endif %}
+                    </span>&nbsp;<span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-left">
                     <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
@@ -502,14 +508,14 @@ function do_adminsearch(el) {
 
       <td>
           {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div style="background: lightgray; border-radius: 1em;"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
+          <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
           {% else %}
           <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
           {% endif %}
           {% if gloss.morphemePart.all.count > 0 %}
           <div class="morpheme_in_gloss">
           {% for morphdef in gloss.morphemePart.all %}
-          <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}</a></span>
+          <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}{% if not forloop.last %}, {% endif %}</a></span>
           {% endfor %}
           </div>
           {% endif %}
@@ -517,7 +523,7 @@ function do_adminsearch(el) {
           {% if gloss.parent_glosses.all.count > 0 %}
           <div class="component_in_gloss">
           {% for component in gloss.parent_glosses.all %}
-          <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a></span>
+          <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}{% if not forloop.last %} + {% endif %}</a></span>
           {% endfor %}
           </div>
           {% endif %}
@@ -525,11 +531,16 @@ function do_adminsearch(el) {
       </td>
 
       {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-      <td><div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
+      <td>
+          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
+          <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
+          {% else %}
+          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
+          {% endif %}
           {% if gloss.morphemePart.all.count > 0 %}
           <div class="morpheme_in_gloss">
           {% for morphdef in gloss.morphemePart.all %}
-          <span>{{ morphdef.annotation_idgloss_en }}</span>
+          <span>{{ morphdef.annotation_idgloss_en }}{% if not forloop.last %}, {% endif %}</span>
           {% endfor %}
           </div>
           {% endif %}
@@ -537,7 +548,7 @@ function do_adminsearch(el) {
           {% if gloss.parent_glosses.all.count > 0 %}
           <div class="component_in_gloss">
           {% for component in gloss.parent_glosses.all %}
-          <span>{{ component.morpheme.annotation_idgloss_en }}</span>
+          <span>{{ component.morpheme.annotation_idgloss_en }}{% if not forloop.last %} + {% endif %}</span>
           {% endfor %}
           </div>
           {% endif %}
