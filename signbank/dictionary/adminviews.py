@@ -753,6 +753,16 @@ class MorphemeListView(ListView):
         context['add_morpheme_form'] = MorphemeCreateForm()
         context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
 
+        # make sure that the morpheme-type options are available to the listview
+        oChoiceLists = {}
+        choice_list = FieldChoice.objects.filter(field__iexact = fieldname_to_category('mrpType'))
+        if (len(choice_list) > 0):
+            ordered_dict = choicelist_queryset_to_translated_ordered_dict(choice_list, self.request.LANGUAGE_CODE)
+            oChoiceLists['mrpType'] = ordered_dict
+
+        # Make all choice lists available in the context (currently only mrpType)
+        context['choice_lists'] = json.dumps(oChoiceLists)
+
         context['input_names_fields_and_labels'] = {}
 
         for topic in ['phonology', 'semantics']:

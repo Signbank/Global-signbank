@@ -564,9 +564,17 @@ def add_morpheme_definition(request, glossid):
     if request.method == "POST":
         form = GlossMorphemeForm(request.POST)
 
+        # Get the glossid at any rate
+        thisgloss = get_object_or_404(Gloss, pk=glossid)
+
+        # check availability of morpheme before continuing
+        if form.data['morph_id'] == "":
+            # The user has obviously not selected a morpheme
+            # Desired action (Issue #199): nothing happens
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+
         if form.is_valid():
 
-            thisgloss = get_object_or_404(Gloss, pk=glossid)
             host_gloss = form.cleaned_data['host_gloss_id']
             morph_id = form.cleaned_data['morph_id']
             morph = morph_from_identifier(morph_id)
