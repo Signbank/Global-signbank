@@ -28,6 +28,17 @@
         
     });
 
+    {% if perms.dictionary.change_gloss %}
+
+    var choice_lists = {{choice_lists|safe}};
+    var mrp_data = choice_lists['mrpType'];
+    $("#id_mrptype").html("");
+    $.each(mrp_data, function(key, value) {
+        var number_only = key.substring(1);
+        $("#id_mrptype").append($('<option>', { value : number_only }).text(value));
+    });
+
+    {% endif %}
 
 
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
@@ -415,12 +426,14 @@ function do_adminsearch(el) {
                          <th><label for='id_idgloss'>ID Gloss</label></th>
                          <th><label for='id_annotation_idgloss'>Annotation ID Gloss (Dutch)</label></th>
                          <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
+                         <th><label for='id_mrp_type'>Morpheme type</label></th>
                          <th></th>
                      </tr>
                      <tr>
                          <td>{{add_morpheme_form.idgloss}}</td>
                          <td>{{add_morpheme_form.annotation_idgloss}}</td>
                          <td>{{add_morpheme_form.annotation_idgloss_en}}</td>
+                         <td class="edit edit_list"><select id='id_mrptype' name='mrpType'></select></td>
                          <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Morpheme" %}'></td>
                      </tr>
                  </table>
