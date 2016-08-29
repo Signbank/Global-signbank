@@ -85,6 +85,8 @@ function disable_edit() {
     $('#add_relationtoforeignsign_form').hide();
     $('#add_morphologydefinition_form').hide();
     $('#add_other_media').hide();
+    $('#add_component').hide();
+    $('#add_morphemedefinition_form').hide();
     $('.definition_delete').hide();
     $('.relation_delete').hide();
     $('.other-video-delete').hide();
@@ -120,6 +122,8 @@ function enable_edit() {
     $('#add_relationtoforeignsign_form').show();
     $('#add_morphologydefinition_form').show();
     $('#add_other_media').show();
+    $('#add_component').show();
+    $('#add_morphemedefinition_form').show();
     $('.definition_delete').show();
     $('.relation_delete').show();
     $('.other-video-delete').show();

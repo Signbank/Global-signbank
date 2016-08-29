@@ -345,11 +345,11 @@
                          <td>
                             <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphdef.id}}'></span>
 
-                             <div class="modal fade" id="delete_morphology-definition_modal_{{morphdef.id}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                             <div class="modal fade" id="delete_morphology-definition_modal_{{morphdef.id}}" role="dialog" aria-labelledby="#modalTitle2" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
                                     <div class="modal-content">
                                         <div class='modal-header'>
-                                            <h2 id='modalTitle'>{% trans "Delete This Morpheme" %}</h2>
+                                            <h2 id='modalTitle2'>{% trans "Delete This Morpheme" %}</h2>
                                         </div>
                                         <div class='modal-body'>
 
@@ -390,7 +390,7 @@
                        <td style="width:2em;"></td>
                        <td style="width:12em;">{{morphologyform.role}}</td>
                        <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss/Annotation ID Gloss" %}' name='morpheme_id'></td>
-                       <td><input class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
+                       <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
                    </tr>
                </table>
            </form>
