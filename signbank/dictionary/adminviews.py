@@ -1036,6 +1036,114 @@ class MorphemeListView(ListView):
         return qs
 
 
+    def render_to_response(self, context):
+        # Look for a 'format=json' GET argument
+        if self.request.GET.get('format') == 'CSV':
+            return self.render_to_csv_response(context)
+        else:
+            return super(MorphemeListView, self).render_to_response(context)
+
+    # noinspection PyInterpreter,PyInterpreter
+    def render_to_csv_response(self, context):
+        """Convert all Morphemes into a CSV
+
+        This function is derived from and similar to the one used in class GlossListView
+        Differences:
+        1 - this one adds the field [mrpType]
+        2 - the filename is different"""
+
+        if not self.request.user.has_perm('dictionary.export_csv'):
+            raise PermissionDenied
+
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="dictionary-morph-export.csv"'
+
+        #        fields = [f.name for f in Gloss._meta.fields]
+        # We want to manually set which fields to export here
+
+        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en',
+                      'mrpType',
+                      'useInstr', 'sense', 'StemSN', 'rmrks',
+                      'handedness',
+                      'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc',
+                      'oriCh', 'contType',
+                      'movSh', 'movDir', 'repeat', 'altern', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                      'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType',
+                      'namEnt', 'semField', 'valence', 'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV',
+                      'tokNoR', 'tokNoGe',
+                      'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
+                      'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
+        # Different from Gloss: we use Morpheme here
+        fields = [Morpheme._meta.get_field(fieldname) for fieldname in fieldnames]
+
+        writer = csv.writer(response)
+
+        with override(LANGUAGE_CODE):
+            header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii', 'ignore') for f in fields]
+
+        for extra_column in ['Languages', 'Dialects', 'Keywords', 'Morphology', 'Relations to other signs',
+                             'Relations to foreign signs', ]:
+            header.append(extra_column);
+
+        writer.writerow(header)
+
+        for gloss in self.get_queryset():
+            row = [str(gloss.pk)]
+            for f in fields:
+
+                # Try the value of the choicelist
+                try:
+                    row.append(getattr(gloss, 'get_' + f.name + '_display')())
+
+                # If it's not there, try the raw value
+                except AttributeError:
+                    value = getattr(gloss, f.name)
+
+                    if isinstance(value, unicode):
+                        value = str(value.encode('ascii', 'xmlcharrefreplace'));
+                    elif not isinstance(value, str):
+                        value = str(value);
+
+                    row.append(value)
+
+            # get languages
+            languages = [language.name for language in gloss.language.all()]
+            row.append(", ".join(languages));
+
+            # get dialects
+            dialects = [dialect.name for dialect in gloss.dialect.all()]
+            row.append(", ".join(dialects));
+
+            # get translations
+            trans = [t.translation.text for t in gloss.translation_set.all()]
+            row.append(", ".join(trans))
+
+            # get morphology
+            morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+            row.append(", ".join(morphemes))
+
+            # get relations to other signs
+            relations = [relation.target.idgloss for relation in Relation.objects.filter(source=gloss)]
+            row.append(", ".join(relations))
+
+            # get relations to foreign signs
+            relations = [relation.other_lang_gloss for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
+            row.append(", ".join(relations))
+
+            # Make it safe for weird chars
+            safe_row = [];
+            for column in row:
+                try:
+                    safe_row.append(column.encode('utf-8'))
+                except AttributeError:
+                    safe_row.append(None);
+
+            writer.writerow(safe_row)
+
+        return response
+
+
 class MorphemeDetailView(DetailView):
     model = Morpheme
     context_object_name = 'morpheme'
