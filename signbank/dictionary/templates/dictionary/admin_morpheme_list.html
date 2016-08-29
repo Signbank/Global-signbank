@@ -461,6 +461,7 @@ function do_adminsearch(el) {
             {% endif %}
 
            <th>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Morpheme type" %}</th>
            <th>{% trans "Handedness" %}</th>
            <th>{% trans "Strong hand" %}</th>
            <th>{% trans "Weak hand" %}</th>
@@ -525,6 +526,7 @@ function do_adminsearch(el) {
       {% endfor %}
       </td>
     
+            <td>{{ morpheme.get_mrpType_display }}</td>
             <td>{{ morpheme.get_handedness_display }}</td>
             <td>{{ morpheme.get_domhndsh_display }}</td>
             <td>{{ morpheme.get_subhndsh_display }}</td>
