@@ -51,7 +51,7 @@
                 a.style["float"] = "none";
                 a.href = "{% url 'root_page' %}dictionary/morpheme/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
-                var linktext = document.createTextNode(json_data[key].morpheme);
+                var linktext = document.createTextNode(json_data[key].gloss);
                 a.appendChild(linktext);
                 $( "#results-inline" ).append(a);
             }
@@ -85,7 +85,6 @@
 
 <div id="searchresults" style="overflow-y:hidden;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <strong>{% blocktrans %}Search results{% endblocktrans %}</strong>
     <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
     </div>
     {% endif %}
@@ -119,7 +118,7 @@
 
     {% if morpheme.idgloss %}
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/morpheme/{{morpheme.idgloss}}.html">{% trans "Public View" %}</a>
-    <button id='delete_morpheme_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Sign" %}</button>
+    <button id='delete_morpheme_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
     {% endif %}
     
     {% if perms.dictionary.change_morpheme %}
@@ -130,16 +129,16 @@
          <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit next morpheme" %}</button>
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
          
-         <div class="modal fade" id="delete_morpheme_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+         <div class="modal fade" id="delete_morpheme_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDel" aria-hidden="true">
              <div class="modal-dialog modal-sm">
                 <div class="modal-content">
                     <div class='modal-header'>
-                        <h2 id='modalTitle'>{% trans "Delete This Sign" %}</h2>
+                        <h2 id='modalTitleDel'>{% trans "Delete This Morpheme" %}</h2>
                     </div>
                     <div class='modal-body'>
-                        <p>{% trans "This action will delete this sign and all associated records. It cannot be undone." %}</p>
+                        <p>{% trans "This action will delete this morpheme and all associated records. It cannot be undone." %}</p>
                      </div>
-                  <form action='{% url 'dictionary:update_morpheme' morpheme.id %}' method='post'>
+                  <form action='{% url "dictionary:update_morpheme" morpheme.id %}' method='post'>
                       {% csrf_token %}
                       <input type='hidden' name='id' value='deletemorpheme'>
                       <input type='hidden' name='value' value='confirmed'>
@@ -378,13 +377,13 @@
                    {% for rel in morpheme.relation_sources.all %}
                     <tr>
                          <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
+                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_src_modal_{{rel.id}}'></span>
                             
-                             <div class="modal fade" id="delete_relation_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                             <div class="modal fade" id="delete_relation_src_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitle2" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
                                     <div class="modal-content">
                                         <div class='modal-header'>
-                                            <h2 id='modalTitle'>{% trans "Delete This Relation" %}</h2>
+                                            <h2 id='modalTitle2'>{% trans "Delete This Relation" %}</h2>
                                         </div>
                                         <div class='modal-body'>
                                             
@@ -452,13 +451,13 @@
                    {% for rel in morpheme.relationtoforeignsign_set.all %}
                     <tr>                                               
                          <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
+                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_for_{{rel.id}}'></span>
                             
-                             <div class="modal fade" id="delete_relation_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                             <div class="modal fade" id="delete_relation_modal_for_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleF" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
                                     <div class="modal-content">
                                         <div class='modal-header'>
-                                            <h2 id='modalTitle'>{% trans "Delete This Relation" %}</h2>
+                                            <h2 id='modalTitleF'>{% trans "Delete This Relation" %}</h2>
                                         </div>
                                         <div class='modal-body'>
                                             
@@ -696,11 +695,11 @@
                      <td>
                         <span class='glyphicon glyphicon-trash other-video-delete' data-toggle='modal' data-target='#delete_other_media_{{pk}}'></span>
 
-                         <div class="modal fade" id="delete_other_media_{{pk}}" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
+                         <div class="modal fade" id="delete_other_media_{{pk}}" role="dialog" aria-labelledby="#modalTitleOth" aria-hidden="true">
                              <div class="modal-dialog modal-sm">
                                 <div class="modal-content">
                                     <div class='modal-header'>
-                                        <h2 id='modalTitle'>{% trans "Delete This Media" %}</h2>
+                                        <h2 id='modalTitleOth'>{% trans "Delete This Media" %}</h2>
                                     </div>
                                     <div class='modal-body'>
 

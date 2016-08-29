@@ -78,6 +78,7 @@ function disable_edit() {
     $('#edit_message').text(''); 
     $('.editform').hide();
     $('#delete_gloss_btn').hide();
+    $('#delete_morpheme_btn').hide();
     $('.button-to-appear-in-edit-mode').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
@@ -115,6 +116,7 @@ function enable_edit() {
     $('#edit_message').text('Click on red text to edit  '); 
     $('.editform').show();
     $('#delete_gloss_btn').show().addClass('btn-danger');
+    $('#delete_morpheme_btn').show().addClass('btn-danger');
     $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
