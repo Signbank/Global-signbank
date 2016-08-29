@@ -373,8 +373,7 @@
 
 
                         <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
-                        <td class='edit edit_compoundpart' id='morphology-definition-morpheme_{{morphdef.id}}'>{{morphdef.morpheme}}</td>
-                        <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{% trans "view" %}</a>)</td></tr>
+                        <td class='edit edit_compoundpart' id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{morphdef.morpheme}}</a></td>
                    {% endfor %}
                </table>
             {% else %}
@@ -408,9 +407,8 @@
                 {% for morphdef in gloss.morphemes.all %}
                 <tr>
                     <td style="width:2em;"></td>
-                    <td style='width:12em' class='edit_morphology_role' id='compound-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
-                    <td class='edit_compoundpart' id='compound-definition-morpheme_{{morphdef.id}}'>{{morphdef.parent_gloss}}</td>
-                    <td>(<a href='{% url "dictionary:admin_gloss_view" pk=morphdef.parent_gloss.pk %}'>{% trans "view" %}</a>)</td>
+                    <td style='width:12em' id='compound-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
+                    <td id='compound-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.parent_gloss.pk %}'>{{morphdef.parent_gloss}}</a></td>
                 </tr>
                 {% endfor %}
             </table>
@@ -428,8 +426,7 @@
                 {% for morpheme in gloss.morphemePart.all %}
                 <tr>
                     <td style="width:2em;"></td>
-                    <td class='edit_morpheme' id='morpheme-definition_{{morpheme.id}}'>{{morpheme}}</td>
-                    <td>(<a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.pk %}'>{% trans "view" %}</a>)</td>
+                    <td class='edit_morpheme' id='morpheme-definition_{{morpheme.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.pk %}'>{{morpheme}}</a></td>
                 </tr>
                 {% endfor %}
             </table>
@@ -535,8 +532,7 @@
                         
                         
                         <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
-                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'>{{rel.target}}</td>
-                        <td>(<a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>view</a>)</td></tr>
+                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
                    {% endfor %}
                </table>               
                
