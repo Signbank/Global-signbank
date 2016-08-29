@@ -406,8 +406,7 @@
                         
                         
                         <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
-                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'>{{rel.target}}</td>
-                        <td>(<a href='{% url "dictionary:admin_morpheme_view" pk=rel.target.pk %}'>view</a>)</td></tr>
+                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
                    {% endfor %}
                </table>               
                
