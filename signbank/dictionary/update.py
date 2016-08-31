@@ -106,6 +106,10 @@ def update_gloss(request, glossid):
 
             return update_morphology_definition(gloss, field, value)
 
+        elif field.startswith('morpheme-definition'):
+
+            return update_morpheme_definition(gloss, field, value)
+
         elif field.startswith('other-media'):
 
             return update_other_media(request,gloss, field, value)
@@ -333,7 +337,9 @@ def update_relationtoforeignsign(gloss, field, value):
 
 def gloss_from_identifier(value):
     """Given an id of the form idgloss (pk) return the
-    relevant gloss or None if none is found"""
+    relevant gloss or None if none is found
+    BUT: first check if a unique hit can be found by the string alone (if it is not empty)
+    """
     
     
     match = re.match('(.*) \((\d+)\)', value)
@@ -346,13 +352,20 @@ def gloss_from_identifier(value):
         target = Gloss.objects.get(pk=int(pk))
         print "TARGET: ", target
         return target
+    elif value != '':
+        idgloss = value
+        target = Gloss.objects.get(idgloss=idgloss)
+        return target
     else:
         return None
 
 
 def morph_from_identifier(value):
     """Given an id of the form idgloss (pk) return the
-    relevant Morpheme or None if none is found"""
+    relevant Morpheme or None if none is found
+    BUT: first check if a unique hit can be found by the string alone (if it is not empty)
+    """
+
 
     match = re.match('(.*) \((\d+)\)', value)
     if match:
@@ -363,6 +376,10 @@ def morph_from_identifier(value):
 
         target = Morpheme.objects.get(pk=int(pk))
         print "TARGET: ", target
+        return target
+    elif value != '':
+        idgloss = value
+        target = Morpheme.objects.get(idgloss=idgloss)
         return target
     else:
         return None
@@ -908,6 +925,31 @@ def update_morpheme(request, morphemeid):
                             newvalue = value
 
         return HttpResponse(str(original_value) + '\t' + str(newvalue), {'content-type': 'text/plain'})
+
+
+def update_morpheme_definition(gloss, field, value):
+    """Update the morpheme definition for this gloss"""
+
+    (what, morph_def_id) = field.split('_')
+    what = what.replace('-','_');
+
+    try:
+        # morph_def = MorphologyDefinition.objects.get(id=morph_def_id)
+        morph_def = gloss.morphemePart.get(id=morph_def_id)
+    except:
+        return HttpResponseBadRequest("Bad Morpheme Definition ID '%s'" % morph_def_id, {'content-type': 'text/plain'})
+
+    if what == 'morpheme_definition_delete':
+        print "REMOVE: ", morph_def, " FROM: ", gloss
+        gloss.morphemePart.remove(morph_def)
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
+    else:
+
+        return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
+
+    return HttpResponse(newvalue, {'content-type': 'text/plain'})
+
+
 
 
 @permission_required('dictionary.change_gloss')

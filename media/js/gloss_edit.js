@@ -93,6 +93,7 @@ function disable_edit() {
     $('.other-video-delete').hide();
     $('.relationtoforeignsign_delete').hide();
     $('.morphology-definition-delete').hide();
+    $('.morpheme-definition-delete').hide();
 
     //To prevent RSI
     $('.edit').each(function()
@@ -131,6 +132,7 @@ function enable_edit() {
     $('.other-video-delete').show();
     $('.relationtoforeignsign_delete').show();
     $('.morphology-definition-delete').show();
+    $('.morpheme-definition-delete').show();
 
     //To prevent RSI
     $('.edit').each(function()

@@ -513,17 +513,22 @@ function do_adminsearch(el) {
           <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
           {% endif %}
           {% if gloss.morphemePart.all.count > 0 %}
-          <div class="morpheme_in_gloss">
-          {% for morphdef in gloss.morphemePart.all %}
-          <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}{% if not forloop.last %}, {% endif %}</a></span>
-          {% endfor %}
-          </div>
+              {% if gloss.morphemePart.all.count > 2 %}
+              <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} morphemes)</span>
+              {% else %}
+                  <!-- Number of morphemes is [1-2] -->
+                  <div class="morpheme_in_gloss">
+                  {% for morphdef in gloss.morphemePart.all %}
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  {% endfor %}
+                  </div>
+              {% endif %}
           {% endif %}
 
           {% if gloss.parent_glosses.all.count > 0 %}
           <div class="component_in_gloss">
           {% for component in gloss.parent_glosses.all %}
-          <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}{% if not forloop.last %} + {% endif %}</a></span>
+          <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
           {% endfor %}
           </div>
           {% endif %}
