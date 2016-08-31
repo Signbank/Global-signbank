@@ -268,7 +268,7 @@
                 <td>
                     {% if gloss.morphemePart.all.count > 0 %}
                     {% for morphdef in gloss.morphemePart.all %}
-                    <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.pk %}'>{% value morphdef.annotation_idgloss %}{% if not forloop.last %}, {% endif %}</a></span>
+                    <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.pk %}'>{% value morphdef.annotation_idgloss %}{% if not forloop.last %}, {% endif %}</a></span>
                     {% endfor %}
                     {% endif %}
 
@@ -290,7 +290,7 @@
                 <td>
                     {% if gloss.morphemePart.all.count > 0 %}
                     {% for morphdef in gloss.morphemePart.all %}
-                    <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.pk %}'>{% value morphdef.annotation_idgloss_en %}{% if not forloop.last %}, {% endif %}</a></span>
+                    <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.pk %}'>{% value morphdef.annotation_idgloss_en %}{% if not forloop.last %}, {% endif %}</a></span>
                     {% endfor %}
                     {% endif %}
 
