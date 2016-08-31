@@ -314,9 +314,8 @@ function glosstypeahead(target) {
           source: gloss_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(gloss) {
-                  // Issue #121: remove gloss.sn
-                  // return("<p><strong>" + gloss.idgloss + "</strong> (SN: " + gloss.sn + ")</p>");
-                  return("<p><strong>" + gloss.idgloss + "</strong></p>");
+                  // Issue #121: remove  (SN: " + gloss.sn + ")
+                  return("<p><strong>" + gloss.idgloss +  "</strong></p>");
               }
           }
       });
@@ -356,8 +355,7 @@ function morphtypeahead(target) {
           source: morph_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(gloss) {
-                  // Issue #121: remove gloss.sn
-                  // return("<p><strong>" + gloss.idgloss + "</strong> (SN: " + gloss.sn + ")</p>");
+                  // Issue #121: remove (SN: " + gloss.sn + ")
                   return("<p><strong>" + gloss.idgloss + "</strong></p>");
               }
           }
