@@ -1083,7 +1083,7 @@ class MorphemeListView(ListView):
             header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii', 'ignore') for f in fields]
 
         for extra_column in ['Languages', 'Dialects', 'Keywords', 'Morphology', 'Relations to other signs',
-                             'Relations to foreign signs', ]:
+                             'Relations to foreign signs', 'Appears in signs', ]:
             header.append(extra_column);
 
         writer.writerow(header)
@@ -1119,7 +1119,7 @@ class MorphemeListView(ListView):
             trans = [t.translation.text for t in gloss.translation_set.all()]
             row.append(", ".join(trans))
 
-            # get morphology
+            # get compound's component type
             morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
             row.append(", ".join(morphemes))
 
@@ -1130,6 +1130,10 @@ class MorphemeListView(ListView):
             # get relations to foreign signs
             relations = [relation.other_lang_gloss for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
             row.append(", ".join(relations))
+
+            # Got all the glosses (=signs) this morpheme appears in
+            appearsin = [appears.idgloss for appears in Gloss.objects.filter(morphemePart=gloss)]
+            row.append(", ".join(appearsin))
 
             # Make it safe for weird chars
             safe_row = [];
