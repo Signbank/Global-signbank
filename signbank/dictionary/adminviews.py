@@ -1291,7 +1291,7 @@ def gloss_ajax_complete(request, prefix):
 
     result = []
     for g in qs:
-        result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn, 'pk': "%s (%s)" % (g.idgloss, g.pk)})
+        result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn, 'pk': "%s" % (g.idgloss)})
     
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
@@ -1308,7 +1308,7 @@ def morph_ajax_complete(request, prefix):
     result = []
     for g in qs:
         result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn,
-                       'pk': "%s (%s)" % (g.idgloss, g.pk)})
+                       'pk': "%s" % (g.idgloss)})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
