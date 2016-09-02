@@ -120,323 +120,330 @@ function do_adminsearch(el) {
 
 {% block content %}
 
+<div class="panel panel-default">
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}</div>
 
-<div id='searchformwell' class='well'>
-    <form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
-        <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
-        <div class="hidden">
-            <input name='sortOrder' class='form-control' value='idgloss' >
-            <input name='search_type' class='form-control' value='sign'>
-        </div>
-        <div>
-            <table class='table' id='searchfields'>
-                <tr>
-                    <td><div class='input-group'>
-                        <label class='input-group-addon' for='id_annotation_idgloss'>{{searchform.search.label}}</label>
-                        <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}></div>
-                    </td>
-                    {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-                    <td><div class='input-group'>
-
-                        <label class='input-group-addon' for='id_annotation_idgloss_en'>{{searchform.englishGloss.label}}</label>
-                        <input name='englishGloss' class='form-control' {% if searchform.englishGloss.value %}value='{{searchform.englishGloss.value}}'{% endif %}></div>
-                    </td>
-                    {% endif %}
-
-                    <td><div class='input-group'>
-                        <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
-                        <input name='keyword' class='form-control' {% if searchform.keyword.value %}value='{{searchform.keyword.value}}'{% endif %}></div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <div class="panel-group">
-            <div  class="panel panel-default">
-                <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Language and Basic Properties" %}</div>
-
-                <div id='searchpanels' class='collapse'>
-                <table class='table'>
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_language'>{{searchform.language.label}}</label>
-                                {{searchform.language}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_dialect'>{{searchform.dialect.label}}</label>
-                                {{searchform.dialect}}
-                            </div>
-                        </td>
-                      </tr>
-
-                </table>
-
-                <table class='table'>
-                    {% for fieldname,field,label in input_names_fields_and_labels.main %}
-
-                        <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
-
-                    {% endfor %}
-
-                </table>
-
+    <div id='query-area' class='collapse in'>
+        <div id='searchformwell' class='well search-results-collapsable'>
+            <form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
+                <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='idgloss' >
+                    <input name='search_type' class='form-control' value='sign'>
                 </div>
-              </div>
+                <div>
+                    <table class='table' id='searchfields'>
+                        <tr>
+                            <td><div class='input-group'>
+                                <label class='input-group-addon' for='id_annotation_idgloss'>{{searchform.search.label}}</label>
+                                <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}></div>
+                            </td>
+                            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+                            <td><div class='input-group'>
 
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
+                                <label class='input-group-addon' for='id_annotation_idgloss_en'>{{searchform.englishGloss.label}}</label>
+                                <input name='englishGloss' class='form-control' {% if searchform.englishGloss.value %}value='{{searchform.englishGloss.value}}'{% endif %}></div>
+                            </td>
+                            {% endif %}
 
-              <div id='morph_search' class='collapse'>
-              <table class='table table-condensed'>
-                <tr>
-
-                  <td>
-                    <table class='table table-condensed'>
-                        <tr><td><label for='id_handedness'>{{searchform.morpheme.label}}</label></td><td>{{searchform.morpheme}}</td></tr>
-                        <tr><td><label for='id_domhndsh'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
+                            <td><div class='input-group'>
+                                <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
+                                <input name='keyword' class='form-control' {% if searchform.keyword.value %}value='{{searchform.keyword.value}}'{% endif %}></div>
+                            </td>
+                        </tr>
                     </table>
+                </div>
 
-                  </td>
-                </tr>
-              </table>
-              </div>
-            </div>
+                <div class="panel-group">
+                    <div  class="panel panel-default">
+                        <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Language and Basic Properties" %}</div>
 
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
+                        <div id='searchpanels' class='collapse'>
+                        <table class='table'>
+                              <tr>
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_language'>{{searchform.language.label}}</label>
+                                        {{searchform.language}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_dialect'>{{searchform.dialect.label}}</label>
+                                        {{searchform.dialect}}
+                                    </div>
+                                </td>
+                              </tr>
 
-              <div id='phon_search' class='collapse'>
-              <table class='table table-condensed'>
-                <tr>
+                        </table>
 
-                  <td>
-                    <table class='table table-condensed'>
-                        {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
+                        <table class='table'>
+                            {% for fieldname,field,label in input_names_fields_and_labels.main %}
 
-                            <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+                                <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
 
-                        {% endfor %}
+                            {% endfor %}
 
-                    </table>
+                        </table>
 
-                  </td>
-                </tr>
-              </table>
-              </div>
-            </div>
-
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">{% trans "Search by Semantics" %}</div>
-
-              <div id='sem_search' class='collapse'>
-              <table class='table table-condensed'>
-                <tr>
-
-                  <td>
-                    <table class='table table-condensed'>
-                        {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
-
-                            <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
-
-                        {% endfor %}
-
-
-
-                    </table>
-
-                  </td>
-                </tr>
-              </table>
-              </div>
-            </div>
-
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#rel_search">{% trans "Search by Relation" %}</div>
-
-              <div id='rel_search' class='collapse'>
-              <table class='table'>
-                <tr>
-
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_relation'>{{searchform.relation.label}}</label>
-                                {{searchform.relation}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_hasRelation'>{{searchform.hasRelation.label}}</label>
-                                {{searchform.hasRelation}}
-                            </div>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_relationToForeignSign'>{{searchform.relationToForeignSign.label}}</label>
-                                {{searchform.relationToForeignSign}}
-                            </div>
-                        </td>
-
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_hasRelationToForeignSign'>{{searchform.hasRelationToForeignSign.label}}</label>
-                                {{searchform.hasRelationToForeignSign}}
-                            </div>
-                        </td>
-
-                      </tr>
-
-
-                </tr>
-              </table>
-              </div>
-            </div>
-
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
-
-              <div id='pub_search' class='collapse'>
-              <table class='table'>
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
-                            {{searchform.inWeb}}
                         </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
-                            {{searchform.isNew}}
-                        </div>
-                    </td>
-                  </tr>
+                      </div>
 
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
-                            {{searchform.definitionRole}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
-                            {{searchform.definitionContains}}
-                        </div>
-                    </td>
-                  </tr>
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
 
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionRole'>{{searchform.createdBefore.label}}</label>
-                            {{searchform.createdBefore}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionContains'>{{searchform.createdAfter.label}}</label>
-                            {{searchform.createdAfter}}
-                        </div>
-                    </td>
-                  </tr>
+                      <div id='morph_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+
+                          <td>
+                            <table class='table table-condensed'>
+                                <tr><td><label for='id_handedness'>{{searchform.morpheme.label}}</label></td><td>{{searchform.morpheme}}</td></tr>
+                                <tr><td><label for='id_domhndsh'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
+
+                      <div id='phon_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+
+                          <td>
+                            <table class='table table-condensed'>
+                                {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
+
+                                    <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+
+                                {% endfor %}
+
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">{% trans "Search by Semantics" %}</div>
+
+                      <div id='sem_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+
+                          <td>
+                            <table class='table table-condensed'>
+                                {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
+
+                                    <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+
+                                {% endfor %}
 
 
-                  <tr>
-                      <td>
-                          <div class='input-group'>
-                            <label class='input-group-addon' for='id_language'>{{searchform.tags.label}}</label>
-                            {{searchform.tags}}
-                          </div>
-                      </td>
-                  </tr>
 
-              </table>
+                            </table>
 
-              </div>
-            </div>
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#rel_search">{% trans "Search by Relation" %}</div>
+
+                      <div id='rel_search' class='collapse'>
+                      <table class='table'>
+                        <tr>
+
+                              <tr>
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_relation'>{{searchform.relation.label}}</label>
+                                        {{searchform.relation}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_hasRelation'>{{searchform.hasRelation.label}}</label>
+                                        {{searchform.hasRelation}}
+                                    </div>
+                                </td>
+                              </tr>
+
+                              <tr>
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_relationToForeignSign'>{{searchform.relationToForeignSign.label}}</label>
+                                        {{searchform.relationToForeignSign}}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_hasRelationToForeignSign'>{{searchform.hasRelationToForeignSign.label}}</label>
+                                        {{searchform.hasRelationToForeignSign}}
+                                    </div>
+                                </td>
+
+                              </tr>
+
+
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
+
+                      <div id='pub_search' class='collapse'>
+                      <table class='table'>
+                          <tr>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
+                                    {{searchform.inWeb}}
+                                </div>
+                            </td>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
+                                    {{searchform.isNew}}
+                                </div>
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
+                                    {{searchform.definitionRole}}
+                                </div>
+                            </td>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
+                                    {{searchform.definitionContains}}
+                                </div>
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_definitionRole'>{{searchform.createdBefore.label}}</label>
+                                    {{searchform.createdBefore}}
+                                </div>
+                            </td>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_definitionContains'>{{searchform.createdAfter.label}}</label>
+                                    {{searchform.createdAfter}}
+                                </div>
+                            </td>
+                          </tr>
+
+
+                          <tr>
+                              <td>
+                                  <div class='input-group'>
+                                    <label class='input-group-addon' for='id_language'>{{searchform.tags.label}}</label>
+                                    {{searchform.tags}}
+                                  </div>
+                              </td>
+                          </tr>
+
+                      </table>
+
+                      </div>
+                    </div>
+                </div>
+
+                <div class='btn-group'>
+                    <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
+                    <div class="btn-group">
+                        <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
+                            <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="sign">
+                                {% if search_type == 'sign' %}
+                                {% trans "Search sign" %}
+                                {% else %}
+                                {% trans "Search sign or morpheme" %}
+                                {% endif %}
+                            </span>&nbsp;<span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-left">
+                            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
+                            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search morpheme" %}</a></li>
+                            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
+                        </ul>
+                    </div>
+                    {% if perms.dictionary.export_csv %}
+                    <input class='btn btn-default' type='submit' name='format' value='CSV'>
+                    {% endif %}
+                    <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
+                    {% if perms.dictionary.export_ecv %}
+                    <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
+                    {% endif %}
+                    <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
+                </div>
+
+                <div class='form-group' id='paginate_by'>
+                <label for='paginate_by'>{% trans "Results per page" %}</label>
+                <select class='form-control' name="paginate_by">
+                    <option>3000</option>
+                    <option>2000</option>
+                    <option>1000</option>
+                    <option>500</option>
+                  <option>100</option>
+                    <option>50</option>
+                    <option>25</option>
+                    <option>10</option>
+                </select>
+                </div>
+
+
+            </form>
+
         </div>
 
-        <div class='btn-group'>
-            <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
-            <div class="btn-group">
-                <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
-                    <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="sign">
-                        {% if search_type == 'sign' %}
-                        {% trans "Search sign" %}
-                        {% else %}
-                        {% trans "Search sign or morpheme" %}
-                        {% endif %}
-                    </span>&nbsp;<span class="caret"></span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-left">
-                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
-                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search morpheme" %}</a></li>
-                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
-                </ul>
-            </div>
-            {% if perms.dictionary.export_csv %}
-            <input class='btn btn-default' type='submit' name='format' value='CSV'>
-            {% endif %}
-            <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
-            {% if perms.dictionary.export_ecv %}
-            <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
-            {% endif %}
-            <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
-        </div>
-
-        <div class='form-group' id='paginate_by'>
-        <label for='paginate_by'>{% trans "Results per page" %}</label>
-        <select class='form-control' name="paginate_by">
-            <option>3000</option>
-            <option>2000</option>
-            <option>1000</option>
-            <option>500</option>
-          <option>100</option>
-            <option>50</option>
-            <option>25</option>
-            <option>10</option>
-        </select>
-        </div>
-
-
-    </form>
+    </div>
 
 </div>
 
-   {% if perms.dictionary.add_gloss %}
-   <div  class="panel panel-default">
-      <div class="panel-heading" data-toggle="collapse"  data-target='#add_gloss_form'>{% trans "Add New Sign" %}</div>
+{% if perms.dictionary.add_gloss %}
+<div  class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse"  data-target='#add_gloss_form'>{% trans "Add New Sign" %}</div>
 
-         <div id='add_gloss_form' class='collapse'>
-             <form action='{% url "dictionary:add_gloss" %}' method='post'>
-                 {% csrf_token %}
-                 <table class='table'>
-                     <tr>
-                         <th><label for='id_idgloss'>ID Gloss</label></th>
-                         <th><label for='id_annotation_idgloss'>Annotation ID Gloss (Dutch)</label></th>
-                         <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
-                         <th></th>
-                     </tr>
-                     <tr>
-                         <td>{{add_gloss_form.idgloss}}</td>
-                         <td>{{add_gloss_form.annotation_idgloss}}</td>
-                         <td>{{add_gloss_form.annotation_idgloss_en}}</td>
-                         <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'></td>
-                     </tr>
-                 </table>
-                 
-             </form>
-         </div>
-      </div>
-      {% endif %}
+     <div id='add_gloss_form' class='collapse'>
+         <form action='{% url "dictionary:add_gloss" %}' method='post'>
+             {% csrf_token %}
+             <table class='table'>
+                 <tr>
+                     <th><label for='id_idgloss'>ID Gloss</label></th>
+                     <th><label for='id_annotation_idgloss'>Annotation ID Gloss (Dutch)</label></th>
+                     <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
+                     <th></th>
+                 </tr>
+                 <tr>
+                     <td>{{add_gloss_form.idgloss}}</td>
+                     <td>{{add_gloss_form.annotation_idgloss}}</td>
+                     <td>{{add_gloss_form.annotation_idgloss_en}}</td>
+                     <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'></td>
+                 </tr>
+             </table>
+
+         </form>
+     </div>
+  </div>
+  {% endif %}
                 
              
              
