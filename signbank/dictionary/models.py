@@ -106,6 +106,7 @@ DEFN_ROLE_CHOICES = (('note', 'Note'),
                      ('phon', 'Phonology'),
                      ('todo', 'To Do'),
                      ('sugg', 'Suggestion for other gloss'),
+                     ('disc', 'Discuss between annotators')
                      )
 
 
