@@ -337,9 +337,6 @@
                 <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
             {% endfor %}
 
-            <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language' colspan="2">{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-
         </table>
 			 
    {% if perms.dictionary.view_advanced_properties %}
@@ -541,6 +538,24 @@
             </table>
         </div>
     </div>
+
+    <!-- Language & dialect -->
+    <div class="panel panel-default">
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' data-parent='#definition' href='#languagedialect'>{% trans "Language & Dialect" %}</a>
+            </div>
+        </div>
+        <div id='languagedialect' class='panel-collapse collapse'>
+            <table class="table table-condensed">
+            <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language' colspan="2">{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+
+            </table>
+        </div>
+    </div>
+
+
 
     <!-- Relations to other signs -->
     <div class="panel panel-default">
