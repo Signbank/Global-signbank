@@ -218,18 +218,7 @@
             </table>
             </form>
         </fieldset>
-    
-        {% if perms.dictionary.update_video and gloss.count_videos > 0 %}
-        <fieldset>
-         <legend>{% trans "Delete/Revert Video" %}</legend>
-            <table>
-            <form action="{{URL}}/video/delete/{{gloss.pk}}" method='post'>
-            <tr><td><em>{% trans "This will delete the most recent upload and restore the most recent earlier version." %} </em></td></tr>
-            <tr><td>{% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete/Revert this video'></td></tr>
-            </form>
-           </table>
-        </fieldset>
-        {% endif %}
+
     </div>
     {% endif %}
 
@@ -251,6 +240,23 @@
             </table>
             </form>
         </fieldset>
+    </div>
+
+    {% endif %}
+
+    {% if perms.dictionary.update_video %}
+    <div class="editform">
+        <fieldset>
+         <legend>{% trans "Delete Media" %}</legend>
+            <table>
+                <form action="{{URL}}/video/delete/{{gloss.pk}}" method='post'>
+                    <tr>
+                        <td>{% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete video'>
+                        {% csrf_token %}<input class='btn btn-danger' id='delete_image' type='submit' value='Delete image'></td>
+                    </tr>
+                </form>
+            </table>
+         </fieldset>
     </div>
     {% endif %}
 
