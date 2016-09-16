@@ -400,7 +400,7 @@ minor or insignificant ways that can be ignored.""")
     semField = models.CharField(_("Semantic Field"), choices=build_choice_list("SemField"), null=True, blank=True, max_length=5)
 
     # Adaptation (ERK): supplement wordClass and wordClass2 with [, choices=build_choice_list('WordClass')]
-    wordClass = models.CharField(_("Word class 1"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
+    wordClass = models.CharField(_("Word class"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
     wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50, blank=True)
     lexCatNotes = models.CharField(_("Lexical category notes"),null=True, blank=True, max_length=300)
