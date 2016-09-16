@@ -290,10 +290,6 @@
                     </span>
                     {% endfor %}
                     {% endif %}
-
-                    {% if gloss.morphemePart.all.count == 0 and gloss.parent_glosses.all.count == 0 %}
-                    <i>({% trans "No morphemes defined" %})</i>
-                    {% endif %}
                 </td>
             </tr>
 
@@ -322,10 +318,6 @@
                         {% value component.morpheme.annotation_idgloss_en %}</a>{% if not forloop.last %} + {% endif %}
                     </span>
                     {% endfor %}
-                    {% endif %}
-
-                    {% if gloss.morphemePart.all.count == 0 and gloss.parent_glosses.all.count == 0 %}
-                    <i>({% trans "No morphemes defined" %})</i>
                     {% endif %}
                 </td>
             </tr>
