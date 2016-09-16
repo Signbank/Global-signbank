@@ -813,6 +813,7 @@ def update_cngt_counts(request,folder_index=None):
                                     'Gestel': 'Ge', 'Groningen': 'Gr', 'Mixed': 'O'}
 
     glosses_not_in_signbank = []
+    updated_glosses = []
 
     for idgloss, frequency_info in counts.items():
 
@@ -829,20 +830,32 @@ def update_cngt_counts(request,folder_index=None):
         #Save general frequency info
         gloss.tokNo = frequency_info['frequency']
         gloss.tokNoSgnr = frequency_info['numberOfSigners']
+        updated_glosses.append(gloss.idgloss+' (tokNo,tokNoSgnr)')
 
         #Iterate to them, and add to gloss
-        for region, frequency in frequency_info['frequenciesPerRegion'].items():
+        for region, data in frequency_info['frequenciesPerRegion'].items():
+
+            frequency = data['frequency']
+            numberOfSigners = data['numberOfSigners']
 
             try:
                 attribute_name = 'tokNo' + location_to_fieldname_letter[region]
                 setattr(gloss,attribute_name,frequency)
+                updated_glosses.append(gloss.idgloss + ' ('+attribute_name+')')
+
+                attribute_name = 'tokNoSgnr' + location_to_fieldname_letter[region]
+                setattr(gloss,attribute_name,numberOfSigners)
+                updated_glosses.append(gloss.idgloss + ' (' + attribute_name + ')')
+
             except KeyError:
                 continue
 
         gloss.save()
 
     glosses_not_in_signbank_str = '</li><li>'.join(glosses_not_in_signbank)
-    return HttpResponse('<p>No glosses were found for these names:</p><ul><li>'+glosses_not_in_signbank_str+'</li></ul>')
+    updated_glosses = '</li><li>'.join(updated_glosses)
+    return HttpResponse('<p>No glosses were found for these names:</p><ul><li>'+glosses_not_in_signbank_str+'</li></ul>'+\
+                        '<p>Updated glosses</p><ul><li>'+updated_glosses+'</li></ul>')
 
 def get_unused_videos(request):
 
