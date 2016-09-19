@@ -11,6 +11,7 @@ var morph_bloodhound = new Bloodhound({
 
 morph_bloodhound.initialize();
 
+
 function morphtypeahead(target) {
 
      $(target).typeahead(null, {
