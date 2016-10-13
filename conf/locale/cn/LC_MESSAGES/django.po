@@ -1,0 +1,3071 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-01-22 20:55+1100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: bootstrap_templates/baselayout.html:50
+msgid "The NGT Signbank</span> is licensed under a "
+msgstr “NGT手语词库</ span >”许可证
+
+#: bootstrap_templates/baselayout.html:50
+msgid "Creative Commons BY-NC-SA 4.0 International License"
+msgstr "创作共用BY-NC-SA 4.O国际许可证"
+
+#: bootstrap_templates/baselayout.html:53
+msgid "Provide feedback on the site"
+msgstr "本网站反馈意见留言板"
+
+#: bootstrap_templates/loginform.html:12
+msgid "Sign In"
+msgstr "登录"
+
+#: bootstrap_templates/loginform.html:14 signbank/registration/forms.py:283
+msgid "Email"
+msgstr "电子邮箱"
+
+#: bootstrap_templates/loginform.html:20 signbank/registration/forms.py:48
+#: signbank/registration/forms.py:284
+msgid "Password"
+msgstr "密码"
+
+#: bootstrap_templates/loginform.html:27
+msgid "Sign in"
+msgstr "登录"
+
+#: bootstrap_templates/loginform.html:38 bootstrap_templates/loginform.html:41
+msgid "Register"
+msgstr "注册"
+
+#: bootstrap_templates/loginform.html:40
+msgid "Register for free to provide feedback on the Signbank."
+msgstr "为手语词库提供反馈信息注册免费"
+
+#: bootstrap_templates/loginform.html:47
+msgid "Lost Password"
+msgstr "忘记密码"
+
+#: bootstrap_templates/loginform.html:48
+msgid "如果你忘记密码，请输入你的电子邮件"
+"If you've lost or forgotten your password, enter your email address here and "
+"we'll reset it and send you a reminder."
+msgstr "我们将会发送重置密码提示"
+
+#: bootstrap_templates/loginform.html:53
+msgid "Email:"
+msgstr "电子邮箱"
+
+#: bootstrap_templates/loginform.html:57
+msgid "Request Password"
+msgstr "请求密码"
+
+#: bootstrap_templates/menu.html:105
+msgid "Search gloss"
+msgstr "搜索释义"
+
+#: bootstrap_templates/menu.html:107
+msgid "Search translation"
+msgstr "搜索翻译"
+
+#: bootstrap_templates/menu.html:109
+msgid "Sign search"
+msgstr "搜索手势词"
+
+#: bootstrap_templates/menu.html:114
+msgid "Logout"
+msgstr "退出"
+
+#: bootstrap_templates/menu.html:116
+msgid "Login"
+msgstr "登录"
+
+#: bootstrap_templates/pages/default.html:9
+msgid "Edit Page"
+msgstr "编辑页面"
+
+#: bootstrap_templates/registration/password_reset_complete.html:5
+#: bootstrap_templates/registration/password_reset_complete.html:9
+msgid "Password reset complete"
+msgstr "密码重置完成"
+
+#: bootstrap_templates/registration/password_reset_complete.html:11
+msgid "Password reset complete."
+msgstr "密码重置完成"
+
+#: bootstrap_templates/registration/password_reset_complete.html:13
+msgid "Log in"
+msgstr "登录"
+
+#: bootstrap_templates/registration/password_reset_confirm.html:5
+#: bootstrap_templates/registration/password_reset_form.html:4
+#: bootstrap_templates/registration/password_reset_form.html:6
+#: bootstrap_templates/registration/password_reset_form.html:10
+msgid "Password reset"
+msgstr "密码重置"
+
+#: bootstrap_templates/registration/password_reset_confirm.html:13
+msgid "Enter new password"
+msgstr "输入新密码"
+
+#: bootstrap_templates/registration/password_reset_confirm.html:15
+msgid "请输入新密码并进行确认"
+"Please enter your new password twice so we can verify you typed it in "
+"correctly."
+msgstr “正确”
+
+#: bootstrap_templates/registration/password_reset_confirm.html:19
+msgid "New password:"
+msgstr "新密码"
+
+#: bootstrap_templates/registration/password_reset_confirm.html:22
+msgid "Confirm password:"
+msgstr "确认密码"
+
+#: bootstrap_templates/registration/password_reset_confirm.html:24
+msgid "Change my password"
+msgstr "更改密码"
+
+#: bootstrap_templates/registration/password_reset_confirm.html:29
+msgid "Password reset unsuccessful"
+msgstr "密码重置失败"
+
+#: bootstrap_templates/registration/password_reset_confirm.html:31
+msgid "密码重置无效，可能是被盗用"
+"The password reset link was invalid, possibly because it has already been "
+"used.  Please request a new password reset."
+msgstr “使用过，请重新的密码
+
+#: bootstrap_templates/registration/password_reset_email.html:2
+#, python-format
+msgid "你申请更改密码，已发送您的邮箱"
+"You're receiving this email because you requested a password reset for your "
+"user account at %(site_name)s."
+msgstr "你申请更改密码，已发送您的邮箱％（site_name）s”
+
+#: bootstrap_templates/registration/password_reset_email.html:4
+msgid "Please go to the following page and choose a new password:"
+msgstr "请转到页面，选择一个新的密码"
+
+#: bootstrap_templates/registration/password_reset_email.html:9
+msgid "Thanks for using our site!"
+msgstr "感谢您的使用我们的网站"
+
+#: bootstrap_templates/registration/password_reset_email.html:11
+#, python-format
+msgid "The %(site_name)s team"
+msgstr "这％（site_name）团队"
+
+#: bootstrap_templates/registration/password_reset_form.html:4
+msgid "Home"
+msgstr "主页"
+
+#: bootstrap_templates/registration/password_reset_form.html:12
+msgid "忘了密码？请输入您的电子邮件，我们将重新设置"
+"Forgotten your password? Enter your e-mail address below, and we'll reset "
+"your password and e-mail the new one to you."
+msgstr "设置密码发送邮件通知"
+
+#: bootstrap_templates/registration/password_reset_form.html:17
+msgid "E-mail address:"
+msgstr "电子邮箱地址"
+
+#: bootstrap_templates/registration/password_reset_form.html:17
+msgid "Reset my password"
+msgstr "重置我的密码"
+
+#: build/django/django/conf/global_settings.py:51
+msgid "Afrikaans"
+msgstr "南非语"
+
+#: build/django/django/conf/global_settings.py:52
+msgid "Arabic"
+msgstr "阿拉伯语"
+
+#: build/django/django/conf/global_settings.py:53
+msgid "Azerbaijani"
+msgstr "阿塞拜疆语"
+
+#: build/django/django/conf/global_settings.py:54
+msgid "Bulgarian"
+msgstr "保加利亚语"
+
+#: build/django/django/conf/global_settings.py:55
+msgid "Belarusian"
+msgstr "白俄罗斯语"
+
+#: build/django/django/conf/global_settings.py:56
+msgid "Bengali"
+msgstr "孟加拉语"
+
+#: build/django/django/conf/global_settings.py:57
+msgid "Breton"
+msgstr "布列塔尼语"
+
+#: build/django/django/conf/global_settings.py:58
+msgid "Bosnian"
+msgstr "波斯尼亚语"
+
+#: build/django/django/conf/global_settings.py:59
+msgid "Catalan"
+msgstr "加泰罗尼亚语"
+
+#: build/django/django/conf/global_settings.py:60
+msgid "Czech"
+msgstr "捷克语"
+
+#: build/django/django/conf/global_settings.py:61
+msgid "Welsh"
+msgstr "威尔士语"
+
+#: build/django/django/conf/global_settings.py:62
+msgid "Danish"
+msgstr "丹麦语"
+
+#: build/django/django/conf/global_settings.py:63
+msgid "German"
+msgstr "德国"
+
+#: build/django/django/conf/global_settings.py:64
+msgid "Greek"
+msgstr "希腊语"
+
+#: build/django/django/conf/global_settings.py:65
+msgid "English"
+msgstr "英语"
+
+#: build/django/django/conf/global_settings.py:66
+msgid "British English"
+msgstr "英式英语"
+
+#: build/django/django/conf/global_settings.py:67
+msgid "Esperanto"
+msgstr "世界语"
+
+#: build/django/django/conf/global_settings.py:68
+msgid "Spanish"
+msgstr "西班牙语"
+
+#: build/django/django/conf/global_settings.py:69
+msgid "Argentinian Spanish"
+msgstr "阿根廷式西班牙语"
+
+#: build/django/django/conf/global_settings.py:70
+msgid "Mexican Spanish"
+msgstr "墨西哥式西班牙语"
+
+#: build/django/django/conf/global_settings.py:71
+msgid "Nicaraguan Spanish"
+msgstr "尼加拉瓜式西班牙语"
+
+#: build/django/django/conf/global_settings.py:72
+msgid "Venezuelan Spanish"
+msgstr "委内瑞拉式西班牙语"
+
+#: build/django/django/conf/global_settings.py:73
+msgid "Estonian"
+msgstr "爱沙尼亚语"
+
+#: build/django/django/conf/global_settings.py:74
+msgid "Basque"
+msgstr "巴斯克语"
+
+#: build/django/django/conf/global_settings.py:75
+msgid "Persian"
+msgstr "波斯语"
+
+#: build/django/django/conf/global_settings.py:76
+msgid "Finnish"
+msgstr "芬兰语"
+
+#: build/django/django/conf/global_settings.py:77
+msgid "French"
+msgstr "法语"
+
+#: build/django/django/conf/global_settings.py:78
+msgid "Frisian"
+msgstr "弗里斯兰语"
+
+#: build/django/django/conf/global_settings.py:79
+msgid "Irish"
+msgstr "爱尔兰语"
+
+#: build/django/django/conf/global_settings.py:80
+msgid "Galician"
+msgstr "加利西亚语"
+
+#: build/django/django/conf/global_settings.py:81
+msgid "Hebrew"
+msgstr "希伯来语"
+
+#: build/django/django/conf/global_settings.py:82
+msgid "Hindi"
+msgstr "印地语"
+
+#: build/django/django/conf/global_settings.py:83
+msgid "Croatian"
+msgstr "克罗地亚语"
+
+#: build/django/django/conf/global_settings.py:84
+msgid "Hungarian"
+msgstr "匈牙利语"
+
+#: build/django/django/conf/global_settings.py:85
+msgid "Interlingua"
+msgstr "国际语"
+
+#: build/django/django/conf/global_settings.py:86
+msgid "Indonesian"
+msgstr ""印度尼西亚语
+
+#: build/django/django/conf/global_settings.py:87
+msgid "Icelandic"
+msgstr "冰岛语"
+
+#: build/django/django/conf/global_settings.py:88
+msgid "Italian"
+msgstr "意大利语"
+
+#: build/django/django/conf/global_settings.py:89
+msgid "Japanese"
+msgstr "日本语"
+
+#: build/django/django/conf/global_settings.py:90
+msgid "Georgian"
+msgstr "格鲁吉亚语"
+
+#: build/django/django/conf/global_settings.py:91
+msgid "Kazakh"
+msgstr "哈萨克语"
+
+#: build/django/django/conf/global_settings.py:92
+msgid "Khmer"
+msgstr "高棉语"
+
+#: build/django/django/conf/global_settings.py:93
+msgid "Kannada"
+msgstr "卡纳达语"
+
+#: build/django/django/conf/global_settings.py:94
+msgid "Korean"
+msgstr "韩语"
+
+#: build/django/django/conf/global_settings.py:95
+msgid "Luxembourgish"
+msgstr "卢森堡语"
+
+#: build/django/django/conf/global_settings.py:96
+msgid "Lithuanian"
+msgstr "立陶宛语"
+
+#: build/django/django/conf/global_settings.py:97
+msgid "Latvian"
+msgstr "拉脱维亚语"
+
+#: build/django/django/conf/global_settings.py:98
+msgid "Macedonian"
+msgstr "马其顿语"
+
+#: build/django/django/conf/global_settings.py:99
+msgid "Malayalam"
+msgstr "马来西亚语"
+
+#: build/django/django/conf/global_settings.py:100
+msgid "Mongolian"
+msgstr "蒙古语"
+
+#: build/django/django/conf/global_settings.py:101
+msgid "Burmese"
+msgstr "缅甸语"
+
+#: build/django/django/conf/global_settings.py:102
+msgid "Norwegian Bokmal"
+msgstr "挪威语"
+
+#: build/django/django/conf/global_settings.py:103
+msgid "Nepali"
+msgstr "尼泊尔语"
+
+#: build/django/django/conf/global_settings.py:104
+msgid "Dutch"
+msgstr "荷兰语"
+
+#: build/django/django/conf/global_settings.py:105
+msgid "Norwegian Nynorsk"
+msgstr "耐诺斯克挪威语"
+
+#: build/django/django/conf/global_settings.py:106
+msgid "Ossetic"
+msgstr "奥塞梯语"
+
+#: build/django/django/conf/global_settings.py:107
+msgid "Punjabi"
+msgstr "旁遮普语"
+
+#: build/django/django/conf/global_settings.py:108
+msgid "Polish"
+msgstr "波兰语"
+
+#: build/django/django/conf/global_settings.py:109
+msgid "Portuguese"
+msgstr "葡萄牙语"
+
+#: build/django/django/conf/global_settings.py:110
+msgid "Brazilian Portuguese"
+msgstr "巴西式葡萄牙语"
+
+#: build/django/django/conf/global_settings.py:111
+msgid "Romanian"
+msgstr "罗马尼亚语"
+
+#: build/django/django/conf/global_settings.py:112
+msgid "Russian"
+msgstr "俄语"
+
+#: build/django/django/conf/global_settings.py:113
+msgid "Slovak"
+msgstr "斯洛伐克语"
+
+#: build/django/django/conf/global_settings.py:114
+msgid "Slovenian"
+msgstr "斯洛文尼亚语"
+
+#: build/django/django/conf/global_settings.py:115
+msgid "Albanian"
+msgstr "阿尔巴尼亚语"
+
+#: build/django/django/conf/global_settings.py:116
+msgid "Serbian"
+msgstr "塞尔维亚语"
+
+#: build/django/django/conf/global_settings.py:117
+msgid "Serbian Latin"
+msgstr "塞尔维亚拉丁语"
+
+#: build/django/django/conf/global_settings.py:118
+msgid "Swedish"
+msgstr "瑞典语"
+
+#: build/django/django/conf/global_settings.py:119
+msgid "Swahili"
+msgstr "斯瓦希里语"
+
+#: build/django/django/conf/global_settings.py:120
+msgid "Tamil"
+msgstr "泰米尔语"
+
+#: build/django/django/conf/global_settings.py:121
+msgid "Telugu"
+msgstr "泰卢固语"
+
+#: build/django/django/conf/global_settings.py:122
+msgid "Thai"
+msgstr "泰语"
+
+#: build/django/django/conf/global_settings.py:123
+msgid "Turkish"
+msgstr "土耳其语"
+
+#: build/django/django/conf/global_settings.py:124
+msgid "Tatar"
+msgstr "鞑靼语"
+
+#: build/django/django/conf/global_settings.py:125
+msgid "Udmurt"
+msgstr "乌德穆尔特语"
+
+#: build/django/django/conf/global_settings.py:126
+msgid "Ukrainian"
+msgstr "乌克兰语"
+
+#: build/django/django/conf/global_settings.py:127
+msgid "Urdu"
+msgstr "乌尔都语"
+
+#: build/django/django/conf/global_settings.py:128
+msgid "Vietnamese"
+msgstr "越南语"
+
+#: build/django/django/conf/global_settings.py:129
+msgid "Simplified Chinese"
+msgstr "简体中文"
+
+#: build/django/django/conf/global_settings.py:130
+msgid "Traditional Chinese"
+msgstr "繁体中文"
+
+#: build/django/django/core/validators.py:19
+msgid "Enter a valid value."
+msgstr "输入一个有效值"
+
+#: build/django/django/core/validators.py:51
+#: build/django/django/forms/fields.py:644
+msgid "Enter a valid URL."
+msgstr "输入一个有效的URL网址"
+
+#: build/django/django/core/validators.py:77
+msgid "Enter a valid integer."
+msgstr "输入有效的整数值"
+
+#: build/django/django/core/validators.py:81
+msgid "Enter a valid email address."
+msgstr "输入有效的电子邮件地址"
+
+#: build/django/django/core/validators.py:129
+msgid ""
+"Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens."
+msgstr "请输入有效的字符包括字母、数字、下划线或连字符"
+
+#: build/django/django/core/validators.py:132
+#: build/django/django/core/validators.py:151
+msgid "Enter a valid IPv4 address."
+msgstr "请输入有效的IPv4地址"
+
+#: build/django/django/core/validators.py:137
+#: build/django/django/core/validators.py:152
+msgid "Enter a valid IPv6 address."
+msgstr "请输入有效的IPv6地址"
+
+#: build/django/django/core/validators.py:147
+#: build/django/django/core/validators.py:150
+msgid "Enter a valid IPv4 or IPv6 address."
+msgstr "请输入有效的IPv4或IPv6地址"
+
+#: build/django/django/core/validators.py:173
+#: build/django/django/db/models/fields/__init__.py:715
+msgid "Enter only digits separated by commas."
+msgstr "只能输入数字可以用逗号分隔"
+
+#: build/django/django/core/validators.py:179
+#, python-format
+msgid "Ensure this value is %(limit_value)s (it is %(show_value)s)."
+msgstr "确保该值为 %(limit_value)s ((it is %(show_value)s)"
+
+#: build/django/django/core/validators.py:194
+#, python-format
+msgid "Ensure this value is less than or equal to %(limit_value)s."
+msgstr "确保数值小于或等于%（limit_value）s"
+
+#: build/django/django/core/validators.py:200
+#, python-format
+msgid "Ensure this value is greater than or equal to %(limit_value)s."
+msgstr "确保数值大于或等于%(limit_value)s。"
+
+#: build/django/django/core/validators.py:208
+#, python-format
+msgid ""
+"Ensure this value has at least %(limit_value)d character (it has "
+"%(show_value)d)."
+msgid_plural "确保这个变量至少包含 %(limit_value)d 字符(目前字符数 %(show_value)d)。"
+"Ensure this value has at least %(limit_value)d characters (it has "
+"%(show_value)d)."
+msgstr[0] "确保这个变量至少包含 %(limit_value)d 字符(目前字符数 %(show_value)d)。"
+msgstr[1] "确保这个变量至少包含 %(limit_value)d 字符(目前字符数 %(show_value)d)。"
+
+#: build/django/django/core/validators.py:218
+#, python-format
+msgid ""
+"Ensure this value has at most %(limit_value)d character (it has "
+"%(show_value)d)."
+msgid_plural "确保这个变量包含不超过 %(limit_value)d 字符 (目前字符数 %(show_value)d)。"
+"Ensure this value has at most %(limit_value)d characters (it has "
+"%(show_value)d)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: build/django/django/db/models/base.py:889
+#, python-format
+msgid "%(field_name)s must be unique for %(date_field)s %(lookup)s."
+msgstr ""
+
+#: build/django/django/db/models/base.py:912
+#: build/django/django/forms/models.py:695
+msgid "and"
+msgstr "和"
+
+#: build/django/django/db/models/base.py:913
+#: build/django/django/db/models/fields/__init__.py:83
+#, python-format
+msgid "%(model_name)s with this %(field_label)s already exists."
+msgstr "包含 %(field_labels)s 的 %(model_name)s 已经存在。"
+
+#: build/django/django/db/models/fields/__init__.py:80
+#, python-format
+msgid "Value %(value)r is not a valid choice."
+msgstr "值 %(value)r 不是有效选项。"
+
+#: build/django/django/db/models/fields/__init__.py:81
+msgid "This field cannot be null."
+msgstr "这个值不能为 空的。"
+
+#: build/django/django/db/models/fields/__init__.py:82
+msgid "This field cannot be blank."
+msgstr "此字段不能为空的。"
+
+#: build/django/django/db/models/fields/__init__.py:89
+#, python-format
+msgid "Field of type: %(field_type)s"
+msgstr "类型区域：%(field_type)s"
+
+#: build/django/django/db/models/fields/__init__.py:573
+#: build/django/django/db/models/fields/__init__.py:1068
+msgid "Integer"
+msgstr "整数"
+
+#: build/django/django/db/models/fields/__init__.py:577
+#: build/django/django/db/models/fields/__init__.py:1066
+#, python-format
+msgid "'%(value)s' value must be an integer."
+msgstr "’%(value)s‘ 必须为整数。"
+
+#: build/django/django/db/models/fields/__init__.py:628
+#, python-format
+msgid "'%(value)s' value must be either True or False."
+msgstr "’%(value)s‘ 答案必须为真 或假。"
+
+#: build/django/django/db/models/fields/__init__.py:630
+msgid "Boolean (Either True or False)"
+msgstr "布尔值（真或假）"
+
+#: build/django/django/db/models/fields/__init__.py:682
+#, python-format
+msgid "String (up to %(max_length)s)"
+msgstr "字符串（最长 %(max_length)s 位）"
+
+#: build/django/django/db/models/fields/__init__.py:710
+msgid "Comma-separated integers"
+msgstr "逗号分隔的整数"
+
+#: build/django/django/db/models/fields/__init__.py:724
+#, python-format
+msgid "’ "
+"'%(value)s' value has an invalid date format. It must be in YYYY-MM-DD "
+"format."
+msgstr "%(value)s‘ 必须为合法的日期格式，请使用 YYYY-MM-DD 格式"
+
+#: build/django/django/db/models/fields/__init__.py:726
+#: build/django/django/db/models/fields/__init__.py:820
+#, python-format
+msgid "’ "
+"'%(value)s' value has the correct format (YYYY-MM-DD) but it is an invalid "
+"date."
+msgstr "输入正确日期格式（YYY-MM-DD）但是输入的日期无效"
+
+#: build/django/django/db/models/fields/__init__.py:729
+msgid "Date (without time)"
+msgstr "日期（不含时间）"
+
+#: build/django/django/db/models/fields/__init__.py:818
+#, python-format
+msgid "’%(value)s‘ 数值格式错误，必须为 YYYY-MM-DD HH:MM[:ss］. "
+"'%(value)s' value has an invalid format. It must be in YYYY-MM-DD HH:MM[:ss］."
+"uuuuuu]][TZ] format."
+msgstr "［uuuuuu][TZ]格式。"
+
+#: build/django/django/db/models/fields/__init__.py:822
+#, python-format
+msgid "’%(value)s‘ 值的格式正确(HH:MM[:ss[.uuuuuu]]"
+"'%(value)s' value has the correct format (YYYY-MM-DD HH:MM[:ss[.uuuuuu]]"
+"[TZ]) but it is an invalid date/time."
+msgstr "数值的格式正确（年－月－日 时：分：秒) 但是输入的日期/时间无效。"
+
+#: build/django/django/db/models/fields/__init__.py:826
+msgid "Date (with time)"
+msgstr "日期（含带时间）"
+
+#: build/django/django/db/models/fields/__init__.py:926
+#, python-format
+msgid "'%(value)s' value must be a decimal number."
+msgstr "’%(value)s‘ 必须为十进制数字。"
+
+#: build/django/django/db/models/fields/__init__.py:928
+msgid "Decimal number"
+msgstr "小数"
+
+#: build/django/django/db/models/fields/__init__.py:988
+msgid "Email address"
+msgstr "邮件地址"
+
+#: build/django/django/db/models/fields/__init__.py:1007
+msgid "File path"
+msgstr "文件路径"
+
+#: build/django/django/db/models/fields/__init__.py:1034
+#, python-format
+msgid "'%(value)s' value must be a float."
+msgstr ’%(value)s‘ 必须为浮点数字。""
+
+#: build/django/django/db/models/fields/__init__.py:1036
+msgid "Floating point number"
+msgstr "浮点数"
+
+#: build/django/django/db/models/fields/__init__.py:1103
+msgid "Big (8 byte) integer"
+msgstr "大整数(8字节)"
+
+#: build/django/django/db/models/fields/__init__.py:1117
+msgid "IPv4 address"
+msgstr "IPv4 地址"
+
+#: build/django/django/db/models/fields/__init__.py:1133
+msgid "IP address"
+msgstr "IP 地址"
+
+#: build/django/django/db/models/fields/__init__.py:1180
+#, python-format
+msgid "'%(value)s' value must be either None, True or False."
+msgstr "’%(value)s‘ 必须为无，真或假。"
+
+#: build/django/django/db/models/fields/__init__.py:1182
+msgid "Boolean (Either True, False or None)"
+msgstr "布尔值（真、假或无)"
+
+#: build/django/django/db/models/fields/__init__.py:1234
+msgid "Positive integer"
+msgstr "正整数"
+
+#: build/django/django/db/models/fields/__init__.py:1245
+msgid "Positive small integer"
+msgstr "正小整数"
+
+#: build/django/django/db/models/fields/__init__.py:1257
+#, python-format
+msgid "字符块(up to %(max_length)s)"
+msgstr "字符(多达 %(max_length)s)"
+
+#: build/django/django/db/models/fields/__init__.py:1275
+msgid "Small integer"
+msgstr "小整数"
+
+#: build/django/django/db/models/fields/__init__.py:1281
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:537
+msgid "Text"
+msgstr "文本"
+
+#: build/django/django/db/models/fields/__init__.py:1299
+#, python-format
+msgid "’%(value)s‘ 值格式错误，必须为时：分：秒"
+"'%(value)s' value has an invalid format. It must be in HH:MM[:ss[.uuuuuu]] "
+"format."
+msgstr "格式"
+
+#: build/django/django/db/models/fields/__init__.py:1301
+#, python-format
+msgid "’%(value)s‘ 值的格式正确时：分：秒"
+"'%(value)s' value has the correct format (HH:MM[:ss[.uuuuuu]]) but it is an "
+"invalid time."
+msgstr "但是输入时间无效。"
++"
+
+#: build/django/django/db/models/fields/__init__.py:1304
+msgid "Time"
+msgstr "时间"
+
+#: build/django/django/db/models/fields/__init__.py:1373
+#: signbank/pages/admin.py:13 signbank/pages/models.py:10
+msgid "URL"
+msgstr "URL"
+
+#: build/django/django/db/models/fields/__init__.py:1389
+msgid "Raw binary data"
+msgstr "原始二进制数据"
+
+#: build/django/django/db/models/fields/files.py:217
+msgid "File"
+msgstr "文件"
+
+#: build/django/django/db/models/fields/files.py:324
+msgid "Image"
+msgstr "图像"
+
+#: build/django/django/db/models/fields/related.py:1147
+#, python-format
+msgid "%(model)s instance with pk %(pk)r does not exist."
+msgstr "包含%(field)s %(value)r的%(model)s实例不存在。"
+
+#: build/django/django/db/models/fields/related.py:1149
+msgid "Foreign Key (type determined by related field)"
+msgstr "外键(由相关字段确定)"
+
+#: build/django/django/db/models/fields/related.py:1290
+msgid "One-to-one relationship"
+msgstr “一一对应关系"
+
+#: build/django/django/db/models/fields/related.py:1357
+msgid "Many-to-many relationship"
+msgstr "多对多关系"
+
+#: build/django/django/forms/fields.py:53
+msgid "This field is required."
+msgstr "这个项是必填的"
+
+#: build/django/django/forms/fields.py:220
+msgid "Enter a whole number."
+msgstr "输入整数"
+
+#: build/django/django/forms/fields.py:261
+#: build/django/django/forms/fields.py:289
+msgid "Enter a number."
+msgstr "输一个数字"
+
+#: build/django/django/forms/fields.py:291
+#, python-format
+msgid "Ensure that there are no more than %(max)s digit in total."
+msgid_plural "Ensure that there are no more than %(max)s digits in total."
+msgstr[0] "确认总共不超过 %(max)s 个数字"
+msgstr[1] ""
+
+#: build/django/django/forms/fields.py:295
+#, python-format
+msgid "Ensure that there are no more than %(max)s decimal place."
+msgid_plural "Ensure that there are no more than %(max)s decimal places."
+msgstr[0] "确认小数不超过 %(max)s 位."
+msgstr[1] "确认小数不超过 %(max)s 位."
+
+#: build/django/django/forms/fields.py:299
+#, python-format
+msgid "确认小数点前不超过 %(max)s 位。"
+"Ensure that there are no more than %(max)s digit before the decimal point."
+msgid_plural "确认小数点前不超过 %(max)s 位。"
+"Ensure that there are no more than %(max)s digits before the decimal point."
+msgstr[0] ""
+msgstr[1] ""
+
+#: build/django/django/forms/fields.py:410
+#: build/django/django/forms/fields.py:1082
+msgid "Enter a valid date."
+msgstr "输入一个有效的日期。"
+
+#: build/django/django/forms/fields.py:434
+#: build/django/django/forms/fields.py:1083
+msgid "Enter a valid time."
+msgstr "输入一个有效的时间。"
+
+#: build/django/django/forms/fields.py:456
+msgid "Enter a valid date/time."
+msgstr "输入一个有效的日期/时间。"
+
+#: build/django/django/forms/fields.py:533
+msgid "No file was submitted. Check the encoding type on the form."
+msgstr "未提交文件。请检查表格里的编码类型。"
+
+#: build/django/django/forms/fields.py:534
+msgid "No file was submitted."
+msgstr "未提交文件。"
+
+#: build/django/django/forms/fields.py:535
+msgid "The submitted file is empty."
+msgstr "所提交的是空文件。"
+
+#: build/django/django/forms/fields.py:537
+#, python-format
+msgid "Ensure this filename has at most %(max)d character (it has %(length)d)."
+msgid_plural "确保该文件名长度不超过 %(max)d 字符(目前字符数 %(length)d)。"
+"Ensure this filename has at most %(max)d characters (it has %(length)d)."
+msgstr[0] "确保该文件名长度不超过 %(max)d 字符(目前字符数 %(length)d)。"
+msgstr[1] ""
+
+#: build/django/django/forms/fields.py:540
+msgid "Please either submit a file or check the clear checkbox, not both."
+msgstr "请提交文件或勾选清除复选框，两者其一即可。"
+
+#: build/django/django/forms/fields.py:601
+msgid ""
+"Upload a valid image. The file you uploaded was either not an image or a "
+"corrupted image."
+msgstr "请上传一张有效的图片。您所上传的文件不是图片或者已损坏的图片"
+
+#: build/django/django/forms/fields.py:751
+#: build/django/django/forms/fields.py:838
+#: build/django/django/forms/models.py:1154
+#, python-format
+msgid "Select a valid choice. %(value)s is not one of the available choices."
+msgstr "选择一个有效的选项。 %(value)s 不在可用的选项中。"
+
+#: build/django/django/forms/fields.py:839
+#: build/django/django/forms/fields.py:951
+#: build/django/django/forms/models.py:1153
+msgid "Enter a list of values."
+msgstr "输入一系列数值。"
+
+#. Translators: This is the default suffix added to form field labels
+#: build/django/django/forms/forms.py:90
+msgid ":"
+msgstr ":"
+
+#: build/django/django/forms/forms.py:159
+#, python-format
+msgid "(Hidden field %(name)s) %(error)s"
+msgstr "隐藏字段 %(name)s) %(error)s"
+
+#. Translators: If found as last label character, these punctuation
+#. characters will prevent the default label_suffix to be appended to the label
+#: build/django/django/forms/forms.py:530
+msgid ":?.!"
+msgstr ":?.!"
+
+#: build/django/django/forms/formsets.py:88
+msgid "ManagementForm data is missing or has been tampered with"
+msgstr "管理表单的数据缺失或者已被篡改"
+
+#: build/django/django/forms/formsets.py:321
+#, python-format
+msgid "Please submit %d or fewer forms."
+msgid_plural "Please submit %d or fewer forms."
+msgstr[0] "请提交不超过 %d 个表格。"
+msgstr[1] "请提交不超过 %d 个表格。"
+
+#: build/django/django/forms/formsets.py:350
+#: build/django/django/forms/formsets.py:352
+msgid "Order"
+msgstr "排序"
+
+#: build/django/django/forms/formsets.py:354
+msgid "Delete"
+msgstr "删除"
+
+#: build/django/django/forms/models.py:689
+#, python-format
+msgid "Please correct the duplicate data for %(field)s."
+msgstr "请修改%(field)s的重复数据"
+
+#: build/django/django/forms/models.py:693
+#, python-format
+msgid "Please correct the duplicate data for %(field)s, which must be unique."
+msgstr "请修改%(field)s的重复数据.这个字段必须唯一"
+
+#: build/django/django/forms/models.py:699
+#, python-format
+msgid ""
+"Please correct the duplicate data for %(field_name)s which must be unique "
+"for the %(lookup)s in %(date_field)s."
+msgstr "请修正%(date_field)s的重要数据 %(lookup)s 在 %(field_name)s 不能重复"
+
+#: build/django/django/forms/models.py:707
+msgid "Please correct the duplicate values below."
+msgstr "请修正重复的数据."
+
+#: build/django/django/forms/models.py:995
+msgid "The inline foreign key did not match the parent instance primary key."
+msgstr "内联外键与上位实例主键不匹配。"
+
+#: build/django/django/forms/models.py:1059
+msgid "Select a valid choice. That choice is not one of the available choices."
+msgstr "选择一个有效的选项。 该选择不在可用的选项中。"
+
+#: build/django/django/forms/models.py:1156
+#, python-format
+msgid "\"%(pk)s\" is not a valid value for a primary key."
+msgstr "\"%(pk)s\" 不是一个有效的主键值."
+
+#: build/django/django/forms/models.py:1167
+msgid "Hold down \"Control\", or \"Command\" on a Mac, to select more than one."
+msgstr " Hold down \"Control\", or \"Command\" on a Mac, to select more than one "
+
+#: build/django/django/forms/util.py:83
+#, python-format
+msgid "%(datetime)s 不能在时区 %(current_timezone)s正确解读"
+"%(datetime)s couldn't be interpreted in time zone %(current_timezone)s; it "
+"may be ambiguous or it may not exist."
+msgstr " 可能时间有歧义或者不存"
+
+#: build/django/django/forms/widgets.py:323
+msgid "Currently"
+msgstr "目前"
+
+#: build/django/django/forms/widgets.py:324
+msgid "Change"
+msgstr "修改"
+
+#: build/django/django/forms/widgets.py:325
+msgid "Clear"
+msgstr "­清除"
+
+#: build/django/django/forms/widgets.py:543
+msgid "Unknown"
+msgstr "未知"
+
+#: build/django/django/forms/widgets.py:544 build/django/tests/i18n/urls.py:9
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:295
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:502
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:510
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:577
+msgid "Yes"
+msgstr "是"
+
+#: build/django/django/forms/widgets.py:545 build/django/tests/i18n/urls.py:9
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:297
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:504
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:512
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:579
+msgid "No"
+msgstr "否"
+
+#: build/django/django/template/defaultfilters.py:784
+msgid "yes,no,maybe"
+msgstr "是，否，也许"
+
+#: build/django/django/template/defaultfilters.py:812
+#: build/django/django/template/defaultfilters.py:824
+#, python-format
+msgid "%(size)d byte"
+msgid_plural "%(size)d bytes"
+msgstr[0] "%(size)d 字节"
+msgstr[1] ""
+
+#: build/django/django/template/defaultfilters.py:826
+#, python-format
+msgid "%s KB"
+msgstr "%s KB"
+
+#: build/django/django/template/defaultfilters.py:828
+#, python-format
+msgid "%s MB"
+msgstr "%s MB"
+
+#: build/django/django/template/defaultfilters.py:830
+#, python-format
+msgid "%s GB"
+msgstr "%s GB "
+
+#: build/django/django/template/defaultfilters.py:832
+#, python-format
+msgid "%s TB"
+msgstr "%s TB"
+
+#: build/django/django/template/defaultfilters.py:834
+#, python-format
+msgid "%s PB"
+msgstr "%s PB"
+
+#: build/django/django/utils/dateformat.py:47
+msgid "p.m."
+msgstr "下午."
+
+#: build/django/django/utils/dateformat.py:48
+msgid "a.m."
+msgstr "上午."
+
+#: build/django/django/utils/dateformat.py:53
+msgid "PM"
+msgstr "下午"
+
+#: build/django/django/utils/dateformat.py:54
+msgid "AM"
+msgstr "上午"
+
+#: build/django/django/utils/dateformat.py:103
+msgid "midnight"
+msgstr "午夜"
+
+#: build/django/django/utils/dateformat.py:105
+msgid "noon"
+msgstr "中午"
+
+#: build/django/django/utils/dates.py:6
+msgid "Monday"
+msgstr "星期一"
+
+#: build/django/django/utils/dates.py:6
+msgid "Tuesday"
+msgstr "星期二"
+
+#: build/django/django/utils/dates.py:6
+msgid "Wednesday"
+msgstr "星期三"
+
+#: build/django/django/utils/dates.py:6
+msgid "Thursday"
+msgstr "星期四"
+
+#: build/django/django/utils/dates.py:6
+msgid "Friday"
+msgstr "星期五"
+
+#: build/django/django/utils/dates.py:7
+msgid "Saturday"
+msgstr "星期六"
+
+#: build/django/django/utils/dates.py:7
+msgid "Sunday"
+msgstr "星期日"
+
+#: build/django/django/utils/dates.py:10
+msgid "Mon"
+msgstr "星期一"
+
+#: build/django/django/utils/dates.py:10
+msgid "Tue"
+msgstr "星期二"
+
+#: build/django/django/utils/dates.py:10
+msgid "Wed"
+msgstr "星期三"
+
+#: build/django/django/utils/dates.py:10
+msgid "Thu"
+msgstr "星期四"
+
+#: build/django/django/utils/dates.py:10
+msgid "Fri"
+msgstr "星期五"
+
+#: build/django/django/utils/dates.py:11
+msgid "Sat"
+msgstr "星期六"
+
+#: build/django/django/utils/dates.py:11
+msgid "Sun"
+msgstr "星期日"
+
+#: build/django/django/utils/dates.py:18
+msgid "January"
+msgstr "一月"
+
+#: build/django/django/utils/dates.py:18
+msgid "February"
+msgstr "二月"
+
+#: build/django/django/utils/dates.py:18
+msgid "March"
+msgstr "三月"
+
+#: build/django/django/utils/dates.py:18
+msgid "April"
+msgstr "四月"
+
+#: build/django/django/utils/dates.py:18
+msgid "May"
+msgstr "五月"
+
+#: build/django/django/utils/dates.py:18
+msgid "June"
+msgstr "六月"
+
+#: build/django/django/utils/dates.py:19
+msgid "July"
+msgstr "七月"
+
+#: build/django/django/utils/dates.py:19
+msgid "August"
+msgstr "八月"
+
+#: build/django/django/utils/dates.py:19
+msgid "September"
+msgstr "九月"
+
+#: build/django/django/utils/dates.py:19
+msgid "October"
+msgstr "十月"
+
+#: build/django/django/utils/dates.py:19
+msgid "November"
+msgstr "十一月"
+
+#: build/django/django/utils/dates.py:20
+msgid "December"
+msgstr "十二月"
+
+#: build/django/django/utils/dates.py:23
+msgid "jan"
+msgstr "一月"
+
+#: build/django/django/utils/dates.py:23
+msgid "feb"
+msgstr "二月"
+
+#: build/django/django/utils/dates.py:23
+msgid "mar"
+msgstr "三月"
+
+#: build/django/django/utils/dates.py:23
+msgid "apr"
+msgstr "四月"
+
+#: build/django/django/utils/dates.py:23
+msgid "may"
+msgstr "五月"
+
+#: build/django/django/utils/dates.py:23
+msgid "jun"
+msgstr "六月"
+
+#: build/django/django/utils/dates.py:24
+msgid "jul"
+msgstr "七月"
+
+#: build/django/django/utils/dates.py:24
+msgid "aug"
+msgstr "八月"
+
+#: build/django/django/utils/dates.py:24
+msgid "sep"
+msgstr "九月"
+
+#: build/django/django/utils/dates.py:24
+msgid "oct"
+msgstr "十月"
+
+#: build/django/django/utils/dates.py:24
+msgid "nov"
+msgstr "十一月"
+
+#: build/django/django/utils/dates.py:24
+msgid "dec"
+msgstr "十二月"
+
+#: build/django/django/utils/dates.py:31
+msgctxt "abbrev. month"
+msgid "Jan."
+msgstr "一月"
+
+#: build/django/django/utils/dates.py:32
+msgctxt "abbrev. month"
+msgid "Feb."
+msgstr "二月"
+
+#: build/django/django/utils/dates.py:33
+msgctxt "abbrev. month"
+msgid "March"
+msgstr "三月"
+
+#: build/django/django/utils/dates.py:34
+msgctxt "abbrev. month"
+msgid "April"
+msgstr "四月"
+
+#: build/django/django/utils/dates.py:35
+msgctxt "abbrev. month"
+msgid "May"
+msgstr "五月"
+
+#: build/django/django/utils/dates.py:36
+msgctxt "abbrev. month"
+msgid "June"
+msgstr "六月"
+
+#: build/django/django/utils/dates.py:37
+msgctxt "abbrev. month"
+msgid "July"
+msgstr "七月"
+
+#: build/django/django/utils/dates.py:38
+msgctxt "abbrev. month"
+msgid "Aug."
+msgstr "八月"
+
+#: build/django/django/utils/dates.py:39
+msgctxt "abbrev. month"
+msgid "Sept."
+msgstr "九月"
+
+#: build/django/django/utils/dates.py:40
+msgctxt "abbrev. month"
+msgid "Oct."
+msgstr "十月"
+
+#: build/django/django/utils/dates.py:41
+msgctxt "abbrev. month"
+msgid "Nov."
+msgstr "十一月"
+
+#: build/django/django/utils/dates.py:42
+msgctxt "abbrev. month"
+msgid "Dec."
+msgstr "十二月"
+
+#: build/django/django/utils/dates.py:45
+msgctxt "alt. month"
+msgid "January"
+msgstr "一月"
+
+#: build/django/django/utils/dates.py:46
+msgctxt "alt. month"
+msgid "February"
+msgstr "二月"
+
+#: build/django/django/utils/dates.py:47
+msgctxt "alt. month"
+msgid "March"
+msgstr "三月"
+
+#: build/django/django/utils/dates.py:48
+msgctxt "alt. month"
+msgid "April"
+msgstr "四月"
+
+#: build/django/django/utils/dates.py:49
+msgctxt "alt. month"
+msgid "May"
+msgstr "五月"
+
+#: build/django/django/utils/dates.py:50
+msgctxt "alt. month"
+msgid "June"
+msgstr "六月"
+
+#: build/django/django/utils/dates.py:51
+msgctxt "alt. month"
+msgid "July"
+msgstr "七月"
+
+#: build/django/django/utils/dates.py:52
+msgctxt "alt. month"
+msgid "August"
+msgstr "八月"
+
+#: build/django/django/utils/dates.py:53
+msgctxt "alt. month"
+msgid "September"
+msgstr "九月"
+
+#: build/django/django/utils/dates.py:54
+msgctxt "alt. month"
+msgid "October"
+msgstr "十月"
+
+#: build/django/django/utils/dates.py:55
+msgctxt "alt. month"
+msgid "November"
+msgstr "十一月"
+
+#: build/django/django/utils/dates.py:56
+msgctxt "alt. month"
+msgid "December"
+msgstr "十二月"
+
+#: build/django/django/utils/image.py:108
+#, python-format
+msgid "Neither Pillow nor PIL could be imported: %s"
+msgstr ""
+
+#: build/django/django/utils/image.py:133
+#, python-format
+msgid "The '_imaging' module for the PIL could not be imported: %s"
+msgstr ""
+
+#: build/django/django/utils/ipv6.py:9
+msgid "This is not a valid IPv6 address."
+msgstr "该值不是有效的IPv6地址。"
+
+#: build/django/django/utils/text.py:69
+#, python-format
+msgctxt "String to return when truncating text"
+msgid "%(truncated_text)s..."
+msgstr "%(truncated_text)s..."
+
+#: build/django/django/utils/text.py:224
+msgid "or"
+msgstr "or"
+
+#. Translators: This string is used as a separator between list elements
+#: build/django/django/utils/text.py:241
+#: build/django/django/utils/timesince.py:56
+msgid ", "
+msgstr ", "
+
+#: build/django/django/utils/timesince.py:24
+#, python-format
+msgid "%d year"
+msgid_plural "%d years"
+msgstr[0] "%d 年"
+msgstr[1] ""
+
+#: build/django/django/utils/timesince.py:25
+#, python-format
+msgid "%d month"
+msgid_plural "%d months"
+msgstr[0] "%d 月"
+msgstr[1] ""
+
+#: build/django/django/utils/timesince.py:26
+#, python-format
+msgid "%d week"
+msgid_plural "%d weeks"
+msgstr[0] "%d 周"
+msgstr[1] ""
+
+#: build/django/django/utils/timesince.py:27
+#, python-format
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] "%d 天"
+msgstr[1] ""
+
+#: build/django/django/utils/timesince.py:28
+#, python-format
+msgid "%d hour"
+msgid_plural "%d hours"
+msgstr[0] "%d 小时"
+msgstr[1] ""
+
+#: build/django/django/utils/timesince.py:29
+#, python-format
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d 分钟"
+msgstr[1] ""
+
+#: build/django/django/utils/timesince.py:45
+msgid "0 minutes"
+msgstr "0分钟"
+
+#: build/django/django/views/static.py:53
+msgid "Directory indexes are not allowed here."
+msgstr "此无法生成索引目录"
+
+#: build/django/django/views/static.py:55
+#, python-format
+msgid "\"%(path)s\" does not exist "
+msgstr "\"%(path)s\" 不存在"
+
+#: build/django/django/views/static.py:96
+#, python-format
+msgid "Index of %(directory)s"
+msgstr "指数％（directory)s"
+
+#: build/django/django/views/generic/dates.py:42
+msgid "No year specified"
+msgstr "没有输入年"
+
+#: build/django/django/views/generic/dates.py:98
+msgid "No month specified"
+msgstr "没有输入月份"
+
+#: build/django/django/views/generic/dates.py:157
+msgid "No day specified"
+msgstr " 没有输入日期"
+
+#: build/django/django/views/generic/dates.py:213
+msgid "No week specified"
+msgstr "没有输入周"
+
+#: build/django/django/views/generic/dates.py:368
+#: build/django/django/views/generic/dates.py:396
+#, python-format
+msgid "No %(verbose_name_plural)s available"
+msgstr "%(verbose_name_plural)s 不存在"
+
+#: build/django/django/views/generic/dates.py:649
+#, python-format
+msgid ""
+"Future %(verbose_name_plural)s not available because %(class_name)s."
+"allow_future is False."
+msgstr "Futre %(verbose_name_plural)s 不适用，因为％(class name)s.allow future 是假的"
+
+#: build/django/django/views/generic/dates.py:681
+#, python-format
+msgid "Invalid date string '%(datestr)s' given format '%(format)s'"
+msgstr "日期字符串 '%(datestr)s' 与格式 '%(format)s' 不匹配"
+
+#: build/django/django/views/generic/detail.py:54
+#, python-format
+msgid "No %(verbose_name)s found matching the query"
+msgstr "没有找到符合查询的 %(verbose_name)s"
+
+#: build/django/django/views/generic/list.py:54
+msgid "Page is not 'last', nor can it be converted to an int."
+msgstr "页面不是“最后”或者它不能被转换。"
+
+#: build/django/django/views/generic/list.py:59
+#, python-format
+msgid "Invalid page (%(page_number)s): %(message)s"
+msgstr "无效页面 (%(page_number)s): %(message)s"
+
+#: build/django/django/views/generic/list.py:150
+#, python-format
+msgid "Empty list and '%(class_name)s.allow_empty' is False."
+msgstr "列表是空的并且'%(class_name)s.allow_empty 设置为 假'"
+
+#: build/django/tests/forms_tests/tests/test_regressions.py:30
+#: signbank/registration/forms.py:41
+msgid "Username"
+msgstr "用户名"
+
+#: build/django/tests/forms_tests/tests/test_regressions.py:44
+msgid "field_1"
+msgstr "区域_1"
+
+#: build/django/tests/forms_tests/tests/test_regressions.py:45
+msgid "field_2"
+msgstr "区域_2"
+
+#: build/django/tests/forms_tests/tests/test_regressions.py:80
+#: build/django/tests/i18n/tests.py:93 build/django/tests/i18n/tests.py:96
+#: build/django/tests/many_to_one/tests.py:426
+msgid "test"
+msgstr "测试"
+
+#: build/django/tests/forms_tests/tests/test_util.py:39
+#: build/django/tests/forms_tests/tests/test_util.py:47
+msgid "Error."
+msgstr "错误"
+
+#: build/django/tests/i18n/models.py:8
+msgid "Anything"
+msgstr "任何东西"
+
+#: build/django/tests/i18n/models.py:17
+msgid "Company"
+msgstr "公司"
+
+#: build/django/tests/i18n/tests.py:73 build/django/tests/i18n/tests.py:82
+#: build/django/tests/i18n/tests.py:84 build/django/tests/i18n/tests.py:85
+#, python-format
+msgid "Add %(name)s"
+msgstr "增加Add %(name)s"
+
+#: build/django/tests/i18n/tests.py:88
+msgid "Some other string"
+msgstr "其他字符串"
+
+#: build/django/tests/i18n/tests.py:103
+#, python-format
+msgid "%d good result"
+msgid_plural "%d good results"
+msgstr[0] "%d效果良好"
+msgstr[1] ""
+
+#: build/django/tests/i18n/tests.py:105
+#, python-format
+msgctxt "Exclamation"
+msgid "%d good result"
+msgid_plural "%d good results"
+msgstr[0] "%d效果良好"
+msgstr[1] ""
+
+#: build/django/tests/i18n/tests.py:106
+msgid "good result"
+msgid_plural "good results"
+msgstr[0] "效果良好"
+msgstr[1] ""
+
+#: build/django/tests/i18n/tests.py:117 build/django/tests/i18n/tests.py:118
+#, python-format
+msgid "Hi %(name)s, %(num)d good result"
+msgid_plural "Hi %(name)s, %(num)d good results"
+msgstr[0] "嗨 %（name），%（num）的效果良好"
+msgstr[1] ""
+
+#: build/django/tests/i18n/tests.py:121 build/django/tests/i18n/tests.py:122
+#, python-format
+msgctxt "Greeting"
+msgid "Hi %(name)s, %(num)d good result"
+msgid_plural "Hi %(name)s, %(num)d good results"
+msgstr[0] "­问候"
+msgstr[1] "你好嗨 %（name），%（num）的效果良好"
+
+#: build/django/tests/i18n/tests.py:145
+msgctxt "unexisting" 可能不存在
+msgid "May"
+msgstr "五月"
+
+#: build/django/tests/i18n/tests.py:146
+msgctxt "month name"月份名称
+msgid "May"
+msgstr "也许"
+
+#: build/django/tests/i18n/tests.py:147
+msgctxt "verb"动词
+msgid "May"
+msgstr "可以"
+
+#: build/django/tests/i18n/tests.py:148
+#, python-format
+msgctxt "search"
+msgid "%d result"
+msgid_plural "%d results"
+msgstr[0] "%d结果"
+msgstr[1] ""
+
+#: build/django/tests/i18n/tests.py:295
+msgid "Mac\rEOF\r"
+msgstr "Mac\rEOF\r"
+
+#: build/django/tests/i18n/tests.py:296
+msgid "Win\r\n"
+"Win\r\n"
+"EOF\r\n"
+msgstr "EOF\r\n"
+
+#: build/django/tests/i18n/tests.py:999
+msgid "Date/time"
+msgstr "日期/时间"
+
+#. Translators: This comment should be extracted
+#: build/django/tests/i18n/commands/__init__.py:4
+msgid "This is a translatable string."
+msgstr "这是一个可以翻译的字符串"
+
+#: build/django/tests/i18n/commands/__init__.py:7
+msgid "This is another translatable string."
+msgstr "这是另一个可以翻译的字符串"
+
+#: build/django/tests/i18n/commands/__init__.py:12
+#, python-format
+msgid "%(number)s Foo"
+msgid_plural "%(number)s Foos"
+msgstr[0] ""
+msgstr[1] ""
+
+#: build/django/tests/i18n/commands/ignore_dir/ignored.html:2
+msgid "This should be ignored."
+msgstr “请忽略这个"
+
+#. Translators: Django comment block for translators
+#. string's meaning unveiled
+#: build/django/tests/i18n/commands/templates/test.html:5
+msgid "This literal should be included."
+msgstr "包含文字"
+
+#: build/django/tests/i18n/commands/templates/test.html:6
+msgid ""
+"This literal should also be included wrapped or not wrapped depending on the "
+"use of the --no-wrap option."
+msgstr "这里字符可以分行，根据是否使用揣行选项"
+
+#. Translators: Django template comment for translators
+#: build/django/tests/i18n/commands/templates/test.html:9
+#, python-format
+msgid "I think that 100%% is more that 50%% of anything."
+msgstr "我认为100%大于50%"
+
+#: build/django/tests/i18n/commands/templates/test.html:10
+#, python-format
+msgid "I think that 100%% is more than 50%% of %(obj)s."
+msgstr "我认为100％大于50％"
+
+#. Translators: One-line translator comment #1
+#: build/django/tests/i18n/commands/templates/test.html:16
+msgid "Translatable literal #1a"
+msgstr "直译 ＃1a"
+
+#. Translators: Two-line translator comment #1
+#. continued here.
+#: build/django/tests/i18n/commands/templates/test.html:23
+msgid "Translatable literal #1b"
+msgstr "直译 ＃2b"
+
+#. Translators: One-line translator comment #2
+#: build/django/tests/i18n/commands/templates/test.html:28
+msgid "Translatable literal #2a"
+msgstr "直译 ＃2a"
+
+#. Translators: Two-line translator comment #2
+#. continued here.
+#: build/django/tests/i18n/commands/templates/test.html:34
+msgid "Translatable literal #2b"
+msgstr "直译 #2b"
+
+#. Translators: One-line translator comment #3
+#: build/django/tests/i18n/commands/templates/test.html:39
+msgid "Translatable literal #3a"
+msgstr "直译 #3a"
+
+#. Translators: Two-line translator comment #3
+#. continued here.
+#: build/django/tests/i18n/commands/templates/test.html:45
+msgid "Translatable literal #3b"
+msgstr "直译＃3b"
+
+#. Translators: One-line translator comment #4
+#: build/django/tests/i18n/commands/templates/test.html:48
+msgid "Translatable literal #4a"
+msgstr "直译 #4a"
+
+#. Translators: Two-line translator comment #4
+#. continued here.
+#: build/django/tests/i18n/commands/templates/test.html:52
+msgid "Translatable literal #4b"
+msgstr "直译 #4b"
+
+#. Translators: One-line translator comment #5 -- with non ASCII characters: áéíóúö
+#: build/django/tests/i18n/commands/templates/test.html:55
+msgid "Translatable literal #5a"
+msgstr "直译 #5a"
+
+#. Translators: Two-line translator comment #5 -- with non ASCII characters: áéíóúö
+#. continued here.
+#: build/django/tests/i18n/commands/templates/test.html:59
+msgid "Translatable literal #6b"
+msgstr "直译 #6b"
+
+#: build/django/tests/i18n/commands/templates/test.html:61
+msgctxt "Special trans context #1"
+msgid "Translatable literal #7a"
+msgstr "直译 #7a"
+
+#: build/django/tests/i18n/commands/templates/test.html:62
+msgctxt "Special trans context #2"
+msgid "Translatable literal #7b"
+msgstr "直译 #7b"
+
+#: build/django/tests/i18n/commands/templates/test.html:63
+msgctxt "Special trans context #3"
+msgid "Translatable literal #7c"
+msgstr "直译#7c "
+
+#: build/django/tests/i18n/commands/templates/test.html:65
+msgctxt "Special blocktrans context #1"
+msgid "Translatable literal #8a"
+msgstr "直译 #8a"
+
+#: build/django/tests/i18n/commands/templates/test.html:66
+msgctxt "Special blocktrans context #2"
+msgid "Translatable literal #8b-singular"
+msgid_plural "Translatable literal #8b-plural"
+msgstr[0] "直译＃8a-singular单数形式"
+msgstr[1] "直译＃8b－plural复数形式"
+
+#: build/django/tests/i18n/commands/templates/test.html:67
+msgctxt "Special blocktrans context #3"
+msgid "Translatable literal #8c-singular"
+msgid_plural "Translatable literal #8c-plural"
+msgstr[0] "直译 #8c-单数"
+msgstr[1] "直译 ＃8c－复数"
+
+#: build/django/tests/i18n/commands/templates/test.html:68
+#, python-format
+msgctxt "Special blocktrans context #4"
+msgid "Translatable literal #8d %(a)s"
+msgstr "直译 ＃8d %(a)s"
+
+#: build/django/tests/i18n/commands/templates/test.html:70
+#, python-format
+msgid "Blocktrans extraction shouldn't double escape this: %%, a=%(a)s"
+msgstr "Blocktrans提取不应该双倍逃脱这个"
+
+#: build/django/tests/i18n/commands/templates/test.html:72
+#, python-format
+msgid "Literal with a percent symbol at the end %%"
+msgstr "后面百分号％的字符"
+
+#: build/django/tests/i18n/commands/templates/test.html:73
+#, python-format
+msgid "Literal with a percent %% symbol in the middle"
+msgstr "中间含百分号％的字符％"
+
+#: build/django/tests/i18n/commands/templates/test.html:74
+#, python-format
+msgid "Completed 50%% of all the tasks"
+msgstr "完成50％的全部任务"
+
+#: build/django/tests/i18n/commands/templates/test.html:75
+#, python-format
+msgctxt "ctx0"
+msgid "Completed 99%% of all the tasks"
+msgstr "完成99％的全部任务"
+
+#: build/django/tests/i18n/commands/templates/test.html:76
+#, python-format
+msgid "Shouldn't double escape this sequence: %% (two percent signs)"
+msgstr "不应该双倍逃脱这个序列：%%（两个百分号）"
+
+#: build/django/tests/i18n/commands/templates/test.html:77
+#, python-format
+msgctxt "ctx1"
+msgid "Shouldn't double escape this sequence %% either"
+msgstr "不应该双倍逃脱这个序列：％％"
+
+#: build/django/tests/i18n/commands/templates/test.html:78
+#, python-format
+msgid "Looks like a str fmt spec %%s but shouldn't be interpreted as such"
+msgstr "看起来特殊格式化的规格%%s但它并不是这样的解释"
+
+#: build/django/tests/i18n/commands/templates/test.html:79
+#, python-format
+msgid "Looks like a str fmt spec %% o but shouldn't be interpreted as such"
+msgstr 看起来像一个FMT规格%但它并不是这样解释"
+
+#: build/django/tests/i18n/commands/templates/test.html:81
+msgctxt "Context wrapped in single quotes"
+msgid "Translatable literal with context wrapped in single quotes"
+msgstr "直译文字内容要加单引号"
+
+#: build/django/tests/i18n/commands/templates/test.html:82
+msgctxt "Context wrapped in double quotes"
+msgid "Translatable literal with context wrapped in double quotes"
+msgstr "直译文字内容时要加双引号"
+
+#: build/django/tests/i18n/commands/templates/test.html:83
+msgctxt "Special blocktrans context wrapped in single quotes"
+msgid "Translatable literal with context wrapped in single quotes"
+msgstr "直译文字内容时要加单引号"
+
+#: build/django/tests/i18n/commands/templates/test.html:84
+msgctxt "Special blocktrans context wrapped in double quotes"
+msgid "Translatable literal with context wrapped in double quotes"
+msgstr "直译文字内容时要加双引号"
+
+#: build/django/tests/i18n/commands/templates/xxx_ignored.html:2
+msgid "This should be ignored too."
+msgstr "这可以忽略不计"
+
+#: build/django/tests/i18n/patterns/urls/default.py:12
+msgid "^translated/$"
+msgstr "^翻译/$"
+
+#: build/django/tests/i18n/patterns/urls/default.py:13
+msgid "^translated/(?P<slug>[\\w-]+)/$"
+msgstr "^翻译/(?P<slug>[\\w-]+)/$"
+
+#: build/django/tests/i18n/patterns/urls/default.py:19
+msgid "^users/$"
+msgstr "^用户/$"
+
+#: build/django/tests/i18n/patterns/urls/default.py:20
+#: build/django/tests/i18n/patterns/urls/wrong.py:7
+msgid "^account/"
+msgstr "^帐户/"
+
+#: build/django/tests/i18n/patterns/urls/namespace.py:9
+#: build/django/tests/i18n/patterns/urls/wrong_namespace.py:10
+msgid "^register/$"
+msgstr "^注册/$"
+
+#: build/django/tests/i18n/patterns/urls/namespace.py:10
+msgid "^register-without-slash$"
+msgstr "^注册－无－削减$"
+
+#: build/django/tests/mail/tests.py:74
+msgid "主题\ n"
+"Subject\n"
+"Injection Test"
+msgstr "注水试验"
+
+#: build/django/tests/mail/tests.py:436 build/django/tests/mail/tests.py:441
+msgid "Subject"
+msgstr "主题"
+
+#: build/django/tests/queryset_pickle/models.py:27
+msgid "name"
+msgstr "姓名"
+
+#: build/django/tests/test_client_regress/tests.py:150
+msgid "once"
+msgstr "一次"
+
+#: build/django/tests/test_client_regress/tests.py:154
+msgid "never"
+msgstr "决不"
+
+#: build/django/tests/utils_tests/test_safestring.py:51
+msgid "username"
+msgstr "用户名"
+
+#: build/django/tests/view_tests/tests/test_i18n.py:60
+#: build/django/tests/view_tests/tests/test_i18n.py:62
+msgid "this is to be translated"
+msgstr "这也要翻译"
+
+#: signbank/dictionary/admin.py:46
+msgid "number of senses"
+msgstr "感官数量
+
+#: signbank/dictionary/admin.py:59
+msgid "No Senses"
+msgstr "没有感知"
+
+#: signbank/dictionary/admin.py:60
+msgid "More than one"
+msgstr "不止一个"
+
+#: signbank/dictionary/forms.py:15
+msgid "Glosses containing"
+msgstr "释义项"
+
+#: signbank/dictionary/forms.py:16
+msgid "Translations containing"
+msgstr "翻译项"
+
+#: signbank/dictionary/forms.py:17
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:322
+msgid "Search"
+msgstr "搜索"
+
+#: signbank/dictionary/forms.py:66
+msgid "Dutch Gloss"
+msgstr "荷语释义"
+
+#: signbank/dictionary/forms.py:67
+msgid "English Gloss"
+msgstr "英文释义"
+
+#: signbank/dictionary/forms.py:70
+msgid "Translations"
+msgstr "翻译"
+
+#: signbank/dictionary/forms.py:71
+msgid "Has Video"
+msgstr "有视频"
+
+#: signbank/dictionary/forms.py:72
+msgid "All Definitions Published"
+msgstr "所有公布了的定义"
+
+#: signbank/dictionary/forms.py:74
+msgid "Search Definition/Notes"
+msgstr "搜索定义/备注"
+
+#: signbank/dictionary/forms.py:77
+msgid "Search for gloss of related signs"
+msgstr "搜索相关手势的释义"
+
+#: signbank/dictionary/forms.py:78
+msgid "Search for gloss of foreign signs"
+msgstr "搜索外来手势词的释义"
+
+#: signbank/dictionary/forms.py:79
+msgid "Search for gloss with this as morpheme"
+msgstr "搜索与这个语素有关的释义"
+
+#: signbank/dictionary/forms.py:81
+msgid "Phonology other"
+msgstr "音韵学等"
+
+#: signbank/dictionary/forms.py:83
+msgid "Related to foreign sign or not"
+msgstr "是否与外来手势词有关"
+
+#: signbank/dictionary/forms.py:84
+msgid "Type of relation"
+msgstr "关系类型"
+
+#: signbank/dictionary/forms.py:85
+msgid "Has morpheme type"
+msgstr "语素类型"
+
+#: signbank/dictionary/forms.py:87
+msgid "Repeating Movement"
+msgstr "重复动作"
+
+#: signbank/dictionary/forms.py:88 signbank/dictionary/models.py:884
+msgid "Alternating Movement"
+msgstr "交替动作"
+
+#: signbank/dictionary/forms.py:90
+msgid "Is a proposed new sign"
+msgstr "是否提议新新手势词"
+
+#: signbank/dictionary/forms.py:91
+msgid "Is in Web dictionary"
+msgstr "是否出现在网上字典中"
+
+#: signbank/dictionary/forms.py:92
+msgid "Note type"
+msgstr "备注类型"
+
+#: signbank/dictionary/forms.py:93
+msgid "Note contains"
+msgstr "备注项"
+
+#: signbank/dictionary/forms.py:95
+msgid "Created before"
+msgstr "创建前"
+
+#: signbank/dictionary/forms.py:96
+msgid "Created after"
+msgstr "创建后"
+
+#: signbank/dictionary/forms.py:130 signbank/dictionary/forms.py:143
+msgid "Source Gloss"
+msgstr "资源语释义"
+
+#: signbank/dictionary/forms.py:131
+msgid "Target Gloss"
+msgstr "目标语释义"
+
+#: signbank/dictionary/forms.py:145
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:404
+msgid "Related Language"
+msgstr "同族语言"
+
+#: signbank/dictionary/forms.py:146
+msgid "Gloss in Related Language"
+msgstr "标注语言"
+
+#: signbank/dictionary/forms.py:155
+msgid "Parent Gloss"
+msgstr "上位释义"
+
+#: signbank/dictionary/forms.py:156
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:217
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:536
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:636
+msgid "Type"
+msgstr "类型"
+
+#: signbank/dictionary/forms.py:157
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:218
+msgid "Morpheme"
+msgstr "语素"
+
+#: signbank/dictionary/models.py:775
+#: signbank/dictionary/templates/dictionary/add_gloss.html:23
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:194
+msgid "ID Gloss"
+msgstr "ID释义"
+
+#: signbank/dictionary/models.py:780
+msgid "Annotation ID Gloss: Dutch"
+msgstr "标注识别释义：荷语"
+
+#: signbank/dictionary/models.py:788
+msgid "Annotation ID Gloss: English"
+msgstr "标注识别释义：英语"
+
+#: signbank/dictionary/models.py:799
+msgid "BSL sign"
+msgstr "英国手语手势"
+
+#: signbank/dictionary/models.py:800
+msgid "ASL sign"
+msgstr "美国手语手势"
+
+#: signbank/dictionary/models.py:803
+msgid "ASL gloss"
+msgstr "美国手语释义"
+
+#: signbank/dictionary/models.py:804
+msgid "ASL loan sign"
+msgstr "美国手语借词手势"
+
+#: signbank/dictionary/models.py:807
+msgid "BSL gloss"
+msgstr "英国手语释义"
+
+#: signbank/dictionary/models.py:808
+msgid "BSL loan sign"
+msgstr "英国手语借词手势"
+
+#: signbank/dictionary/models.py:810
+msgid "Annotation instructions"
+msgstr "标注说明"
+
+#: signbank/dictionary/models.py:811
+msgid "Remarks"
+msgstr "备考"
+
+#: signbank/dictionary/models.py:819
+msgid "Blend of"
+msgstr "混合"
+
+#: signbank/dictionary/models.py:820
+msgid "Blend"
+msgstr "混合"
+
+#: signbank/dictionary/models.py:822
+msgid "Compound of"
+msgstr "复合"
+
+#: signbank/dictionary/models.py:823
+msgid "Compound"
+msgstr "复合"
+
+#: signbank/dictionary/models.py:827
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:393
+msgid "Handedness"
+msgstr "惯用手或手的使用情况"
+
+#: signbank/dictionary/models.py:829
+msgid "Strong Hand"
+msgstr "强手"
+
+#: signbank/dictionary/models.py:830
+msgid "Weak Hand"
+msgstr "弱手"
+
+#: signbank/dictionary/models.py:832
+msgid "Final Dominant Handshape"
+msgstr "最后的主控手手形"
+
+#: signbank/dictionary/models.py:833
+msgid "Final Subordinate Handshape"
+msgstr "最后的辅助手手形"
+
+#: signbank/dictionary/models.py:835
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:396
+msgid "Location"
+msgstr "手的位置"
+
+#: signbank/dictionary/models.py:836
+msgid "Final Primary Location"
+msgstr "最后的主要位置"
+
+#: signbank/dictionary/models.py:837
+msgid "Virtual Object"
+msgstr "虚拟对象"
+
+#: signbank/dictionary/models.py:839
+msgid "Secondary Location"
+msgstr "第二个位置"
+
+#: signbank/dictionary/models.py:841
+msgid "Initial Subordinate Location"
+msgstr "辅助手的起始的位置"
+
+#: signbank/dictionary/models.py:842
+msgid "Final Subordinate Location"
+msgstr "辅助手的最终位置"
+
+#: signbank/dictionary/models.py:844
+msgid "Initial Palm Orientation"
+msgstr "辅助手的最终位置"
+
+#: signbank/dictionary/models.py:845
+msgid "Final Palm Orientation"
+msgstr "手掌初始方向"
+
+#: signbank/dictionary/models.py:847
+msgid "Initial Interacting Dominant Hand Part"
+msgstr "最初与始主控手联系的部分"
+
+#: signbank/dictionary/models.py:848
+msgid "Final Interacting Dominant Hand Part"
+msgstr "最后与主控手联系的部分"
+
+#: signbank/dictionary/models.py:851
+msgid "In the Web dictionary"
+msgstr "在网上词典里"
+
+#: signbank/dictionary/models.py:852
+msgid "Is this a proposed new sign?"
+msgstr "这是新提议的手势吗？"
+
+#: signbank/dictionary/models.py:856
+msgid "Morphemic Analysis"
+msgstr "语素分析"
+
+#: signbank/dictionary/models.py:858
+msgid "Signed English definition available"
+msgstr "手势英语定义可用"
+
+#: signbank/dictionary/models.py:859
+msgid "Signed English gloss"
+msgstr "手势英语释义"
+
+#: signbank/dictionary/models.py:861
+msgid "Sense Number"
+msgstr "感官数量"
+
+#: signbank/dictionary/models.py:864
+msgid "Sign Number"
+msgstr "手势数量"
+
+#: signbank/dictionary/models.py:871
+msgid "Relation between Articulators"
+msgstr "发音器官之间的关系"
+
+#: signbank/dictionary/models.py:873
+msgid "Absolute Orientation: Palm"
+msgstr "相对方向：手掌"
+
+#: signbank/dictionary/models.py:874
+msgid "Absolute Orientation: Fingers"
+msgstr "相对方向：手指"
+
+#: signbank/dictionary/models.py:876
+msgid "Relative Orientation: Movement"
+msgstr "相对方向：运动"
+
+#: signbank/dictionary/models.py:877
+msgid "Relative Orientation: Location"
+msgstr "相对定向：位置"
+
+#: signbank/dictionary/models.py:879
+msgid "Orientation Change"
+msgstr "方向变化"
+
+#: signbank/dictionary/models.py:881
+msgid "Handshape Change"
+msgstr "手形变化"
+
+#: signbank/dictionary/models.py:883
+msgid "Repeated Movement"
+msgstr "重复动作"
+
+#: signbank/dictionary/models.py:886
+msgid "Movement Shape"
+msgstr "动作形态"
+
+#: signbank/dictionary/models.py:887
+msgid "Movement Direction"
+msgstr "运动方向"
+
+#: signbank/dictionary/models.py:888
+msgid "Movement Manner"
+msgstr "运动方式"
+
+#: signbank/dictionary/models.py:889
+msgid "Contact Type"
+msgstr "接触类型"
+
+#: signbank/dictionary/models.py:891
+msgid "Phonology Other"
+msgstr "音韵学等"
+
+#: signbank/dictionary/models.py:893
+msgid "Mouth Gesture"
+msgstr "姿势口动"
+
+#: signbank/dictionary/models.py:894
+msgid "Mouthing"
+msgstr "语词口动"
+
+#: signbank/dictionary/models.py:895
+msgid "Phonetic Variation"
+msgstr "语音变异"
+
+#: signbank/dictionary/models.py:899
+msgid "Iconic Image"
+msgstr "象似性图像"
+
+#: signbank/dictionary/models.py:900
+msgid "Named Entity"
+msgstr "命名实体"
+
+#: signbank/dictionary/models.py:901
+msgid "Semantic Field"
+msgstr "语议场"
+
+#: signbank/dictionary/models.py:905
+msgid "Number of Occurrences"
+msgstr "出现的次数"
+
+#: signbank/dictionary/models.py:906
+msgid "Number of Signers"
+msgstr "手语者的人次"
+
+#: signbank/dictionary/models.py:907
+msgid "Number of Occurrences in Amsterdam"
+msgstr "在阿姆斯丹出现的次数"
+
+#: signbank/dictionary/models.py:908
+msgid "Number of Occurrences in Voorburg"
+msgstr "在沃尔堡出现的次数"
+
+#: signbank/dictionary/models.py:909
+msgid "Number of Occurrences in Rotterdam"
+msgstr "在鹿特丹出现的次数"
+
+#: signbank/dictionary/models.py:910
+msgid "Number of Occurrences in Gestel"
+msgstr "在Gestel出现的次数"
+
+#: signbank/dictionary/models.py:911
+msgid "Number of Occurrences in Groningen"
+msgstr "在格罗宁根出现的次数"
+
+#: signbank/dictionary/models.py:912
+msgid "Number of Occurrences in Other Regions"
+msgstr "其它地区出现的次数"
+
+#: signbank/dictionary/models.py:914
+msgid "Number of Amsterdam Signers"
+msgstr "阿姆斯丹手语者出现的次数"
+
+#: signbank/dictionary/models.py:915
+msgid "Number of Voorburg Signers"
+msgstr "沃尔堡手语者出现的次数"
+
+#: signbank/dictionary/models.py:916
+msgid "Number of Rotterdam Signers"
+msgstr "鹿特丹手语者出现的次数"
+
+#: signbank/dictionary/models.py:917
+msgid "Number of Gestel Signers"
+msgstr "Gestel手势出现的次数"
+
+#: signbank/dictionary/models.py:918
+msgid "Number of Groningen Signers"
+msgstr "格罗宁根手语者出现的次数"
+
+#: signbank/dictionary/models.py:919
+msgid "Number of Other Region Signers"
+msgstr "其它地区手语者出现的次数"
+
+#: signbank/dictionary/models.py:921
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+msgid "Creation date"
+msgstr "创建日期"
+
+#: signbank/dictionary/update.py:28
+msgid "Annotation ID Gloss not unique."
+msgstr "标注识别释义并不是唯一的"
+
+#: signbank/dictionary/update.py:30
+msgid "English annotation ID gloss not unique."
+msgstr "英文标注识别释义并不是唯一的"
+
+#: signbank/dictionary/update.py:32
+msgid "Dutch annotation ID gloss cannot be empty."
+msgstr "荷兰标注识别释义不能填空"
+
+#: signbank/dictionary/templates/dictionary/add_gloss.html:17
+msgid "Please provide some initial data"
+msgstr "请提供一些原始数据"
+
+#: signbank/dictionary/templates/dictionary/add_gloss.html:26
+#: signbank/dictionary/templates/dictionary/add_gloss_form.html:21
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:195
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+msgid "Annotation ID Gloss (Dutch)"
+msgstr "标注识别释义（荷语）"
+
+#: signbank/dictionary/templates/dictionary/add_gloss.html:29
+#: signbank/dictionary/templates/dictionary/add_gloss_form.html:22
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:196
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+msgid "Annotation ID Gloss (English)"
+msgstr "标注识别释义（英语）"
+
+#: signbank/dictionary/templates/dictionary/add_gloss.html:33
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:354
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:370
+msgid "Add New Sign"
+msgstr "添加新手势"
+
+#: signbank/dictionary/templates/dictionary/add_gloss_form.html:20
+msgid "Lemma ID Gloss"
+msgstr "引理ID释义"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:101
+msgid "Search by Language and Basic Properties"
+msgstr "根据语种何语言的基本属性搜索"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:130
+msgid "Search by Morphology"
+msgstr "根据形态学搜索"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:149
+msgid "Search by Phonology"
+msgstr "根据音韵学搜索"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:190
+msgid "Search by Semantics"
+msgstr "根据语义学搜索"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:211
+msgid "Search by Relation"
+msgstr "相关搜索"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:256
+msgid "Search by Publication Status and Notes"
+msgstr "根据出版状态和备释义检索"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:330
+msgid "Reset"
+msgstr "重设"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:334
+msgid "Results per page"
+msgstr "搜索结果显示页"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:384
+msgid "Number of matches:"
+msgstr "匹配数目"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:384
+msgid "out of"
+msgstr "离开"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:390
+msgid "Annotation ID gloss: Dutch"
+msgstr "标注识别释义：荷语"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:391
+msgid "Annotation ID gloss: English"
+msgstr "标注识别释义：英语"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:392
+msgid "Translation equivalents"
+msgstr "翻译对等词"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:394
+msgid "Strong hand"
+msgstr "强势手"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:395
+msgid "Weak hand"
+msgstr "弱势手"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:397
+#: signbank/dictionary/templates/dictionary/glosstags.html:5
+msgid "Tags"
+msgstr "标签"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:20
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:84
+msgid "Edit"
+msgstr "编辑"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:21
+msgid "Turn off edit mode"
+msgstr "关闭编辑模式"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:22
+msgid "Delete this gloss"
+msgstr "删除这个释义"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:23
+msgid "Saving..."
+msgstr "保存"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:62
+#, python-format
+msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
+msgstr "在荷兰手语词典"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:66
+msgid "Next Sign &raquo;"
+msgstr "下一个手势词语&"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:74
+msgid "Public View"
+msgstr "公开的界面"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:75
+msgid "Delete Sign"
+msgstr "删除手势"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:83
+msgid "Edit next gloss"
+msgstr "编辑下一释义"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:90
+msgid "Delete This Sign"
+msgstr "删除这个手语势"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:93
+msgid ""
+"This action will delete this sign and all associated records. It cannot be "
+"undone."
+msgstr "这样做将删除这个手势词相关的所有的记录。删除后则不能复原。"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:100
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:243
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:354
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:428
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:564
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:660
+#: signbank/dictionary/templates/dictionary/update_video.html:78
+msgid "Cancel"
+msgstr "取消"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:101
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:244
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:355
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:429
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:565
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:661
+msgid "Confirm Delete"
+msgstr "确认删除"
+
+#. Translators:
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:140
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:142
+#: signbank/dictionary/templates/dictionary/word.html:116
+#: signbank/dictionary/templates/dictionary/word.html:119
+msgid "Provide feedback about this sign"
+msgstr "请提供与这个手势有关的反馈信息"
+
+#. Translators: If sign is missing, report it
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:145
+#: signbank/dictionary/templates/dictionary/word.html:123
+msgid "Report a missing sign"
+msgstr "报告遗漏的手势"
+
+#. Translators: Provide feedback about the site in general
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:146
+#: signbank/dictionary/templates/dictionary/word.html:125
+msgid "Provide general site feedback"
+msgstr "提供网站反馈意见"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:155
+msgid "Upload New Video"
+msgstr "上传新视频"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:156
+#, python-format
+msgid " We have %(gloss.count_videos)s videos for this sign. "
+msgstr "我们有%(gloss.count_videos)s手语视频 "
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:174
+msgid "Delete/Revert Video"
+msgstr "删除/恢复视频"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:177
+msgid ""
+"This will delete the most recent upload and restore the most recent earlier "
+"version."
+msgstr "这样做将会删除最新上传的资料，还原成之前的版本"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:197
+msgid "Translation equivalents in Dutch"
+msgstr "荷语翻译等值"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:198
+msgid "Annotation Instructions"
+msgstr "标注说明"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:199
+msgid "Language"
+msgstr "语言"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:200
+msgid "Dialect"
+msgstr "方言"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:209
+msgid "Morphology"
+msgstr "形态学"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:232
+msgid "Delete This Morphology"
+msgstr "删除这个形态学"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:236
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:421
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:653
+msgid "Are you sure you want to delete this? This cannot be undone."
+msgstr "你确定要删除这个？一旦删除就不能复原。"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:257
+msgid "view"
+msgstr "查看"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:269
+msgid "ID Gloss/Annotation ID Gloss"
+msgstr "识别释义/标注识别释义"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:270
+msgid "Add Morphology Definition"
+msgstr "添加形态学定义"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:287
+msgid "Phonology"
+msgstr "音韵学"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:312
+msgid "Semantics"
+msgstr "语义学"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:329
+msgid "Relations to Other Signs"
+msgstr "关系到其他手势"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:343
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:417
+msgid "Delete This Relation"
+msgstr "删除这个关系"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:347
+#, python-format
+msgid ""
+" This action will delete the %(rel.get_role_display)s relation between "
+"%(rel.source)s and %(rel.target)s. It cannot be undone. "
+msgstr "这样做将会删除%(rel.source)s  %(rel.target)s.以及％（rel.target)之间关系.一旦删除不能复原 "
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:397
+msgid "Relations to Foreign Signs"
+msgstr "与外来手势的关系"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:403
+msgid "Loan"
+msgstr "借用"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:405
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:453
+msgid "Gloss in related language"
+msgstr "同族语言的释义"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:426
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:562
+msgid "confirmed"
+msgstr "确定"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:452
+msgid "Related language"
+msgstr "同族语言"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:454
+msgid "Add Relation to Foreign Sign"
+msgstr "添加与外来手势的关系"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:471
+msgid "Frequency"
+msgstr "频率"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:488
+msgid "Publication Status"
+msgstr "出版状态"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:496
+msgid "Creation Date"
+msgstr 创建日期""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:497
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+msgid "Creator"
+msgstr "创建者"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:499
+msgid "In Web Dictionary"
+msgstr "网上词典"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:507
+msgid "Proposed New Sign"
+msgstr "创建新手语势"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:524
+msgid "Notes"
+msgstr "备注"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:534
+msgid "Published"
+msgstr "发表了"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:535
+msgid "Index"
+msgstr "索引"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:553
+msgid "Delete This Note"
+msgstr "删除此记录"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:557
+msgid "This action will delete this note. It cannot be undone."
+msgstr "这样做将会删除这个备注。一旦删除不能复原。"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:603
+msgid "Enter new note"
+msgstr "输入新的备注"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:610
+msgid "Save New"
+msgstr "另存为新文件"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:627
+msgid "Other videos"
+msgstr "其它视频"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:635
+msgid "Video"
+msgstr "视频"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:637
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:690
+msgid "Alternative gloss"
+msgstr "可替换的释义"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:649
+msgid "Delete This Other Video"
+msgstr "删除其它视频"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:688
+msgid "Upload video"
+msgstr "上传视频"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:695
+msgid "Save new other video"
+msgstr "另存为新的其它的视频"
+
+#: signbank/dictionary/templates/dictionary/gloss_list.html:42
+#: signbank/dictionary/templates/dictionary/search_result.html:94
+msgid "Jump to results page:"
+msgstr "跳转到结果页面"
+
+#: signbank/dictionary/templates/dictionary/glosstags.html:20
+msgid "delete this tag"
+msgstr "删除这个标记"
+
+#: signbank/dictionary/templates/dictionary/glosstags.html:36
+msgid "Add Tag"
+msgstr "添加标记"
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:9
+msgid "Upload your changed CSV here:"
+msgstr "在这里上传更改了的csv"
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:14
+#: signbank/dictionary/templates/dictionary/search_result.html:20
+msgid "Submit"
+msgstr "提交"
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:28
+msgid "The following changes were detected:"
+msgstr "检测出如下变化"
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:32
+#, python-format
+msgid ""
+"\n"
+" <li>For %(idgloss)s (%(pk)s), <em>%(human_key)s</em> "
+"changes from %(original_human_value)s (%(original_machine_value)s) to "
+"%(new_human_value)s (%(new_machine_value)s).</li>\n"
+"                "
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:40
+msgid "Make changes"
+msgstr "进行更改"
+
+#: signbank/dictionary/templates/dictionary/import_csv.html:47
+msgid "Changes are live."
+msgstr "即时更改"
+
+#. Translators: Welcome message
+#: signbank/dictionary/templates/dictionary/index.html:7
+#, python-format
+msgid ""
+"Welcome to the Sign Search section of the %(langauge)s SignBank. Here\n"
+"you can search for a sign using a Dutch translation in the search box\n"
+"above, or browse words starting with any letter below."
+msgstr "欢迎到手语词库搜索％（language)s Here\n"
+“这里你能在上面搜索框用荷语翻译找到一个手势＼n”
+“或者在搜括框下面浏览不同字母起首的词语.”
+
+#: signbank/dictionary/templates/dictionary/search_result.html:27
+msgid "There is no exact match to the word you typed."
+msgstr "没有与你输入的单词匹配的。"
+
+#: signbank/dictionary/templates/dictionary/search_result.html:33
+#, python-format
+msgid ""
+" There really is no %(language)s sign in the database for which that word is "
+"an good translation "
+msgstr "这个数据库里没有与这个词匹配的正确的翻译"
+
+#: signbank/dictionary/templates/dictionary/search_result.html:35
+msgid ""
+"You have mis-typed the word or you have added unnecessary word endings. "
+"Follow these search tips:"
+msgstr "你输入词语错误或者在词尾添加了多余成分"
+
+#: signbank/dictionary/templates/dictionary/search_result.html:37
+msgid "type only the first few letters of a word"
+msgstr "只输入单词的第一个字母"
+
+#: signbank/dictionary/templates/dictionary/search_result.html:39
+msgid "type words with no word endings like ‘-en’, ‘-end’, or ‘-t’."
+msgstr "输入的词没有’-en’，’-end’，or ‘-t’词尾"
+
+#: signbank/dictionary/templates/dictionary/search_result.html:42
+#, python-format
+msgid ""
+" The match is blocked in the public view of %(language)s Signbank because "
+"the word/sign is\n"
+"\n"
+" obscene or offensive in Dutch or %(language)s, or both. (Schools "
+"and parents have repeatedly \n"
+"\n"
+" requested that these type of words/signs be only visible to "
+"registered users.) If you\n"
+" <a href=\"/accounts/login/\">login or register \n"
+"\n"
+" with %(langauge)s Signbank</a>,  you will then be able to find "
+"these \n"
+"\n"
+" matching words/signs if they exist in %(language)s. "
+msgstr "匹配结果在手语词库的公开界面不能显示出来，因为这个手语词在荷语是不良或使人反感的词语。（学校和家长多次要求这类手势词语只能在注册成员界面可以显示。）你必须注册登录后才能看到这种手势词语"
+
+#: signbank/dictionary/templates/dictionary/search_result.html:60
+msgid ""
+"There is one word that fully or partially match your query. Please select "
+"the word below."
+msgstr "这里有一个词 与你查询的词 全部或者部分匹配。请选择下面的词字"
+
+#: signbank/dictionary/templates/dictionary/search_result.html:62
+#, python-format
+msgid ""
+" There are %(wordcount)s words that fully or partially match your query. "
+msgstr "这里有％个词与你查询的词全部或部分匹配。"
+
+#: signbank/dictionary/templates/dictionary/search_result.html:97
+#: signbank/dictionary/templates/dictionary/search_result.html:99
+msgid "Start"
+msgstr "开始"
+
+#: signbank/dictionary/templates/dictionary/update_result.html:9
+msgid "The update to the gloss {{ gloss }} was successful"
+msgstr "释义{{ gloss }}更新成功了 "
+
+#: signbank/dictionary/templates/dictionary/update_result.html:12
+#, python-format
+msgid " Return to <a href=\"%(referer)s\">the gloss page. "
+msgstr " Return to <a href=\"%(referer)s\">the gloss page "
+
+#: signbank/dictionary/templates/dictionary/update_result.html:15
+msgid "Errors in the update form: "
+msgstr "更新表出现错误"
+
+#: signbank/dictionary/templates/dictionary/update_video.html:43
+msgid "Update Video for Gloss <em>{{gloss.idgloss}}</em>"
+msgstr "更新的视频解释<em>{{gloss.idgloss}}</em>"
+
+#: signbank/dictionary/templates/dictionary/update_video.html:46
+msgid "Replacement of video cancelled."
+msgstr "更换视频被取消"
+
+#: signbank/dictionary/templates/dictionary/update_video.html:48
+#: signbank/dictionary/templates/dictionary/update_video.html:54
+msgid "Close Window"
+msgstr "关闭浏览器窗口"
+
+#: signbank/dictionary/templates/dictionary/update_video.html:52
+msgid "Replacement of video completed."
+msgstr "视频更换完毕"
+
+#: signbank/dictionary/templates/dictionary/update_video.html:63
+msgid "Existing Video"
+msgstr "现有的视频"
+
+#: signbank/dictionary/templates/dictionary/update_video.html:63
+msgid "New Video"
+msgstr "新的视频"
+
+#: signbank/dictionary/templates/dictionary/update_video.html:76
+msgid "Confirm update of this video:"
+msgstr "确认更新的视频"
+
+#: signbank/dictionary/templates/dictionary/update_video.html:93
+msgid "Upload Video"
+msgstr "上传视频"
+
+#: signbank/dictionary/templates/dictionary/warning.html:8
+msgid "Click here to go back."
+msgstr "点击此处返回"
+
+#. Translators: Page title
+#: signbank/dictionary/templates/dictionary/word.html:5
+#, python-format
+msgid "NGT: sign for %(translation)s"
+msgstr "荷兰手语：手势表示语 %(translation)s
+#. Translators: Navigation
+#: signbank/dictionary/templates/dictionary/word.html:39
+msgid "Previous Sign"
+msgstr "上个手语势"
+
+#. Translators: Sign x of n(signs)
+#: signbank/dictionary/templates/dictionary/word.html:43
+#, python-format
+msgid " 手语%(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the NGT "
+"Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the NGT "
+"Dictionary"
+msgstr "词典"
+
+#: signbank/dictionary/templates/dictionary/word.html:48
+msgid "Next Sign"
+msgstr "下个手语势"
+
+#. Translators: Navbar text
+#: signbank/dictionary/templates/dictionary/word.html:59
+#, python-format
+msgid "Matches for the word <em>%(translation|safe)s"
+msgstr "与词<em>%(translation|safe)s 匹配"
+
+#. Translators: Navigation
+#: signbank/dictionary/templates/dictionary/word.html:72
+msgid "Return to Matches"
+msgstr "返回匹配条目"
+
+#. Translators: Navigation detailed view
+#: signbank/dictionary/templates/dictionary/word.html:81
+msgid "Detail View"
+msgstr "细节界面"
+
+#. Translators: Keywords
+#: signbank/dictionary/templates/dictionary/word.html:105
+msgid "Keywords:"
+msgstr "关键词"
+
+#. Translators: Header4
+#: signbank/dictionary/templates/dictionary/word.html:132
+msgid "Sign Distribution"
+msgstr "手势分布"
+
+#. Translators: Header2
+#: signbank/dictionary/templates/dictionary/word.html:145
+msgid "Sign Definition"
+msgstr "手势定义"
+
+#: signbank/pages/admin.py:14
+msgid ""
+"Example: '/about/contact/'. Make sure to have leading and trailing slashes."
+msgstr ""
+
+#: signbank/pages/admin.py:16
+msgid ""
+"This value must contain only letters, numbers, underscores, dashes or "
+"slashes."
+msgstr "这里输入的内容只能是字母，数字，下划线，破折号或斜杠"
+
+#: signbank/pages/admin.py:27
+msgid "Uploaded video will be converted to Flash"
+msgstr "上传的视频将被转换为Flash"
+
+#: signbank/pages/admin.py:49
+msgid "Advanced options"
+msgstr "高级选项"
+
+#: signbank/pages/models.py:11
+msgid "English title"
+msgstr "英文标题"
+
+#: signbank/pages/models.py:12
+msgid "Dutch title"
+msgstr "荷语标题"
+
+#: signbank/pages/models.py:13
+msgid "English content"
+msgstr "英文内容"
+
+#: signbank/pages/models.py:14
+msgid "Dutch content"
+msgstr "荷兰内容"
+
+#: signbank/pages/models.py:15
+msgid "template name"
+msgstr "模板名称"
+
+#: signbank/pages/models.py:16
+msgid ""
+"Example: 'pages/contact_page.html'. If this isn't provided, the system will "
+"use 'pages/default.html'."
+msgstr "例如：'pages/contact_page.html'。如果没有，系统将用'pages/contact_page.html'"
+
+#: signbank/pages/models.py:17
+msgid "publish"
+msgstr "发表"
+
+#: signbank/pages/models.py:17
+msgid "If this is checked, the page will be included in the site menus."
+msgstr "如果选中此选项，页面将包含在该网站的菜单。"
+
+#: signbank/pages/models.py:18
+msgid ""
+"Leave blank for a top level menu entry.  Top level entries that have sub-"
+"pages should be empty as they will not be linked in the menu."
+msgstr "顶层菜单输入处留空白，顶层输入处有下属页面留着空白，因为他们将不与菜单链接。"
+
+#: signbank/pages/models.py:19
+msgid "ordering index"
+msgstr "序列目录"
+
+#: signbank/pages/models.py:19
+msgid "Used to order pages in the menu"
+msgstr "用来根据菜单排列网页"
+
+#: signbank/pages/models.py:20
+msgid "这个网页只有团队成员可以浏览，留空白"
+"This page will only be visible to members of these groups, leave blank to "
+"allow anyone to access."
+msgstr "允许任何人浏览"
+
+#: signbank/pages/models.py:23
+msgid "page"
+msgstr "页"
+
+#: signbank/pages/models.py:24
+msgid "pages"
+msgstr "页数"
+
+#: signbank/pages/models.py:35
+msgid "title"
+msgstr "标题"
+
+#: signbank/pages/models.py:36
+msgid "number"
+msgstr "数字"
+
+#: signbank/registration/forms.py:46
+msgid "Your Email Address"
+msgstr "你的邮件地址"
+
+#: signbank/registration/forms.py:50
+msgid "Password (again)"
+msgstr "密码（重复一次）"
+
+#: signbank/registration/forms.py:62
+msgid "This username is already taken. Please choose another."
+msgstr "该用户名已被使用，请选择别的"
+
+#: signbank/registration/forms.py:72
+msgid "You must type the same password each time"
+msgstr "每次必须输入相同的密码"
+
+#: signbank/registration/forms.py:101
+msgid "I have read and agree to the Terms of Service"
+msgstr "我已阅读并同意服务条款"
+
+#: signbank/registration/forms.py:110
+msgid "You must agree to the terms to register"
+msgstr "你必须同意本使用条款才能注册"
+
+#: signbank/registration/forms.py:129
+msgid "该邮件地址已被使用，请提供另一个电子邮件"
+"This email address is already in use. Please supply a different email "
+"address."
+msgstr "地址"
+
+#: signbank/registration/forms.py:154
+msgid ""
+"Registration using free email addresses is prohibited. Please supply a "
+"different email address."
+msgstr "禁止使用免费的电子邮件地址注册。请提供另一个的电子邮件地址"
+
+#: signbank/registration/forms.py:212
+msgid "What is your background?"
+msgstr "你是什么背景？"
+
+#: signbank/registration/forms.py:304
+msgid ""
+"Please enter a correct email and password. Note that password is case-"
+"sensitive."
+msgstr "请输入有效的电子邮件和密码。注意密码区分大小写。"
+
+#: signbank/registration/forms.py:306
+msgid "This account is inactive."
+msgstr "这个账户尚未激活"
+
+#: signbank/registration/forms.py:311
+msgid ""
+"Your Web browser doesn't appear to have cookies enabled. Cookies are "
+"required for logging in."
+msgstr "你的浏览器不显示已经启用cookies.登录需要启用cookies"
+
+#: signbank/registration/models.py:192
+msgid "user"
+msgstr "用户"
+
+#: signbank/registration/models.py:193
+msgid "activation key"
+msgstr "激活序列号"
+
+#: signbank/registration/models.py:198
+msgid "registration profile"
+msgstr "注册的个人资料"
+
+#: signbank/registration/models.py:199
+msgid "registration profiles"
+msgstr "注册的个人资料"
+
+#: templates/admin/dictionary/gloss/change_form.html:15
+msgid "History"
+msgstr "历史"
+
+#: templates/admin/dictionary/gloss/change_form.html:18
+msgid "View on site"
+msgstr "现场查看"
