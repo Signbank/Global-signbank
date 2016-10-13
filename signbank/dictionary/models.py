@@ -5,12 +5,15 @@ from django.http import Http404
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
+from django.utils.timezone import now
 import tagging
 
 import sys, os
 import json
 from collections import OrderedDict
 from datetime import datetime
+
+import signbank.settings
 
 class Translation(models.Model):
     """A Dutch translation of NGT signs"""
@@ -425,11 +428,38 @@ minor or insignificant ways that can be ignored.""")
     tokNoSgnrO = models.IntegerField(_("Number of Other Region Signers"),null=True, blank=True)
 
     creationDate = models.DateField(_('Creation date'),default=datetime(2015,1,1))
+    lastUpdated = models.DateTimeField(_('Last updated'),default=datetime(2015,1,1),auto_now=True)
     creator = models.ManyToManyField(User,null=True)
     alternative_id = models.CharField(max_length=50,null=True,blank=True)
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
+
+    def get_fields_dict(self):
+        fields = {}
+        for field in Gloss._meta.fields:
+            if field.name in settings.API_FIELDS:
+                category = fieldname_to_category(field.name)
+                if category != field.name:
+                    if not fields.has_key(category):
+                        fields[category] = {}
+                    fields[category][field.verbose_name.title()] = field.value_to_string(self)
+                else:
+                    fields[field.verbose_name.title()] = field.value_to_string(self)
+
+        # Get all the keywords associated with this sign
+        allkwds = ", ".join([x.translation.text for x in self.translation_set.all()])
+        fields[Translation.__name__ + "s"] = allkwds
+
+        # Get morphology
+        fields[Morpheme.__name__ + "s"] = ", ".join([x.__str__() for x in self.morphemePart.all()])
+
+        #
+        fields["Parent glosses"] = ", ".join([x.__str__() for x in self.parent_glosses.all()])
+
+        fields["Link"] = signbank.settings.base.URL + '/dictionary/gloss/' + str(self.pk)
+
+        return fields
 
     def navigation(self, is_staff):
         """Return a gloss navigation structure that can be used to

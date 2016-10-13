@@ -4,10 +4,14 @@ import shutil
 from HTMLParser import HTMLParser
 from zipfile import ZipFile
 import json
+import re
 
 import signbank.settings
 from signbank.settings.base import LANGUAGE_CODE
 from django.utils.translation import override
+
+from signbank.dictionary.models import *
+from django.utils.dateformat import format
 
 def save_media(source_folder,goal_folder,gloss,extension):
         
@@ -178,15 +182,27 @@ def reload_signbank(request=None):
 def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
 
     full_root_path = signbank.settings.server_specific.WRITABLE_FOLDER+root_folder+'/'
-    static_urls = []
+    static_urls = {}
 
     for subfolder_name in os.listdir(full_root_path):
         for filename in os.listdir(full_root_path+subfolder_name):
 
             if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
-                static_urls.append(signbank.settings.base.STATIC_URL+root_folder+'/'+subfolder_name+'/'+filename)
+                res = re.search(r'(\d+)\.[^\.]*', filename)
+                gloss_id = res.group(1)
+                static_urls[gloss_id] = signbank.settings.base.STATIC_URL+root_folder+'/'+subfolder_name+'/'+filename
 
     return static_urls
+
+def get_gloss_data(since_timestamp=0):
+
+    glosses = Gloss.objects.all()
+    gloss_data = {}
+    for gloss in glosses:
+        if int(format(gloss.lastUpdated, 'U')) > since_timestamp:
+            gloss_data[gloss.pk] = gloss.get_fields_dict()
+
+    return gloss_data
 
 def create_zip_with_json_files(data_per_file,output_path):
 
@@ -200,7 +216,6 @@ def create_zip_with_json_files(data_per_file,output_path):
 
     for filename, data in data_per_file.items():
 
-        if isinstance(data,list):
+        if isinstance(data,list) or isinstance(data,dict):
             output = json.dumps(data,indent=INDENTATION_CHARS)
-
-        zip.writestr(filename+'.json',output)
+            zip.writestr(filename+'.json',output)
