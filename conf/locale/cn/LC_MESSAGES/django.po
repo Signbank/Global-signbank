@@ -387,7 +387,7 @@ msgstr "确保该值为 %(limit_value)s ((it is %(show_value)s)"
 #: build/django/django/core/validators.py:194
 #, python-format
 msgid "Ensure this value is less than or equal to %(limit_value)s."
-msgstr "确保数值小于或等于%（limit_value）s"
+msgstr "确保数值小于或等于 %(limit_value)s"
 
 #: build/django/django/core/validators.py:200
 #, python-format
@@ -432,7 +432,7 @@ msgstr "和"
 #: build/django/django/db/models/fields/__init__.py:83
 #, python-format
 msgid "%(model_name)s with this %(field_label)s already exists."
-msgstr "包含 %(field_labels)s 的 %(model_name)s 已经存在。"
+msgstr "包含 %(field_label)s 的 %(model_name)s 已经存在。"
 
 #: build/django/django/db/models/fields/__init__.py:80
 #, python-format
@@ -470,12 +470,12 @@ msgstr "'%(value)s' 答案必须为真 或假。"
 
 #: build/django/django/db/models/fields/__init__.py:630
 msgid "Boolean (Either True or False)"
-msgstr "布尔值（真或假）"
+msgstr "布尔值(真或假)"
 
 #: build/django/django/db/models/fields/__init__.py:682
 #, python-format
 msgid "String (up to %(max_length)s)"
-msgstr "字符串（最长 %(max_length)s 位）"
+msgstr "字符串(最长 %(max_length)s 位)"
 
 #: build/django/django/db/models/fields/__init__.py:710
 msgid "Comma-separated integers"
@@ -486,7 +486,7 @@ msgstr "逗号分隔的整数"
 msgid ""
 "'%(value)s' value has an invalid date format. It must be in YYYY-MM-DD "
 "format."
-msgstr "%(value)s' 必须为合法的日期格式，请使用 YYYY-MM-DD 格式"
+msgstr "%(value)s' 必须为合法的日期格式, 请使用 YYYY-MM-DD 格式"
 
 #: build/django/django/db/models/fields/__init__.py:726
 #: build/django/django/db/models/fields/__init__.py:820
@@ -494,18 +494,18 @@ msgstr "%(value)s' 必须为合法的日期格式，请使用 YYYY-MM-DD 格式"
 msgid ""
 "'%(value)s' value has the correct format (YYYY-MM-DD) but it is an invalid "
 "date."
-msgstr "输入正确日期格式（YYY-MM-DD）但是输入的日期无效"
+msgstr "输入正确日期格式(YYY-MM-DD)但是输入的日期无效"
 
 #: build/django/django/db/models/fields/__init__.py:729
 msgid "Date (without time)"
-msgstr "日期（不含时间）"
+msgstr "日期(不含时间)"
 
 #: build/django/django/db/models/fields/__init__.py:818
 #, fuzzy, python-format
 msgid ""
 "'%(value)s' value has an invalid format. It must be in YYYY-MM-DD HH:MM[:ss[."
 "uuuuuu]][TZ] format."
-msgstr "%(value)s' 必须为合法的日期格式，请使用 YYYY-MM-DD 格式"
+msgstr "%(value)s' 必须为合法的日期格式, 请使用 YYYY-MM-DD 格式"
 
 #: build/django/django/db/models/fields/__init__.py:822
 #, fuzzy, python-format
@@ -516,7 +516,7 @@ msgstr "'%(value)s' 值的格式正确时：分：秒但是输入时间无效。
 
 #: build/django/django/db/models/fields/__init__.py:826
 msgid "Date (with time)"
-msgstr "日期（含带时间）"
+msgstr "日期(含带时间)"
 
 #: build/django/django/db/models/fields/__init__.py:926
 #, python-format
@@ -559,11 +559,11 @@ msgstr "IP 地址"
 #: build/django/django/db/models/fields/__init__.py:1180
 #, python-format
 msgid "'%(value)s' value must be either None, True or False."
-msgstr "'%(value)s' 必须为无，真或假。"
+msgstr "'%(value)s' 必须为无, 真或假。"
 
 #: build/django/django/db/models/fields/__init__.py:1182
 msgid "Boolean (Either True, False or None)"
-msgstr "布尔值（真、假或无)"
+msgstr "布尔值(真、假或无)"
 
 #: build/django/django/db/models/fields/__init__.py:1234
 msgid "Positive integer"
@@ -576,7 +576,7 @@ msgstr "正小整数"
 #: build/django/django/db/models/fields/__init__.py:1257
 #, fuzzy, python-format
 msgid "Slug (up to %(max_length)s)"
-msgstr "字符串（最长 %(max_length)s 位）"
+msgstr "字符串(最长 %(max_length)s 位)"
 
 #: build/django/django/db/models/fields/__init__.py:1275
 msgid "Small integer"
@@ -593,7 +593,7 @@ msgstr "文本"
 msgid ""
 "'%(value)s' value has an invalid format. It must be in HH:MM[:ss[.uuuuuu]] "
 "format."
-msgstr "%(value)s' 必须为合法的日期格式，请使用 YYYY-MM-DD 格式"
+msgstr "%(value)s' 必须为合法的日期格式, 请使用 YYYY-MM-DD 格式"
 
 #: build/django/django/db/models/fields/__init__.py:1301
 #, python-format
@@ -626,7 +626,7 @@ msgstr "图像"
 #: build/django/django/db/models/fields/related.py:1147
 #, python-format
 msgid "%(model)s instance with pk %(pk)r does not exist."
-msgstr "包含%(field)s %(value)r的%(model)s实例不存在。"
+msgstr ""
 
 #: build/django/django/db/models/fields/related.py:1149
 msgid "Foreign Key (type determined by related field)"
@@ -712,7 +712,7 @@ msgstr[1] "确保该文件名长度不超过 %(max)d 字符(目前字符数 %(le
 
 #: build/django/django/forms/fields.py:540
 msgid "Please either submit a file or check the clear checkbox, not both."
-msgstr "请提交文件或勾选清除复选框，两者其一即可。"
+msgstr "请提交文件或勾选清除复选框, 两者其一即可。"
 
 #: build/django/django/forms/fields.py:601
 msgid ""
@@ -861,7 +861,7 @@ msgstr "否"
 
 #: build/django/django/template/defaultfilters.py:784
 msgid "yes,no,maybe"
-msgstr "是，否，也许"
+msgstr "是, 否, 也许"
 
 #: build/django/django/template/defaultfilters.py:812
 #: build/django/django/template/defaultfilters.py:824
@@ -1227,42 +1227,42 @@ msgstr ", "
 msgid "%d year"
 msgid_plural "%d years"
 msgstr[0] "%d 年"
-msgstr[1] ""
+msgstr[1] "%d 年"
 
 #: build/django/django/utils/timesince.py:25
 #, python-format
 msgid "%d month"
 msgid_plural "%d months"
 msgstr[0] "%d 月"
-msgstr[1] ""
+msgstr[1] "%d 月"
 
 #: build/django/django/utils/timesince.py:26
 #, python-format
 msgid "%d week"
 msgid_plural "%d weeks"
 msgstr[0] "%d 周"
-msgstr[1] ""
+msgstr[1] "%d 周"
 
 #: build/django/django/utils/timesince.py:27
 #, python-format
 msgid "%d day"
 msgid_plural "%d days"
 msgstr[0] "%d 天"
-msgstr[1] ""
+msgstr[1] "%d 天"
 
 #: build/django/django/utils/timesince.py:28
 #, python-format
 msgid "%d hour"
 msgid_plural "%d hours"
 msgstr[0] "%d 小时"
-msgstr[1] ""
+msgstr[1] "%d 小时"
 
 #: build/django/django/utils/timesince.py:29
 #, python-format
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d 分钟"
-msgstr[1] ""
+msgstr[1] "%d 分钟"
 
 #: build/django/django/utils/timesince.py:45
 msgid "0 minutes"
@@ -1280,7 +1280,7 @@ msgstr "\"%(path)s\" 不存在"
 #: build/django/django/views/static.py:96
 #, python-format
 msgid "Index of %(directory)s"
-msgstr "指数％（directory)s"
+msgstr "指数 %(directory)s"
 
 #: build/django/django/views/generic/dates.py:42
 msgid "No year specified"
@@ -1310,7 +1310,7 @@ msgid ""
 "Future %(verbose_name_plural)s not available because %(class_name)s."
 "allow_future is False."
 msgstr ""
-"Futre %(verbose_name_plural)s 不适用，因为％(class name)s.allow future 是假的"
+"Futre %(verbose_name_plural)s 不适用, 因为 %(class_name)s.allow future 是假的"
 
 #: build/django/django/views/generic/dates.py:681
 #, python-format
@@ -1382,8 +1382,8 @@ msgstr "其他字符串"
 #, python-format
 msgid "%d good result"
 msgid_plural "%d good results"
-msgstr[0] "%d效果良好"
-msgstr[1] ""
+msgstr[0] "%d 效果良好"
+msgstr[1] "%d 效果良好"
 
 #: build/django/tests/i18n/tests.py:105
 #, python-format
@@ -1391,7 +1391,7 @@ msgctxt "Exclamation"
 msgid "%d good result"
 msgid_plural "%d good results"
 msgstr[0] "%d效果良好"
-msgstr[1] ""
+msgstr[1] "%d效果良好"
 
 #: build/django/tests/i18n/tests.py:106
 msgid "good result"
@@ -1403,7 +1403,7 @@ msgstr[1] ""
 #, python-format
 msgid "Hi %(name)s, %(num)d good result"
 msgid_plural "Hi %(name)s, %(num)d good results"
-msgstr[0] "嗨 %（name），%（num）的效果良好"
+msgstr[0] "嗨 %(name)s, %(num)d 的效果良好"
 msgstr[1] ""
 
 #: build/django/tests/i18n/tests.py:121 build/django/tests/i18n/tests.py:122
@@ -1412,7 +1412,7 @@ msgctxt "Greeting"
 msgid "Hi %(name)s, %(num)d good result"
 msgid_plural "Hi %(name)s, %(num)d good results"
 msgstr[0] "­问候"
-msgstr[1] "你好嗨 %（name），%（num）的效果良好"
+msgstr[1] "你好嗨 %(name)s, %(num)d 的效果良好"
 
 #: build/django/tests/i18n/tests.py:145
 msgctxt "unexisting"
@@ -1435,7 +1435,7 @@ msgctxt "search"
 msgid "%d result"
 msgid_plural "%d results"
 msgstr[0] "%d结果"
-msgstr[1] ""
+msgstr[1] "%d结果"
 
 #: build/django/tests/i18n/tests.py:295
 msgid "Mac\rEOF\r"
@@ -1482,18 +1482,18 @@ msgstr "包含文字"
 msgid ""
 "This literal should also be included wrapped or not wrapped depending on the "
 "use of the --no-wrap option."
-msgstr "这里字符可以分行，根据是否使用揣行选项"
+msgstr "这里字符可以分行, 根据是否使用揣行选项"
 
 #. Translators: Django template comment for translators
 #: build/django/tests/i18n/commands/templates/test.html:9
 #, python-format
 msgid "I think that 100%% is more that 50%% of anything."
-msgstr "我认为100%大于50%"
+msgstr "我认为100%%大于50%%"
 
 #: build/django/tests/i18n/commands/templates/test.html:10
 #, fuzzy, python-format
 msgid "I think that 100%% is more that 50%% of %(obj)s."
-msgstr "我认为100％大于50％"
+msgstr "我认为100% 大于50% "
 
 #. Translators: One-line translator comment #1
 #: build/django/tests/i18n/commands/templates/test.html:16
@@ -1593,39 +1593,39 @@ msgstr "直译 ＃8d %(a)s"
 #: build/django/tests/i18n/commands/templates/test.html:70
 #, python-format
 msgid "Blocktrans extraction shouldn't double escape this: %%, a=%(a)s"
-msgstr "Blocktrans提取不应该双倍逃脱这个"
+msgstr "Blocktrans提取不应该双倍逃脱这个: %%, a=%(a)s"
 
 #: build/django/tests/i18n/commands/templates/test.html:72
 #, python-format
 msgid "Literal with a percent symbol at the end %%"
-msgstr "后面百分号％的字符"
+msgstr "后面百分号 %% 的字符"
 
 #: build/django/tests/i18n/commands/templates/test.html:73
 #, python-format
 msgid "Literal with a percent %% symbol in the middle"
-msgstr "中间含百分号％的字符％"
+msgstr "中间含百分号 %% 的字符 %% "
 
 #: build/django/tests/i18n/commands/templates/test.html:74
 #, python-format
 msgid "Completed 50%% of all the tasks"
-msgstr "完成50％的全部任务"
+msgstr "完成 50%% 的全部任务"
 
 #: build/django/tests/i18n/commands/templates/test.html:75
 #, python-format
 msgctxt "ctx0"
 msgid "Completed 99%% of all the tasks"
-msgstr "完成99％的全部任务"
+msgstr "完成 99%% 的全部任务"
 
 #: build/django/tests/i18n/commands/templates/test.html:76
 #, python-format
 msgid "Shouldn't double escape this sequence: %% (two percent signs)"
-msgstr "不应该双倍逃脱这个序列：%%（两个百分号）"
+msgstr "不应该双倍逃脱这个序列：%%(两个百分号)"
 
 #: build/django/tests/i18n/commands/templates/test.html:77
 #, python-format
 msgctxt "ctx1"
 msgid "Shouldn't double escape this sequence %% either"
-msgstr "不应该双倍逃脱这个序列：％％"
+msgstr "不应该双倍逃脱这个序列：% % "
 
 #: build/django/tests/i18n/commands/templates/test.html:78
 #, python-format
@@ -1635,7 +1635,7 @@ msgstr "看起来特殊格式化的规格%%s但它并不是这样的解释"
 #: build/django/tests/i18n/commands/templates/test.html:79
 #, python-format
 msgid "Looks like a str fmt spec %% o but shouldn't be interpreted as such"
-msgstr "看起来像一个FMT规格%但它并不是这样解释"
+msgstr "看起来像一个FMT规格%%但它并不是这样解释"
 
 #: build/django/tests/i18n/commands/templates/test.html:81
 msgctxt "Context wrapped in single quotes"
@@ -2270,7 +2270,7 @@ msgstr "请提供一些原始数据"
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:266
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (Dutch)"
-msgstr "标注识别释义（荷语）"
+msgstr "标注识别释义(荷语)"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:33
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:22
@@ -2280,7 +2280,7 @@ msgstr "标注识别释义（荷语）"
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:269
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (English)"
-msgstr "标注识别释义（英语）"
+msgstr "标注识别释义(英语)"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:44
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:426
@@ -2465,7 +2465,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:108
 #, python-format
 msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
-msgstr "在荷兰手语词典"
+msgstr "\"在荷兰手语词典 %(glossposn)s of %(glosscount)s\" "
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:112
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:112
@@ -2666,7 +2666,7 @@ msgid ""
 " This action will delete the %(rel.get_role_display)s relation between "
 "%(rel.source)s and %(rel.target)s. It cannot be undone. "
 msgstr ""
-"这样做将会删除%(rel.source)s  %(rel.target)s.以及％（rel.target)之间关系.一旦"
+"这样做将会删除 %(rel.get_role_display)s  %(rel.source)s. 以及 %(rel.target)s 之间关系.一旦"
 "删除不能复原 "
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:629
@@ -2858,7 +2858,7 @@ msgid ""
 "    you can search for a sign using a Dutch translation in the search box\n"
 "    above, or browse words starting with any letter below."
 msgstr ""
-"欢迎到手语词库搜索％（language)s Here\n"
+"欢迎到手语词库搜索% (language)s Here\n"
 "这里你能在上面搜索框用荷语翻译找到一个手势＼n或者在搜括框下面浏览不同字母起首"
 "的词语."
 
@@ -2903,7 +2903,7 @@ msgstr "删除/恢复视频"
 msgid ""
 "This will delete the most recent upload and restore the most recent earlier "
 "version."
-msgstr "这样做将会删除最新上传的资料，还原成之前的版本"
+msgstr "这样做将会删除最新上传的资料, 还原成之前的版本"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:273
 msgid "Annotation Instructions"
@@ -2949,7 +2949,7 @@ msgstr "没有与你输入的单词匹配的。"
 msgid ""
 " There really is no %(language)s sign in the database for which that word is "
 "an good translation "
-msgstr "这个数据库里没有与这个词匹配的正确的翻译"
+msgstr "这个数据库里没有与这个词匹配的正确的翻译 %(language)s"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:35
 msgid ""
@@ -2964,7 +2964,7 @@ msgstr "只输入单词的第一个字母"
 #: signbank/dictionary/templates/dictionary/search_result.html:39
 #, fuzzy
 msgid "type words with no word endings like ‘-en’, ‘-end’, or ‘-t’."
-msgstr "输入的词没有'-en'，'-end'，or '-t'词尾"
+msgstr "输入的词没有'-en', '-end', or '-t'词尾"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:42
 #, fuzzy, python-format
@@ -2984,8 +2984,8 @@ msgid ""
 "\n"
 "            matching words/signs if they exist in %(language)s. "
 msgstr ""
-"匹配结果在手语词库的公开界面不能显示出来，因为这个手语词在荷语是不良或使人反"
-"感的词语。（学校和家长多次要求这类手势词语只能在注册成员界面可以显示。）你必"
+"匹配结果在手语词库的公开界面不能显示出来, 因为这个手语词在荷语是不良或使人反"
+"感的词语。(学校和家长多次要求这类手势词语只能在注册成员界面可以显示。)你必"
 "须注册登录后才能看到这种手势词语"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:60
@@ -2998,7 +2998,7 @@ msgstr "这里有一个词 与你查询的词 全部或者部分匹配。请选�
 #, python-format
 msgid ""
 " There are %(wordcount)s words that fully or partially match your query. "
-msgstr "这里有％个词与你查询的词全部或部分匹配。"
+msgstr "这里有 %(wordcount)s 个词与你查询的词全部或部分匹配。"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:97
 #: signbank/dictionary/templates/dictionary/search_result.html:99
@@ -3128,7 +3128,7 @@ msgstr ""
 msgid ""
 "This value must contain only letters, numbers, underscores, dashes or "
 "slashes."
-msgstr "这里输入的内容只能是字母，数字，下划线，破折号或斜杠"
+msgstr "这里输入的内容只能是字母, 数字, 下划线, 破折号或斜杠"
 
 #: signbank/pages/admin.py:27
 msgid "Uploaded video will be converted to Flash"
@@ -3173,7 +3173,7 @@ msgid ""
 "Example: 'pages/contact_page.html'. If this isn't provided, the system will "
 "use 'pages/default.html'."
 msgstr ""
-"例如：'pages/contact_page.html'。如果没有，系统将用'pages/contact_page.html'"
+"例如：'pages/contact_page.html'。如果没有, 系统将用'pages/contact_page.html'"
 
 #: signbank/pages/models.py:22
 msgid "publish"
@@ -3181,14 +3181,14 @@ msgstr "发表"
 
 #: signbank/pages/models.py:22
 msgid "If this is checked, the page will be included in the site menus."
-msgstr "如果选中此选项，页面将包含在该网站的菜单。"
+msgstr "如果选中此选项, 页面将包含在该网站的菜单。"
 
 #: signbank/pages/models.py:23
 msgid ""
 "Leave blank for a top level menu entry.  Top level entries that have sub-"
 "pages should be empty as they will not be linked in the menu."
 msgstr ""
-"顶层菜单输入处留空白，顶层输入处有下属页面留着空白，因为他们将不与菜单链接。"
+"顶层菜单输入处留空白, 顶层输入处有下属页面留着空白, 因为他们将不与菜单链接。"
 
 #: signbank/pages/models.py:24
 msgid "ordering index"
@@ -3233,11 +3233,11 @@ msgstr "密码"
 
 #: signbank/registration/forms.py:50
 msgid "Password (again)"
-msgstr "密码（重复一次）"
+msgstr "密码(重复一次)"
 
 #: signbank/registration/forms.py:62
 msgid "This username is already taken. Please choose another."
-msgstr "该用户名已被使用，请选择别的"
+msgstr "该用户名已被使用, 请选择别的"
 
 #: signbank/registration/forms.py:72
 msgid "You must type the same password each time"
@@ -3464,7 +3464,7 @@ msgstr "密码重置失败"
 msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used.  Please request a new password reset."
-msgstr "密码重置无效，可能是被盗用使用过，请重新的密码"
+msgstr "密码重置无效, 可能是被盗用使用过, 请重新的密码"
 
 #: templates/ASL-templates/registration/password_reset_done.html:6
 #: templates/NGT-templates/registration/password_reset_done.html:6
@@ -3478,12 +3478,12 @@ msgid ""
 "You're receiving this email because you requested a password reset for your "
 "user account at Signbank."
 msgstr ""
-"你申请更改密码，已发送您的邮箱你申请更改密码，已发送您的邮箱％（site_name）s"
+"你申请更改密码, 已发送您的邮箱你申请更改密码, 已发送您的邮箱% (site_name)s"
 
 #: templates/ASL-templates/registration/password_reset_email.html:4
 #: templates/NGT-templates/registration/password_reset_email.html:4
 msgid "Please go to the following page and choose a new password:"
-msgstr "请转到页面，选择一个新的密码"
+msgstr "请转到页面, 选择一个新的密码"
 
 #: templates/ASL-templates/registration/password_reset_email.html:9
 #: templates/NGT-templates/registration/password_reset_email.html:9
@@ -3494,7 +3494,7 @@ msgstr "感谢您的使用我们的网站"
 #: templates/NGT-templates/registration/password_reset_email.html:11
 #, fuzzy
 msgid "The Signbank team"
-msgstr "这％（site_name）团队"
+msgstr "这% (site_name)团队"
 
 #: templates/ASL-templates/registration/password_reset_form.html:4
 #: templates/NGT-templates/registration/password_reset_form.html:4
@@ -3506,7 +3506,7 @@ msgstr "主页"
 msgid ""
 "Forgotten your password? Enter your e-mail address below, and we'll reset "
 "your password and e-mail the new one to you."
-msgstr "忘了密码？请输入您的电子邮件，我们将重新设置设置密码发送邮件通知"
+msgstr "忘了密码？请输入您的电子邮件, 我们将重新设置设置密码发送邮件通知"
 
 #: templates/ASL-templates/registration/password_reset_form.html:17
 #: templates/NGT-templates/registration/password_reset_form.html:17
@@ -3522,7 +3522,7 @@ msgstr "重置我的密码"
 #~ msgstr "密码重置完成"
 
 #~ msgid ""
-#~ "'%(value)s' 数值格式错误，必须为 YYYY-MM-DD HH:MM[:ss］. '%(value)s' "
+#~ "'%(value)s' 数值格式错误, 必须为 YYYY-MM-DD HH:MM[:ss］. '%(value)s' "
 #~ "value has an invalid format. It must be in YYYY-MM-DD HH:MM[:ss］.uuuuuu]]"
 #~ "[TZ] format."
 #~ msgstr "［uuuuuu][TZ]格式。"
@@ -3531,13 +3531,13 @@ msgstr "重置我的密码"
 #~ "'%(value)s' 值的格式正确(HH:MM[:ss[.uuuuuu]]'%(value)s' value has the "
 #~ "correct format (YYYY-MM-DD HH:MM[:ss[.uuuuuu]][TZ]) but it is an invalid "
 #~ "date/time."
-#~ msgstr "数值的格式正确（年－月－日 时：分：秒) 但是输入的日期/时间无效。"
+#~ msgstr "数值的格式正确(年－月－日 时：分：秒) 但是输入的日期/时间无效。"
 
 #~ msgid "字符块(up to %(max_length)s)"
 #~ msgstr "字符(多达 %(max_length)s)"
 
 #~ msgid ""
-#~ "'%(value)s' 值格式错误，必须为时：分：秒'%(value)s' value has an invalid "
+#~ "'%(value)s' 值格式错误, 必须为时：分：秒'%(value)s' value has an invalid "
 #~ "format. It must be in HH:MM[:ss[.uuuuuu]] format."
 #~ msgstr "格式"
 
@@ -3563,7 +3563,7 @@ msgstr "重置我的密码"
 #~ msgstr "词典"
 
 #~ msgid ""
-#~ "该邮件地址已被使用，请提供另一个电子邮件This email address is already in "
+#~ "该邮件地址已被使用, 请提供另一个电子邮件This email address is already in "
 #~ "use. Please supply a different email address."
 #~ msgstr "地址"
 
