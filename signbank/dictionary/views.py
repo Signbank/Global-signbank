@@ -898,6 +898,22 @@ def get_unused_videos(request):
 
     return HttpResponse(result)
 
+def list_all_fieldchoice_names(request):
+
+    content = ''
+    for fieldchoice in FieldChoice.objects.all():
+        columns = []
+
+        for column in [fieldchoice.field,fieldchoice.english_name,fieldchoice.dutch_name,fieldchoice.chinese_name]:
+            if column not in [None,'']:
+                columns.append(column)
+            else:
+                columns.append('[empty]')
+
+        content += '\t'.join(columns)+'\n'
+
+    return HttpResponse(content)
+
 def package(request):
 
     # :)
