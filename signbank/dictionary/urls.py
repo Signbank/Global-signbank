@@ -60,6 +60,7 @@ urlpatterns = patterns('',
 
     url(r'get_unused_videos/$','signbank.dictionary.views.get_unused_videos'),
     url(r'package/$', 'signbank.dictionary.views.package'),
+    url(r'info/$', 'signbank.dictionary.views.info'),
 
     # Admin views
     url(r'^try/$', 'signbank.dictionary.views.try_code'), #A view for the developer to try out some things

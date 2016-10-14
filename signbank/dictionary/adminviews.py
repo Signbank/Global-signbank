@@ -548,18 +548,34 @@ class GlossListView(ListView):
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role];
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
-        if get.has_key('morpheme') and get['morpheme'] != '':
+        if get.has_key('id_morpheme') and get['id_morpheme'] != '':
 
-            potential_morphemes = Gloss.objects.filter(idgloss__icontains=get['morpheme']);
-            potential_morphdefs = MorphologyDefinition.objects.filter(morpheme__in=[morpheme.pk for morpheme in potential_morphemes])
-            potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs];
-            qs = qs.filter(pk__in=potential_pks)
+            # Filter all glosses that contain a morpheme with the indicated text in its gloss
+            # Step 1: get all morphemes containing the indicated text
+            potential_morphemes = Morpheme.objects.filter(idgloss__exact=get['id_morpheme']);
+            if (potential_morphemes.count() > 0):
+                # At least one has been found: take the first one
+                selected_morpheme = potential_morphemes[0];
+                # Step 2: get all Glosses containing the above morphemes
+                potential_pks = [appears.pk for appears in Gloss.objects.filter(morphemePart=selected_morpheme)];
+                qs = qs.filter(pk__in=potential_pks)
+
+        if get.has_key('hasComponentOfType') and get['hasComponentOfType'] != '':
+
+            # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasComponentOfType']);
+            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role];
+            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
         if get.has_key('hasMorphemeOfType') and get['hasMorphemeOfType'] != '':
 
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasMorphemeOfType']);
-            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role];
-            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
+            # Get all Morphemes of the indicated mrpType
+            target_morphemes = Morpheme.objects.filter(mrpType__exact=get['hasMorphemeOfType'])
+            # Get all glosses that have one of the morphemes in this set
+            glosses_with_correct_mrpType = Gloss.objects.filter(morphemePart__in=target_morphemes)
+            # Turn this into a list with pks
+            pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in glosses_with_correct_mrpType];
+            qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
         if get.has_key('definitionRole') and get['definitionRole'] != '':
 
@@ -982,10 +998,18 @@ class MorphemeListView(ListView):
             qs = qs.filter(pk__in=potential_pks)
 
         if get.has_key('hasMorphemeOfType') and get['hasMorphemeOfType'] != '':
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasMorphemeOfType']);
-            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in
-                                                                morphdefs_with_correct_role];
-            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
+
+            # Get all Morphemes of the indicated mrpType
+            target_morphemes = Morpheme.objects.filter(mrpType__exact=get['hasMorphemeOfType'])
+            # Turn this into a list with pks
+            pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in target_morphemes];
+            qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
+
+#        if get.has_key('hasMorphemeOfType') and get['hasMorphemeOfType'] != '':
+#            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasMorphemeOfType']);
+#            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in
+#                                                                morphdefs_with_correct_role];
+#            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
         if get.has_key('definitionRole') and get['definitionRole'] != '':
 

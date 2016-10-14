@@ -10,11 +10,11 @@
 {% block extrajs %}
 
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
 
     <script type='text/javascript'>
     
-    
-    $(document).ready(function(){
+     $(document).ready(function(){
         
         
         $('.collapsetoggle').click(function() {
@@ -24,7 +24,6 @@
                 $(this).text('Show');
             }
         });
-        
         
     });
 
@@ -198,8 +197,12 @@ function do_adminsearch(el) {
 
                           <td>
                             <table class='table table-condensed'>
-                                <tr><td><label for='id_handedness'>{{searchform.morpheme.label}}</label></td><td>{{searchform.morpheme}}</td></tr>
-                                <tr><td><label for='id_domhndsh'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
+                                <tr>
+                                    <td><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
+                                    <td><input class='form-control morphtypeahead' placeholder='{% trans "ID Morpheme/Annotation ID Morpheme" %}' name='id_morpheme'></td>
+                                </tr>
+                                <tr><td><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td><td>{{searchform.hasComponentOfType}}</td></tr>
+                                <tr><td><label for='id_hasMorphemeOfType'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
                             </table>
 
                           </td>

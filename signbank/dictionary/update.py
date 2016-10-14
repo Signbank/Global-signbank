@@ -63,6 +63,7 @@ def update_gloss(request, glossid):
     if request.method == "POST":
 
         gloss = get_object_or_404(Gloss, id=glossid)
+        gloss.save() # This updates the lastUpdated field
 
         field = request.POST.get('id', '')
         value = request.POST.get('value', '')

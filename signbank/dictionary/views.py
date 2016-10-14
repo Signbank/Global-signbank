@@ -916,10 +916,15 @@ def package(request):
     archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
     collected_data = {'video_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossvideo',since_timestamp),
-                      'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossimage',since_timestamp)}
+                      'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossimage',since_timestamp),
+                      'glosses':signbank.tools.get_gloss_data(since_timestamp)}
 
     signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
 
     response = HttpResponse(FileWrapper(open(archive_file_path)), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename='+archive_file_name
     return response
+
+
+def info(request):
+    return HttpResponse(json.dumps([ settings.LANGUAGE_NAME, settings.COUNTRY_NAME ]))
