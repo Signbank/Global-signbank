@@ -257,7 +257,7 @@ class Gloss(models.Model):
         return result
         
     
-    idgloss = models.CharField(_("ID Gloss"), unique=True, max_length=50, help_text="""
+    idgloss = models.CharField(_("ID Gloss"), max_length=50, help_text="""
     This is the unique identifying name of an entry of a sign form in the
 database. No two Sign Entry Names can be exactly the same, but a "Sign
 Entry Name" can be (and often is) the same as the Annotation Idgloss.""")    
