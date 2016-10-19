@@ -179,7 +179,7 @@ class GlossListView(ListView):
 
         # Make sure we iterate only over the none-Morpheme glosses
         for gloss in Gloss.none_morpheme_objects():
-            glossid = 'gloss'+ str(gloss.pk)
+            glossid = str(gloss.pk)
             myattributes = {cve_id: glossid}
             cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
 
