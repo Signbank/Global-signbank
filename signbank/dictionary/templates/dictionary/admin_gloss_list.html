@@ -513,7 +513,7 @@ function do_adminsearch(el) {
             {% endif %}
 
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{STATIC_URL}}{{gloss.get_image_path}}"></div>{% endif %}
+          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{STATIC_URL}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       <td>
