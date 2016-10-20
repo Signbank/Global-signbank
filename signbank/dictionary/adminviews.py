@@ -20,7 +20,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_MEDIA_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE
+from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_MEDIA_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS
 
 
 def order_queryset_by_sort_order(get, qs):
@@ -145,7 +145,9 @@ class GlossListView(ListView):
         lang_ref     = 'LANG_REF'
         lang_id_nld  = 'nld'
         lang_id_eng  = 'eng'
-        languages    = [lang_id_nld,lang_id_eng];
+        languages    = []
+        for lang in ECV_SETTINGS['languages']:
+            languages.append(lang['id'])
         cv_entry_ml  = 'CV_ENTRY_ML'
         cve_id       = 'CVE_ID'
         cve_value    = 'CVE_VALUE'
@@ -157,25 +159,16 @@ class GlossListView(ListView):
                          'xsi:noNamespaceSchemaLocation':"http://www.mpi.nl/tools/elan/EAFv2.8.xsd"}
         top = ET.Element('CV_RESOURCE', topattributes)
 
-        ## define languages
-        langattributes = {'LANG_DEF':'http://cdb.iso.org/lg/CDB-00138502-001',
-                          'LANG_ID':lang_id_eng,
-                          'LANG_LABEL':'English (eng)'}
-        ET.SubElement(top, language, langattributes)
+        for lang in ECV_SETTINGS['languages']:
+            ET.SubElement(top, language, lang['attributes'])
 
-        nllangattributes = {'LANG_DEF':'http://cdb.iso.org/lg/CDB-00138580-001',
-                            'LANG_ID':lang_id_nld,
-                            'LANG_LABEL':'Dutch (nld)'}
-        ET.SubElement(top, language, nllangattributes)
+        cv_element = ET.SubElement(top, 'CONTROLLED_VOCABULARY', {'CV_ID':ECV_SETTINGS['CV_ID']})
 
-
-        cv_element = ET.SubElement(top, 'CONTROLLED_VOCABULARY', {'CV_ID':'CNGT_RU-lexicon'})
-
-        ## description f0r cv_element
-        for lang in languages:
-            myattributes = {lang_ref: lang}
+        # description f0r cv_element
+        for lang in ECV_SETTINGS['languages']:
+            myattributes = {lang_ref: lang['id']}
             desc_element = ET.SubElement(cv_element, description, myattributes)
-            desc_element.text = 'The glosses CV for the CNGT (RU)'
+            desc_element.text = lang['description']
 
         # Make sure we iterate only over the none-Morpheme glosses
         for gloss in Gloss.none_morpheme_objects():
