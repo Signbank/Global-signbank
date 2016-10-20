@@ -176,7 +176,7 @@ class GlossListView(ListView):
             myattributes = {cve_id: glossid}
             cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
 
-            desc = self.get_ecv_descripion_for_gloss(gloss)
+            desc = self.get_ecv_descripion_for_gloss(gloss, ECV_SETTINGS['include_phonology_and_frequencies'])
 
             for lang in languages:
                 cve_value_element = ET.SubElement(cve_entry_element, cve_value, {description:desc, lang_ref:lang})
@@ -194,34 +194,40 @@ class GlossListView(ListView):
 
         return HttpResponse('OK')
 
-    def get_ecv_descripion_for_gloss(self, gloss):
+    def get_ecv_descripion_for_gloss(self, gloss, include_phonology_and_frequencies=False):
+        desc = ""
+        if include_phonology_and_frequencies:
+            description_fields = ['handedness','domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir','movSh', 'tokNo',
+                          'tokNoSgnr'];
 
-        description_fields = ['handedness','domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir','movSh', 'tokNo',
-                      'tokNoSgnr'];
+            for f in description_fields:
+                value = self.get_value_for_ecv(gloss,f)
 
-        for f in description_fields:
-            value = self.get_value_for_ecv(gloss,f)
+                if f == 'handedness':
+                    desc = value
+                elif f == 'domhndsh':
+                    desc = desc+ ', ('+ value
+                elif f == 'subhndsh':
+                    desc = desc+','+value
+                elif f == 'handCh':
+                    desc = desc+'; '+value+')'
+                elif f == 'tokNo':
+                    desc = desc+' ['+value
+                elif f == 'tokNoSgnr':
+                    desc = desc+'/'+value+']'
+                else:
+                    desc = desc+', '+value
 
-            if f == 'handedness':
-                desc = value
-            elif f == 'domhndsh':
-                desc = desc+ ', ('+ value
-            elif f == 'subhndsh':
-                desc = desc+','+value
-            elif f == 'handCh':
-                desc = desc+'; '+value+')'
-            elif f == 'tokNo':
-                desc = desc+' ['+value
-            elif f == 'tokNoSgnr':
-                desc = desc+'/'+value+']'
-            else:
-                desc = desc+', '+value
+        if desc:
+            desc += ", "
 
         trans = [t.translation.text for t in gloss.translation_set.all()]
-        for t in trans:
-            if isinstance(t, unicode):
-                value = str(t.encode('ascii','xmlcharrefreplace'));
-            desc = desc + (", ") + t
+        desc += ", ".join(
+            # The next line was adapted from an older version of this code,
+            # that happened to do nothing. I left this for future usage.
+            #map(lambda t: str(t.encode('ascii','xmlcharrefreplace')) if isinstance(t, unicode) else t, trans)
+            trans
+        )
 
         return desc
 
