@@ -863,6 +863,10 @@ msgstr ""
 msgid "Enter new note"
 msgstr ""
 
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:852
+msgid "Save new note"
+msgstr ""
+
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:610
 msgid "Save New"
 msgstr ""
