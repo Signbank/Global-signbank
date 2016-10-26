@@ -315,7 +315,7 @@ class GlossListView(ListView):
             row.append(", ".join(trans))
 
             # get morphology
-            morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+            morphemes = [morpheme.morpheme.annotation_idgloss for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
             row.append(", ".join(morphemes))
 
             # get relations to other signs
