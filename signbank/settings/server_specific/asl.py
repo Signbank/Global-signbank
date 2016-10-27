@@ -34,6 +34,25 @@ FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconT
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
+ECV_SETTINGS = {
+    'CV_ID': 'ASL Signbank lexicon',
+    'include_phonology_and_frequencies': False,
+    # The order of languages matters as the first will
+    # be treated as default by ELAN
+    'languages': [
+        {
+            'id': 'eng',
+            'description': 'ASL Signbank lexicon',
+            'attributes': {
+                'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138502-001',
+                'LANG_ID': 'eng',
+                'LANG_LABEL': 'English (eng)'
+            }
+        },
+    ]
+
+}
+
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
 CROP_GLOSS_IMAGES = False
@@ -46,3 +65,6 @@ SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 
 CNGT_EAF_FILES_LOCATION = ''
 CNGT_METADATA_LOCATION = ''
+
+FFMPEG_PROGRAM = "avconv"
+TMP_DIR = "/tmp"
