@@ -2697,7 +2697,7 @@ msgstr "Vul nieuwe aantekening in"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:852
 msgid "Save new note"
-msgstr "Bewaar nieuwe opmerking"
+msgstr "Bewaar nieuwe aantekening"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:610
 msgid "Save New"
