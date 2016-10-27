@@ -108,11 +108,14 @@ from django.contrib.sites.models import Site, RequestSite
 
 def mylogin(request, template_name='registration/login.html', redirect_field_name='/signs/recently_added/'):
     "Displays the login form and handles the login action."
-    
-    redirect_to = request.REQUEST.get(redirect_field_name, '')
+
+    redirect_to = request.REQUEST.get(REDIRECT_FIELD_NAME, '')
     error_message = ''
 
     if request.method == "POST":
+        if REDIRECT_FIELD_NAME in request.POST:
+            redirect_to = request.POST[REDIRECT_FIELD_NAME]
+
         form = EmailAuthenticationForm(data=request.POST)
         if form.is_valid():
 
@@ -148,7 +151,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         current_site = RequestSite(request)
     return render_to_response(template_name, {
         'form': form,
-        redirect_field_name: redirect_to,
+        REDIRECT_FIELD_NAME: redirect_to,
         'site': current_site,
         'site_name': current_site.name,
         'allow_registration': settings.ALLOW_REGISTRATION,
