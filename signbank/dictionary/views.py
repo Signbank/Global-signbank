@@ -779,6 +779,28 @@ def add_image(request):
     # a malicious request, if no referrer, go back to root
     return redirect(url)
 
+def delete_image(request, pk):
+    """Remove the video for this gloss, if there is an older version
+    then reinstate that as the current video (act like undo)"""
+
+    if request.method == "POST":
+
+        # deal with any existing video for this sign
+        gloss = get_object_or_404(Gloss, pk=pk)
+        image_path = gloss.get_image_path()
+
+#        try:
+        os.remove(settings.WRITABLE_FOLDER+image_path)
+#        except OSError:
+#            pass
+
+    # return to referer
+    if request.META.has_key('HTTP_REFERER'):
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
+    return redirect(url)
+
 def update_cngt_counts(request,folder_index=None):
 
     #Run the counter script

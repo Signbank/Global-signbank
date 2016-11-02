@@ -249,12 +249,14 @@
         <fieldset>
          <legend>{% trans "Delete Media" %}</legend>
             <table>
-                <form action="{{URL}}/video/delete/{{gloss.pk}}" method='post'>
-                    <tr>
-                        <td>{% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete video'>
-                        {% csrf_token %}<input class='btn btn-danger' id='delete_image' type='submit' value='Delete image'></td>
-                    </tr>
+                <tr><td>
+                <form class="formbutton" action="{{URL}}/video/delete/{{gloss.pk}}" method='post'>
+                        {% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete video'>
                 </form>
+                <form class="formbutton" action="{{URL}}/image/delete/{{gloss.pk}}" method='post'>
+                        {% csrf_token %}<input class='btn btn-danger' id='delete_image' type='submit' value='Delete image'>
+                </form>
+                </td></tr>
             </table>
          </fieldset>
     </div>
