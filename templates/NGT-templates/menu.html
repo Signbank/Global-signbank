@@ -47,7 +47,15 @@
              </ul> 
         </li>
       {% else %}
-        <li><a href="{{ URL }}{{item.url}}">{{item.title}}</a></li>
+        <li><a href="{{ URL }}{{item.url}}">
+            {% if LANGUAGE == "nl" %}
+                 {{item.title_dutch}}
+             	{% elif LANGUAGE == "cn" %}
+                 {{item.title_chinese}}
+             	{% else %}
+                 {{item.title}}
+             	{% endif %}
+        </a></li>
       {% endif %}
     {% endfor %}
 
