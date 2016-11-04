@@ -230,7 +230,7 @@ ACCOUNT_ACTIVATION_DAYS = 7
 # show the number signs page or an under construction page?
 SHOW_NUMBERSIGNS = True
 
-LOGIN_URL = URL+'accounts/login/'
+LOGIN_URL = URL+'/accounts/login/'
 LOGIN_REDIRECT_URL = URL+'/signs/recently_added/'
 
 
