@@ -96,6 +96,7 @@ class GlossAdmin(VersionAdmin):
     list_filter = ['language', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
     inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 
+    history_latest_first = True
 
 class RegistrationProfileAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'activation_key_expired', )

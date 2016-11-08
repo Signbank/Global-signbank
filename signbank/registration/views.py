@@ -167,7 +167,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
 
     return render_to_response(template_name, {
         'form': form,
-        REDIRECT_FIELD_NAME: redirect_to,
+        REDIRECT_FIELD_NAME: settings.URL+redirect_to,
         'site': current_site,
         'site_name': current_site.name,
         'allow_registration': settings.ALLOW_REGISTRATION,

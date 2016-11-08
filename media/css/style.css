@@ -455,6 +455,11 @@ body {
     box-shadow: 0;
 }
 
+.formbutton
+{
+    display: inline;
+}
+
 /* How a clickable reference to a morpheme looks in the Gloss List View */
 .morpheme_style {
   color: black;
