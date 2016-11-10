@@ -13,6 +13,8 @@ from django.utils.translation import override
 from signbank.dictionary.models import *
 from django.utils.dateformat import format
 
+from django.core.urlresolvers import reverse
+
 def save_media(source_folder,goal_folder,gloss,extension):
         
     #Add a dot before the extension if needed
@@ -190,7 +192,7 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
             if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
                 res = re.search(r'(\d+)\.[^\.]*', filename)
                 gloss_id = res.group(1)
-                static_urls[gloss_id] = signbank.settings.base.STATIC_URL+root_folder+'/'+subfolder_name+'/'+filename
+                static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+subfolder_name+'/'+filename
 
     return static_urls
 

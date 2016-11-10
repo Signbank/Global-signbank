@@ -157,6 +157,7 @@
 </div>
 
 <div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
     <div id="videocontainer">
     {% if gloss.get_video %}
@@ -165,7 +166,7 @@
 
         <div id="player">
           <iframe id='videoiframe' scrolling="no" frameborder='0'
-		   src="{{URL}}/static/{{gloss.get_video}}">
+		   src="{{protected_media_url}}{{gloss.get_video}}">
 
           </iframe>
         </div>
@@ -182,7 +183,7 @@
 
     <div>
         {% if gloss.get_image_path %}
-            <img class="citation_form_image" src="{{STATIC_URL}}{{gloss.get_image_path}}">
+            <img class="citation_form_image" src="{{protected_media_url}}{{gloss.get_image_path}}">
         {% endif %}
     </div>
 

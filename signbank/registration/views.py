@@ -5,15 +5,18 @@ Views which allow users to create and activate accounts.
 
 
 from django.conf import settings
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
+from django.middleware.csrf import get_token
 
 from forms import RegistrationForm, EmailAuthenticationForm
 from models import RegistrationProfile
 
 from datetime import date
+
+import json
 
 def activate(request, activation_key, template_name='registration/activate.html'):
     """
@@ -137,8 +140,15 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
                 login(request, form.get_user())
                 if request.session.test_cookie_worked():
                     request.session.delete_test_cookie()
+
+                # For logging in API clients
+                if "api" in request.GET and request.GET['api'] == 'yes':
+                    return HttpResponse(json.dumps({'success': 'true'}), content_type='application/json')
+
                 return HttpResponseRedirect(redirect_to)
         else:
+            if "api" in request.GET and request.GET['api'] == 'yes':
+                    return HttpResponse(json.dumps({'success': 'false'}), content_type='application/json')
             error_message = _('The username or password is incorrect.')
 
     else:
@@ -149,6 +159,12 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         current_site = Site.objects.get_current()
     else:
         current_site = RequestSite(request)
+
+    # For logging in API clients
+    if request.method == "GET" and "api" in request.GET and request.GET['api'] == 'yes':
+        token = get_token(request)
+        return HttpResponse(json.dumps({'csrfmiddlewaretoken': token}), content_type='application/json')
+
     return render_to_response(template_name, {
         'form': form,
         REDIRECT_FIELD_NAME: settings.URL+redirect_to,

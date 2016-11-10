@@ -62,6 +62,7 @@ urlpatterns = patterns('',
     url(r'all_field_choices.tsv/$','signbank.dictionary.views.list_all_fieldchoice_names'),
     url(r'package/$', 'signbank.dictionary.views.package'),
     url(r'info/$', 'signbank.dictionary.views.info'),
+    url(r'protected_media/(?P<filename>.*)$', 'signbank.dictionary.views.protected_media', name='protected_media'),
 
     # Admin views
     url(r'^try/$', 'signbank.dictionary.views.try_code'), #A view for the developer to try out some things

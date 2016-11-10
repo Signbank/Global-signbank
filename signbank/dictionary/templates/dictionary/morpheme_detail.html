@@ -157,6 +157,7 @@
 </div>
 
 <div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
     <div id="videocontainer">
     {% if morpheme.get_video %}
@@ -165,7 +166,7 @@
 
         <div id="player">
           <iframe id='videoiframe' scrolling="no" frameborder='0'
-		   src="{{URL}}/static/{{morpheme.get_video}}">
+		   src="{{protected_media_url}}{{morpheme.get_video}}">
 
           </iframe>
         </div>
@@ -182,7 +183,7 @@
 
     <div>
         {% if morpheme.get_image_path %}
-            <img class="citation_form_image" src="{{STATIC_URL}}{{morpheme.get_image_path}}">
+            <img class="citation_form_image" src="{{protected_media_url}}{{morpheme.get_image_path}}">
         {% endif %}
     </div>
 

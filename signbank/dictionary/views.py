@@ -30,6 +30,7 @@ import signbank.tools
 from signbank.tools import save_media, compare_valuedict_to_gloss, MachineValueNotFoundError
 
 import signbank.settings
+from signbank.settings.base import WRITABLE_FOLDER
 from django.utils.translation import override
 
 import urlparse
@@ -936,6 +937,7 @@ def list_all_fieldchoice_names(request):
 
     return HttpResponse(content)
 
+@login_required_config
 def package(request):
 
     # :)
@@ -965,4 +967,15 @@ def package(request):
 
 
 def info(request):
-    return HttpResponse(json.dumps([ settings.LANGUAGE_NAME, settings.COUNTRY_NAME ]))
+    return HttpResponse(json.dumps([ settings.LANGUAGE_NAME, settings.COUNTRY_NAME ]), content_type='application/json')
+
+
+@login_required_config
+def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
+    # print(filename)
+    path = WRITABLE_FOLDER + filename
+    exists = os.path.exists(path)
+    if not exists:
+        raise Http404("File does not exist.")
+    from django.views.static import serve
+    return serve(request, filename, document_root, show_indexes)
