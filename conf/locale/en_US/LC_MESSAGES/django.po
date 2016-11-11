@@ -166,7 +166,6 @@ msgid "ID Gloss"
 msgstr "Lemma ID"
 
 #: signbank/dictionary/models.py:266
-#, fuzzy
 msgid "Annotation ID Gloss: Dutch"
 msgstr "Annotation ID Gloss"
 
