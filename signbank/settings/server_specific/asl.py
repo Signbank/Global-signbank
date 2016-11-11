@@ -43,6 +43,7 @@ ECV_SETTINGS = {
         {
             'id': 'eng',
             'description': 'ASL Signbank lexicon',
+            'annotation_idgloss_fieldname': 'annotation_idgloss',
             'attributes': {
                 'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138502-001',
                 'LANG_ID': 'eng',

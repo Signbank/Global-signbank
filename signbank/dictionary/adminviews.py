@@ -143,11 +143,7 @@ class GlossListView(ListView):
         description  = 'DESCRIPTION'
         language     = 'LANGUAGE'
         lang_ref     = 'LANG_REF'
-        lang_id_nld  = 'nld'
-        lang_id_eng  = 'eng'
-        languages    = []
-        for lang in ECV_SETTINGS['languages']:
-            languages.append(lang['id'])
+
         cv_entry_ml  = 'CV_ENTRY_ML'
         cve_id       = 'CVE_ID'
         cve_value    = 'CVE_VALUE'
@@ -178,12 +174,9 @@ class GlossListView(ListView):
 
             desc = self.get_ecv_descripion_for_gloss(gloss, ECV_SETTINGS['include_phonology_and_frequencies'])
 
-            for lang in languages:
-                cve_value_element = ET.SubElement(cve_entry_element, cve_value, {description:desc, lang_ref:lang})
-                if lang is lang_id_eng:
-                    cve_value_element.text = self.get_value_for_ecv(gloss, 'annotation_idgloss_en')
-                elif lang is lang_id_nld:
-                    cve_value_element.text = self.get_value_for_ecv(gloss, 'annotation_idgloss')
+            for lang in ECV_SETTINGS['languages']:
+                cve_value_element = ET.SubElement(cve_entry_element, cve_value, {description:desc, lang_ref:lang['id']})
+                cve_value_element.text = self.get_value_for_ecv(gloss, lang['annotation_idgloss_fieldname'])
 
         xmlstr = minidom.parseString(ET.tostring(top,'utf-8')).toprettyxml(indent="   ")
         with open(ECV_FILE, "w") as f:
