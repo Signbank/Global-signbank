@@ -953,10 +953,19 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = None
 
+    video_folder_name = 'glossvideo'
+    image_folder_name = 'glossimage'
+
+    try:
+        if request.GET['small_videos'] not in [0,False,'false']:
+            video_folder_name+= '_small'
+    except KeyError:
+        pass
+
     archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
-    collected_data = {'video_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossvideo',since_timestamp),
-                      'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossimage',since_timestamp),
+    collected_data = {'video_urls':signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp),
+                      'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp),
                       'glosses':signbank.tools.get_gloss_data(since_timestamp)}
 
     signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
