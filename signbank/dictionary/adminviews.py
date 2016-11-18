@@ -609,7 +609,7 @@ class GlossListView(ListView):
             items = []
 
             for item in qs:
-                items.append(dict(id = item.id, gloss = item.idgloss))
+                items.append(dict(id = item.id, gloss = item.annotation_idgloss))
 
             self.request.session['search_results'] = items
 
