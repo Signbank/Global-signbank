@@ -199,7 +199,6 @@ def word(request, keyword, n):
                                },
                                context_instance=RequestContext(request))
 
-@login_required_config
 def gloss(request, idgloss):
     """View of a gloss - mimics the word view, really for admin use
        when we want to preview a particular gloss"""
@@ -219,7 +218,10 @@ def gloss(request, idgloss):
 
     gloss = glosses[0]
 
-    # and all the keywords associated with this sign
+    if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
+#        return render_to_response('dictionary/not_allowed.html')
+        return render_to_response("dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'},context_instance=RequestContext(request))
+
     allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
         trans = Translation()
