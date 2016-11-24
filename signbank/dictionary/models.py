@@ -872,6 +872,7 @@ class UserProfile(models.Model):
     last_used_language = models.CharField(max_length=5, default=settings.LANGUAGE_CODE)
     expiry_date = models.DateField(null=True, blank=True)
     number_of_logins = models.IntegerField(null=True,default=0)
+    comments = models.CharField(max_length=500,null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.pk:
