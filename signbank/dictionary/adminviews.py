@@ -626,6 +626,30 @@ class GlossDetailView(DetailView):
     model = Gloss
     context_object_name = 'gloss'
 
+    #Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+        except Http404:
+            # return custom template
+            return render(request, 'no_object.html', status=404)
+
+        if request.user.is_authenticated():
+            if not request.user.has_perm('dictionary.search_gloss'):
+                if self.object.inWeb:
+                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'idgloss':self.object.idgloss}))
+                else:
+                    return HttpResponse('')
+        else:
+            if self.object.inWeb:
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'idgloss': self.object.idgloss}))
+            else:
+                return HttpResponseRedirect(reverse('registration:auth_login'))
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
