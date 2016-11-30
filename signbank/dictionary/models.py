@@ -3,7 +3,8 @@ from django.db import models
 from django.conf import settings
 from django.http import Http404 
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
 import tagging
@@ -11,7 +12,7 @@ import tagging
 import sys, os
 import json
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, date
 
 import signbank.settings
 
@@ -727,6 +728,23 @@ try:
     tagging.register(Gloss)
 except tagging.AlreadyRegistered:
     pass
+
+@receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
+def save_info_about_deleted_gloss(sender,instance,using,**kwarsg):
+    deleted_gloss = DeletedGloss()
+    deleted_gloss.idgloss = instance.idgloss
+    deleted_gloss.annotation_idgloss = instance.annotation_idgloss
+    deleted_gloss.annotation_idgloss_en = instance.annotation_idgloss_en
+    deleted_gloss.old_pk = instance.pk
+    deleted_gloss.save()
+
+#We want to remember some stuff about deleted glosses
+class DeletedGloss(models.Model):
+    idgloss = models.CharField(_("ID Gloss"), max_length=50)
+    annotation_idgloss = models.CharField(_("Annotation ID Gloss: Dutch"), max_length=30)
+    annotation_idgloss_en = models.CharField(_("Annotation ID Gloss: English"), blank=True, max_length=30)
+    old_pk = models.IntegerField()
+    deletion_date = models.DateField(default=date.today)
 
 RELATION_ROLE_CHOICES = (('homonym', 'Homonym'),
                          ('synonym', 'Synonym'),
