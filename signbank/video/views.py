@@ -13,7 +13,7 @@ import django_mobile
 import os
 import shutil
 
-from signbank.dictionary.models import Gloss
+from signbank.dictionary.models import Gloss, DeletedGlossOrMedia
 from signbank.settings.base import GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, WRITABLE_FOLDER
 from signbank.settings.server_specific import FFMPEG_PROGRAM, TMP_DIR
 
@@ -142,8 +142,13 @@ def deletevideo(request, videoid):
         log_entry = GlossVideoHistory(action="delete", gloss=gloss, actor=request.user)
         log_entry.save()
 
-    # TODO: provide some feedback that it worked (if
-    # immediate non-display of video isn't working)
+    deleted_video = DeletedGlossOrMedia()
+    deleted_video.item_type = 'video'
+    deleted_video.idgloss = gloss.idgloss
+    deleted_video.annotation_idgloss = gloss.annotation_idgloss
+    deleted_video.old_pk = gloss.pk
+    deleted_video.filename = gloss.get_video_path()
+    deleted_video.save()
 
     # return to referer
     if request.META.has_key('HTTP_REFERER'):

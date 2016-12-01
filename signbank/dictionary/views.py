@@ -769,8 +769,6 @@ def add_image(request):
     return redirect(url)
 
 def delete_image(request, pk):
-    """Remove the video for this gloss, if there is an older version
-    then reinstate that as the current video (act like undo)"""
 
     if request.method == "POST":
 
@@ -778,10 +776,15 @@ def delete_image(request, pk):
         gloss = get_object_or_404(Gloss, pk=pk)
         image_path = gloss.get_image_path()
 
-#        try:
         os.remove(settings.WRITABLE_FOLDER+image_path)
-#        except OSError:
-#            pass
+
+        deleted_image = DeletedGlossOrMedia()
+        deleted_image.item_type = 'image'
+        deleted_image.idgloss = gloss.idgloss
+        deleted_image.annotation_idgloss = gloss.annotation_idgloss
+        deleted_image.old_pk = gloss.pk
+        deleted_image.filename = image_path
+        deleted_image.save()
 
     # return to referer
     if request.META.has_key('HTTP_REFERER'):
@@ -957,7 +960,9 @@ def package(request):
                       'glosses':signbank.tools.get_gloss_data(since_timestamp)}
 
     if since_timestamp != None:
-        collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_data(since_timestamp)
+        collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss',since_timestamp)
+        collected_data['deleted_videos'] = signbank.tools.get_deleted_gloss_or_media_data('video',since_timestamp)
+        collected_data['deleted_images'] = signbank.tools.get_deleted_gloss_or_media_data('image',since_timestamp)
 
     signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
 
