@@ -191,7 +191,12 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
 
             if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
                 res = re.search(r'(\d+)\.[^\.]*', filename)
-                gloss_id = res.group(1)
+
+                try:
+                    gloss_id = res.group(1)
+                except AttributeError:
+                    continue
+
                 static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+subfolder_name+'/'+filename
 
     return static_urls
