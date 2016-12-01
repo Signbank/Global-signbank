@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-13 13:56+0200\n"
+"POT-Creation-Date: 2016-11-10 14:34+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -583,7 +583,7 @@ msgid "Small integer"
 msgstr "小整数"
 
 #: build/django/django/db/models/fields/__init__.py:1281
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:779
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:781
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:588
 msgid "Text"
 msgstr "文本"
@@ -834,11 +834,11 @@ msgid "Unknown"
 msgstr "未知"
 
 #: build/django/django/forms/widgets.py:544 build/django/tests/i18n/urls.py:9
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:335
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:516
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:744
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:752
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:819
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:337
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:518
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:746
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:754
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:821
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:343
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:553
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:561
@@ -847,11 +847,11 @@ msgid "Yes"
 msgstr "是"
 
 #: build/django/django/forms/widgets.py:545 build/django/tests/i18n/urls.py:9
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:335
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:516
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:746
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:754
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:821
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:337
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:518
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:748
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:756
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:823
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:343
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:555
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:563
@@ -1790,11 +1790,11 @@ msgstr "搜索外来手势词的释义"
 msgid "Search for gloss with this as morpheme"
 msgstr "搜索与这个语素有关的释义"
 
-#: signbank/dictionary/forms.py:107 signbank/dictionary/models.py:333
+#: signbank/dictionary/forms.py:107 signbank/dictionary/models.py:336
 msgid "Abduction change"
 msgstr ""
 
-#: signbank/dictionary/forms.py:108 signbank/dictionary/models.py:334
+#: signbank/dictionary/forms.py:108 signbank/dictionary/models.py:337
 #, fuzzy
 msgid "Flexion change"
 msgstr "方向变化"
@@ -1824,7 +1824,7 @@ msgid "Repeating Movement"
 msgstr "重复动作"
 
 #: signbank/dictionary/forms.py:120 signbank/dictionary/forms.py:188
-#: signbank/dictionary/models.py:373
+#: signbank/dictionary/models.py:376
 msgid "Alternating Movement"
 msgstr "交替动作"
 
@@ -1861,7 +1861,7 @@ msgid "Target Gloss"
 msgstr "目标语释义"
 
 #: signbank/dictionary/forms.py:255
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:636
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:638
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:445
 msgid "Related Language"
 msgstr "同族语言"
@@ -1875,9 +1875,9 @@ msgid "Parent Gloss"
 msgstr "上位释义"
 
 #: signbank/dictionary/forms.py:268 signbank/dictionary/forms.py:287
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:423
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:778
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:878
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:425
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:780
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:880
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:587
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:687
 msgid "Type"
@@ -1885,7 +1885,7 @@ msgstr "类型"
 
 #: signbank/dictionary/forms.py:269 signbank/dictionary/forms.py:280
 #: signbank/dictionary/forms.py:288
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:443
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:445
 msgid "Morpheme"
 msgstr "语素"
 
@@ -1894,367 +1894,371 @@ msgstr "语素"
 msgid "Host Gloss"
 msgstr "荷语释义"
 
-#: signbank/dictionary/models.py:257
+#: signbank/dictionary/models.py:260
 #: signbank/dictionary/templates/dictionary/add_gloss.html:23
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:44
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:271
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:273
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:265
 msgid "ID Gloss"
 msgstr "ID释义"
 
-#: signbank/dictionary/models.py:262
+#: signbank/dictionary/models.py:265
 msgid "Annotation ID Gloss: Dutch"
 msgstr "标注识别释义：荷语"
 
-#: signbank/dictionary/models.py:270
+#: signbank/dictionary/models.py:273
 msgid "Annotation ID Gloss: English"
 msgstr "标注识别释义：英语"
 
-#: signbank/dictionary/models.py:281
+#: signbank/dictionary/models.py:284
 msgid "BSL sign"
 msgstr "英国手语手势"
 
-#: signbank/dictionary/models.py:282
+#: signbank/dictionary/models.py:285
 msgid "ASL sign"
 msgstr "美国手语手势"
 
-#: signbank/dictionary/models.py:285
+#: signbank/dictionary/models.py:288
 msgid "ASL gloss"
 msgstr "美国手语释义"
 
-#: signbank/dictionary/models.py:286
+#: signbank/dictionary/models.py:289
 msgid "ASL loan sign"
 msgstr "美国手语借词手势"
 
-#: signbank/dictionary/models.py:289
+#: signbank/dictionary/models.py:292
 msgid "BSL gloss"
 msgstr "英国手语释义"
 
-#: signbank/dictionary/models.py:290
+#: signbank/dictionary/models.py:293
 msgid "BSL loan sign"
 msgstr "英国手语借词手势"
 
-#: signbank/dictionary/models.py:292
+#: signbank/dictionary/models.py:295
 msgid "Annotation instructions"
 msgstr "标注说明"
 
-#: signbank/dictionary/models.py:293
+#: signbank/dictionary/models.py:296
 msgid "Remarks"
 msgstr "备考"
 
-#: signbank/dictionary/models.py:300
+#: signbank/dictionary/models.py:303
 msgid "Blend of"
 msgstr "混合"
 
-#: signbank/dictionary/models.py:301
+#: signbank/dictionary/models.py:304
 msgid "Blend"
 msgstr "混合"
 
-#: signbank/dictionary/models.py:303
+#: signbank/dictionary/models.py:306
 msgid "Compound of"
 msgstr "复合"
 
-#: signbank/dictionary/models.py:304
+#: signbank/dictionary/models.py:307
 msgid "Compound"
 msgstr "复合"
 
-#: signbank/dictionary/models.py:308
+#: signbank/dictionary/models.py:311
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:470
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:464
 msgid "Handedness"
 msgstr "惯用手或手的使用情况"
 
-#: signbank/dictionary/models.py:310
+#: signbank/dictionary/models.py:313
 msgid "Strong Hand"
 msgstr "强手"
 
-#: signbank/dictionary/models.py:311
+#: signbank/dictionary/models.py:314
 msgid "Weak Hand"
 msgstr "弱手"
 
-#: signbank/dictionary/models.py:313
+#: signbank/dictionary/models.py:316
 msgid "Final Dominant Handshape"
 msgstr "最后的主控手手形"
 
-#: signbank/dictionary/models.py:314
+#: signbank/dictionary/models.py:317
 msgid "Final Subordinate Handshape"
 msgstr "最后的辅助手手形"
 
-#: signbank/dictionary/models.py:316
+#: signbank/dictionary/models.py:319
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:473
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:467
 msgid "Location"
 msgstr "手的位置"
 
-#: signbank/dictionary/models.py:317
+#: signbank/dictionary/models.py:320
 msgid "Final Primary Location"
 msgstr "最后的主要位置"
 
-#: signbank/dictionary/models.py:318
+#: signbank/dictionary/models.py:321
 msgid "Virtual Object"
 msgstr "虚拟对象"
 
-#: signbank/dictionary/models.py:320
+#: signbank/dictionary/models.py:323
 msgid "Secondary Location"
 msgstr "第二个位置"
 
-#: signbank/dictionary/models.py:322
+#: signbank/dictionary/models.py:325
 msgid "Initial Subordinate Location"
 msgstr "辅助手的起始的位置"
 
-#: signbank/dictionary/models.py:323
+#: signbank/dictionary/models.py:326
 msgid "Final Subordinate Location"
 msgstr "辅助手的最终位置"
 
-#: signbank/dictionary/models.py:325
+#: signbank/dictionary/models.py:328
 msgid "Initial Palm Orientation"
 msgstr "辅助手的最终位置"
 
-#: signbank/dictionary/models.py:326
+#: signbank/dictionary/models.py:329
 msgid "Final Palm Orientation"
 msgstr "手掌初始方向"
 
-#: signbank/dictionary/models.py:328
+#: signbank/dictionary/models.py:331
 msgid "Initial Interacting Dominant Hand Part"
 msgstr "最初与始主控手联系的部分"
 
-#: signbank/dictionary/models.py:329
+#: signbank/dictionary/models.py:332
 msgid "Final Interacting Dominant Hand Part"
 msgstr "最后与主控手联系的部分"
 
-#: signbank/dictionary/models.py:337
+#: signbank/dictionary/models.py:340
 msgid "In the Web dictionary"
 msgstr "在网上词典里"
 
-#: signbank/dictionary/models.py:338
+#: signbank/dictionary/models.py:341
 msgid "Is this a proposed new sign?"
 msgstr "这是新提议的手势吗？"
 
-#: signbank/dictionary/models.py:342
+#: signbank/dictionary/models.py:345
 msgid "Morphemic Analysis"
 msgstr "语素分析"
 
-#: signbank/dictionary/models.py:347
+#: signbank/dictionary/models.py:350
 msgid "Signed English definition available"
 msgstr "手势英语定义可用"
 
-#: signbank/dictionary/models.py:348
+#: signbank/dictionary/models.py:351
 msgid "Signed English gloss"
 msgstr "手势英语释义"
 
-#: signbank/dictionary/models.py:350
+#: signbank/dictionary/models.py:353
 msgid "Sense Number"
 msgstr "感官数量"
 
-#: signbank/dictionary/models.py:353
+#: signbank/dictionary/models.py:356
 msgid "Sign Number"
 msgstr "手势数量"
 
-#: signbank/dictionary/models.py:360
+#: signbank/dictionary/models.py:363
 msgid "Relation between Articulators"
 msgstr "发音器官之间的关系"
 
-#: signbank/dictionary/models.py:362
+#: signbank/dictionary/models.py:365
 msgid "Absolute Orientation: Palm"
 msgstr "相对方向：手掌"
 
-#: signbank/dictionary/models.py:363
+#: signbank/dictionary/models.py:366
 msgid "Absolute Orientation: Fingers"
 msgstr "相对方向：手指"
 
-#: signbank/dictionary/models.py:365
+#: signbank/dictionary/models.py:368
 msgid "Relative Orientation: Movement"
 msgstr "相对方向：运动"
 
-#: signbank/dictionary/models.py:366
+#: signbank/dictionary/models.py:369
 msgid "Relative Orientation: Location"
 msgstr "相对定向：位置"
 
-#: signbank/dictionary/models.py:368
+#: signbank/dictionary/models.py:371
 msgid "Orientation Change"
 msgstr "方向变化"
 
-#: signbank/dictionary/models.py:370
+#: signbank/dictionary/models.py:373
 msgid "Handshape Change"
 msgstr "手形变化"
 
-#: signbank/dictionary/models.py:372
+#: signbank/dictionary/models.py:375
 msgid "Repeated Movement"
 msgstr "重复动作"
 
-#: signbank/dictionary/models.py:375
+#: signbank/dictionary/models.py:378
 msgid "Movement Shape"
 msgstr "动作形态"
 
-#: signbank/dictionary/models.py:376
+#: signbank/dictionary/models.py:379
 msgid "Movement Direction"
 msgstr "运动方向"
 
-#: signbank/dictionary/models.py:377
+#: signbank/dictionary/models.py:380
 msgid "Movement Manner"
 msgstr "运动方式"
 
-#: signbank/dictionary/models.py:378
+#: signbank/dictionary/models.py:381
 msgid "Contact Type"
 msgstr "接触类型"
 
-#: signbank/dictionary/models.py:380
+#: signbank/dictionary/models.py:383
 msgid "Phonology Other"
 msgstr "音韵学等"
 
-#: signbank/dictionary/models.py:382
+#: signbank/dictionary/models.py:385
 msgid "Mouth Gesture"
 msgstr "姿势口动"
 
-#: signbank/dictionary/models.py:383
+#: signbank/dictionary/models.py:386
 msgid "Mouthing"
 msgstr "语词口动"
 
-#: signbank/dictionary/models.py:384
+#: signbank/dictionary/models.py:387
 msgid "Phonetic Variation"
 msgstr "语音变异"
 
-#: signbank/dictionary/models.py:386
+#: signbank/dictionary/models.py:389
 #, fuzzy
 msgid "Placement Active Articulator LH"
 msgstr "发音器官之间的关系"
 
-#: signbank/dictionary/models.py:387
+#: signbank/dictionary/models.py:390
 msgid "Placement Focal Site RH"
 msgstr ""
 
-#: signbank/dictionary/models.py:388
+#: signbank/dictionary/models.py:391
 msgid "Placement Focal site LH"
 msgstr ""
 
-#: signbank/dictionary/models.py:389
+#: signbank/dictionary/models.py:392
 #, fuzzy
 msgid "Orientation RH (initial)"
 msgstr "方向变化"
 
-#: signbank/dictionary/models.py:390
+#: signbank/dictionary/models.py:393
 #, fuzzy
 msgid "Orientation RH (final)"
 msgstr "方向变化"
 
-#: signbank/dictionary/models.py:391
+#: signbank/dictionary/models.py:394
 #, fuzzy
 msgid "Orientation LH (initial)"
 msgstr "方向变化"
 
-#: signbank/dictionary/models.py:392
+#: signbank/dictionary/models.py:395
 #, fuzzy
 msgid "Orientation LH (final)"
 msgstr "方向变化"
 
-#: signbank/dictionary/models.py:396
+#: signbank/dictionary/models.py:399
 msgid "Iconic Image"
 msgstr "象似性图像"
 
-#: signbank/dictionary/models.py:397
+#: signbank/dictionary/models.py:400
 #, fuzzy
 msgid "Type of iconicity"
 msgstr "关系类型"
 
-#: signbank/dictionary/models.py:399
+#: signbank/dictionary/models.py:402
 msgid "Named Entity"
 msgstr "命名实体"
 
-#: signbank/dictionary/models.py:400
+#: signbank/dictionary/models.py:403
 msgid "Semantic Field"
 msgstr "语议场"
 
-#: signbank/dictionary/models.py:403
+#: signbank/dictionary/models.py:406
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:310
 msgid "Word class"
 msgstr ""
 
-#: signbank/dictionary/models.py:404
+#: signbank/dictionary/models.py:407
 msgid "Word class 2"
 msgstr ""
 
-#: signbank/dictionary/models.py:405
+#: signbank/dictionary/models.py:408
 msgid "Derivation history"
 msgstr ""
 
-#: signbank/dictionary/models.py:406
+#: signbank/dictionary/models.py:409
 msgid "Lexical category notes"
 msgstr ""
 
-#: signbank/dictionary/models.py:407
+#: signbank/dictionary/models.py:410
 msgid "Valence"
 msgstr ""
 
-#: signbank/dictionary/models.py:411
+#: signbank/dictionary/models.py:414
 msgid "Number of Occurrences"
 msgstr "出现的次数"
 
-#: signbank/dictionary/models.py:412
+#: signbank/dictionary/models.py:415
 msgid "Number of Signers"
 msgstr "手语者的人次"
 
-#: signbank/dictionary/models.py:413
+#: signbank/dictionary/models.py:416
 msgid "Number of Occurrences in Amsterdam"
 msgstr "在阿姆斯丹出现的次数"
 
-#: signbank/dictionary/models.py:414
+#: signbank/dictionary/models.py:417
 msgid "Number of Occurrences in Voorburg"
 msgstr "在沃尔堡出现的次数"
 
-#: signbank/dictionary/models.py:415
+#: signbank/dictionary/models.py:418
 msgid "Number of Occurrences in Rotterdam"
 msgstr "在鹿特丹出现的次数"
 
-#: signbank/dictionary/models.py:416
+#: signbank/dictionary/models.py:419
 msgid "Number of Occurrences in Gestel"
 msgstr "在Gestel出现的次数"
 
-#: signbank/dictionary/models.py:417
+#: signbank/dictionary/models.py:420
 msgid "Number of Occurrences in Groningen"
 msgstr "在格罗宁根出现的次数"
 
-#: signbank/dictionary/models.py:418
+#: signbank/dictionary/models.py:421
 msgid "Number of Occurrences in Other Regions"
 msgstr "其它地区出现的次数"
 
-#: signbank/dictionary/models.py:420
+#: signbank/dictionary/models.py:423
 msgid "Number of Amsterdam Signers"
 msgstr "阿姆斯丹手语者出现的次数"
 
-#: signbank/dictionary/models.py:421
+#: signbank/dictionary/models.py:424
 msgid "Number of Voorburg Signers"
 msgstr "沃尔堡手语者出现的次数"
 
-#: signbank/dictionary/models.py:422
+#: signbank/dictionary/models.py:425
 msgid "Number of Rotterdam Signers"
 msgstr "鹿特丹手语者出现的次数"
 
-#: signbank/dictionary/models.py:423
+#: signbank/dictionary/models.py:426
 msgid "Number of Gestel Signers"
 msgstr "Gestel手势出现的次数"
 
-#: signbank/dictionary/models.py:424
+#: signbank/dictionary/models.py:427
 msgid "Number of Groningen Signers"
 msgstr "格罗宁根手语者出现的次数"
 
-#: signbank/dictionary/models.py:425
+#: signbank/dictionary/models.py:428
 msgid "Number of Other Region Signers"
 msgstr "其它地区手语者出现的次数"
 
-#: signbank/dictionary/models.py:427
+#: signbank/dictionary/models.py:430
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Creation date"
 msgstr "创建日期"
 
-#: signbank/dictionary/update.py:33 signbank/dictionary/update.py:710
+#: signbank/dictionary/models.py:431
+msgid "Last updated"
+msgstr ""
+
+#: signbank/dictionary/update.py:33 signbank/dictionary/update.py:711
 msgid "Annotation ID Gloss not unique."
 msgstr "标注识别释义并不是唯一的"
 
-#: signbank/dictionary/update.py:35 signbank/dictionary/update.py:714
+#: signbank/dictionary/update.py:35 signbank/dictionary/update.py:715
 msgid "English annotation ID gloss not unique."
 msgstr "英文标注识别释义并不是唯一的"
 
-#: signbank/dictionary/update.py:37 signbank/dictionary/update.py:718
+#: signbank/dictionary/update.py:37 signbank/dictionary/update.py:719
 msgid "Dutch annotation ID gloss cannot be empty."
 msgstr "荷兰标注识别释义不能填空"
 
@@ -2266,7 +2270,7 @@ msgstr "请提供一些原始数据"
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:21
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:47
 #: signbank/dictionary/templates/dictionary/add_morpheme_form.html:21
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:272
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:274
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:266
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (Dutch)"
@@ -2276,7 +2280,7 @@ msgstr "标注识别释义(荷语)"
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:22
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:54
 #: signbank/dictionary/templates/dictionary/add_morpheme_form.html:22
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:303
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:305
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:269
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (English)"
@@ -2334,7 +2338,7 @@ msgid "Search by Morphology"
 msgstr "根据形态学搜索"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:202
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:492
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:494
 #, fuzzy
 msgid "ID Morpheme/Annotation ID Morpheme"
 msgstr "识别释义/标注识别释义"
@@ -2496,12 +2500,12 @@ msgid ""
 msgstr "这样做将删除这个手势词相关的所有的记录。删除后则不能复原。"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:146
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:382
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:466
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:587
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:660
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:806
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:902
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:384
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:468
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:589
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:662
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:808
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:904
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:146
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:396
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:469
@@ -2512,12 +2516,12 @@ msgid "Cancel"
 msgstr "取消"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:147
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:383
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:467
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:588
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:661
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:807
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:903
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:385
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:469
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:590
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:663
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:809
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:905
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:147
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:397
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:470
@@ -2554,252 +2558,253 @@ msgstr ""
 msgid "Delete Media"
 msgstr "删除手势"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:332
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:334
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:272
 msgid "Translation equivalents in Dutch"
 msgstr "荷语翻译等值"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:346
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:348
 msgid "Morphology"
 msgstr "形态学"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:356
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:358
 #, fuzzy
 msgid "Compound part"
 msgstr "复合"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:357
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:359
 msgid "Component sign"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:371
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:373
 #, fuzzy
 msgid "Delete This Compound part"
 msgstr "删除此记录"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:375
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:459
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:653
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:895
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:377
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:461
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:655
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:897
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:462
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:704
 msgid "Are you sure you want to delete this? This cannot be undone."
 msgstr "你确定要删除这个？一旦删除就不能复原。"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:399
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:401
 msgid "If this is a compound, use [Edit] to define its components"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:410
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:412
 msgid "ID Gloss/Annotation ID Gloss"
 msgstr "识别释义/标注识别释义"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:411
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:413
 msgid "Add Component"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:424
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:426
 #, fuzzy
 msgid "Compound sign"
 msgstr "复合"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:435
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:437
 msgid "This gloss is not defined as part of a compound"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:455
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:457
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:136
 #, fuzzy
 msgid "Delete This Morpheme"
 msgstr "删除这个形态学"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:481
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:483
 msgid "Use [Edit] to define any morphemes used in this sign"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:493
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:495
 #, fuzzy
 msgid "Add Morpheme"
 msgstr "语素"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:510
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:512
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:337
 msgid "Phonology"
 msgstr "音韵学"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:527
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:529
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:354
 msgid "Semantics"
 msgstr "语义学"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:544
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:546
 #, fuzzy
 msgid "Language & Dialect"
 msgstr "语言"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:549
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:551
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:290
 msgid "Language"
 msgstr "语言"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:550
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:552
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:291
 msgid "Dialect"
 msgstr "方言"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:562
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:564
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:371
 msgid "Relations to Other Signs"
 msgstr "关系到其他手势"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:576
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:649
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:578
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:651
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:385
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:458
 msgid "Delete This Relation"
 msgstr "删除这个关系"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:580
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:582
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:389
 #, python-format
 msgid ""
 " This action will delete the %(rel.get_role_display)s relation between "
 "%(rel.source)s and %(rel.target)s. It cannot be undone. "
 msgstr ""
-"这样做将会删除 %(rel.get_role_display)s  %(rel.source)s. 以及 %(rel.target)s 之间关系.一旦"
-"删除不能复原 "
+"这样做将会删除 %(rel.get_role_display)s  %(rel.source)s. 以及 %(rel.target)s "
+"之间关系.一旦删除不能复原 "
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:629
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:631
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:438
 msgid "Relations to Foreign Signs"
 msgstr "与外来手势的关系"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:635
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:637
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:444
 msgid "Loan"
 msgstr "借用"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:637
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:685
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:639
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:687
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:446
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:494
 msgid "Gloss in related language"
 msgstr "同族语言的释义"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:658
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:804
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:660
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:806
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:467
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:613
 msgid "confirmed"
 msgstr "确定"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:684
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:686
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:493
 msgid "Related language"
 msgstr "同族语言"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:686
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:688
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:495
 msgid "Add Relation to Foreign Sign"
 msgstr "添加与外来手势的关系"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:703
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:705
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:512
 msgid "Frequency"
 msgstr "频率"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:720
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:722
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:529
 msgid "Publication Status"
 msgstr "出版状态"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:728
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:730
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:537
 msgid "Creation Date"
 msgstr "创建日期"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:729
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:731
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:538
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Creator"
 msgstr "创建者"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:741
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:743
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:550
 msgid "In Web Dictionary"
 msgstr "网上词典"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:749
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:751
 msgid "Proposed New Sign"
 msgstr "创建新手语势"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:766
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:768
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:575
 msgid "Notes"
 msgstr "备注"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:776
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:778
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:585
 msgid "Published"
 msgstr "发表了"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:777
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:779
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:586
 msgid "Index"
 msgstr "索引"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:795
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:797
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:604
 msgid "Delete This Note"
 msgstr "删除此记录"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:799
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:801
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:608
 msgid "This action will delete this note. It cannot be undone."
 msgstr "这样做将会删除这个备注。一旦删除不能复原。"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:845
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:847
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:654
 msgid "Enter new note"
 msgstr "输入新的备注"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:852
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:854
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:661
-msgid "Save New"
-msgstr "另存为新文件"
+#, fuzzy
+msgid "Save new note"
+msgstr "输入新的备注"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:869
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:871
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:678
 #, fuzzy
 msgid "Other media"
 msgstr "其它视频"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:877
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:879
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:686
 #, fuzzy
 msgid "Image/Video"
 msgstr "图像"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:879
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:932
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:881
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:934
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:688
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:741
 msgid "Alternative gloss"
 msgstr "可替换的释义"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:891
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:893
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:700
 #, fuzzy
 msgid "Delete This Media"
 msgstr "删除这个手语势"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:930
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:932
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:739
 #, fuzzy
 msgid "Upload media"
 msgstr "上传视频"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:937
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:939
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:746
 #, fuzzy
 msgid "Save"
@@ -2854,7 +2859,7 @@ msgstr "即时更改"
 #: signbank/dictionary/templates/dictionary/index.html:7
 #, fuzzy, python-format
 msgid ""
-"Welcome to the Sign Search section of the %(langauge)s SignBank. Here\n"
+"Welcome to the Sign Search section of the %(language)s SignBank. Here\n"
 "    you can search for a sign using a Dutch translation in the search box\n"
 "    above, or browse words starting with any letter below."
 msgstr ""
@@ -2979,14 +2984,14 @@ msgid ""
 "registered users.) If you\n"
 "            <a href=\"/accounts/login/\">login or register \n"
 "\n"
-"            with %(langauge)s Signbank</a>,  you will then be able to find "
-"these \n"
+"            with %(language)s Signbank</a>,  you will then be able to find "
+"these\n"
 "\n"
 "            matching words/signs if they exist in %(language)s. "
 msgstr ""
 "匹配结果在手语词库的公开界面不能显示出来, 因为这个手语词在荷语是不良或使人反"
-"感的词语。(学校和家长多次要求这类手势词语只能在注册成员界面可以显示。)你必"
-"须注册登录后才能看到这种手势词语"
+"感的词语。(学校和家长多次要求这类手势词语只能在注册成员界面可以显示。)你必须"
+"注册登录后才能看到这种手势词语"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:60
 msgid ""
@@ -3306,11 +3311,11 @@ msgstr "注册的个人资料"
 msgid "registration profiles"
 msgstr "注册的个人资料"
 
-#: signbank/registration/views.py:127
+#: signbank/registration/views.py:130
 msgid "This account has expired. Please contact o.crasborn@let.ru.nl."
 msgstr ""
 
-#: signbank/registration/views.py:139
+#: signbank/registration/views.py:142
 msgid "The username or password is incorrect."
 msgstr ""
 
@@ -3374,23 +3379,23 @@ msgstr "电子邮箱"
 msgid "Request Password"
 msgstr "请求密码"
 
-#: templates/ASL-templates/menu.html:97 templates/NGT-templates/menu.html:105
+#: templates/ASL-templates/menu.html:97 templates/NGT-templates/menu.html:117
 msgid "Search gloss"
 msgstr "搜索释义"
 
-#: templates/ASL-templates/menu.html:99 templates/NGT-templates/menu.html:107
+#: templates/ASL-templates/menu.html:99 templates/NGT-templates/menu.html:119
 msgid "Search translation"
 msgstr "搜索翻译"
 
-#: templates/ASL-templates/menu.html:101 templates/NGT-templates/menu.html:109
+#: templates/ASL-templates/menu.html:101 templates/NGT-templates/menu.html:121
 msgid "Sign search"
 msgstr "搜索手势词"
 
-#: templates/ASL-templates/menu.html:106 templates/NGT-templates/menu.html:114
+#: templates/ASL-templates/menu.html:106 templates/NGT-templates/menu.html:126
 msgid "Logout"
 msgstr "退出"
 
-#: templates/ASL-templates/menu.html:108 templates/NGT-templates/menu.html:116
+#: templates/ASL-templates/menu.html:108 templates/NGT-templates/menu.html:128
 msgid "Login"
 msgstr "登录"
 
@@ -3517,6 +3522,9 @@ msgstr "电子邮箱地址"
 #: templates/NGT-templates/registration/password_reset_form.html:17
 msgid "Reset my password"
 msgstr "重置我的密码"
+
+#~ msgid "Save New"
+#~ msgstr "另存为新文件"
 
 #~ msgid "Password reset complete."
 #~ msgstr "密码重置完成"

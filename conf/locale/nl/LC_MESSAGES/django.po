@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-10 22:45+1100\n"
+"POT-Creation-Date: 2016-11-10 14:33+0100\n"
 "PO-Revision-Date: 2015-07-28 16:26+1000\n"
 "Last-Translator: Richard <r.bankl@let.ru.nl>\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -16,185 +16,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: bootstrap_templates/baselayout.html:46
-msgid "The NGT Signbank</span> is licensed under a "
-msgstr "Gebruik van NGT Signbank</span> valt onder een"
-
-#: bootstrap_templates/baselayout.html:46
-msgid "Creative Commons BY-NC-SA 4.0 International License"
-msgstr "Creative Commons BY-NC-SA 4.0 International-Licentie"
-
-#: bootstrap_templates/baselayout.html:49
-msgid "Provide feedback on the site"
-msgstr "Geef feedback over dit gebaar"
-
-#: bootstrap_templates/loginform.html:12
-msgid "Sign In"
-msgstr "Inloggen"
-
-#: bootstrap_templates/loginform.html:14 signbank/registration/forms.py:283
-msgid "Email"
-msgstr "E-mail"
-
-#: bootstrap_templates/loginform.html:20 signbank/registration/forms.py:48
-#: signbank/registration/forms.py:284
-msgid "Password"
-msgstr "Wachtwoord"
-
-#: bootstrap_templates/loginform.html:27
-msgid "Sign in"
-msgstr "Inloggen"
-
-#: bootstrap_templates/loginform.html:38 bootstrap_templates/loginform.html:41
-msgid "Register"
-msgstr "Aanmelden"
-
-#: bootstrap_templates/loginform.html:40
-msgid "Register for free to provide feedback on the Signbank."
-msgstr "Meld je gratis aan om feedback op Signbank te kunnen geven."
-
-#: bootstrap_templates/loginform.html:47
-msgid "Lost Password"
-msgstr "Wachtwoord vergeten"
-
-#: bootstrap_templates/loginform.html:48
-msgid ""
-"If you've lost or forgotten your password, enter your email address here and "
-"we'll reset it and send you a reminder."
-msgstr ""
-"Wachtwoord vergeten? Vul hieronder je e-mailadres in om een nieuwe "
-"toegestuurd te krijgen."
-
-#: bootstrap_templates/loginform.html:53
-msgid "Email:"
-msgstr "Gebruikersnaam"
-
-#: bootstrap_templates/loginform.html:57
-msgid "Request Password"
-msgstr "Stel mijn wachtwoord opnieuw in"
-
-#: bootstrap_templates/menu.html:132
-msgid "Search gloss"
-msgstr "Glos zoeken"
-
-#: bootstrap_templates/menu.html:134
-msgid "Search translation"
-msgstr "Vertaling zoeken"
-
-#: bootstrap_templates/menu.html:136
-msgid "Sign search"
-msgstr "Gebaar zoeken"
-
-#: bootstrap_templates/menu.html:141
-msgid "Logout"
-msgstr "Uitloggen"
-
-#: bootstrap_templates/menu.html:143
-msgid "Login"
-msgstr "Inloggen"
-
-#: bootstrap_templates/pages/default.html:9
-msgid "Edit Page"
-msgstr "Bewerk pagina"
-
-#: bootstrap_templates/registration/password_reset_complete.html:5
-#: bootstrap_templates/registration/password_reset_complete.html:9
-msgid "Password reset complete"
-msgstr "Het wachtwoord is opnieuw ingesteld"
-
-#: bootstrap_templates/registration/password_reset_complete.html:11
-msgid "Your password has been set.  You may go ahead and log in now."
-msgstr "Je wachtwoord is ingesteld. Je kunt nu inloggen."
-
-#: bootstrap_templates/registration/password_reset_complete.html:13
-msgid "Log in"
-msgstr "Inloggen"
-
-#: bootstrap_templates/registration/password_reset_confirm.html:5
-#: bootstrap_templates/registration/password_reset_form.html:4
-#: bootstrap_templates/registration/password_reset_form.html:6
-#: bootstrap_templates/registration/password_reset_form.html:10
-msgid "Password reset"
-msgstr "Wachtwoord opnieuw instellen"
-
-#: bootstrap_templates/registration/password_reset_confirm.html:13
-msgid "Enter new password"
-msgstr "Vul nieuw wachtwoord in"
-
-#: bootstrap_templates/registration/password_reset_confirm.html:15
-msgid ""
-"Please enter your new password twice so we can verify you typed it in "
-"correctly."
-msgstr ""
-"Vul je nieuwe wachtwoord twee keer in zodat we kunnen controleren of ze "
-"gelijk zijn."
-
-#: bootstrap_templates/registration/password_reset_confirm.html:19
-msgid "New password:"
-msgstr "Nieuw wachtwoord:"
-
-#: bootstrap_templates/registration/password_reset_confirm.html:22
-msgid "Confirm password:"
-msgstr "Bevestig nieuw wachtwoord:"
-
-#: bootstrap_templates/registration/password_reset_confirm.html:24
-msgid "Change my password"
-msgstr "Verander mijn wachtwoord:"
-
-#: bootstrap_templates/registration/password_reset_confirm.html:29
-msgid "Password reset unsuccessful"
-msgstr "Wachtwoord opnieuw instellen is mislukt"
-
-#: bootstrap_templates/registration/password_reset_confirm.html:31
-msgid ""
-"The password reset link was invalid, possibly because it has already been "
-"used.  Please request a new password reset."
-msgstr ""
-"De link om het wachtwoord opnieuw in te stellen is waarschijnlijk al een "
-"keer gebruikt. Vraag opnieuw een nieuw wachtwoord aan."
-
-#: bootstrap_templates/registration/password_reset_email.html:2
-#, python-format
-msgid ""
-"You're receiving this email because you requested a password reset for your "
-"user account at %(site_name)s."
-msgstr ""
-"Je ontvangt deze mail omdat je het wachtwoord voor je account op "
-"%(site_name)s opnieuw in wilt stellen"
-
-#: bootstrap_templates/registration/password_reset_email.html:4
-msgid "Please go to the following page and choose a new password:"
-msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen:"
-
-#: bootstrap_templates/registration/password_reset_email.html:9
-msgid "Thanks for using our site!"
-msgstr "Bedankt voor het gebruik van onze site! "
-
-#: bootstrap_templates/registration/password_reset_email.html:11
-#, python-format
-msgid "The %(site_name)s team"
-msgstr "Het %(site_name)s-team"
-
-#: bootstrap_templates/registration/password_reset_form.html:4
-msgid "Home"
-msgstr "Home"
-
-#: bootstrap_templates/registration/password_reset_form.html:12
-msgid ""
-"Forgotten your password? Enter your e-mail address below, and we'll reset "
-"your password and e-mail the new one to you."
-msgstr ""
-"Wachtwoord vergeten? Vul hieronder je e-mailadres in om een nieuwe "
-"toegestuurd te krijgen."
-
-#: bootstrap_templates/registration/password_reset_form.html:17
-msgid "E-mail address:"
-msgstr "E-mailadres:"
-
-#: bootstrap_templates/registration/password_reset_form.html:17
-msgid "Reset my password"
-msgstr "Stel mijn wachtwoord opnieuw in"
 
 #: build/django/django/conf/global_settings.py:51
 msgid "Afrikaans"
@@ -778,7 +599,8 @@ msgid "Small integer"
 msgstr "Klein geheel getal"
 
 #: build/django/django/db/models/fields/__init__.py:1281
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:537
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:781
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:588
 msgid "Text"
 msgstr "Tekst"
 
@@ -1043,18 +865,28 @@ msgid "Unknown"
 msgstr "Onbekend"
 
 #: build/django/django/forms/widgets.py:544 build/django/tests/i18n/urls.py:9
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:295
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:502
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:510
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:577
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:337
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:518
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:746
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:754
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:821
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:343
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:553
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:561
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:628
 msgid "Yes"
 msgstr "Ja"
 
 #: build/django/django/forms/widgets.py:545 build/django/tests/i18n/urls.py:9
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:297
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:504
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:512
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:579
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:337
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:518
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:748
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:756
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:823
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:343
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:555
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:563
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:630
 msgid "No"
 msgstr "Nee"
 
@@ -1933,420 +1765,533 @@ msgstr "Meer dan een"
 msgid "Glosses containing"
 msgstr "Glossen met"
 
-#: signbank/dictionary/forms.py:16
+#: signbank/dictionary/forms.py:16 signbank/dictionary/forms.py:38
 msgid "Translations containing"
 msgstr "Vertaling bevat"
 
 #: signbank/dictionary/forms.py:17
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:325
 msgid "Search"
 msgstr "Zoeken"
 
-#: signbank/dictionary/forms.py:66
+#: signbank/dictionary/forms.py:36
+#, fuzzy
+msgid "Morphemes containing"
+msgstr "Glossen met"
+
+#: signbank/dictionary/forms.py:91 signbank/dictionary/forms.py:157
 msgid "Dutch Gloss"
 msgstr "Nederlandse glos"
 
-#: signbank/dictionary/forms.py:67
+#: signbank/dictionary/forms.py:92 signbank/dictionary/forms.py:158
+#, fuzzy
+msgid "Sort Order"
+msgstr "Volgorde"
+
+#: signbank/dictionary/forms.py:93 signbank/dictionary/forms.py:160
 msgid "English Gloss"
 msgstr "Engelse glos"
 
-#: signbank/dictionary/forms.py:70
+#: signbank/dictionary/forms.py:96 signbank/dictionary/forms.py:163
 msgid "Translations"
 msgstr "Mogelijke vertalingen"
 
-#: signbank/dictionary/forms.py:71
+#: signbank/dictionary/forms.py:97 signbank/dictionary/forms.py:164
 msgid "Has Video"
 msgstr "Video beschikbaar"
 
-#: signbank/dictionary/forms.py:72
+#: signbank/dictionary/forms.py:98 signbank/dictionary/forms.py:165
 msgid "All Definitions Published"
 msgstr "Alle definities gepubliceerd"
 
-#: signbank/dictionary/forms.py:74
+#: signbank/dictionary/forms.py:100 signbank/dictionary/forms.py:167
 msgid "Search Definition/Notes"
 msgstr "Zoek Definitie/Aantekeningen"
 
-#: signbank/dictionary/forms.py:77
+#: signbank/dictionary/forms.py:103 signbank/dictionary/forms.py:169
 msgid "Search for gloss of related signs"
 msgstr "Zoek op glos van een verwant gebaar"
 
-#: signbank/dictionary/forms.py:78
+#: signbank/dictionary/forms.py:104 signbank/dictionary/forms.py:171
 msgid "Search for gloss of foreign signs"
 msgstr "Zoek op de glos in een andere gebarentaal"
 
-#: signbank/dictionary/forms.py:79
+#: signbank/dictionary/forms.py:105 signbank/dictionary/forms.py:173
 msgid "Search for gloss with this as morpheme"
 msgstr "Zoek voor een glos met dit morfeem"
 
-#: signbank/dictionary/forms.py:81
+#: signbank/dictionary/forms.py:107 signbank/dictionary/models.py:336
+msgid "Abduction change"
+msgstr ""
+
+#: signbank/dictionary/forms.py:108 signbank/dictionary/models.py:337
+#, fuzzy
+msgid "Flexion change"
+msgstr "Oriëntatieverandering"
+
+#: signbank/dictionary/forms.py:110 signbank/dictionary/forms.py:176
 msgid "Phonology other"
 msgstr "Fonologie: overig"
 
-#: signbank/dictionary/forms.py:83
+#: signbank/dictionary/forms.py:112 signbank/dictionary/forms.py:178
 msgid "Related to foreign sign or not"
 msgstr "Relaties met gebaren uit andere talen"
 
-#: signbank/dictionary/forms.py:84
+#: signbank/dictionary/forms.py:113 signbank/dictionary/forms.py:181
 msgid "Type of relation"
 msgstr "Type relatie"
 
-#: signbank/dictionary/forms.py:85
+#: signbank/dictionary/forms.py:115
+msgid "Has compound component type"
+msgstr ""
+
+#: signbank/dictionary/forms.py:117 signbank/dictionary/forms.py:183
 msgid "Has morpheme type"
 msgstr "Heeft morfeem-type"
 
-#: signbank/dictionary/forms.py:87
+#: signbank/dictionary/forms.py:119 signbank/dictionary/forms.py:186
 msgid "Repeating Movement"
 msgstr "Herhaalde beweging"
 
-#: signbank/dictionary/forms.py:88 signbank/dictionary/models.py:883
+#: signbank/dictionary/forms.py:120 signbank/dictionary/forms.py:188
+#: signbank/dictionary/models.py:376
 msgid "Alternating Movement"
 msgstr "Alternerende beweging"
 
-#: signbank/dictionary/forms.py:90
+#: signbank/dictionary/forms.py:122 signbank/dictionary/forms.py:191
 msgid "Is a proposed new sign"
 msgstr "Voorstel voor nieuw gebaar"
 
-#: signbank/dictionary/forms.py:91
+#: signbank/dictionary/forms.py:123 signbank/dictionary/forms.py:193
 msgid "Is in Web dictionary"
 msgstr "In woordenboek"
 
-#: signbank/dictionary/forms.py:92
+#: signbank/dictionary/forms.py:124 signbank/dictionary/forms.py:195
 msgid "Note type"
 msgstr "Type aantekening"
 
-#: signbank/dictionary/forms.py:93
+#: signbank/dictionary/forms.py:125 signbank/dictionary/forms.py:197
 msgid "Note contains"
 msgstr "Aantekening bevat"
 
-#: signbank/dictionary/forms.py:95
+#: signbank/dictionary/forms.py:127 signbank/dictionary/forms.py:199
 msgid "Created before"
 msgstr "Toegevoegd vóór"
 
-#: signbank/dictionary/forms.py:96
+#: signbank/dictionary/forms.py:128 signbank/dictionary/forms.py:200
 msgid "Created after"
 msgstr "Aangemaakt na"
 
-#: signbank/dictionary/forms.py:130 signbank/dictionary/forms.py:143
+#: signbank/dictionary/forms.py:240 signbank/dictionary/forms.py:253
 msgid "Source Gloss"
 msgstr "Bron-glos"
 
-#: signbank/dictionary/forms.py:131
+#: signbank/dictionary/forms.py:241
 msgid "Target Gloss"
 msgstr "Doel-glos"
 
-#: signbank/dictionary/forms.py:145
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:404
+#: signbank/dictionary/forms.py:255
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:638
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:445
 msgid "Related Language"
 msgstr "Verwante taal"
 
-#: signbank/dictionary/forms.py:146
+#: signbank/dictionary/forms.py:256
 msgid "Gloss in Related Language"
 msgstr "Glos in een verwante taal"
 
-#: signbank/dictionary/forms.py:155
+#: signbank/dictionary/forms.py:267 signbank/dictionary/forms.py:286
 msgid "Parent Gloss"
 msgstr "Ouder-glos"
 
-#: signbank/dictionary/forms.py:156
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:217
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:536
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:636
+#: signbank/dictionary/forms.py:268 signbank/dictionary/forms.py:287
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:425
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:780
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:880
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:587
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:687
 msgid "Type"
 msgstr "Type"
 
-#: signbank/dictionary/forms.py:157
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:218
+#: signbank/dictionary/forms.py:269 signbank/dictionary/forms.py:280
+#: signbank/dictionary/forms.py:288
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:445
 msgid "Morpheme"
 msgstr "Morfeem"
 
-#: signbank/dictionary/models.py:774
+#: signbank/dictionary/forms.py:279
+#, fuzzy
+msgid "Host Gloss"
+msgstr "Nederlandse glos"
+
+#: signbank/dictionary/models.py:260
 #: signbank/dictionary/templates/dictionary/add_gloss.html:23
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:194
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:44
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:273
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:265
 msgid "ID Gloss"
 msgstr "ID-Glos"
 
-#: signbank/dictionary/models.py:779
+#: signbank/dictionary/models.py:265
 msgid "Annotation ID Gloss: Dutch"
 msgstr "Annotatie-ID-Glos: Nederlands"
 
-#: signbank/dictionary/models.py:787
+#: signbank/dictionary/models.py:273
 msgid "Annotation ID Gloss: English"
 msgstr "Annotatie-ID-Glos: Engels"
 
-#: signbank/dictionary/models.py:798
+#: signbank/dictionary/models.py:284
 msgid "BSL sign"
 msgstr "BSL-gebaar"
 
-#: signbank/dictionary/models.py:799
+#: signbank/dictionary/models.py:285
 msgid "ASL sign"
 msgstr "ASL-gebaar"
 
-#: signbank/dictionary/models.py:802
+#: signbank/dictionary/models.py:288
 msgid "ASL gloss"
 msgstr "ASL-glos"
 
-#: signbank/dictionary/models.py:803
+#: signbank/dictionary/models.py:289
 msgid "ASL loan sign"
 msgstr "Leengebaar uit ASL"
 
-#: signbank/dictionary/models.py:806
+#: signbank/dictionary/models.py:292
 msgid "BSL gloss"
 msgstr "BSL-glos"
 
-#: signbank/dictionary/models.py:807
+#: signbank/dictionary/models.py:293
 msgid "BSL loan sign"
 msgstr "Leengebaar uit BSL"
 
-#: signbank/dictionary/models.py:809
+#: signbank/dictionary/models.py:295
 msgid "Annotation instructions"
 msgstr "Annotatieinstructies"
 
-#: signbank/dictionary/models.py:810
+#: signbank/dictionary/models.py:296
 msgid "Remarks"
 msgstr "Opmerkingen"
 
-#: signbank/dictionary/models.py:818
+#: signbank/dictionary/models.py:303
 msgid "Blend of"
 msgstr "Blend van"
 
-#: signbank/dictionary/models.py:819
+#: signbank/dictionary/models.py:304
 msgid "Blend"
 msgstr "Blend"
 
-#: signbank/dictionary/models.py:821
+#: signbank/dictionary/models.py:306
 msgid "Compound of"
 msgstr "Samenstelling van"
 
-#: signbank/dictionary/models.py:822
+#: signbank/dictionary/models.py:307
 msgid "Compound"
 msgstr "Samenstelling"
 
-#: signbank/dictionary/models.py:826
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:396
+#: signbank/dictionary/models.py:311
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:470
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:464
 msgid "Handedness"
 msgstr "Handigheid"
 
-#: signbank/dictionary/models.py:828
+#: signbank/dictionary/models.py:313
 msgid "Strong Hand"
 msgstr "Sterke hand"
 
-#: signbank/dictionary/models.py:829
+#: signbank/dictionary/models.py:314
 msgid "Weak Hand"
 msgstr "Zwakke hand"
 
-#: signbank/dictionary/models.py:831
+#: signbank/dictionary/models.py:316
 msgid "Final Dominant Handshape"
 msgstr ""
 
-#: signbank/dictionary/models.py:832
+#: signbank/dictionary/models.py:317
 msgid "Final Subordinate Handshape"
 msgstr ""
 
-#: signbank/dictionary/models.py:834
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:399
+#: signbank/dictionary/models.py:319
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:473
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:467
 msgid "Location"
 msgstr "Plaats"
 
-#: signbank/dictionary/models.py:835
+#: signbank/dictionary/models.py:320
 msgid "Final Primary Location"
 msgstr ""
 
-#: signbank/dictionary/models.py:836
+#: signbank/dictionary/models.py:321
 msgid "Virtual Object"
 msgstr "Virtueel object"
 
-#: signbank/dictionary/models.py:838
+#: signbank/dictionary/models.py:323
 msgid "Secondary Location"
 msgstr ""
 
-#: signbank/dictionary/models.py:840
+#: signbank/dictionary/models.py:325
 msgid "Initial Subordinate Location"
 msgstr ""
 
-#: signbank/dictionary/models.py:841
+#: signbank/dictionary/models.py:326
 msgid "Final Subordinate Location"
 msgstr ""
 
-#: signbank/dictionary/models.py:843
+#: signbank/dictionary/models.py:328
 msgid "Initial Palm Orientation"
 msgstr ""
 
-#: signbank/dictionary/models.py:844
+#: signbank/dictionary/models.py:329
 msgid "Final Palm Orientation"
 msgstr ""
 
-#: signbank/dictionary/models.py:846
+#: signbank/dictionary/models.py:331
 msgid "Initial Interacting Dominant Hand Part"
 msgstr ""
 
-#: signbank/dictionary/models.py:847
+#: signbank/dictionary/models.py:332
 msgid "Final Interacting Dominant Hand Part"
 msgstr ""
 
-#: signbank/dictionary/models.py:850
+#: signbank/dictionary/models.py:340
 msgid "In the Web dictionary"
 msgstr "In het woordenboek"
 
-#: signbank/dictionary/models.py:851
+#: signbank/dictionary/models.py:341
 msgid "Is this a proposed new sign?"
 msgstr "Voorstel voor nieuw gebaar?"
 
-#: signbank/dictionary/models.py:855
+#: signbank/dictionary/models.py:345
 msgid "Morphemic Analysis"
 msgstr "Morfeemanalyse"
 
-#: signbank/dictionary/models.py:857
+#: signbank/dictionary/models.py:350
 msgid "Signed English definition available"
 msgstr ""
 
-#: signbank/dictionary/models.py:858
+#: signbank/dictionary/models.py:351
 msgid "Signed English gloss"
 msgstr ""
 
-#: signbank/dictionary/models.py:860
+#: signbank/dictionary/models.py:353
 msgid "Sense Number"
 msgstr ""
 
-#: signbank/dictionary/models.py:863
+#: signbank/dictionary/models.py:356
 msgid "Sign Number"
 msgstr "Gebaarnummer"
 
-#: signbank/dictionary/models.py:870
+#: signbank/dictionary/models.py:363
 msgid "Relation between Articulators"
 msgstr "Relatie tussen articulatoren"
 
-#: signbank/dictionary/models.py:872
+#: signbank/dictionary/models.py:365
 msgid "Absolute Orientation: Palm"
 msgstr "Absolute oriëntatie: palm"
 
-#: signbank/dictionary/models.py:873
+#: signbank/dictionary/models.py:366
 msgid "Absolute Orientation: Fingers"
 msgstr "Absolute oriëntatie: vingers"
 
-#: signbank/dictionary/models.py:875
+#: signbank/dictionary/models.py:368
 msgid "Relative Orientation: Movement"
 msgstr "Relatieve oriëntatie: beweging"
 
-#: signbank/dictionary/models.py:876
+#: signbank/dictionary/models.py:369
 msgid "Relative Orientation: Location"
 msgstr "Relatieve oriëntatie: locatie"
 
-#: signbank/dictionary/models.py:878
+#: signbank/dictionary/models.py:371
 msgid "Orientation Change"
 msgstr "Oriëntatieverandering"
 
-#: signbank/dictionary/models.py:880
+#: signbank/dictionary/models.py:373
 msgid "Handshape Change"
 msgstr "Handvormverandering"
 
-#: signbank/dictionary/models.py:882
+#: signbank/dictionary/models.py:375
 msgid "Repeated Movement"
 msgstr "Herhaalde beweging"
 
-#: signbank/dictionary/models.py:885
+#: signbank/dictionary/models.py:378
 msgid "Movement Shape"
 msgstr "Vorm van de beweging"
 
-#: signbank/dictionary/models.py:886
+#: signbank/dictionary/models.py:379
 msgid "Movement Direction"
 msgstr "Richting van de beweging"
 
-#: signbank/dictionary/models.py:887
+#: signbank/dictionary/models.py:380
 msgid "Movement Manner"
 msgstr "Manier van bewegen"
 
-#: signbank/dictionary/models.py:888
+#: signbank/dictionary/models.py:381
 msgid "Contact Type"
 msgstr "Type contact"
 
-#: signbank/dictionary/models.py:890
+#: signbank/dictionary/models.py:383
 msgid "Phonology Other"
 msgstr "Fonologie: overig"
 
-#: signbank/dictionary/models.py:892
+#: signbank/dictionary/models.py:385
 msgid "Mouth Gesture"
 msgstr "Orale component"
 
-#: signbank/dictionary/models.py:893
+#: signbank/dictionary/models.py:386
 msgid "Mouthing"
 msgstr "Gesproken component"
 
-#: signbank/dictionary/models.py:894
+#: signbank/dictionary/models.py:387
 msgid "Phonetic Variation"
 msgstr "Fonetische variatie"
 
-#: signbank/dictionary/models.py:898
+#: signbank/dictionary/models.py:389
+#, fuzzy
+msgid "Placement Active Articulator LH"
+msgstr "Relatie tussen articulatoren"
+
+#: signbank/dictionary/models.py:390
+msgid "Placement Focal Site RH"
+msgstr ""
+
+#: signbank/dictionary/models.py:391
+msgid "Placement Focal site LH"
+msgstr ""
+
+#: signbank/dictionary/models.py:392
+#, fuzzy
+msgid "Orientation RH (initial)"
+msgstr "Oriëntatieverandering"
+
+#: signbank/dictionary/models.py:393
+#, fuzzy
+msgid "Orientation RH (final)"
+msgstr "Oriëntatieverandering"
+
+#: signbank/dictionary/models.py:394
+#, fuzzy
+msgid "Orientation LH (initial)"
+msgstr "Oriëntatieverandering"
+
+#: signbank/dictionary/models.py:395
+#, fuzzy
+msgid "Orientation LH (final)"
+msgstr "Oriëntatieverandering"
+
+#: signbank/dictionary/models.py:399
 msgid "Iconic Image"
 msgstr "Iconisch beeld"
 
-#: signbank/dictionary/models.py:899
+#: signbank/dictionary/models.py:400
+#, fuzzy
+msgid "Type of iconicity"
+msgstr "Type relatie"
+
+#: signbank/dictionary/models.py:402
 msgid "Named Entity"
 msgstr "Naamtype"
 
-#: signbank/dictionary/models.py:900
+#: signbank/dictionary/models.py:403
 msgid "Semantic Field"
 msgstr "Semantisch veld"
 
-#: signbank/dictionary/models.py:904
+#: signbank/dictionary/models.py:406
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:310
+msgid "Word class"
+msgstr ""
+
+#: signbank/dictionary/models.py:407
+msgid "Word class 2"
+msgstr ""
+
+#: signbank/dictionary/models.py:408
+msgid "Derivation history"
+msgstr ""
+
+#: signbank/dictionary/models.py:409
+msgid "Lexical category notes"
+msgstr ""
+
+#: signbank/dictionary/models.py:410
+msgid "Valence"
+msgstr ""
+
+#: signbank/dictionary/models.py:414
 msgid "Number of Occurrences"
 msgstr "Aantal voorkomens"
 
-#: signbank/dictionary/models.py:905
+#: signbank/dictionary/models.py:415
 msgid "Number of Signers"
 msgstr "Aantal gebaarders"
 
-#: signbank/dictionary/models.py:906
+#: signbank/dictionary/models.py:416
 msgid "Number of Occurrences in Amsterdam"
 msgstr "Aantal voorkomens in Amsterdam"
 
-#: signbank/dictionary/models.py:907
+#: signbank/dictionary/models.py:417
 msgid "Number of Occurrences in Voorburg"
 msgstr "Aantal voorkomens in Voorburg"
 
-#: signbank/dictionary/models.py:908
+#: signbank/dictionary/models.py:418
 msgid "Number of Occurrences in Rotterdam"
 msgstr "Aantal voorkomens in Rotterdam"
 
-#: signbank/dictionary/models.py:909
+#: signbank/dictionary/models.py:419
 msgid "Number of Occurrences in Gestel"
 msgstr "Aantal voorkomens in Gestel"
 
-#: signbank/dictionary/models.py:910
+#: signbank/dictionary/models.py:420
 msgid "Number of Occurrences in Groningen"
 msgstr "Aantal voorkomens in Groningen"
 
-#: signbank/dictionary/models.py:911
+#: signbank/dictionary/models.py:421
 msgid "Number of Occurrences in Other Regions"
 msgstr "Aantal voorkomens in andere regio's"
 
-#: signbank/dictionary/models.py:913
+#: signbank/dictionary/models.py:423
 msgid "Number of Amsterdam Signers"
 msgstr "Aantal gebaarders uit Amsterdam"
 
-#: signbank/dictionary/models.py:914
+#: signbank/dictionary/models.py:424
 msgid "Number of Voorburg Signers"
 msgstr "Aantal gebaarders uit Voorburg"
 
-#: signbank/dictionary/models.py:915
+#: signbank/dictionary/models.py:425
 msgid "Number of Rotterdam Signers"
 msgstr "Aantal gebaarders uit Rotterdam"
 
-#: signbank/dictionary/models.py:916
+#: signbank/dictionary/models.py:426
 msgid "Number of Gestel Signers"
 msgstr "Aantal gebaarders uit Gestel"
 
-#: signbank/dictionary/models.py:917
+#: signbank/dictionary/models.py:427
 msgid "Number of Groningen Signers"
 msgstr "Aantal gebaarders uit Groningen"
 
-#: signbank/dictionary/models.py:918
+#: signbank/dictionary/models.py:428
 msgid "Number of Other Region Signers"
 msgstr "Aantal gebaarders uit andere regio's"
 
-#: signbank/dictionary/models.py:920
-#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+#: signbank/dictionary/models.py:430
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Creation date"
 msgstr "Aanmaakdatum"
+
+#: signbank/dictionary/models.py:431
+msgid "Last updated"
+msgstr ""
+
+#: signbank/dictionary/update.py:33 signbank/dictionary/update.py:711
+#, fuzzy
+msgid "Annotation ID Gloss not unique."
+msgstr "Annotatie-ID-Glos"
+
+#: signbank/dictionary/update.py:35 signbank/dictionary/update.py:715
+#, fuzzy
+msgid "English annotation ID gloss not unique."
+msgstr "Annotatie-ID-Glos: Engels"
+
+#: signbank/dictionary/update.py:37 signbank/dictionary/update.py:719
+msgid "Dutch annotation ID gloss cannot be empty."
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:17
 msgid "Please provide some initial data"
@@ -2354,99 +2299,186 @@ msgstr "Geef hier wat data om mee te beginnen"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:26
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:21
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:195
-#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:47
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:21
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:274
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:266
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (Dutch)"
 msgstr "Annotatie-ID-Glos (Nederlands)"
 
-#: signbank/dictionary/templates/dictionary/add_gloss.html:29
+#: signbank/dictionary/templates/dictionary/add_gloss.html:33
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:22
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:196
-#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:54
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:22
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:305
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:269
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (English)"
 msgstr "Annotatie-ID-Glos (Engels)"
 
-#: signbank/dictionary/templates/dictionary/add_gloss.html:33
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:357
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:373
+#: signbank/dictionary/templates/dictionary/add_gloss.html:44
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:426
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:442
 msgid "Add New Sign"
 msgstr "Voeg nieuw gebaar toe"
 
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:20
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:20
 msgid "Lemma ID Gloss"
 msgstr "Lemma-ID-Glos"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:101
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:38
+#, fuzzy
+msgid "Please provide some initial data for this new morpheme"
+msgstr "Geef hier wat data om mee te beginnen"
+
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:64
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:23
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:463
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:275
+#, fuzzy
+msgid "Morpheme type"
+msgstr "Heeft morfeem-type"
+
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:69
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:415
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:433
+#, fuzzy
+msgid "Add New Morpheme"
+msgstr "Voeg morfeem toe"
+
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:72
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:42
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:441
+msgid "You are not authorized to add a morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:123
+msgid "Form your query"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:158
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:170
 msgid "Search by Language and Basic Properties"
 msgstr "Zoek op Taal en Basiseigenschappen"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:130
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:192
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:199
 msgid "Search by Morphology"
 msgstr "Zoek op Morfologie"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:149
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:202
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:494
+#, fuzzy
+msgid "ID Morpheme/Annotation ID Morpheme"
+msgstr "ID-glos/Annotatie-ID-Glos"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:215
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:217
 msgid "Search by Phonology"
 msgstr "Zoek op Fonologie"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:193
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:238
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:240
 msgid "Search by Semantics"
 msgstr "Zoek op Semantiek"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:214
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:263
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:265
 msgid "Search by Relation"
 msgstr "Zoek op Relaties"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:259
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:308
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:310
 msgid "Search by Publication Status and Notes"
 msgstr "Zoek op Publicatiestatus en Aantekeningen"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:333
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:379
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:386
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:382
+#, fuzzy
+msgid "Search sign"
+msgstr "Zoeken"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:381
+#, fuzzy
+msgid "Search sign or morpheme"
+msgstr "Zoek voor een glos met dit morfeem"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:387
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:379
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:383
+#, fuzzy
+msgid "Search morpheme"
+msgstr "Zoek op Morfologie"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:388
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:384
+msgid "Sign or morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:398
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:391
 msgid "Reset"
 msgstr "Reset"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:337
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:402
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:395
 msgid "Results per page"
 msgstr "Hits per pagina"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:387
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:456
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:449
 msgid "Number of matches:"
 msgstr "Aantal hits:"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:387
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:456
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:449
 msgid "out of"
 msgstr "van"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:393
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:463
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:456
 msgid "Annotation ID gloss: Dutch"
 msgstr "Annotatie-ID-Glos: Nederlands"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:394
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:466
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:459
 msgid "Annotation ID gloss: English"
 msgstr "Annotatie-ID-Glos: Engels"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:395
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:469
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:462
 msgid "Translation equivalents"
 msgstr "Mogelijke vertalingen"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:397
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:471
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:465
 msgid "Strong hand"
 msgstr "Sterke hand"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:398
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:472
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:466
 msgid "Weak hand"
 msgstr "Zwakke hand"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:400
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:474
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:468
 #: signbank/dictionary/templates/dictionary/glosstags.html:5
+#: signbank/dictionary/templates/dictionary/morphemetags.html:5
 msgid "Tags"
 msgstr "Labels"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:20
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:84
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:130
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:20
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:130
 msgid "Edit"
 msgstr "Bewerk"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:21
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:21
 msgid "Turn off edit mode"
 msgstr "Zet edit-stand uit"
 
@@ -2455,162 +2487,216 @@ msgid "Delete this gloss"
 msgstr "Verwijder deze glos"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:23
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:23
 msgid "Saving..."
 msgstr "Opslaan..."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:62
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:24
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:24
+msgid "This idgloss already exists"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:108
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:108
 #, python-format
 msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
 msgstr "\"Gebaar %(glossposn)s van %(glosscount)s in NGT Signbank\" "
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:66
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:112
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:112
 msgid "Next Sign &raquo;"
 msgstr "Volgende gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:74
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:120
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:120
 msgid "Public View"
 msgstr "Publieke Versie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:75
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:121
 msgid "Delete Sign"
 msgstr "Verwijder gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:83
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:129
 msgid "Edit next gloss"
 msgstr "Bewerk volgende glos"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:90
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:136
 msgid "Delete This Sign"
 msgstr "Verwijder dit gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:93
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:139
 msgid ""
 "This action will delete this sign and all associated records. It cannot be "
 "undone."
 msgstr ""
 "Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:100
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:243
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:354
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:428
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:564
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:660
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:146
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:384
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:468
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:589
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:662
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:808
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:904
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:146
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:396
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:469
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:615
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:711
 #: signbank/dictionary/templates/dictionary/update_video.html:78
 msgid "Cancel"
 msgstr "Annuleer"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:101
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:244
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:355
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:429
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:565
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:661
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:147
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:385
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:469
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:590
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:663
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:809
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:905
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:147
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:397
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:470
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:616
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:712
 msgid "Confirm Delete"
 msgstr "Bevestig verwijderen"
 
 #. Translators:
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:140
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:142
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:192
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:194
 #: signbank/dictionary/templates/dictionary/word.html:116
 #: signbank/dictionary/templates/dictionary/word.html:119
 msgid "Provide feedback about this sign"
 msgstr "Geef feedback over dit gebaar"
 
-#. Translators: If sign is missing, report it
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:145
-#: signbank/dictionary/templates/dictionary/word.html:123
-msgid "Report a missing sign"
-msgstr "Geef een ontbrekend gebaar door"
-
-#. Translators: Provide feedback about the site in general
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:146
-#: signbank/dictionary/templates/dictionary/word.html:125
-msgid "Provide general site feedback"
-msgstr "Geef algemene feedback op de site"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:155
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:205
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:205
 msgid "Upload New Video"
 msgstr "Nieuwe video uploaden"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:156
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:206
 #, python-format
 msgid " We have %(gloss.count_videos)s videos for this sign. "
 msgstr "We hebben %(gloss.count_videos)s video's voor dit gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:174
-msgid "Delete/Revert Video"
-msgstr "Verwijder video"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:177
-msgid ""
-"This will delete the most recent upload and restore the most recent earlier "
-"version."
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:228
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:239
+msgid "Upload New Citation Form Image"
 msgstr ""
-"Zo wordt de meest recente video verwijderd en de vorige versie getoond."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:197
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:250
+#, fuzzy
+msgid "Delete Media"
+msgstr "Verwijder gebaar"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:334
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:272
 msgid "Translation equivalents in Dutch"
 msgstr "Mogelijke vertalingen in het Nederlands"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:198
-msgid "Annotation Instructions"
-msgstr "Annotatieinstructies"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:199
-msgid "Language"
-msgstr "Taal"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:200
-msgid "Dialect"
-msgstr "Dialect"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:209
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:348
 msgid "Morphology"
 msgstr "Morfologie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:232
-msgid "Delete This Morpheme"
-msgstr "Verwijder deze morfeem"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:358
+#, fuzzy
+msgid "Compound part"
+msgstr "Samenstelling"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:236
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:421
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:653
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:359
+msgid "Component sign"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:373
+#, fuzzy
+msgid "Delete This Compound part"
+msgstr "Verwijder deze aantekening"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:377
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:461
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:655
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:897
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:462
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:704
 msgid "Are you sure you want to delete this? This cannot be undone."
 msgstr ""
 "Weet je zeker dat je dit wilt verwijderen? Het kan niet ongedaan gemaakt "
 "worden."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:257
-msgid "view"
-msgstr "toon"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:401
+msgid "If this is a compound, use [Edit] to define its components"
+msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:269
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:412
 msgid "ID Gloss/Annotation ID Gloss"
 msgstr "ID-glos/Annotatie-ID-Glos"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:270
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:413
+msgid "Add Component"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:426
+#, fuzzy
+msgid "Compound sign"
+msgstr "Samenstelling"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:437
+msgid "This gloss is not defined as part of a compound"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:457
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:136
+msgid "Delete This Morpheme"
+msgstr "Verwijder deze morfeem"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:483
+msgid "Use [Edit] to define any morphemes used in this sign"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:495
 msgid "Add Morpheme"
 msgstr "Voeg morfeem toe"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:287
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:512
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:337
 msgid "Phonology"
 msgstr "Fonologie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:312
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:529
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:354
 msgid "Semantics"
 msgstr "Semantiek"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:329
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:546
+#, fuzzy
+msgid "Language & Dialect"
+msgstr "Taal"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:551
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:290
+msgid "Language"
+msgstr "Taal"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:552
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:291
+msgid "Dialect"
+msgstr "Dialect"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:564
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:371
 msgid "Relations to Other Signs"
 msgstr "Relaties met andere gebaren"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:343
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:417
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:578
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:651
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:385
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:458
 msgid "Delete This Relation"
 msgstr "Verwijder deze relatie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:347
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:582
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:389
 #, python-format
 msgid ""
 " This action will delete the %(rel.get_role_display)s relation between "
@@ -2619,117 +2705,142 @@ msgstr ""
 "Zo wordt de %(rel.get_role_display)s-relatie tussen %(rel.source)s en "
 "%(rel.target)s verwijderd. Dit kan niet ongedaan gemaakt worden."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:397
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:631
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:438
 msgid "Relations to Foreign Signs"
 msgstr "Relaties met gebaren uit andere talen"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:403
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:637
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:444
 msgid "Loan"
 msgstr "Leenwoord"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:405
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:453
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:639
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:687
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:446
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:494
 msgid "Gloss in related language"
 msgstr "Glos in een verwante taal"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:426
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:562
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:660
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:806
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:467
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:613
 msgid "confirmed"
 msgstr "Verwijder"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:452
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:686
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:493
 msgid "Related language"
 msgstr "Verwante taal"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:454
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:688
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:495
 msgid "Add Relation to Foreign Sign"
 msgstr "Voeg relatie toe"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:471
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:705
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:512
 msgid "Frequency"
 msgstr "Frequentie"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:488
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:722
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:529
 msgid "Publication Status"
 msgstr "Publicatiestatus"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:496
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:730
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:537
 msgid "Creation Date"
 msgstr "Aanmaakdatum"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:497
-#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:731
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:538
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Creator"
 msgstr "Toegevoegd door"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:499
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:743
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:550
 msgid "In Web Dictionary"
 msgstr "In woordenboek"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:507
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:751
 msgid "Proposed New Sign"
 msgstr "Voorstel voor nieuw gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:524
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:768
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:575
 msgid "Notes"
 msgstr "Aantekeningen"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:534
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:778
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:585
 msgid "Published"
 msgstr "Gepubliceerd"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:535
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:779
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:586
 msgid "Index"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:553
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:797
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:604
 msgid "Delete This Note"
 msgstr "Verwijder deze aantekening"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:557
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:801
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:608
 msgid "This action will delete this note. It cannot be undone."
 msgstr ""
 "Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:603
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:847
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:654
 msgid "Enter new note"
 msgstr "Vul nieuwe aantekening in"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:852
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:854
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:661
 msgid "Save new note"
 msgstr "Bewaar nieuwe aantekening"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:610
-msgid "Save New"
-msgstr "Bewaar nieuw gebaar"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:627
-msgid "Other videos"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:871
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:678
+#, fuzzy
+msgid "Other media"
 msgstr "Andere video's"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:635
-msgid "Video"
-msgstr "video"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:879
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:686
+#, fuzzy
+msgid "Image/Video"
+msgstr "Afbeelding"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:637
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:690
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:881
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:934
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:688
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:741
 msgid "Alternative gloss"
 msgstr "Alternatieve glos"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:649
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:893
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:700
 #, fuzzy
-msgid "Delete This Other Video"
-msgstr "Verwijder deze aantekening"
+msgid "Delete This Media"
+msgstr "Verwijder dit gebaar"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:688
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:932
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:739
 #, fuzzy
-msgid "Upload video"
+msgid "Upload media"
 msgstr "Upload video"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:695
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:939
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:746
 #, fuzzy
-msgid "Save new other video"
-msgstr "Andere video's"
+msgid "Save"
+msgstr "Bewaar nieuw gebaar"
 
 #: signbank/dictionary/templates/dictionary/gloss_list.html:42
 #: signbank/dictionary/templates/dictionary/search_result.html:94
@@ -2737,6 +2848,7 @@ msgid "Jump to results page:"
 msgstr "Ga naar de resultatenlijst:"
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:20
+#: signbank/dictionary/templates/dictionary/morphemetags.html:20
 msgid "delete this tag"
 msgstr "verwijder dit label"
 
@@ -2753,11 +2865,11 @@ msgstr "Upload hier het gewijzigde CSV-bestand:"
 msgid "Submit"
 msgstr "Bevestig"
 
-#: signbank/dictionary/templates/dictionary/import_csv.html:28
+#: signbank/dictionary/templates/dictionary/import_csv.html:32
 msgid "The following changes were detected:"
 msgstr "De volgende wijzigingen zijn vastgesteld:"
 
-#: signbank/dictionary/templates/dictionary/import_csv.html:32
+#: signbank/dictionary/templates/dictionary/import_csv.html:36
 #, python-format
 msgid ""
 "\n"
@@ -2767,27 +2879,107 @@ msgid ""
 "                "
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/import_csv.html:40
+#: signbank/dictionary/templates/dictionary/import_csv.html:44
 msgid "Make changes"
 msgstr "Wijzig"
 
-#: signbank/dictionary/templates/dictionary/import_csv.html:47
+#: signbank/dictionary/templates/dictionary/import_csv.html:51
 msgid "Changes are live."
 msgstr "Wijzigingen zijn gepubliceerd."
 
 #. Translators: Welcome message
 #: signbank/dictionary/templates/dictionary/index.html:7
-#, python-format
+#, fuzzy, python-format
 msgid ""
-"Welcome to the Sign Search section of the %(langauge)s SignBank. Here\n"
+"Welcome to the Sign Search section of the %(language)s SignBank. Here\n"
 "    you can search for a sign using a Dutch translation in the search box\n"
 "    above, or browse words starting with any letter below."
 msgstr ""
-"Welcome bij de Zoekpagina van %(langauge)s SignBank. Hier\n"
+"Welcome bij de Zoekpagina van %(language)s SignBank. Hier\n"
 "    kun je zoeken naar een gebaar op basis van de Nederlandse vertaling\n"
 "    hierboven, of zoeken naar gebaren op basis van de beginletter van de "
 "vertaling\n"
 "    hieronder."
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:22
+#, fuzzy
+msgid "Delete this morpheme"
+msgstr "Verwijder deze morfeem"
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:121
+#, fuzzy
+msgid "Delete Morpheme"
+msgstr "Verwijder deze morfeem"
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:129
+#, fuzzy
+msgid "Edit next morpheme"
+msgstr "Bewerk volgende glos"
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:139
+#, fuzzy
+msgid ""
+"This action will delete this morpheme and all associated records. It cannot "
+"be undone."
+msgstr ""
+"Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:192
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:194
+#, fuzzy
+msgid "Provide feedback about this morpheme"
+msgstr "Geef feedback over dit gebaar"
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:206
+#, fuzzy, python-format
+msgid " We have %(morpheme.count_videos)s videos for this morpheme. "
+msgstr "We hebben %(gloss.count_videos)s video's voor dit gebaar"
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:224
+msgid "Delete/Revert Video"
+msgstr "Verwijder video"
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:227
+msgid ""
+"This will delete the most recent upload and restore the most recent earlier "
+"version."
+msgstr ""
+"Zo wordt de meest recente video verwijderd en de vorige versie getoond."
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:273
+msgid "Annotation Instructions"
+msgstr "Annotatieinstructies"
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:281
+msgid "From word class"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:285
+msgid "To word class"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:300
+msgid "Appears in"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:311
+#, fuzzy
+msgid "Gloss"
+msgstr "ID-Glos"
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:323
+msgid "This morpheme does not occur in any gloss"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:558
+#, fuzzy
+msgid "Proposed New Morpheme"
+msgstr "Voorstel voor nieuw gebaar"
+
+#: signbank/dictionary/templates/dictionary/morphemetags.html:36
+#, fuzzy
+msgid "Add morpheme Tag"
+msgstr "Voeg morfeem toe"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:27
 msgid "There is no exact match to the word you typed."
@@ -2831,8 +3023,8 @@ msgid ""
 "registered users.) If you\n"
 "            <a href=\"/accounts/login/\">login or register \n"
 "\n"
-"            with %(langauge)s Signbank</a>,  you will then be able to find "
-"these \n"
+"            with %(language)s Signbank</a>,  you will then be able to find "
+"these\n"
 "\n"
 "            matching words/signs if they exist in %(language)s. "
 msgstr ""
@@ -2904,6 +3096,10 @@ msgstr "Bevestig update van deze video:"
 msgid "Upload Video"
 msgstr "Upload video"
 
+#: signbank/dictionary/templates/dictionary/warning.html:8
+msgid "Click here to go back."
+msgstr ""
+
 #. Translators: Page title
 #: signbank/dictionary/templates/dictionary/word.html:5
 #, python-format
@@ -2950,6 +3146,16 @@ msgstr "Detailbeeld"
 msgid "Keywords:"
 msgstr "Vertalingen:"
 
+#. Translators: If sign is missing, report it
+#: signbank/dictionary/templates/dictionary/word.html:123
+msgid "Report a missing sign"
+msgstr "Geef een ontbrekend gebaar door"
+
+#. Translators: Provide feedback about the site in general
+#: signbank/dictionary/templates/dictionary/word.html:125
+msgid "Provide general site feedback"
+msgstr "Geef algemene feedback op de site"
+
 #. Translators: Header4
 #: signbank/dictionary/templates/dictionary/word.html:132
 msgid "Sign Distribution"
@@ -2982,27 +3188,37 @@ msgstr "De geüploade video zal naar Flash worden geconverteerd"
 msgid "Advanced options"
 msgstr "Geavanceerde opties"
 
-#: signbank/pages/models.py:11
+#: signbank/pages/models.py:12
 msgid "English title"
 msgstr "Engelse titel"
 
-#: signbank/pages/models.py:12
+#: signbank/pages/models.py:13
 msgid "Dutch title"
 msgstr "Nederlandse titel"
 
-#: signbank/pages/models.py:13
+#: signbank/pages/models.py:14
+#, fuzzy
+msgid "Chinese title"
+msgstr "Engelse titel"
+
+#: signbank/pages/models.py:16
 msgid "English content"
 msgstr "Engelse inhoud"
 
-#: signbank/pages/models.py:14
+#: signbank/pages/models.py:17
 msgid "Dutch content"
 msgstr "Nederlandse inhoud"
 
-#: signbank/pages/models.py:15
+#: signbank/pages/models.py:18
+#, fuzzy
+msgid "Chinese content"
+msgstr "Engelse inhoud"
+
+#: signbank/pages/models.py:20
 msgid "template name"
 msgstr "templaatnaam"
 
-#: signbank/pages/models.py:16
+#: signbank/pages/models.py:21
 msgid ""
 "Example: 'pages/contact_page.html'. If this isn't provided, the system will "
 "use 'pages/default.html'."
@@ -3010,16 +3226,16 @@ msgstr ""
 "Voorbeeld: 'pages/contact_page.html'. Als deze niet aanwezig is, zal het "
 "systeem 'pages/default.html' gebruiken."
 
-#: signbank/pages/models.py:17
+#: signbank/pages/models.py:22
 msgid "publish"
 msgstr "publiceer"
 
-#: signbank/pages/models.py:17
+#: signbank/pages/models.py:22
 msgid "If this is checked, the page will be included in the site menus."
 msgstr ""
 "Als dit is aangevinkt, wordt de pagina opgenomen in de menu's van de site."
 
-#: signbank/pages/models.py:18
+#: signbank/pages/models.py:23
 msgid ""
 "Leave blank for a top level menu entry.  Top level entries that have sub-"
 "pages should be empty as they will not be linked in the menu."
@@ -3027,15 +3243,15 @@ msgstr ""
 "Laat leeg voor een top-levelmenuitem. Top-levelitems die subpagina'shebben "
 "moeten leeg blijven omdat ze niet in het menu gelinkt worden."
 
-#: signbank/pages/models.py:19
+#: signbank/pages/models.py:24
 msgid "ordering index"
 msgstr "sorteerindex"
 
-#: signbank/pages/models.py:19
+#: signbank/pages/models.py:24
 msgid "Used to order pages in the menu"
 msgstr "Gebruikt om pagina's in het menu te sorteren"
 
-#: signbank/pages/models.py:20
+#: signbank/pages/models.py:25
 msgid ""
 "This page will only be visible to members of these groups, leave blank to "
 "allow anyone to access."
@@ -3043,25 +3259,31 @@ msgstr ""
 "Deze pagina is alleen zichtbaar voor leden van deze groepen, laatleeg om "
 "iedereen toegang te geven."
 
-#: signbank/pages/models.py:23
+#: signbank/pages/models.py:28
 msgid "page"
 msgstr "pagina"
 
-#: signbank/pages/models.py:24
+#: signbank/pages/models.py:29
 msgid "pages"
 msgstr "pagina's"
 
-#: signbank/pages/models.py:35
+#: signbank/pages/models.py:40
 msgid "title"
 msgstr "titel"
 
-#: signbank/pages/models.py:36
+#: signbank/pages/models.py:41
 msgid "number"
 msgstr "nummer"
 
 #: signbank/registration/forms.py:46
 msgid "Your Email Address"
 msgstr "Je emailadres"
+
+#: signbank/registration/forms.py:48 signbank/registration/forms.py:284
+#: templates/ASL-templates/loginform.html:20
+#: templates/NGT-templates/loginform.html:20
+msgid "Password"
+msgstr "Wachtwoord"
 
 #: signbank/registration/forms.py:50
 msgid "Password (again)"
@@ -3101,6 +3323,12 @@ msgstr ""
 msgid "What is your background?"
 msgstr "Wat is je achtergrond?"
 
+#: signbank/registration/forms.py:283
+#: templates/ASL-templates/loginform.html:14
+#: templates/NGT-templates/loginform.html:14
+msgid "Email"
+msgstr "E-mail"
+
 #: signbank/registration/forms.py:304
 msgid ""
 "Please enter a correct email and password. Note that password is case-"
@@ -3136,16 +3364,245 @@ msgstr "registratieprofiel"
 msgid "registration profiles"
 msgstr "registratieprofielen"
 
-#: templates/admin/dictionary/gloss/change_form.html:15
-msgid "History"
-msgstr "Geschiedenis"
+#: signbank/registration/views.py:130
+msgid "This account has expired. Please contact o.crasborn@let.ru.nl."
+msgstr ""
 
-#: templates/admin/dictionary/gloss/change_form.html:18
-msgid "View on site"
-msgstr "Bekijk op de site"
+#: signbank/registration/views.py:142
+msgid "The username or password is incorrect."
+msgstr ""
 
-#~ msgid "Annotation ID Gloss"
-#~ msgstr "Annotatie-ID-Glos"
+#: templates/ASL-templates/baselayout.html:50
+#: templates/NGT-templates/baselayout.html:50
+msgid "The NGT Signbank</span> is licensed under a "
+msgstr "Gebruik van NGT Signbank</span> valt onder een"
+
+#: templates/ASL-templates/baselayout.html:50
+#: templates/NGT-templates/baselayout.html:50
+msgid "Creative Commons BY-NC-SA 4.0 International License"
+msgstr "Creative Commons BY-NC-SA 4.0 International-Licentie"
+
+#: templates/ASL-templates/baselayout.html:53
+#: templates/NGT-templates/baselayout.html:53
+msgid "Provide feedback on the site"
+msgstr "Geef feedback over dit gebaar"
+
+#: templates/ASL-templates/loginform.html:12
+#: templates/NGT-templates/loginform.html:12
+msgid "Sign In"
+msgstr "Inloggen"
+
+#: templates/ASL-templates/loginform.html:27
+#: templates/NGT-templates/loginform.html:27
+msgid "Sign in"
+msgstr "Inloggen"
+
+#: templates/ASL-templates/loginform.html:38
+#: templates/ASL-templates/loginform.html:41
+#: templates/NGT-templates/loginform.html:43
+#: templates/NGT-templates/loginform.html:46
+msgid "Register"
+msgstr "Aanmelden"
+
+#: templates/ASL-templates/loginform.html:40
+#: templates/NGT-templates/loginform.html:45
+msgid "Register for free to provide feedback on the Signbank."
+msgstr "Meld je gratis aan om feedback op Signbank te kunnen geven."
+
+#: templates/ASL-templates/loginform.html:47
+#: templates/NGT-templates/loginform.html:52
+msgid "Lost Password"
+msgstr "Wachtwoord vergeten"
+
+#: templates/ASL-templates/loginform.html:48
+#: templates/NGT-templates/loginform.html:53
+msgid ""
+"If you've lost or forgotten your password, enter your email address here and "
+"we'll reset it and send you a reminder."
+msgstr ""
+"Wachtwoord vergeten? Vul hieronder je e-mailadres in om een nieuwe "
+"toegestuurd te krijgen."
+
+#: templates/ASL-templates/loginform.html:53
+#: templates/NGT-templates/loginform.html:58
+msgid "Email:"
+msgstr "Gebruikersnaam"
+
+#: templates/ASL-templates/loginform.html:57
+#: templates/NGT-templates/loginform.html:62
+msgid "Request Password"
+msgstr "Stel mijn wachtwoord opnieuw in"
+
+#: templates/ASL-templates/menu.html:97 templates/NGT-templates/menu.html:117
+msgid "Search gloss"
+msgstr "Glos zoeken"
+
+#: templates/ASL-templates/menu.html:99 templates/NGT-templates/menu.html:119
+msgid "Search translation"
+msgstr "Vertaling zoeken"
+
+#: templates/ASL-templates/menu.html:101 templates/NGT-templates/menu.html:121
+msgid "Sign search"
+msgstr "Gebaar zoeken"
+
+#: templates/ASL-templates/menu.html:106 templates/NGT-templates/menu.html:126
+msgid "Logout"
+msgstr "Uitloggen"
+
+#: templates/ASL-templates/menu.html:108 templates/NGT-templates/menu.html:128
+msgid "Login"
+msgstr "Inloggen"
+
+#: templates/ASL-templates/pages/default.html:9
+#: templates/NGT-templates/pages/default.html:9
+msgid "Edit Page"
+msgstr "Bewerk pagina"
+
+#: templates/ASL-templates/registration/password_reset_complete.html:5
+#: templates/ASL-templates/registration/password_reset_complete.html:9
+#: templates/NGT-templates/registration/password_reset_complete.html:5
+#: templates/NGT-templates/registration/password_reset_complete.html:9
+msgid "Password reset complete"
+msgstr "Het wachtwoord is opnieuw ingesteld"
+
+#: templates/ASL-templates/registration/password_reset_complete.html:11
+#: templates/NGT-templates/registration/password_reset_complete.html:11
+msgid "Your password has been set.  You may go ahead and log in now."
+msgstr "Je wachtwoord is ingesteld. Je kunt nu inloggen."
+
+#: templates/ASL-templates/registration/password_reset_complete.html:13
+#: templates/NGT-templates/registration/password_reset_complete.html:13
+msgid "Log in"
+msgstr "Inloggen"
+
+#: templates/ASL-templates/registration/password_reset_confirm.html:5
+#: templates/ASL-templates/registration/password_reset_form.html:4
+#: templates/ASL-templates/registration/password_reset_form.html:6
+#: templates/ASL-templates/registration/password_reset_form.html:10
+#: templates/NGT-templates/registration/password_reset_confirm.html:5
+#: templates/NGT-templates/registration/password_reset_form.html:4
+#: templates/NGT-templates/registration/password_reset_form.html:6
+#: templates/NGT-templates/registration/password_reset_form.html:10
+msgid "Password reset"
+msgstr "Wachtwoord opnieuw instellen"
+
+#: templates/ASL-templates/registration/password_reset_confirm.html:13
+#: templates/NGT-templates/registration/password_reset_confirm.html:13
+msgid "Enter new password"
+msgstr "Vul nieuw wachtwoord in"
+
+#: templates/ASL-templates/registration/password_reset_confirm.html:15
+#: templates/NGT-templates/registration/password_reset_confirm.html:15
+msgid ""
+"Please enter your new password twice so we can verify you typed it in "
+"correctly."
+msgstr ""
+"Vul je nieuwe wachtwoord twee keer in zodat we kunnen controleren of ze "
+"gelijk zijn."
+
+#: templates/ASL-templates/registration/password_reset_confirm.html:19
+#: templates/NGT-templates/registration/password_reset_confirm.html:19
+msgid "New password:"
+msgstr "Nieuw wachtwoord:"
+
+#: templates/ASL-templates/registration/password_reset_confirm.html:22
+#: templates/NGT-templates/registration/password_reset_confirm.html:22
+msgid "Confirm password:"
+msgstr "Bevestig nieuw wachtwoord:"
+
+#: templates/ASL-templates/registration/password_reset_confirm.html:24
+#: templates/NGT-templates/registration/password_reset_confirm.html:24
+msgid "Change my password"
+msgstr "Verander mijn wachtwoord:"
+
+#: templates/ASL-templates/registration/password_reset_confirm.html:29
+#: templates/NGT-templates/registration/password_reset_confirm.html:29
+msgid "Password reset unsuccessful"
+msgstr "Wachtwoord opnieuw instellen is mislukt"
+
+#: templates/ASL-templates/registration/password_reset_confirm.html:31
+#: templates/NGT-templates/registration/password_reset_confirm.html:31
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used.  Please request a new password reset."
+msgstr ""
+"De link om het wachtwoord opnieuw in te stellen is waarschijnlijk al een "
+"keer gebruikt. Vraag opnieuw een nieuw wachtwoord aan."
+
+#: templates/ASL-templates/registration/password_reset_done.html:6
+#: templates/NGT-templates/registration/password_reset_done.html:6
+msgid "An email has been sent to your address with a new password."
+msgstr ""
+
+#: templates/ASL-templates/registration/password_reset_email.html:2
+#: templates/NGT-templates/registration/password_reset_email.html:2
+#, fuzzy
+msgid ""
+"You're receiving this email because you requested a password reset for your "
+"user account at Signbank."
+msgstr ""
+"Je ontvangt deze mail omdat je het wachtwoord voor je account op "
+"%(site_name)s opnieuw in wilt stellen"
+
+#: templates/ASL-templates/registration/password_reset_email.html:4
+#: templates/NGT-templates/registration/password_reset_email.html:4
+msgid "Please go to the following page and choose a new password:"
+msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen:"
+
+#: templates/ASL-templates/registration/password_reset_email.html:9
+#: templates/NGT-templates/registration/password_reset_email.html:9
+msgid "Thanks for using our site!"
+msgstr "Bedankt voor het gebruik van onze site! "
+
+#: templates/ASL-templates/registration/password_reset_email.html:11
+#: templates/NGT-templates/registration/password_reset_email.html:11
+#, fuzzy
+msgid "The Signbank team"
+msgstr "Het %(site_name)s-team"
+
+#: templates/ASL-templates/registration/password_reset_form.html:4
+#: templates/NGT-templates/registration/password_reset_form.html:4
+msgid "Home"
+msgstr "Home"
+
+#: templates/ASL-templates/registration/password_reset_form.html:12
+#: templates/NGT-templates/registration/password_reset_form.html:12
+msgid ""
+"Forgotten your password? Enter your e-mail address below, and we'll reset "
+"your password and e-mail the new one to you."
+msgstr ""
+"Wachtwoord vergeten? Vul hieronder je e-mailadres in om een nieuwe "
+"toegestuurd te krijgen."
+
+#: templates/ASL-templates/registration/password_reset_form.html:17
+#: templates/NGT-templates/registration/password_reset_form.html:17
+msgid "E-mail address:"
+msgstr "E-mailadres:"
+
+#: templates/ASL-templates/registration/password_reset_form.html:17
+#: templates/NGT-templates/registration/password_reset_form.html:17
+msgid "Reset my password"
+msgstr "Stel mijn wachtwoord opnieuw in"
+
+#~ msgid "view"
+#~ msgstr "toon"
+
+#~ msgid "Video"
+#~ msgstr "video"
+
+#, fuzzy
+#~ msgid "Delete This Other Video"
+#~ msgstr "Verwijder deze aantekening"
+
+#, fuzzy
+#~ msgid "Save new other video"
+#~ msgstr "Andere video's"
+
+#~ msgid "History"
+#~ msgstr "Geschiedenis"
+
+#~ msgid "View on site"
+#~ msgstr "Bekijk op de site"
 
 #~ msgid "Password:"
 #~ msgstr "Wachtwoord:"

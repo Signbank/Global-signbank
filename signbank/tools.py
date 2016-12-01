@@ -3,6 +3,7 @@ import os
 import shutil
 from HTMLParser import HTMLParser
 from zipfile import ZipFile
+from datetime import datetime, date
 import json
 import re
 
@@ -191,7 +192,12 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
 
             if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
                 res = re.search(r'(\d+)\.[^\.]*', filename)
-                gloss_id = res.group(1)
+
+                try:
+                    gloss_id = res.group(1)
+                except AttributeError:
+                    continue
+
                 static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+subfolder_name+'/'+filename
 
     return static_urls
@@ -221,3 +227,8 @@ def create_zip_with_json_files(data_per_file,output_path):
         if isinstance(data,list) or isinstance(data,dict):
             output = json.dumps(data,indent=INDENTATION_CHARS)
             zip.writestr(filename+'.json',output)
+
+def get_deleted_gloss_data(since_timestamp):
+
+    deletion_date_range = [datetime.fromtimestamp(since_timestamp),date.today()]
+    return [(deleted_gloss.old_pk,deleted_gloss.idgloss) for deleted_gloss in DeletedGloss.objects.filter(deletion_date__range=deletion_date_range)]

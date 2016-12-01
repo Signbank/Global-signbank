@@ -199,7 +199,6 @@ def word(request, keyword, n):
                                },
                                context_instance=RequestContext(request))
 
-@login_required_config
 def gloss(request, idgloss):
     """View of a gloss - mimics the word view, really for admin use
        when we want to preview a particular gloss"""
@@ -219,7 +218,10 @@ def gloss(request, idgloss):
 
     gloss = glosses[0]
 
-    # and all the keywords associated with this sign
+    if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
+#        return render_to_response('dictionary/not_allowed.html')
+        return render_to_response("dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'},context_instance=RequestContext(request))
+
     allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
         trans = Translation()
@@ -468,32 +470,18 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    result = ''
+    result = 'hoi'
+    for tagged_item in TaggedItem.objects.all():
 
-    # for gloss in Gloss.objects.all():
-    #
-    #     if gloss.idgloss in all_id_glosses:
-    #         result += ' '.join([str(gloss.idgloss),str(gloss.annotation_idgloss),str(gloss.annotation_idgloss_en)]) + '<br>'
-    #
-    #     all_id_glosses.append(gloss.idgloss)
+        if tagged_item.tag.pk == 13: #13 = radboud sign
 
-    # for n, line in enumerate(open('/var/www2/signbank/live/repo/signbank/signbank/dictionary/ID-glossen-classifier-en-SHAPEconstructies.csv')):
-    #
-    #     if n == 0:
-    #         continue
-    #
-    #     signbank_id, idgloss, annotation_id_gloss, annotation_id_gloss_en, strong_hand = line.strip().split(',')
-    #     machine_value = FieldChoice.objects.get(english_name=strong_hand,field='Handshape').machine_value
-    #     g = Gloss()
-    #     g.idgloss = idgloss
-    #     g.annotation_idgloss = annotation_id_gloss
-    #     g.annotation_idgloss_en = annotation_id_gloss_en
-    #     g.domhndsh = machine_value
-    #     g.save()
-
-    for gloss in Gloss.objects.filter(relOriMov=1):
-        gloss.relOriMov = 6
-        gloss.save()
+            try:
+                pk = tagged_item.object_id
+                gloss = Gloss.objects.get(pk=pk)
+                gloss.inWeb = True
+                gloss.save()
+            except ObjectDoesNotExist:
+                continue
 
     return HttpResponse(result)
 
@@ -953,11 +941,23 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = None
 
+    video_folder_name = 'glossvideo'
+    image_folder_name = 'glossimage'
+
+    try:
+        if request.GET['small_videos'] not in [0,False,'false']:
+            video_folder_name+= '_small'
+    except KeyError:
+        pass
+
     archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
-    collected_data = {'video_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossvideo',since_timestamp),
-                      'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder('glossimage',since_timestamp),
+    collected_data = {'video_urls':signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp),
+                      'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp),
                       'glosses':signbank.tools.get_gloss_data(since_timestamp)}
+
+    if since_timestamp != None:
+        collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_data(since_timestamp)
 
     signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
 

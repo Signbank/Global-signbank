@@ -580,11 +580,26 @@ function do_adminsearch(el) {
 
       {% endfor %}
       </td>
-    
-            <td>{{ gloss.get_handedness_display }}</td>
-            <td>{{ gloss.get_domhndsh_display }}</td>
-            <td>{{ gloss.get_subhndsh_display }}</td>
-            <td>{{ gloss.get_locprim_display }}</td>
+
+            {% load field_choice %}
+
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td>{{ gloss.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td>{{ gloss.subhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td>{{ gloss.locprim|translate_to_dutch:"Location" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td>{{ gloss.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td>{{ gloss.subhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td>{{ gloss.locprim|translate_to_chinese:"Location" }}</td>
+            {% else %}
+                <td>{{ gloss.get_handedness_display }}</td>
+                <td>{{ gloss.get_domhndsh_display }}</td>
+                <td>{{ gloss.get_subhndsh_display }}</td>
+                <td>{{ gloss.get_locprim_display }}</td>
+            {% endif %}
+
             {% load underscore_to_space %}
             <td>{% for tag in gloss.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
             
