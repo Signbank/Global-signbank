@@ -956,6 +956,9 @@ def package(request):
                       'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp),
                       'glosses':signbank.tools.get_gloss_data(since_timestamp)}
 
+    if since_timestamp != None:
+        collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_data(since_timestamp)
+
     signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
 
     response = HttpResponse(FileWrapper(open(archive_file_path)), content_type='application/zip')

@@ -3,6 +3,7 @@ import os
 import shutil
 from HTMLParser import HTMLParser
 from zipfile import ZipFile
+from datetime import datetime, date
 import json
 import re
 
@@ -226,3 +227,8 @@ def create_zip_with_json_files(data_per_file,output_path):
         if isinstance(data,list) or isinstance(data,dict):
             output = json.dumps(data,indent=INDENTATION_CHARS)
             zip.writestr(filename+'.json',output)
+
+def get_deleted_gloss_data(since_timestamp):
+
+    deletion_date_range = [datetime.fromtimestamp(since_timestamp),date.today()]
+    return [(deleted_gloss.old_pk,deleted_gloss.idgloss) for deleted_gloss in DeletedGloss.objects.filter(deletion_date__range=deletion_date_range)]
