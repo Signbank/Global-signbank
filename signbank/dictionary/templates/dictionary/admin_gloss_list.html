@@ -119,6 +119,7 @@ function do_adminsearch(el) {
 
 {% block content %}
 
+{% if perms.dictionary.search_gloss %}
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}</div>
 
@@ -420,6 +421,7 @@ function do_adminsearch(el) {
     </div>
 
 </div>
+{% endif %}
 
 {% if perms.dictionary.add_gloss %}
 <div  class="panel panel-default">
@@ -447,8 +449,7 @@ function do_adminsearch(el) {
      </div>
   </div>
   {% endif %}
-                
-             
+
              
 
   
