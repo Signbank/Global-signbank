@@ -233,11 +233,11 @@ def get_deleted_gloss_or_media_data(item_type,since_timestamp):
     result = []
     deletion_date_range = [datetime.fromtimestamp(since_timestamp),date.today()]
 
-    for deleted_gloss in DeletedGlossOrMedia.objects.filter(deletion_date__range=deletion_date_range,
+    for deleted_gloss_or_media in DeletedGlossOrMedia.objects.filter(deletion_date__range=deletion_date_range,
                                                             item_type=item_type):
         if item_type == 'gloss':
-            result.append((deleted_gloss.old_pk, deleted_gloss.idgloss))
+            result.append((deleted_gloss_or_media.old_pk, deleted_gloss_or_media.idgloss))
         else:
-            result.append(deleted_gloss.filename)
+            result.append(deleted_gloss_or_media.old_pk)
 
     return result
