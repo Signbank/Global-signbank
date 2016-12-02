@@ -90,3 +90,9 @@ CNGT_METADATA_LOCATION = ROOT+'virtualenv/signbank/CNGT_MetadataEnglish_OtherRes
 
 FFMPEG_PROGRAM = "avconv"
 TMP_DIR = "/tmp"
+
+API_FIELDS = [
+    'idgloss',
+    'annotation_idgloss',
+    'annotation_idgloss_en',
+]

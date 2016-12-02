@@ -57,3 +57,9 @@ CNGT_METADATA_LOCATION = ''
 
 FFMPEG_PROGRAM = "avconv"
 TMP_DIR = "/tmp"
+
+API_FIELDS = [
+    'idgloss',
+    'annotation_idgloss',
+    'annotation_idgloss_en',
+]

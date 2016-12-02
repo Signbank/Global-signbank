@@ -439,7 +439,7 @@ minor or insignificant ways that can be ignored.""")
     def get_fields_dict(self):
         fields = {}
         for field in Gloss._meta.fields:
-            if True or field.name in settings.API_FIELDS: #True is temporary because API_FIELDS is not yet defined
+            if field.name in settings.API_FIELDS:
                 category = fieldname_to_category(field.name)
                 if category != field.name:
                     if not fields.has_key(category):
