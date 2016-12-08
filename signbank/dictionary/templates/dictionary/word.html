@@ -102,7 +102,7 @@
         
             <div id="keywords">
                 {# Translators: Keywords #}
-                 <p><strong>{% blocktrans %}Keywords:{% endblocktrans %}</strong>
+                 <p><strong>{% blocktrans %}Translation equivalents:{% endblocktrans %}</strong>
                  {% for kwd in allkwds %}
                    {% ifequal translation kwd.translation.text %}<strong>{{ kwd.translation.text|safe }}</strong>{% else %}{{ kwd.translation.text|safe }}{% endifequal %}{% if not forloop.last %},{% endif %}
                  {% endfor %}
