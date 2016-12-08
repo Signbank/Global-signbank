@@ -162,7 +162,7 @@ msgstr ""
 #: signbank/dictionary/models.py:261
 #: signbank/dictionary/templates/dictionary/add_gloss.html:23
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:190
-msgid "ID Gloss"
+msgid "Lemma ID Gloss"
 msgstr "Lemma ID"
 
 #: signbank/dictionary/models.py:266
