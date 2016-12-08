@@ -380,7 +380,7 @@ class GlossListView(ListView):
             qs = qs.filter(inWeb__exact=val)
             #print "B :", len(qs)
 
-        if not self.request.user.has_perm('search_gloss'):
+        if not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(inWeb__exact=True)
 
         if get.has_key('hasvideo') and get['hasvideo'] != 'unspecified':
