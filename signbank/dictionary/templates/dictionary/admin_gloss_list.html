@@ -389,6 +389,10 @@ function do_adminsearch(el) {
                             <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
                         </ul>
                     </div>
+
+                    <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
+                    <input type="submit" style="visibility: hidden;" />
+
                     {% if perms.dictionary.export_csv %}
                     <input class='btn btn-default' type='submit' name='format' value='CSV'>
                     {% endif %}
