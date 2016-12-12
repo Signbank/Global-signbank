@@ -577,7 +577,7 @@ msgid "Annotation ID gloss: English"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:392
-msgid "Translation equivalents"
+msgid "Abstract Meaning"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:394

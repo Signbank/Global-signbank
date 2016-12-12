@@ -2450,7 +2450,7 @@ msgstr "Annotatie-ID-Glos: Engels"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:469
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:462
-msgid "Translation equivalents"
+msgid "Abstract Meaning"
 msgstr "Mogelijke vertalingen"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:471
