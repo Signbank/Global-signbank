@@ -321,7 +321,7 @@
                 {% endfor %}
             </table>
            {% else %}
-            <p>{% trans "This morpheme does not occur in any gloss" %}</p>
+            <p>{% trans "This morpheme does not occur in any sign" %}</p>
            {% endif %}
 
            {# spacing div to allow room for typeahead dropdown #}
@@ -418,7 +418,7 @@
                    <table class='table table-condensed'>
                        <tr>
                            <td>{{relationform.role}}</td>
-                           <td><input class='form-control glosstypeahead' placeholder='ID Gloss/Annotation ID Gloss' name='targetid'></td>
+                           <td><input class='form-control glosstypeahead' placeholder='Annotation ID Gloss' name='targetid'></td>
                            <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
                        </tr>
                    </table>

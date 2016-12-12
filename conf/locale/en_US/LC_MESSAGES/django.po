@@ -1501,3 +1501,13 @@ msgstr ""
 #: templates/NGT-templates/registration/password_reset_form.html:17
 msgid "Reset my password"
 msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:323
+msgid "This morpheme does not occur in any sign"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:202
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:494
+#, fuzzy
+msgid "Morpheme Gloss"
+msgstr "Morpheme Gloss"

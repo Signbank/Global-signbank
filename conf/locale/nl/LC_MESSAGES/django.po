@@ -2371,8 +2371,8 @@ msgstr "Zoek op Morfologie"
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:202
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:494
 #, fuzzy
-msgid "ID Morpheme/Annotation ID Morpheme"
-msgstr "ID-glos/Annotatie-ID-Glos"
+msgid "Morpheme Gloss"
+msgstr "Morfeem-Glos"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:215
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:217
@@ -2629,8 +2629,8 @@ msgid "If this is a compound, use [Edit] to define its components"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:412
-msgid "ID Gloss/Annotation ID Gloss"
-msgstr "ID-glos/Annotatie-ID-Glos"
+msgid "Annotation ID Gloss"
+msgstr "Annotatie-ID-Glos"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:413
 msgid "Add Component"
@@ -2968,7 +2968,7 @@ msgid "Gloss"
 msgstr "ID-Glos"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:323
-msgid "This morpheme does not occur in any gloss"
+msgid "This morpheme does not occur in any sign"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:558
