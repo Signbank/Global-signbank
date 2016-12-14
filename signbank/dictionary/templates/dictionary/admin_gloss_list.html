@@ -123,7 +123,7 @@ function do_adminsearch(el) {
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}</div>
 
-    <div id='query-area' class='collapse {% if not request.GET.search %} in {% endif %}'>
+    <div id='query-area' class='collapse {% if not request.GET.search and not request.GET.keyword and not request.GET.englishGloss %} in {% endif %}'>
         <div id='searchformwell' class='well search-results-collapsable'>
             <form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
