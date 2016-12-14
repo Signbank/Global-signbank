@@ -14,8 +14,8 @@ import os
 import shutil
 
 from signbank.dictionary.models import Gloss, DeletedGlossOrMedia
-from signbank.settings.base import GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, WRITABLE_FOLDER
-from signbank.settings.server_specific import FFMPEG_PROGRAM, TMP_DIR
+from signbank.settings.base import GLOSS_VIDEO_DIRECTORY, WRITABLE_FOLDER
+from signbank.settings.server_specific import FFMPEG_PROGRAM
 
 def addvideo(request):
     """View to present a video upload form and process
@@ -41,7 +41,9 @@ def addvideo(request):
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing video for this sign
-            goal_location = WRITABLE_FOLDER+GLOSS_VIDEO_DIRECTORY + '/' + gloss.idgloss[:2] + '/' + gloss.idgloss + '-' + str(gloss.pk) + '.mp4'
+            goal_folder = WRITABLE_FOLDER+GLOSS_VIDEO_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
+            goal_filename = gloss.idgloss + '-' + str(gloss.pk) + '.mp4'
+            goal_location = goal_folder + goal_filename
             if os.path.isfile(goal_location):
                 backup_id = 1
                 made_backup = False
@@ -76,39 +78,8 @@ def addvideo(request):
                 print(i.message)
 
             # Issue #214: generate still image
-            try:
-                from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
-
-                # Extract frames (incl. middle)
-                extracter = MiddleFrameExtracter([goal_location], TMP_DIR + os.sep + "signbank-extractMiddleFrame", FFMPEG_PROGRAM, True)
-                output_dirs = extracter.run()
-
-                # Copy video still to the correct location
-                for dir in output_dirs:
-                    for filename in os.listdir(dir):
-                        if filename.replace('.png','.mp4') == vfile.name:
-                            destination = WRITABLE_FOLDER + GLOSS_IMAGE_DIRECTORY + os.sep + gloss.idgloss[:2]
-                            still_goal_location = destination + os.sep + filename
-                            if not os.path.isdir(destination):
-                                os.makedirs(destination, 0o750)
-                            elif os.path.isfile(still_goal_location):
-                                # Make a backup
-                                backup_id = 1
-                                made_backup = False
-
-                                while not made_backup:
-
-                                    if not os.path.isfile(still_goal_location+'_'+str(backup_id)):
-                                        os.rename(still_goal_location,still_goal_location+'_'+str(backup_id))
-                                        made_backup = True
-                                    else:
-                                        backup_id += 1
-                            shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
-                    shutil.rmtree(dir)
-            except ImportError as i:
-                print(i.message)
-            except IOError as io:
-                print(io.message)
+            from signbank.tools import generate_still_image
+            generate_still_image(gloss.idgloss[:2], goal_folder, goal_filename)
 
             # TODO: provide some feedback that it worked (if
             # immediate display of video isn't working)
