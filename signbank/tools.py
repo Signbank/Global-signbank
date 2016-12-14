@@ -241,3 +241,42 @@ def get_deleted_gloss_or_media_data(item_type,since_timestamp):
             result.append(deleted_gloss_or_media.old_pk)
 
     return result
+
+
+def generate_still_image(gloss_prefix, vfile_location, vfile_name):
+    try:
+        from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
+        from signbank.settings.server_specific import FFMPEG_PROGRAM, TMP_DIR
+        from signbank.settings.base import GLOSS_IMAGE_DIRECTORY
+
+        # Extract frames (incl. middle)
+        extracter = MiddleFrameExtracter([vfile_location+vfile_name], TMP_DIR + os.sep + "signbank-extractMiddleFrame",
+                                         FFMPEG_PROGRAM, True)
+        output_dirs = extracter.run()
+
+        # Copy video still to the correct location
+        for dir in output_dirs:
+            for filename in os.listdir(dir):
+                if filename.replace('.png', '.mp4') == vfile_name:
+                    destination = WRITABLE_FOLDER + GLOSS_IMAGE_DIRECTORY + os.sep + gloss_prefix
+                    still_goal_location = destination + os.sep + filename
+                    if not os.path.isdir(destination):
+                        os.makedirs(destination, 0o750)
+                    elif os.path.isfile(still_goal_location):
+                        # Make a backup
+                        backup_id = 1
+                        made_backup = False
+
+                        while not made_backup:
+
+                            if not os.path.isfile(still_goal_location + '_' + str(backup_id)):
+                                os.rename(still_goal_location, still_goal_location + '_' + str(backup_id))
+                                made_backup = True
+                            else:
+                                backup_id += 1
+                    shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
+            shutil.rmtree(dir)
+    except ImportError as i:
+        print(i.message)
+    except IOError as io:
+        print(io.message)

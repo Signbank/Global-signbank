@@ -372,6 +372,28 @@ def import_media(request,video):
 
         out += '<li>'+filename+'</li>'
 
+        # If it is a video also extract a still image and generate a thumbnail version
+        if video:
+            annotation_id = gloss.annotation_idgloss
+            destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
+            video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
+
+            try:
+                from CNGT_scripts.python.resizeVideos import VideoResizer
+                from signbank.settings.server_specific import FFMPEG_PROGRAM
+                resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
+                resizer.run()
+            except ImportError as i:
+                print(i.message)
+
+            # Issue #255: generate still image
+            try:
+                from signbank.tools import generate_still_image
+                generate_still_image(annotation_id[:2],
+                                     destination_folder,
+                                     video_filename)
+            except ImportError as i:
+                print(i.message)
 
         if overwritten:
             overwritten_files += '<li>'+filename+'</li>'
