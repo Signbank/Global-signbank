@@ -337,6 +337,14 @@ class GlossListView(ListView):
 
         get = self.request.GET
 
+        #First check whether we want to show everything or a subset
+        try:
+            if self.kwargs['show_all']:
+                show_all = True
+        except (KeyError,TypeError):
+            show_all = False
+
+        #Then check what kind of stuff we want
         if 'search_type' in get:
             self.search_type = get['search_type']
         else:
@@ -344,16 +352,23 @@ class GlossListView(ListView):
 
         setattr(self.request, 'search_type', self.search_type)
 
+        #Get the initial selection
+        if len(get) > 0 or show_all:
+            if self.search_type == 'sign':
+                # Get all the GLOSS items that are not member of the sub-class Morpheme
+                qs = Gloss.none_morpheme_objects()
+            else:
+                qs = Gloss.objects.all()
 
-        if self.search_type == 'sign':
-            # Get all the GLOSS items that are not member of the sub-class Morpheme
-            qs = Gloss.none_morpheme_objects()
+        #No filters or 'show_all' specified? show nothing
         else:
-            qs = Gloss.objects.all()
+            qs = Gloss.objects.none()
 
-        #print "QS:", len(qs)
-        
+        #If we wanted to get everything, we're done now
+        if show_all:
+            return qs
 
+        #If not, we will go trhough a long list of filters
         if get.has_key('search') and get['search'] != '':
             val = get['search']
             query = Q(idgloss__istartswith=val) | \
