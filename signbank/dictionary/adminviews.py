@@ -371,7 +371,7 @@ class GlossListView(ListView):
         #If not, we will go trhough a long list of filters
         if get.has_key('search') and get['search'] != '':
             val = get['search']
-            query = Q(idgloss__istartswith=val) | \
+            query = Q(idgloss__iregex=val) | \
                     Q(annotation_idgloss__istartswith=val)
 
             if re.match('^\d+$', val):
