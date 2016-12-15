@@ -835,12 +835,16 @@ class MorphemeListView(ListView):
 
 
     def get_queryset(self):
+
         # get query terms from self.request
-        qs = Morpheme.objects.all()
-
-        # print "QS:", len(qs)
-
         get = self.request.GET
+
+        if len(get) > 0:
+            qs = Morpheme.objects.all()
+
+        #Don't show anything when we're not searching yet
+        else:
+            qs = Morpheme.objects.none()
 
         if get.has_key('search') and get['search'] != '':
             val = get['search']
