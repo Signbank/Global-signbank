@@ -120,6 +120,11 @@ class GlossListView(ListView):
 
                 context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
+        try:
+            context['show_all'] = self.kwargs['show_all']
+        except KeyError:
+            context['show_all'] = False
+
         return context
     
     
