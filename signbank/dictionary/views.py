@@ -1002,7 +1002,19 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     # print(filename)
     path = WRITABLE_FOLDER + filename
     exists = os.path.exists(path)
+
     if not exists:
         raise Http404("File does not exist.")
+
+    #Old approach:
+
     from django.views.static import serve
     return serve(request, filename, document_root, show_indexes)
+
+    # New approach with x-sendfile
+    # from django.utils.encoding import smart_str
+
+    # response = HttpResponse(mimetype='application/force-download') # mimetype is replaced by content_type for django 1.7
+    # response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(filename)
+    # response['X-Sendfile'] = smart_str('/var/www2/signbank/live/htdocs/'+filename)
+    return response
