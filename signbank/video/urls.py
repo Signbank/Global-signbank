@@ -7,6 +7,7 @@ urlpatterns = patterns('',
     (r'^delete/(?P<videoid>\d+)$', 'signbank.video.views.deletevideo'),
     (r'^poster/(?P<videoid>\d+)$', 'signbank.video.views.poster'),
     (r'^iframe/(?P<videoid>\d+)$', 'signbank.video.views.iframe'),
+    (r'^create_still_images/', 'signbank.video.views.create_still_images'),
 )
 
 

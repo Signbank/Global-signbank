@@ -17,6 +17,8 @@ from signbank.dictionary.models import Gloss, DeletedGlossOrMedia
 from signbank.settings.base import GLOSS_VIDEO_DIRECTORY, WRITABLE_FOLDER
 from signbank.settings.server_specific import FFMPEG_PROGRAM
 
+from signbank.tools import generate_still_image
+
 def addvideo(request):
     """View to present a video upload form and process
     the upload"""
@@ -173,4 +175,13 @@ def iframe(request, videoid):
                                context_instance=RequestContext(request))
 
 
-
+def create_still_images(request):
+    processed_videos = []
+    for gloss in Gloss.objects.all():
+        video_path = WRITABLE_FOLDER + gloss.get_video_path()
+        if os.path.isfile(video_path):
+            idgloss_prefix = gloss.idgloss[:2]
+            (folder, basename) = os.path.split(video_path)
+            generate_still_image(idgloss_prefix, folder + os.sep, basename)
+            processed_videos.append(video_path)
+    return HttpResponse('Processed videos: <br/>' + "<br/>".join(processed_videos))
