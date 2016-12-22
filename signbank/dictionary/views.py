@@ -1009,7 +1009,8 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     USE_NEW_X_SENDFILE_APPROACH = True
 
     if USE_NEW_X_SENDFILE_APPROACH:
-        response = HttpResponse()
+        response = HttpResponse(mimetype='video/mp4')
+        response['Content-Disposition'] = 'inline;filename='+filename
         response['X-Sendfile'] = WRITABLE_FOLDER + filename
 
         return response
