@@ -380,7 +380,7 @@ class GlossListView(ListView):
         if get.has_key('search') and get['search'] != '':
             val = get['search']
             query = Q(idgloss__iregex=val) | \
-                    Q(annotation_idgloss__istartswith=val)
+                    Q(annotation_idgloss__iregex=val)
 
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
@@ -390,11 +390,11 @@ class GlossListView(ListView):
 
         if get.has_key('englishGloss') and get['englishGloss'] != '':
             val = get['englishGloss']
-            qs = qs.filter(annotation_idgloss_en__istartswith=val)
+            qs = qs.filter(annotation_idgloss_en__iregex=val)
 
         if get.has_key('keyword') and get['keyword'] != '':
             val = get['keyword']
-            qs = qs.filter(translation__translation__text__istartswith=val)
+            qs = qs.filter(translation__translation__text__iregex=val)
             
           
         if get.has_key('inWeb') and get['inWeb'] != '0':
@@ -854,8 +854,8 @@ class MorphemeListView(ListView):
 
         if get.has_key('search') and get['search'] != '':
             val = get['search']
-            query = Q(idgloss__istartswith=val) | \
-                    Q(annotation_idgloss__istartswith=val)
+            query = Q(idgloss__iregex=val) | \
+                    Q(annotation_idgloss__iregex=val)
 
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
@@ -865,11 +865,11 @@ class MorphemeListView(ListView):
 
         if get.has_key('englishGloss') and get['englishGloss'] != '':
             val = get['englishGloss']
-            qs = qs.filter(annotation_idgloss_en__istartswith=val)
+            qs = qs.filter(annotation_idgloss_en__iregex=val)
 
         if get.has_key('keyword') and get['keyword'] != '':
             val = get['keyword']
-            qs = qs.filter(translation__translation__text__istartswith=val)
+            qs = qs.filter(translation__translation__text__iregex=val)
 
         if get.has_key('inWeb') and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
