@@ -364,6 +364,9 @@ class GlossListView(ListView):
         else:
             qs = Gloss.objects.none()
 
+        if not self.request.user.has_perm('dictionary.search_gloss'):
+            qs = qs.filter(inWeb__exact=True)
+
         #If we wanted to get everything, we're done now
         if show_all:
             return qs
@@ -395,8 +398,6 @@ class GlossListView(ListView):
             qs = qs.filter(inWeb__exact=val)
             #print "B :", len(qs)
 
-        if not self.request.user.has_perm('dictionary.search_gloss'):
-            qs = qs.filter(inWeb__exact=True)
 
         if get.has_key('hasvideo') and get['hasvideo'] != 'unspecified':
             val = get['hasvideo'] == 'no'
