@@ -587,7 +587,7 @@ minor or insignificant ways that can be ignored.""")
 
         video_path = self.get_video_path()
 
-        if os.path.isfile(settings.MEDIA_ROOT+'/'+video_path):
+        if os.path.isfile(settings.WRITABLE_FOLDER+'/'+video_path):
             return video_path
         else:
             return None

@@ -20,6 +20,8 @@
 
 
 {% block content %}
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
 <div id='publicsign'>
     {% if feedbackmessage %}
     <div id="feedbackmessage">
@@ -90,7 +92,7 @@
                <div id="player" style="width: 700px;">
                 {% if gloss.has_video %}
                   <iframe id='videoiframe' class="larger_iframe" scrolling="no" frameborder='0' style="width: 635px; height: 358px;"
-                          src="/static/{{gloss.get_video}}">
+                          src="{{protected_media_url}}{{gloss.get_video}}">
                   </iframe>
                 {% else %}
                   <img id="novideo" src='{{ STATIC_URL }}images/no-video-ngt.png'>
