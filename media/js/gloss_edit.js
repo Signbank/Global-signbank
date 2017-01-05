@@ -95,6 +95,8 @@ function disable_edit() {
     $('.morphology-definition-delete').hide();
     $('.morpheme-definition-delete').hide();
 
+    $('.empty_row').hide();
+
     //To prevent RSI
     $('.edit').each(function()
     {
@@ -133,6 +135,8 @@ function enable_edit() {
     $('.relationtoforeignsign_delete').show();
     $('.morphology-definition-delete').show();
     $('.morpheme-definition-delete').show();
+
+    $('.empty_row').show();
 
     //To prevent RSI
     $('.edit').each(function()
