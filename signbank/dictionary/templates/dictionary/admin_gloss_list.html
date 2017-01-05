@@ -528,8 +528,8 @@ function do_adminsearch(el) {
           {% else %}
           <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
           {% endif %}
-          {% if gloss.morphemePart.all.count > 0 %}
-              {% if gloss.morphemePart.all.count > 2 %}
+          {% if gloss.morphemePart.count > 0 %}
+              {% if gloss.morphemePart.count > 2 %}
               <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} morphemes)</span>
               {% else %}
                   <!-- Number of morphemes is [1-2] -->
@@ -541,7 +541,7 @@ function do_adminsearch(el) {
               {% endif %}
           {% endif %}
 
-          {% if gloss.parent_glosses.all.count > 0 %}
+          {% if gloss.parent_glosses.count > 0 %}
           <div class="component_in_gloss">
           {% for component in gloss.parent_glosses.all %}
           <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
