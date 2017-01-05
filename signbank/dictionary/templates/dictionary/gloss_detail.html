@@ -570,7 +570,7 @@
                    {% for rel in gloss.relation_sources.all %}
                     <tr>
                          <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
+                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation-other_modal_{{rel.id}}'></span>
                             
                              <div class="modal fade" id="delete_relation-other_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleOth" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
@@ -643,7 +643,7 @@
                    {% for rel in gloss.relationtoforeignsign_set.all %}
                     <tr>                                               
                          <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
+                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation-foreign_modal_{{rel.id}}'></span>
                             
                              <div class="modal fade" id="delete_relation-foreign_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleFor" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
