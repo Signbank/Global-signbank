@@ -125,6 +125,15 @@ class GlossListView(ListView):
         except KeyError:
             context['show_all'] = False
 
+        # context['morphemes_ordered_by_parent_pk'] = {}
+        #
+        # for morphdef in MorphologyDefinition.objects.all():
+        #
+        #     try:
+        #         context['morphemes_ordered_by_parent_pk'][morphdef.parent_gloss.pk].append(morphdef.morpheme)
+        #     except KeyError:
+        #         context['morphemes_ordered_by_parent_pk'][morphdef.parent_gloss.pk] = [morphdef.morpheme]
+
         return context
     
     
@@ -682,7 +691,12 @@ class GlossDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
+
         context['morphologyform'] = GlossMorphologyForm()
+        context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+            choices=choicelist_queryset_to_translated_ordered_dict_temp(FieldChoice.objects.filter(field__iexact='MorphologyType'),
+                                                                   self.request.LANGUAGE_CODE))
+
         context['morphemeform'] = GlossMorphemeForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
@@ -747,6 +761,10 @@ class GlossDetailView(DetailView):
                     kind = 'list';
 
                 context[topic+'_fields'].append([human_value,field,labels[field],kind]);
+
+        #Add morphology to choice lists
+        context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_ordered_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
+                                                                                       self.request.LANGUAGE_CODE)
 
         #Gather the OtherMedia
         context['other_media'] = []
@@ -1401,3 +1419,21 @@ def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
     sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
 
     return OrderedDict(sorted_choice_list)
+
+def choicelist_queryset_to_translated_ordered_dict_temp(queryset,language_code):
+
+    codes_to_adjectives = dict(settings.LANGUAGES)
+
+    if language_code not in codes_to_adjectives.keys():
+        adjective = 'english'
+    else:
+        adjective = codes_to_adjectives[language_code].lower()
+
+    try:
+        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
+    except AttributeError:
+        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,'english_name'))) for choice in queryset]
+
+    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
+
+    return sorted_choice_list
