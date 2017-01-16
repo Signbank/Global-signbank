@@ -372,6 +372,28 @@ def import_media(request,video):
 
         out += '<li>'+filename+'</li>'
 
+        # If it is a video also extract a still image and generate a thumbnail version
+        if video:
+            annotation_id = gloss.annotation_idgloss
+            destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
+            video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
+
+            try:
+                from CNGT_scripts.python.resizeVideos import VideoResizer
+                from signbank.settings.server_specific import FFMPEG_PROGRAM
+                resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
+                resizer.run()
+            except ImportError as i:
+                print(i.message)
+
+            # Issue #255: generate still image
+            try:
+                from signbank.tools import generate_still_image
+                generate_still_image(annotation_id[:2],
+                                     destination_folder,
+                                     video_filename)
+            except ImportError as i:
+                print(i.message)
 
         if overwritten:
             overwritten_files += '<li>'+filename+'</li>'
@@ -769,8 +791,6 @@ def add_image(request):
     return redirect(url)
 
 def delete_image(request, pk):
-    """Remove the video for this gloss, if there is an older version
-    then reinstate that as the current video (act like undo)"""
 
     if request.method == "POST":
 
@@ -778,10 +798,15 @@ def delete_image(request, pk):
         gloss = get_object_or_404(Gloss, pk=pk)
         image_path = gloss.get_image_path()
 
-#        try:
         os.remove(settings.WRITABLE_FOLDER+image_path)
-#        except OSError:
-#            pass
+
+        deleted_image = DeletedGlossOrMedia()
+        deleted_image.item_type = 'image'
+        deleted_image.idgloss = gloss.idgloss
+        deleted_image.annotation_idgloss = gloss.annotation_idgloss
+        deleted_image.old_pk = gloss.pk
+        deleted_image.filename = image_path
+        deleted_image.save()
 
     # return to referer
     if request.META.has_key('HTTP_REFERER'):
@@ -956,6 +981,11 @@ def package(request):
                       'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp),
                       'glosses':signbank.tools.get_gloss_data(since_timestamp)}
 
+    if since_timestamp != None:
+        collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss',since_timestamp)
+        collected_data['deleted_videos'] = signbank.tools.get_deleted_gloss_or_media_data('video',since_timestamp)
+        collected_data['deleted_images'] = signbank.tools.get_deleted_gloss_or_media_data('image',since_timestamp)
+
     signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
 
     response = HttpResponse(FileWrapper(open(archive_file_path)), content_type='application/zip')
@@ -967,12 +997,43 @@ def info(request):
     return HttpResponse(json.dumps([ settings.LANGUAGE_NAME, settings.COUNTRY_NAME ]), content_type='application/json')
 
 
-@login_required_config
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
-    # print(filename)
+
+    if not request.user.is_authenticated():
+
+        # If we are not logged in, try to find if this maybe belongs to a gloss that is free to see for everbody?
+        gloss_string = filename.split('/')[-1].split('-')[0]
+
+        try:
+            if not Gloss.objects.get(idgloss=gloss_string).inWeb:
+                return HttpResponse(status=401)
+        except Gloss.DoesNotExist:
+            return HttpResponse(status=401)
+
+        #If we got here, the gloss was found and in the web dictionary, so we can continue
+
     path = WRITABLE_FOLDER + filename
     exists = os.path.exists(path)
+
     if not exists:
         raise Http404("File does not exist.")
-    from django.views.static import serve
-    return serve(request, filename, document_root, show_indexes)
+
+    USE_NEW_X_SENDFILE_APPROACH = True
+
+    if USE_NEW_X_SENDFILE_APPROACH:
+
+        if filename.split('.')[-1] == 'mp4':
+            response = HttpResponse(mimetype='video/mp4')
+        elif filename.split('.')[-1] == 'png':
+            response = HttpResponse(mimetype='image/png')
+        else:
+            response = HttpResponse()
+
+        response['Content-Disposition'] = 'inline;filename='+filename
+        response['X-Sendfile'] = WRITABLE_FOLDER + filename
+
+        return response
+
+    else:
+        from django.views.static import serve
+        return serve(request, filename, document_root, show_indexes)

@@ -118,11 +118,13 @@ function do_adminsearch(el) {
 
 
 {% block content %}
+{% url 'dictionary:protected_media' '' as protected_media_url %}
 
+{% if perms.dictionary.search_gloss %}
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}</div>
 
-    <div id='query-area' class='collapse {% if not request.GET.search %} in {% endif %}'>
+    <div id='query-area' class='collapse {% if not request.GET.search and not request.GET.keyword and not request.GET.englishGloss and not show_all %} in {% endif %}'>
         <div id='searchformwell' class='well search-results-collapsable'>
             <form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
@@ -388,6 +390,10 @@ function do_adminsearch(el) {
                             <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
                         </ul>
                     </div>
+
+                    <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
+                    <input type="submit" style="visibility: hidden;" />
+
                     {% if perms.dictionary.export_csv %}
                     <input class='btn btn-default' type='submit' name='format' value='CSV'>
                     {% endif %}
@@ -420,6 +426,7 @@ function do_adminsearch(el) {
     </div>
 
 </div>
+{% endif %}
 
 {% if perms.dictionary.add_gloss %}
 <div  class="panel panel-default">
@@ -447,8 +454,7 @@ function do_adminsearch(el) {
      </div>
   </div>
   {% endif %}
-                
-             
+
              
 
   
@@ -513,7 +519,7 @@ function do_adminsearch(el) {
             {% endif %}
 
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{STATIC_URL}}{{gloss.get_image_path}}"></div></a>{% endif %}
+          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       <td>
@@ -522,8 +528,8 @@ function do_adminsearch(el) {
           {% else %}
           <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
           {% endif %}
-          {% if gloss.morphemePart.all.count > 0 %}
-              {% if gloss.morphemePart.all.count > 2 %}
+          {% if gloss.morphemePart.count > 0 %}
+              {% if gloss.morphemePart.count > 2 %}
               <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} morphemes)</span>
               {% else %}
                   <!-- Number of morphemes is [1-2] -->
@@ -535,7 +541,7 @@ function do_adminsearch(el) {
               {% endif %}
           {% endif %}
 
-          {% if gloss.parent_glosses.all.count > 0 %}
+          {% if gloss.parent_glosses.count > 0 %}
           <div class="component_in_gloss">
           {% for component in gloss.parent_glosses.all %}
           <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>

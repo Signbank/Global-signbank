@@ -120,6 +120,20 @@ class GlossListView(ListView):
 
                 context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
+        try:
+            context['show_all'] = self.kwargs['show_all']
+        except KeyError:
+            context['show_all'] = False
+
+        # context['morphemes_ordered_by_parent_pk'] = {}
+        #
+        # for morphdef in MorphologyDefinition.objects.all():
+        #
+        #     try:
+        #         context['morphemes_ordered_by_parent_pk'][morphdef.parent_gloss.pk].append(morphdef.morpheme)
+        #     except KeyError:
+        #         context['morphemes_ordered_by_parent_pk'][morphdef.parent_gloss.pk] = [morphdef.morpheme]
+
         return context
     
     
@@ -337,6 +351,14 @@ class GlossListView(ListView):
 
         get = self.request.GET
 
+        #First check whether we want to show everything or a subset
+        try:
+            if self.kwargs['show_all']:
+                show_all = True
+        except (KeyError,TypeError):
+            show_all = False
+
+        #Then check what kind of stuff we want
         if 'search_type' in get:
             self.search_type = get['search_type']
         else:
@@ -344,20 +366,30 @@ class GlossListView(ListView):
 
         setattr(self.request, 'search_type', self.search_type)
 
+        #Get the initial selection
+        if len(get) > 0 or show_all:
+            if self.search_type == 'sign':
+                # Get all the GLOSS items that are not member of the sub-class Morpheme
+                qs = Gloss.none_morpheme_objects()
+            else:
+                qs = Gloss.objects.all()
 
-        if self.search_type == 'sign':
-            # Get all the GLOSS items that are not member of the sub-class Morpheme
-            qs = Gloss.none_morpheme_objects()
+        #No filters or 'show_all' specified? show nothing
         else:
-            qs = Gloss.objects.all()
+            qs = Gloss.objects.none()
 
-        #print "QS:", len(qs)
-        
+        if not self.request.user.has_perm('dictionary.search_gloss'):
+            qs = qs.filter(inWeb__exact=True)
 
+        #If we wanted to get everything, we're done now
+        if show_all:
+            return qs
+
+        #If not, we will go trhough a long list of filters
         if get.has_key('search') and get['search'] != '':
             val = get['search']
-            query = Q(idgloss__istartswith=val) | \
-                    Q(annotation_idgloss__istartswith=val)
+            query = Q(idgloss__iregex=val) | \
+                    Q(annotation_idgloss__iregex=val)
 
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
@@ -367,11 +399,11 @@ class GlossListView(ListView):
 
         if get.has_key('englishGloss') and get['englishGloss'] != '':
             val = get['englishGloss']
-            qs = qs.filter(annotation_idgloss_en__istartswith=val)
+            qs = qs.filter(annotation_idgloss_en__iregex=val)
 
         if get.has_key('keyword') and get['keyword'] != '':
             val = get['keyword']
-            qs = qs.filter(translation__translation__text__istartswith=val)
+            qs = qs.filter(translation__translation__text__iregex=val)
             
           
         if get.has_key('inWeb') and get['inWeb'] != '0':
@@ -379,8 +411,8 @@ class GlossListView(ListView):
             val = get['inWeb'] == 'yes'
             qs = qs.filter(inWeb__exact=val)
             #print "B :", len(qs)
-            
-            
+
+
         if get.has_key('hasvideo') and get['hasvideo'] != 'unspecified':
             val = get['hasvideo'] == 'no'
 
@@ -659,7 +691,12 @@ class GlossDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
+
         context['morphologyform'] = GlossMorphologyForm()
+        context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+            choices=choicelist_queryset_to_translated_ordered_dict_temp(FieldChoice.objects.filter(field__iexact='MorphologyType'),
+                                                                   self.request.LANGUAGE_CODE))
+
         context['morphemeform'] = GlossMorphemeForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
@@ -724,6 +761,10 @@ class GlossDetailView(DetailView):
                     kind = 'list';
 
                 context[topic+'_fields'].append([human_value,field,labels[field],kind]);
+
+        #Add morphology to choice lists
+        context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_ordered_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
+                                                                                       self.request.LANGUAGE_CODE)
 
         #Gather the OtherMedia
         context['other_media'] = []
@@ -818,17 +859,21 @@ class MorphemeListView(ListView):
 
 
     def get_queryset(self):
+
         # get query terms from self.request
-        qs = Morpheme.objects.all()
-
-        # print "QS:", len(qs)
-
         get = self.request.GET
+
+        if len(get) > 0:
+            qs = Morpheme.objects.all()
+
+        #Don't show anything when we're not searching yet
+        else:
+            qs = Morpheme.objects.none()
 
         if get.has_key('search') and get['search'] != '':
             val = get['search']
-            query = Q(idgloss__istartswith=val) | \
-                    Q(annotation_idgloss__istartswith=val)
+            query = Q(idgloss__iregex=val) | \
+                    Q(annotation_idgloss__iregex=val)
 
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
@@ -838,11 +883,11 @@ class MorphemeListView(ListView):
 
         if get.has_key('englishGloss') and get['englishGloss'] != '':
             val = get['englishGloss']
-            qs = qs.filter(annotation_idgloss_en__istartswith=val)
+            qs = qs.filter(annotation_idgloss_en__iregex=val)
 
         if get.has_key('keyword') and get['keyword'] != '':
             val = get['keyword']
-            qs = qs.filter(translation__translation__text__istartswith=val)
+            qs = qs.filter(translation__translation__text__iregex=val)
 
         if get.has_key('inWeb') and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
@@ -1374,3 +1419,21 @@ def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
     sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
 
     return OrderedDict(sorted_choice_list)
+
+def choicelist_queryset_to_translated_ordered_dict_temp(queryset,language_code):
+
+    codes_to_adjectives = dict(settings.LANGUAGES)
+
+    if language_code not in codes_to_adjectives.keys():
+        adjective = 'english'
+    else:
+        adjective = codes_to_adjectives[language_code].lower()
+
+    try:
+        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
+    except AttributeError:
+        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,'english_name'))) for choice in queryset]
+
+    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
+
+    return sorted_choice_list

@@ -271,7 +271,7 @@
     <div class='panel-group' id="definition">
 
         <table class='table table-condensed'>
-            <tr><th>{% trans "ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
+            <tr><th>{% trans "Lemma ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
             <tr><th>{% trans "Annotation ID Gloss (Dutch)" %}</th>
                 <td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td>
                 <td>
@@ -413,7 +413,7 @@
                    <tr>
                        <td style="width:2em;"></td>
                        <td style="width:12em;">{{morphologyform.role}}</td>
-                       <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss/Annotation ID Gloss" %}' name='morpheme_id'></td>
+                       <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss of Morpheme" %}' name='morpheme_id'></td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
                    </tr>
                </table>
@@ -522,7 +522,7 @@
         <div id='phonology' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in phonology_fields %}
-		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
+		    <tr value="{{value}}" {% if value == '-' or value == ' ' or value == '' or value == None %}class="empty_row"{% endif %}><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
 		{% endfor %}
 
             </table>
@@ -576,7 +576,7 @@
                    {% for rel in gloss.relation_sources.all %}
                     <tr>
                          <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
+                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation-other_modal_{{rel.id}}'></span>
                             
                              <div class="modal fade" id="delete_relation-other_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleOth" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
@@ -617,7 +617,7 @@
                    <table class='table table-condensed'>
                        <tr>
                            <td>{{relationform.role}}</td>
-                           <td><input class='form-control glosstypeahead' placeholder='ID Gloss/Annotation ID Gloss' name='targetid'></td>
+                           <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss" %}' name='targetid'></td>
                            <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
                        </tr>
                    </table>
@@ -649,7 +649,7 @@
                    {% for rel in gloss.relationtoforeignsign_set.all %}
                     <tr>                                               
                          <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
+                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation-foreign_modal_{{rel.id}}'></span>
                             
                              <div class="modal fade" id="delete_relation-foreign_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleFor" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">

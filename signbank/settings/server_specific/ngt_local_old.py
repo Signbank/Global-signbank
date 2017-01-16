@@ -1,10 +1,7 @@
 import socket
 hostname = socket.gethostname()
 
-if hostname == 'spitfire':
-    ROOT = '/var/www2/signbank/live/'
-else:
-    ROOT = '/www/signbank/live/'
+ROOT = '/home/susan/signbank/NGT-signbank'
 
 BASE_DIR = ROOT+'repo/signbank/'
 WRITABLE_FOLDER = ROOT+'writable/'
@@ -20,7 +17,7 @@ ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 
 #Influences which template and css folder are used
 SIGNBANK_VERSION_CODE = 'NGT'
-URL = 'https://signbank.science.ru.nl/'
+URL = ''
 
 LANGUAGES = (
   ('en', 'English'),
@@ -90,9 +87,3 @@ CNGT_METADATA_LOCATION = ROOT+'virtualenv/signbank/CNGT_MetadataEnglish_OtherRes
 
 FFMPEG_PROGRAM = "avconv"
 TMP_DIR = "/tmp"
-
-API_FIELDS = [
-    'idgloss',
-    'annotation_idgloss',
-    'annotation_idgloss_en',
-]

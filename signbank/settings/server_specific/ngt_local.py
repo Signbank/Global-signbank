@@ -1,12 +1,6 @@
-import socket
-hostname = socket.gethostname()
+ROOT = '/home/susan/signbank/'
 
-if hostname == 'spitfire':
-    ROOT = '/var/www2/signbank/live/'
-else:
-    ROOT = '/www/signbank/live/'
-
-BASE_DIR = ROOT+'repo/signbank/'
+BASE_DIR = ROOT+'src/NGT-signbank/'
 WRITABLE_FOLDER = ROOT+'writable/'
 
 DATABASES = {'default':
@@ -16,11 +10,11 @@ DATABASES = {'default':
                 }
             }
 
-ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
+ADMINS = (('Micha Hulsbosch', 'm.hulsbosch@let.ru.nl'))
 
 #Influences which template and css folder are used
 SIGNBANK_VERSION_CODE = 'NGT'
-URL = 'https://signbank.science.ru.nl/'
+URL = ''
 
 LANGUAGES = (
   ('en', 'English'),
@@ -45,36 +39,6 @@ FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNo
                        'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
-ECV_SETTINGS = {
-    'CV_ID': 'CNGT_RU-lexicon',
-    'include_phonology_and_frequencies': True,
-
-    # The order of languages matters as the first will
-    # be treated as default by ELAN
-    'languages': [
-        {
-            'id': 'nld',
-            'description': 'De glossen-CV voor het CNGT (RU)',
-            'annotation_idgloss_fieldname': 'annotation_idgloss',
-            'attributes': {
-                'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138580-001',
-                'LANG_ID': 'nld',
-                'LANG_LABEL': 'Dutch (nld)'
-            }
-        },
-        {
-            'id': 'eng',
-            'description': 'The glosses CV for the CNGT (RU)',
-            'annotation_idgloss_fieldname': 'annotation_idgloss_en',
-            'attributes': {
-                'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138502-001',
-                'LANG_ID': 'eng',
-                'LANG_LABEL': 'English (eng)'
-            }
-        },
-    ]
-}
-
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
 CROP_GLOSS_IMAGES = True
@@ -86,13 +50,43 @@ OTHER_MEDIA_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_other_media/'
 SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 
 CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'
-CNGT_METADATA_LOCATION = ROOT+'virtualenv/signbank/CNGT_MetadataEnglish_OtherResearchers.csv'
-
-FFMPEG_PROGRAM = "avconv"
-TMP_DIR = "/tmp"
+CNGT_METADATA_LOCATION = ROOT+'source/virtualenv/signbank/CNGT_MetadataEnglish_OtherResearchers.csv'
 
 API_FIELDS = [
     'idgloss',
     'annotation_idgloss',
     'annotation_idgloss_en',
+
 ]
+
+ECV_SETTINGS = {
+    'CV_ID': 'CNGT_RU-lexicon-test',
+    'include_phonology_and_frequencies': True,
+
+    # The order of languages matters as the first will
+    # be treated as default by ELAN
+    'languages': [
+        {
+            'id': 'nld',
+            'description': 'De glossen-CV voor het CNGT (RU)',
+            'attributes': {
+                'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138580-001',
+                'LANG_ID': 'nld',
+                'LANG_LABEL': 'Dutch (nld)'
+            }
+        },
+        {
+            'id': 'eng',
+            'description': 'The glosses CV for the CNGT (RU)',
+            'attributes': {
+                'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138502-001',
+                'LANG_ID': 'eng',
+                'LANG_LABEL': 'English (eng)'
+            }
+        },
+    ]
+}
+
+FFMPEG_PROGRAM = "avconv"
+
+TMP_DIR = "/tmp"

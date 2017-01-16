@@ -20,6 +20,8 @@
 
 
 {% block content %}
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
 <div id='publicsign'>
     {% if feedbackmessage %}
     <div id="feedbackmessage">
@@ -90,7 +92,7 @@
                <div id="player" style="width: 700px;">
                 {% if gloss.has_video %}
                   <iframe id='videoiframe' class="larger_iframe" scrolling="no" frameborder='0' style="width: 635px; height: 358px;"
-                          src="/static/{{gloss.get_video}}">
+                          src="{{protected_media_url}}{{gloss.get_video}}">
                   </iframe>
                 {% else %}
                   <img id="novideo" src='{{ STATIC_URL }}images/no-video-ngt.png'>
@@ -102,30 +104,13 @@
         
             <div id="keywords">
                 {# Translators: Keywords #}
-                 <p><strong>{% blocktrans %}Keywords:{% endblocktrans %}</strong>
+                 <p><strong>{% blocktrans %}Translation equivalents:{% endblocktrans %}</strong>
                  {% for kwd in allkwds %}
                    {% ifequal translation kwd.translation.text %}<strong>{{ kwd.translation.text|safe }}</strong>{% else %}{{ kwd.translation.text|safe }}{% endifequal %}{% if not forloop.last %},{% endif %}
                  {% endfor %}
                  </p>
             </div>
-
-            <div id="feedback">
-                <ul>
-                    {% ifequal viewname "words" %}
-                    {# Translators:  #}
-                    <li><a href="{% url 'root_page' %}feedback/sign/{{translation}}-{{n}}.html?return=/dictionary/words/{{translation}}-{{n}}.html">{% blocktrans %}Provide feedback about this sign{% endblocktrans %}</a></li>
-                    {% else %}
-                    {# Translators:  #}
-                    <li><a href="{% url 'root_page' %}feedback/gloss/{{gloss.idgloss}}.html?return=/dictionary/gloss/{{gloss.idgloss}}.html&lastmatch={{lastmatch}}">{% blocktrans %}Provide feedback about this sign{% endblocktrans %}</a></li>
-                    {% endifequal %}
-
-                    {# Translators: If sign is missing, report it #}
-                    <li><a href="{% url 'root_page' %}feedback/missingsign.html">{% blocktrans %}Report a missing sign{% endblocktrans %}</a></li>
-                    {# Translators: Provide feedback about the site in general #}
-                    <li><a href="{% url 'root_page' %}feedback/generalfeedback.html">{% blocktrans %}Provide general site feedback{% endblocktrans %}</a></li>
-                </ul>
-            </div>
-
+            
             {% if gloss.dialect.all %}
             <div>
                 {# Translators: Header4 #}

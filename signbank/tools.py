@@ -3,6 +3,7 @@ import os
 import shutil
 from HTMLParser import HTMLParser
 from zipfile import ZipFile
+from datetime import datetime, date
 import json
 import re
 
@@ -191,7 +192,12 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
 
             if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
                 res = re.search(r'(\d+)\.[^\.]*', filename)
-                gloss_id = res.group(1)
+
+                try:
+                    gloss_id = res.group(1)
+                except AttributeError:
+                    continue
+
                 static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+subfolder_name+'/'+filename
 
     return static_urls
@@ -221,3 +227,56 @@ def create_zip_with_json_files(data_per_file,output_path):
         if isinstance(data,list) or isinstance(data,dict):
             output = json.dumps(data,indent=INDENTATION_CHARS)
             zip.writestr(filename+'.json',output)
+
+def get_deleted_gloss_or_media_data(item_type,since_timestamp):
+
+    result = []
+    deletion_date_range = [datetime.fromtimestamp(since_timestamp),date.today()]
+
+    for deleted_gloss_or_media in DeletedGlossOrMedia.objects.filter(deletion_date__range=deletion_date_range,
+                                                            item_type=item_type):
+        if item_type == 'gloss':
+            result.append((deleted_gloss_or_media.old_pk, deleted_gloss_or_media.idgloss))
+        else:
+            result.append(deleted_gloss_or_media.old_pk)
+
+    return result
+
+
+def generate_still_image(gloss_prefix, vfile_location, vfile_name):
+    try:
+        from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
+        from signbank.settings.server_specific import FFMPEG_PROGRAM, TMP_DIR
+        from signbank.settings.base import GLOSS_IMAGE_DIRECTORY
+
+        # Extract frames (incl. middle)
+        extracter = MiddleFrameExtracter([vfile_location+vfile_name], TMP_DIR + os.sep + "signbank-extractMiddleFrame",
+                                         FFMPEG_PROGRAM, True)
+        output_dirs = extracter.run()
+
+        # Copy video still to the correct location
+        for dir in output_dirs:
+            for filename in os.listdir(dir):
+                if filename.replace('.png', '.mp4') == vfile_name:
+                    destination = WRITABLE_FOLDER + GLOSS_IMAGE_DIRECTORY + os.sep + gloss_prefix
+                    still_goal_location = destination + os.sep + filename
+                    if not os.path.isdir(destination):
+                        os.makedirs(destination, 0o750)
+                    elif os.path.isfile(still_goal_location):
+                        # Make a backup
+                        backup_id = 1
+                        made_backup = False
+
+                        while not made_backup:
+
+                            if not os.path.isfile(still_goal_location + '_' + str(backup_id)):
+                                os.rename(still_goal_location, still_goal_location + '_' + str(backup_id))
+                                made_backup = True
+                            else:
+                                backup_id += 1
+                    shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
+            shutil.rmtree(dir)
+    except ImportError as i:
+        print(i.message)
+    except IOError as io:
+        print(io.message)

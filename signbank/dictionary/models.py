@@ -3,7 +3,8 @@ from django.db import models
 from django.conf import settings
 from django.http import Http404 
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
 import tagging
@@ -11,7 +12,7 @@ import tagging
 import sys, os
 import json
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, date
 
 import signbank.settings
 
@@ -109,7 +110,8 @@ DEFN_ROLE_CHOICES = (('note', 'Note'),
                      ('phon', 'Phonology'),
                      ('todo', 'To Do'),
                      ('sugg', 'Suggestion for other gloss'),
-                     ('disc', 'Discuss between annotators')
+                     ('disc', 'Discuss between annotators'),
+                     ('ety','Etymology')
                      )
 
 
@@ -257,7 +259,7 @@ class Gloss(models.Model):
         return result
         
     
-    idgloss = models.CharField(_("ID Gloss"), max_length=50, help_text="""
+    idgloss = models.CharField(_("Lemma ID Gloss"), max_length=50, help_text="""
     This is the unique identifying name of an entry of a sign form in the
 database. No two Sign Entry Names can be exactly the same, but a "Sign
 Entry Name" can be (and often is) the same as the Annotation Idgloss.""")    
@@ -428,7 +430,7 @@ minor or insignificant ways that can be ignored.""")
     tokNoSgnrO = models.IntegerField(_("Number of Other Region Signers"),null=True, blank=True)
 
     creationDate = models.DateField(_('Creation date'),default=datetime(2015,1,1))
-    lastUpdated = models.DateTimeField(_('Last updated'),default=datetime(2015,1,1),auto_now=True)
+    lastUpdated = models.DateTimeField(_('Last updated'),default=datetime.now,auto_now=True)
     creator = models.ManyToManyField(User,null=True)
     alternative_id = models.CharField(max_length=50,null=True,blank=True)
 
@@ -586,7 +588,7 @@ minor or insignificant ways that can be ignored.""")
 
         video_path = self.get_video_path()
 
-        if os.path.isfile(settings.MEDIA_ROOT+'/'+video_path):
+        if os.path.isfile(settings.WRITABLE_FOLDER+'/'+video_path):
             return video_path
         else:
             return None
@@ -727,6 +729,28 @@ try:
     tagging.register(Gloss)
 except tagging.AlreadyRegistered:
     pass
+
+@receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
+def save_info_about_deleted_gloss(sender,instance,using,**kwarsg):
+    deleted_gloss = DeletedGlossOrMedia()
+    deleted_gloss.item_type = 'gloss'
+    deleted_gloss.idgloss = instance.idgloss
+    deleted_gloss.annotation_idgloss = instance.annotation_idgloss
+    deleted_gloss.old_pk = instance.pk
+    deleted_gloss.save()
+
+#We want to remember some stuff about deleted glosses
+class DeletedGlossOrMedia(models.Model):
+
+    item_type = models.CharField(max_length=5,choices=(('gloss','gloss'),('image','image'),('video','video')))
+    idgloss = models.CharField("ID Gloss", max_length=50)
+    annotation_idgloss = models.CharField("Annotation ID Gloss: Dutch", max_length=30)
+    old_pk = models.IntegerField()
+
+    filename = models.CharField(max_length=100,blank=True) #For media only
+
+    deletion_date = models.DateField(default=date.today)
+
 
 RELATION_ROLE_CHOICES = (('homonym', 'Homonym'),
                          ('synonym', 'Synonym'),
