@@ -727,6 +727,14 @@ msgstr ""
 msgid "Delete This Morpheme"
 msgstr ""
 
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:448
+msgid "Simultaneous Morphology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:358
+msgid "Sequential Morphology"
+msgstr ""
+
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:236
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:421
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:653
