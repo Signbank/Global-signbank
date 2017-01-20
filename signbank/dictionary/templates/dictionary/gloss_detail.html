@@ -118,7 +118,10 @@
 
     {% if gloss.idgloss %}
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.idgloss}}.html">{% trans "Public View" %}</a>
-    <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
+
+        {% if perms.dictionary.change_gloss %}
+            <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
+        {% endif %}
     {% endif %}
     
     {% if perms.dictionary.change_gloss %}
