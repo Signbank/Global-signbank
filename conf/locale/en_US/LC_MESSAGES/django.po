@@ -161,9 +161,11 @@ msgstr ""
 
 #: signbank/dictionary/models.py:261
 #: signbank/dictionary/templates/dictionary/add_gloss.html:23
+#: signbank/dictionary/templates/dictionary/add_gloss_form.html:20
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:190
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:266
 msgid "Lemma ID Gloss"
-msgstr "Lemma ID"
+msgstr ""
 
 #: signbank/dictionary/models.py:266
 msgid "Annotation ID Gloss: Dutch"
@@ -522,10 +524,6 @@ msgstr "Annotation ID Gloss"
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:354
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:370
 msgid "Add New Sign"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/add_gloss_form.html:20
-msgid "Lemma ID Gloss"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:101

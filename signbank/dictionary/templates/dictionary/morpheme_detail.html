@@ -263,31 +263,13 @@
     <div class='panel-group' id="definition">
 
         <table class='table table-condensed'>
-            <tr><th>{% trans "ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value morpheme.idgloss %}</td></tr>
-            <tr><th>{% trans "Annotation ID Gloss (Dutch)" %}</th><td class='edit edit_text'  id='annotation_idgloss'>{% value morpheme.annotation_idgloss %}</td></tr>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-            <tr><th>{% trans "Annotation ID Gloss (English)" %}</th><td class='edit edit_text'  id='annotation_idgloss_en'>{% value morpheme.annotation_idgloss_en %}</td></tr>
-            {% endif %}
+            <tr><th>{% trans "Lemma ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value morpheme.idgloss %}</td></tr>
 
             <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords'>{% for trn in morpheme.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>{% trans "Annotation Instructions" %}</th><td class='edit edit_text' id='useInstr'>{% value morpheme.useInstr %}</td></tr>
             <tr>
                 <th>{% trans "Morpheme type" %}</th>
                 <td class='edit edit_mrptype' id='mrpType'>{{ morpheme.get_mrpType_display }}</td>
             </tr>
-        <!-- Temporary solution until we implement a more generic 'MAIN' section display -->
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-            <tr>
-                <th>{% trans "From word class" %}</th>
-                <td class='edit edit_wordclass' id='wordClass'>{{ morpheme.get_wordClass_display }}</td>
-            </tr>
-            <tr>
-                <th>{% trans "To word class" %}</th>
-                <td class='edit edit_wordclass' id='wordClass2'>{{ morpheme.get_wordClass2_display }}</td>
-            </tr>
-            {% endif %}
-        <!-- End of temporary solution -->
             <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language'>{% for lang in morpheme.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
         </table>
@@ -365,163 +347,8 @@
         </div>
     </div>
 
-    <!-- Relations to other signs
-    <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#relations'>{% trans "Relations to Other Signs" %}</a>
-            </div>
-        </div>
-        <div id='relations' class='collapse'>
-               <table class='table table-condensed'>
-                   {% for rel in morpheme.relation_sources.all %}
-                    <tr>
-                         <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_src_modal_{{rel.id}}'></span>
-                            
-                             <div class="modal fade" id="delete_relation_src_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitle2" aria-hidden="true">
-                                 <div class="modal-dialog modal-sm">
-                                    <div class="modal-content">
-                                        <div class='modal-header'>
-                                            <h2 id='modalTitle2'>{% trans "Delete This Relation" %}</h2>
-                                        </div>
-                                        <div class='modal-body'>
-                                            
-                                            <p>{% blocktrans %} This action will delete the {{rel.get_role_display}} relation between {{rel.source}} and {{rel.target}}. It cannot be undone. {% endblocktrans %}</p>
-                                         </div>
-                                      <form action='{% url "dictionary:update_morpheme" morpheme.id %}' method='post'>
-                                          {% csrf_token %}
-                                          <input type='hidden' name='id' value='relationdelete_{{rel.id}}'>
-                                          <input type='hidden' name='value' value='confirmed'>
-                                          <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                                          </div>
-                                      </form>
-                                          
-                                    </div>
-                                  </div>
-                             </div>
-                            
-                        </td>
-                        
-                        
-                        <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
-                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
-                   {% endfor %}
-               </table>               
-               
-               {% if perms.dictionary.change_morpheme %}
-               <form id='add_relation_form' method='post' action='{% url 'dictionary:add_relation' %}'>
-                   {% csrf_token %}
-                   <input type='hidden' name='sourceid' value='{{morpheme.pk}}'>
-                   <table class='table table-condensed'>
-                       <tr>
-                           <td>{{relationform.role}}</td>
-                           <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss" %}' name='targetid'></td>
-                           <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
-                       </tr>
-                   </table>
-                </form>
-                {% endif %}
-                
-           {# spacing div to allow room for typeahead dropdown #}
-           <div style='height: 10em'></div>
-           
-        </div>
-    </div>
-    -->
+{% endif %}
 
-    <!-- Relations to foreign signs
-    <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#relationsforeign'>{% trans "Relations to Foreign Signs" %}</a>
-            </div>
-        </div>
-        <div id='relationsforeign' class='collapse'>
-               <table class='table table-condensed'>
-	      <tr>
-		  <th style='width:3em'>{% trans "Loan" %}</th>
-		  <th style='width:6em'>{% trans "Related Language" %}</th>
-		  <th style='width:10em'>{% trans "Gloss in related language" %}</th>
-		</tr>
-
-                   {% for rel in morpheme.relationtoforeignsign_set.all %}
-                    <tr>                                               
-                         <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_for_{{rel.id}}'></span>
-                            
-                             <div class="modal fade" id="delete_relation_modal_for_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleF" aria-hidden="true">
-                                 <div class="modal-dialog modal-sm">
-                                    <div class="modal-content">
-                                        <div class='modal-header'>
-                                            <h2 id='modalTitleF'>{% trans "Delete This Relation" %}</h2>
-                                        </div>
-                                        <div class='modal-body'>
-                                            
-                                            <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
-                                         </div>
-                                      <form action='{% url "dictionary:update_morpheme" morpheme.id %}' method='post'>
-                                          {% csrf_token %}
-                                          <input type='hidden' name='id' value='relationforeigndelete_{{rel.id}}'>
-                                          <input type='hidden' name='value' value='{% trans "confirmed" %}'>
-                                          <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                                          </div>
-                                      </form>
-                                          
-                                    </div>
-                                  </div>
-                             </div>
-                            
-                        </td>
-
-                        <td class='edit edit_check' id='relationforeign-loan_{{rel.id}}'>{{rel.loan}}</td>
-                        <td class='edit edit_text' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
-                        <td class='edit edit_text' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
-                   {% endfor %}
-               </table>
-
-               {% if perms.dictionary.change_morpheme %}
-               <form id='add_relationtoforeignsign_form' method='post' action='{% url 'dictionary:add_relationtoforeignsign' %}'>
-                   {% csrf_token %}
-                   <input type='hidden' name='sourceid' value='{{morpheme.pk}}'>
-                   <table class='table table-condensed'>
-                       <tr>
-                           <td><input class='checkbox' name='loan' type='checkbox'></td>
-                           <td><input class='form-control' placeholder='{% trans "Related language" %}' name='other_lang' type='text'></td>
-                           <td><input class='form-control' placeholder='{% trans "Gloss in related language" %}' name='other_lang_gloss' type='text'></td>
-                           <td><input class='btn btn-primary' value='{% trans "Add Relation to Foreign Sign" %}' type='submit'></td>
-                       </tr>
-                   </table>
-                </form>
-                {% endif %}
-                               
-           {# spacing div to allow room for typeahead dropdown #}
-           <div style='height: 10em'></div>
-           
-        </div>
-    </div>
-    {% endif %}
-
-
-        <div class="panel panel-default">
-            <div class='panel-heading'>
-                <div class='panel-title'>
-                    <a data-toggle='collapse' data-parent='#definition' href='#frequency'>{% trans "Frequency" %}</a>
-                </div>
-            </div>
-            <div id='frequency' class='panel-collapse collapse'>
-                <table class='table table-condensed'>
-                    {% for value,name,label,kind in frequency_fields %}
-                    <tr><th>{{label}}</th><td class="edit edit_text" id='{{name}}'>{% value value %}</td></tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </div>
-    -->
 
     <!-- Publication status -->
     <div class="panel panel-default">
