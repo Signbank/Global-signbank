@@ -366,7 +366,7 @@
                       <th style='width:12em'>{% trans "Component sign" %}</th>
                   </tr>
 
-                   {% for morphdef in gloss.parent_glosses.all %}
+                   {% for morphdef, translated_role in morphdefs %}
 
 
                    <tr>
@@ -399,8 +399,7 @@
 
                         </td>
 
-
-                        <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
+                        <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{translated_role}}</td>
                         <td class='edit edit_compoundpart' id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{morphdef.morpheme}}</a></td>
                    {% endfor %}
                </table>

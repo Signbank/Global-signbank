@@ -757,6 +757,27 @@ class GlossDetailView(DetailView):
         context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
                                                                                        self.request.LANGUAGE_CODE)
 
+        #Collect all morphology definitions for th sequential morphology section, and make some translations in advance
+        morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
+
+        morphdefs = []
+
+        for morphdef in context['gloss'].parent_glosses.all():
+            try:
+                selected_field_choice = morphdef_roles.filter(machine_value=morphdef.role)[0]
+
+                if self.request.LANGUAGE_CODE == 'nl':
+                    translated_role = selected_field_choice.dutch_name
+                else:
+                    translated_role = selected_field_choice.english_name
+
+            except (IndexError, ValueError):
+                translated_role = morphdef.role
+
+            morphdefs.append((morphdef,translated_role))
+
+        context['morphdefs'] = morphdefs
+
         #Gather the OtherMedia
         context['other_media'] = []
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
