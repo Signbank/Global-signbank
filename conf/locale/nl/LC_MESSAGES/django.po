@@ -2357,8 +2357,12 @@ msgstr "Zoek op Morfologie"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:202
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:494
+msgid "Morpheme Gloss"
+msgstr "Morfeem-Glos"
+
 msgid "ID Morpheme/Annotation ID Morpheme"
 msgstr "ID-glos morfeem/Annotatie-ID-Glos morfeem"
+
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:215
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:217
@@ -2433,7 +2437,7 @@ msgstr "Annotatie-ID-Glos: Engels"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:469
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:462
-msgid "Translation equivalents"
+msgid "Abstract Meaning"
 msgstr "Mogelijke vertalingen"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:471
@@ -2611,8 +2615,8 @@ msgstr ""
 "klikken"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:412
-msgid "ID Gloss/Annotation ID Gloss"
-msgstr "ID-glos/Annotatie-ID-Glos"
+msgid "Annotation ID Gloss"
+msgstr "Annotatie-ID-Glos"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:413
 msgid "Add Component"
@@ -2937,7 +2941,7 @@ msgid "Gloss"
 msgstr "Glos"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:323
-msgid "This morpheme does not occur in any gloss"
+msgid "This morpheme does not occur in any sign"
 msgstr "Dit morfeem komt in geen enkel gebaar voor"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:558

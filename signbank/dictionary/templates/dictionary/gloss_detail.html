@@ -357,6 +357,9 @@
             <!-- List the glosses that serve as compound parts of 'me', and allow Adding/Deleting these parts -->
             {% if gloss.parent_glosses.count > 0 %}
                <table class='table table-condensed'>
+                   <tr>
+                       <th style='...'>{% trans "Sequential Morphology" %}</th>
+                   </tr>
                   <tr>
                       <th style='width:2em'></th>
                       <th style='width:12em'>{% trans "Compound part" %}</th>
@@ -444,6 +447,9 @@
             <!-- Editable list of morphemes (see model "Morpheme") used in this Gloss (ERK, issue #177) -->
             {% if gloss.morphemePart.all.count > 0 %}
             <table class='table table-condensed'>
+                <tr>
+                    <th style='...'>{% trans "Simultaneous Morphology" %}</th>
+                </tr>
                 <tr>
                     <th style='width:2em'></th>
                     <th style='width:12em'>{% trans "Morpheme" %}</th>

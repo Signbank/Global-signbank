@@ -161,9 +161,11 @@ msgstr ""
 
 #: signbank/dictionary/models.py:261
 #: signbank/dictionary/templates/dictionary/add_gloss.html:23
+#: signbank/dictionary/templates/dictionary/add_gloss_form.html:20
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:190
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:266
 msgid "Lemma ID Gloss"
-msgstr "Lemma ID"
+msgstr ""
 
 #: signbank/dictionary/models.py:266
 msgid "Annotation ID Gloss: Dutch"
@@ -524,10 +526,6 @@ msgstr "Annotation ID Gloss"
 msgid "Add New Sign"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/add_gloss_form.html:20
-msgid "Lemma ID Gloss"
-msgstr ""
-
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:101
 msgid "Search by Language and Basic Properties"
 msgstr ""
@@ -577,7 +575,7 @@ msgid "Annotation ID gloss: English"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:392
-msgid "Translation equivalents"
+msgid "Abstract Meaning"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:394
@@ -725,6 +723,14 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:232
 msgid "Delete This Morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:448
+msgid "Simultaneous Morphology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:358
+msgid "Sequential Morphology"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:236
@@ -1501,3 +1507,13 @@ msgstr ""
 #: templates/NGT-templates/registration/password_reset_form.html:17
 msgid "Reset my password"
 msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:323
+msgid "This morpheme does not occur in any sign"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:202
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:494
+#, fuzzy
+msgid "Morpheme Gloss"
+msgstr "Morpheme Gloss"
