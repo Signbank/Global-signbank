@@ -1,1 +1,1 @@
-from ngt_local import *
+from ngt import *
