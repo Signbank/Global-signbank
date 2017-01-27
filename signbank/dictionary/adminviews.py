@@ -686,7 +686,7 @@ class GlossDetailView(DetailView):
         context['morphologyform'] = GlossMorphologyForm()
         context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
             choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
-                                                                   self.request.LANGUAGE_CODE,ordered=False))
+                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''))
 
         context['morphemeform'] = GlossMorphemeForm()
         context['othermediaform'] = OtherMediaForm()

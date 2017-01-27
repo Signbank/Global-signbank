@@ -2,7 +2,7 @@ from collections import OrderedDict
 import signbank.settings.base as settings
 
 
-def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True):
+def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_'):
 
     codes_to_adjectives = dict(settings.LANGUAGES)
 
@@ -12,11 +12,11 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True):
         adjective = codes_to_adjectives[language_code].lower()
 
     try:
-        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
+        raw_choice_list = [(id_prefix+str(choice.machine_value),unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
     except AttributeError:
-        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,'english_name'))) for choice in queryset]
+        raw_choice_list = [(id_prefix+str(choice.machine_value),unicode(getattr(choice,'english_name'))) for choice in queryset]
 
-    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
+    sorted_choice_list = [(id_prefix+'0','-'),(id_prefix+'1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
 
     if ordered:
         return OrderedDict(sorted_choice_list)
