@@ -14,6 +14,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 import signbank.settings
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -105,7 +106,7 @@ def update_gloss(request, glossid):
 
         elif field.startswith('morphology-definition'):
 
-            return update_morphology_definition(gloss, field, value)
+            return update_morphology_definition(gloss, field, value, request.LANGUAGE_CODE)
 
         elif field.startswith('morpheme-definition'):
 
@@ -224,24 +225,9 @@ def update_gloss(request, glossid):
                 #If the value is not a Boolean, return the new value
                 if not isinstance(value,bool):
 
-                    #Try to get the human value in the correct language
-                    if value == '0':
-                        newvalue = '-'
-                    elif value == '1':
-                        newvalue = 'N/A'
-                    else:
-
-                        try:
-                            field_category = fieldname_to_category(field)
-                            selected_field_choice = FieldChoice.objects.filter(field__iexact=field_category,machine_value=value)[0]
-
-                            if request.LANGUAGE_CODE == 'nl':
-                                newvalue = selected_field_choice.dutch_name
-                            else:
-                                newvalue = selected_field_choice.english_name
-
-                        except (IndexError, ValueError):
-                            newvalue = value
+                    field_category = fieldname_to_category(field)
+                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                    newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
 
         return HttpResponse(unicode(original_value)+unicode('\t')+unicode(newvalue), {'content-type': 'text/plain'})
 
@@ -447,20 +433,8 @@ def update_other_media(request,gloss,field,value):
 
     elif action_or_fieldname == 'other-media-type':
         other_media.type = value
-
-        #Translate the value
-        if value == '0':
-            value = '-'
-        elif value == '1':
-            value = 'N/A'
-        else:
-
-            selected_field_choice = FieldChoice.objects.filter(field__iexact='OtherMediaType',machine_value=value)[0]
-
-            if request.LANGUAGE_CODE == 'en':
-                value = selected_field_choice.english_name
-            elif request.LANGUAGE_CODE == 'nl':
-                value = selected_field_choice.dutch_name
+        choice_list = FieldChoice.objects.filter(field__iexact='OtherMediaType')
+        value = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
 
     elif action_or_fieldname == 'other-media-alternative-gloss':
         other_media.alternative_gloss = value
@@ -658,7 +632,7 @@ def add_othermedia(request):
 
     raise Http404('Incorrect request');
 
-def update_morphology_definition(gloss, field, value):
+def update_morphology_definition(gloss, field, value, language_code = 'en'):
     """Update one of the relations for this gloss"""
 
     (what, morph_def_id) = field.split('_')
@@ -679,7 +653,11 @@ def update_morphology_definition(gloss, field, value):
     elif what == 'morphology_definition_role':
         morph_def.role = value
         morph_def.save()
-        newvalue = morph_def.get_role_display()
+
+        choice_list = FieldChoice.objects.filter(field__iexact='MorphologyType')
+        newvalue = machine_value_to_translated_human_value(value, choice_list, language_code)
+
+
     elif what == 'morphology_definition_morpheme':
 
         morpheme = gloss_from_identifier(value)
@@ -789,7 +767,7 @@ def update_morpheme(request, morphemeid):
 
         elif field.startswith('morphology-definition'):
 
-            return update_morphology_definition(morpheme, field, value)
+            return update_morphology_definition(morpheme, field, value, request.LANGUAGE_CODE)
 
         elif field.startswith('other-media'):
 
@@ -904,26 +882,9 @@ def update_morpheme(request, morphemeid):
 
                 # If the value is not a Boolean, return the new value
                 if not isinstance(value, bool):
-
-                    # Try to get the human value in the correct language
-                    if value == '0':
-                        newvalue = '-'
-                    elif value == '1':
-                        newvalue = 'N/A'
-                    else:
-
-                        try:
-                            field_category = fieldname_to_category(field)
-                            selected_field_choice = \
-                            FieldChoice.objects.filter(field__iexact=field_category, machine_value=value)[0]
-
-                            if request.LANGUAGE_CODE == 'en':
-                                newvalue = selected_field_choice.english_name
-                            elif request.LANGUAGE_CODE == 'nl':
-                                newvalue = selected_field_choice.dutch_name
-
-                        except (IndexError, ValueError):
-                            newvalue = value
+                    field_category = fieldname_to_category(field)
+                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                    newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
 
         return HttpResponse(str(original_value) + '\t' + str(newvalue), {'content-type': 'text/plain'})
 
@@ -1022,3 +983,4 @@ def add_morphemetag(request, morphemeid):
             print form.as_table()
 
     return response
+
