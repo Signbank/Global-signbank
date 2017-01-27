@@ -717,31 +717,15 @@ class GlossDetailView(DetailView):
             for field in FIELDS[topic]:
 
                 #Get and save the choice list for this field
-                field_category = fieldname_to_category(field)
-                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                fieldchoice_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
                 if len(choice_list) > 0:
                     context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
 
                 #Take the human value in the language we are using
                 machine_value = getattr(gl,field);
-
-                if machine_value == '0':
-                    human_value = '-'
-                elif machine_value == '1':
-                    human_value = 'N/A'
-                else:
-
-                    try:
-                        selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
-
-                        if self.request.LANGUAGE_CODE == 'nl':
-                            human_value = selected_field_choice.dutch_name
-                        else:
-                            human_value = selected_field_choice.english_name
-
-                    except (IndexError, ValueError):
-                        human_value = machine_value
+                human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                 #And add the kind of field
                 if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
@@ -759,21 +743,11 @@ class GlossDetailView(DetailView):
 
         #Collect all morphology definitions for th sequential morphology section, and make some translations in advance
         morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
-
         morphdefs = []
 
         for morphdef in context['gloss'].parent_glosses.all():
-            try:
-                selected_field_choice = morphdef_roles.filter(machine_value=morphdef.role)[0]
 
-                if self.request.LANGUAGE_CODE == 'nl':
-                    translated_role = selected_field_choice.dutch_name
-                else:
-                    translated_role = selected_field_choice.english_name
-
-            except (IndexError, ValueError):
-                translated_role = morphdef.role
-
+            translated_role = machine_value_to_translated_human_value(morphdef.role,morphdef_roles,self.request.LANGUAGE_CODE)
             morphdefs.append((morphdef,translated_role))
 
         context['morphdefs'] = morphdefs
@@ -784,25 +758,7 @@ class GlossDetailView(DetailView):
 
         for other_media in gl.othermedia_set.all():
 
-            if int(other_media.type) == 0:
-                human_value_media_type = '-'
-            elif int(other_media.type) == 1:
-                human_value_media_type = 'N/A'
-            else:
-
-                selected_field_choice = other_media_type_choice_list.filter(machine_value=other_media.type)[0]
-
-                codes_to_adjectives = dict(settings.LANGUAGES)
-
-                if self.request.LANGUAGE_CODE not in codes_to_adjectives.keys():
-                    adjective = 'english'
-                else:
-                    adjective = codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
-
-                try:
-                    human_value_media_type = getattr(selected_field_choice,adjective+'_name')
-                except AttributeError:
-                    human_value_media_type = getattr(selected_field_choice,'english_name')
+            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
             path = settings.STATIC_URL+'othermedia/'+other_media.path
             context['other_media'].append([other_media.pk, path, human_value_media_type, other_media.alternative_gloss])
@@ -1304,23 +1260,7 @@ class MorphemeDetailView(DetailView):
 
                 # Take the human value in the language we are using
                 machine_value = getattr(gl, field);
-
-                if machine_value == '0':
-                    human_value = '-'
-                elif machine_value == '1':
-                    human_value = 'N/A'
-                else:
-
-                    try:
-                        selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
-
-                        if self.request.LANGUAGE_CODE == 'nl':
-                            human_value = selected_field_choice.dutch_name
-                        else:
-                            human_value = selected_field_choice.english_name
-
-                    except (IndexError, ValueError):
-                        human_value = machine_value
+                human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                 # And add the kind of field
                 if field in ['phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'locVirtObj']:
@@ -1338,25 +1278,7 @@ class MorphemeDetailView(DetailView):
 
         for other_media in gl.othermedia_set.all():
 
-            if int(other_media.type) == 0:
-                human_value_media_type = '-'
-            elif int(other_media.type) == 1:
-                human_value_media_type = 'N/A'
-            else:
-
-                selected_field_choice = other_media_type_choice_list.filter(machine_value=other_media.type)[0]
-
-                codes_to_adjectives = dict(settings.LANGUAGES)
-
-                if self.request.LANGUAGE_CODE not in codes_to_adjectives.keys():
-                    adjective = 'english'
-                else:
-                    adjective = codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
-
-                try:
-                    human_value_media_type = getattr(selected_field_choice, adjective + '_name')
-                except AttributeError:
-                    human_value_media_type = getattr(selected_field_choice, 'english_name')
+            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
             path = settings.STATIC_URL + 'othermedia/' + other_media.path
             context['other_media'].append([other_media.pk, path, human_value_media_type, other_media.alternative_gloss])
@@ -1434,3 +1356,31 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True):
         return OrderedDict(sorted_choice_list)
     else:
         return sorted_choice_list
+
+def machine_value_to_translated_human_value(machine_value,choice_list,language_code):
+
+    codes_to_adjectives = dict(settings.LANGUAGES)
+
+    if language_code not in codes_to_adjectives.keys():
+        adjective = 'english'
+    else:
+        adjective = codes_to_adjectives[language_code].lower()
+
+    if machine_value == '0':
+        human_value = '-'
+    elif machine_value == '1':
+        human_value = 'N/A'
+    else:
+
+        try:
+            selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
+
+            try:
+                human_value = getattr(selected_field_choice, adjective + '_name')
+            except AttributeError:
+                human_value = getattr(selected_field_choice, 'english_name')
+
+        except (IndexError, ValueError):
+            human_value = machine_value
+
+    return human_value
