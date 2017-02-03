@@ -6,6 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import override
+from django.forms.fields import TypedChoiceField
 
 import csv
 import operator
@@ -97,6 +98,22 @@ class GlossListView(ListView):
             self.search_type = self.request.GET['search_type']
 
         search_form = GlossSearchForm(self.request.GET)
+
+        #Translations for field choices dropdown menu
+        # for field_group in FIELDS.values():
+        #     for field in field_group:
+        #
+        #         try:
+        #             if isinstance(search_form.fields[field], TypedChoiceField):
+        #                 choices = FieldChoice.objects.filter(field__iexact=fieldname_to_category(field))
+        #                 translated_choices = choicelist_queryset_to_translated_dict(choices,self.request.LANGUAGE_CODE,
+        #                                                                             ordered=False,id_prefix='')
+        #                 search_form.fields[field] = forms.ChoiceField(label=search_form.fields[field].label,
+        #                                                                 choices=translated_choices,
+        #                                                                 widget=forms.Select(attrs={'class':'form-control'}))
+        #
+        #         except KeyError:
+        #             continue
 
         context['searchform'] = search_form
         context['search_type'] = self.search_type
