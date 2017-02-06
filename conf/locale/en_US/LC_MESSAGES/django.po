@@ -511,14 +511,14 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:191
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
 msgid "Annotation ID Gloss (Dutch)"
-msgstr "Annotation ID Gloss"
+msgstr "Annotation ID Gloss (Dutch)"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:29
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:22
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:194
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
 msgid "Annotation ID Gloss (English)"
-msgstr "Annotation ID Gloss"
+msgstr "Annotation ID Gloss (English)"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:33
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:354
@@ -702,7 +702,7 @@ msgid ""
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:197
-msgid "Translation equivalents in Dutch"
+msgid "Translation equivalents"
 msgstr "Translation equivalents"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:198
@@ -731,6 +731,10 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:358
 msgid "Sequential Morphology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:430
+msgid "Compound sign"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:236
@@ -962,7 +966,7 @@ msgstr ""
 #, python-format
 msgid ""
 " There really is no %(language)s sign in the database for which that word is "
-"an good translation "
+"a good translation "
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/search_result.html:35
