@@ -6,8 +6,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import override
+from django.forms.fields import TypedChoiceField
 
-from collections import OrderedDict
 import csv
 import operator
 import re
@@ -21,6 +21,7 @@ from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_MEDIA_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 
 
 def order_queryset_by_sort_order(get, qs):
@@ -98,6 +99,22 @@ class GlossListView(ListView):
 
         search_form = GlossSearchForm(self.request.GET)
 
+        #Translations for field choices dropdown menu
+        # for field_group in FIELDS.values():
+        #     for field in field_group:
+        #
+        #         try:
+        #             if isinstance(search_form.fields[field], TypedChoiceField):
+        #                 choices = FieldChoice.objects.filter(field__iexact=fieldname_to_category(field))
+        #                 translated_choices = choicelist_queryset_to_translated_dict(choices,self.request.LANGUAGE_CODE,
+        #                                                                             ordered=False,id_prefix='')
+        #                 search_form.fields[field] = forms.ChoiceField(label=search_form.fields[field].label,
+        #                                                                 choices=translated_choices,
+        #                                                                 widget=forms.Select(attrs={'class':'form-control'}))
+        #
+        #         except KeyError:
+        #             continue
+
         context['searchform'] = search_form
         context['search_type'] = self.search_type
         if self.search_type == 'sign':
@@ -125,25 +142,16 @@ class GlossListView(ListView):
         except KeyError:
             context['show_all'] = False
 
-        # context['morphemes_ordered_by_parent_pk'] = {}
-        #
-        # for morphdef in MorphologyDefinition.objects.all():
-        #
-        #     try:
-        #         context['morphemes_ordered_by_parent_pk'][morphdef.parent_gloss.pk].append(morphdef.morpheme)
-        #     except KeyError:
-        #         context['morphemes_ordered_by_parent_pk'][morphdef.parent_gloss.pk] = [morphdef.morpheme]
-
         return context
-    
-    
+
+
     def get_paginate_by(self, queryset):
         """
         Paginate by specified value in querystring, or use default class property value.
         """
         return self.request.GET.get('paginate_by', self.paginate_by)
-        
-    
+
+
     def render_to_response(self, context):
         # Look for a 'format=json' GET argument
         if self.request.GET.get('format') == 'CSV':
@@ -259,15 +267,15 @@ class GlossListView(ListView):
 
     # noinspection PyInterpreter,PyInterpreter
     def render_to_csv_response(self, context):
-        
+
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="dictionary-export.csv"'
-    
-    
+
+
 #        fields = [f.name for f in Gloss._meta.fields]
         #We want to manually set which fields to export here
 
@@ -289,7 +297,7 @@ class GlossListView(ListView):
             header.append(extra_column);
 
         writer.writerow(header)
-    
+
         for gloss in self.get_queryset():
             row = [str(gloss.pk)]
             for f in fields:
@@ -343,7 +351,7 @@ class GlossListView(ListView):
                     safe_row.append(None);
 
             writer.writerow(safe_row)
-    
+
         return response
 
 
@@ -393,7 +401,7 @@ class GlossListView(ListView):
 
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
-                    
+
             qs = qs.filter(query)
             #print "A: ", len(qs)
 
@@ -404,8 +412,8 @@ class GlossListView(ListView):
         if get.has_key('keyword') and get['keyword'] != '':
             val = get['keyword']
             qs = qs.filter(translation__translation__text__iregex=val)
-            
-          
+
+
         if get.has_key('inWeb') and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['inWeb'] == 'yes'
@@ -457,45 +465,45 @@ class GlossListView(ListView):
                 if val != '':
                     kwargs = {key:val};
                     qs = qs.filter(**kwargs);
-        
-        
+
+
         if get.has_key('initial_relative_orientation') and get['initial_relative_orientation'] != '':
             val = get['initial_relative_orientation']
-            qs = qs.filter(initial_relative_orientation__exact=val)               
+            qs = qs.filter(initial_relative_orientation__exact=val)
 
         if get.has_key('final_relative_orientation') and get['final_relative_orientation'] != '':
             val = get['final_relative_orientation']
-            qs = qs.filter(final_relative_orientation__exact=val)   
+            qs = qs.filter(final_relative_orientation__exact=val)
 
         if get.has_key('initial_palm_orientation') and get['initial_palm_orientation'] != '':
             val = get['initial_palm_orientation']
-            qs = qs.filter(initial_palm_orientation__exact=val)               
+            qs = qs.filter(initial_palm_orientation__exact=val)
 
         if get.has_key('final_palm_orientation') and get['final_palm_orientation'] != '':
             val = get['final_palm_orientation']
-            qs = qs.filter(final_palm_orientation__exact=val)  
+            qs = qs.filter(final_palm_orientation__exact=val)
 
         if get.has_key('initial_secondary_loc') and get['initial_secondary_loc'] != '':
             val = get['initial_secondary_loc']
-            qs = qs.filter(initial_secondary_loc__exact=val)  
+            qs = qs.filter(initial_secondary_loc__exact=val)
 
         if get.has_key('final_secondary_loc') and get['final_secondary_loc'] != '':
             val = get['final_secondary_loc']
-            qs = qs.filter(final_secondary_loc__exact=val) 
-            
+            qs = qs.filter(final_secondary_loc__exact=val)
+
         if get.has_key('final_secondary_loc') and get['final_secondary_loc'] != '':
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
-        
+
         if get.has_key('defsearch') and get['defsearch'] != '':
-            
+
             val = get['defsearch']
-            
+
             if get.has_key('defrole'):
                 role = get['defrole']
             else:
                 role = 'all'
-            
+
             if role == 'all':
                 qs = qs.filter(definition__text__icontains=val)
             else:
@@ -503,38 +511,38 @@ class GlossListView(ListView):
 
         if get.has_key('tags') and get['tags'] != '':
             vals = get.getlist('tags')
-            
+
             tags = []
             for t in vals:
                 tags.extend(Tag.objects.filter(name=t))
-                
- 
+
+
             # search is an implicit AND so intersection
             tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-            
+
             # intersection
             qs = qs & tqs
-            
+
             #print "J :", len(qs)
-            
+
         qs = qs.distinct()
-        
+
         if get.has_key('nottags') and get['nottags'] != '':
             vals = get.getlist('nottags')
-            
+
            # print "NOT TAGS: ", vals
-            
+
             tags = []
             for t in vals:
                 tags.extend(Tag.objects.filter(name=t))
- 
+
             # search is an implicit AND so intersection
             tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-            
+
            # print "NOT", tags, len(tqs)
             # exclude all of tqs from qs
-            qs = [q for q in qs if q not in tqs]   
-            
+            qs = [q for q in qs if q not in tqs]
+
            # print "K :", len(qs)
 
         if get.has_key('relationToForeignSign') and get['relationToForeignSign'] != '':
@@ -654,7 +662,7 @@ class GlossListView(ListView):
 
 
 class GlossDetailView(DetailView):
-    
+
     model = Gloss
     context_object_name = 'gloss'
 
@@ -694,8 +702,8 @@ class GlossDetailView(DetailView):
 
         context['morphologyform'] = GlossMorphologyForm()
         context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-            choices=choicelist_queryset_to_translated_ordered_dict_temp(FieldChoice.objects.filter(field__iexact='MorphologyType'),
-                                                                   self.request.LANGUAGE_CODE))
+            choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
+                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''))
 
         context['morphemeform'] = GlossMorphemeForm()
         context['othermediaform'] = OtherMediaForm()
@@ -726,31 +734,15 @@ class GlossDetailView(DetailView):
             for field in FIELDS[topic]:
 
                 #Get and save the choice list for this field
-                field_category = fieldname_to_category(field)
-                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                fieldchoice_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
                 if len(choice_list) > 0:
-                    context['choice_lists'][field] = choicelist_queryset_to_translated_ordered_dict (choice_list,self.request.LANGUAGE_CODE)
+                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
 
                 #Take the human value in the language we are using
                 machine_value = getattr(gl,field);
-
-                if machine_value == '0':
-                    human_value = '-'
-                elif machine_value == '1':
-                    human_value = 'N/A'
-                else:
-
-                    try:
-                        selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
-
-                        if self.request.LANGUAGE_CODE == 'nl':
-                            human_value = selected_field_choice.dutch_name
-                        else:
-                            human_value = selected_field_choice.english_name
-
-                    except (IndexError, ValueError):
-                        human_value = machine_value
+                human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                 #And add the kind of field
                 if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
@@ -763,8 +755,19 @@ class GlossDetailView(DetailView):
                 context[topic+'_fields'].append([human_value,field,labels[field],kind]);
 
         #Add morphology to choice lists
-        context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_ordered_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
+        context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
                                                                                        self.request.LANGUAGE_CODE)
+
+        #Collect all morphology definitions for th sequential morphology section, and make some translations in advance
+        morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
+        morphdefs = []
+
+        for morphdef in context['gloss'].parent_glosses.all():
+
+            translated_role = machine_value_to_translated_human_value(morphdef.role,morphdef_roles,self.request.LANGUAGE_CODE)
+            morphdefs.append((morphdef,translated_role))
+
+        context['morphdefs'] = morphdefs
 
         #Gather the OtherMedia
         context['other_media'] = []
@@ -772,31 +775,13 @@ class GlossDetailView(DetailView):
 
         for other_media in gl.othermedia_set.all():
 
-            if int(other_media.type) == 0:
-                human_value_media_type = '-'
-            elif int(other_media.type) == 1:
-                human_value_media_type = 'N/A'
-            else:
-
-                selected_field_choice = other_media_type_choice_list.filter(machine_value=other_media.type)[0]
-
-                codes_to_adjectives = dict(settings.LANGUAGES)
-
-                if self.request.LANGUAGE_CODE not in codes_to_adjectives.keys():
-                    adjective = 'english'
-                else:
-                    adjective = codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
-
-                try:
-                    human_value_media_type = getattr(selected_field_choice,adjective+'_name')
-                except AttributeError:
-                    human_value_media_type = getattr(selected_field_choice,'english_name')
+            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
             path = settings.STATIC_URL+'othermedia/'+other_media.path
             context['other_media'].append([other_media.pk, path, human_value_media_type, other_media.alternative_gloss])
 
             #Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
-            context['choice_lists']['other-media-type_'+str(other_media.pk)] = choicelist_queryset_to_translated_ordered_dict(other_media_type_choice_list,self.request.LANGUAGE_CODE)
+            context['choice_lists']['other-media-type_'+str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
         #context['choice_lists'] = gl.get_choice_lists()
         context['choice_lists'] = json.dumps(context['choice_lists'])
@@ -830,7 +815,7 @@ class MorphemeListView(ListView):
         oChoiceLists = {}
         choice_list = FieldChoice.objects.filter(field__iexact = fieldname_to_category('mrpType'))
         if (len(choice_list) > 0):
-            ordered_dict = choicelist_queryset_to_translated_ordered_dict(choice_list, self.request.LANGUAGE_CODE)
+            ordered_dict = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
             oChoiceLists['mrpType'] = ordered_dict
 
         # Make all choice lists available in the context (currently only mrpType)
@@ -1287,28 +1272,12 @@ class MorphemeDetailView(DetailView):
                 choice_list = FieldChoice.objects.filter(field__iexact=field_category)
 
                 if len(choice_list) > 0:
-                    context['choice_lists'][field] = choicelist_queryset_to_translated_ordered_dict(choice_list,
+                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list,
                                                                                                     self.request.LANGUAGE_CODE)
 
                 # Take the human value in the language we are using
                 machine_value = getattr(gl, field);
-
-                if machine_value == '0':
-                    human_value = '-'
-                elif machine_value == '1':
-                    human_value = 'N/A'
-                else:
-
-                    try:
-                        selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
-
-                        if self.request.LANGUAGE_CODE == 'nl':
-                            human_value = selected_field_choice.dutch_name
-                        else:
-                            human_value = selected_field_choice.english_name
-
-                    except (IndexError, ValueError):
-                        human_value = machine_value
+                human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                 # And add the kind of field
                 if field in ['phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'locVirtObj']:
@@ -1326,32 +1295,14 @@ class MorphemeDetailView(DetailView):
 
         for other_media in gl.othermedia_set.all():
 
-            if int(other_media.type) == 0:
-                human_value_media_type = '-'
-            elif int(other_media.type) == 1:
-                human_value_media_type = 'N/A'
-            else:
-
-                selected_field_choice = other_media_type_choice_list.filter(machine_value=other_media.type)[0]
-
-                codes_to_adjectives = dict(settings.LANGUAGES)
-
-                if self.request.LANGUAGE_CODE not in codes_to_adjectives.keys():
-                    adjective = 'english'
-                else:
-                    adjective = codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
-
-                try:
-                    human_value_media_type = getattr(selected_field_choice, adjective + '_name')
-                except AttributeError:
-                    human_value_media_type = getattr(selected_field_choice, 'english_name')
+            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
             path = settings.STATIC_URL + 'othermedia/' + other_media.path
             context['other_media'].append([other_media.pk, path, human_value_media_type, other_media.alternative_gloss])
 
             # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
             context['choice_lists'][
-                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_ordered_dict(
+                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(
                 other_media_type_choice_list, self.request.LANGUAGE_CODE)
 
         # context['choice_lists'] = gl.get_choice_lists()
@@ -1360,7 +1311,7 @@ class MorphemeDetailView(DetailView):
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
         return context
-        
+
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
 
@@ -1369,8 +1320,8 @@ def gloss_ajax_search_results(request):
 def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
-    
-    
+
+
     query = Q(idgloss__istartswith=prefix) | \
             Q(annotation_idgloss__istartswith=prefix) | \
             Q(sn__startswith=prefix)
@@ -1381,7 +1332,7 @@ def gloss_ajax_complete(request, prefix):
     result = []
     for g in qs:
         result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn, 'pk': "%s" % (g.idgloss)})
-    
+
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
 
@@ -1400,40 +1351,3 @@ def morph_ajax_complete(request, prefix):
                        'pk': "%s" % (g.idgloss)})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
-
-
-def choicelist_queryset_to_translated_ordered_dict(queryset,language_code):
-
-    codes_to_adjectives = dict(settings.LANGUAGES)
-
-    if language_code not in codes_to_adjectives.keys():
-        adjective = 'english'
-    else:
-        adjective = codes_to_adjectives[language_code].lower()
-
-    try:
-        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
-    except AttributeError:
-        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,'english_name'))) for choice in queryset]
-
-    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
-
-    return OrderedDict(sorted_choice_list)
-
-def choicelist_queryset_to_translated_ordered_dict_temp(queryset,language_code):
-
-    codes_to_adjectives = dict(settings.LANGUAGES)
-
-    if language_code not in codes_to_adjectives.keys():
-        adjective = 'english'
-    else:
-        adjective = codes_to_adjectives[language_code].lower()
-
-    try:
-        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
-    except AttributeError:
-        raw_choice_list = [('_'+str(choice.machine_value),unicode(getattr(choice,'english_name'))) for choice in queryset]
-
-    sorted_choice_list = [('_0','-'),('_1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
-
-    return sorted_choice_list

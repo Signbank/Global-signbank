@@ -118,7 +118,10 @@
 
     {% if gloss.idgloss %}
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.idgloss}}.html">{% trans "Public View" %}</a>
-    <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
+
+        {% if perms.dictionary.change_gloss %}
+            <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
+        {% endif %}
     {% endif %}
     
     {% if perms.dictionary.change_gloss %}
@@ -363,7 +366,7 @@
                       <th style='width:12em'>{% trans "Component sign" %}</th>
                   </tr>
 
-                   {% for morphdef in gloss.parent_glosses.all %}
+                   {% for morphdef, translated_role in morphdefs %}
 
 
                    <tr>
@@ -396,8 +399,7 @@
 
                         </td>
 
-
-                        <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
+                        <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{translated_role}}</td>
                         <td class='edit edit_compoundpart' id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{morphdef.morpheme}}</a></td>
                    {% endfor %}
                </table>
@@ -516,7 +518,7 @@
 	<div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#phonology'>{% trans "Phonology" %}</a>
+                <a data-toggle='collapse' href='#phonology'>{% trans "Phonology" %}</a>
             </div>
         </div>
         <div id='phonology' class='panel-collapse collapse'>
@@ -533,7 +535,7 @@
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#semantics'>{% trans "Semantics" %}</a>
+                <a data-toggle='collapse' href='#semantics'>{% trans "Semantics" %}</a>
             </div>
         </div>
         <div id='semantics' class='panel-collapse collapse'>
@@ -550,7 +552,7 @@
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#languagedialect'>{% trans "Language & Dialect" %}</a>
+                <a data-toggle='collapse' href='#languagedialect'>{% trans "Language & Dialect" %}</a>
             </div>
         </div>
         <div id='languagedialect' class='panel-collapse collapse'>
@@ -568,7 +570,7 @@
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#relations'>{% trans "Relations to Other Signs" %}</a>
+                <a data-toggle='collapse' href='#relations'>{% trans "Relations to Other Signs" %}</a>
             </div>
         </div>
         <div id='relations' class='collapse'>
@@ -635,7 +637,7 @@
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#relationsforeign'>{% trans "Relations to Foreign Signs" %}</a>
+                <a data-toggle='collapse' href='#relationsforeign'>{% trans "Relations to Foreign Signs" %}</a>
             </div>
         </div>
         <div id='relationsforeign' class='collapse'>
@@ -709,7 +711,7 @@
         <div class="panel panel-default">
             <div class='panel-heading'>
                 <div class='panel-title'>
-                    <a data-toggle='collapse' data-parent='#definition' href='#frequency'>{% trans "Frequency" %}</a>
+                    <a data-toggle='collapse' href='#frequency'>{% trans "Frequency" %}</a>
                 </div>
             </div>
             <div id='frequency' class='panel-collapse collapse'>
@@ -726,7 +728,7 @@
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#pubStatus'>{% trans "Publication Status" %}</a>
+                <a data-toggle='collapse' href='#pubStatus'>{% trans "Publication Status" %}</a>
             </div>
         </div>
         
@@ -772,7 +774,7 @@
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#definitions'>{% trans "Notes" %}</a>
+                <a data-toggle='collapse' href='#definitions'>{% trans "Notes" %}</a>
             </div>
         </div>
         <div id='definitions' class='collapse'>
@@ -875,7 +877,7 @@
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#othermedia' href='#othermedia'>{% trans "Other media" %}</a>
+                <a data-toggle='collapse' href='#othermedia'>{% trans "Other media" %}</a>
             </div>
         </div>
         <div id='othermedia' class='collapse'>
