@@ -2953,7 +2953,7 @@ msgstr "没有与你输入的单词匹配的。"
 #, python-format
 msgid ""
 " There really is no %(language)s sign in the database for which that word is "
-"an good translation "
+"a good translation "
 msgstr "这个数据库里没有与这个词匹配的正确的翻译 %(language)s"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:35

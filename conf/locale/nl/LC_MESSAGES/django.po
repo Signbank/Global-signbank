@@ -2188,7 +2188,7 @@ msgstr "Semantisch veld"
 #: signbank/dictionary/models.py:406
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:310
 msgid "Word class"
-msgstr "Woorsoort"
+msgstr "Woordsoort"
 
 #: signbank/dictionary/models.py:407
 msgid "Word class 2"
@@ -2960,7 +2960,7 @@ msgstr "Er is geen resultaat dat precies overeenkomst met het zoekwoord."
 #, python-format
 msgid ""
 " There really is no %(language)s sign in the database for which that word is "
-"an good translation "
+"a good translation "
 msgstr ""
 "Er is geen %(language)s-gebaar in de database waarvoor dat woord een goede "
 "vertaling is."
