@@ -100,20 +100,20 @@ class GlossListView(ListView):
         search_form = GlossSearchForm(self.request.GET)
 
         #Translations for field choices dropdown menu
-        # for field_group in FIELDS.values():
-        #     for field in field_group:
-        #
-        #         try:
-        #             if isinstance(search_form.fields[field], TypedChoiceField):
-        #                 choices = FieldChoice.objects.filter(field__iexact=fieldname_to_category(field))
-        #                 translated_choices = choicelist_queryset_to_translated_dict(choices,self.request.LANGUAGE_CODE,
-        #                                                                             ordered=False,id_prefix='')
-        #                 search_form.fields[field] = forms.ChoiceField(label=search_form.fields[field].label,
-        #                                                                 choices=translated_choices,
-        #                                                                 widget=forms.Select(attrs={'class':'form-control'}))
-        #
-        #         except KeyError:
-        #             continue
+        for field_group in FIELDS.values():
+            for field in field_group:
+
+                try:
+                    if isinstance(search_form.fields[field], TypedChoiceField):
+                        choices = FieldChoice.objects.filter(field__iexact=fieldname_to_category(field))
+                        translated_choices = [('','---------')]+choicelist_queryset_to_translated_dict(choices,self.request.LANGUAGE_CODE,
+                                                                                    ordered=False,id_prefix='')
+                        search_form.fields[field] = forms.ChoiceField(label=search_form.fields[field].label,
+                                                                        choices=translated_choices,
+                                                                        widget=forms.Select(attrs={'class':'form-control'}))
+
+                except KeyError:
+                    continue
 
         context['searchform'] = search_form
         context['search_type'] = self.search_type
