@@ -85,7 +85,11 @@ def update_gloss(request, glossid):
         if field == 'deletegloss':
             if value == 'confirmed':
                 # delete the gloss and redirect back to gloss list
+
+                pk = gloss.pk
                 gloss.delete()
+                gloss.pk = pk
+
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
         
         if field.startswith('definition'):
