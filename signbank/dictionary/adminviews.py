@@ -108,7 +108,7 @@ class GlossListView(ListView):
 
         for field in fields_that_need_translated_options:
             try:
-                if isinstance(search_form.fields[field], TypedChoiceField) or isinstance(search_form.fields[field], ChoiceField):
+                if isinstance(search_form.fields[field], TypedChoiceField):
                     choices = FieldChoice.objects.filter(field__iexact=fieldname_to_category(field))
                     translated_choices = [('','---------')]+choicelist_queryset_to_translated_dict(choices,self.request.LANGUAGE_CODE,
                                                                                 ordered=False,id_prefix='')
