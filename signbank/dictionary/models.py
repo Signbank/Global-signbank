@@ -791,6 +791,10 @@ def fieldname_to_category(fieldname):
         field_category = 'DominantHandSelectedFingers'
     elif fieldname in ['wordClass', 'wordClass2']:
         field_category = 'WordClass'
+    elif fieldname == 'hasComponentOfType':
+        field_category = 'MorphologyType'
+    elif fieldname == 'hasMorphemeOfType':
+        field_category = 'MorphemeType'
     else:
         field_category = fieldname
 
