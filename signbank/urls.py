@@ -20,7 +20,7 @@ else:
     numbersigns_view = TemplateView.as_view(template_name='numbersigns/underconstruction.html')
 
 
-urlpatterns = patterns('',                       
+urlpatterns = patterns('',
 
     url(r'^$', 'signbank.pages.views.page', name='root_page'),
 
@@ -67,8 +67,8 @@ urlpatterns = patterns('',
 
     # special admin sub site
     url(r'^publisher/', include(publisher_admin.urls)),
-    
-    
+
+
     url(r'^summernote/', include('django_summernote.urls')),
 
     url(r'^test/(?P<videofile>.*)$', TemplateView.as_view(template_name="test.html")),
@@ -76,8 +76,4 @@ urlpatterns = patterns('',
     url(r'reload_signbank/$','signbank.tools.reload_signbank'),
 
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-
-
-
 

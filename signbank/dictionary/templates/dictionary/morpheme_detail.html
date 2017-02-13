@@ -265,7 +265,7 @@
         <table class='table table-condensed'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value morpheme.idgloss %}</td></tr>
 
-            <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords'>{% for trn in morpheme.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Abstract meaning" %}</th><td class='edit edit_text' id='keywords'>{% for trn in morpheme.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr>
                 <th>{% trans "Morpheme type" %}</th>
                 <td class='edit edit_mrptype' id='mrpType'>{{ morpheme.get_mrpType_display }}</td>
