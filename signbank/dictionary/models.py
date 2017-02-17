@@ -549,7 +549,7 @@ minor or insignificant ways that can be ignored.""")
                 return root.homophones()
         return []
 
-    def get_image_path(self):
+    def get_image_path(self,check_existance=True):
         """Returns the path within the writable and static folder"""
 
         foldername = self.idgloss[:2]+'/'
@@ -558,13 +558,17 @@ minor or insignificant ways that can be ignored.""")
         dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername
         dir_path = dir_path.encode('utf-8')
 
-        try:
-            for filename in os.listdir(dir_path):
+        if check_existance:
+            try:
+                for filename in os.listdir(dir_path):
 
-                if filename_without_extension in filename:
-                    return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
-        except OSError:
-            return None
+                    if filename_without_extension in filename:
+                        return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+            except OSError:
+                return None
+        else:
+            return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename_without_extension
+
 
     def get_video_gloss(self):
         """Work out the gloss that might have the video for this sign, usually the sign number but

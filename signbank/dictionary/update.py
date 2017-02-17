@@ -211,6 +211,8 @@ def update_gloss(request, glossid):
                 #Remember the old video path if you're changing the name
                 if field == 'idgloss':
                     old_video_path = gloss.get_video_path()
+                    old_image_path = gloss.get_image_path()
+                    old_extension = old_image_path.split('.')[-1]
 
                 setattr(gloss,field,value)
                 gloss.save()
@@ -218,11 +220,19 @@ def update_gloss(request, glossid):
                 #Update the video location if you're changing the name
                 if field == 'idgloss':
                     new_video_path = gloss.get_video_path()
+                    new_image_path = gloss.get_image_path(check_existance=False)
 
                     try:
                         shutil.move(settings.MEDIA_ROOT+'/'+old_video_path,settings.MEDIA_ROOT+'/'+new_video_path)
 
                     #You don't have to do this if there's no video
+                    except IOError:
+                        pass
+
+                    try:
+                        shutil.move(settings.MEDIA_ROOT+'/'+old_image_path,settings.MEDIA_ROOT+'/'+new_image_path+'.'+old_extension)
+
+                    #You don't have to do this if there's no image
                     except IOError:
                         pass
 
