@@ -16,6 +16,7 @@
     {% if perms.dictionary.change_gloss %}
     
     <script type='text/javascript'>
+    var url = '{{ URL }}'
 
     var edit_mode_str = '{% trans "Edit" %}'
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
@@ -619,7 +620,7 @@
                    <table class='table table-condensed'>
                        <tr>
                            <td>{{relationform.role}}</td>
-                           <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss" %}' name='targetid'></td>
+                           <td><input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID Gloss" %}' name='targetid'></td>
                            <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
                        </tr>
                    </table>
