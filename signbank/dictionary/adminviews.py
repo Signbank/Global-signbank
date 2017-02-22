@@ -381,9 +381,9 @@ class GlossListView(ListView):
         if len(get) > 0 or show_all:
             if self.search_type == 'sign':
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
-                qs = Gloss.none_morpheme_objects()
+                qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
             else:
-                qs = Gloss.objects.all()
+                qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
 
         #No filters or 'show_all' specified? show nothing
         else:
