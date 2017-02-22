@@ -832,9 +832,7 @@ msgstr ""
 msgid "Delete Media"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:339
-#: signbank/dictionary/templates/dictionary/morpheme_detail.html:268
-#, fuzzy
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:197
 msgid "Translation equivalents in Dutch"
 msgstr "Translation equivalents"
 

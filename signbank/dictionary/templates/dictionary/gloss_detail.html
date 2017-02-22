@@ -356,11 +356,12 @@
         <div id='morphology' class='collapse'>
 
             <!-- List the glosses that serve as compound parts of 'me', and allow Adding/Deleting these parts -->
-            {% if gloss.parent_glosses.count > 0 %}
+
                <table class='table table-condensed'>
                    <tr>
                        <th style='...'>{% trans "Sequential Morphology" %}</th>
                    </tr>
+                   {% if gloss.parent_glosses.count > 0 %}
                   <tr>
                       <th style='width:2em'></th>
                       <th style='width:12em'>{% trans "Compound part" %}</th>
@@ -368,7 +369,6 @@
                   </tr>
 
                    {% for morphdef, translated_role in morphdefs %}
-
 
                    <tr>
                          <td>
@@ -403,10 +403,11 @@
                         <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{translated_role}}</td>
                         <td class='edit edit_compoundpart' id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{morphdef.morpheme}}</a></td>
                    {% endfor %}
-               </table>
+
             {% else %}
-            <p><i>({% trans "If this is a compound, use [Edit] to define its components" %})</i></p>
+            <tr><td><i>({% trans "If this is a compound, use [Edit] to define its components" %})</i></td></tr>
             {% endif %}
+           </table>
 
            {% if perms.dictionary.change_gloss %}
            <form id='add_morphologydefinition_form' method='post' action="{% url 'dictionary:add_morphologydefinition' %}">
@@ -423,33 +424,13 @@
            </form>
             {% endif %}
 
-
-            <!-- Show a read-only list of glosses in which this gloss occurs as compound part(ERK, issue #177) -->
-            {% if gloss.morphemes.count > 0 %}
-            <table class='table table-condensed'>
-                <tr>
-                    <th style='width:2em'></th>
-                    <th style='width:12em'>{% trans "Type" %}</th>
-                    <th style='width:12em'>{% trans "Compound sign" %}</th>
-                </tr>
-                {% for morphdef in gloss.morphemes.all %}
-                <tr>
-                    <td style="width:2em;"></td>
-                    <td style='width:12em' id='compound-definition-role_{{morphdef.id}}'>{{morphdef.get_role_display}}</td>
-                    <td id='compound-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.parent_gloss.pk %}'>{{morphdef.parent_gloss}}</a></td>
-                </tr>
-                {% endfor %}
-            </table>
-            {% else %}
-            <p><i>({% trans "This gloss is not defined as part of a compound" %})</i></p>
-            {% endif %}
-
             <!-- Editable list of morphemes (see model "Morpheme") used in this Gloss (ERK, issue #177) -->
-            {% if gloss.morphemePart.all.count > 0 %}
+
             <table class='table table-condensed'>
                 <tr>
                     <th style='...'>{% trans "Simultaneous Morphology" %}</th>
                 </tr>
+              {% if gloss.morphemePart.all.count > 0 %}
                 <tr>
                     <th style='width:2em'></th>
                     <th style='width:12em'>{% trans "Morpheme" %}</th>
@@ -488,10 +469,11 @@
                     <td class='edit edit_morpheme' id='morpheme-definition_{{morpheme.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.pk %}'>{{morpheme}}</a></td>
                 </tr>
                 {% endfor %}
-            </table>
+
             {% else %}
-            <p><i>({% trans "Use [Edit] to define any morphemes used in this sign" %})</i></p>
+                <tr><td><i>({% trans "Use [Edit] to define any morphemes used in this sign" %})</i></td></tr>
             {% endif %}
+            </table>
 
             <!-- Facilitate adding and deleting morphemes that are used in this sign -->
            {% if perms.dictionary.change_gloss %}
