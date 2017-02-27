@@ -20,7 +20,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_MEDIA_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS
+from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_MEDIA_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 
 
@@ -194,7 +194,7 @@ class GlossListView(ListView):
         # Make sure we iterate only over the none-Morpheme glosses
         for gloss in Gloss.none_morpheme_objects():
             glossid = str(gloss.pk)
-            myattributes = {cve_id: glossid}
+            myattributes = {cve_id: glossid, 'EXT_REF':'signbank-ecv'}
             cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
 
             desc = self.get_ecv_descripion_for_gloss(gloss, ECV_SETTINGS['include_phonology_and_frequencies'])
@@ -202,6 +202,8 @@ class GlossListView(ListView):
             for lang in ECV_SETTINGS['languages']:
                 cve_value_element = ET.SubElement(cve_entry_element, cve_value, {description:desc, lang_ref:lang['id']})
                 cve_value_element.text = self.get_value_for_ecv(gloss, lang['annotation_idgloss_fieldname'])
+
+        ET.SubElement(top, 'EXTERNAL_REF', {'EXT_REF_ID':'signbank-ecv', 'TYPE':'resource_url', 'VALUE':URL + "/dictionary/gloss/"})
 
         xmlstr = minidom.parseString(ET.tostring(top,'utf-8')).toprettyxml(indent="   ")
         with open(ECV_FILE, "w") as f:
