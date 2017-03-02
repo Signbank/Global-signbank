@@ -20,7 +20,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_MEDIA_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL
+from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, OTHER_MEDIA_DIRECTORY, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 
 
@@ -197,9 +197,11 @@ class GlossListView(ListView):
             myattributes = {cve_id: glossid, 'EXT_REF':'signbank-ecv'}
             cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
 
-            desc = self.get_ecv_descripion_for_gloss(gloss, ECV_SETTINGS['include_phonology_and_frequencies'])
-
             for lang in ECV_SETTINGS['languages']:
+                langId = lang['id']
+                if len(langId) == 3:
+                    langId = [c[2] for c in LANGUAGE_CODE_MAP if c[3] == langId][0]
+                desc = self.get_ecv_descripion_for_gloss(gloss, langId, ECV_SETTINGS['include_phonology_and_frequencies'])
                 cve_value_element = ET.SubElement(cve_entry_element, cve_value, {description:desc, lang_ref:lang['id']})
                 cve_value_element.text = self.get_value_for_ecv(gloss, lang['annotation_idgloss_fieldname'])
 
@@ -214,14 +216,21 @@ class GlossListView(ListView):
 
         return HttpResponse('OK')
 
-    def get_ecv_descripion_for_gloss(self, gloss, include_phonology_and_frequencies=False):
+    def get_ecv_descripion_for_gloss(self, gloss, lang, include_phonology_and_frequencies=False):
         desc = ""
         if include_phonology_and_frequencies:
             description_fields = ['handedness','domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir','movSh', 'tokNo',
                           'tokNoSgnr'];
 
             for f in description_fields:
-                value = self.get_value_for_ecv(gloss,f)
+                if f in FIELDS['phonology']:
+                    choice_list = FieldChoice.objects.filter(field__iexact=fieldname_to_category(f))
+                    machine_value = getattr(gloss,f)
+                    value = machine_value_to_translated_human_value(machine_value,choice_list,lang)
+                    if value is None:
+                        value = ' '
+                else:
+                    value = self.get_value_for_ecv(gloss,f)
 
                 if f == 'handedness':
                     desc = value

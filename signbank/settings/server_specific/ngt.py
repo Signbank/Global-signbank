@@ -96,3 +96,12 @@ API_FIELDS = [
     'annotation_idgloss',
     'annotation_idgloss_en',
 ]
+
+# This is a short mapping between 2 and 3 letter language code
+# This needs more complete solution (perhaps a library),
+# but then the code cn for Chinese should changed to zh.
+LANGUAGE_CODE_MAP = [
+    {2:'nl',3:'nld'},
+    {2:'en',3:'eng'},
+    {2:'cn',3:'chi'}
+]
