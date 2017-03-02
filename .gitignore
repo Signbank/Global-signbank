@@ -10,3 +10,5 @@ build/django
 media/css/.DS_Store
 media/css/.DS_Store
 media/glossimage
+
+signbank/settings/server_specific/__init__.py
