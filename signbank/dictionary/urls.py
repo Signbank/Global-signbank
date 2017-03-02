@@ -37,6 +37,8 @@ urlpatterns = patterns('',
     url(r'^update/othermedia/', 'signbank.dictionary.update.add_othermedia', name='add_othermedia'),
     url(r'^update/gloss/', 'signbank.dictionary.update.add_gloss', name='add_gloss'),
     url(r'^update/morpheme/', 'signbank.dictionary.update.add_morpheme', name='add_morpheme'),
+
+    # The next one does not have a permission check because it should be accessible from a cronjob 
     url(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
 
     url(r'^switch_to_language/(?P<language>..)$', 'signbank.dictionary.views.switch_to_language',name='switch_to_language'),
