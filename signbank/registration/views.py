@@ -123,7 +123,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         if form.is_valid():
 
             #Count the number of logins
-            profile = form.get_user().get_profile()
+            profile = form.get_user().user_profile_user
             profile.number_of_logins += 1
             profile.save()
 

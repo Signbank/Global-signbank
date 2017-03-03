@@ -123,7 +123,6 @@ INSTALLED_APPS = (
     'signbank.pages',
     'signbank.attachments',
     'signbank.video',
-    'south',
     'reversion',
     'django_mobile',
     'tagging',
@@ -302,6 +301,8 @@ XALLOWED_TAGS = [ '',
                  'phonology:symmetrical',
                  'phonology:two handed',
                 ]
+
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 EARLIEST_GLOSS_CREATION_DATE = datetime(2015,1,1)
 SUPPORTED_CITATION_IMAGE_EXTENSIONS = ['.jpg','.jpeg','.png']

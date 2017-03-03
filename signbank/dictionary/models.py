@@ -1,5 +1,5 @@
 from django.db.models import Q
-from django.db import models
+from django.db import models, OperationalError
 from django.conf import settings
 from django.http import Http404 
 from django.contrib.auth.models import User
@@ -199,12 +199,18 @@ def build_choice_list(field):
 
     choice_list = [];
 
-    for choice in FieldChoice.objects.filter(field__iexact=field):
-        choice_list.append((str(choice.machine_value),choice.english_name));
+    # Get choices for a certain field in FieldChoices, append machine_value and english_name
+    try:
+        for choice in FieldChoice.objects.filter(field__iexact=field):
+            choice_list.append((str(choice.machine_value),choice.english_name));
 
-    choice_list = sorted(choice_list,key=lambda x: x[1]);
+        choice_list = sorted(choice_list,key=lambda x: x[1]);
 
-    return [('0','-'),('1','N/A')] + choice_list;
+        return [('0','-'),('1','N/A')] + choice_list;
+
+    # Enter this exception if for example the db has no data yet (without this it is impossible to migrate)
+    except:
+        pass
 
 class Gloss(models.Model):
     

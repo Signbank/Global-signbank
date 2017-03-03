@@ -269,13 +269,13 @@ class UserProfile(models.Model):
     
     user = models.ForeignKey(authmodels.User, unique=True)    
     yob = models.IntegerField("When were you born?")
-    australian = models.BooleanField(t("Do you live in $country?"))
+    australian = models.BooleanField(t("Do you live in $country?"),default=False)
     postcode = models.CharField(t("If you live in $country, what is your postcode?"), max_length=20, blank=True)
     background = models.CommaSeparatedIntegerField("What is your background?", max_length=20, choices=backgroundChoices)
-    auslan_user = models.BooleanField(t("Do you use $language?"))
+    auslan_user = models.BooleanField(t("Do you use $language?"),default=False)
     learned = models.IntegerField(t("If you use $language, when did you learn sign language?"), 
                                   choices=learnedChoices)
-    deaf = models.BooleanField("Are you a deaf person?")
+    deaf = models.BooleanField("Are you a deaf person?",default=False)
     schooltype = models.IntegerField("What sort of school do you (or did you) attend?", 
                                      choices=schoolChoices)
     school = models.CharField("Which school do you (or did you) attend?", max_length=50, blank=True)                             
