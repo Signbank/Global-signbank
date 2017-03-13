@@ -168,7 +168,7 @@ class Command(BaseCommand):
         Keyword.objects.all().delete()
         
         
-        (lang_bsl, created) = Language.objects.get_or_create(name='BSL')
+        (lang_bsl, created) = SignLanguage.objects.get_or_create(name='BSL')
         for csvfile in args:
             
             #h = csv.DictReader(codecs.open(csvfile, 'Ur', encoding='iso8859-1'))

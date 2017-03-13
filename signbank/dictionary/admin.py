@@ -116,7 +116,7 @@ class DialectAdmin(VersionAdmin):
     model = Dialect
  
 class LanguageAdmin(VersionAdmin):
-    model = Language
+    model = SignLanguage
     inlines = [DialectInline]
 
 # Define an inline admin descriptor for UserProfile model
@@ -155,7 +155,7 @@ class FieldChoiceAdmin(VersionAdmin):
         obj.save()
 
 admin.site.register(Dialect, DialectAdmin)
-admin.site.register(Language, LanguageAdmin) 
+admin.site.register(SignLanguage, LanguageAdmin)
 admin.site.register(Gloss, GlossAdmin) 
 admin.site.register(Morpheme, GlossAdmin)
 admin.site.register(Keyword, KeywordAdmin)

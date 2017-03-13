@@ -135,7 +135,7 @@ class Definition(models.Model):
         list_filter = ['role']
         search_fields = ['gloss__idgloss']
         
-class Language(models.Model):
+class SignLanguage(models.Model):
     """A sign language name"""
         
     class Meta:
@@ -153,7 +153,7 @@ class Dialect(models.Model):
     class Meta:
         ordering = ['language', 'name']
     
-    language = models.ForeignKey(Language)
+    language = models.ForeignKey(SignLanguage)
     name = models.CharField(max_length=20)
     description = models.TextField()
     
@@ -280,7 +280,7 @@ have the same 'Annotation Idgloss' that means they differ in form in only
 minor or insignificant ways that can be ignored.""") 
 
     # languages that this gloss is part of
-    language = models.ManyToManyField(Language)
+    language = models.ManyToManyField(SignLanguage)
 
     # these language fields are subsumed by the language field above
     bsltf = models.NullBooleanField(_("BSL sign"), null=True, blank=True)
@@ -688,7 +688,7 @@ minor or insignificant ways that can be ignored.""")
         """Return JSON for langauge choices"""
         
         d = dict()
-        for l in Language.objects.all():
+        for l in SignLanguage.objects.all():
             d[l.name] = l.name
 
         return json.dumps(d)
