@@ -126,7 +126,7 @@ def update_gloss(request, glossid):
             try:
                 gloss.language.clear()
                 for value in values:
-                    lang = SignLanguage.objects.get(name=value)
+                    lang = Language.objects.get(name=value)
                     gloss.language.add(lang)
                 gloss.save()
                 newvalue = ", ".join([str(g) for g in gloss.language.all()])
@@ -793,7 +793,7 @@ def update_morpheme(request, morphemeid):
             try:
                 morpheme.language.clear()
                 for value in values:
-                    lang = SignLanguage.objects.get(name=value)
+                    lang = Language.objects.get(name=value)
                     morpheme.language.add(lang)
                     morpheme.save()
                 newvalue = ", ".join([str(g) for g in morpheme.language.all()])
