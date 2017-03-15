@@ -707,7 +707,7 @@ def import_csv(request):
 
 def switch_to_language(request,language):
 
-    user_profile = request.user.get_profile()
+    user_profile = request.user.user_profile_user
     user_profile.last_used_language = language
     user_profile.save()
 
