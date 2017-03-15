@@ -737,7 +737,7 @@ minor or insignificant ways that can be ignored.""")
 # register Gloss for tags
 try:
     tagging.register(Gloss)
-except tagging.AlreadyRegistered:
+except:
     pass
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
