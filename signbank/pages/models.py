@@ -22,7 +22,7 @@ class Page(models.Model):
     publish = models.BooleanField(_('publish'), help_text=_("If this is checked, the page will be included in the site menus."),default=False)
     parent = models.ForeignKey('self', blank=True, null=True, help_text=_("Leave blank for a top level menu entry.  Top level entries that have sub-pages should be empty as they will not be linked in the menu."))
     index = models.IntegerField(_('ordering index'), default=0, help_text=_('Used to order pages in the menu'))
-    group_required = models.ManyToManyField(Group, null=True, blank=True, help_text=_("This page will only be visible to members of these groups, leave blank to allow anyone to access."))
+    group_required = models.ManyToManyField(Group, blank=True, help_text=_("This page will only be visible to members of these groups, leave blank to allow anyone to access."))
 
     class Meta:
         verbose_name = _('page')

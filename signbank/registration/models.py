@@ -189,7 +189,7 @@ class RegistrationProfile(models.Model):
     ``RegistrationManager``.
     
     """
-    user = models.ForeignKey(User, unique=True, verbose_name=_('user'))
+    user = models.ForeignKey(User, verbose_name=_('user'))
     activation_key = models.CharField(_('activation key'), max_length=40)
     
     objects = RegistrationManager()
@@ -267,7 +267,7 @@ teachercommChoices = ((0, 'mostly oral'),
 class UserProfile(models.Model):
     """Extended profile for users of the site"""
     
-    user = models.ForeignKey(authmodels.User, unique=True)    
+    user = models.ForeignKey(authmodels.User)
     yob = models.IntegerField("When were you born?")
     australian = models.BooleanField(t("Do you live in $country?"),default=False)
     postcode = models.CharField(t("If you live in $country, what is your postcode?"), max_length=20, blank=True)

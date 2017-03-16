@@ -436,8 +436,8 @@ minor or insignificant ways that can be ignored.""")
     tokNoSgnrO = models.IntegerField(_("Number of Other Region Signers"),null=True, blank=True)
 
     creationDate = models.DateField(_('Creation date'),default=datetime(2015,1,1))
-    lastUpdated = models.DateTimeField(_('Last updated'),default=datetime.now,auto_now=True)
-    creator = models.ManyToManyField(User,null=True)
+    lastUpdated = models.DateTimeField(_('Last updated'),auto_now=True)
+    creator = models.ManyToManyField(User)
     alternative_id = models.CharField(max_length=50,null=True,blank=True)
 
     def get_fields(self):

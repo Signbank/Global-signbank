@@ -308,9 +308,6 @@ def search(request):
 
         return HttpResponseRedirect('../../signs/search/?search='+glossQuery+'&keyword='+term)
 
-from django.db.models.loading import get_model, get_apps, get_models
-from django.core import serializers
-
 def keyword_value_list(request, prefix=None):
     """View to generate a list of possible values for
     a keyword given a prefix."""
