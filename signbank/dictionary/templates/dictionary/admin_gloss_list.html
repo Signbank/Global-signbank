@@ -534,10 +534,10 @@ function do_adminsearch(el) {
           {% endif %}
 
           {% if gloss.morphemePart.count > 0 %}
-              {% if gloss.morphemePart.count > 2 %}
-                  <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} morphemes)</span>
+              {% if gloss.morphemePart.count > 3 %}
+                  <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
               {% else %}
-                  <!-- Number of morphemes is [1-2] -->
+                  <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.morphemePart.all %}
                   <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}</span>
@@ -565,11 +565,16 @@ function do_adminsearch(el) {
           {% endif %}
 
           {% if gloss.morphemePart.all.count > 0 %}
-            <div class="morpheme_in_gloss">
-            {% for morphdef in gloss.morphemePart.all %}
-                <span>{{ morphdef.annotation_idgloss_en }}{% if not forloop.last %}, {% endif %}</span>
-            {% endfor %}
-            </div>
+              {% if gloss.morphemePart.count > 3 %}
+                    <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
+              {% else %}
+                    <!-- Number of morphemes is [1-3] -->
+                    <div class="morpheme_in_gloss">
+                    {% for morphdef in gloss.morphemePart.all %}
+                        <span>{{ morphdef.annotation_idgloss_en }}{% if not forloop.last %}, {% endif %}</span>
+                    {% endfor %}
+                    </div>
+              {% endif %}
           {% endif %}
 
           {% if gloss.parent_glosses.all.count > 0 %}
