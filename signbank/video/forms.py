@@ -6,7 +6,8 @@ class VideoUploadForm(forms.ModelForm):
     
     class Meta:
         model = GlossVideo
-        
+        fields = '__all__'
+
 class VideoUploadForGlossForm(forms.Form):
     """Form for video upload for a particular gloss"""
     

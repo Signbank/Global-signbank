@@ -60,8 +60,6 @@ def page(request, url='/'):
     # mark the title and content as already safe (since they are raw HTML
     # content in the first place).
 
-    print(f.title,f.title_dutch)
-
     if request.LANGUAGE_CODE == 'nl':
         f.title = mark_safe(f.title_dutch)
         f.content = mark_safe(f.content_dutch)
