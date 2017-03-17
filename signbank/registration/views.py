@@ -12,7 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.middleware.csrf import get_token
 
 from forms import RegistrationForm, EmailAuthenticationForm
-from models import RegistrationProfile
+#from models import RegistrationProfile
 
 from datetime import date
 
@@ -45,11 +45,11 @@ def activate(request, activation_key, template_name='registration/activate.html'
     
     """
     activation_key = activation_key.lower() # Normalize before trying anything with it.
-    account = RegistrationProfile.objects.activate_user(activation_key)
-    return render_to_response(template_name,
-                              { 'account': account,
-                                'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS },
-                                context_instance=RequestContext(request))
+    # account = RegistrationProfile.objects.activate_user(activation_key)
+    # return render_to_response(template_name,
+    #                           { 'account': account,
+    #                             'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS },
+    #                             context_instance=RequestContext(request))
 
 
 def register(request, success_url='/accounts/register/complete/',
@@ -106,7 +106,7 @@ def register(request, success_url='/accounts/register/complete/',
 # userids (> 30 chars) since we're using email addresses
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.cache import never_cache
-from django.contrib.sites.models import Site, RequestSite
+from django.contrib.sites.models import Site #, RequestSite
 
 
 def mylogin(request, template_name='registration/login.html', redirect_field_name='/signs/recently_added/'):
@@ -157,8 +157,8 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
     request.session.set_test_cookie()
     if Site._meta.installed:
         current_site = Site.objects.get_current()
-    else:
-        current_site = RequestSite(request)
+    # else:
+    #     current_site = RequestSite(request)
 
     # For logging in API clients
     if request.method == "GET" and "api" in request.GET and request.GET['api'] == 'yes':

@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from models import RegistrationProfile, UserProfile
+#from models import RegistrationProfile, UserProfile
 
 import re
 alnum_re = re.compile(r'^\w+$')
@@ -83,12 +83,11 @@ class RegistrationForm(forms.Form):
         supplied.
 
         """
-        new_user = RegistrationProfile.objects.create_inactive_user(username=self.cleaned_data['username'],
-                                                                    password=self.cleaned_data['password1'],
-                                                                    email=self.cleaned_data['email'],
-                                                                    profile_callback=profile_callback)
-        barf
-        return new_user
+        # new_user = RegistrationProfile.objects.create_inactive_user(username=self.cleaned_data['username'],
+        #                                                             password=self.cleaned_data['password1'],
+        #                                                             email=self.cleaned_data['email'],
+        #                                                             profile_callback=profile_callback)
+        # return new_user
 
 
 class RegistrationFormTermsOfService(RegistrationForm):
@@ -180,7 +179,7 @@ class BirthYearField(forms.Field):
         return year
 
 
-from models import backgroundChoices, learnedChoices, schoolChoices, teachercommChoices
+#from models import backgroundChoices, learnedChoices, schoolChoices, teachercommChoices
 
 yesnoChoices = ((1, 'yes'), (0, 'no'))
 
@@ -197,34 +196,34 @@ class RegistrationFormAuslan(RegistrationFormUniqueEmail):
     """
     Registration form for the site
     """
-    username = forms.CharField(widget=forms.HiddenInput, required=False)
-    firstname = forms.CharField(label=t("Firstname"), max_length=50)
-    
-    lastname = forms.CharField(label=t("Lastname"), max_length=50)
-    
-    yob = BirthYearField(label=t("What year were you born?"))
-    
-    australian = forms.ChoiceField(yesnoChoices, label=t("Do you live in ${country}?"))
-    
-    postcode = forms.CharField(label=t("If you live in $country, what is your postcode?"), 
-                               max_length=20, required=False)
-    
-    background = forms.MultipleChoiceField(backgroundChoices, label=_("What is your background?"))
-    
-    auslan_user = forms.ChoiceField(yesnoChoices, label=t("Do you use $language?"), required=False)
-    
-    learned = forms.ChoiceField(label=t("If you use $language, when did you learn sign language?"),
-                                  choices=learnedChoices, required=False)
-    
-    deaf = forms.ChoiceField(yesnoChoices, label=t("Are you a deaf person?"))
-    
-    schooltype = forms.ChoiceField(label=t("What sort of school do you (or did you) attend?"),
-                                   choices=schoolChoices, required=False)
-    school = forms.CharField(label=t("Which school do you (or did you) attend?"),
-                             max_length=50, required=False)
-    teachercomm = forms.ChoiceField(label=t("How do (or did) your teachers communicate with you?"),
-                                    choices=teachercommChoices,
-                                    required=False)
+    # username = forms.CharField(widget=forms.HiddenInput, required=False)
+    # firstname = forms.CharField(label=t("Firstname"), max_length=50)
+    #
+    # lastname = forms.CharField(label=t("Lastname"), max_length=50)
+    #
+    # yob = BirthYearField(label=t("What year were you born?"))
+    #
+    # australian = forms.ChoiceField(yesnoChoices, label=t("Do you live in ${country}?"))
+    #
+    # postcode = forms.CharField(label=t("If you live in $country, what is your postcode?"),
+    #                            max_length=20, required=False)
+    #
+    # background = forms.MultipleChoiceField(backgroundChoices, label=_("What is your background?"))
+    #
+    # auslan_user = forms.ChoiceField(yesnoChoices, label=t("Do you use $language?"), required=False)
+    #
+    # learned = forms.ChoiceField(label=t("If you use $language, when did you learn sign language?"),
+    #                               choices=learnedChoices, required=False)
+    #
+    # deaf = forms.ChoiceField(yesnoChoices, label=t("Are you a deaf person?"))
+    #
+    # schooltype = forms.ChoiceField(label=t("What sort of school do you (or did you) attend?"),
+    #                                choices=schoolChoices, required=False)
+    # school = forms.CharField(label=t("Which school do you (or did you) attend?"),
+    #                          max_length=50, required=False)
+    # teachercomm = forms.ChoiceField(label=t("How do (or did) your teachers communicate with you?"),
+    #                                 choices=teachercommChoices,
+    #                                 required=False)
 
 
 
@@ -243,33 +242,33 @@ class RegistrationFormAuslan(RegistrationFormUniqueEmail):
         username = self.cleaned_data['email'].replace('@','').replace('.','')
         username = username[:30]
 
-        new_user = RegistrationProfile.objects.create_inactive_user(username=username,
-                                                                    password=self.cleaned_data['password1'],
-                                                                    email=self.cleaned_data['email'],
-                                                                    firstname=self.cleaned_data['firstname'],
-                                                                    lastname=self.cleaned_data['lastname'],
-                                                                    profile_callback=profile_callback)
-
-
-
-        # now also create the userprofile for this user with
-        # the extra information from the form
-        
-        profile = UserProfile(user=new_user,
-                              yob=self.cleaned_data['yob'],
-                              australian=self.cleaned_data['australian'],
-                              postcode=self.cleaned_data['postcode'],
-                              background=",".join(self.cleaned_data['background']),
-                              auslan_user=self.cleaned_data['auslan_user'],
-                              learned=self.cleaned_data['learned'],
-                              deaf=self.cleaned_data['deaf'],
-                              schooltype=self.cleaned_data['schooltype'],
-                              school=self.cleaned_data['school'],
-                              teachercomm=self.cleaned_data['teachercomm'])
-
-        profile.save()
-
-        return new_user
+        # new_user = RegistrationProfile.objects.create_inactive_user(username=username,
+        #                                                             password=self.cleaned_data['password1'],
+        #                                                             email=self.cleaned_data['email'],
+        #                                                             firstname=self.cleaned_data['firstname'],
+        #                                                             lastname=self.cleaned_data['lastname'],
+        #                                                             profile_callback=profile_callback)
+        #
+        #
+        #
+        # # now also create the userprofile for this user with
+        # # the extra information from the form
+        #
+        # profile = UserProfile(user=new_user,
+        #                       yob=self.cleaned_data['yob'],
+        #                       australian=self.cleaned_data['australian'],
+        #                       postcode=self.cleaned_data['postcode'],
+        #                       background=",".join(self.cleaned_data['background']),
+        #                       auslan_user=self.cleaned_data['auslan_user'],
+        #                       learned=self.cleaned_data['learned'],
+        #                       deaf=self.cleaned_data['deaf'],
+        #                       schooltype=self.cleaned_data['schooltype'],
+        #                       school=self.cleaned_data['school'],
+        #                       teachercomm=self.cleaned_data['teachercomm'])
+        #
+        # profile.save()
+        #
+        # return new_user
 
 
 from django.views.decorators.cache import never_cache
