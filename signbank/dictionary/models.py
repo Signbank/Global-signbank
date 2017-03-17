@@ -348,7 +348,7 @@ minor or insignificant ways that can be ignored.""")
     inWeb = models.NullBooleanField(_("In the Web dictionary"), default=False)
     isNew = models.NullBooleanField(_("Is this a proposed new sign?"), null=True, default=False)
     
-    inittext = models.CharField(max_length="50", blank=True) 
+    inittext = models.CharField(max_length=50, blank=True)
 
     morph = models.CharField(_("Morphemic Analysis"), max_length=50, blank=True)
 
