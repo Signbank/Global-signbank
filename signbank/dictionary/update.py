@@ -276,7 +276,7 @@ def update_relation(gloss, field, value):
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
     if what == 'relationdelete':
-        print "DELETE: ", rel
+        print("DELETE: ", rel)
         rel.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrel')
     elif what == 'relationrole':
@@ -313,7 +313,7 @@ def update_relationtoforeignsign(gloss, field, value):
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
     if what == 'relationforeigndelete':
-        print "DELETE: ", rel
+        print("DELETE: ", rel)
         rel.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
     elif what == 'relationforeign_loan':
@@ -343,13 +343,13 @@ def gloss_from_identifier(value):
     
     match = re.match('(.*) \((\d+)\)', value)
     if match:
-        print "MATCH: ", match
+        print("MATCH: ", match)
         idgloss = match.group(1)
         pk = match.group(2)
-        print "INFO: ", idgloss, pk
+        print("INFO: ", idgloss, pk)
         
         target = Gloss.objects.get(pk=int(pk))
-        print "TARGET: ", target
+        print("TARGET: ", target)
         return target
     elif value != '':
         idgloss = value
@@ -368,13 +368,13 @@ def morph_from_identifier(value):
 
     match = re.match('(.*) \((\d+)\)', value)
     if match:
-        print "MATCH: ", match
+        print("MATCH: ", match)
         idgloss = match.group(1)
         pk = match.group(2)
-        print "INFO: ", idgloss, pk
+        print("INFO: ", idgloss, pk)
 
         target = Morpheme.objects.get(pk=int(pk))
-        print "TARGET: ", target
+        print("TARGET: ", target)
         return target
     elif value != '':
         idgloss = value
@@ -482,7 +482,7 @@ def add_relation(request):
             else:
                 return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
         else:
-            print form
+            print(form)
 
     # fallback to redirecting to the requesting page
     return HttpResponseRedirect('/')
@@ -512,7 +512,7 @@ def add_relationtoforeignsign(request):
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
 
         else:
-            print form
+            print(form)
             return HttpResponseBadRequest("Form not valid", {'content-type': 'text/plain'})
 
     # fallback to redirecting to the requesting page
@@ -659,7 +659,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
         return HttpResponseBadRequest("Morphology Definition doesn't match gloss", {'content-type': 'text/plain'})
 
     if what == 'morphology_definition_delete':
-        print "DELETE: ", morph_def
+        print("DELETE: ", morph_def)
         morph_def.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morphology_definition_role':
@@ -909,7 +909,7 @@ def update_morpheme_definition(gloss, field, value):
         return HttpResponseBadRequest("Bad Morpheme Definition ID '%s'" % morph_def_id, {'content-type': 'text/plain'})
 
     if what == 'morpheme_definition_delete':
-        print "REMOVE: ", morph_def, " FROM: ", gloss
+        print("REMOVE: ", morph_def, " FROM: ", gloss)
         gloss.morphemePart.remove(morph_def)
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     else:
@@ -949,8 +949,8 @@ def add_tag(request, glossid):
                                               {'gloss': thisgloss,
                                                'tagform': TagUpdateForm()})
         else:
-            print "invalid form"
-            print form.as_table()
+            print("invalid form")
+            print(form.as_table())
             
     return response
 
@@ -982,8 +982,8 @@ def add_morphemetag(request, morphemeid):
                                               {'morpheme': thismorpheme,
                                                'tagform': TagUpdateForm()})
         else:
-            print "invalid form"
-            print form.as_table()
+            print("invalid form")
+            print(form.as_table())
 
     return response
 

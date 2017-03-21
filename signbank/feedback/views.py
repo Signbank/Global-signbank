@@ -1,6 +1,6 @@
 
 import os
-from models import *
+from signbank.feedback.models import *
 from django import forms
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Context, RequestContext, loader

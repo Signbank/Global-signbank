@@ -12,8 +12,8 @@ from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 
 # local imports
-from views import activate, register, mylogin
-from forms import *
+from signbank.registration.views import activate, register, mylogin
+from signbank.registration.forms import *
 
 urlpatterns = [
                        # Activation keys get matched by \w+ instead of the more specific

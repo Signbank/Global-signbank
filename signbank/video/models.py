@@ -6,7 +6,7 @@ from django.db import models
 from django.conf import settings
 import sys, os, time, shutil
 
-from convertvideo import extract_frame, convert_video, ffmpeg
+from signbank.video.convertvideo import extract_frame, convert_video, ffmpeg
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
@@ -264,9 +264,9 @@ class GlossVideo(models.Model):
 
 
         if revert:
-            print "REVERT VIDEO", self.videofile.name, self.version
+            print("REVERT VIDEO", self.videofile.name, self.version)
             if self.version==0:
-                print "DELETE VIDEO VIA REVERSION", self.videofile.name
+                print("DELETE VIDEO VIA REVERSION", self.videofile.name)
                 self.delete_files()
                 self.delete()
                 return

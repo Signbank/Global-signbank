@@ -1,14 +1,13 @@
-from settings.base import WSGI_FILE, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY
+import signbank.settings
+from signbank.settings.base import WSGI_FILE, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, LANGUAGE_CODE
 import os
 import shutil
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 from zipfile import ZipFile
 from datetime import datetime, date
 import json
 import re
 
-import signbank.settings
-from signbank.settings.base import LANGUAGE_CODE
 from django.utils.translation import override
 
 from signbank.dictionary.models import *

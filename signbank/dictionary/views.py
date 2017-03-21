@@ -10,7 +10,6 @@ from tagging.models import Tag, TaggedItem
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlquote
-from django.utils.encoding import smart_unicode
 from collections import OrderedDict
 
 import os
@@ -23,7 +22,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
-import forms
+import signbank.dictionary.forms
 
 from signbank.video.forms import VideoUploadForGlossForm
 import signbank.tools
@@ -33,8 +32,7 @@ import signbank.settings
 from signbank.settings.base import WRITABLE_FOLDER
 from django.utils.translation import override
 
-import urlparse
-from urllib import urlencode
+from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper
 
 

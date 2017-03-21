@@ -11,7 +11,7 @@ from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.middleware.csrf import get_token
 
-from forms import RegistrationForm, EmailAuthenticationForm
+from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
 #from models import RegistrationProfile
 
 from datetime import date

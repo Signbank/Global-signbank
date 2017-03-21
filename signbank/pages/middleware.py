@@ -1,4 +1,4 @@
-from views import page
+from signbank.pages.views import page
 from django.http import Http404
 from django.conf import settings
 from signbank.log import debug

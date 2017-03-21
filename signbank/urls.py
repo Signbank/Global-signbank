@@ -1,7 +1,7 @@
 from django.conf.urls import *
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
-import registration.forms
+import signbank.registration.forms
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
@@ -25,7 +25,7 @@ from signbank.dictionary.views import add_image, delete_image, add_new_morpheme
 from django.contrib import admin
 admin.autodiscover()
 
-from adminsite import publisher_admin
+from signbank.adminsite import publisher_admin
 
 if settings.SHOW_NUMBERSIGNS:
     numbersigns_view = TemplateView.as_view(template_name='numbersigns/numbersigns.html')

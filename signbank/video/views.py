@@ -3,11 +3,10 @@ from django.template import Context, RequestContext
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
-from models import Video, GlossVideo, GlossVideoHistory
-from forms import VideoUploadForm, VideoUploadForGlossForm
+from signbank.video.models import Video, GlossVideo, GlossVideoHistory
+from signbank.video.forms import VideoUploadForm, VideoUploadForGlossForm
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
-from convertvideo import extract_frame
 import django_mobile
 
 import os
