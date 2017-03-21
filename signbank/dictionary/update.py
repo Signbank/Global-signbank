@@ -183,7 +183,7 @@ def update_gloss(request, glossid):
 
             original_value = getattr(gloss,field)
 
-            if not field in Gloss._meta.get_all_field_names():
+            if not field in [f.name for f in Gloss._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
             
             # special cases 
@@ -193,7 +193,7 @@ def update_gloss(request, glossid):
             # - tags
 
             #Translate the value if a boolean
-            if isinstance(gloss._meta.get_field_by_name(field)[0],NullBooleanField):
+            if isinstance(gloss._meta.get_field(field),NullBooleanField):
                 newvalue = value;
                 value = (value == 'Yes')
 
@@ -845,7 +845,7 @@ def update_morpheme(request, morphemeid):
         else:
             original_value = getattr(morpheme, field)
 
-            if not field in Morpheme._meta.get_all_field_names():
+            if not field in [f.name for f in Morpheme._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
             # special cases
@@ -855,7 +855,7 @@ def update_morpheme(request, morphemeid):
             # - tags
 
             # Translate the value if a boolean
-            if isinstance(morpheme._meta.get_field_by_name(field)[0], NullBooleanField):
+            if isinstance(morpheme._meta.get_field(field), NullBooleanField):
                 newvalue = value;
                 value = (value == 'Yes')
 
