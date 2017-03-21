@@ -39,7 +39,7 @@ def page(request, url='/'):
                      content='<p>No pages defined. Login to <a href="/admin"> to create some.</p>')  
         else:
             t = loader.get_template("404.html")
-            return HttpResponseNotFound(t.render(request))
+            return HttpResponseNotFound(t.render(request=request))
 
     
     # If registration is required for accessing this page, and the user isn't

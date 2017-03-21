@@ -91,6 +91,9 @@ TEMPLATES = [
     },
 ]
 
+# Needed for django-mobile
+TEMPLATE_LOADERS = TEMPLATES[0]['OPTIONS']['loaders']
+
 # add the Email backend to allow logins using email as username
 AUTHENTICATION_BACKENDS = (
     "signbank.registration.EmailBackend",

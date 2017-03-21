@@ -95,12 +95,12 @@ class RegistrationManager(models.Manager):
             current_site = Site.objects.get_current()
             
             subject = render_to_string('registration/activation_email_subject.txt',
-                                       { 'site': current_site })
+                                       context={ 'site': current_site })
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
             
             message = render_to_string('registration/activation_email.txt',
-                                       { 'activation_key': registration_profile.activation_key,
+                                       context={ 'activation_key': registration_profile.activation_key,
                                          'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
                                          'site': current_site })
             
