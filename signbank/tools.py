@@ -177,10 +177,8 @@ def reload_signbank(request=None):
     #If this is an HTTP request, give an HTTP response
     if request != None:
 
-        from django.template import RequestContext
-        from django.shortcuts import render_to_response
-
-        return render_to_response('reload_signbank.html',context_instance=RequestContext(request))
+        from django.shortcuts import render
+        return render(request,'reload_signbank.html')
 
 def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
 

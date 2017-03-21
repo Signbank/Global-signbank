@@ -1,6 +1,6 @@
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
 from django.template import Context, RequestContext, loader
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.core.urlresolvers import reverse
 
 from django.contrib.auth.decorators import permission_required
@@ -31,11 +31,11 @@ def add_gloss(request):
         form = GlossCreateForm(request.POST)
 
         if len(Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
-            return render_to_response('dictionary/warning.html', {'warning':_('Annotation ID Gloss not unique.')},context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html', {'warning':_('Annotation ID Gloss not unique.')})
         elif len(Gloss.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
-            return render_to_response('dictionary/warning.html', {'warning':_('English annotation ID gloss not unique.')},context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html', {'warning':_('English annotation ID gloss not unique.')})
         elif len(request.POST['annotation_idgloss']) < 1:
-            return render_to_response('dictionary/warning.html', {'warning':_('Dutch annotation ID gloss cannot be empty.')},context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html', {'warning':_('Dutch annotation ID gloss cannot be empty.')})
 
         if form.is_valid():
             
@@ -46,9 +46,7 @@ def add_gloss(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
         else:
-            return render_to_response('dictionary/add_gloss_form.html',
-                                      {'add_gloss_form': form},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/add_gloss_form.html',{'add_gloss_form': form})
         
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
@@ -700,16 +698,12 @@ def add_morpheme(request):
         form = MorphemeCreateForm(request.POST)
 
         if len(Morpheme.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
-            return render_to_response('dictionary/warning.html', {'warning': _('Annotation ID Gloss not unique.')},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html', {'warning': _('Annotation ID Gloss not unique.')})
         elif len(Morpheme.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
-            return render_to_response('dictionary/warning.html',
-                                      {'warning': _('English annotation ID gloss not unique.')},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html',
+                                      {'warning': _('English annotation ID gloss not unique.')})
         elif len(request.POST['annotation_idgloss']) < 1:
-            return render_to_response('dictionary/warning.html',
-                                      {'warning': _('Dutch annotation ID gloss cannot be empty.')},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html',{'warning': _('Dutch annotation ID gloss cannot be empty.')})
         # extract the user-chosen mrpType, converting it to...?
         mrpType = request.POST['mrpType']
 
@@ -722,9 +716,8 @@ def add_morpheme(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}) + '?edit')
         else:
-            return render_to_response('dictionary/add_morpheme_form.html',
-                                      {'add_morpheme_form': form},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/add_morpheme_form.html',
+                                      {'add_morpheme_form': form})
 
     return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
 
@@ -952,11 +945,9 @@ def add_tag(request, glossid):
                 # we need to wrap the tag name in quotes since it might contain spaces
                 Tag.objects.add_tag(thisgloss, '"%s"' % tag)
                 # response is new HTML for the tag list and form
-                response = render_to_response('dictionary/glosstags.html',
+                response = render(request,'dictionary/glosstags.html',
                                               {'gloss': thisgloss,
-                                               'tagform': TagUpdateForm(),
-                                               },
-                                              context_instance=RequestContext(request))
+                                               'tagform': TagUpdateForm()})
         else:
             print "invalid form"
             print form.as_table()
@@ -987,11 +978,9 @@ def add_morphemetag(request, morphemeid):
                 # we need to wrap the tag name in quotes since it might contain spaces
                 Tag.objects.add_morphemetag(thismorpheme, '"%s"' % tag)
                 # response is new HTML for the tag list and form
-                response = render_to_response('dictionary/morphemetags.html',
+                response = render(request,'dictionary/morphemetags.html',
                                               {'morpheme': thismorpheme,
-                                               'tagform': TagUpdateForm(),
-                                               },
-                                              context_instance=RequestContext(request))
+                                               'tagform': TagUpdateForm()})
         else:
             print "invalid form"
             print form.as_table()

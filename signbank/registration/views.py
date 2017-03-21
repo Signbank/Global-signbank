@@ -6,7 +6,7 @@ Views which allow users to create and activate accounts.
 
 from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.middleware.csrf import get_token
@@ -97,10 +97,7 @@ def register(request, success_url='/accounts/register/complete/',
             return HttpResponseRedirect(success_url)
     else:
         form = form_class()
-    return render_to_response(template_name,
-                              { 'form': form },
-                              context_instance=RequestContext(request))
-                              
+    return render(request,template_name,{ 'form': form })
 
 # a copy of the login view since we need to change the form to allow longer
 # userids (> 30 chars) since we're using email addresses
@@ -165,14 +162,13 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         token = get_token(request)
         return HttpResponse(json.dumps({'csrfmiddlewaretoken': token}), content_type='application/json')
 
-    return render_to_response(template_name, {
+    return render(request,template_name, {
         'form': form,
         REDIRECT_FIELD_NAME: settings.URL+redirect_to,
         'site': current_site,
         'site_name': current_site.name,
         'allow_registration': settings.ALLOW_REGISTRATION,
-        'error_message': error_message
-    }, context_instance=RequestContext(request))
+        'error_message': error_message})
 mylogin = never_cache(mylogin)
     
                               

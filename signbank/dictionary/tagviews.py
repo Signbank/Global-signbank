@@ -1,5 +1,5 @@
 
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.template import RequestContext
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -50,17 +50,14 @@ def taglist(request, tag=None):
         
         
 
-        return render_to_response('dictionary/gloss_list.html',
+        return render(request, 'dictionary/gloss_list.html',
                                   {'paginator': paginator,
                                    'page': result_page,
                                    'thistag': taginfo,
-                                   'tagdict': tag_dict()},
-                                   context_instance=RequestContext(request) )
+                                   'tagdict': tag_dict()})
     else:
-        return render_to_response('dictionary/gloss_list.html',
-                                  {'tagdict': tag_dict(),
-                                   },
-                                   context_instance=RequestContext(request))
+        return render(request, 'dictionary/gloss_list.html',
+                                  {'tagdict': tag_dict()})
 
 
 def tag_dict():

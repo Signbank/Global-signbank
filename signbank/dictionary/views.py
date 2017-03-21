@@ -1,7 +1,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import Context, RequestContext, loader
 from django.http import Http404
-from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.db.models import Q
@@ -54,13 +54,10 @@ def index(request):
     point to the dictionary"""
 
 
-    return render_to_response("dictionary/search_result.html",
+    return render(request,"dictionary/search_result.html",
                               {'form': UserSignSearchForm(),
                                'language': settings.LANGUAGE_NAME,
-                               'query': '',
-                               },
-                               context_instance=RequestContext(request))
-
+                               'query': ''})
 
 
 STATE_IMAGES = {'auslan_all': "images/maps/allstates.gif",
@@ -170,7 +167,7 @@ def word(request, keyword, n):
         update_form = None
         video_form = None
 
-    return render_to_response("dictionary/word.html",
+    return render(request,"dictionary/word.html",
                               {'translation': trans.translation.text.encode('utf-8'),
                                'viewname': 'words',
                                'definitions': trans.gloss.definitions(),
@@ -195,9 +192,7 @@ def word(request, keyword, n):
                                'feedbackmessage': feedbackmessage,
                                'tagform': TagUpdateForm(),
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
-                               },
-                               context_instance=RequestContext(request))
+                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 def gloss(request, idgloss):
     """View of a gloss - mimics the word view, really for admin use
@@ -220,7 +215,7 @@ def gloss(request, idgloss):
 
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
 #        return render_to_response('dictionary/not_allowed.html')
-        return render_to_response("dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'},context_instance=RequestContext(request))
+        return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
 
     allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
@@ -267,7 +262,7 @@ def gloss(request, idgloss):
     else:
         lastmatch = False
 
-    return render_to_response("dictionary/word.html",
+    return render(request,"dictionary/word.html",
                               {'translation': trans,
                                'definitions': gloss.definitions(),
                                'allkwds': allkwds,
@@ -285,9 +280,7 @@ def gloss(request, idgloss):
                                'tagform': TagUpdateForm(),
                                'feedbackmessage': feedbackmessage,
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
-                               },
-                               context_instance=RequestContext(request))
+                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 
 
@@ -532,7 +525,7 @@ def import_authors(request):
 
 def add_new_sign(request):
 
-    return render_to_response('dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()},context_instance=RequestContext(request))
+    return render(request,'dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()})
 
 
 @login_required_config
@@ -554,8 +547,7 @@ def search_morpheme(request):
 
 def add_new_morpheme(request):
 
-    oForm = {'add_morpheme_form':MorphemeCreateForm()}
-    oContext = RequestContext(request)
+    oContext = {'add_morpheme_form': MorphemeCreateForm()}
 
     # Add essential information to the context
     oContext['morph_fields'] = []
@@ -582,7 +574,7 @@ def add_new_morpheme(request):
     oContext['morph_fields'].append(['(Make a choice)', field, "Morpheme type", kind]);
 
     # Continue
-    oBack = render_to_response('dictionary/add_morpheme.html', oForm, context_instance=oContext)
+    oBack = render(request,'dictionary/add_morpheme.html', oContext)
     return oBack
 
 
@@ -700,7 +692,7 @@ def import_csv(request):
 
         stage = 0
 
-    return render_to_response('dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,'error':error},context_instance=RequestContext(request))
+    return render(request,'dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,'error':error})
 
 def switch_to_language(request,language):
 
@@ -712,7 +704,7 @@ def switch_to_language(request,language):
 
 def recently_added_glosses(request):
 
-    return render_to_response('dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()},context_instance=RequestContext(request))
+    return render(request,'dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()})
 
 def add_params_to_url(url,params):
     url_parts = list(urlparse.urlparse(url))

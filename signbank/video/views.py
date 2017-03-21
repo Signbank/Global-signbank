@@ -1,4 +1,4 @@
-from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Context, RequestContext
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -167,12 +167,10 @@ def iframe(request, videoid):
         posterurl = None
 
 
-    return render_to_response("iframe.html",
+    return render(request,"iframe.html",
                               {'videourl': videourl,
                                'posterurl': posterurl,
-                               'aspectRatio': settings.VIDEO_ASPECT_RATIO,
-                               },
-                               context_instance=RequestContext(request))
+                               'aspectRatio': settings.VIDEO_ASPECT_RATIO})
 
 
 def create_still_images(request):

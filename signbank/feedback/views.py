@@ -2,7 +2,7 @@
 import os
 from models import *
 from django import forms
-from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Context, RequestContext, loader
 from django.conf import settings 
 from django.core.mail import send_mail
@@ -13,12 +13,11 @@ from django.core.urlresolvers import reverse
 import time
 
 def index(request):
-    return render_to_response('feedback/index.html',
+    return render(request,'feedback/index.html',
                               { 
                                'language': settings.LANGUAGE_NAME,
                                'country': settings.COUNTRY_NAME,
-                               'title':"Leave Feedback"},
-                              context_instance=RequestContext(request))
+                               'title':"Leave Feedback"})
 
 
 
@@ -60,13 +59,11 @@ def interpreterfeedback(request, glossid=None):
         missing = MissingSignFeedback.objects.filter(status='unread', user__groups__name='Interpreter')
         signfb = SignFeedback.objects.filter(status='unread', user__groups__name='Interpreter')
         
-        return render_to_response('feedback/interpreter.html',
+        return render(request,'feedback/interpreter.html',
                                    {'notes': notes,
                                     'general': general,
                                     'missing': missing,
-                                    'signfb': signfb,
-                                   },
-                               context_instance=RequestContext(request))
+                                    'signfb': signfb})
 
 
         
@@ -93,15 +90,13 @@ def generalfeedback(request):
     else:
         form = GeneralFeedbackForm()
 
-    return render_to_response("feedback/generalfeedback.html",
+    return render(request,"feedback/generalfeedback.html",
                               {
                                'language': settings.LANGUAGE_NAME,
                                'country': settings.COUNTRY_NAME,
                                'title':"General Feedback",
                                'form': form,
-                               'valid': valid },
-                               context_instance=RequestContext(request)
-                              )
+                               'valid': valid })
 
 @login_required
 def missingsign(request):
@@ -147,15 +142,13 @@ def missingsign(request):
         form = MissingSignFeedbackForm()        
   
     
-    return render_to_response('feedback/missingsign.html',
+    return render(request,'feedback/missingsign.html',
                                {
                                'language': settings.LANGUAGE_NAME,
                                'country': settings.COUNTRY_NAME,
                                 'title':"Report a Missing Sign",
                                 'posted': posted,
-                                'form': form
-                                },
-                              context_instance=RequestContext(request))
+                                'form': form})
 
                               
 #-----------
@@ -170,14 +163,11 @@ def showfeedback(request):
     missing = MissingSignFeedback.objects.filter(status='unread')
     signfb = SignFeedback.objects.filter(status__in=('unread', 'read'))
     
-    return render_to_response("feedback/show.html",
+    return render(request,"feedback/show.html",
                               {'general': general,    
                               'missing': missing,
-                              'signfb': signfb,
-                              }, 
-                              context_instance=RequestContext(request))
-    
-    
+                              'signfb': signfb})
+
     
 
 @login_required
@@ -257,7 +247,7 @@ def recordsignfeedback(request, trans, n, total):
     else:
         feedback_form = SignFeedbackForm()
         
-    return render_to_response("feedback/signfeedback.html",
+    return render(request,"feedback/signfeedback.html",
                               {'translation': trans,
                                'n': n, 
                                'total': total,   
@@ -265,10 +255,7 @@ def recordsignfeedback(request, trans, n, total):
                                'valid': valid,
                                'sourcepage': sourcepage,
                                'lastmatch': lastmatch,
-                               'language': settings.LANGUAGE_NAME,
-                               },
-                               context_instance=RequestContext(request))
-
+                               'language': settings.LANGUAGE_NAME})
 
 #--------------------
 #  deleting feedback
