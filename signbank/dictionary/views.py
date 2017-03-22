@@ -120,7 +120,7 @@ def word(request, keyword, n):
 
     n = int(n)
 
-    if request.GET.has_key('feedbackmessage'):
+    if 'feedbackmessage' in request.GET:
         feedbackmessage = request.GET['feedbackmessage']
     else:
         feedbackmessage = False
@@ -196,7 +196,7 @@ def gloss(request, idgloss):
     """View of a gloss - mimics the word view, really for admin use
        when we want to preview a particular gloss"""
 
-    if request.GET.has_key('feedbackmessage'):
+    if 'feedbackmessage' in request.GET:
         feedbackmessage = request.GET['feedbackmessage']
     else:
         feedbackmessage = False
@@ -253,7 +253,7 @@ def gloss(request, idgloss):
 
 
     # get the last match keyword if there is one passed along as a form variable
-    if request.GET.has_key('lastmatch'):
+    if 'lastmatch' in request.GET:
         lastmatch = request.GET['lastmatch']
         if lastmatch == "None":
             lastmatch = False
@@ -715,7 +715,7 @@ def add_params_to_url(url,params):
 
 def add_image(request):
 
-    if request.META.has_key('HTTP_REFERER'):
+    if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
@@ -796,7 +796,7 @@ def delete_image(request, pk):
         deleted_image.save()
 
     # return to referer
-    if request.META.has_key('HTTP_REFERER'):
+    if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'

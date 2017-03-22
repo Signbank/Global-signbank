@@ -449,7 +449,7 @@ minor or insignificant ways that can be ignored.""")
             if field.name in settings.API_FIELDS:
                 category = fieldname_to_category(field.name)
                 if category != field.name:
-                    if not fields.has_key(category):
+                    if not category in fields:
                         fields[category] = {}
                     fields[category][field.verbose_name.title()] = field.value_to_string(self)
                 else:
@@ -652,7 +652,7 @@ minor or insignificant ways that can be ignored.""")
     
         defs = dict()
         for d in self.definition_set.all().order_by('count'):
-            if not defs.has_key(d.role):
+            if not d.role in defs:
                 defs[d.role] = []
             
             defs[d.role].append(d.text)

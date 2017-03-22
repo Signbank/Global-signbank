@@ -90,7 +90,7 @@ def addvideo(request):
     # referring page, should just be the case of hitting
     # Upload without choosing a file but could be
     # a malicious request, if no referrer, go back to root
-    if request.META.has_key('HTTP_REFERER'):
+    if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
@@ -123,7 +123,7 @@ def deletevideo(request, videoid):
     deleted_video.save()
 
     # return to referer
-    if request.META.has_key('HTTP_REFERER'):
+    if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'

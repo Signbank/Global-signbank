@@ -60,7 +60,7 @@ def order_queryset_by_sort_order(get, qs):
     # Set the default sort order
     sOrder = 'idgloss'  # Default sort order if nothing is specified
     # See if the form contains any sort-order information
-    if (get.has_key('sortOrder') and get['sortOrder'] != ''):
+    if ('sortOrder' in get and get['sortOrder'] != ''):
         # Take the user-indicated sort order
         sOrder = get['sortOrder']
 
@@ -408,7 +408,7 @@ class GlossListView(ListView):
             return qs
 
         #If not, we will go trhough a long list of filters
-        if get.has_key('search') and get['search'] != '':
+        if 'search' in get and get['search'] != '':
             val = get['search']
             query = Q(idgloss__iregex=val) | \
                     Q(annotation_idgloss__iregex=val)
@@ -419,28 +419,28 @@ class GlossListView(ListView):
             qs = qs.filter(query)
             #print "A: ", len(qs)
 
-        if get.has_key('englishGloss') and get['englishGloss'] != '':
+        if 'englishGloss' in get and get['englishGloss'] != '':
             val = get['englishGloss']
             qs = qs.filter(annotation_idgloss_en__iregex=val)
 
-        if get.has_key('keyword') and get['keyword'] != '':
+        if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']
             qs = qs.filter(translation__translation__text__iregex=val)
 
 
-        if get.has_key('inWeb') and get['inWeb'] != '0':
+        if 'inWeb' in get and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['inWeb'] == 'yes'
             qs = qs.filter(inWeb__exact=val)
             #print "B :", len(qs)
 
 
-        if get.has_key('hasvideo') and get['hasvideo'] != 'unspecified':
+        if 'hasvideo' in get and get['hasvideo'] != 'unspecified':
             val = get['hasvideo'] == 'no'
 
             qs = qs.filter(glossvideo__isnull=val)
 
-        if get.has_key('defspublished') and get['defspublished'] != 'unspecified':
+        if 'defspublished' in get and get['defspublished'] != 'unspecified':
             val = get['defspublished'] == 'yes'
 
             qs = qs.filter(definition__published=val)
@@ -462,7 +462,7 @@ class GlossListView(ListView):
         if vals != []:
             qs = qs.filter(language__in=vals)
 
-        if get.has_key('useInstr') and get['useInstr'] != '':
+        if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
 
@@ -481,39 +481,39 @@ class GlossListView(ListView):
                     qs = qs.filter(**kwargs);
 
 
-        if get.has_key('initial_relative_orientation') and get['initial_relative_orientation'] != '':
+        if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
             val = get['initial_relative_orientation']
             qs = qs.filter(initial_relative_orientation__exact=val)
 
-        if get.has_key('final_relative_orientation') and get['final_relative_orientation'] != '':
+        if 'final_relative_orientation' in get and get['final_relative_orientation'] != '':
             val = get['final_relative_orientation']
             qs = qs.filter(final_relative_orientation__exact=val)
 
-        if get.has_key('initial_palm_orientation') and get['initial_palm_orientation'] != '':
+        if 'initial_palm_orientation' in get and get['initial_palm_orientation'] != '':
             val = get['initial_palm_orientation']
             qs = qs.filter(initial_palm_orientation__exact=val)
 
-        if get.has_key('final_palm_orientation') and get['final_palm_orientation'] != '':
+        if 'final_palm_orientation' in get and get['final_palm_orientation'] != '':
             val = get['final_palm_orientation']
             qs = qs.filter(final_palm_orientation__exact=val)
 
-        if get.has_key('initial_secondary_loc') and get['initial_secondary_loc'] != '':
+        if 'initial_secondary_loc' in get and get['initial_secondary_loc'] != '':
             val = get['initial_secondary_loc']
             qs = qs.filter(initial_secondary_loc__exact=val)
 
-        if get.has_key('final_secondary_loc') and get['final_secondary_loc'] != '':
+        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
 
-        if get.has_key('final_secondary_loc') and get['final_secondary_loc'] != '':
+        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
 
-        if get.has_key('defsearch') and get['defsearch'] != '':
+        if 'defsearch' in get and get['defsearch'] != '':
 
             val = get['defsearch']
 
-            if get.has_key('defrole'):
+            if 'defrole' in get:
                 role = get['defrole']
             else:
                 role = 'all'
@@ -523,7 +523,7 @@ class GlossListView(ListView):
             else:
                 qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
 
-        if get.has_key('tags') and get['tags'] != '':
+        if 'tags' in get and get['tags'] != '':
             vals = get.getlist('tags')
 
             tags = []
@@ -541,7 +541,7 @@ class GlossListView(ListView):
 
         qs = qs.distinct()
 
-        if get.has_key('nottags') and get['nottags'] != '':
+        if 'nottags' in get and get['nottags'] != '':
             vals = get.getlist('nottags')
 
            # print "NOT TAGS: ", vals
@@ -559,13 +559,13 @@ class GlossListView(ListView):
 
            # print "K :", len(qs)
 
-        if get.has_key('relationToForeignSign') and get['relationToForeignSign'] != '':
+        if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
 
             relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
             potential_pks = [relation.gloss.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
 
-        if get.has_key('hasRelationToForeignSign') and get['hasRelationToForeignSign'] != '0':
+        if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
 
             pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()];
             print('pks_for_glosses',pks_for_glosses_with_relations)
@@ -575,14 +575,14 @@ class GlossListView(ListView):
             elif get['hasRelationToForeignSign'] == '2': #We only want glosses without a relation to a foreign sign
                 qs = qs.exclude(pk__in=pks_for_glosses_with_relations)
 
-        if get.has_key('relation') and get['relation'] != '':
+        if 'relation' in get and get['relation'] != '':
 
             potential_targets = Gloss.objects.filter(idgloss__icontains=get['relation'])
             relations = Relation.objects.filter(target__in=potential_targets)
             potential_pks = [relation.source.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
 
-        if get.has_key('hasRelation') and get['hasRelation'] != '':
+        if 'hasRelation' in get and get['hasRelation'] != '':
 
             #Find all relations with this role
             if get['hasRelation'] == 'all':
@@ -594,7 +594,7 @@ class GlossListView(ListView):
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role];
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
-        if get.has_key('id_morpheme') and get['id_morpheme'] != '':
+        if 'id_morpheme' in get and get['id_morpheme'] != '':
 
             # Filter all glosses that contain a morpheme with the indicated text in its gloss
             # Step 1: get all morphemes containing the indicated text
@@ -606,14 +606,14 @@ class GlossListView(ListView):
                 potential_pks = [appears.pk for appears in Gloss.objects.filter(morphemePart=selected_morpheme)];
                 qs = qs.filter(pk__in=potential_pks)
 
-        if get.has_key('hasComponentOfType') and get['hasComponentOfType'] != '':
+        if 'hasComponentOfType' in get and get['hasComponentOfType'] != '':
 
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
             morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasComponentOfType']);
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role];
             qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
-        if get.has_key('hasMorphemeOfType') and get['hasMorphemeOfType'] != '':
+        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
 
             # Get all Morphemes of the indicated mrpType
             target_morphemes = Morpheme.objects.filter(mrpType__exact=get['hasMorphemeOfType'])
@@ -623,7 +623,7 @@ class GlossListView(ListView):
             pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in glosses_with_correct_mrpType];
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
-        if get.has_key('definitionRole') and get['definitionRole'] != '':
+        if 'definitionRole' in get and get['definitionRole'] != '':
 
             #Find all definitions with this role
             if get['definitionRole'] == 'all':
@@ -635,7 +635,7 @@ class GlossListView(ListView):
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role];
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
-        if get.has_key('definitionContains') and get['definitionContains'] != '':
+        if 'definitionContains' in get and get['definitionContains'] != '':
 
             definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains']);
 
@@ -643,12 +643,12 @@ class GlossListView(ListView):
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text];
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
-        if get.has_key('createdBefore') and get['createdBefore'] != '':
+        if 'createdBefore' in get and get['createdBefore'] != '':
 
             created_before_date = DT.datetime.strptime(get['createdBefore'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE,created_before_date))
 
-        if get.has_key('createdAfter') and get['createdAfter'] != '':
+        if 'createdAfter' in get and get['createdAfter'] != '':
 
             created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(created_after_date,DT.datetime.now()))
@@ -869,7 +869,7 @@ class MorphemeListView(ListView):
         else:
             qs = Morpheme.objects.none()
 
-        if get.has_key('search') and get['search'] != '':
+        if 'search' in get and get['search'] != '':
             val = get['search']
             query = Q(idgloss__iregex=val) | \
                     Q(annotation_idgloss__iregex=val)
@@ -880,26 +880,26 @@ class MorphemeListView(ListView):
             qs = qs.filter(query)
             # print "A: ", len(qs)
 
-        if get.has_key('englishGloss') and get['englishGloss'] != '':
+        if 'englishGloss' in get and get['englishGloss'] != '':
             val = get['englishGloss']
             qs = qs.filter(annotation_idgloss_en__iregex=val)
 
-        if get.has_key('keyword') and get['keyword'] != '':
+        if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']
             qs = qs.filter(translation__translation__text__iregex=val)
 
-        if get.has_key('inWeb') and get['inWeb'] != '0':
+        if 'inWeb' in get and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['inWeb'] == 'yes'
             qs = qs.filter(inWeb__exact=val)
             # print "B :", len(qs)
 
-        if get.has_key('hasvideo') and get['hasvideo'] != 'unspecified':
+        if 'hasvideo' in get and get['hasvideo'] != 'unspecified':
             val = get['hasvideo'] == 'no'
 
             qs = qs.filter(glossvideo__isnull=val)
 
-        if get.has_key('defspublished') and get['defspublished'] != 'unspecified':
+        if 'defspublished' in get and get['defspublished'] != 'unspecified':
             val = get['defspublished'] == 'yes'
 
             qs = qs.filter(definition__published=val)
@@ -923,7 +923,7 @@ class MorphemeListView(ListView):
         if vals != []:
             qs = qs.filter(language__in=vals)
 
-        if get.has_key('useInstr') and get['useInstr'] != '':
+        if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
         ## phonology and semantics field filters
@@ -940,39 +940,39 @@ class MorphemeListView(ListView):
                     kwargs = {key: val};
                     qs = qs.filter(**kwargs);
 
-        if get.has_key('initial_relative_orientation') and get['initial_relative_orientation'] != '':
+        if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
             val = get['initial_relative_orientation']
             qs = qs.filter(initial_relative_orientation__exact=val)
 
-        if get.has_key('final_relative_orientation') and get['final_relative_orientation'] != '':
+        if 'final_relative_orientation' in get and get['final_relative_orientation'] != '':
             val = get['final_relative_orientation']
             qs = qs.filter(final_relative_orientation__exact=val)
 
-        if get.has_key('initial_palm_orientation') and get['initial_palm_orientation'] != '':
+        if 'initial_palm_orientation' in get and get['initial_palm_orientation'] != '':
             val = get['initial_palm_orientation']
             qs = qs.filter(initial_palm_orientation__exact=val)
 
-        if get.has_key('final_palm_orientation') and get['final_palm_orientation'] != '':
+        if 'final_palm_orientation' in get and get['final_palm_orientation'] != '':
             val = get['final_palm_orientation']
             qs = qs.filter(final_palm_orientation__exact=val)
 
-        if get.has_key('initial_secondary_loc') and get['initial_secondary_loc'] != '':
+        if 'initial_secondary_loc' in get and get['initial_secondary_loc'] != '':
             val = get['initial_secondary_loc']
             qs = qs.filter(initial_secondary_loc__exact=val)
 
-        if get.has_key('final_secondary_loc') and get['final_secondary_loc'] != '':
+        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
 
-        if get.has_key('final_secondary_loc') and get['final_secondary_loc'] != '':
+        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
 
-        if get.has_key('defsearch') and get['defsearch'] != '':
+        if 'defsearch' in get and get['defsearch'] != '':
 
             val = get['defsearch']
 
-            if get.has_key('defrole'):
+            if 'defrole' in get:
                 role = get['defrole']
             else:
                 role = 'all'
@@ -982,7 +982,7 @@ class MorphemeListView(ListView):
             else:
                 qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
 
-        if get.has_key('tags') and get['tags'] != '':
+        if 'tags' in get and get['tags'] != '':
             vals = get.getlist('tags')
 
             tags = []
@@ -999,7 +999,7 @@ class MorphemeListView(ListView):
 
         qs = qs.distinct()
 
-        if get.has_key('nottags') and get['nottags'] != '':
+        if 'nottags' in get and get['nottags'] != '':
             vals = get.getlist('nottags')
 
             # print "NOT TAGS: ", vals
@@ -1017,12 +1017,12 @@ class MorphemeListView(ListView):
 
             # print "K :", len(qs)
 
-        if get.has_key('relationToForeignSign') and get['relationToForeignSign'] != '':
+        if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
             relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
             potential_pks = [relation.gloss.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
 
-        if get.has_key('hasRelationToForeignSign') and get['hasRelationToForeignSign'] != '0':
+        if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
 
             pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()];
             print('pks_for_glosses', pks_for_glosses_with_relations)
@@ -1032,13 +1032,13 @@ class MorphemeListView(ListView):
             elif get['hasRelationToForeignSign'] == '2':  # We only want glosses without a relation to a foreign sign
                 qs = qs.exclude(pk__in=pks_for_glosses_with_relations)
 
-        if get.has_key('relation') and get['relation'] != '':
+        if 'relation' in get and get['relation'] != '':
             potential_targets = Gloss.objects.filter(idgloss__icontains=get['relation'])
             relations = Relation.objects.filter(target__in=potential_targets)
             potential_pks = [relation.source.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
 
-        if get.has_key('hasRelation') and get['hasRelation'] != '':
+        if 'hasRelation' in get and get['hasRelation'] != '':
 
             # Find all relations with this role
             if get['hasRelation'] == 'all':
@@ -1050,14 +1050,14 @@ class MorphemeListView(ListView):
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role];
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
-        if get.has_key('morpheme') and get['morpheme'] != '':
+        if 'morpheme' in get and get['morpheme'] != '':
             potential_morphemes = Gloss.objects.filter(idgloss__icontains=get['morpheme']);
             potential_morphdefs = MorphologyDefinition.objects.filter(
                 morpheme__in=[morpheme.pk for morpheme in potential_morphemes])
             potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs];
             qs = qs.filter(pk__in=potential_pks)
 
-        if get.has_key('hasMorphemeOfType') and get['hasMorphemeOfType'] != '':
+        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
 
             # Get all Morphemes of the indicated mrpType
             target_morphemes = Morpheme.objects.filter(mrpType__exact=get['hasMorphemeOfType'])
@@ -1065,13 +1065,13 @@ class MorphemeListView(ListView):
             pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in target_morphemes];
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
-#        if get.has_key('hasMorphemeOfType') and get['hasMorphemeOfType'] != '':
+#        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
 #            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasMorphemeOfType']);
 #            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in
 #                                                                morphdefs_with_correct_role];
 #            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
-        if get.has_key('definitionRole') and get['definitionRole'] != '':
+        if 'definitionRole' in get and get['definitionRole'] != '':
 
             # Find all definitions with this role
             if get['definitionRole'] == 'all':
@@ -1083,18 +1083,18 @@ class MorphemeListView(ListView):
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role];
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
-        if get.has_key('definitionContains') and get['definitionContains'] != '':
+        if 'definitionContains' in get and get['definitionContains'] != '':
             definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains']);
 
             # Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text];
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
-        if get.has_key('createdBefore') and get['createdBefore'] != '':
+        if 'createdBefore' in get and get['createdBefore'] != '':
             created_before_date = DT.datetime.strptime(get['createdBefore'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
 
-        if get.has_key('createdAfter') and get['createdAfter'] != '':
+        if 'createdAfter' in get and get['createdAfter'] != '':
             created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
 
