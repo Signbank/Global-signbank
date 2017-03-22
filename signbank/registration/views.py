@@ -109,7 +109,7 @@ from django.contrib.sites.models import Site #, RequestSite
 def mylogin(request, template_name='registration/login.html', redirect_field_name='/signs/recently_added/'):
     "Displays the login form and handles the login action."
 
-    redirect_to = request.REQUEST.get(REDIRECT_FIELD_NAME, '')
+    redirect_to = request.GET[REDIRECT_FIELD_NAME]
     error_message = ''
 
     if request.method == "POST":
