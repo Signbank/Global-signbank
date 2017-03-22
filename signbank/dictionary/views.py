@@ -581,7 +581,7 @@ def import_csv(request):
     if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
         return HttpResponse('You are not allowed to see this page.')
 
-    uploadform = forms.CSVUploadForm
+    uploadform = signbank.dictionary.forms.CSVUploadForm
     changes = []
     error = False
 

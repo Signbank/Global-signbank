@@ -469,7 +469,7 @@ class GlossListView(ListView):
         ## phonology and semantics field filters
         for fieldname in fieldnames:
 
-            if get.has_key(fieldname):
+            if fieldname in get:
                 key = fieldname+'__exact';
                 val = get[fieldname];
 
@@ -929,7 +929,7 @@ class MorphemeListView(ListView):
         ## phonology and semantics field filters
         for fieldname in fieldnames:
 
-            if get.has_key(fieldname):
+            if fieldname in get:
                 key = fieldname + '__exact';
                 val = get[fieldname];
 

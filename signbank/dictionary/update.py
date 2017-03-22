@@ -241,7 +241,7 @@ def update_gloss(request, glossid):
                     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                     newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
 
-        return HttpResponse(unicode(original_value)+unicode('\t')+unicode(newvalue), {'content-type': 'text/plain'})
+        return HttpResponse(original_value+'\t'+newvalue, {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""

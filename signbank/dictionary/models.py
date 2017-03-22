@@ -228,10 +228,10 @@ class Gloss(models.Model):
                         )
 
     def __str__(self):
-        return unicode(self.idgloss.encode('utf-8'))
+        return self.idgloss.encode('utf-8')
 
     def __unicode__(self):
-        return unicode(self.idgloss)
+        return self.idgloss
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
