@@ -25,7 +25,7 @@ class Translation(models.Model):
     
     def __str__(self):
         #return unicode(self.gloss).encode('ascii','ignore')+"-"+unicode(self.translation).encode('ascii','ignore')
-        return self.gloss.idgloss.encode('utf-8') + '-' + self.translation.text.encode('utf-8')
+        return self.gloss.idgloss + '-' + self.translation.text
 
     def get_absolute_url(self):
         """Return a URL for a view of this translation."""
@@ -52,7 +52,7 @@ class Keyword(models.Model):
     """A Dutch keyword that is a possible translation equivalent of a sign"""
     
     def __str__(self):
-        return self.text.encode('utf-8')
+        return self.text
     
     text = models.CharField(max_length=100, unique=True)
     
@@ -228,7 +228,7 @@ class Gloss(models.Model):
                         )
 
     def __str__(self):
-        return self.idgloss.encode('utf-8')
+        return self.idgloss
 
     def __unicode__(self):
         return self.idgloss
@@ -590,8 +590,7 @@ minor or insignificant ways that can be ignored.""")
 
     def get_video_path(self):
 
-        idgloss = self.idgloss.encode('utf-8')
-        return 'glossvideo/'+idgloss[:2]+'/'+idgloss+'-'+str(self.pk)+'.mp4'
+        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
