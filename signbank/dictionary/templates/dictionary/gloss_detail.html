@@ -5,6 +5,12 @@
 
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <style>
+        #panel-expand-collapse-btn-group.affix {
+            top:3px;
+            position:fixed;
+        }
+    </style>
 {% endblock %}
 
 {% block extrajs %}
@@ -76,6 +82,29 @@
 
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
+
+    <!-- Expand and collapse all panels -->
+    <script type='text/javascript'>
+        $('#expand-panels').on('click', function() {
+            $('#definition .collapse').collapse('show');
+        });
+        $('#collapse-panels').on('click', function() {
+            $('#definition .collapse').collapse('hide');
+        });
+        $('#panel-expand-collapse-btn-group').affix({
+            offset: {
+                top: $('#panel-expand-collapse-btn-group').offset().top + 3,
+            }
+        });
+        $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
+            $('#panel-expand-collapse-btn-group').css({
+                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
+            });
+         });
+         $('#panel-expand-collapse-btn-toolbar').css({
+            'height': $('#panel-expand-collapse-btn-group').css('height'),
+         });
+    </script>
     
     
     {% endif %}
@@ -345,6 +374,20 @@
         </table>
 			 
    {% if perms.dictionary.view_advanced_properties %}
+
+        <!-- Expand and collapse all panels -->
+        <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
+            <div class="pull-right">
+                <div class="btn-group" id="panel-expand-collapse-btn-group">
+                    <button id="expand-panels" type="button" class="btn btn-default btn-xs">
+                            <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+                    </button>
+                    <button id="collapse-panels" type="button" class="btn btn-default btn-xs">
+                        <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
    <!-- Morphology -->
    <div class="panel panel-default">
