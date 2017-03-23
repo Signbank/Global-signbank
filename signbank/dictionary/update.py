@@ -209,7 +209,7 @@ def update_gloss(request, glossid):
                 #Remember the old video path if you're changing the name
                 if field == 'idgloss':
                     old_video_path = gloss.get_video_path()
-                    old_image_path = gloss.get_image_path()
+                    old_image_path = gloss.get_image_path(check_existance=False)
                     old_extension = old_image_path.split('.')[-1]
 
                 setattr(gloss,field,value)
