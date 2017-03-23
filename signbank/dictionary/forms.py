@@ -124,8 +124,8 @@ class GlossSearchForm(forms.ModelForm):
     definitionRole = forms.ChoiceField(label=_(u'Note type'),choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionContains = forms.CharField(label=_(u'Note contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-    createdBefore = forms.DateField(label=_(u'Created before'))
-    createdAfter = forms.DateField(label=_(u'Created after'))
+    createdBefore = forms.DateField(label=_(u'Created before'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
+    createdAfter = forms.DateField(label=_(u'Created after'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
 
     class Meta:
 
@@ -253,7 +253,7 @@ class RelationToForeignSignForm(forms.ModelForm):
     sourceid = forms.CharField(label=_(u'Source Gloss'))
     #loan = forms.CharField(label=_(u'Loan'))
     other_lang = forms.CharField(label=_(u'Related Language'))
-    other_lang_gloss = forms.CharField(label=_(u'Gloss in Related Language'))
+    other_lang_gloss = forms.CharField(label=_(u'Gloss in Related Language'), required=False)
     
     class Meta:
         model = RelationToForeignSign
