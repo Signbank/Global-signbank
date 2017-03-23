@@ -58,8 +58,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'signbank.pages.middleware.PageFallbackMiddleware',
-    'django_mobile.middleware.MobileDetectionMiddleware',
-    'django_mobile.middleware.SetFlavourMiddleware',
+#    'django_mobile.middleware.MobileDetectionMiddleware',
+#    'django_mobile.middleware.SetFlavourMiddleware',
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
 )
@@ -80,19 +80,16 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "signbank.context_processors.url",
                 "signbank.pages.context_processors.menu",
-                "django_mobile.context_processors.flavour",
+#                "django_mobile.context_processors.flavour",
             ],
             'loaders': [
-                'django_mobile.loader.Loader',
+#                'django_mobile.loader.Loader',
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
             ]
         },
     },
 ]
-
-# Needed for django-mobile
-TEMPLATE_LOADERS = TEMPLATES[0]['OPTIONS']['loaders']
 
 # add the Email backend to allow logins using email as username
 AUTHENTICATION_BACKENDS = (
@@ -127,7 +124,7 @@ INSTALLED_APPS = (
     'signbank.attachments',
     'signbank.video',
     'reversion',
-    'django_mobile',
+    #'django_mobile',
     'tagging',
 )
 

@@ -7,8 +7,6 @@ from signbank.video.models import Video, GlossVideo, GlossVideoHistory
 from signbank.video.forms import VideoUploadForm, VideoUploadForGlossForm
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
-import django_mobile
-
 import os
 import shutil
 
@@ -153,10 +151,7 @@ def iframe(request, videoid):
         gloss = Gloss.objects.get(pk=videoid)
         glossvideo = gloss.get_video()
         
-        if django_mobile.get_flavour(request) == 'mobile':
-            videourl = glossvideo.get_mobile_url()
-        else:
-            videourl = glossvideo.get_absolute_url()
+        videourl = glossvideo.get_absolute_url()
                 
         posterurl = glossvideo.poster_url()
     except:
