@@ -1,0 +1,53 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div  class="panel panel-default">
+
+<table class='table table-condensed'>
+    <thead>
+        {% if object_list %}
+      <tr>
+
+          <th style="width:5em">{% trans "Source sign" %}</th>
+           <th style="width:15em">{% trans "Relations" %}</th>
+
+           <th style='width:20em'>{% trans "Variants" %}</th>
+      </tr>
+        {% endif %}
+    </thead>
+    <tbody>
+
+	{% for gloss in object_list %}
+
+      <tr>
+          <td id='src_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{% value gloss.idgloss %}</td>
+          <td id='src_relations'>{% for trn in gloss.other_relations %}<a href='{% url "dictionary:admin_gloss_view" pk=trn.target.id %}'>{{ trn.target }}</a> ({{ trn.role }}){% if not forloop.last %}, {% endif %}{% endfor %}</td>
+
+          <td  id='src_variants'>{% for trn in gloss.has_variants %}<a href='{% url "dictionary:admin_gloss_view" pk=trn.id %}'>{{ trn.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      </tr>
+
+	{% endfor %}
+    </tbody>
+
+
+</table>
+
+</div>
+
+{% endblock %}

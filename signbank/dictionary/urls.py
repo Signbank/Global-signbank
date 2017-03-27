@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeDetailView, MorphemeListView
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossRelationsDetailView, MorphemeDetailView, MorphemeListView, VariantsListView
 
 
 urlpatterns = patterns('',
@@ -38,7 +38,8 @@ urlpatterns = patterns('',
     url(r'^update/gloss/', 'signbank.dictionary.update.add_gloss', name='add_gloss'),
     url(r'^update/morpheme/', 'signbank.dictionary.update.add_morpheme', name='add_morpheme'),
     url(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
-
+    url(r'^update/glossvariants/', VariantsListView.as_view(), name='update_glossvariants'),
+    url(r'^update/gloss_variants/(?P<glossid>\d+)$', 'signbank.dictionary.update.gloss_variants', name='update_gloss_variants'),
     url(r'^switch_to_language/(?P<language>..)$', 'signbank.dictionary.views.switch_to_language',name='switch_to_language'),
     url(r'^recently_added_glosses/$', 'signbank.dictionary.views.recently_added_glosses',name='recently_added_glosses'),
 
@@ -71,6 +72,7 @@ urlpatterns = patterns('',
     url(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
     url(r'^morphemes/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view()), name='admin_morpheme_list'),
     url(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view'),
+    url(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     url(r'^morpheme/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(MorphemeDetailView.as_view()), name='admin_morpheme_view'),
 )
 

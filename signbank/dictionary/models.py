@@ -8,11 +8,15 @@ from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
 import tagging
+import re
 
 import sys, os
 import json
 from collections import OrderedDict
 from datetime import datetime, date
+
+from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 
 import signbank.settings
 
@@ -463,6 +467,27 @@ minor or insignificant ways that can be ignored.""")
 
         return fields
 
+    @property
+    def get_phonology_display(self):
+        fields = []
+        choice_list = []
+        for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
+          'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
+          'mouthing', 'phonetVar',]:
+
+            # Get and save the choice list for this field
+            fieldchoice_category = fieldname_to_category(field)
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            field_value = getattr(self,field)
+            human_value = machine_value_to_translated_human_value(field_value, choice_list, LANGUAGE_CODE)
+            if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None) :
+                human_value = '   '
+            else:
+                human_value = str(human_value)
+            fields = fields + [(field,human_value)]
+
+        return fields
+
     def navigation(self, is_staff):
         """Return a gloss navigation structure that can be used to
         generate next/previous links from within a template page"""
@@ -548,6 +573,277 @@ minor or insignificant ways that can be ignored.""")
                 root = homophones[0].target
                 return root.homophones()
         return []
+
+    def homonyms_count(self):
+
+        homonyms_count = self.relation_sources.filter(role='homonym').count()
+
+        return homonyms_count
+
+    def synonyms_count(self):
+
+        synonyms_count = self.relation_sources.filter(role='synonym').count()
+
+        return synonyms_count
+
+    def antonyms_count(self):
+
+        antonyms_count = self.relation_sources.filter(role='antonym').count()
+
+        return antonyms_count
+
+    def hyponyms_count(self):
+
+        hyponyms_count = self.relation_sources.filter(role='hyponym').count()
+
+        return hyponyms_count
+
+    def hypernyms_count(self):
+
+        hypernyms_count = self.relation_sources.filter(role='hypernym').count()
+
+        return hypernyms_count
+
+    def seealso_count(self):
+
+        seealso_count = self.relation_sources.filter(role='seealso').count()
+
+        return seealso_count
+
+    def variant_count(self):
+
+        variant_count = self.relation_sources.filter(role='variant').count()
+
+        return variant_count
+
+    def relations_count(self):
+
+        relations_count = self.relation_sources.filter(role__in=['homonym','synonyn','antonym','hyponym','hypernym','seealso','variant']).count()
+
+        return relations_count
+
+    def has_variants(self):
+
+        this_sign_stem = self.has_stem()
+        length_this_sign_stem = len(this_sign_stem)
+        this_matches = r'^' + re.escape(this_sign_stem) + r'\-[A-Z]$'
+        other_relations_of_sign = self.other_relations()
+
+        has_variants = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=self).exclude(pk__in=other_relations_of_sign)
+
+        return has_variants
+
+    def variants_count(self):
+        this_sign_stem = self.has_stem()
+        this_matches = r'^' + re.escape(this_sign_stem) + r'\-[A-Z]$'
+        other_relations_of_sign = self.other_relations()
+
+        variants_count = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=self).exclude(pk__in=other_relations_of_sign).count()
+
+        return variants_count
+
+    def other_relations(self):
+
+        other_relations = self.relation_sources.filter(role__in=['homonym','synonyn','antonym','hyponym','hypernym','seealso'])
+
+        return other_relations
+
+    def has_stem(self):
+
+        has_stem = self.annotation_idgloss[:-2]
+
+        return has_stem
+
+    def empty_non_empty_phonology(self):
+
+        choice_lists = []
+        non_empty_phonology = []
+        empty_phonology = []
+
+        fieldLabel = {'handedness':'Handedness','domhndsh':'Strong Hand','subhndsh':'Weak Hand',
+		  'handCh':'Handshape Change','relatArtic':'Relation between Articulators','locprim':'Location','locVirtObj':'Virual Object',
+          'relOriMov':'Relative Orientation: Movement','relOriLoc':'Relative Orientation: Location','oriCh':'Orientation Change',
+		  'contType':'Contact Type','movSh':'Movement Shape','movDir':'Movement Direction','repeat':'Repeated Movement',
+		  'altern':'Alternating Movement','phonOth':'Phonology Other','mouthG':'Mouth Gesture',
+          'mouthing':'Mouthing','phonetVar':'Phonetic Variation'}
+
+        for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
+          'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
+          'mouthing', 'phonetVar',]:
+
+            # Get and save the choice list for this field
+            fieldchoice_category = fieldname_to_category(field)
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+            # Take the human value in the language we are using
+            machine_value = getattr(self,field)
+            human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
+            label = fieldLabel[field]
+            if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None) :
+                empty_phonology = empty_phonology + [(field,str(label))]
+            else :
+                non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
+
+        return (empty_phonology, non_empty_phonology)
+
+    def minimal_pairs_count(self):
+
+        mp = self.minimal_pairs()
+
+        minimal_pairs_count = len(mp)
+
+        return minimal_pairs_count
+
+    def non_empty_phonology_count(self):
+
+        non_empty_phonology_count = 0
+
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj',
+                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', 'phonOth',
+                      'mouthG',
+                      'mouthing', 'phonetVar', ]:
+
+            fieldchoice_category = fieldname_to_category(field)
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+            machine_value = getattr(self, field)
+            human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
+
+            if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None) :
+                 non_empty_phonology_count+= 1
+
+        return non_empty_phonology_count
+
+    def non_empty_phonology(self):
+
+        fieldLabel = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
+                      'handCh': 'Handshape Change', 'relatArtic': 'Relation between Articulators',
+                      'locprim': 'Location', 'locVirtObj': 'Virual Object',
+                      'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
+                      'oriCh': 'Orientation Change',
+                      'contType': 'Contact Type', 'movSh': 'Movement Shape', 'movDir': 'Movement Direction',
+                      'repeat': 'Repeated Movement',
+                      'altern': 'Alternating Movement', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture',
+                      'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'}
+
+        non_empty_phonology = []
+
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj',
+                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', 'phonOth',
+                      'mouthG',
+                      'mouthing', 'phonetVar', ]:
+
+            fieldchoice_category = fieldname_to_category(field)
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+            machine_value = getattr(self, field)
+            human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
+            label = fieldLabel[field]
+
+            if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None) :
+                 non_empty_phonology = non_empty_phonology + [(field,str(label),str(human_value))]
+
+        return non_empty_phonology
+
+    def minimal_pairs(self):
+
+        (ep, nep) = self.empty_non_empty_phonology()
+        at_least_as_many_fields_defined = []
+        matching_fields_the_same = []
+        minimal_pairs_fields = {}
+        lower_bound = len(nep) - 1
+        upper_bound = len(nep) + 1
+
+        for o in Gloss.objects.all():
+            count_nep_o = o.non_empty_phonology_count()
+            if (count_nep_o >= lower_bound) and (count_nep_o <= upper_bound) :
+                at_least_as_many_fields_defined.append(o.id)
+
+        same_count_pairs = Gloss.objects.filter(id__in=at_least_as_many_fields_defined).exclude(idgloss=self)
+
+        for o in same_count_pairs:
+            count_nep_o = o.non_empty_phonology_count()
+            count_equal_non_empty_fields = 0;
+            for f,n,v in nep:
+                if getattr(self,f) == getattr(o,f):
+                    count_equal_non_empty_fields+= 1
+            if ((count_equal_non_empty_fields >= lower_bound and count_nep_o < upper_bound)
+                    or (count_equal_non_empty_fields > lower_bound and count_nep_o == upper_bound)):
+                matching_fields_the_same.append(o.id)
+
+        minimal_pairs = Gloss.objects.filter(id__in=matching_fields_the_same).exclude(idgloss=self)
+
+        for o in minimal_pairs:
+            different_fields = []
+            for f,n,v in o.non_empty_phonology():
+                if getattr(self,f) != getattr(o,f):
+                    different_fields = different_fields + [(f,n,v)]
+            minimal_pairs_fields[o.id] = different_fields
+
+        return minimal_pairs
+
+    def minimal_pairs_dict(self):
+
+        (ep, nep) = self.empty_non_empty_phonology()
+        at_least_as_many_fields_defined = []
+        matching_fields_the_same = []
+        minimal_pairs_fields = {}
+        lower_bound = len(nep) - 1
+        upper_bound = len(nep) + 1
+
+        for o in Gloss.objects.all():
+            count_nep_o = o.non_empty_phonology_count()
+            if (count_nep_o >= lower_bound) and (count_nep_o <= upper_bound) :
+                at_least_as_many_fields_defined.append(o.id)
+
+        same_count_pairs = Gloss.objects.filter(id__in=at_least_as_many_fields_defined).exclude(idgloss=self)
+
+        for o in same_count_pairs:
+            count_nep_o = o.non_empty_phonology_count()
+            count_equal_non_empty_fields = 0;
+            for f,n,v in nep:
+                if getattr(self,f) == getattr(o,f):
+                    count_equal_non_empty_fields+= 1
+            if ((count_equal_non_empty_fields >= lower_bound and count_nep_o < upper_bound)
+                    or (count_equal_non_empty_fields > lower_bound and count_nep_o == upper_bound)):
+                matching_fields_the_same.append(o.id)
+
+        minimal_pairs = Gloss.objects.filter(id__in=matching_fields_the_same).exclude(idgloss=self)
+
+        for o in minimal_pairs:
+            different_fields = {}
+            for f,n,v in o.non_empty_phonology():
+                if getattr(self,f) != getattr(o,f):
+                    different_fields[f] = (n,v)
+            minimal_pairs_fields[o] = different_fields
+
+        print('Minimal pairs dictionary ', minimal_pairs_fields)
+
+        return minimal_pairs_fields
+
+    def minimal_pairs_handedness(self):
+
+        minimal_pairs_handedness = Gloss.objects.filter(handedness=self.handedness).exclude(idgloss=self).count()
+
+        return minimal_pairs_handedness
+
+    def minimal_pairs_stronghand(self):
+
+        minimal_pairs_stronghand = Gloss.objects.filter(domhndsh=self.domhndsh).exclude(idgloss=self).count()
+
+        return minimal_pairs_stronghand
+
+    def minimal_pairs_weakhand(self):
+
+        minimal_pairs_weakhand = Gloss.objects.filter(subhndsh=self.subhndsh).exclude(idgloss=self).count()
+
+        return minimal_pairs_weakhand
+
+    def minimal_pairs_location(self):
+
+        minimal_pairs_location = Gloss.objects.filter(locprim=self.locprim).exclude(idgloss=self).count()
+
+        return minimal_pairs_location
 
     def get_image_path(self):
         """Returns the path within the writable and static folder"""

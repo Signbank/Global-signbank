@@ -479,6 +479,13 @@ def add_relation(request):
     # fallback to redirecting to the requesting page
     return HttpResponseRedirect('/')
 
+@permission_required('dictionary.change_gloss')
+def gloss_variants(request, glossid):
+
+    thisgloss = get_object_or_404(Gloss, id=glossid)
+
+    return HttpResponse("Okay", {'content-type': 'text/plain'})
+
 def add_relationtoforeignsign(request):
     """Add a new relationtoforeignsign instance"""
     

@@ -1,0 +1,390 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div  class="panel panel-default">
+
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+          <th style="width:8em; color:darkred">{% trans "Source sign" %}</th>
+
+           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
+           <th style='width:12em'>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Location" %}</th>
+           <th style='width:12em'>{% trans "Tags" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+          <td/>
+          <td id='src_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{% value gloss.idgloss %}</a></td>
+          <td  id='src_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{% value gloss.annotation_idgloss_en %}</a></td>
+          <td id='src_keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td  id='src_handedness'>{% value gloss.get_handedness_display %}</td>
+          <td  id='src_domhndsh'>{% value gloss.get_domhndsh_display %}</td>
+          <td  id='src_subhndsh'>{% value gloss.get_subhndsh_display %}</td>
+          <td  id='src_locprim'>{% value gloss.get_locprim_display %}</td>
+          {% load underscore_to_space %}
+          <td>{% for tag in gloss.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+      </tr>
+    </tbody>
+
+
+
+       <thead>
+       {% if gloss.homonyms_count %}
+       <tr>
+           <th style="width:8em; color:darkred">{% trans "Homonyms" %}</th>
+
+           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
+           <th style='width:12em'>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Location" %}</th>
+           <th style='width:12em'>{% trans "Tags" %}</th>
+      </tr>
+     {% endif %}
+       </thead>
+    <tbody>
+     {% for rel in gloss.relation_sources.all %}
+      {% if rel.role == "homonym" %}
+      <tr>
+          <td/>
+          <td id='homo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='homo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='homo_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td id='homo_handedness'>{% value rel.target.get_handedness_display %}</td>
+          <td id='homo_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
+          <td id='homo_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
+          <td id='homo_locprim'>{% value rel.target.get_locprim_display %}</td>
+          {% load underscore_to_space %}
+          <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+
+       <thead>
+       {% if gloss.synonyms_count %}
+       <tr>
+           <th style="width:8em; color:darkred">{% trans "Synonyms" %}</th>
+
+           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
+           <th style='width:12em'>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Location" %}</th>
+           <th style='width:12em'>{% trans "Tags" %}</th>
+      </tr>
+     {% endif %}
+     </thead>
+    <tbody>
+     {% for rel in gloss.relation_sources.all %}
+      {% if rel.role == "synonym" %}
+      <tr>
+          <td/>
+          <td id='syno_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='syno_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='syno_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td id='syno_handedness'>{% value rel.target.get_handedness_display %}</td>
+          <td id='syno_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
+          <td id='syno_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
+          <td id='syno_locprim'>{% value rel.target.get_locprim_display %}</td>
+          {% load underscore_to_space %}
+          <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+
+    <thead>
+       {% if gloss.antonyms_count %}
+       <tr>
+           <th style="width:8em; color:darkred">{% trans "Antonyms" %}</th>
+
+           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
+           <th style='width:12em'>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Location" %}</th>
+           <th style='width:12em'>{% trans "Tags" %}</th>
+      </tr>
+     {% endif %}
+    </thead>
+    <tbody>
+     {% for rel in gloss.relation_sources.all %}
+      {% if rel.role == "antonym" %}
+      <tr>
+          <td/>
+          <td id='anto_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='anto_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='anto_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td id='anto_handedness'>{% value rel.target.get_handedness_display %}</td>
+          <td id='anto_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
+          <td id='anto_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
+          <td id='anto_locprim'>{% value rel.target.get_locprim_display %}</td>
+          {% load underscore_to_space %}
+          <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+
+    <thead>
+       {% if gloss.hyponyms_count %}
+        <tr>
+            <th style="width:8em; color:darkred">{% trans "Hyponyms" %}</th>
+
+           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
+           <th style='width:12em'>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Location" %}</th>
+           <th style='width:12em'>{% trans "Tags" %}</th>
+      </tr>
+     {% endif %}
+    </thead>
+    <tbody>
+     {% for rel in gloss.relation_sources.all %}
+      {% if rel.role == "hyponym" %}
+      <tr>
+          <td/>
+          <td id='hypo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='hypo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='hypo_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td id='hypo_handedness'>{% value rel.target.get_handedness_display %}</td>
+          <td id='hypo_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
+          <td id='hypo_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
+          <td id='hypo_locprim'>{% value rel.target.get_locprim_display %}</td>
+          {% load underscore_to_space %}
+          <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+
+    <thead>
+       {% if gloss.hypernyms_count %}
+        <tr>
+           <th style="width:8em; color:darkred">{% trans "Hypernyms" %}</th>
+
+           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
+           <th style='width:12em'>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Location" %}</th>
+           <th style='width:12em'>{% trans "Tags" %}</th>
+      </tr>
+     {% endif %}
+    </thead>
+    <tbody>
+     {% for rel in gloss.relation_sources.all %}
+      {% if rel.role == "hypernym" %}
+      <tr>
+          <td/>
+          <td id='hyper_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='hyper_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='hyper_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td id='hyper_handedness'>{% value rel.target.get_handedness_display %}</td>
+          <td id='hyper_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
+          <td id='hyper_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
+          <td id='hyper_locprim'>{% value rel.target.get_locprim_display %}</td>
+          {% load underscore_to_space %}
+          <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+
+    <thead>
+       {% if gloss.seealso_count %}
+        <tr>
+           <th style="width:8em; color:darkred">{% trans "See Also" %}</th>
+
+           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
+           <th style='width:12em'>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Location" %}</th>
+           <th style='width:12em'>{% trans "Tags" %}</th>
+      </tr>
+     {% endif %}
+    </thead>
+    <tbody>
+     {% for rel in gloss.relation_sources.all %}
+      {% if rel.role == "seealso" %}
+      <tr>
+          <td/>
+          <td id='seealso_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='seealso_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='seealso_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td id='seealso_handedness'>{% value rel.target.get_handedness_display %}</td>
+          <td id='seealso_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
+          <td id='seealso_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
+          <td id='seealso_locprim'>{% value rel.target.get_locprim_display %}</td>
+          {% load underscore_to_space %}
+          <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+
+    <thead>
+       {% if gloss.variants_count %}
+       <tr>
+           <th style="width:8em; color:darkred">{% trans "Variants" %}</th>
+
+           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
+           <th style='width:12em'>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Location" %}</th>
+           <th style='width:12em'>{% trans "Tags" %}</th>
+      </tr>
+     {% endif %}
+       </thead>
+    <tbody>
+     {% for gl in gloss.has_variants %}
+      <tr>
+          <td/>
+          <td id='var_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl.idgloss}}</a></td>
+          <td id='var_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{% value gl.annotation_idgloss_en %}</a></td>
+          <td id='var_keywords'>{% for trn in gl.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td id='var_handedness'>{% value gl.get_handedness_display %}</td>
+          <td id='var_domhndsh'>{% value gl.get_domhndsh_display %}</td>
+          <td id='var_subhndsh'>{% value gl.get_subhndsh_display %}</td>
+          <td id='var_locprim'>{% value gl.get_locprim_display %}</td>
+          {% load underscore_to_space %}
+          <td>{% for tag in gl.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+</table>
+<table style="font-size: 9px; border-collapse:separate; border-spacing: 2px;">
+    <thead>
+       {% if gloss.minimal_pairs_count %}
+       <tr>
+           <th style="color:darkred" colspan="2">{% trans "Minimal Pairs Phonology" %}</th>
+       </tr>
+     {% with gloss.empty_non_empty_phonology as ep_nep %}
+		<tr>
+            <th style="width:auto; padding:0px 0px;">{% trans "ID Gloss" %}</th>
+           {% for field,name,value in ep_nep.1 %} <th style="width:auto; padding:8px 8px;">{{ name }}</th>
+            {% endfor %}
+            {% for field,name in ep_nep.0 %} <th style="width:auto; padding:8px 8px;">{{ name }}</th>
+            {% endfor %}
+
+        </tr>
+     {% endwith %}
+
+       <tr><th style="color:darkred" colspan="2">Source Sign</th></tr>
+
+     {% with gloss.empty_non_empty_phonology as ep_nep %}
+		<tr>
+            <td><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{% value gloss.idgloss %}</a></td>
+            {% for field,name,value in ep_nep.1 %}<td style="width:auto; text-align:center; padding 8px 8px">{{ value }}</td>{% endfor %}
+        </tr>
+     {% endwith %}
+
+       <tr>
+           <th style="color:darkred" colspan="2">{% trans "Minimal pairs" %}</th>
+       </tr>
+
+     {% endif %}
+     </thead>
+    <tbody>
+
+     {% for gl in gloss.minimal_pairs %}
+     {% with gloss.empty_non_empty_phonology as glep_glnep %}
+		<tr>
+            <td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{% value gl.idgloss %}</a></td>
+            {% for field,name,value in glep_glnep.1 %}
+                {% for f,v in gl.get_phonology_display %}
+                    {% if f == field %}
+                        <td style="width:auto; text-align:center; padding 8px 8px">{{ v }}</td>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            {% for field,name in glep_glnep.0 %}
+                {% for f,v in gl.get_phonology_display %}
+                    {% if f == field %}
+                        <td style="width:auto; text-align:center; padding 8px 8px">{{ v }}</td>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </tr>
+     {% endwith %}
+     {% endfor %}
+    </tbody>
+
+</table>
+
+</div>
+
+{% endblock %}
