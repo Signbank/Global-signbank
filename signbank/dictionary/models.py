@@ -751,8 +751,10 @@ minor or insignificant ways that can be ignored.""")
         at_least_as_many_fields_defined = []
         matching_fields_the_same = []
         minimal_pairs_fields = {}
-        lower_bound = len(nep) - 1
-        upper_bound = len(nep) + 1
+        defined_nep = len(nep)
+        lower_bound = defined_nep - 1
+        upper_bound = defined_nep + 1
+
 
         for o in Gloss.objects.all():
             count_nep_o = o.non_empty_phonology_count()
@@ -767,10 +769,11 @@ minor or insignificant ways that can be ignored.""")
             for f,n,v in nep:
                 if getattr(self,f) == getattr(o,f):
                     count_equal_non_empty_fields+= 1
-            if ((count_equal_non_empty_fields >= lower_bound and count_nep_o < upper_bound)
-                    or (count_equal_non_empty_fields > lower_bound and count_nep_o == upper_bound)):
-                matching_fields_the_same.append(o.id)
 
+            if ((count_equal_non_empty_fields == lower_bound and count_nep_o == count_equal_non_empty_fields)
+                    or (count_equal_non_empty_fields == defined_nep and count_nep_o == upper_bound)
+                    or (count_equal_non_empty_fields == lower_bound and count_nep_o < defined_nep)):
+                matching_fields_the_same.append(o.id)
         minimal_pairs = Gloss.objects.filter(id__in=matching_fields_the_same).exclude(idgloss=self)
 
         for o in minimal_pairs:
@@ -788,8 +791,9 @@ minor or insignificant ways that can be ignored.""")
         at_least_as_many_fields_defined = []
         matching_fields_the_same = []
         minimal_pairs_fields = {}
-        lower_bound = len(nep) - 1
-        upper_bound = len(nep) + 1
+        defined_nep = len(nep)
+        lower_bound = defined_nep - 1
+        upper_bound = defined_nep + 1
 
         for o in Gloss.objects.all():
             count_nep_o = o.non_empty_phonology_count()
@@ -804,46 +808,27 @@ minor or insignificant ways that can be ignored.""")
             for f,n,v in nep:
                 if getattr(self,f) == getattr(o,f):
                     count_equal_non_empty_fields+= 1
-            if ((count_equal_non_empty_fields >= lower_bound and count_nep_o < upper_bound)
-                    or (count_equal_non_empty_fields > lower_bound and count_nep_o == upper_bound)):
+            if ((count_equal_non_empty_fields == lower_bound and count_nep_o == count_equal_non_empty_fields)
+                    or (count_equal_non_empty_fields == defined_nep and count_nep_o == upper_bound)
+                    or (count_equal_non_empty_fields == lower_bound and count_nep_o < defined_nep)):
                 matching_fields_the_same.append(o.id)
 
         minimal_pairs = Gloss.objects.filter(id__in=matching_fields_the_same).exclude(idgloss=self)
 
         for o in minimal_pairs:
             different_fields = {}
-            for f,n,v in o.non_empty_phonology():
-                if getattr(self,f) != getattr(o,f):
-                    different_fields[f] = (n,v)
+            onep = o.non_empty_phonology()
+            for f,n,v in onep:
+                self_value_f = getattr(self,f)
+                if self_value_f != getattr(o,f):
+                     different_fields[f] = (n,v)
+            if (len(list(different_fields.keys())) == 0):
+                for sf,sn,sv in nep:
+                    if (getattr(self, sf) != getattr(o, sf)):
+                        different_fields[sf] = (sn, '')
             minimal_pairs_fields[o] = different_fields
 
-        print('Minimal pairs dictionary ', minimal_pairs_fields)
-
         return minimal_pairs_fields
-
-    def minimal_pairs_handedness(self):
-
-        minimal_pairs_handedness = Gloss.objects.filter(handedness=self.handedness).exclude(idgloss=self).count()
-
-        return minimal_pairs_handedness
-
-    def minimal_pairs_stronghand(self):
-
-        minimal_pairs_stronghand = Gloss.objects.filter(domhndsh=self.domhndsh).exclude(idgloss=self).count()
-
-        return minimal_pairs_stronghand
-
-    def minimal_pairs_weakhand(self):
-
-        minimal_pairs_weakhand = Gloss.objects.filter(subhndsh=self.subhndsh).exclude(idgloss=self).count()
-
-        return minimal_pairs_weakhand
-
-    def minimal_pairs_location(self):
-
-        minimal_pairs_location = Gloss.objects.filter(locprim=self.locprim).exclude(idgloss=self).count()
-
-        return minimal_pairs_location
 
     def get_image_path(self):
         """Returns the path within the writable and static folder"""

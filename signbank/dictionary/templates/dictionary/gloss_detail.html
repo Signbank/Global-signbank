@@ -522,16 +522,19 @@
         </div>
         <div id='minimalpairs' class='panel-collapse collapse'>
             <table class='table table-condensed'>
+               {% with gloss.minimal_pairs_dict as mpd %}
+                {% if mpd %}
                <tr>
                    <th style="width:auto; padding:0px 0px;">{% trans "ID Gloss" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Field name" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Value" %}</th>
                 </tr>
-                {% with gloss.minimal_pairs_dict as mpd %}
+                {% endif %}
+
                 {% for gl, dict in mpd.items %}
                 <tr>
                 {% for k, d in dict.items %}
-                    <td>{{ gl.idgloss }}</a></td><td>{{ d.0 }}</td><td>{{ d.1 }}</td>
+                    <td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.idgloss }}</a></td><td>{{ d.0 }}</td><td>{{ d.1 }}</td>
                 {% endfor %}
                 </tr>
                 {% endfor %}
