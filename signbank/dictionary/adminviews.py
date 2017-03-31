@@ -209,7 +209,7 @@ class GlossListView(ListView):
 
         xmlstr = minidom.parseString(ET.tostring(top,'utf-8')).toprettyxml(indent="   ")
         with open(ECV_FILE, "w") as f:
-            f.write(xmlstr.encode('utf-8'))
+            f.write(xmlstr.encode('utf-8').decode())
 
 #        tree = ET.ElementTree(top)
 #        tree.write(open(ECV_FILE, 'w'), encoding ="utf-8",xml_declaration=True, method="xml")
@@ -267,9 +267,11 @@ class GlossListView(ListView):
         except AttributeError:
             value = getattr(gloss,fieldname)
 
-        if isinstance(value,unicode):
-            value = str(value.encode('ascii','xmlcharrefreplace'))
-        elif value is None:
+        # This was disabled with the move to python 3... might not be needed anymore
+        # if isinstance(value,unicode):
+        #     value = str(value.encode('ascii','xmlcharrefreplace'))
+
+        if value is None:
            value = " "
         elif not isinstance(value,str):
             value = str(value)
@@ -305,7 +307,7 @@ class GlossListView(ListView):
         writer = csv.writer(response)
 
         with override(LANGUAGE_CODE):
-            header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii','ignore') for f in fields]
+            header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii','ignore').decode() for f in fields]
 
         for extra_column in ['Languages','Dialects','Keywords','Morphology','Relations to other signs','Relations to foreign signs',]:
             header.append(extra_column);
@@ -324,9 +326,11 @@ class GlossListView(ListView):
                 except AttributeError:
                     value = getattr(gloss,f.name)
 
-                    if isinstance(value,unicode):
-                        value = str(value.encode('ascii','xmlcharrefreplace'));
-                    elif not isinstance(value,str):
+                    # This was disabled with the move to Python 3... might not be needed anymore?
+                    # if isinstance(value,unicode):
+                    #     value = str(value.encode('ascii','xmlcharrefreplace'));
+
+                    if not isinstance(value,str):
                         value = str(value);
 
                     row.append(value)
@@ -360,7 +364,7 @@ class GlossListView(ListView):
             safe_row = [];
             for column in row:
                 try:
-                    safe_row.append(column.encode('utf-8'))
+                    safe_row.append(column.encode('utf-8').decode())
                 except AttributeError:
                     safe_row.append(None);
 
@@ -1164,7 +1168,7 @@ class MorphemeListView(ListView):
         writer = csv.writer(response)
 
         with override(LANGUAGE_CODE):
-            header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii', 'ignore') for f in fields]
+            header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
 
         for extra_column in ['Languages', 'Dialects', 'Keywords', 'Morphology', 'Relations to other signs',
                              'Relations to foreign signs', 'Appears in signs', ]:
@@ -1184,10 +1188,13 @@ class MorphemeListView(ListView):
                 except AttributeError:
                     value = getattr(gloss, f.name)
 
-                    if isinstance(value, unicode):
-                        value = str(value.encode('ascii', 'xmlcharrefreplace'));
-                    elif not isinstance(value, str):
-                        value = str(value);
+
+                    # This was disabled with the move to Python 3... might not be needed anymore?
+                    # if isinstance(value, unicode):
+                    #     value = str(value.encode('ascii', 'xmlcharrefreplace'));
+                    # elif not isinstance(value, str):
+
+                    value = str(value);
 
                     row.append(value)
 
@@ -1223,7 +1230,7 @@ class MorphemeListView(ListView):
             safe_row = [];
             for column in row:
                 try:
-                    safe_row.append(column.encode('utf-8'))
+                    safe_row.append(column.encode('utf-8').decode())
                 except AttributeError:
                     safe_row.append(None);
 
