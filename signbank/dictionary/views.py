@@ -17,6 +17,7 @@ import os
 import shutil
 import csv
 import time
+import re
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -999,8 +1000,15 @@ def package(request):
 
     archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
-    collected_data = {'video_urls':signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp),
-                      'image_urls':signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp),
+
+    video_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp)
+    image_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp)
+    # Filter out all backup files
+    video_urls = dict([(gloss_id, url) for (gloss_id, url) in video_urls.iteritems() if not re.match('.*_\d+', url)])
+    image_urls = dict([(gloss_id, url) for (gloss_id, url) in image_urls.iteritems() if not re.match('.*_\d+', url)])
+
+    collected_data = {'video_urls':video_urls,
+                      'image_urls':image_urls,
                       'glosses':signbank.tools.get_gloss_data(since_timestamp)}
 
     if since_timestamp != None:
