@@ -648,6 +648,14 @@ minor or insignificant ways that can be ignored.""")
 
         return other_relations
 
+    def homonyms(self):
+
+        homonym_relations = self.relation_sources.filter(role__in=['homonym'])
+
+        homonyms = [x.target for x in homonym_relations]
+
+        return homonyms
+
     def has_stem(self):
 
         has_stem = self.annotation_idgloss[:-2]
@@ -751,6 +759,7 @@ minor or insignificant ways that can be ignored.""")
         at_least_as_many_fields_defined = []
         matching_fields_the_same = []
         minimal_pairs_fields = {}
+        matching_phonology_fields = []
         defined_nep = len(nep)
         lower_bound = defined_nep - 1
         upper_bound = defined_nep + 1
@@ -774,14 +783,18 @@ minor or insignificant ways that can be ignored.""")
                     or (count_equal_non_empty_fields == defined_nep and count_nep_o == upper_bound)
                     or (count_equal_non_empty_fields == lower_bound and count_nep_o < defined_nep)):
                 matching_fields_the_same.append(o.id)
-        minimal_pairs = Gloss.objects.filter(id__in=matching_fields_the_same).exclude(idgloss=self)
+            elif (count_equal_non_empty_fields == lower_bound and count_nep_o == defined_nep):
+                defined_extra = False
+                for f, n, v in nep:
+                    if (getattr(self, f) != getattr(o, f)):
+                        for fo,no,vo in o.non_empty_phonology():
+                            if (f != fo and getattr(self,fo) != getattr(o, fo)):
+                                defined_extra = True
 
-        for o in minimal_pairs:
-            different_fields = []
-            for f,n,v in o.non_empty_phonology():
-                if getattr(self,f) != getattr(o,f):
-                    different_fields = different_fields + [(f,n,v)]
-            minimal_pairs_fields[o.id] = different_fields
+                if not defined_extra:
+                    matching_fields_the_same.append(o.id)
+
+        minimal_pairs = Gloss.objects.filter(id__in=matching_fields_the_same).exclude(idgloss=self)
 
         return minimal_pairs
 
@@ -791,9 +804,11 @@ minor or insignificant ways that can be ignored.""")
         at_least_as_many_fields_defined = []
         matching_fields_the_same = []
         minimal_pairs_fields = {}
+        matching_phonology_fields = []
         defined_nep = len(nep)
         lower_bound = defined_nep - 1
         upper_bound = defined_nep + 1
+        hnyms = self.homonyms()
 
         for o in Gloss.objects.all():
             count_nep_o = o.non_empty_phonology_count()
@@ -812,6 +827,18 @@ minor or insignificant ways that can be ignored.""")
                     or (count_equal_non_empty_fields == defined_nep and count_nep_o == upper_bound)
                     or (count_equal_non_empty_fields == lower_bound and count_nep_o < defined_nep)):
                 matching_fields_the_same.append(o.id)
+            elif (count_equal_non_empty_fields == lower_bound and count_nep_o == defined_nep):
+                defined_extra = False
+                for f, n, v in nep:
+                    if (getattr(self, f) != getattr(o, f)):
+                        for fo,no,vo in o.non_empty_phonology():
+                            if (f != fo and getattr(self,fo) != getattr(o, fo)):
+                                defined_extra = True
+
+                if not defined_extra:
+                    matching_fields_the_same.append(o.id)
+            elif (count_equal_non_empty_fields == defined_nep and count_nep_o == defined_nep and not (o in hnyms)):
+                matching_phonology_fields = matching_phonology_fields + [o]
 
         minimal_pairs = Gloss.objects.filter(id__in=matching_fields_the_same).exclude(idgloss=self)
 
@@ -826,9 +853,10 @@ minor or insignificant ways that can be ignored.""")
                 for sf,sn,sv in nep:
                     if (getattr(self, sf) != getattr(o, sf)):
                         different_fields[sf] = (sn, '')
+
             minimal_pairs_fields[o] = different_fields
 
-        return minimal_pairs_fields
+        return (minimal_pairs_fields,matching_phonology_fields)
 
     def get_image_path(self):
         """Returns the path within the writable and static folder"""
@@ -841,7 +869,6 @@ minor or insignificant ways that can be ignored.""")
 
         try:
             for filename in os.listdir(dir_path):
-
                 if filename_without_extension in filename:
                     return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
         except OSError:
