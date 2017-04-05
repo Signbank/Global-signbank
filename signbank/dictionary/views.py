@@ -974,7 +974,7 @@ def package(request):
         timestamp_part_of_file_name = request.GET['since_timestamp']+'-'+timestamp_part_of_file_name
     else:
         first_part_of_file_name += 'ckage'
-        since_timestamp = None
+        since_timestamp = 0
 
     video_folder_name = 'glossvideo'
     image_folder_name = 'glossimage'
@@ -991,21 +991,21 @@ def package(request):
     video_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp)
     image_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp)
     # Filter out all backup files
-    video_urls = dict([(gloss_id, url) for (gloss_id, url) in video_urls.iteritems() if not re.match('.*_\d+', url)])
-    image_urls = dict([(gloss_id, url) for (gloss_id, url) in image_urls.iteritems() if not re.match('.*_\d+', url)])
+    video_urls = dict([(gloss_id, url) for (gloss_id, url) in video_urls.items() if not re.match('.*_\d+', url)])
+    image_urls = dict([(gloss_id, url) for (gloss_id, url) in image_urls.items() if not re.match('.*_\d+', url)])
 
     collected_data = {'video_urls':video_urls,
                       'image_urls':image_urls,
                       'glosses':signbank.tools.get_gloss_data(since_timestamp)}
 
-    if since_timestamp != None:
+    if since_timestamp != 0:
         collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss',since_timestamp)
         collected_data['deleted_videos'] = signbank.tools.get_deleted_gloss_or_media_data('video',since_timestamp)
         collected_data['deleted_images'] = signbank.tools.get_deleted_gloss_or_media_data('image',since_timestamp)
 
     signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
 
-    response = HttpResponse(FileWrapper(open(archive_file_path)), content_type='application/zip')
+    response = HttpResponse(FileWrapper(open(archive_file_path,'rb')), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename='+archive_file_name
     return response
 
