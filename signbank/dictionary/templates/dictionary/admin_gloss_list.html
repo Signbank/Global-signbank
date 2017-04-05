@@ -24,7 +24,8 @@
                 $(this).text('Show');
             }
         });
-        
+
+        $('[data-toggle="tooltip"]').tooltip();
     });
 
 
@@ -136,9 +137,36 @@ function do_adminsearch(el) {
                 <div>
                     <table class='table' id='searchfields'>
                         <tr>
-                            <td><div class='input-group'>
-                                <label class='input-group-addon' for='id_annotation_idgloss'>{{searchform.search.label}}</label>
-                                <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}></div>
+                            <td>
+                                <div class='input-group'>
+                                <label class='input-group-addon' for='id_annotation_idgloss'>
+                                    {{searchform.search.label}}
+                                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                                          title="
+                                          <table>
+                                            <tr>
+                                                <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>contains A</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>starts with A</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>ends with A</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>A or B</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>contains A</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>use backslash to find <br/>special characters in field</td>
+                                            </tr>
+                                          </table>
+                                          "></span>
+                                </label>
+                                <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}>
+                                </div>
                             </td>
                             {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
                             <td><div class='input-group'>

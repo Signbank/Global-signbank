@@ -7,6 +7,7 @@ from zipfile import ZipFile
 from datetime import datetime, date
 import json
 import re
+import urllib
 
 from django.utils.translation import override
 
@@ -195,7 +196,7 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
                 except AttributeError:
                     continue
 
-                static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+subfolder_name+'/'+filename
+                static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+urllib.quote(subfolder_name)+'/'+urllib.quote(filename)
 
     return static_urls
 
