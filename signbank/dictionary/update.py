@@ -480,11 +480,52 @@ def add_relation(request):
     return HttpResponseRedirect('/')
 
 @permission_required('dictionary.change_gloss')
-def gloss_variants(request, glossid):
+def variants_of_gloss(request):
 
-    thisgloss = get_object_or_404(Gloss, id=glossid)
+#    thisgloss = get_object_or_404(Gloss, id=glossid)
 
-    return HttpResponse("Okay", {'content-type': 'text/plain'})
+    if request.method == "POST":
+
+        form = VariantsForm(request.POST)
+
+        if form.is_valid():
+            role = 'variant'
+            sourceid = form.cleaned_data['sourceid']
+            targetid = form.cleaned_data['targetid']
+
+#            print('Source id: ', sourceid)
+#            print('Target id: ', targetid)
+
+#            try:
+#                source = Gloss.objects.get(pk=int(sourceid))
+#            except:
+#                return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
+
+            source = str(sourceid)
+            target = str(targetid)
+
+#            print('Source from identifier: ', source)
+#            print('Target from identifier: ', target)
+
+            source_object = Gloss.objects.get(pk=int(source))
+            target_object = Gloss.objects.get(pk=int(target))
+
+#            print('Source object: ', source_object)
+#            print('Target object: ', target_object)
+
+
+            if target:
+                rel = Relation(source=source_object, target=target_object, role=role)
+                rel.save()
+
+                return HttpResponseRedirect(reverse('dictionary:glossvariants'))
+            else:
+                return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
+        else:
+#            print('invalid form')
+            print form
+
+    return HttpResponseRedirect('/')
 
 def add_relationtoforeignsign(request):
     """Add a new relationtoforeignsign instance"""

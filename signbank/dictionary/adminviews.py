@@ -672,6 +672,8 @@ class VariantsListView(ListView):
         context = super(VariantsListView, self).get_context_data(**kwargs)
         # Add in a QuerySet of all the books
 
+        context['variantsform'] = VariantsForm()
+
         return context
 
     def get_queryset(self):
