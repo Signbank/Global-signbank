@@ -7,7 +7,6 @@
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
     <style>
         #panel-expand-collapse-btn-group.affix {
-            top:3px;
             position:fixed;
         }
     </style>
@@ -93,12 +92,21 @@
         });
         $('#panel-expand-collapse-btn-group').affix({
             offset: {
-                top: $('#panel-expand-collapse-btn-group').offset().top + 3,
+                top: $('#panel-expand-collapse-btn-group').offset().top - $('#affix-bar').height()
+                 + parseInt($('#affix-bar').css('margin-bottom'))
+                 + parseInt($('#panel-expand-collapse-btn-group').css('height')),
             }
         });
         $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
             $('#panel-expand-collapse-btn-group').css({
                 'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
+                'top': ($('#affix-bar').height() - parseInt($('#navbar').css('margin-bottom')) + 3) + 'px',
+            });
+         });
+        $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
+            $('#panel-expand-collapse-btn-group').css({
+                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
+                'top': '0px',
             });
          });
          $('#panel-expand-collapse-btn-toolbar').css({
