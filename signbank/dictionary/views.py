@@ -1040,9 +1040,9 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     if USE_NEW_X_SENDFILE_APPROACH:
 
         if filename.split('.')[-1] == 'mp4':
-            response = HttpResponse(mimetype='video/mp4')
+            response = HttpResponse(content_type='video/mp4')
         elif filename.split('.')[-1] == 'png':
-            response = HttpResponse(mimetype='image/png')
+            response = HttpResponse(content_type='image/png')
         else:
             response = HttpResponse()
 

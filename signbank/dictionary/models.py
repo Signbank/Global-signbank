@@ -562,7 +562,6 @@ minor or insignificant ways that can be ignored.""")
         filename_without_extension = self.idgloss+'-'+str(self.pk)
 
         dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername
-        dir_path = dir_path.encode('utf-8')
 
         if check_existance:
             try:
