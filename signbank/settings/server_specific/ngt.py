@@ -1,12 +1,9 @@
 import socket
 hostname = socket.gethostname()
 
-if hostname == 'spitfire':
-    ROOT = '/var/www2/signbank/live/'
-else:
-    ROOT = '/www/signbank/live/'
+ROOT = '/scratch2/www/signbank/'
 
-BASE_DIR = ROOT+'repo/signbank/'
+BASE_DIR = ROOT+'repo/'
 WRITABLE_FOLDER = ROOT+'writable/'
 
 DATABASES = {'default':
@@ -21,6 +18,7 @@ ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 #Influences which template and css folder are used
 SIGNBANK_VERSION_CODE = 'NGT'
 URL = 'https://signbank.science.ru.nl/'
+ALLOWED_HOSTS = ['signbank.science.ru.nl']
 
 LANGUAGES = (
   ('en', 'English'),
@@ -79,14 +77,14 @@ GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
 CROP_GLOSS_IMAGES = True
 OTHER_MEDIA_DIRECTORY = WRITABLE_FOLDER+'othermedia/'
-WSGI_FILE = ROOT+'virtualenv/signbank/lib/python2.7/site-packages/signbank/wsgi.py'
+WSGI_FILE = ROOT+'lib/python2.7/site-packages/signbank/wsgi.py'
 IMAGES_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_images/'
 VIDEOS_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_videos/'
 OTHER_MEDIA_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_other_media/'
 SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 
 CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'
-CNGT_METADATA_LOCATION = ROOT+'virtualenv/signbank/CNGT_MetadataEnglish_OtherResearchers.csv'
+CNGT_METADATA_LOCATION = ROOT+'CNGT_MetadataEnglish_OtherResearchers.csv'
 
 FFMPEG_PROGRAM = "avconv"
 TMP_DIR = "/tmp"
