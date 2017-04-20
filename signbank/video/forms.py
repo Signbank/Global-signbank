@@ -1,12 +1,13 @@
 from django import forms
-from models import Video, GlossVideo
+from signbank.video.models import Video, GlossVideo
 
 class VideoUploadForm(forms.ModelForm):
     """Form for video upload"""
     
     class Meta:
         model = GlossVideo
-        
+        fields = '__all__'
+
 class VideoUploadForGlossForm(forms.Form):
     """Form for video upload for a particular gloss"""
     

@@ -1,6 +1,6 @@
 
 from django.core.files.uploadedfile import UploadedFile
-from django.forms.util import ValidationError
+from django.forms.utils import ValidationError
 from django import forms
 from django.conf import settings
 import sys, os, time, signal

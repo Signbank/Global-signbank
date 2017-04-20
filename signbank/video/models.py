@@ -6,7 +6,7 @@ from django.db import models
 from django.conf import settings
 import sys, os, time, shutil
 
-from convertvideo import extract_frame, convert_video, ffmpeg
+from signbank.video.convertvideo import extract_frame, convert_video, ffmpeg
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
@@ -20,12 +20,15 @@ if sys.argv[0] == 'mod_wsgi':
 else:
     from signbank.dictionary.models import Gloss
 
-class VideoPosterMixin:
-    """Base class for video models that adds a method
-    for generating poster images
 
-    Concrete class should have fields 'videofile' and 'poster'
-    """
+class Video(models.Model):
+    """A video file stored on the site"""
+
+    # video file name relative to MEDIA_ROOT
+    videofile = models.FileField("Video file in h264 mp4 format", upload_to=settings.VIDEO_UPLOAD_LOCATION)
+
+    def __unicode__(self):
+        return self.videofile.name
 
     def process(self):
         """The clean method will try to validate the video
@@ -33,7 +36,7 @@ class VideoPosterMixin:
         the poster image"""
 
         self.poster_path()
-        #self.ensure_mp4()
+        # self.ensure_mp4()
 
 
     def poster_path(self, create=True):
@@ -53,6 +56,7 @@ class VideoPosterMixin:
 
         return poster_path
 
+
     def poster_url(self):
         """Return the URL of the poster image for this video"""
 
@@ -65,9 +69,10 @@ class VideoPosterMixin:
 
         return poster_url
 
-    def get_absolute_url(self):
 
+    def get_absolute_url(self):
         return self.videofile.url
+
 
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format
@@ -77,12 +82,12 @@ class VideoPosterMixin:
         # create a temporary copy in the new format
         # then move it into place
 
-        #print "ENSURE: ", self.videofile.path
-        
+        # print "ENSURE: ", self.videofile.path
+
         (basename, ext) = os.path.splitext(self.videofile.path)
         tmploc = basename + "-conv.mp4"
         err = convert_video(self.videofile.path, tmploc, force=True)
-        #print tmploc
+        # print tmploc
         shutil.move(tmploc, self.videofile.path)
 
 
@@ -96,16 +101,6 @@ class VideoPosterMixin:
                 os.unlink(poster_path)
         except:
             pass
-
-
-class Video(models.Model, VideoPosterMixin):
-    """A video file stored on the site"""
-
-    # video file name relative to MEDIA_ROOT
-    videofile = models.FileField("Video file in h264 mp4 format", upload_to=settings.VIDEO_UPLOAD_LOCATION)
-
-    def __unicode__(self):
-        return self.videofile.name
 
 
 import shutil
@@ -169,7 +164,7 @@ class GlossVideoHistory(models.Model):
         ordering = ['datestamp']
 
 
-class GlossVideo(models.Model, VideoPosterMixin):
+class GlossVideo(models.Model):
     """A video that represents a particular idgloss"""
 
     videofile = models.FileField("video file", upload_to=settings.GLOSS_VIDEO_DIRECTORY, storage=storage)
@@ -180,6 +175,74 @@ class GlossVideo(models.Model, VideoPosterMixin):
     # we will increment the version (via reversion) if a new video is added
     # for this gloss
     version = models.IntegerField("Version", default=0)
+
+    def process(self):
+        """The clean method will try to validate the video
+        file format, optimise for streaming and generate
+        the poster image"""
+
+        self.poster_path()
+        # self.ensure_mp4()
+
+    def poster_path(self, create=True):
+        """Return the path of the poster image for this
+        video, if create=True, create the image if needed
+        Return None if create=False and the file doesn't exist"""
+
+        vidpath, ext = os.path.splitext(self.videofile.path)
+        poster_path = vidpath + ".jpg"
+
+        if not os.path.exists(poster_path):
+            if create:
+                # need to create the image
+                extract_frame(self.videofile.path, poster_path)
+            else:
+                return None
+
+        return poster_path
+
+    def poster_url(self):
+        """Return the URL of the poster image for this video"""
+
+        # generate the poster image if needed
+        path = self.poster_path()
+
+        # splitext works on urls too!
+        vidurl, ext = os.path.splitext(self.videofile.url)
+        poster_url = vidurl + ".jpg"
+
+        return poster_url
+
+    def get_absolute_url(self):
+
+        return self.videofile.url
+
+    def ensure_mp4(self):
+        """Ensure that the video file is an h264 format
+        video, convert it if necessary"""
+
+        # convert video to use the right size and iphone/net friendly bitrate
+        # create a temporary copy in the new format
+        # then move it into place
+
+        # print "ENSURE: ", self.videofile.path
+
+        (basename, ext) = os.path.splitext(self.videofile.path)
+        tmploc = basename + "-conv.mp4"
+        err = convert_video(self.videofile.path, tmploc, force=True)
+        # print tmploc
+        shutil.move(tmploc, self.videofile.path)
+
+    def delete_files(self):
+        """Delete the files associated with this object"""
+
+        try:
+            os.unlink(self.videofile.path)
+            poster_path = self.poster_path(create=False)
+            if poster_path:
+                os.unlink(poster_path)
+        except:
+            pass
 
     def get_mobile_url(self):
         """Return a URL to serve the mobile version of this
@@ -201,9 +264,9 @@ class GlossVideo(models.Model, VideoPosterMixin):
 
 
         if revert:
-            print "REVERT VIDEO", self.videofile.name, self.version
+            print("REVERT VIDEO", self.videofile.name, self.version)
             if self.version==0:
-                print "DELETE VIDEO VIA REVERSION", self.videofile.name
+                print("DELETE VIDEO VIA REVERSION", self.videofile.name)
                 self.delete_files()
                 self.delete()
                 return

@@ -1,15 +1,12 @@
-from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Context, RequestContext
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
-from models import Video, GlossVideo, GlossVideoHistory
-from forms import VideoUploadForm, VideoUploadForGlossForm
+from signbank.video.models import Video, GlossVideo, GlossVideoHistory
+from signbank.video.forms import VideoUploadForm, VideoUploadForGlossForm
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
-from convertvideo import extract_frame
-import django_mobile
-
 import os
 import shutil
 
@@ -91,7 +88,7 @@ def addvideo(request):
     # referring page, should just be the case of hitting
     # Upload without choosing a file but could be
     # a malicious request, if no referrer, go back to root
-    if request.META.has_key('HTTP_REFERER'):
+    if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
@@ -124,7 +121,7 @@ def deletevideo(request, videoid):
     deleted_video.save()
 
     # return to referer
-    if request.META.has_key('HTTP_REFERER'):
+    if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
@@ -154,10 +151,7 @@ def iframe(request, videoid):
         gloss = Gloss.objects.get(pk=videoid)
         glossvideo = gloss.get_video()
         
-        if django_mobile.get_flavour(request) == 'mobile':
-            videourl = glossvideo.get_mobile_url()
-        else:
-            videourl = glossvideo.get_absolute_url()
+        videourl = glossvideo.get_absolute_url()
                 
         posterurl = glossvideo.poster_url()
     except:
@@ -167,12 +161,10 @@ def iframe(request, videoid):
         posterurl = None
 
 
-    return render_to_response("iframe.html",
+    return render(request,"iframe.html",
                               {'videourl': videourl,
                                'posterurl': posterurl,
-                               'aspectRatio': settings.VIDEO_ASPECT_RATIO,
-                               },
-                               context_instance=RequestContext(request))
+                               'aspectRatio': settings.VIDEO_ASPECT_RATIO})
 
 
 def create_still_images(request):

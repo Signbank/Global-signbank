@@ -88,6 +88,8 @@ ATTRS_FOR_FORMS = {'class':'form-control'};
 
 class GlossSearchForm(forms.ModelForm):
 
+    use_required_attribute = False #otherwise the html required attribute will show up on every form
+
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"), initial="idgloss")       # Used in glosslistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))

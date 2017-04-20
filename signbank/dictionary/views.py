@@ -1,7 +1,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import Context, RequestContext, loader
 from django.http import Http404
-from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.db.models import Q
@@ -10,7 +10,6 @@ from tagging.models import Tag, TaggedItem
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlquote
-from django.utils.encoding import smart_unicode
 from collections import OrderedDict
 
 import os
@@ -24,7 +23,7 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
-import forms
+import signbank.dictionary.forms
 
 from signbank.video.forms import VideoUploadForGlossForm
 import signbank.tools
@@ -34,8 +33,7 @@ import signbank.settings
 from signbank.settings.base import WRITABLE_FOLDER
 from django.utils.translation import override
 
-import urlparse
-from urllib import urlencode
+from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper
 
 
@@ -55,13 +53,10 @@ def index(request):
     point to the dictionary"""
 
 
-    return render_to_response("dictionary/search_result.html",
+    return render(request,"dictionary/search_result.html",
                               {'form': UserSignSearchForm(),
                                'language': settings.LANGUAGE_NAME,
-                               'query': '',
-                               },
-                               context_instance=RequestContext(request))
-
+                               'query': ''})
 
 
 STATE_IMAGES = {'auslan_all': "images/maps/allstates.gif",
@@ -126,7 +121,7 @@ def word(request, keyword, n):
 
     n = int(n)
 
-    if request.GET.has_key('feedbackmessage'):
+    if 'feedbackmessage' in request.GET:
         feedbackmessage = request.GET['feedbackmessage']
     else:
         feedbackmessage = False
@@ -171,7 +166,7 @@ def word(request, keyword, n):
         update_form = None
         video_form = None
 
-    return render_to_response("dictionary/word.html",
+    return render(request,"dictionary/word.html",
                               {'translation': trans.translation.text.encode('utf-8'),
                                'viewname': 'words',
                                'definitions': trans.gloss.definitions(),
@@ -196,15 +191,13 @@ def word(request, keyword, n):
                                'feedbackmessage': feedbackmessage,
                                'tagform': TagUpdateForm(),
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
-                               },
-                               context_instance=RequestContext(request))
+                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 def gloss(request, idgloss):
     """View of a gloss - mimics the word view, really for admin use
        when we want to preview a particular gloss"""
 
-    if request.GET.has_key('feedbackmessage'):
+    if 'feedbackmessage' in request.GET:
         feedbackmessage = request.GET['feedbackmessage']
     else:
         feedbackmessage = False
@@ -221,7 +214,7 @@ def gloss(request, idgloss):
 
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
 #        return render_to_response('dictionary/not_allowed.html')
-        return render_to_response("dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'},context_instance=RequestContext(request))
+        return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
 
     allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
@@ -261,14 +254,14 @@ def gloss(request, idgloss):
 
 
     # get the last match keyword if there is one passed along as a form variable
-    if request.GET.has_key('lastmatch'):
+    if 'lastmatch' in request.GET:
         lastmatch = request.GET['lastmatch']
         if lastmatch == "None":
             lastmatch = False
     else:
         lastmatch = False
 
-    return render_to_response("dictionary/word.html",
+    return render(request,"dictionary/word.html",
                               {'translation': trans,
                                'definitions': gloss.definitions(),
                                'allkwds': allkwds,
@@ -286,9 +279,7 @@ def gloss(request, idgloss):
                                'tagform': TagUpdateForm(),
                                'feedbackmessage': feedbackmessage,
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
-                               },
-                               context_instance=RequestContext(request))
+                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 
 
@@ -308,9 +299,6 @@ def search(request):
         term = urlquote(term)
 
         return HttpResponseRedirect('../../signs/search/?search='+glossQuery+'&keyword='+term)
-
-from django.db.models.loading import get_model, get_apps, get_models
-from django.core import serializers
 
 def keyword_value_list(request, prefix=None):
     """View to generate a list of possible values for
@@ -536,7 +524,7 @@ def import_authors(request):
 
 def add_new_sign(request):
 
-    return render_to_response('dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()},context_instance=RequestContext(request))
+    return render(request,'dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()})
 
 
 @login_required_config
@@ -558,8 +546,7 @@ def search_morpheme(request):
 
 def add_new_morpheme(request):
 
-    oForm = {'add_morpheme_form':MorphemeCreateForm()}
-    oContext = RequestContext(request)
+    oContext = {'add_morpheme_form': MorphemeCreateForm()}
 
     # Add essential information to the context
     oContext['morph_fields'] = []
@@ -586,7 +573,7 @@ def add_new_morpheme(request):
     oContext['morph_fields'].append(['(Make a choice)', field, "Morpheme type", kind]);
 
     # Continue
-    oBack = render_to_response('dictionary/add_morpheme.html', oForm, context_instance=oContext)
+    oBack = render(request,'dictionary/add_morpheme.html', oContext)
     return oBack
 
 
@@ -595,7 +582,7 @@ def import_csv(request):
     if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
         return HttpResponse('You are not allowed to see this page.')
 
-    uploadform = forms.CSVUploadForm
+    uploadform = signbank.dictionary.forms.CSVUploadForm
     changes = []
     error = False
 
@@ -704,11 +691,11 @@ def import_csv(request):
 
         stage = 0
 
-    return render_to_response('dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,'error':error},context_instance=RequestContext(request))
+    return render(request,'dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,'error':error})
 
 def switch_to_language(request,language):
 
-    user_profile = request.user.get_profile()
+    user_profile = request.user.user_profile_user
     user_profile.last_used_language = language
     user_profile.save()
 
@@ -716,7 +703,7 @@ def switch_to_language(request,language):
 
 def recently_added_glosses(request):
 
-    return render_to_response('dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()},context_instance=RequestContext(request))
+    return render(request,'dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()})
 
 def add_params_to_url(url,params):
     url_parts = list(urlparse.urlparse(url))
@@ -729,7 +716,7 @@ def add_params_to_url(url,params):
 
 def add_image(request):
 
-    if request.META.has_key('HTTP_REFERER'):
+    if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
@@ -810,7 +797,7 @@ def delete_image(request, pk):
         deleted_image.save()
 
     # return to referer
-    if request.META.has_key('HTTP_REFERER'):
+    if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
@@ -987,7 +974,7 @@ def package(request):
         timestamp_part_of_file_name = request.GET['since_timestamp']+'-'+timestamp_part_of_file_name
     else:
         first_part_of_file_name += 'ckage'
-        since_timestamp = None
+        since_timestamp = 0
 
     video_folder_name = 'glossvideo'
     image_folder_name = 'glossimage'
@@ -1004,21 +991,21 @@ def package(request):
     video_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp)
     image_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp)
     # Filter out all backup files
-    video_urls = dict([(gloss_id, url) for (gloss_id, url) in video_urls.iteritems() if not re.match('.*_\d+', url)])
-    image_urls = dict([(gloss_id, url) for (gloss_id, url) in image_urls.iteritems() if not re.match('.*_\d+', url)])
+    video_urls = dict([(gloss_id, url) for (gloss_id, url) in video_urls.items() if not re.match('.*_\d+', url)])
+    image_urls = dict([(gloss_id, url) for (gloss_id, url) in image_urls.items() if not re.match('.*_\d+', url)])
 
     collected_data = {'video_urls':video_urls,
                       'image_urls':image_urls,
                       'glosses':signbank.tools.get_gloss_data(since_timestamp)}
 
-    if since_timestamp != None:
+    if since_timestamp != 0:
         collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss',since_timestamp)
         collected_data['deleted_videos'] = signbank.tools.get_deleted_gloss_or_media_data('video',since_timestamp)
         collected_data['deleted_images'] = signbank.tools.get_deleted_gloss_or_media_data('image',since_timestamp)
 
     signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
 
-    response = HttpResponse(FileWrapper(open(archive_file_path)), content_type='application/zip')
+    response = HttpResponse(FileWrapper(open(archive_file_path,'rb')), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename='+archive_file_name
     return response
 
@@ -1053,9 +1040,9 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     if USE_NEW_X_SENDFILE_APPROACH:
 
         if filename.split('.')[-1] == 'mp4':
-            response = HttpResponse(mimetype='video/mp4')
+            response = HttpResponse(content_type='video/mp4')
         elif filename.split('.')[-1] == 'png':
-            response = HttpResponse(mimetype='image/png')
+            response = HttpResponse(content_type='image/png')
         else:
             response = HttpResponse()
 

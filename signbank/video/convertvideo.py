@@ -60,7 +60,7 @@ def ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
         if time.time()-start > timeout:
             # we've gone over time, kill the process  
             os.kill(process.pid, signal.SIGKILL)
-            print "Killing ffmpeg process for", sourcefile
+            print("Killing ffmpeg process for", sourcefile)
             errormsg = "Conversion of video took too long.  This site is only able to host relatively short videos."
             return errormsg
         
@@ -122,7 +122,7 @@ if __name__=='__main__':
     import sys
     
     if len(sys.argv) != 3:
-        print "Usage: convertvideo.py <sourcefile> <targetfile>"
+        print("Usage: convertvideo.py <sourcefile> <targetfile>")
         exit()
         
     sourcefile = sys.argv[1]

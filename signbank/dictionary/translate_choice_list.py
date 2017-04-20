@@ -12,9 +12,9 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
         adjective = codes_to_adjectives[language_code].lower()
 
     try:
-        raw_choice_list = [(id_prefix+str(choice.machine_value),unicode(getattr(choice,adjective+'_name'))) for choice in queryset]
+        raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,adjective+'_name')) for choice in queryset]
     except AttributeError:
-        raw_choice_list = [(id_prefix+str(choice.machine_value),unicode(getattr(choice,'english_name'))) for choice in queryset]
+        raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,'english_name')) for choice in queryset]
 
     sorted_choice_list = [(id_prefix+'0','-'),(id_prefix+'1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
 

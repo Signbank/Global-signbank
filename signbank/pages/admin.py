@@ -12,22 +12,23 @@ from signbank.log import debug
 class PageForm(forms.ModelForm):
     url = forms.RegexField(label=_("URL"), max_length=100, regex=r'^[-\w/]+$',
         help_text = _("Example: '/about/contact/'. Make sure to have leading"
-                      " and trailing slashes."),
-        error_message = _("This value must contain only letters, numbers,"
-                          " underscores, dashes or slashes."))
+                      " and trailing slashes."))
 
     class Meta:
         model = Page
+        fields = '__all__'
 
-   
+
 class PageVideoForm(forms.ModelForm):
     video = VideoUploadToFLVField(label='Video',
                             required=True,
                             prefix='pages',
                             help_text = _("Uploaded video will be converted to Flash"),
                             widget = admin.widgets.AdminFileWidget)
+
     class Meta:
         model = PageVideo
+        fields = '__all__'
 
     def save(self, commit=True):
         debug("Saving a video form")

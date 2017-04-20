@@ -40,57 +40,6 @@
     {% endfor %}
 
     </ul>
-    
-    <!--<ul class='nav navbar-nav'>
-        <li class='dropdown'>
-            <a class='dropdown-toggle' data-toggle='dropdown'>Signbank <b class="caret"></b></a>
-            <ul class='dropdown-menu'>
-                <li><a href="/dictionary/">Dictionary</a></li>                
-            </ul>
-        </li>
-        
-    </ul>
-
-    {% if perms.dictionary.search_gloss %}
-    ul class="nav navbar-nav">
-       <li class='dropdown'>
-             <a class="dropdown-toggle" data-toggle="dropdown"
-                {% if '/feedback/show.html' in request.path %}class="active"{% endif %}
-                {% if '/attachments/' in request.path %}class="active"{% endif %}>
-                Staff <b class="caret"></b>
-             </a>
-             <ul class='dropdown-menu'> 
-                
-              <li {% if '/dictionary/list/' in request.path %}class='active'{% endif %}>
-                   <a href="{% url 'dictionary:admin_gloss_list' %}">Search Signs</a></li>
-    
-              {% if perms.feedback.delete_generalfeedback %}
-              <li {% if '/feedback/show.html' in request.path %}class="active"{% endif %}>
-                   <a href="{% url 'signbank.feedback.views.showfeedback' %}">View Feedback</a></li>
-              {% endif %}
-              
-              {% if perms.feedback.delete_interpreterfeedback %}
-                   
-              <li {% if '/feedback/interpreter.html' in request.path %}class="active"{% endif %}>
-                    <a href="{% url 'intnotelist' %}">Interpreter Feedback</a></li>
-                
-              {% endif %}
-              
-              {% if perms.attachments.add_attachment %}
-              <li {% if '/attachments/' in request.path %}class="active"{% endif %}>
-                   <a href="{% url 'attachments' %}">File Attachments</a></li>
-              {% endif %}
-              
-              {% if user.is_staff %}
-              <li><a href="/publisher">Users/Pages</a></li>
-              {% endif %}
-                      
-                      
-             </ul>
-        </li>
-    
-    </ul>
-    {% endif %}-->
 
     <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}/signs/search">
        <div class="form-group">

@@ -50,7 +50,7 @@
                   <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">{% trans "The NGT Signbank</span> is licensed under a " %}<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">{% trans "Creative Commons BY-NC-SA 4.0 International License" %}</a>.
               
               
-              <a href="{% url 'signbank.feedback.views.generalfeedback' %}">{% trans "Provide feedback on the site" %}</a>
+              <a href="{% url 'general_feedback' %}">{% trans "Provide feedback on the site" %}</a>
           </div>
        </div>
     </div>
@@ -67,11 +67,10 @@
     <script type="text/javascript">
     $(window).ready(function()
     {
-
     	{% get_current_language as WEBSITE_LANGUAGE %}
 
         //Use the form below to update the language when logging in (if needed)
-        {% if user.is_authenticated and user.get_profile.last_used_language != WEBSITE_LANGUAGE %}
+        {% if user.is_authenticated and user.user_profile_user.last_used_language != WEBSITE_LANGUAGE %}
 
             $('#change_language_form').submit();
 
@@ -79,7 +78,7 @@
 
     	$('#minimalistic_language_picker').minimalistic_language_picker(['en','nl','cn'],'{{WEBSITE_LANGUAGE}}','{{ STATIC_URL }}images/languages/',function(chosen_language)
     	{
-            {% if user.is_authenticated and user.get_profile.last_used_language != chosen_language %}
+            {% if user.is_authenticated and user.user_profile_user.last_used_language != chosen_language %}
 
                 //When the user is logged in, we don't want to submit the form, but instead save
                 //the user preference and reload
@@ -107,7 +106,7 @@
     </script>
     <form id="change_language_form" method="post" action="{{ URL }}/i18n/setlang/">
         {% csrf_token %}
-        <input id="change_language_input_field" type="hidden" name="language" value="{{ user.get_profile.last_used_language }}">
+        <input id="change_language_input_field" type="hidden" name="language" value="{{ user.user_profile_user.last_used_language }}">
 
     </form>
 

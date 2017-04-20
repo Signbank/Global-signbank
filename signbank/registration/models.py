@@ -95,12 +95,12 @@ class RegistrationManager(models.Manager):
             current_site = Site.objects.get_current()
             
             subject = render_to_string('registration/activation_email_subject.txt',
-                                       { 'site': current_site })
+                                       context={ 'site': current_site })
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
             
             message = render_to_string('registration/activation_email.txt',
-                                       { 'activation_key': registration_profile.activation_key,
+                                       context={ 'activation_key': registration_profile.activation_key,
                                          'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
                                          'site': current_site })
             
@@ -189,7 +189,7 @@ class RegistrationProfile(models.Model):
     ``RegistrationManager``.
     
     """
-    user = models.ForeignKey(User, unique=True, verbose_name=_('user'))
+    user = models.ForeignKey(User, verbose_name=_('user'))
     activation_key = models.CharField(_('activation key'), max_length=40)
     
     objects = RegistrationManager()
@@ -267,15 +267,15 @@ teachercommChoices = ((0, 'mostly oral'),
 class UserProfile(models.Model):
     """Extended profile for users of the site"""
     
-    user = models.ForeignKey(authmodels.User, unique=True)    
+    user = models.ForeignKey(authmodels.User)
     yob = models.IntegerField("When were you born?")
-    australian = models.BooleanField(t("Do you live in $country?"))
+    australian = models.BooleanField(t("Do you live in $country?"),default=False)
     postcode = models.CharField(t("If you live in $country, what is your postcode?"), max_length=20, blank=True)
     background = models.CommaSeparatedIntegerField("What is your background?", max_length=20, choices=backgroundChoices)
-    auslan_user = models.BooleanField(t("Do you use $language?"))
+    auslan_user = models.BooleanField(t("Do you use $language?"),default=False)
     learned = models.IntegerField(t("If you use $language, when did you learn sign language?"), 
                                   choices=learnedChoices)
-    deaf = models.BooleanField("Are you a deaf person?")
+    deaf = models.BooleanField("Are you a deaf person?",default=False)
     schooltype = models.IntegerField("What sort of school do you (or did you) attend?", 
                                      choices=schoolChoices)
     school = models.CharField("Which school do you (or did you) attend?", max_length=50, blank=True)                             

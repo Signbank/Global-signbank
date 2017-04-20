@@ -1,15 +1,14 @@
-from settings.base import WSGI_FILE, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY
+import signbank.settings
+from signbank.settings.base import WSGI_FILE, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, LANGUAGE_CODE
 import os
 import shutil
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 from zipfile import ZipFile
 from datetime import datetime, date
 import json
 import re
-import urllib
+from urllib.parse import quote
 
-import signbank.settings
-from signbank.settings.base import LANGUAGE_CODE
 from django.utils.translation import override
 
 from signbank.dictionary.models import *
@@ -178,10 +177,8 @@ def reload_signbank(request=None):
     #If this is an HTTP request, give an HTTP response
     if request != None:
 
-        from django.template import RequestContext
-        from django.shortcuts import render_to_response
-
-        return render_to_response('reload_signbank.html',context_instance=RequestContext(request))
+        from django.shortcuts import render
+        return render(request,'reload_signbank.html')
 
 def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
 
@@ -199,7 +196,7 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
                 except AttributeError:
                     continue
 
-                static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+urllib.quote(subfolder_name)+'/'+urllib.quote(filename)
+                static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+quote(subfolder_name)+'/'+quote(filename)
 
     return static_urls
 

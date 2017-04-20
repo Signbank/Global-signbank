@@ -1,5 +1,5 @@
 from django.db.models import Q
-from django.db import models
+from django.db import models, OperationalError
 from django.conf import settings
 from django.http import Http404 
 from django.contrib.auth.models import User
@@ -25,7 +25,7 @@ class Translation(models.Model):
     
     def __str__(self):
         #return unicode(self.gloss).encode('ascii','ignore')+"-"+unicode(self.translation).encode('ascii','ignore')
-        return self.gloss.idgloss.encode('utf-8') + '-' + self.translation.text.encode('utf-8')
+        return self.gloss.idgloss + '-' + self.translation.text
 
     def get_absolute_url(self):
         """Return a URL for a view of this translation."""
@@ -52,7 +52,7 @@ class Keyword(models.Model):
     """A Dutch keyword that is a possible translation equivalent of a sign"""
     
     def __str__(self):
-        return self.text.encode('utf-8')
+        return self.text
     
     text = models.CharField(max_length=100, unique=True)
     
@@ -199,12 +199,18 @@ def build_choice_list(field):
 
     choice_list = [];
 
-    for choice in FieldChoice.objects.filter(field__iexact=field):
-        choice_list.append((str(choice.machine_value),choice.english_name));
+    # Get choices for a certain field in FieldChoices, append machine_value and english_name
+    try:
+        for choice in FieldChoice.objects.filter(field__iexact=field):
+            choice_list.append((str(choice.machine_value),choice.english_name));
 
-    choice_list = sorted(choice_list,key=lambda x: x[1]);
+        choice_list = sorted(choice_list,key=lambda x: x[1]);
 
-    return [('0','-'),('1','N/A')] + choice_list;
+        return [('0','-'),('1','N/A')] + choice_list;
+
+    # Enter this exception if for example the db has no data yet (without this it is impossible to migrate)
+    except:
+        pass
 
 class Gloss(models.Model):
     
@@ -222,10 +228,10 @@ class Gloss(models.Model):
                         )
 
     def __str__(self):
-        return unicode(self.idgloss.encode('utf-8'))
+        return self.idgloss
 
     def __unicode__(self):
-        return unicode(self.idgloss)
+        return self.idgloss
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
@@ -342,7 +348,7 @@ minor or insignificant ways that can be ignored.""")
     inWeb = models.NullBooleanField(_("In the Web dictionary"), default=False)
     isNew = models.NullBooleanField(_("Is this a proposed new sign?"), null=True, default=False)
     
-    inittext = models.CharField(max_length="50", blank=True) 
+    inittext = models.CharField(max_length=50, blank=True)
 
     morph = models.CharField(_("Morphemic Analysis"), max_length=50, blank=True)
 
@@ -430,8 +436,8 @@ minor or insignificant ways that can be ignored.""")
     tokNoSgnrO = models.IntegerField(_("Number of Other Region Signers"),null=True, blank=True)
 
     creationDate = models.DateField(_('Creation date'),default=datetime(2015,1,1))
-    lastUpdated = models.DateTimeField(_('Last updated'),default=datetime.now,auto_now=True)
-    creator = models.ManyToManyField(User,null=True)
+    lastUpdated = models.DateTimeField(_('Last updated'),auto_now=True)
+    creator = models.ManyToManyField(User)
     alternative_id = models.CharField(max_length=50,null=True,blank=True)
 
     def get_fields(self):
@@ -443,7 +449,7 @@ minor or insignificant ways that can be ignored.""")
             if field.name in settings.API_FIELDS:
                 category = fieldname_to_category(field.name)
                 if category != field.name:
-                    if not fields.has_key(category):
+                    if not category in fields:
                         fields[category] = {}
                     fields[category][field.verbose_name.title()] = field.value_to_string(self)
                 else:
@@ -556,7 +562,6 @@ minor or insignificant ways that can be ignored.""")
         filename_without_extension = self.idgloss+'-'+str(self.pk)
 
         dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername
-        dir_path = dir_path.encode('utf-8')
 
         if check_existance:
             try:
@@ -584,8 +589,7 @@ minor or insignificant ways that can be ignored.""")
 
     def get_video_path(self):
 
-        idgloss = self.idgloss.encode('utf-8')
-        return 'glossvideo/'+idgloss[:2]+'/'+idgloss+'-'+str(self.pk)+'.mp4'
+        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
@@ -646,7 +650,7 @@ minor or insignificant ways that can be ignored.""")
     
         defs = dict()
         for d in self.definition_set.all().order_by('count'):
-            if not defs.has_key(d.role):
+            if not d.role in defs:
                 defs[d.role] = []
             
             defs[d.role].append(d.text)
@@ -731,7 +735,7 @@ minor or insignificant ways that can be ignored.""")
 # register Gloss for tags
 try:
     tagging.register(Gloss)
-except tagging.AlreadyRegistered:
+except:
     pass
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
