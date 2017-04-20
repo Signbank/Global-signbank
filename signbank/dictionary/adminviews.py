@@ -145,6 +145,8 @@ class GlossListView(ListView):
         except KeyError:
             context['show_all'] = False
 
+        context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
+
         return context
 
 
@@ -847,6 +849,8 @@ class MorphemeListView(ListView):
 
                 context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
 
+        context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
+        
         return context
 
 
