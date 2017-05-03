@@ -252,6 +252,10 @@ def update_gloss(request, glossid):
                     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                     newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
 
+        #This is because you cannot concat none to a string in py3
+        if original_value == None:
+            original_value = ''
+
         return HttpResponse(original_value+'\t'+newvalue, {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
