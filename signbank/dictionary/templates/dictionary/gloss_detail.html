@@ -305,11 +305,14 @@
     {% endif %}
 
 
-  {% include "dictionary/glosstags.html" %}
+
 
 </div>
 
+
     <div class='panel-group' id="definition">
+
+        {% include "dictionary/glosstags.html" %}
 
         <table class='table table-condensed'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
