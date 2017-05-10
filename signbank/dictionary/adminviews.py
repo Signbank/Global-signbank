@@ -1,6 +1,8 @@
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.db.models import Q
+from django.db.models import CharField, Value as V
+from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -659,6 +661,12 @@ class GlossListView(ListView):
             created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(created_after_date,DT.datetime.now()))
 
+        if 'createdBy' in get and get['createdBy'] != '':
+            created_by_search_string = ' '.join(get['createdBy'].strip().split()) # remove redundant spaces
+            qs = qs.annotate(
+                created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
+                .filter(created_by__icontains=created_by_search_string)
+
         # Saving querysets results to sessions, these results can then be used elsewhere (like in gloss_detail)
         # Flush the previous queryset (just in case)
         self.request.session['search_results'] = None
@@ -1105,6 +1113,12 @@ class MorphemeListView(ListView):
         if 'createdAfter' in get and get['createdAfter'] != '':
             created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
+
+        if 'createdBy' in get and get['createdBy'] != '':
+            created_by_search_string = ' '.join(get['createdBy'].strip().split())  # remove redundant spaces
+            qs = qs.annotate(
+                created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
+                .filter(created_by__icontains=created_by_search_string)
 
         # Saving querysets results to sessions, these results can then be used elsewhere (like in gloss_detail)
         # Flush the previous queryset (just in case)

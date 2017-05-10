@@ -129,6 +129,8 @@ class GlossSearchForm(forms.ModelForm):
     createdBefore = forms.DateField(label=_(u'Created before'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
     createdAfter = forms.DateField(label=_(u'Created after'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
 
+    createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+
     class Meta:
 
         ATTRS_FOR_FORMS = {'class':'form-control'};
@@ -200,6 +202,8 @@ class MorphemeSearchForm(forms.ModelForm):
 
     createdBefore = forms.DateField(label=_(u'Created before'))
     createdAfter = forms.DateField(label=_(u'Created after'))
+
+    createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'};
