@@ -601,7 +601,7 @@ def import_csv(request):
             elif len(line) == 0:
                 continue
 
-            values = csv.reader([line]).__next__()
+            values = csv.reader([line]).__next__
             value_dict = {}
 
             for nv,value in enumerate(values):
@@ -702,8 +702,17 @@ def switch_to_language(request,language):
     return HttpResponse('OK')
 
 def recently_added_glosses(request):
+    try:
+        from signbank.settings.base import RECENTLY_ADDED_SIGNS_PERIOD
+        import datetime as DT
+        recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
+        return render(request, 'dictionary/recently_added_glosses.html',
+                      {'glosses': Gloss.objects.filter(
+                          creationDate__range=(recently_added_signs_since_date, DT.datetime.now())).order_by(
+                          'creationDate').reverse()})
 
-    return render(request,'dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()})
+    except:
+        return render(request,'dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()})
 
 def add_params_to_url(url,params):
     url_parts = list(urlparse.urlparse(url))
