@@ -824,6 +824,14 @@ class Relation(models.Model):
     class Meta:
         ordering = ['source']
 
+    def get_reverse_role(role):
+        if role == 'hyponym':
+            return 'hypernym'
+        elif role == 'hypernym':
+            return 'hyponym'
+        else:
+            return role
+
 class MorphologyDefinition(models.Model):
     """Tells something about morphology of a gloss"""
 

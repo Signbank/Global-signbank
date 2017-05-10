@@ -1,3 +1,5 @@
+from django.core.exceptions import ObjectDoesNotExist
+
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
 from django.template import Context, RequestContext, loader
 from django.shortcuts import render, get_object_or_404
@@ -293,6 +295,13 @@ def update_relation(gloss, field, value):
     if what == 'relationdelete':
         print("DELETE: ", rel)
         rel.delete()
+
+        # Also delete the reverse relation
+        reverse_relations = Relation.objects.filter(source=rel.target, target=rel.source,
+                                                    role=Relation.get_reverse_role(rel.role))
+        if reverse_relations.count() > 0:
+            reverse_relations[0].delete()
+
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrel')
     elif what == 'relationrole':
         rel.role = value
@@ -492,6 +501,11 @@ def add_relation(request):
             if target:
                 rel = Relation(source=source, target=target, role=role)
                 rel.save()
+
+                # Also add the reverse relation
+                reverse_relation = Relation(source=target, target=source, role=Relation.get_reverse_role(role))
+                reverse_relation.save()
+
                 
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
             else:
