@@ -714,6 +714,15 @@ def recently_added_glosses(request):
     except:
         return render(request,'dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()})
 
+
+def proposed_new_signs(request):
+    proposed_or_new_signs = (Gloss.objects.filter(isNew=True) |
+                             TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed"))\
+                             .order_by('creationDate').reverse()
+    return render(request, 'dictionary/recently_added_glosses.html',
+                  {'glosses': proposed_or_new_signs})
+
+
 def add_params_to_url(url,params):
     url_parts = list(urlparse.urlparse(url))
     query = dict(urlparse.parse_qsl(url_parts[4]))

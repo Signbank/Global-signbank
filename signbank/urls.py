@@ -60,6 +60,7 @@ urlpatterns = [
     url(r'^signs/add/$', signbank.dictionary.views.add_new_sign),
     url(r'^signs/import_csv/$', signbank.dictionary.views.import_csv),
     url(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
+    url(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
     url(r'^morphemes/dictionary/$', signbank.dictionary.views.search_morpheme),
     url(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),
     url(r'^morphemes/add/$', permission_required('dictionary.search_gloss')(add_new_morpheme)),
