@@ -258,7 +258,7 @@ def update_gloss(request, glossid):
         if original_value == None:
             original_value = ''
 
-        return HttpResponse(original_value+'\t'+newvalue, {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value)+'\t'+newvalue, {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
