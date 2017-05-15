@@ -590,7 +590,8 @@ def import_csv(request):
     if len(request.FILES) > 0:
 
         changes = []
-        csv_lines = request.FILES['file'].read().decode('UTF-8').split('\n')
+        csv_text = request.FILES['file'].read().decode('UTF-8')
+        csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
 
         for nl, line in enumerate(csv_lines):
 
@@ -601,7 +602,7 @@ def import_csv(request):
             elif len(line) == 0:
                 continue
 
-            values = csv.reader([line]).__next__
+            values = csv.reader([line]).__next__()
             value_dict = {}
 
             for nv,value in enumerate(values):
