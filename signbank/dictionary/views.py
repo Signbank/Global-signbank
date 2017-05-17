@@ -893,6 +893,115 @@ def update_cngt_counts(request,folder_index=None):
     return HttpResponse('<p>No glosses were found for these names:</p><ul><li>'+glosses_not_in_signbank_str+'</li></ul>'+\
                         '<p>Updated glosses</p><ul><li>'+updated_glosses+'</li></ul>')
 
+def find_and_save_variants(request):
+
+    variant_pattern_glosses = Gloss.objects.filter(annotation_idgloss__regex=r"^(.*)\-([A-Z])$").order_by('annotation_idgloss')
+
+    gloss_table_prefix = '<!DOCTYPE html>\n' \
+                         '<html>\n' \
+                         '<body>\n' \
+                         '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
+                         '<thead>\n' \
+                         '<tr>\n' \
+                         '<th style="width:10em; text-align:left;">Focus Gloss</th>\n' \
+                         '<th style="width:15em; text-align:left;">Other Relations</th>\n' \
+                         '<th style="width:20em; text-align:left;">Variant Relations (PRE)</th>\n' \
+                         '<th style="width:20em; text-align:left;">Candidate Variants</th>\n' \
+                         '<th style="width:25em; text-align:left;">Variant Relations (POST)</th>\n' \
+                          '</tr>\n' \
+                         '</thead>\n' \
+                         '<tbody>\n'
+    gloss_table_suffix = '</tbody>\n' \
+                         '</table>\n' \
+                         '</body>\n' \
+                         '</html>'
+
+    gloss_pattern_table = dict()
+    gloss_table_rows = ''
+
+    for gloss in variant_pattern_glosses:
+
+        dict_key = int(gloss.id)
+        gloss_pattern_table[dict_key] = '<td>' + str(gloss.idgloss) + '</td>'
+#        print(gloss.id, '\t', str(gloss.idgloss))
+        other_relations_of_sign = gloss.other_relations()
+
+        if other_relations_of_sign:
+
+            gloss_pattern_table[dict_key] += '<td>'
+
+            for x in other_relations_of_sign:
+                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
+
+            gloss_pattern_table[dict_key] += '</td>'
+
+        else:
+            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+
+        #        if (len(other_relations_of_sign) > 0):
+        #            print('Other relations: ', other_relation_objects )
+
+        variant_relations_of_sign = gloss.variant_relations()
+
+        if variant_relations_of_sign:
+
+            gloss_pattern_table[dict_key] += '<td>'
+
+            for x in variant_relations_of_sign:
+                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
+
+            gloss_pattern_table[dict_key] += '</td>'
+
+        else:
+            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+
+
+        other_relation_objects = [x.target for x in other_relations_of_sign]
+        variant_relation_objects = [x.target for x in variant_relations_of_sign]
+        this_sign_stem = gloss.has_stem()
+        length_this_sign_stem = len(this_sign_stem)
+        this_matches = r'^' + re.escape(this_sign_stem) + r'\-[A-Z]$'
+        candidate_variants = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=gloss).exclude(
+            idgloss__in=other_relation_objects).exclude(idgloss__in=variant_relation_objects)
+
+        if candidate_variants:
+            gloss_pattern_table[dict_key] += '<td>'
+
+            for x in candidate_variants:
+                gloss_pattern_table[dict_key] += str(x.idgloss) + ' '
+
+            gloss_pattern_table[dict_key] += '</td>'
+
+        else:
+            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+
+
+        for target in candidate_variants:
+
+ #           print('UPDATE REL: source=', gloss, ', target=', target)
+            rel = Relation(source=gloss, target=target, role='variant')
+            rel.save()
+
+        updated_variants = gloss.variant_relations()
+
+        if updated_variants:
+
+            gloss_pattern_table[dict_key] += '<td>'
+
+            for x in updated_variants:
+                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
+
+            gloss_pattern_table[dict_key] += '</td>'
+
+        else:
+            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+
+#        print('Dictionary key: ', dict_key, ', ', gloss_pattern_table[dict_key])
+        gloss_table_rows = gloss_table_rows + '<tr>' + gloss_pattern_table[dict_key] + '</tr>\n'
+
+
+    return HttpResponse(gloss_table_prefix+gloss_table_rows+gloss_table_suffix)
+
 def get_unused_videos(request):
 
     videos_with_unused_pk = []

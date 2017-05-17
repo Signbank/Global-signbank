@@ -58,6 +58,7 @@ urlpatterns = patterns('',
 
     url(r'update_cngt_counts/$', 'signbank.dictionary.views.update_cngt_counts'),
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', 'signbank.dictionary.views.update_cngt_counts'),
+    url(r'find_and_save_variants/$','signbank.dictionary.views.find_and_save_variants'),
 
     url(r'get_unused_videos/$','signbank.dictionary.views.get_unused_videos'),
     url(r'all_field_choices.tsv/$','signbank.dictionary.views.list_all_fieldchoice_names'),
