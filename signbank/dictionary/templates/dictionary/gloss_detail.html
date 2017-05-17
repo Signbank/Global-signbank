@@ -30,6 +30,7 @@
     var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}'
 
     var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
+    var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
     var languages = {{gloss.language_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
@@ -797,6 +798,14 @@
                 <tr><th>{% trans "Proposed New Sign" %}</th>
                     <td class='edit edit_check' id='isNew'>
                         {% if gloss.isNew %}
+                            {% trans "Yes" %}
+                        {% else %}
+                            {% trans "No" %}
+                        {% endif %}
+                    </td></tr>
+                <tr><th>{% trans "Exclude from ECV" %}</th>
+                    <td class='edit edit_check' id='excludeFromEcv'>
+                        {% if gloss.excludeFromEcv %}
                             {% trans "Yes" %}
                         {% else %}
                             {% trans "No" %}

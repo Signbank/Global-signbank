@@ -340,6 +340,7 @@ minor or insignificant ways that can be ignored.""")
 
     inWeb = models.NullBooleanField(_("In the Web dictionary"), default=False)
     isNew = models.NullBooleanField(_("Is this a proposed new sign?"), null=True, default=False)
+    excludeFromEcv = models.NullBooleanField(_("Exclude from ECV"), default=False)
     
     inittext = models.CharField(max_length=50, blank=True)
 
@@ -656,6 +657,11 @@ minor or insignificant ways that can be ignored.""")
         for k, v in options:
             result.append('"%s":"%s"' % (k, v))
         return "{" + ",".join(result) + "}"
+
+    def definition_role_choices_json(self):
+        """Return JSON for the definition role choice list"""
+        from signbank.dictionary.forms import DEFN_ROLE_CHOICES
+        return self.options_to_json(DEFN_ROLE_CHOICES)
 
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""
