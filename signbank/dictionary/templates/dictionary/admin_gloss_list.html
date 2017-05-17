@@ -655,7 +655,8 @@ function do_adminsearch(el) {
             {% endif %}
 
             {% load underscore_to_space %}
-            <td>{% for tag in gloss.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+            {% tags_for_object gloss as tag_list %}
+            <td>{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
             
         </tr>
     {% endfor %}
