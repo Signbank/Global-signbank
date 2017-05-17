@@ -624,32 +624,33 @@ minor or insignificant ways that can be ignored.""")
 
     def has_variants(self):
 
+        variant_relations_of_sign = self.variant_relations()
+
+        variant_relation_objects = [ x.target for x in variant_relations_of_sign ]
+
+        return variant_relation_objects
+
+    def pattern_variants(self):
+
         this_sign_stem = self.has_stem()
         length_this_sign_stem = len(this_sign_stem)
         this_matches = r'^' + re.escape(this_sign_stem) + r'\-[A-Z]$'
         other_relations_of_sign = self.other_relations()
-        variant_relations_of_sign = self.variant_relations()
+        #variant_relations_of_sign = self.variant_relations()
 
-        other_relation_objects = [ x.target for x in other_relations_of_sign ]
+        other_relation_objects = [x.target for x in other_relations_of_sign]
 
-#        if (len(other_relations_of_sign) > 0):
-#            print('Other relations: ', other_relation_objects )
+        pattern_variants = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=self).exclude(
+            idgloss__in=other_relation_objects)
 
-        variant_relation_objects = [ x.target for x in variant_relations_of_sign ]
+        return pattern_variants
 
-#        if (len(variant_relations_of_sign) > 0):
-#            print('Variant relations: ', variant_relation_objects )
-
-        has_variants = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=self).exclude(idgloss__in=other_relation_objects).exclude(idgloss__in=variant_relation_objects)
-
-        return has_variants
-
-    def new_variant_relations(self,target_gloss):
+    def new_variant_relation(self,target_gloss):
 
         rel = Relation(source=self, target=target_gloss, role='variant')
         rel.save()
 
-        return None
+        return target_gloss
 
     def other_relations(self):
 
@@ -676,6 +677,14 @@ minor or insignificant ways that can be ignored.""")
         has_stem = self.annotation_idgloss[:-2]
 
         return has_stem
+
+    def gloss_relations(self):
+
+        variant_relations = self.relation_sources.filter(role__in=['variant'])
+
+        other_relations = self.relation_sources.filter(role__in=['homonym','synonyn','antonym','hyponym','hypernym','seealso'])
+
+        return (other_relations, variant_relations)
 
     def empty_non_empty_phonology(self):
 
