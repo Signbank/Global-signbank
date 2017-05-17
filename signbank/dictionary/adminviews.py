@@ -130,6 +130,11 @@ class GlossListView(ListView):
         context['add_gloss_form'] = GlossCreateForm()
         context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
 
+        if hasattr(settings, 'SHOW_MORPHEME_SEARCH'):
+            context['SHOW_MORPHEME_SEARCH'] = settings.SHOW_MORPHEME_SEARCH
+        else:
+            context['SHOW_MORPHEME_SEARCH'] = False
+
         context['input_names_fields_and_labels'] = {}
 
         for topic in ['main','phonology','semantics']:
