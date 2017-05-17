@@ -201,7 +201,7 @@ class GlossListView(ListView):
             desc_element.text = lang['description']
 
         # Make sure we iterate only over the none-Morpheme glosses
-        for gloss in Gloss.none_morpheme_objects():
+        for gloss in Gloss.none_morpheme_objects().filter(excludeFromEcv=False):
             glossid = str(gloss.pk)
             myattributes = {cve_id: glossid, 'EXT_REF':'signbank-ecv'}
             cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
@@ -217,8 +217,9 @@ class GlossListView(ListView):
         ET.SubElement(top, 'EXTERNAL_REF', {'EXT_REF_ID':'signbank-ecv', 'TYPE':'resource_url', 'VALUE':URL + "/dictionary/gloss/"})
 
         xmlstr = minidom.parseString(ET.tostring(top,'utf-8')).toprettyxml(indent="   ")
-        with open(ECV_FILE, "w") as f:
-            f.write(xmlstr.encode('utf-8').decode())
+        import codecs
+        with codecs.open(ECV_FILE, "w", "utf-8") as f:
+            f.write(xmlstr)
 
 #        tree = ET.ElementTree(top)
 #        tree.write(open(ECV_FILE, 'w'), encoding ="utf-8",xml_declaration=True, method="xml")
