@@ -16,6 +16,24 @@ from datetime import datetime, date
 
 import signbank.settings
 
+def build_choice_list(field):
+
+    choice_list = [];
+
+    # Get choices for a certain field in FieldChoices, append machine_value and english_name
+    try:
+        for choice in FieldChoice.objects.filter(field__iexact=field):
+            choice_list.append((str(choice.machine_value),choice.english_name));
+
+        choice_list = sorted(choice_list,key=lambda x: x[1]);
+
+        return [('0','-'),('1','N/A')] + choice_list;
+
+    # Enter this exception if for example the db has no data yet (without this it is impossible to migrate)
+    except:
+        pass
+
+
 class Translation(models.Model):
     """A Dutch translation of NGT signs"""
      
@@ -103,16 +121,6 @@ class Keyword(models.Model):
             trans = alltrans[len(alltrans)-1]
         
         return (trans, len(alltrans))
-    
-    
-DEFN_ROLE_CHOICES = (('note', 'Note'),
-                     ('privatenote', 'Private Note'),
-                     ('phon', 'Phonology'),
-                     ('todo', 'To Do'),
-                     ('sugg', 'Suggestion for other gloss'),
-                     ('disc', 'Discuss between annotators'),
-                     ('ety','Etymology')
-                     )
 
 
 class Definition(models.Model):
@@ -123,7 +131,7 @@ class Definition(models.Model):
         
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
-    role = models.CharField("Type",max_length=20, choices=DEFN_ROLE_CHOICES)
+    role = models.CharField("Type",max_length=20, choices=build_choice_list('NoteType'))
     count = models.IntegerField()
     published = models.BooleanField(default=True)
 
@@ -134,7 +142,8 @@ class Definition(models.Model):
         list_display = ['gloss', 'role', 'count', 'text']
         list_filter = ['role']
         search_fields = ['gloss__idgloss']
-        
+
+
 class Language(models.Model):
     """A sign language name"""
         
@@ -195,22 +204,6 @@ class FieldChoice(models.Model):
     class Meta:
         ordering = ['field','machine_value']
 
-def build_choice_list(field):
-
-    choice_list = [];
-
-    # Get choices for a certain field in FieldChoices, append machine_value and english_name
-    try:
-        for choice in FieldChoice.objects.filter(field__iexact=field):
-            choice_list.append((str(choice.machine_value),choice.english_name));
-
-        choice_list = sorted(choice_list,key=lambda x: x[1]);
-
-        return [('0','-'),('1','N/A')] + choice_list;
-
-    # Enter this exception if for example the db has no data yet (without this it is impossible to migrate)
-    except:
-        pass
 
 class Gloss(models.Model):
     
@@ -663,11 +656,6 @@ minor or insignificant ways that can be ignored.""")
         for k, v in options:
             result.append('"%s":"%s"' % (k, v))
         return "{" + ",".join(result) + "}"
-
-    def definition_role_choices_json(self):
-        """Return JSON for the definition role choice list"""
-
-        return self.options_to_json(DEFN_ROLE_CHOICES)
 
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""

@@ -797,6 +797,18 @@ class GlossDetailView(DetailView):
 
         context['morphdefs'] = morphdefs
 
+        # Regroup notes
+        note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+        notes = context['gloss'].definition_set.all()
+        notes_groupedby_role = {}
+        for note in notes:
+            translated_note_role = machine_value_to_translated_human_value(note.role,note_role_choices,self.request.LANGUAGE_CODE)
+            role_id = (note.role, translated_note_role)
+            if role_id not in notes_groupedby_role:
+                notes_groupedby_role[role_id] = []
+            notes_groupedby_role[role_id].append(note)
+        context['notes_groupedby_role'] = notes_groupedby_role
+
         #Gather the OtherMedia
         context['other_media'] = []
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
