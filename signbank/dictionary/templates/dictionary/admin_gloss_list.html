@@ -417,6 +417,8 @@ function do_adminsearch(el) {
 
     <div class='btn-group' style="margin-bottom: 20px">
         <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
+
+        {% if SHOW_MORPHEME_SEARCH %}
         <div class="btn-group">
             <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
             <span data-bind="label" onclick="do_adminsearch(this);" name="search_type" value="sign">
@@ -437,6 +439,10 @@ function do_adminsearch(el) {
 
         <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
         <input type="submit" style="visibility: hidden;"/>
+
+        {% else %}
+        <input class="btn btn-primary" type="submit" name="search_type" value='{% trans "Search sign" %}'/>
+        {% endif %}
 
         {% if perms.dictionary.export_csv %}
         <input class='btn btn-default' type='submit' name='format' value='CSV'>

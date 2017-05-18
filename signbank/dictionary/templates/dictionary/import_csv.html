@@ -3,6 +3,26 @@
 {% load bootstrap3 %}
 {% load i18n %}
 
+{% block extrajs %}
+    <script type='text/javascript'>
+
+     $(document).ready(function(){
+
+
+        $('.collapsetoggle').click(function() {
+            if ($(this).text() == 'Show') {
+                $(this).text('Hide');
+            } else {
+                $(this).text('Show');
+            }
+        });
+
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+   </script>
+{% endblock %}
+
+
 {% block content %}
 
 {% if stage == 0 %}
@@ -10,6 +30,8 @@
 
     <form action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+              title="CSV files should have min. two columns, the first being the ID number of the sign (obtained through CSV export), the second column the value that needs to be put in the field. Make sure the header row is cf. the CSV export, indicating the fields you want to make changes to. In case of adding new values to comma-separated fields like Translation Equivalents, make sure that the old values that should stay are also in the second column."></span>
         {{ form }}
         <input type="submit" value="{% blocktrans %}Submit{% endblocktrans %}" />
     </form>

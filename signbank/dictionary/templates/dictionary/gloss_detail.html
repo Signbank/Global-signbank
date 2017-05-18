@@ -803,6 +803,14 @@
                             {% trans "No" %}
                         {% endif %}
                     </td></tr>
+                <tr><th>{% trans "Exclude from ECV" %}</th>
+                    <td class='edit edit_check' id='excludeFromEcv'>
+                        {% if gloss.excludeFromEcv %}
+                            {% trans "Yes" %}
+                        {% else %}
+                            {% trans "No" %}
+                        {% endif %}
+                    </td></tr>
             </table>
         </div>
     </div>
@@ -817,8 +825,6 @@
         </div>
         <div id='definitions' class='collapse'>
             
-            {% regroup gloss.definition_set.all by role as roles %}
-
             <table class='table'>
               <tr>
                   <th style='width:1em'></th>
@@ -827,9 +833,9 @@
                   <th style='width:10em'>{% trans "Type" %}</th>
                   <th>{% trans "Text" %}</th>
               </tr>
-            {% for role in roles %}
+            {% for role_id, note_list in notes_groupedby_role.items %}
 
-              {% for def in role.list %}
+              {% for def in note_list %}
               <tr>
                 <td>
 
@@ -844,7 +850,7 @@
                                     <h2 id='modalTitle'>{% trans "Delete This Note" %}</h2>
                                 </div>
                                 <div class='modal-body'>
-                                    <p><strong>{{def.get_role_display}}</strong> {{def.text}}</p>
+                                    <p><strong>{{role_id.1}}</strong> {{def.text}}</p>
                                     <p>{% trans "This action will delete this note. It cannot be undone." %}</p>
                                  </div>
                               <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
@@ -871,7 +877,7 @@
                     {% endif %}
                 </td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td class='edit edit_role' id='definitionrole_{{def.id}}'>{{def.get_role_display}}</td>
+                <td class='edit edit_role' id='definitionrole_{{def.id}}'>{{role_id.1}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
               </tr>
               {% endfor %}

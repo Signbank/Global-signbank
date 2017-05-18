@@ -144,6 +144,11 @@ class GlossListView(ListView):
         context['add_gloss_form'] = GlossCreateForm()
         context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
 
+        if hasattr(settings, 'SHOW_MORPHEME_SEARCH'):
+            context['SHOW_MORPHEME_SEARCH'] = settings.SHOW_MORPHEME_SEARCH
+        else:
+            context['SHOW_MORPHEME_SEARCH'] = False
+
         context['input_names_fields_and_labels'] = {}
 
         for topic in ['main','phonology','semantics']:
@@ -210,7 +215,7 @@ class GlossListView(ListView):
             desc_element.text = lang['description']
 
         # Make sure we iterate only over the none-Morpheme glosses
-        for gloss in Gloss.none_morpheme_objects():
+        for gloss in Gloss.none_morpheme_objects().filter(excludeFromEcv=False):
             glossid = str(gloss.pk)
             myattributes = {cve_id: glossid, 'EXT_REF':'signbank-ecv'}
             cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
@@ -226,8 +231,9 @@ class GlossListView(ListView):
         ET.SubElement(top, 'EXTERNAL_REF', {'EXT_REF_ID':'signbank-ecv', 'TYPE':'resource_url', 'VALUE':URL + "/dictionary/gloss/"})
 
         xmlstr = minidom.parseString(ET.tostring(top,'utf-8')).toprettyxml(indent="   ")
-        with open(ECV_FILE, "w") as f:
-            f.write(xmlstr.encode('utf-8').decode())
+        import codecs
+        with codecs.open(ECV_FILE, "w", "utf-8") as f:
+            f.write(xmlstr)
 
 #        tree = ET.ElementTree(top)
 #        tree.write(open(ECV_FILE, 'w'), encoding ="utf-8",xml_declaration=True, method="xml")
@@ -810,6 +816,18 @@ class GlossDetailView(DetailView):
             morphdefs.append((morphdef,translated_role))
 
         context['morphdefs'] = morphdefs
+
+        # Regroup notes
+        note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+        notes = context['gloss'].definition_set.all()
+        notes_groupedby_role = {}
+        for note in notes:
+            translated_note_role = machine_value_to_translated_human_value(note.role,note_role_choices,self.request.LANGUAGE_CODE)
+            role_id = (note.role, translated_note_role)
+            if role_id not in notes_groupedby_role:
+                notes_groupedby_role[role_id] = []
+            notes_groupedby_role[role_id].append(note)
+        context['notes_groupedby_role'] = notes_groupedby_role
 
         #Gather the OtherMedia
         context['other_media'] = []

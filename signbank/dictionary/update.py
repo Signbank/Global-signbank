@@ -44,6 +44,7 @@ def add_gloss(request):
             gloss = form.save()
             gloss.creationDate = datetime.now()
             gloss.creator.add(request.user)
+            gloss.excludeFromEcv = True
             gloss.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
@@ -258,7 +259,7 @@ def update_gloss(request, glossid):
         if original_value == None:
             original_value = ''
 
-        return HttpResponse(original_value+'\t'+newvalue, {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value)+'\t'+newvalue, {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""

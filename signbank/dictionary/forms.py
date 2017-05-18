@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list, OtherMedia
+from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, build_choice_list, OtherMedia
 from django.conf import settings
 from tagging.models import Tag
 
@@ -80,7 +80,7 @@ RELATION_ROLE_CHOICES = (('','---------'),
                          ('seealso', 'See Also'),
                          )
 
-DEFN_ROLE_CHOICES = (('','---------'),('all','All')) + DEFN_ROLE_CHOICES;
+DEFN_ROLE_CHOICES = [('','---------'),('all','All')] + build_choice_list('NoteType');
 COMPONENT_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphologyType');
 MORPHEME_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphemeType');
 ATTRS_FOR_FORMS = {'class':'form-control'};
@@ -233,13 +233,12 @@ class MorphemeSearchForm(forms.ModelForm):
 
 
 class DefinitionForm(forms.ModelForm):
-    
+    role = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
     class Meta:
         model = Definition
         fields = ('published','count', 'role', 'text')
-        widgets = {
-                   'role': forms.Select(attrs={'class': 'form-control'}),
-                   }
         
 class RelationForm(forms.ModelForm):
     
