@@ -77,7 +77,21 @@ def order_queryset_by_sort_order(get, qs):
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Location")
     else:
         # Use straightforward ordering on field [sOrder]
-        ordered = qs.order_by(sOrder)
+
+        bReversed = False
+        if (sOrder[0:1] == '-'):
+            # A starting '-' sign means: descending order
+            sOrder = sOrder[1:]
+            bReversed = True
+
+        qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'})
+        qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'})
+
+        ordered = sorted(qs_letters, key=lambda x: getattr(x, sOrder))
+        ordered += sorted(qs_special, key=lambda x: getattr(x, sOrder))
+
+        if bReversed:
+            ordered.reverse()
 
     # return the ordered list
     return ordered
