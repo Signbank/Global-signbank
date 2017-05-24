@@ -132,7 +132,7 @@ function do_adminsearch(el) {
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
                 <div class="hidden">
                     <input name='sortOrder' class='form-control' value='idgloss' >
-                    <input name='search_type' class='form-control' value='sign'>
+                    <input name='search_type' class='form-control' value='{{search_type}}'>
                 </div>
                 <div>
                     <table class='table' id='searchfields'>
@@ -421,7 +421,7 @@ function do_adminsearch(el) {
         {% if SHOW_MORPHEME_SEARCH %}
         <div class="btn-group">
             <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
-            <span data-bind="label" onclick="do_adminsearch(this);" name="search_type" value="sign">
+            <span data-bind="label" onclick="do_adminsearch(this);" name="search_type" value="{{search_type}}">
                 {% if search_type == 'sign' %}
                 {% trans "Search sign" %}
                 {% else %}
