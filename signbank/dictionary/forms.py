@@ -158,6 +158,8 @@ class GlossSearchForm(forms.ModelForm):
 
 
 class MorphemeSearchForm(forms.ModelForm):
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="idgloss")  # Used in morphemelistview to store user-selection
