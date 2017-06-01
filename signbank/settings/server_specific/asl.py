@@ -76,3 +76,5 @@ API_FIELDS = [
     'idgloss',
     'annotation_idgloss'
 ]
+
+SHOW_ENGLISH_ONLY = True

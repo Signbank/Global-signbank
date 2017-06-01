@@ -8,6 +8,7 @@ from django_summernote.admin import SummernoteModelAdmin
 
 
 from signbank.log import debug
+from signbank.settings import server_specific
 
 class PageForm(forms.ModelForm):
     url = forms.RegexField(label=_("URL"), max_length=100, regex=r'^[-\w/]+$',
@@ -45,10 +46,18 @@ class PageVideoInline(admin.TabularInline):
 
 class PageAdmin(SummernoteModelAdmin):
     form = PageForm
-    fieldsets = (
-        (None, {'fields': ('url', 'title', 'title_dutch', 'title_chinese', 'parent', 'index', 'publish', 'content', 'content_dutch', 'content_chinese')}),
-        (_('Advanced options'), {'classes': ('collapse',), 'fields': ('group_required', 'template_name')}),
-    )
+    #print("SHOW_ENGLISH_ONLY: " + str(server_specific.SHOW_ENGLISH_ONLY))
+    if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
+        fieldsets = (
+            (None, {'fields': (
+            'url', 'title', 'parent', 'index', 'publish', 'content')}),
+            (_('Advanced options'), {'classes': ('collapse',), 'fields': ('group_required', 'template_name')}),
+        )
+    else:
+        fieldsets = (
+            (None, {'fields': ('url', 'title', 'title_dutch', 'title_chinese', 'parent', 'index', 'publish', 'content', 'content_dutch', 'content_chinese')}),
+            (_('Advanced options'), {'classes': ('collapse',), 'fields': ('group_required', 'template_name')}),
+        )
     list_display = ('url', 'title', 'parent', 'index')
     list_filter = ('publish', 'group_required')
     search_fields = ('url', 'title')

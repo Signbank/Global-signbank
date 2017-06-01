@@ -132,8 +132,19 @@ class UserAdmin(UserAdmin):
 
 class FieldChoiceAdmin(VersionAdmin):
     readonly_fields=['machine_value']
-    list_display = ['english_name','dutch_name','machine_value','field']
+    if hasattr(settings, 'SHOW_ENGLISH_ONLY') and settings.SHOW_ENGLISH_ONLY:
+        show_english_only = True
+        list_display = ['english_name', 'machine_value','field']
+    else:
+        list_display = ['english_name', 'dutch_name', 'machine_value', 'field']
+        show_english_only = False
     list_filter = ['field']
+
+    def get_form(self, request, obj=None, **kwargs):
+        if self.show_english_only:
+            self.exclude = ('dutch_name', 'chinese_name')
+        form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
+        return form
 
     def save_model(self, request, obj, form, change):
 
