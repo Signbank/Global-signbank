@@ -193,7 +193,7 @@ class FieldChoice(models.Model):
     field = models.CharField(max_length=50)
     english_name = models.CharField(max_length=50)
     dutch_name = models.CharField(max_length=50)
-    chinese_name = models.CharField(max_length=50)
+    chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(help_text="The actual numeric value stored in the database. Created automatically.")
 
     def __unicode__(self):

@@ -11,7 +11,7 @@ class Page(models.Model):
 
     title = models.CharField(_('English title'), max_length=200)
     title_dutch = models.CharField(_('Dutch title'), max_length=200)
-    title_chinese = models.CharField(_('Chinese title'), max_length=200)
+    title_chinese = models.CharField(_('Chinese title'), max_length=200, blank=True)
 
     content = models.TextField(_('English content'), blank=True)
     content_dutch = models.TextField(_('Dutch content'), blank=True)
