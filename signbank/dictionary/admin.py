@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
 from reversion.admin import VersionAdmin
+from signbank.settings import server_specific
 from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
 
 class KeywordAdmin(VersionAdmin):
@@ -132,7 +133,7 @@ class UserAdmin(UserAdmin):
 
 class FieldChoiceAdmin(VersionAdmin):
     readonly_fields=['machine_value']
-    if hasattr(settings, 'SHOW_ENGLISH_ONLY') and settings.SHOW_ENGLISH_ONLY:
+    if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
         show_english_only = True
         list_display = ['english_name', 'machine_value','field']
     else:
