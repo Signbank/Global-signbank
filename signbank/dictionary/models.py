@@ -940,7 +940,7 @@ minor or insignificant ways that can be ignored.""")
                     where_homonyms_filled += '(' + field + '=' + value_of_this_field + ')'
                 count_filled = count_filled + 1
 
-        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=15'
+        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=14'
 
         qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE ' + where_homonyms)
 
