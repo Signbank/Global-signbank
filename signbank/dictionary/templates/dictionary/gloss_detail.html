@@ -26,6 +26,7 @@
     var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
     var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
+    var relation_delete_choices = '{ "delete" : "Delete" }';
     var languages = {{gloss.language_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
     var mrptype_choices = {};
@@ -125,9 +126,9 @@
     {% endif %}
     
     {% if perms.dictionary.change_gloss %}
-    
+
     <div class='pull-right'>
-         <span id='edit_message'></span>&nbsp;
+         <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
          <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit next gloss" %}</button>
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
@@ -499,8 +500,8 @@
     <!-- Phonology -->
 	<div class="panel panel-default">
         <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' href='#phonology'>{% trans "Phonology" %}</a>
+            <div class='panel-title' id='phonology_heading'>
+                <a data-toggle='collapse' href='#phonology'>{% trans "Phonology" %}</a><span id='phonology_message'></span>
             </div>
         </div>
         <div id='phonology' class='panel-collapse collapse'>
@@ -522,8 +523,8 @@
     </div>
 
     <!-- Minimal Pairs -->
- {% with gloss.minimal_pairs_dict as mpd %}
-{% if mpd.1 %}
+ {% with gloss.homonyms as homs %}
+ {% if homs.1 %}
   <div class="panel panel-default">
 
         <div class='panel-heading'>
@@ -532,21 +533,38 @@
             </div>
         </div>
         <div id='identicalphonology' class='panel-collapse collapse'>
-            {% with gloss.homonyms as hnyms %}
             <table class='table table-condensed' style="padding-left: 20px;">
                <tr>
                    <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
                </tr>
-                {% for gl in mpd.1 %}
-                {% if not gl in hnyms %}
+                {% for gl in homs.1 %}
                 <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.idgloss }}</a></td></tr>
-                {% endif %}
                 {% endfor %}
             </table>
-            {% endwith %}
+        </div>
+  </div>
+ {% endif %}
+ {% if homs.2 %}
+ <div class="panel panel-default">
+
+        <div class='panel-heading'>
+            <div class='panel-title'>
+                <a data-toggle='collapse' style="color:red" href='#differentphonology'>{% trans "Marked as homonym but different phonology" %}</a>
+            </div>
+        </div>
+        <div id='differentphonology' class='panel-collapse collapse'>
+            <table class='table table-condensed' style="padding-left: 20px;">
+               <tr>
+                   <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
+               </tr>
+                {% for gl in homs.2 %}
+                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.idgloss }}</a></td></tr>
+                {% endfor %}
+            </table>
         </div>
   </div>
 {% endif %}
+{% endwith %}
 <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
@@ -554,16 +572,15 @@
             </div>
         </div>
         <div id='minimalpairs' class='panel-collapse collapse'>
-            {% if mpd.0 %}
             <table class='table table-condensed'>
 
-
+            {% with gloss.minimal_pairs_dict as mpd %}
+            {% if mpd.0 %}
                <tr>
                    <th style="width:auto; padding:0px 0px;">{% trans "ID Gloss" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Field name" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Value" %}</th>
                 </tr>
-
 
                 {% for gl, dict in mpd.0.items %}
                 <tr>
@@ -572,12 +589,11 @@
                 {% endfor %}
                 </tr>
                 {% endfor %}
-            </table>
             {% endif %}
+            {% endwith %}
+            </table>
         </div>
 </div>
-{% endwith %}
-
 
     <!-- Semantics -->
     <div class="panel panel-default">
@@ -624,41 +640,13 @@
         <div id='relations' class='collapse'>
                <table class='table table-condensed'>
                    {% for rel in gloss.relation_sources.all %}
-                    <tr>
-                         <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation-other_modal_{{rel.id}}'></span>
-                            
-                             <div class="modal fade" id="delete_relation-other_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleOth" aria-hidden="true">
-                                 <div class="modal-dialog modal-sm">
-                                    <div class="modal-content">
-                                        <div class='modal-header'>
-                                            <h2 id='modalTitleOth'>{% trans "Delete This Relation" %}</h2>
-                                        </div>
-                                        <div class='modal-body'>
-                                            
-                                            <p>{% blocktrans %} This action will delete the {{rel.get_role_display}} relation between {{rel.source}} and {{rel.target}}. It cannot be undone. {% endblocktrans %}</p>
-                                         </div>
-                                      <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
-                                          {% csrf_token %}
-                                          <input type='hidden' name='id' value='relationdelete_{{rel.id}}'>
-                                          <input type='hidden' name='value' value='confirmed'>
-                                          <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                                          </div>
-                                      </form>
-                                          
-                                    </div>
-                                  </div>
-                             </div>
-                            
-                        </td>
-                        
-                        
+                    <tr id='row_{{rel.id}}'>
+                        <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}'><span class='glyphicon glyphicon-trash'></span></td>
                         <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                         <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+                    </tr>
                    {% endfor %}
-               </table>               
+               </table>
                
                {% if perms.dictionary.change_gloss %}
                <form id='add_relation_form' method='post' action='{% url "dictionary:add_relation" %}'>
@@ -673,7 +661,7 @@
                    </table>
                 </form>
                 {% endif %}
-                
+
            {# spacing div to allow room for typeahead dropdown #}
            <div style='height: 10em'></div>
            

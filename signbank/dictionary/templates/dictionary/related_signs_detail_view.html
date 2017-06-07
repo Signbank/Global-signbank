@@ -382,8 +382,9 @@
       </tr>
       {% endfor %}
     </tbody>
+    {% with gloss.minimal_pairs_dict as mpd %}
+    {% if mpd.0 %}
     <thead>
-       {% if gloss.minimal_pairs_count %}
        <tr>
            <th style="width:8em; color:darkred">{% trans "Minimal Pairs" %}</th>
 
@@ -398,13 +399,8 @@
            <th style="width:20em" colspan="2">{% trans "Value" %}</th>
 
        </tr>
-
-     {% endif %}
-     </thead>
+    </thead>
     <tbody>
-
-     {% with gloss.minimal_pairs_dict as mpd %}
-     {% if mpd.0 %}
      {% for gl,dict in mpd.0.items %}
 		<tr>
           <td>{%if gl.get_image_path != None %}
@@ -425,9 +421,10 @@
             {% endfor %}
         </tr>
      {% endfor %}
+    </tbody>
+
      {% endif %}
      {% endwith %}
-    </tbody>
 
 </table>
 

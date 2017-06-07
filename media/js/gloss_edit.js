@@ -75,7 +75,7 @@ var original_values_for_changes_made = new Array();
 function disable_edit() {
     $('.edit').editable('disable');
     $('.edit').css('color', 'black');
-    $('#edit_message').text(''); 
+    $('#edit_message').text('');
     $('.editform').hide();
     $('#delete_gloss_btn').hide();
     $('#delete_morpheme_btn').hide();
@@ -111,12 +111,14 @@ function disable_edit() {
         $(this).html('-')
     });
 
+    check_phonology_modified();
 };
 
 function enable_edit() {
     $('.edit').editable('enable');
     $('.edit').css('color', 'red');
-    $('#edit_message').text('Click on red text to edit  '); 
+    $('#edit_message').text('Click on red text to edit  ');
+    $('#edit_message').css('color', 'black');
     $('.editform').show();
     $('#delete_gloss_btn').show().addClass('btn-danger');
     $('#delete_morpheme_btn').show().addClass('btn-danger');
@@ -255,6 +257,11 @@ function configure_edit() {
          type      : 'glosstypeahead',
 		 callback : update_view_and_remember_original_value
      });
+     $('.edit_relation_delete').editable(edit_post_url, {
+        type    : 'select',
+        data    : relation_delete_choices,
+        callback : update_relation_delete
+     });
      $('.edit_compoundpart').editable(edit_post_url, {
          type      : 'glosstypeahead',
 		 callback : update_view_and_remember_original_value
@@ -286,7 +293,11 @@ function configure_edit() {
 			 callback : update_view_and_remember_original_value
 		 });
      });
-
+     $('.edit_variants').editable(edit_post_url, {
+		 type      : 'select',
+		 data       : relation_role_choices,
+		 callback : update_view_and_remember_original_value
+     });
 }
 
 function update_view_and_remember_original_value(change_summary)
@@ -294,20 +305,37 @@ function update_view_and_remember_original_value(change_summary)
 	split_values = change_summary.split('\t');
 	original_value = split_values[0];
   	new_value = split_values[1];
+  	category_value = split_values[2];
+  	console.log("category value: ", category_value);
+
 	id = $(this).attr('id');
   	$(this).html(new_value);
+  	console.log('field changed: ', id);
 
 	if (original_values_for_changes_made[id] == undefined)
   	{
     	original_values_for_changes_made[id] = original_value;                          
-		console.log(original_values_for_changes_made); 
+		console.log("original value: ", original_value);
+		console.log("new value: ", new_value);
+		$(this).parent().removeClass('empty_row');
+		$(this).parent().attr("value", new_value);
 	}
+	if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' || new_value == 'False')
+	{
+		console.log("new value is empty: ", new_value);
+		$(this).parent().addClass('empty_row');
+		$(this).parent().attr("value", new_value);
+		$(this).html("------");
+	}
+	if (category_value == 'phonology') {
+        console.log('phonology modified');
+    }
 }
 
 var gloss_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: '/dictionary/ajax/gloss/%QUERY'
+      remote: '/signbank/dictionary/ajax/gloss/%QUERY'
     });
 
 gloss_bloodhound.initialize();
@@ -436,7 +464,18 @@ $.editable.addInputType("multiselect", {
     }
 });
 
+function update_relation_delete(change_summary)
+{
+    var deleted_relation_for_gloss = $(this).attr('id');
+    var deleted_relation = deleted_relation_for_gloss.split('_');
+    var deleted_relation_id = deleted_relation[1];
+    $(this).css("color", "black");
+    console.log("Delete relation: ", deleted_relation_id);
+    var search_id = 'row_' + deleted_relation_id;
+    $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
+  	$(this).html('');
 
+}
      
 function getCookie(name) {
     var cookieValue = null;
@@ -527,4 +566,24 @@ function rewind()
 
 	delayed_reload(c*100);
 
+}
+
+function check_phonology_modified()
+{
+    console.log('inside check_phonology_modified');
+
+    var phonology_keys = ["handedness", "domhndsh", "subhndsh", "handCh", "relatArtic", "locprim", "locVirtObj",
+                      "relOriMov", "relOriLoc", "oriCh", "contType", "movSh", "movDir", "repeat", "altern", "phonOth",
+                      "mouthG",
+                      "mouthing", "phonetVar"];
+    for (key in original_values_for_changes_made)
+    {
+        for (var i = 0; i < phonology_keys.length; i++) {
+            if (phonology_keys[i] == key)
+            {
+	            $(document.getElementById('edit_message')).text('The phonology has been changed, please remember to reload the page when finished editing!');
+	            $(document.getElementById('edit_message')).css('color', 'red');
+            }
+        }
+    }
 }
