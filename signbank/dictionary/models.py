@@ -955,7 +955,8 @@ minor or insignificant ways that can be ignored.""")
         saved_but_not_homonyms = []
 
         for r in gloss_homonym_relations:
-            if (not r.target in homonyms_of_this_gloss):
+#            print("details homonym relation: ", r, "source: ", r.source, " target: ", r.target)
+            if (not r.target in homonyms_of_this_gloss) and (r.target != self):
                 saved_but_not_homonyms += [r.target]
         for h in homonyms_of_this_gloss:
             if (not h in gloss_homonym_relations):
