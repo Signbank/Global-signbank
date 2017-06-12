@@ -91,7 +91,7 @@
                 //When the user is logged in, we don't want to submit the form, but instead save
                 //the user preference and reload
 
-                $.ajax('/dictionary/switch_to_language/'+chosen_language,'html');
+                $.ajax('{{ URL }}/dictionary/switch_to_language/'+chosen_language,'html');
 
                 //The reload is on a timeout, because it happened to fast on Firefox
                 setTimeout(function()
