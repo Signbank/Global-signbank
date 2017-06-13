@@ -641,7 +641,7 @@
                <table class='table table-condensed'>
                    {% for rel in gloss.relation_sources.all %}
                     <tr id='row_{{rel.id}}'>
-                        <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}'><span class='glyphicon glyphicon-trash'></span></td>
+                        <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}'><span class='glyphicon glyphicon-trash relation_delete'></span></td>
                         <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                         <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
                     </tr>
@@ -678,46 +678,19 @@
         </div>
         <div id='relationsforeign' class='collapse'>
                <table class='table table-condensed'>
-	      <tr>
-		  <th style='width:3em'>{% trans "Loan" %}</th>
-		  <th style='width:6em'>{% trans "Related Language" %}</th>
-		  <th style='width:10em'>{% trans "Gloss in related language" %}</th>
-		</tr>
-
+	                <tr>
+                        <th style='width:1em'></th>
+                        <th style='width:3em'>{% trans "Loan" %}</th>
+		                <th style='width:10em'>{% trans "Related Language" %}</th>
+		                <th style='width:15em'>{% trans "Gloss in related language" %}</th>
+		            </tr>
                    {% for rel in gloss.relationtoforeignsign_set.all %}
-                    <tr>                                               
-                         <td>
-                            <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation-foreign_modal_{{rel.id}}'></span>
-                            
-                             <div class="modal fade" id="delete_relation-foreign_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleFor" aria-hidden="true">
-                                 <div class="modal-dialog modal-sm">
-                                    <div class="modal-content">
-                                        <div class='modal-header'>
-                                            <h2 id='modalTitleFor'>{% trans "Delete This Relation" %}</h2>
-                                        </div>
-                                        <div class='modal-body'>
-                                            
-                                            <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
-                                         </div>
-                                      <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
-                                          {% csrf_token %}
-                                          <input type='hidden' name='id' value='relationforeigndelete_{{rel.id}}'>
-                                          <input type='hidden' name='value' value='{% trans "confirmed" %}'>
-                                          <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                                          </div>
-                                      </form>
-                                          
-                                    </div>
-                                  </div>
-                             </div>
-                            
-                        </td>
-
+                    <tr id='foreign_{{rel.id}}'>
+                        <td class='edit edit_foreign_delete' id='relationforeign-delete_{{rel.id}}'><span class='glyphicon glyphicon-trash relationtoforeignsign_delete'></span></td>
                         <td class='edit edit_check' id='relationforeign-loan_{{rel.id}}'>{{rel.loan}}</td>
                         <td class='edit edit_text' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
                         <td class='edit edit_text' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
+                    </tr>
                    {% endfor %}
                </table>
 

@@ -258,7 +258,7 @@ def update_keywords(gloss, field, value):
     
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.all()])
     
-    return HttpResponse(newvalue, {'content-type': 'text/plain'})
+    return HttpResponse(unicode(newvalue), {'content-type': 'text/plain'})
 
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
@@ -296,7 +296,7 @@ def update_relation(gloss, field, value):
         
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})           
     
-    return HttpResponse(newvalue, {'content-type': 'text/plain'})
+    return HttpResponse(unicode(newvalue), {'content-type': 'text/plain'})
 
 def delete_relation(gloss, field):
 
@@ -316,10 +316,11 @@ def update_relationtoforeignsign(gloss, field, value):
     if not rel.gloss == gloss:
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
-    if what == 'relationforeigndelete':
+    if what == 'relationforeign_delete':
         # print "DELETE: ", rel
         rel.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
+        # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
+        return HttpResponse('', {'content-type': 'text/plain'})
     elif what == 'relationforeign_loan':
         rel.loan = value == 'YES';
         rel.save();
@@ -336,7 +337,7 @@ def update_relationtoforeignsign(gloss, field, value):
         
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})           
     
-    return HttpResponse(value, {'content-type': 'text/plain'})
+    return HttpResponse(unicode(value), {'content-type': 'text/plain'})
 
 def gloss_from_identifier(value):
     """Given an id of the form idgloss (pk) return the
@@ -429,7 +430,7 @@ def update_definition(request, gloss, field, value):
         newvalue = defn.get_role_display()
 
 
-    return HttpResponse(newvalue, {'content-type': 'text/plain'})
+    return HttpResponse(unicode(newvalue), {'content-type': 'text/plain'})
 
 def update_other_media(request,gloss,field,value):
 
@@ -457,7 +458,7 @@ def update_other_media(request,gloss,field,value):
 
     other_media.save()
 
-    return HttpResponse(value, {'content-type': 'text/plain'})
+    return HttpResponse(unicode(value), {'content-type': 'text/plain'})
 
 def add_relation(request):
     """Add a new relation instance"""
@@ -483,7 +484,10 @@ def add_relation(request):
                 rel = Relation(source=source, target=target, role=role)
                 rel.save()
                 
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
+                # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
+
+
             else:
                 print("target gloss not found")
                 return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
@@ -736,7 +740,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
 
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
-    return HttpResponse(newvalue, {'content-type': 'text/plain'})
+    return HttpResponse(unicode(newvalue), {'content-type': 'text/plain'})
 
 
 def add_morpheme(request):
