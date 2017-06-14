@@ -888,6 +888,8 @@ minor or insignificant ways that can be ignored.""")
 
         gloss_homonym_relations = self.relation_sources.filter(role='homonym')
 
+        targets_of_homonyms_of_this_gloss = [ r.target for r in homonyms_of_this_gloss ]
+
         paren = ')'
 
         phonology_for_gloss = self.phonology_matrix()
@@ -944,7 +946,6 @@ minor or insignificant ways that can be ignored.""")
 
         qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE ' + where_homonyms)
 
-
         match_glosses = [g for g in qs]
 
         for other_gloss in match_glosses:
@@ -955,12 +956,12 @@ minor or insignificant ways that can be ignored.""")
         saved_but_not_homonyms = []
 
         for r in gloss_homonym_relations:
-#            print("details homonym relation: ", r, "source: ", r.source, " target: ", r.target)
             if (not r.target in homonyms_of_this_gloss) and (r.target != self):
                 saved_but_not_homonyms += [r.target]
-        for h in homonyms_of_this_gloss:
+        for h in targets_of_homonyms_of_this_gloss:
             if (not h in gloss_homonym_relations):
                 homonyms_not_saved += [h]
+
         return (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms)
 
     def get_image_path(self):
