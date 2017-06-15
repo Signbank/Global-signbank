@@ -62,7 +62,7 @@ urlpatterns = [
     url(r'^import_other_media/$', signbank.dictionary.views.import_other_media),
 
     url(r'find_and_save_variants/$',signbank.dictionary.views.find_and_save_variants),
-    url(r'find_and_save_homonyms/$',signbank.dictionary.views.find_and_save_homonyms),
+    url(r'find_homonyms/$',signbank.dictionary.views.find_homonyms),
     url(r'update_cngt_counts/$', signbank.dictionary.views.update_cngt_counts),
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', signbank.dictionary.views.update_cngt_counts),
 

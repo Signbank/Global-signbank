@@ -888,7 +888,9 @@ minor or insignificant ways that can be ignored.""")
 
         gloss_homonym_relations = self.relation_sources.filter(role='homonym')
 
-        targets_of_homonyms_of_this_gloss = [ r.target for r in homonyms_of_this_gloss ]
+        list_of_homonym_relations = [ r for r in gloss_homonym_relations ]
+
+        targets_of_homonyms_of_this_gloss = [ r.target for r in gloss_homonym_relations ]
 
         paren = ')'
 
@@ -955,11 +957,11 @@ minor or insignificant ways that can be ignored.""")
         homonyms_not_saved = []
         saved_but_not_homonyms = []
 
-        for r in gloss_homonym_relations:
-            if (not r.target in homonyms_of_this_gloss) and (r.target != self):
+        for r in list_of_homonym_relations:
+            if (not r.target in homonyms_of_this_gloss):
                 saved_but_not_homonyms += [r.target]
-        for h in targets_of_homonyms_of_this_gloss:
-            if (not h in gloss_homonym_relations):
+        for h in homonyms_of_this_gloss:
+            if (not h in targets_of_homonyms_of_this_gloss):
                 homonyms_not_saved += [h]
 
         return (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms)

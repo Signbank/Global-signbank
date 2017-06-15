@@ -374,7 +374,7 @@ def update_relationtoforeignsign(gloss, field, value):
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 
 def gloss_from_identifier(value):
-    """Given an id of the form idgloss (pk) return the
+    """Given an id of the form "idgloss (pk)" return the
     relevant gloss or None if none is found
     BUT: first check if a unique hit can be found by the string alone (if it is not empty)
     """
@@ -383,16 +383,16 @@ def gloss_from_identifier(value):
     match = re.match('(.*) \((\d+)\)', value)
     if match:
         print("MATCH: ", match)
-        idgloss = match.group(1)
+        annotation_idgloss = match.group(1)
         pk = match.group(2)
-        print("INFO: ", idgloss, pk)
+        print("INFO: ", annotation_idgloss, pk)
         
         target = Gloss.objects.get(pk=int(pk))
         print("TARGET: ", target)
         return target
     elif value != '':
-        idgloss = value
-        target = Gloss.objects.get(idgloss=idgloss)
+        annotation_idgloss = value
+        target = Gloss.objects.get(annotation_idgloss=annotation_idgloss)
         return target
     else:
         return None

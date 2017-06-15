@@ -593,7 +593,7 @@
                    <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
                </tr>
                 {% for gl in homs.1 %}
-                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.idgloss }}</a></td></tr>
+                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
@@ -613,7 +613,7 @@
                    <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
                </tr>
                 {% for gl in homs.2 %}
-                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.idgloss }}</a></td></tr>
+                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
@@ -640,7 +640,7 @@
                 {% for gl, dict in mpd.0.items %}
                 <tr>
                 {% for k, d in dict.items %}
-                    <td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.idgloss }}</a></td><td>{{ d.0 }}</td><td>{{ d.1 }}</td>
+                    <td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td><td>{{ d.0 }}</td><td>{{ d.1 }}</td>
                 {% endfor %}
                 </tr>
                 {% endfor %}
@@ -698,7 +698,7 @@
                     <tr id='row_{{rel.id}}'>
                         <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}'><span class='glyphicon glyphicon-trash relation_delete'></span></td>
                         <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
-                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
                     </tr>
                    {% endfor %}
                </table>

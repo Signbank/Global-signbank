@@ -365,7 +365,7 @@ function glosstypeahead(target) {
           templates: {
               suggestion: function(gloss) {
                   // Issue #121: remove  (SN: " + gloss.sn + ")
-                  return("<p><strong>" + gloss.idgloss +  "</strong></p>");
+                  return("<p><strong>" + gloss.annotation_idgloss +  "</strong></p>");
               }
           }
       });
@@ -406,7 +406,7 @@ function morphtypeahead(target) {
           templates: {
               suggestion: function(gloss) {
                   // Issue #121: remove (SN: " + gloss.sn + ")
-                  return("<p><strong>" + gloss.idgloss + "</strong></p>");
+                  return("<p><strong>" + gloss.annotation_idgloss + "</strong></p>");
               }
           }
       });
