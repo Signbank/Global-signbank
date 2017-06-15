@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-26 14:50+0100\n"
+"POT-Creation-Date: 2017-02-18 00:28+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,177 +33,205 @@ msgstr ""
 msgid "Glosses containing"
 msgstr ""
 
-#: signbank/dictionary/forms.py:16
+#: signbank/dictionary/forms.py:16 signbank/dictionary/forms.py:38
 msgid "Translations containing"
 msgstr ""
 
 #: signbank/dictionary/forms.py:17
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:322
 msgid "Search"
 msgstr ""
 
-#: signbank/dictionary/forms.py:66
+#: signbank/dictionary/forms.py:36
+msgid "Morphemes containing"
+msgstr ""
+
+#: signbank/dictionary/forms.py:91 signbank/dictionary/forms.py:157
 msgid "Dutch Gloss"
 msgstr "Gloss"
 
-#: signbank/dictionary/forms.py:67
+#: signbank/dictionary/forms.py:92 signbank/dictionary/forms.py:158
+msgid "Sort Order"
+msgstr ""
+
+#: signbank/dictionary/forms.py:93 signbank/dictionary/forms.py:160
 msgid "English Gloss"
 msgstr ""
 
-#: signbank/dictionary/forms.py:70
+#: signbank/dictionary/forms.py:96 signbank/dictionary/forms.py:163
 msgid "Translations"
 msgstr ""
 
-#: signbank/dictionary/forms.py:71
+#: signbank/dictionary/forms.py:97 signbank/dictionary/forms.py:164
 msgid "Has Video"
 msgstr ""
 
-#: signbank/dictionary/forms.py:72
+#: signbank/dictionary/forms.py:98 signbank/dictionary/forms.py:165
 msgid "All Definitions Published"
 msgstr ""
 
-#: signbank/dictionary/forms.py:74
+#: signbank/dictionary/forms.py:100 signbank/dictionary/forms.py:167
 msgid "Search Definition/Notes"
 msgstr ""
 
-#: signbank/dictionary/forms.py:77
+#: signbank/dictionary/forms.py:103 signbank/dictionary/forms.py:169
 msgid "Search for gloss of related signs"
 msgstr ""
 
-#: signbank/dictionary/forms.py:78
+#: signbank/dictionary/forms.py:104 signbank/dictionary/forms.py:171
 msgid "Search for gloss of foreign signs"
 msgstr ""
 
-#: signbank/dictionary/forms.py:79
+#: signbank/dictionary/forms.py:105 signbank/dictionary/forms.py:173
 msgid "Search for gloss with this as morpheme"
 msgstr ""
 
-#: signbank/dictionary/forms.py:81
+#: signbank/dictionary/forms.py:107 signbank/dictionary/models.py:338
+msgid "Abduction change"
+msgstr ""
+
+#: signbank/dictionary/forms.py:108 signbank/dictionary/models.py:339
+msgid "Flexion change"
+msgstr ""
+
+#: signbank/dictionary/forms.py:110 signbank/dictionary/forms.py:176
 msgid "Phonology other"
 msgstr ""
 
-#: signbank/dictionary/forms.py:83
+#: signbank/dictionary/forms.py:112 signbank/dictionary/forms.py:178
 msgid "Related to foreign sign or not"
 msgstr ""
 
-#: signbank/dictionary/forms.py:84
+#: signbank/dictionary/forms.py:113 signbank/dictionary/forms.py:181
 msgid "Type of relation"
 msgstr ""
 
-#: signbank/dictionary/forms.py:85
+#: signbank/dictionary/forms.py:115
+msgid "Has compound component type"
+msgstr ""
+
+#: signbank/dictionary/forms.py:117 signbank/dictionary/forms.py:183
 msgid "Has morpheme type"
 msgstr ""
 
-#: signbank/dictionary/forms.py:87
+#: signbank/dictionary/forms.py:119 signbank/dictionary/forms.py:186
 msgid "Repeating Movement"
 msgstr ""
 
-#: signbank/dictionary/forms.py:88 signbank/dictionary/models.py:370
+#: signbank/dictionary/forms.py:120 signbank/dictionary/forms.py:188
+#: signbank/dictionary/models.py:378
 msgid "Alternating Movement"
 msgstr ""
 
-#: signbank/dictionary/forms.py:90
+#: signbank/dictionary/forms.py:122 signbank/dictionary/forms.py:191
 msgid "Is a proposed new sign"
 msgstr ""
 
-#: signbank/dictionary/forms.py:91
+#: signbank/dictionary/forms.py:123 signbank/dictionary/forms.py:193
 msgid "Is in Web dictionary"
 msgstr ""
 
-#: signbank/dictionary/forms.py:92
+#: signbank/dictionary/forms.py:124 signbank/dictionary/forms.py:195
 msgid "Note type"
 msgstr ""
 
-#: signbank/dictionary/forms.py:93
+#: signbank/dictionary/forms.py:125 signbank/dictionary/forms.py:197
 msgid "Note contains"
 msgstr ""
 
-#: signbank/dictionary/forms.py:95
+#: signbank/dictionary/forms.py:127 signbank/dictionary/forms.py:199
 msgid "Created before"
 msgstr ""
 
-#: signbank/dictionary/forms.py:96
+#: signbank/dictionary/forms.py:128 signbank/dictionary/forms.py:200
 msgid "Created after"
 msgstr ""
 
-#: signbank/dictionary/forms.py:130 signbank/dictionary/forms.py:143
+#: signbank/dictionary/forms.py:240 signbank/dictionary/forms.py:253
 msgid "Source Gloss"
 msgstr ""
 
-#: signbank/dictionary/forms.py:131
+#: signbank/dictionary/forms.py:241
 msgid "Target Gloss"
 msgstr ""
 
-#: signbank/dictionary/forms.py:145
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:404
+#: signbank/dictionary/forms.py:255
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:648
 msgid "Related Language"
 msgstr ""
 
-#: signbank/dictionary/forms.py:146
+#: signbank/dictionary/forms.py:256
 msgid "Gloss in Related Language"
 msgstr ""
 
-#: signbank/dictionary/forms.py:155
+#: signbank/dictionary/forms.py:267 signbank/dictionary/forms.py:286
 msgid "Parent Gloss"
 msgstr ""
 
-#: signbank/dictionary/forms.py:156
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:217
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:536
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:636
+#: signbank/dictionary/forms.py:268 signbank/dictionary/forms.py:287
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:432
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:790
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:890
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:415
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:515
 msgid "Type"
 msgstr ""
 
-#: signbank/dictionary/forms.py:157
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:218
+#: signbank/dictionary/forms.py:269 signbank/dictionary/forms.py:280
+#: signbank/dictionary/forms.py:288
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:455
 msgid "Morpheme"
 msgstr ""
 
-#: signbank/dictionary/models.py:261
-#: signbank/dictionary/templates/dictionary/add_gloss.html:23
+#: signbank/dictionary/forms.py:279
+#, fuzzy
+msgid "Host Gloss"
+msgstr "Gloss"
+
+#: signbank/dictionary/models.py:262
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:20
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:190
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:20
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:278
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:266
 msgid "Lemma ID Gloss"
 msgstr ""
 
-#: signbank/dictionary/models.py:266
+#: signbank/dictionary/models.py:267
 msgid "Annotation ID Gloss: Dutch"
 msgstr "Annotation ID Gloss"
 
-#: signbank/dictionary/models.py:274
+#: signbank/dictionary/models.py:275
 msgid "Annotation ID Gloss: English"
 msgstr ""
 
-#: signbank/dictionary/models.py:285
+#: signbank/dictionary/models.py:286
 msgid "BSL sign"
 msgstr ""
 
-#: signbank/dictionary/models.py:286
+#: signbank/dictionary/models.py:287
 msgid "ASL sign"
 msgstr ""
 
-#: signbank/dictionary/models.py:289
+#: signbank/dictionary/models.py:290
 msgid "ASL gloss"
 msgstr ""
 
-#: signbank/dictionary/models.py:290
+#: signbank/dictionary/models.py:291
 msgid "ASL loan sign"
 msgstr ""
 
-#: signbank/dictionary/models.py:293
+#: signbank/dictionary/models.py:294
 msgid "BSL gloss"
 msgstr ""
 
-#: signbank/dictionary/models.py:294
+#: signbank/dictionary/models.py:295
 msgid "BSL loan sign"
 msgstr ""
 
-#: signbank/dictionary/models.py:296
+#: signbank/dictionary/models.py:297
 msgid "Annotation instructions"
 msgstr ""
 
-#: signbank/dictionary/models.py:297
+#: signbank/dictionary/models.py:298
 msgid "Remarks"
 msgstr ""
 
@@ -224,7 +252,8 @@ msgid "Compound"
 msgstr ""
 
 #: signbank/dictionary/models.py:313
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:393
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:476
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:464
 msgid "Handedness"
 msgstr ""
 
@@ -245,7 +274,8 @@ msgid "Final Subordinate Handshape"
 msgstr ""
 
 #: signbank/dictionary/models.py:321
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:396
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:479
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:467
 msgid "Location"
 msgstr "Location - major"
 
@@ -285,220 +315,238 @@ msgstr ""
 msgid "Final Interacting Dominant Hand Part"
 msgstr ""
 
-#: signbank/dictionary/models.py:337
+#: signbank/dictionary/models.py:342
 msgid "In the Web dictionary"
 msgstr ""
 
-#: signbank/dictionary/models.py:338
+#: signbank/dictionary/models.py:343
 msgid "Is this a proposed new sign?"
 msgstr ""
 
-#: signbank/dictionary/models.py:342
+#: signbank/dictionary/models.py:347
 msgid "Morphemic Analysis"
 msgstr ""
 
-#: signbank/dictionary/models.py:344
+#: signbank/dictionary/models.py:352
 msgid "Signed English definition available"
 msgstr ""
 
-#: signbank/dictionary/models.py:345
+#: signbank/dictionary/models.py:353
 msgid "Signed English gloss"
 msgstr ""
 
-#: signbank/dictionary/models.py:347
+#: signbank/dictionary/models.py:355
 msgid "Sense Number"
 msgstr ""
 
-#: signbank/dictionary/models.py:350
+#: signbank/dictionary/models.py:358
 msgid "Sign Number"
 msgstr ""
 
-#: signbank/dictionary/models.py:357
+#: signbank/dictionary/models.py:365
 msgid "Relation between Articulators"
 msgstr ""
 
-#: signbank/dictionary/models.py:359
+#: signbank/dictionary/models.py:367
 msgid "Absolute Orientation: Palm"
 msgstr ""
 
-#: signbank/dictionary/models.py:360
+#: signbank/dictionary/models.py:368
 msgid "Absolute Orientation: Fingers"
 msgstr ""
 
-#: signbank/dictionary/models.py:362
+#: signbank/dictionary/models.py:370
 msgid "Relative Orientation: Movement"
 msgstr ""
 
-#: signbank/dictionary/models.py:363
+#: signbank/dictionary/models.py:371
 msgid "Relative Orientation: Location"
 msgstr ""
 
-#: signbank/dictionary/models.py:365
+#: signbank/dictionary/models.py:373
 msgid "Orientation Change"
 msgstr ""
 
-#: signbank/dictionary/models.py:367
+#: signbank/dictionary/models.py:375
 msgid "Handshape Change"
 msgstr ""
 
-#: signbank/dictionary/models.py:369
+#: signbank/dictionary/models.py:377
 msgid "Repeated Movement"
 msgstr ""
 
-#: signbank/dictionary/models.py:372
+#: signbank/dictionary/models.py:380
 msgid "Movement Shape"
 msgstr "Path movement"
 
-#: signbank/dictionary/models.py:373
+#: signbank/dictionary/models.py:381
 msgid "Movement Direction"
 msgstr ""
 
-#: signbank/dictionary/models.py:374
+#: signbank/dictionary/models.py:382
 msgid "Movement Manner"
 msgstr ""
 
-#: signbank/dictionary/models.py:375
+#: signbank/dictionary/models.py:383
 msgid "Contact Type"
 msgstr ""
 
-#: signbank/dictionary/models.py:377
+#: signbank/dictionary/models.py:385
 msgid "Phonology Other"
 msgstr ""
 
-#: signbank/dictionary/models.py:379
+#: signbank/dictionary/models.py:387
 msgid "Mouth Gesture"
 msgstr ""
 
-#: signbank/dictionary/models.py:380
+#: signbank/dictionary/models.py:388
 msgid "Mouthing"
 msgstr ""
 
-#: signbank/dictionary/models.py:381
+#: signbank/dictionary/models.py:389
 msgid "Phonetic Variation"
 msgstr ""
 
-#: signbank/dictionary/models.py:383
+#: signbank/dictionary/models.py:391
 msgid "Placement Active Articulator LH"
 msgstr "Location - major"
 
-#: signbank/dictionary/models.py:384
+#: signbank/dictionary/models.py:392
 msgid "Placement Focal Site RH"
 msgstr ""
 
-#: signbank/dictionary/models.py:385
+#: signbank/dictionary/models.py:393
 msgid "Placement Focal site LH"
 msgstr ""
 
-#: signbank/dictionary/models.py:386
+#: signbank/dictionary/models.py:394
 msgid "Orientation RH (initial)"
 msgstr ""
 
-#: signbank/dictionary/models.py:387
+#: signbank/dictionary/models.py:395
 msgid "Orientation RH (final)"
 msgstr ""
 
-#: signbank/dictionary/models.py:388
+#: signbank/dictionary/models.py:396
 msgid "Orientation LH (initial)"
 msgstr ""
 
-#: signbank/dictionary/models.py:389
+#: signbank/dictionary/models.py:397
 msgid "Orientation LH (final)"
 msgstr ""
 
-#: signbank/dictionary/models.py:393
+#: signbank/dictionary/models.py:401
 msgid "Iconic Image"
 msgstr ""
 
-#: signbank/dictionary/models.py:394
-msgid "Named Entity"
-msgstr ""
-
-#: signbank/dictionary/models.py:395
-msgid "Semantic Field"
-msgstr ""
-
-#: signbank/dictionary/models.py:397
-msgid "Word class 1"
-msgstr "Lexical category 1"
-
-#: signbank/dictionary/models.py:398
-msgid "Word class 2"
-msgstr "Lexical category 2"
-
-#: signbank/dictionary/models.py:399
-msgid "Derivation history"
-msgstr ""
-
-#: signbank/dictionary/models.py:403
-msgid "Number of Occurrences"
+#: signbank/dictionary/models.py:402
+msgid "Type of iconicity"
 msgstr ""
 
 #: signbank/dictionary/models.py:404
-msgid "Number of Signers"
+msgid "Named Entity"
 msgstr ""
 
 #: signbank/dictionary/models.py:405
-msgid "Number of Occurrences in Amsterdam"
-msgstr ""
-
-#: signbank/dictionary/models.py:406
-msgid "Number of Occurrences in Voorburg"
-msgstr ""
-
-#: signbank/dictionary/models.py:407
-msgid "Number of Occurrences in Rotterdam"
+msgid "Semantic Field"
 msgstr ""
 
 #: signbank/dictionary/models.py:408
-msgid "Number of Occurrences in Gestel"
-msgstr ""
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:293
+#, fuzzy
+msgid "Word class"
+msgstr "Lexical category 1"
 
 #: signbank/dictionary/models.py:409
-msgid "Number of Occurrences in Groningen"
-msgstr ""
+msgid "Word class 2"
+msgstr "Lexical category 2"
 
 #: signbank/dictionary/models.py:410
-msgid "Number of Occurrences in Other Regions"
+msgid "Derivation history"
+msgstr ""
+
+#: signbank/dictionary/models.py:411
+msgid "Lexical category notes"
 msgstr ""
 
 #: signbank/dictionary/models.py:412
-msgid "Number of Amsterdam Signers"
-msgstr ""
-
-#: signbank/dictionary/models.py:413
-msgid "Number of Voorburg Signers"
-msgstr ""
-
-#: signbank/dictionary/models.py:414
-msgid "Number of Rotterdam Signers"
-msgstr ""
-
-#: signbank/dictionary/models.py:415
-msgid "Number of Gestel Signers"
+msgid "Valence"
 msgstr ""
 
 #: signbank/dictionary/models.py:416
-msgid "Number of Groningen Signers"
+msgid "Number of Occurrences"
 msgstr ""
 
 #: signbank/dictionary/models.py:417
-msgid "Number of Other Region Signers"
+msgid "Number of Signers"
+msgstr ""
+
+#: signbank/dictionary/models.py:418
+msgid "Number of Occurrences in Amsterdam"
 msgstr ""
 
 #: signbank/dictionary/models.py:419
-#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+msgid "Number of Occurrences in Voorburg"
+msgstr ""
+
+#: signbank/dictionary/models.py:420
+msgid "Number of Occurrences in Rotterdam"
+msgstr ""
+
+#: signbank/dictionary/models.py:421
+msgid "Number of Occurrences in Gestel"
+msgstr ""
+
+#: signbank/dictionary/models.py:422
+msgid "Number of Occurrences in Groningen"
+msgstr ""
+
+#: signbank/dictionary/models.py:423
+msgid "Number of Occurrences in Other Regions"
+msgstr ""
+
+#: signbank/dictionary/models.py:425
+msgid "Number of Amsterdam Signers"
+msgstr ""
+
+#: signbank/dictionary/models.py:426
+msgid "Number of Voorburg Signers"
+msgstr ""
+
+#: signbank/dictionary/models.py:427
+msgid "Number of Rotterdam Signers"
+msgstr ""
+
+#: signbank/dictionary/models.py:428
+msgid "Number of Gestel Signers"
+msgstr ""
+
+#: signbank/dictionary/models.py:429
+msgid "Number of Groningen Signers"
+msgstr ""
+
+#: signbank/dictionary/models.py:430
+msgid "Number of Other Region Signers"
+msgstr ""
+
+#: signbank/dictionary/models.py:432
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Creation date"
 msgstr ""
 
-#: signbank/dictionary/update.py:28
+#: signbank/dictionary/models.py:433
+msgid "Last updated"
+msgstr ""
+
+#: signbank/dictionary/update.py:34 signbank/dictionary/update.py:693
 msgid "Annotation ID Gloss not unique."
 msgstr "Annotation ID Gloss not unique"
 
-#: signbank/dictionary/update.py:30
+#: signbank/dictionary/update.py:36 signbank/dictionary/update.py:697
 msgid "English annotation ID gloss not unique."
 msgstr "Annotation ID gloss not unique"
 
-#: signbank/dictionary/update.py:32
+#: signbank/dictionary/update.py:38 signbank/dictionary/update.py:701
 msgid "Dutch annotation ID gloss cannot be empty."
 msgstr "Annotation ID gloss cannot be empty."
 
@@ -506,403 +554,548 @@ msgstr "Annotation ID gloss cannot be empty."
 msgid "Please provide some initial data"
 msgstr ""
 
+#: signbank/dictionary/templates/dictionary/add_gloss.html:23
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:44
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:623
+#, fuzzy
+msgid "ID Gloss"
+msgstr "Gloss"
+
 #: signbank/dictionary/templates/dictionary/add_gloss.html:26
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:21
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:191
-#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:47
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:21
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:279
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (Dutch)"
 msgstr "Annotation ID Gloss (Dutch)"
 
-#: signbank/dictionary/templates/dictionary/add_gloss.html:29
+#: signbank/dictionary/templates/dictionary/add_gloss.html:33
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:22
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:194
-#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:54
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:22
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:310
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (English)"
 msgstr "Annotation ID Gloss (English)"
 
-#: signbank/dictionary/templates/dictionary/add_gloss.html:33
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:354
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:370
+#: signbank/dictionary/templates/dictionary/add_gloss.html:44
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:433
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:449
 msgid "Add New Sign"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:101
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:38
+msgid "Please provide some initial data for this new morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:64
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:23
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:463
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:270
+#, fuzzy
+msgid "Morpheme type"
+msgstr "Morpheme Gloss"
+
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:69
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:415
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:433
+msgid "Add New Morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/add_morpheme.html:72
+#: signbank/dictionary/templates/dictionary/add_morpheme_form.html:42
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:441
+msgid "You are not authorized to add a morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:125
+msgid "Form your query"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:160
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:170
 msgid "Search by Language and Basic Properties"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:130
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:194
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:199
 msgid "Search by Morphology"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:149
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:204
+#, fuzzy
+msgid "Morpheme Gloss"
+msgstr "Morpheme Gloss"
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:217
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:217
 msgid "Search by Phonology"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:190
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:240
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:240
 msgid "Search by Semantics"
 msgstr "Search by Syntax & Semantics"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:211
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:265
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:265
 msgid "Search by Relation"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:256
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:310
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:310
 msgid "Search by Publication Status and Notes"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:330
-msgid "Reset"
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:381
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:388
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:382
+msgid "Search sign"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:334
-msgid "Results per page"
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:383
+msgid "Search sign or morpheme"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:384
-msgid "Number of matches:"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:384
-msgid "out of"
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:389
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:379
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:383
+msgid "Search morpheme"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:390
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:384
+msgid "Sign or morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:404
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:391
+msgid "Reset"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:408
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:395
+msgid "Results per page"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:462
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:449
+msgid "Number of matches:"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:462
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:449
+msgid "out of"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:469
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:456
 msgid "Annotation ID gloss: Dutch"
 msgstr "Annotation ID gloss"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:391
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:472
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:459
 msgid "Annotation ID gloss: English"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:392
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:475
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:462
 msgid "Abstract Meaning"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:394
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:477
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:465
 msgid "Strong hand"
 msgstr "Dominant Handshape"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:395
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:478
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:466
 msgid "Weak hand"
 msgstr "Nondominant Handshape"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:397
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:480
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:468
 #: signbank/dictionary/templates/dictionary/glosstags.html:5
+#: signbank/dictionary/templates/dictionary/morphemetags.html:5
 msgid "Tags"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:20
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:80
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:21
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:134
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:20
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:130
 msgid "Edit"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:21
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:22
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:21
 msgid "Turn off edit mode"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:22
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:23
 msgid "Delete this gloss"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:23
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:24
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:23
 msgid "Saving..."
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:24
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:25
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:24
 msgid "This idgloss already exists"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:58
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:109
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:108
 #, python-format
 msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
 msgstr "\"Sign %(glossposn)s of %(glosscount)s in the ASL Dictionary\" "
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:62
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:113
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:112
 msgid "Next Sign &raquo;"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:70
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:121
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:120
 msgid "Public View"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:71
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:124
 msgid "Delete Sign"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:79
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:133
 msgid "Edit next gloss"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:86
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:140
 msgid "Delete This Sign"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:89
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:143
 msgid ""
 "This action will delete this sign and all associated records. It cannot be "
 "undone."
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:96
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:243
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:354
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:428
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:564
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:660
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:150
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:392
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:478
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:599
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:672
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:818
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:914
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:146
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:443
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:539
 #: signbank/dictionary/templates/dictionary/update_video.html:78
 msgid "Cancel"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:97
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:244
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:355
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:429
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:565
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:661
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:151
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:393
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:479
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:600
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:673
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:819
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:915
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:147
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:444
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:540
 msgid "Confirm Delete"
 msgstr ""
 
-#. Translators:
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:136
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:138
-#: signbank/dictionary/templates/dictionary/word.html:116
-#: signbank/dictionary/templates/dictionary/word.html:119
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:197
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:199
 msgid "Provide feedback about this sign"
 msgstr ""
 
-#. Translators: If sign is missing, report it
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:141
-#: signbank/dictionary/templates/dictionary/word.html:123
-msgid "Report a missing sign"
-msgstr ""
-
-#. Translators: Provide feedback about the site in general
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:142
-#: signbank/dictionary/templates/dictionary/word.html:125
-msgid "Provide general site feedback"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:151
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:210
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:206
 msgid "Upload New Video"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:152
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:211
 #, python-format
 msgid " We have %(gloss.count_videos)s videos for this sign. "
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:170
-msgid "Delete/Revert Video"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:233
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:240
+msgid "Upload New Citation Form Image"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:173
-msgid ""
-"This will delete the most recent upload and restore the most recent earlier "
-"version."
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:255
+msgid "Delete Media"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:197
 msgid "Translation equivalents in Dutch"
 msgstr "Translation equivalents"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:198
-msgid "Annotation Instructions"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:199
-msgid "Language"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:200
-msgid "Dialect"
-msgstr "Regional dialect"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:209
-msgid "Morphology"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:232
-msgid "Delete This Morpheme"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:448
-msgid "Simultaneous Morphology"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:358
-msgid "Sequential Morphology"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:430
-msgid "Compound sign"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:236
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:421
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:653
-msgid "Are you sure you want to delete this? This cannot be undone."
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:257
-msgid "view"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:269
-msgid "ID Gloss/Annotation ID Gloss"
-msgstr "Lemma ID"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:270
-msgid "Add Morpheme"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:287
-msgid "Phonology"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:295
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:502
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:510
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:577
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:342
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:528
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:756
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:764
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:831
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:326
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:381
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:389
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:456
 msgid "Yes"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:297
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:504
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:512
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:579
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:342
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:528
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:758
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:766
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:833
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:326
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:383
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:391
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:458
 msgid "No"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:312
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:353
+msgid "Morphology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:362
+msgid "Sequential Morphology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:366
+msgid "Compound part"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:367
+msgid "Component sign"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:381
+msgid "Delete This Compound part"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:385
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:471
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:665
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:907
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:532
+msgid "Are you sure you want to delete this? This cannot be undone."
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:408
+msgid "If this is a compound, use [Edit] to define its components"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:419
+msgid "ID Gloss of Morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:420
+msgid "Add Component"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:433
+msgid "Compound sign"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:444
+msgid "This gloss is not defined as part of a compound"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:451
+msgid "Simultaneous Morphology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:467
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:136
+msgid "Delete This Morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:493
+msgid "Use [Edit] to define any morphemes used in this sign"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:504
+#, fuzzy
+msgid "ID Morpheme/Annotation ID Morpheme"
+msgstr "Lemma ID"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:505
+msgid "Add Morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:522
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:320
+msgid "Phonology"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:539
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:337
 msgid "Semantics"
 msgstr "Morphosyntax"
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:329
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:556
+msgid "Language & Dialect"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:561
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:273
+msgid "Language"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:562
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:274
+msgid "Dialect"
+msgstr "Regional dialect"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:574
 msgid "Relations to Other Signs"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:343
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:417
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:588
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:661
 msgid "Delete This Relation"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:347
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:592
 #, python-format
 msgid ""
 " This action will delete the %(rel.get_role_display)s relation between "
 "%(rel.source)s and %(rel.target)s. It cannot be undone. "
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:397
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:641
 msgid "Relations to Foreign Signs"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:403
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:647
 msgid "Loan"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:405
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:453
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:649
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:697
 msgid "Gloss in related language"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:426
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:562
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:670
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:816
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:441
 msgid "confirmed"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:452
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:696
 msgid "Related language"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:454
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:698
 msgid "Add Relation to Foreign Sign"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:471
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:715
 msgid "Frequency"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:488
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:732
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:357
 msgid "Publication Status"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:496
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:740
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:365
 msgid "Creation Date"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:497
-#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:17
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:741
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:366
+#: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Creator"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:499
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:753
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:378
 msgid "In Web Dictionary"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:507
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:761
 msgid "Proposed New Sign"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:524
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:778
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:403
 msgid "Notes"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:534
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:788
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:413
 msgid "Published"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:535
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:789
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:414
 msgid "Index"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:537
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:791
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:416
 msgid "Text"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:553
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:807
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:432
 msgid "Delete This Note"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:557
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:811
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:436
 msgid "This action will delete this note. It cannot be undone."
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:603
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:857
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:482
 msgid "Enter new note"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:852
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:864
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:489
 msgid "Save new note"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:610
-msgid "Save New"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:881
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:506
+msgid "Other media"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:627
-msgid "Other videos"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:889
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:514
+msgid "Image/Video"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:635
-msgid "Video"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:637
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:690
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:891
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:944
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:516
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:569
 msgid "Alternative gloss"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:649
-msgid "Delete This Other Video"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:903
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:528
+msgid "Delete This Media"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:688
-msgid "Upload video"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:942
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:567
+msgid "Upload media"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:695
-msgid "Save new other video"
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:949
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:574
+msgid "Save"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_list.html:42
@@ -911,6 +1104,7 @@ msgid "Jump to results page:"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:20
+#: signbank/dictionary/templates/dictionary/morphemetags.html:20
 msgid "delete this tag"
 msgstr ""
 
@@ -927,11 +1121,11 @@ msgstr ""
 msgid "Submit"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/import_csv.html:28
+#: signbank/dictionary/templates/dictionary/import_csv.html:32
 msgid "The following changes were detected:"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/import_csv.html:32
+#: signbank/dictionary/templates/dictionary/import_csv.html:36
 #, python-format
 msgid ""
 "\n"
@@ -941,11 +1135,11 @@ msgid ""
 "                "
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/import_csv.html:40
+#: signbank/dictionary/templates/dictionary/import_csv.html:44
 msgid "Make changes"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/import_csv.html:47
+#: signbank/dictionary/templates/dictionary/import_csv.html:51
 msgid "Changes are live."
 msgstr ""
 
@@ -953,9 +1147,68 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/index.html:7
 #, python-format
 msgid ""
-"Welcome to the Sign Search section of the %(langauge)s SignBank. Here\n"
+"Welcome to the Sign Search section of the %(language)s SignBank. Here\n"
 "    you can search for a sign using a Dutch translation in the search box\n"
 "    above, or browse words starting with any letter below."
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:22
+msgid "Delete this morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:121
+msgid "Delete Morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:129
+msgid "Edit next morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:139
+msgid ""
+"This action will delete this morpheme and all associated records. It cannot "
+"be undone."
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:193
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:195
+msgid "Provide feedback about this morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:207
+#, python-format
+msgid " We have %(morpheme.count_videos)s videos for this morpheme. "
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:225
+msgid "Delete/Revert Video"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:228
+msgid ""
+"This will delete the most recent upload and restore the most recent earlier "
+"version."
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:283
+msgid "Appears in"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:294
+#, fuzzy
+msgid "Gloss"
+msgstr "Gloss"
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:306
+msgid "This morpheme does not occur in any sign"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:386
+msgid "Proposed New Morpheme"
+msgstr ""
+
+#: signbank/dictionary/templates/dictionary/morphemetags.html:36
+msgid "Add morpheme Tag"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/search_result.html:27
@@ -996,8 +1249,8 @@ msgid ""
 "registered users.) If you\n"
 "            <a href=\"/accounts/login/\">login or register \n"
 "\n"
-"            with %(langauge)s Signbank</a>,  you will then be able to find "
-"these \n"
+"            with %(language)s Signbank</a>,  you will then be able to find "
+"these\n"
 "\n"
 "            matching words/signs if they exist in %(language)s. "
 msgstr ""
@@ -1076,50 +1329,53 @@ msgid "NGT: sign for %(translation)s"
 msgstr "ASL: sign for %(translation)s"
 
 #. Translators: Navigation
-#: signbank/dictionary/templates/dictionary/word.html:39
+#: signbank/dictionary/templates/dictionary/word.html:41
 msgid "Previous Sign"
 msgstr ""
 
 #. Translators: Sign x of n(signs)
-#: signbank/dictionary/templates/dictionary/word.html:43
+#: signbank/dictionary/templates/dictionary/word.html:45
 #, python-format
 msgid ""
 "Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the NGT "
 "Dictionary"
-msgstr "Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the ASL Dictionary "
+msgstr ""
+"Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the ASL "
+"Dictionary "
 
-#: signbank/dictionary/templates/dictionary/word.html:48
+#: signbank/dictionary/templates/dictionary/word.html:50
 msgid "Next Sign"
 msgstr ""
 
 #. Translators: Navbar text
-#: signbank/dictionary/templates/dictionary/word.html:59
+#: signbank/dictionary/templates/dictionary/word.html:61
 #, python-format
 msgid "Matches for the word <em>%(translation|safe)s"
 msgstr ""
 
 #. Translators: Navigation
-#: signbank/dictionary/templates/dictionary/word.html:72
+#: signbank/dictionary/templates/dictionary/word.html:74
 msgid "Return to Matches"
 msgstr ""
 
 #. Translators: Navigation detailed view
-#: signbank/dictionary/templates/dictionary/word.html:81
+#: signbank/dictionary/templates/dictionary/word.html:83
 msgid "Detail View"
 msgstr ""
 
 #. Translators: Keywords
-#: signbank/dictionary/templates/dictionary/word.html:105
-msgid "Keywords:"
-msgstr ""
+#: signbank/dictionary/templates/dictionary/word.html:107
+#, fuzzy
+msgid "Translation equivalents:"
+msgstr "Translation equivalents"
 
 #. Translators: Header4
-#: signbank/dictionary/templates/dictionary/word.html:132
+#: signbank/dictionary/templates/dictionary/word.html:117
 msgid "Sign Distribution"
 msgstr ""
 
 #. Translators: Header2
-#: signbank/dictionary/templates/dictionary/word.html:145
+#: signbank/dictionary/templates/dictionary/word.html:130
 msgid "Sign Definition"
 msgstr ""
 
@@ -1275,8 +1531,8 @@ msgid "What is your background?"
 msgstr ""
 
 #: signbank/registration/forms.py:283
-#: templates/ASL-templates/loginform.html:14
-#: templates/NGT-templates/loginform.html:14
+#: templates/ASL-templates/loginform.html:53
+#: templates/NGT-templates/loginform.html:58
 msgid "Email"
 msgstr ""
 
@@ -1312,6 +1568,14 @@ msgstr ""
 msgid "registration profiles"
 msgstr ""
 
+#: signbank/registration/views.py:133
+msgid "This account has expired. Please contact o.crasborn@let.ru.nl."
+msgstr ""
+
+#: signbank/registration/views.py:152
+msgid "The username or password is incorrect."
+msgstr ""
+
 #: templates/ASL-templates/baselayout.html:50
 #: templates/NGT-templates/baselayout.html:50
 msgid "The NGT Signbank</span> is licensed under a "
@@ -1332,6 +1596,11 @@ msgstr ""
 msgid "Sign In"
 msgstr ""
 
+#: templates/ASL-templates/loginform.html:14
+#: templates/NGT-templates/loginform.html:14
+msgid "User name"
+msgstr ""
+
 #: templates/ASL-templates/loginform.html:27
 #: templates/NGT-templates/loginform.html:27
 msgid "Sign in"
@@ -1339,55 +1608,50 @@ msgstr ""
 
 #: templates/ASL-templates/loginform.html:38
 #: templates/ASL-templates/loginform.html:41
-#: templates/NGT-templates/loginform.html:38
-#: templates/NGT-templates/loginform.html:41
+#: templates/NGT-templates/loginform.html:43
+#: templates/NGT-templates/loginform.html:46
 msgid "Register"
 msgstr ""
 
 #: templates/ASL-templates/loginform.html:40
-#: templates/NGT-templates/loginform.html:40
+#: templates/NGT-templates/loginform.html:45
 msgid "Register for free to provide feedback on the Signbank."
 msgstr ""
 
 #: templates/ASL-templates/loginform.html:47
-#: templates/NGT-templates/loginform.html:47
+#: templates/NGT-templates/loginform.html:52
 msgid "Lost Password"
 msgstr ""
 
 #: templates/ASL-templates/loginform.html:48
-#: templates/NGT-templates/loginform.html:48
+#: templates/NGT-templates/loginform.html:53
 msgid ""
 "If you've lost or forgotten your password, enter your email address here and "
 "we'll reset it and send you a reminder."
 msgstr ""
 
-#: templates/ASL-templates/loginform.html:53
-#: templates/NGT-templates/loginform.html:53
-msgid "Email:"
-msgstr ""
-
 #: templates/ASL-templates/loginform.html:57
-#: templates/NGT-templates/loginform.html:57
+#: templates/NGT-templates/loginform.html:62
 msgid "Request Password"
 msgstr ""
 
-#: templates/ASL-templates/menu.html:105 templates/NGT-templates/menu.html:105
+#: templates/ASL-templates/menu.html:97 templates/NGT-templates/menu.html:117
 msgid "Search gloss"
 msgstr ""
 
-#: templates/ASL-templates/menu.html:107 templates/NGT-templates/menu.html:107
+#: templates/ASL-templates/menu.html:99 templates/NGT-templates/menu.html:119
 msgid "Search translation"
 msgstr ""
 
-#: templates/ASL-templates/menu.html:109 templates/NGT-templates/menu.html:109
+#: templates/ASL-templates/menu.html:101 templates/NGT-templates/menu.html:121
 msgid "Sign search"
 msgstr ""
 
-#: templates/ASL-templates/menu.html:114 templates/NGT-templates/menu.html:114
+#: templates/ASL-templates/menu.html:106 templates/NGT-templates/menu.html:126
 msgid "Logout"
 msgstr ""
 
-#: templates/ASL-templates/menu.html:116 templates/NGT-templates/menu.html:116
+#: templates/ASL-templates/menu.html:108 templates/NGT-templates/menu.html:128
 msgid "Login"
 msgstr ""
 
@@ -1511,13 +1775,3 @@ msgstr ""
 #: templates/NGT-templates/registration/password_reset_form.html:17
 msgid "Reset my password"
 msgstr ""
-
-#: signbank/dictionary/templates/dictionary/morpheme_detail.html:323
-msgid "This morpheme does not occur in any sign"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:202
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:494
-#, fuzzy
-msgid "Morpheme Gloss"
-msgstr "Morpheme Gloss"

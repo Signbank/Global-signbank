@@ -164,9 +164,9 @@ function toggle_edit(redirect_to_next) {
 		    // Check if this is a gloss or a morpheme
 		    if (!next_gloss_id || next_gloss_id === undefined)
 		    {
-			    window.location.href = '/dictionary/morpheme/'+next_morpheme_id;
+			    window.location.href = url + '/dictionary/morpheme/'+next_morpheme_id;
 		    } else {
-			    window.location.href = '/dictionary/gloss/'+next_gloss_id;
+			    window.location.href = url + '/dictionary/gloss/'+next_gloss_id;
 		    }
 		}
 
@@ -351,7 +351,7 @@ function update_view_and_remember_original_value(change_summary)
 var gloss_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: '/signbank/dictionary/ajax/gloss/%QUERY'
+      remote: url+'/dictionary/ajax/gloss/%QUERY'
     });
 
 gloss_bloodhound.initialize();
@@ -392,7 +392,7 @@ $.editable.addInputType('glosstypeahead', {
 var morph_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: '/dictionary/ajax/morph/%QUERY'
+      remote: url+'/dictionary/ajax/morph/%QUERY'
     });
 
 morph_bloodhound.initialize();

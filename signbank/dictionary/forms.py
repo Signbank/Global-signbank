@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, DEFN_ROLE_CHOICES, build_choice_list, OtherMedia
+from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, build_choice_list, OtherMedia
 from django.conf import settings
 from tagging.models import Tag
 
@@ -80,13 +80,15 @@ RELATION_ROLE_CHOICES = (('','---------'),
                          ('seealso', 'See Also'),
                          )
 
-DEFN_ROLE_CHOICES = (('','---------'),('all','All')) + DEFN_ROLE_CHOICES;
+DEFN_ROLE_CHOICES = [('','---------'),('all','All')] + build_choice_list('NoteType');
 COMPONENT_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphologyType');
 MORPHEME_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphemeType');
 ATTRS_FOR_FORMS = {'class':'form-control'};
 
 
 class GlossSearchForm(forms.ModelForm):
+
+    use_required_attribute = False #otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"), initial="idgloss")       # Used in glosslistview to store user-selection
@@ -124,8 +126,10 @@ class GlossSearchForm(forms.ModelForm):
     definitionRole = forms.ChoiceField(label=_(u'Note type'),choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionContains = forms.CharField(label=_(u'Note contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-    createdBefore = forms.DateField(label=_(u'Created before'))
-    createdAfter = forms.DateField(label=_(u'Created after'))
+    createdBefore = forms.DateField(label=_(u'Created before'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
+    createdAfter = forms.DateField(label=_(u'Created after'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
+
+    createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     class Meta:
 
@@ -154,6 +158,8 @@ class GlossSearchForm(forms.ModelForm):
 
 
 class MorphemeSearchForm(forms.ModelForm):
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="idgloss")  # Used in morphemelistview to store user-selection
@@ -199,6 +205,8 @@ class MorphemeSearchForm(forms.ModelForm):
     createdBefore = forms.DateField(label=_(u'Created before'))
     createdAfter = forms.DateField(label=_(u'Created after'))
 
+    createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'};
 
@@ -227,13 +235,12 @@ class MorphemeSearchForm(forms.ModelForm):
 
 
 class DefinitionForm(forms.ModelForm):
-    
+    role = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
     class Meta:
         model = Definition
         fields = ('published','count', 'role', 'text')
-        widgets = {
-                   'role': forms.Select(attrs={'class': 'form-control'}),
-                   }
         
 class RelationForm(forms.ModelForm):
     
@@ -259,7 +266,7 @@ class RelationToForeignSignForm(forms.ModelForm):
     sourceid = forms.CharField(label=_(u'Source Gloss'))
     #loan = forms.CharField(label=_(u'Loan'))
     other_lang = forms.CharField(label=_(u'Related Language'))
-    other_lang_gloss = forms.CharField(label=_(u'Gloss in Related Language'))
+    other_lang_gloss = forms.CharField(label=_(u'Gloss in Related Language'), required=False)
     
     class Meta:
         model = RelationToForeignSign

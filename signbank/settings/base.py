@@ -4,7 +4,6 @@ from signbank.settings.server_specific import *
 from datetime import datetime
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 PROJECT_DIR = os.path.dirname(BASE_DIR)
 
@@ -50,14 +49,6 @@ STATICFILES_FINDERS = (
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '^g=q21r_nnmbz49d!vs*2gvpll-y9b@&amp;t3k2r3c$*u&amp;2la5!%s'
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django_mobile.loader.Loader',
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
-)
-
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -67,29 +58,38 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'signbank.pages.middleware.PageFallbackMiddleware',
-    'django_mobile.middleware.MobileDetectionMiddleware',
-    'django_mobile.middleware.SetFlavourMiddleware',
+#    'django_mobile.middleware.MobileDetectionMiddleware',
+#    'django_mobile.middleware.SetFlavourMiddleware',
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
 )
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
-    "django.core.context_processors.media",
-    "django.core.context_processors.static",
-    "django.core.context_processors.tz",
-    "django.core.context_processors.request",
-    "django.contrib.auth.context_processors.auth",
-    "django.contrib.messages.context_processors.messages",
-    "signbank.context_processors.url",
-    "signbank.pages.context_processors.menu",
-    "django_mobile.context_processors.flavour",
-)
-
-TEMPLATE_DIRS = (
-    os.path.join(PROJECT_DIR, 'templates/'+SIGNBANK_VERSION_CODE+'-templates'),
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(PROJECT_DIR, 'templates/' + SIGNBANK_VERSION_CODE + '-templates')],
+        'OPTIONS': {
+            'context_processors': [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.media",
+                "django.template.context_processors.static",
+                "django.template.context_processors.tz",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "signbank.context_processors.url",
+                "signbank.pages.context_processors.menu",
+#                "django_mobile.context_processors.flavour",
+            ],
+            'loaders': [
+#                'django_mobile.loader.Loader',
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
+        },
+    },
+]
 
 # add the Email backend to allow logins using email as username
 AUTHENTICATION_BACKENDS = (
@@ -119,13 +119,12 @@ INSTALLED_APPS = (
     'django_summernote',
     'signbank.dictionary',
     'signbank.feedback',
-    'signbank.registration',
+    #'signbank.registration',
     'signbank.pages',
     'signbank.attachments',
     'signbank.video',
-    'south',
     'reversion',
-    'django_mobile',
+    #'django_mobile',
     'tagging',
 )
 
@@ -303,8 +302,12 @@ XALLOWED_TAGS = [ '',
                  'phonology:two handed',
                 ]
 
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+
 EARLIEST_GLOSS_CREATION_DATE = datetime(2015,1,1)
 SUPPORTED_CITATION_IMAGE_EXTENSIONS = ['.jpg','.jpeg','.png']
 MAXIMUM_UPLOAD_SIZE = 5000000
 
 MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT = 40
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None 

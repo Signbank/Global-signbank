@@ -6,13 +6,13 @@ Views which allow users to create and activate accounts.
 
 from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.middleware.csrf import get_token
 
-from forms import RegistrationForm, EmailAuthenticationForm
-from models import RegistrationProfile
+from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
+#from models import RegistrationProfile
 
 from datetime import date
 
@@ -45,11 +45,11 @@ def activate(request, activation_key, template_name='registration/activate.html'
     
     """
     activation_key = activation_key.lower() # Normalize before trying anything with it.
-    account = RegistrationProfile.objects.activate_user(activation_key)
-    return render_to_response(template_name,
-                              { 'account': account,
-                                'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS },
-                                context_instance=RequestContext(request))
+    # account = RegistrationProfile.objects.activate_user(activation_key)
+    # return render_to_response(template_name,
+    #                           { 'account': account,
+    #                             'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS },
+    #                             context_instance=RequestContext(request))
 
 
 def register(request, success_url='/accounts/register/complete/',
@@ -97,22 +97,19 @@ def register(request, success_url='/accounts/register/complete/',
             return HttpResponseRedirect(success_url)
     else:
         form = form_class()
-    return render_to_response(template_name,
-                              { 'form': form },
-                              context_instance=RequestContext(request))
-                              
+    return render(request,template_name,{ 'form': form })
 
 # a copy of the login view since we need to change the form to allow longer
 # userids (> 30 chars) since we're using email addresses
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.cache import never_cache
-from django.contrib.sites.models import Site, RequestSite
+from django.contrib.sites.models import Site #, RequestSite
 
 
 def mylogin(request, template_name='registration/login.html', redirect_field_name='/signs/recently_added/'):
     "Displays the login form and handles the login action."
 
-    redirect_to = request.REQUEST.get(REDIRECT_FIELD_NAME, '')
+    redirect_to = request.GET[REDIRECT_FIELD_NAME] if REDIRECT_FIELD_NAME in request.GET else ''
     error_message = ''
 
     if request.method == "POST":
@@ -123,7 +120,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         if form.is_valid():
 
             #Count the number of logins
-            profile = form.get_user().get_profile()
+            profile = form.get_user().user_profile_user
             profile.number_of_logins += 1
             profile.save()
 
@@ -157,22 +154,21 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
     request.session.set_test_cookie()
     if Site._meta.installed:
         current_site = Site.objects.get_current()
-    else:
-        current_site = RequestSite(request)
+    # else:
+    #     current_site = RequestSite(request)
 
     # For logging in API clients
     if request.method == "GET" and "api" in request.GET and request.GET['api'] == 'yes':
         token = get_token(request)
         return HttpResponse(json.dumps({'csrfmiddlewaretoken': token}), content_type='application/json')
 
-    return render_to_response(template_name, {
+    return render(request,template_name, {
         'form': form,
         REDIRECT_FIELD_NAME: settings.URL+redirect_to,
         'site': current_site,
         'site_name': current_site.name,
         'allow_registration': settings.ALLOW_REGISTRATION,
-        'error_message': error_message
-    }, context_instance=RequestContext(request))
+        'error_message': error_message})
 mylogin = never_cache(mylogin)
     
                               

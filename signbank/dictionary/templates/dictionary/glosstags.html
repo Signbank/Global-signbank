@@ -2,7 +2,6 @@
 
         <div id='tags'>
         <fieldset>
-      <legend>{% trans "Tags" %}</legend>
       {% load tagging_tags %}
       {% tags_for_object gloss as tag_list %}
       {% if tag_list %}

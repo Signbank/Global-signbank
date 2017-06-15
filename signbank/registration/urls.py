@@ -12,12 +12,10 @@ from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 
 # local imports
-from views import activate, register, mylogin
-from forms import *
-from models import UserProfile
+from signbank.registration.views import activate, register, mylogin
+from signbank.registration.forms import *
 
-
-urlpatterns = patterns('',
+urlpatterns = [
                        # Activation keys get matched by \w+ instead of the more specific
                        # [a-fA-F0-9]+ because a bad activation key should still get to the view;
                        # that way it can return a sensible "invalid key" message instead of a
@@ -67,4 +65,4 @@ urlpatterns = patterns('',
                        url(r'^register/complete/$',
                            TemplateView.as_view(template_name='registration/registration_complete.html'),
                            name='registration_complete'),
-                       )
+                       ]

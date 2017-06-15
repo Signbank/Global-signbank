@@ -2,8 +2,8 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 
-from pages.models import Page
-from pages.admin import PageAdmin
+from signbank.pages.models import Page
+from signbank.pages.admin import PageAdmin
 
 publisher_admin = AdminSite('pageadmin')
 publisher_admin.register(Page, PageAdmin)
@@ -13,10 +13,10 @@ def groups_part_of(self,obj):
     return ', '.join([group.name for group in obj.groups.all()])
 
 def number_of_logins(self,obj):
-    return obj.get_profile().number_of_logins
+    return obj.user_profile_user.number_of_logins
 
 def expiry_date(self,obj):
-    return obj.get_profile().expiry_date
+    return obj.user_profile_user.expiry_date
 
 UserAdmin.groups_part_of = groups_part_of
 UserAdmin.number_of_logins = number_of_logins

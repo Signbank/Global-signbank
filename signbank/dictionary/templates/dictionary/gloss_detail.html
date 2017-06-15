@@ -5,6 +5,11 @@
 
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <style>
+        #panel-expand-collapse-btn-group.affix {
+            position:fixed;
+        }
+    </style>
 {% endblock %}
 
 {% block extrajs %}
@@ -16,6 +21,7 @@
     {% if perms.dictionary.change_gloss %}
     
     <script type='text/javascript'>
+    var url = '{{ URL }}'
 
     var edit_mode_str = '{% trans "Edit" %}'
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
@@ -76,6 +82,38 @@
 
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
+
+    <!-- Expand and collapse all panels -->
+    <script type='text/javascript'>
+        $('#expand-panels').on('click', function() {
+            $('#definition .collapse').collapse('show');
+        });
+        $('#collapse-panels').on('click', function() {
+            $('#definition .collapse').collapse('hide');
+        });
+        $('#panel-expand-collapse-btn-group').affix({
+            offset: {
+                top: $('#panel-expand-collapse-btn-group').offset().top - $('#affix-bar').height()
+                 + parseInt($('#affix-bar').css('margin-bottom'))
+                 + parseInt($('#panel-expand-collapse-btn-group').css('height')),
+            }
+        });
+        $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
+            $('#panel-expand-collapse-btn-group').css({
+                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
+                'top': ($('#affix-bar').height() - parseInt($('#navbar').css('margin-bottom')) + 3) + 'px',
+            });
+         });
+        $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
+            $('#panel-expand-collapse-btn-group').css({
+                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
+                'top': '0px',
+            });
+         });
+         $('#panel-expand-collapse-btn-toolbar').css({
+            'height': $('#panel-expand-collapse-btn-group').css('height'),
+         });
+    </script>
     
     
     {% endif %}
@@ -268,11 +306,14 @@
     {% endif %}
 
 
-  {% include "dictionary/glosstags.html" %}
+
 
 </div>
 
+
     <div class='panel-group' id="definition">
+
+        {% include "dictionary/glosstags.html" %}
 
         <table class='table table-condensed'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
@@ -345,6 +386,20 @@
         </table>
 			 
    {% if perms.dictionary.view_advanced_properties %}
+
+        <!-- Expand and collapse all panels -->
+        <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
+            <div class="pull-right">
+                <div class="btn-group" id="panel-expand-collapse-btn-group">
+                    <button id="expand-panels" type="button" class="btn btn-default btn-xs">
+                            <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+                    </button>
+                    <button id="collapse-panels" type="button" class="btn btn-default btn-xs">
+                        <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
    <!-- Morphology -->
    <div class="panel panel-default">
@@ -655,7 +710,7 @@
                    <table class='table table-condensed'>
                        <tr>
                            <td>{{relationform.role}}</td>
-                           <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss" %}' name='targetid'></td>
+                           <td><input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID Gloss" %}' name='targetid'></td>
                            <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
                        </tr>
                    </table>
@@ -774,6 +829,14 @@
                             {% trans "No" %}
                         {% endif %}
                     </td></tr>
+                <tr><th>{% trans "Exclude from ECV" %}</th>
+                    <td class='edit edit_check' id='excludeFromEcv'>
+                        {% if gloss.excludeFromEcv %}
+                            {% trans "Yes" %}
+                        {% else %}
+                            {% trans "No" %}
+                        {% endif %}
+                    </td></tr>
             </table>
         </div>
     </div>
@@ -788,8 +851,6 @@
         </div>
         <div id='definitions' class='collapse'>
             
-            {% regroup gloss.definition_set.all by role as roles %}
-
             <table class='table'>
               <tr>
                   <th style='width:1em'></th>
@@ -798,9 +859,9 @@
                   <th style='width:10em'>{% trans "Type" %}</th>
                   <th>{% trans "Text" %}</th>
               </tr>
-            {% for role in roles %}
+            {% for role_id, note_list in notes_groupedby_role.items %}
 
-              {% for def in role.list %}
+              {% for def in note_list %}
               <tr>
                 <td>
 
@@ -815,7 +876,7 @@
                                     <h2 id='modalTitle'>{% trans "Delete This Note" %}</h2>
                                 </div>
                                 <div class='modal-body'>
-                                    <p><strong>{{def.get_role_display}}</strong> {{def.text}}</p>
+                                    <p><strong>{{role_id.1}}</strong> {{def.text}}</p>
                                     <p>{% trans "This action will delete this note. It cannot be undone." %}</p>
                                  </div>
                               <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
@@ -842,7 +903,7 @@
                     {% endif %}
                 </td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td class='edit edit_role' id='definitionrole_{{def.id}}'>{{def.get_role_display}}</td>
+                <td class='edit edit_role' id='definitionrole_{{def.id}}'>{{role_id.1}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
               </tr>
               {% endfor %}
@@ -930,7 +991,7 @@
 
                     </td>
 
-                    <td><a href="{{ path }}">Download</a></td>
+                    <td><a download="other_media.jpg" href="{{ path }}">Download</a></td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
                     <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
                 </tr>

@@ -24,7 +24,8 @@
                 $(this).text('Show');
             }
         });
-        
+
+        $('[data-toggle="tooltip"]').tooltip();
     });
 
 
@@ -121,23 +122,51 @@ function do_adminsearch(el) {
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
 {% if perms.dictionary.search_gloss %}
+<form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}</div>
 
     <div id='query-area' class='collapse {% if not request.GET.search and not request.GET.keyword and not request.GET.englishGloss and not show_all %} in {% endif %}'>
         <div id='searchformwell' class='well search-results-collapsable'>
-            <form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
+
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
                 <div class="hidden">
                     <input name='sortOrder' class='form-control' value='idgloss' >
-                    <input name='search_type' class='form-control' value='sign'>
+                    <input name='search_type' class='form-control' value='{{search_type}}'>
                 </div>
                 <div>
                     <table class='table' id='searchfields'>
                         <tr>
-                            <td><div class='input-group'>
-                                <label class='input-group-addon' for='id_annotation_idgloss'>{{searchform.search.label}}</label>
-                                <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}></div>
+                            <td>
+                                <div class='input-group'>
+                                <label class='input-group-addon' for='id_annotation_idgloss'>
+                                    {{searchform.search.label}}
+                                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                                          title="
+                                          <table>
+                                            <tr>
+                                                <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                                            </tr>
+                                          </table>
+                                          "></span>
+                                </label>
+                                <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}>
+                                </div>
                             </td>
                             {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
                             <td><div class='input-group'>
@@ -356,6 +385,14 @@ function do_adminsearch(el) {
                             </td>
                           </tr>
 
+                          <tr>
+                              <td>
+                                  <div class='input-group'>
+                                    <label class='input-group-addon' for='id_createdBy'>{{searchform.createdBy.label}}</label>
+                                    {{searchform.createdBy}}
+                                  </div>
+                              </td>
+                          </tr>
 
                           <tr>
                               <td>
@@ -372,61 +409,70 @@ function do_adminsearch(el) {
                     </div>
                 </div>
 
-                <div class='btn-group'>
-                    <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
-                    <div class="btn-group">
-                        <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
-                            <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="sign">
-                                {% if search_type == 'sign' %}
-                                {% trans "Search sign" %}
-                                {% else %}
-                                {% trans "Search sign or morpheme" %}
-                                {% endif %}
-                            </span>&nbsp;<span class="caret"></span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-left">
-                            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
-                            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search morpheme" %}</a></li>
-                            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
-                    <input type="submit" style="visibility: hidden;" />
-
-                    {% if perms.dictionary.export_csv %}
-                    <input class='btn btn-default' type='submit' name='format' value='CSV'>
-                    {% endif %}
-                    <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
-                    {% if perms.dictionary.export_ecv %}
-                    <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
-                    {% endif %}
-                    <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
-                </div>
-
-                <div class='form-group' id='paginate_by'>
-                <label for='paginate_by'>{% trans "Results per page" %}</label>
-                <select class='form-control' name="paginate_by">
-                    <option>3000</option>
-                    <option>2000</option>
-                    <option>1000</option>
-                    <option>500</option>
-                  <option>100</option>
-                    <option>50</option>
-                    <option>25</option>
-                    <option>10</option>
-                </select>
-                </div>
-
-
-            </form>
-
         </div>
 
     </div>
 
 </div>
+
+    <div class='btn-group' style="margin-bottom: 20px">
+        <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
+
+        {% if SHOW_MORPHEME_SEARCH %}
+        <div class="btn-group">
+            <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
+            <span data-bind="label" onclick="do_adminsearch(this);" name="search_type" value="{{search_type}}">
+                {% if search_type == 'sign' %}
+                {% trans "Search sign" %}
+                {% else %}
+                {% trans "Search sign or morpheme" %}
+                {% endif %}
+            </span>&nbsp;<span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-left">
+                <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
+                <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search morpheme" %}</a></li>
+                <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type"
+                       value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
+            </ul>
+        </div>
+
+        <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
+        <input type="submit" style="visibility: hidden;"/>
+
+        {% else %}
+        <input class="btn btn-primary" type="submit" name="search_type" value='{% trans "Search sign" %}'/>
+        {% endif %}
+
+        {% if perms.dictionary.export_csv %}
+        <input class='btn btn-default' type='submit' name='format' value='CSV'>
+        {% endif %}
+        <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
+        {% if perms.dictionary.export_ecv %}
+        <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
+        {% endif %}
+        <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);"
+               value='{% trans "Reset" %}'>
+    </div>
+
+    <div class='form-group' id='paginate_by'>
+        <label for='paginate_by'>{% trans "Results per page" %}</label>
+        <select class='form-control' name="paginate_by">
+            <option {% if paginate_by == "3000" %}selected{% endif %}>3000</option>
+            <option {% if paginate_by == "2000" %}selected{% endif %}>2000</option>
+            <option {% if paginate_by == "1000" %}selected{% endif %}>1000</option>
+            <option {% if paginate_by == "500" %}selected{% endif %}>500</option>
+            <option {% if paginate_by == "100" %}selected{% endif %}>100</option>
+            <option {% if paginate_by == "50" %}selected{% endif %}>50</option>
+            <option {% if paginate_by == "25" %}selected{% endif %}>25</option>
+            <option {% if paginate_by == "10" %}selected{% endif %}>10</option>
+        </select>
+    </div>
+
+</form>
 {% endif %}
+
+<div></div>
 
 {% if perms.dictionary.add_gloss %}
 <div  class="panel panel-default">
@@ -528,11 +574,12 @@ function do_adminsearch(el) {
           {% else %}
           <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
           {% endif %}
+
           {% if gloss.morphemePart.count > 0 %}
-              {% if gloss.morphemePart.count > 2 %}
-              <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} morphemes)</span>
+              {% if gloss.morphemePart.count > 3 %}
+                  <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
               {% else %}
-                  <!-- Number of morphemes is [1-2] -->
+                  <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.morphemePart.all %}
                   <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}</span>
@@ -542,11 +589,11 @@ function do_adminsearch(el) {
           {% endif %}
 
           {% if gloss.parent_glosses.count > 0 %}
-          <div class="component_in_gloss">
-          {% for component in gloss.parent_glosses.all %}
-          <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
-          {% endfor %}
-          </div>
+              <div class="component_in_gloss">
+              {% for component in gloss.parent_glosses.all %}
+                  <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
+              {% endfor %}
+              </div>
           {% endif %}
 
       </td>
@@ -554,25 +601,32 @@ function do_adminsearch(el) {
       {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
       <td>
           {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
+            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
           {% else %}
-          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
+            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
           {% endif %}
+
           {% if gloss.morphemePart.all.count > 0 %}
-          <div class="morpheme_in_gloss">
-          {% for morphdef in gloss.morphemePart.all %}
-          <span>{{ morphdef.annotation_idgloss_en }}{% if not forloop.last %}, {% endif %}</span>
-          {% endfor %}
-          </div>
+              {% if gloss.morphemePart.count > 3 %}
+                    <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
+              {% else %}
+                    <!-- Number of morphemes is [1-3] -->
+                    <div class="morpheme_in_gloss">
+                    {% for morphdef in gloss.morphemePart.all %}
+                        <span>{{ morphdef.annotation_idgloss_en }}{% if not forloop.last %}, {% endif %}</span>
+                    {% endfor %}
+                    </div>
+              {% endif %}
           {% endif %}
 
           {% if gloss.parent_glosses.all.count > 0 %}
-          <div class="component_in_gloss">
-          {% for component in gloss.parent_glosses.all %}
-          <span>{{ component.morpheme.annotation_idgloss_en }}{% if not forloop.last %} + {% endif %}</span>
-          {% endfor %}
-          </div>
+            <div class="component_in_gloss">
+            {% for component in gloss.parent_glosses.all %}
+                <span>{{ component.morpheme.annotation_idgloss_en }}{% if not forloop.last %} + {% endif %}</span>
+            {% endfor %}
+            </div>
           {% endif %}
+
       </td>
       {% endif %}
 
@@ -607,7 +661,8 @@ function do_adminsearch(el) {
             {% endif %}
 
             {% load underscore_to_space %}
-            <td>{% for tag in gloss.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+            {% tags_for_object gloss as tag_list %}
+            <td>{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
             
         </tr>
     {% endfor %}

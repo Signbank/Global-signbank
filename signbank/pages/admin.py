@@ -8,26 +8,28 @@ from django_summernote.admin import SummernoteModelAdmin
 
 
 from signbank.log import debug
+from signbank.settings import server_specific
 
 class PageForm(forms.ModelForm):
     url = forms.RegexField(label=_("URL"), max_length=100, regex=r'^[-\w/]+$',
         help_text = _("Example: '/about/contact/'. Make sure to have leading"
-                      " and trailing slashes."),
-        error_message = _("This value must contain only letters, numbers,"
-                          " underscores, dashes or slashes."))
+                      " and trailing slashes."))
 
     class Meta:
         model = Page
+        fields = '__all__'
 
-   
+
 class PageVideoForm(forms.ModelForm):
     video = VideoUploadToFLVField(label='Video',
                             required=True,
                             prefix='pages',
                             help_text = _("Uploaded video will be converted to Flash"),
                             widget = admin.widgets.AdminFileWidget)
+
     class Meta:
         model = PageVideo
+        fields = '__all__'
 
     def save(self, commit=True):
         debug("Saving a video form")
@@ -44,10 +46,18 @@ class PageVideoInline(admin.TabularInline):
 
 class PageAdmin(SummernoteModelAdmin):
     form = PageForm
-    fieldsets = (
-        (None, {'fields': ('url', 'title', 'title_dutch', 'title_chinese', 'parent', 'index', 'publish', 'content', 'content_dutch', 'content_chinese')}),
-        (_('Advanced options'), {'classes': ('collapse',), 'fields': ('group_required', 'template_name')}),
-    )
+    #print("SHOW_ENGLISH_ONLY: " + str(server_specific.SHOW_ENGLISH_ONLY))
+    if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
+        fieldsets = (
+            (None, {'fields': (
+            'url', 'title', 'parent', 'index', 'publish', 'content')}),
+            (_('Advanced options'), {'classes': ('collapse',), 'fields': ('group_required', 'template_name')}),
+        )
+    else:
+        fieldsets = (
+            (None, {'fields': ('url', 'title', 'title_dutch', 'title_chinese', 'parent', 'index', 'publish', 'content', 'content_dutch', 'content_chinese')}),
+            (_('Advanced options'), {'classes': ('collapse',), 'fields': ('group_required', 'template_name')}),
+        )
     list_display = ('url', 'title', 'parent', 'index')
     list_filter = ('publish', 'group_required')
     search_fields = ('url', 'title')

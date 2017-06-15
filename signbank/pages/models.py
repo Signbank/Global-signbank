@@ -11,7 +11,7 @@ class Page(models.Model):
 
     title = models.CharField(_('English title'), max_length=200)
     title_dutch = models.CharField(_('Dutch title'), max_length=200)
-    title_chinese = models.CharField(_('Chinese title'), max_length=200)
+    title_chinese = models.CharField(_('Chinese title'), max_length=200, blank=True)
 
     content = models.TextField(_('English content'), blank=True)
     content_dutch = models.TextField(_('Dutch content'), blank=True)
@@ -19,10 +19,10 @@ class Page(models.Model):
 
     template_name = models.CharField(_('template name'), max_length=70, blank=True,
         help_text=_("Example: 'pages/contact_page.html'. If this isn't provided, the system will use 'pages/default.html'."))
-    publish = models.BooleanField(_('publish'), help_text=_("If this is checked, the page will be included in the site menus."))
+    publish = models.BooleanField(_('publish'), help_text=_("If this is checked, the page will be included in the site menus."),default=False)
     parent = models.ForeignKey('self', blank=True, null=True, help_text=_("Leave blank for a top level menu entry.  Top level entries that have sub-pages should be empty as they will not be linked in the menu."))
     index = models.IntegerField(_('ordering index'), default=0, help_text=_('Used to order pages in the menu'))
-    group_required = models.ManyToManyField(Group, null=True, blank=True, help_text=_("This page will only be visible to members of these groups, leave blank to allow anyone to access."))
+    group_required = models.ManyToManyField(Group, blank=True, help_text=_("This page will only be visible to members of these groups, leave blank to allow anyone to access."))
 
     class Meta:
         verbose_name = _('page')

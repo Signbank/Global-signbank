@@ -1,6 +1,8 @@
+from django.core.exceptions import ObjectDoesNotExist
+
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
 from django.template import Context, RequestContext, loader
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.core.urlresolvers import reverse
 
 from django.contrib.auth.decorators import permission_required
@@ -31,24 +33,23 @@ def add_gloss(request):
         form = GlossCreateForm(request.POST)
 
         if len(Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
-            return render_to_response('dictionary/warning.html', {'warning':_('Annotation ID Gloss not unique.')},context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html', {'warning':_('Annotation ID Gloss not unique.')})
         elif len(Gloss.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
-            return render_to_response('dictionary/warning.html', {'warning':_('English annotation ID gloss not unique.')},context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html', {'warning':_('English annotation ID gloss not unique.')})
         elif len(request.POST['annotation_idgloss']) < 1:
-            return render_to_response('dictionary/warning.html', {'warning':_('Dutch annotation ID gloss cannot be empty.')},context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html', {'warning':_('Dutch annotation ID gloss cannot be empty.')})
 
         if form.is_valid():
             
             gloss = form.save()
             gloss.creationDate = datetime.now()
             gloss.creator.add(request.user)
+            gloss.excludeFromEcv = False
             gloss.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
         else:
-            return render_to_response('dictionary/add_gloss_form.html',
-                                      {'add_gloss_form': form},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/add_gloss_form.html',{'add_gloss_form': form})
         
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
@@ -174,7 +175,7 @@ def update_gloss(request, glossid):
                     newvalue = value
             
         
-        elif field == 'inWeb':
+        elif field in 'inWeb':
             # only modify if we have publish permission
             if request.user.has_perm('dictionary.can_publish'):
                 gloss.inWeb = (value == 'Yes')
@@ -184,12 +185,23 @@ def update_gloss(request, glossid):
                 newvalue = 'Yes'
             else:
                 newvalue = 'No'
-                
+
+        elif field in 'isNew':
+            # only modify if we have publish permission
+
+            gloss.isNew = (value == 'Yes')
+            gloss.save()
+
+            if gloss.isNew:
+                newvalue = 'Yes'
+            else:
+                newvalue = 'No'
+
         else:
 
             original_value = getattr(gloss,field)
 
-            if not field in Gloss._meta.get_all_field_names():
+            if not field in [f.name for f in Gloss._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
             
             # special cases 
@@ -199,7 +211,7 @@ def update_gloss(request, glossid):
             # - tags
 
             #Translate the value if a boolean
-            if isinstance(gloss._meta.get_field_by_name(field)[0],NullBooleanField):
+            if isinstance(gloss._meta.get_field(field),NullBooleanField):
                 newvalue = value;
                 value = (value == 'Yes')
 
@@ -215,6 +227,8 @@ def update_gloss(request, glossid):
                 #Remember the old video path if you're changing the name
                 if field == 'idgloss':
                     old_video_path = gloss.get_video_path()
+                    old_image_path = gloss.get_image_path(check_existance=False)
+                    old_extension = old_image_path.split('.')[-1]
 
                 setattr(gloss,field,value)
                 gloss.save()
@@ -222,11 +236,19 @@ def update_gloss(request, glossid):
                 #Update the video location if you're changing the name
                 if field == 'idgloss':
                     new_video_path = gloss.get_video_path()
+                    new_image_path = gloss.get_image_path(check_existance=False)
 
                     try:
                         shutil.move(settings.MEDIA_ROOT+'/'+old_video_path,settings.MEDIA_ROOT+'/'+new_video_path)
 
                     #You don't have to do this if there's no video
+                    except IOError:
+                        pass
+
+                    try:
+                        shutil.move(settings.MEDIA_ROOT+'/'+old_image_path,settings.MEDIA_ROOT+'/'+new_image_path+'.'+old_extension)
+
+                    #You don't have to do this if there's no image
                     except IOError:
                         pass
 
@@ -240,7 +262,13 @@ def update_gloss(request, glossid):
                     newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
                     category_value = 'phonology'
 
-        return HttpResponse(unicode(original_value)+unicode('\t')+unicode(newvalue) + unicode('\t') + unicode(category_value), {'content-type': 'text/plain'})
+        #This is because you cannot concat none to a string in py3
+        if original_value == None:
+            original_value = ''
+
+        return HttpResponse(
+            str(original_value) + str('\t') + str(newvalue) + str('\t') + str(category_value),
+            {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
@@ -258,7 +286,7 @@ def update_keywords(gloss, field, value):
     
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.all()])
     
-    return HttpResponse(unicode(newvalue), {'content-type': 'text/plain'})
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
@@ -275,9 +303,15 @@ def update_relation(gloss, field, value):
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
     if what == 'relationdelete':
-        # print "DELETE: ", rel
+        print("DELETE: ", rel)
         rel.delete()
-#        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrel')
+
+        # Also delete the reverse relation
+        reverse_relations = Relation.objects.filter(source=rel.target, target=rel.source,
+                                                    role=Relation.get_reverse_role(rel.role))
+        if reverse_relations.count() > 0:
+            reverse_relations[0].delete()
+
         return HttpResponse('', {'content-type': 'text/plain'})
     elif what == 'relationrole':
         rel.role = value
@@ -296,7 +330,7 @@ def update_relation(gloss, field, value):
         
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})           
     
-    return HttpResponse(unicode(newvalue), {'content-type': 'text/plain'})
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 def delete_relation(gloss, field):
 
@@ -317,7 +351,7 @@ def update_relationtoforeignsign(gloss, field, value):
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
     if what == 'relationforeign_delete':
-        # print "DELETE: ", rel
+        print("DELETE: ", rel)
         rel.delete()
         # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
         return HttpResponse('', {'content-type': 'text/plain'})
@@ -337,7 +371,7 @@ def update_relationtoforeignsign(gloss, field, value):
         
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})           
     
-    return HttpResponse(unicode(value), {'content-type': 'text/plain'})
+    return HttpResponse(str(value), {'content-type': 'text/plain'})
 
 def gloss_from_identifier(value):
     """Given an id of the form idgloss (pk) return the
@@ -348,13 +382,13 @@ def gloss_from_identifier(value):
     
     match = re.match('(.*) \((\d+)\)', value)
     if match:
-        print "MATCH: ", match
+        print("MATCH: ", match)
         idgloss = match.group(1)
         pk = match.group(2)
-        print "INFO: ", idgloss, pk
+        print("INFO: ", idgloss, pk)
         
         target = Gloss.objects.get(pk=int(pk))
-        print "TARGET: ", target
+        print("TARGET: ", target)
         return target
     elif value != '':
         idgloss = value
@@ -373,13 +407,13 @@ def morph_from_identifier(value):
 
     match = re.match('(.*) \((\d+)\)', value)
     if match:
-        print "MATCH: ", match
+        print("MATCH: ", match)
         idgloss = match.group(1)
         pk = match.group(2)
-        print "INFO: ", idgloss, pk
+        print("INFO: ", idgloss, pk)
 
         target = Morpheme.objects.get(pk=int(pk))
-        print "TARGET: ", target
+        print("TARGET: ", target)
         return target
     elif value != '':
         idgloss = value
@@ -430,7 +464,7 @@ def update_definition(request, gloss, field, value):
         newvalue = defn.get_role_display()
 
 
-    return HttpResponse(unicode(newvalue), {'content-type': 'text/plain'})
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 def update_other_media(request,gloss,field,value):
 
@@ -458,7 +492,7 @@ def update_other_media(request,gloss,field,value):
 
     other_media.save()
 
-    return HttpResponse(unicode(value), {'content-type': 'text/plain'})
+    return HttpResponse(str(value), {'content-type': 'text/plain'})
 
 def add_relation(request):
     """Add a new relation instance"""
@@ -483,6 +517,11 @@ def add_relation(request):
             if target:
                 rel = Relation(source=source, target=target, role=role)
                 rel.save()
+
+                # Also add the reverse relation
+                reverse_relation = Relation(source=target, target=source, role=Relation.get_reverse_role(role))
+                reverse_relation.save()
+
                 
                 # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
@@ -492,8 +531,7 @@ def add_relation(request):
                 print("target gloss not found")
                 return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
         else:
-            print("inside add_relation, form is not valid")
-            print form
+            print(form)
 
     # fallback to redirecting to the requesting page
     return HttpResponseRedirect('/')
@@ -540,7 +578,7 @@ def variants_of_gloss(request):
             return HttpResponse(json.dumps(rel), content_type="application/json")
         else:
 #            print('invalid form')
-            print form
+            print(form)
 
     return HttpResponseRedirect('/')
 
@@ -569,7 +607,7 @@ def add_relationtoforeignsign(request):
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
 
         else:
-            print form
+            print(form)
             return HttpResponseBadRequest("Form not valid", {'content-type': 'text/plain'})
 
     # fallback to redirecting to the requesting page
@@ -716,7 +754,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
         return HttpResponseBadRequest("Morphology Definition doesn't match gloss", {'content-type': 'text/plain'})
 
     if what == 'morphology_definition_delete':
-        print "DELETE: ", morph_def
+        print("DELETE: ", morph_def)
         morph_def.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morphology_definition_role':
@@ -740,7 +778,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
 
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
-    return HttpResponse(unicode(newvalue), {'content-type': 'text/plain'})
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 
 def add_morpheme(request):
@@ -755,16 +793,12 @@ def add_morpheme(request):
         form = MorphemeCreateForm(request.POST)
 
         if len(Morpheme.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
-            return render_to_response('dictionary/warning.html', {'warning': _('Annotation ID Gloss not unique.')},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html', {'warning': _('Annotation ID Gloss not unique.')})
         elif len(Morpheme.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
-            return render_to_response('dictionary/warning.html',
-                                      {'warning': _('English annotation ID gloss not unique.')},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html',
+                                      {'warning': _('English annotation ID gloss not unique.')})
         elif len(request.POST['annotation_idgloss']) < 1:
-            return render_to_response('dictionary/warning.html',
-                                      {'warning': _('Dutch annotation ID gloss cannot be empty.')},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/warning.html',{'warning': _('Dutch annotation ID gloss cannot be empty.')})
         # extract the user-chosen mrpType, converting it to...?
         mrpType = request.POST['mrpType']
 
@@ -777,9 +811,8 @@ def add_morpheme(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}) + '?edit')
         else:
-            return render_to_response('dictionary/add_morpheme_form.html',
-                                      {'add_morpheme_form': form},
-                                      context_instance=RequestContext(request))
+            return render(request,'dictionary/add_morpheme_form.html',
+                                      {'add_morpheme_form': form})
 
     return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
 
@@ -908,7 +941,7 @@ def update_morpheme(request, morphemeid):
         else:
             original_value = getattr(morpheme, field)
 
-            if not field in Morpheme._meta.get_all_field_names():
+            if not field in [f.name for f in Morpheme._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
             # special cases
@@ -918,7 +951,7 @@ def update_morpheme(request, morphemeid):
             # - tags
 
             # Translate the value if a boolean
-            if isinstance(morpheme._meta.get_field_by_name(field)[0], NullBooleanField):
+            if isinstance(morpheme._meta.get_field(field), NullBooleanField):
                 newvalue = value;
                 value = (value == 'Yes')
 
@@ -973,7 +1006,7 @@ def update_morpheme_definition(gloss, field, value):
         return HttpResponseBadRequest("Bad Morpheme Definition ID '%s'" % morph_def_id, {'content-type': 'text/plain'})
 
     if what == 'morpheme_definition_delete':
-        print "REMOVE: ", morph_def, " FROM: ", gloss
+        print("REMOVE: ", morph_def, " FROM: ", gloss)
         gloss.morphemePart.remove(morph_def)
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     else:
@@ -1009,14 +1042,12 @@ def add_tag(request, glossid):
                 # we need to wrap the tag name in quotes since it might contain spaces
                 Tag.objects.add_tag(thisgloss, '"%s"' % tag)
                 # response is new HTML for the tag list and form
-                response = render_to_response('dictionary/glosstags.html',
+                response = render(request,'dictionary/glosstags.html',
                                               {'gloss': thisgloss,
-                                               'tagform': TagUpdateForm(),
-                                               },
-                                              context_instance=RequestContext(request))
+                                               'tagform': TagUpdateForm()})
         else:
-            print "invalid form"
-            print form.as_table()
+            print("invalid form")
+            print(form.as_table())
             
     return response
 
@@ -1044,14 +1075,12 @@ def add_morphemetag(request, morphemeid):
                 # we need to wrap the tag name in quotes since it might contain spaces
                 Tag.objects.add_morphemetag(thismorpheme, '"%s"' % tag)
                 # response is new HTML for the tag list and form
-                response = render_to_response('dictionary/morphemetags.html',
+                response = render(request,'dictionary/morphemetags.html',
                                               {'morpheme': thismorpheme,
-                                               'tagform': TagUpdateForm(),
-                                               },
-                                              context_instance=RequestContext(request))
+                                               'tagform': TagUpdateForm()})
         else:
-            print "invalid form"
-            print form.as_table()
+            print("invalid form")
+            print(form.as_table())
 
     return response
 
