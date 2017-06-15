@@ -665,7 +665,7 @@ def import_csv(request):
             with override(settings.LANGUAGE_CODE):
 
                 #Replace the value for bools
-                if gloss._meta.get_field_by_name(fieldname)[0].__class__.__name__ == 'NullBooleanField':
+                if gloss._meta.get_field(fieldname).__class__.__name__ == 'NullBooleanField':
 
                     if new_value in ['true','True']:
                         new_value = True
