@@ -855,6 +855,108 @@ class GlossDetailView(DetailView):
 
         return context
 
+class GlossRelationsDetailView(DetailView):
+    model = Gloss
+    template_name = 'dictionary/related_signs_detail_view.html'
+    context_object_name = 'gloss'
+
+    #Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+        except Http404:
+            # return custom template
+            return render(request, 'no_object.html', status=404)
+
+        if request.user.is_authenticated():
+            if not request.user.has_perm('dictionary.search_gloss'):
+                if self.object.inWeb:
+                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'idgloss':self.object.idgloss}))
+                else:
+                    return HttpResponse('')
+        else:
+            if self.object.inWeb:
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'idgloss': self.object.idgloss}))
+            else:
+                return HttpResponseRedirect(reverse('registration:auth_login'))
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(GlossRelationsDetailView, self).get_context_data(**kwargs)
+        # Add in a QuerySet of all the books
+        context['tagform'] = TagUpdateForm()
+        context['videoform'] = VideoUploadForGlossForm()
+        context['imageform'] = ImageUploadForGlossForm()
+        context['definitionform'] = DefinitionForm()
+        context['relationform'] = RelationForm()
+
+        context['morphologyform'] = GlossMorphologyForm()
+        context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+            choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
+                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''))
+
+        context['morphemeform'] = GlossMorphemeForm()
+        context['othermediaform'] = OtherMediaForm()
+        context['navigation'] = context['gloss'].navigation(True)
+        context['interpform'] = InterpreterFeedbackForm()
+        context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
+
+        #Pass info about which fields we want to see
+        gl = context['gloss'];
+        labels = gl.field_labels();
+
+        context['choice_lists'] = {}
+
+        #Translate the machine values to human values in the correct language, and save the choice lists along the way
+        for topic in ['main','phonology','semantics','frequency']:
+            context[topic+'_fields'] = [];
+
+            for field in FIELDS[topic]:
+
+                #Get and save the choice list for this field
+                fieldchoice_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+                if len(choice_list) > 0:
+                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
+
+                #Take the human value in the language we are using
+                machine_value = getattr(gl,field);
+                human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
+
+                #And add the kind of field
+                if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
+                    kind = 'text';
+                elif field in ['repeat','altern','oriChAbd','oriChFlex']:
+                    kind = 'check';
+                else:
+                    kind = 'list';
+
+                context[topic+'_fields'].append([human_value,field,labels[field],kind]);
+
+        #Add morphology to choice lists
+        context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
+                                                                                       self.request.LANGUAGE_CODE)
+
+        #Collect all morphology definitions for th sequential morphology section, and make some translations in advance
+        morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
+        morphdefs = []
+
+        for morphdef in context['gloss'].parent_glosses.all():
+
+            translated_role = machine_value_to_translated_human_value(morphdef.role,morphdef_roles,self.request.LANGUAGE_CODE)
+            morphdefs.append((morphdef,translated_role))
+
+        context['morphdefs'] = morphdefs
+
+        context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
+
+        return context
+
 
 class MorphemeListView(ListView):
     """The morpheme list view basically copies the gloss list view"""

@@ -253,7 +253,13 @@ class RelationForm(forms.ModelForm):
         widgets = {
                    'role': forms.Select(attrs={'class': 'form-control'}),
                    }
-        
+
+class VariantsForm(forms.Form):
+    sourceid = forms.CharField(label=_(u'Source Gloss'))
+    targetid = forms.CharField(label=_(u'Target Gloss'))
+
+    class Meta:
+        model = Relation
         
 class RelationToForeignSignForm(forms.ModelForm):
 

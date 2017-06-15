@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeDetailView, MorphemeListView
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossRelationsDetailView, MorphemeDetailView, MorphemeListView
 
 #These are needed for the urls below
 import signbank.dictionary.views
@@ -44,7 +44,7 @@ urlpatterns = [
 
     # The next one does not have a permission check because it should be accessible from a cronjob 
     url(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
-
+    url(r'^update/variants_of_gloss/$', signbank.dictionary.update.variants_of_gloss, name='variants_of_gloss'),
     url(r'^switch_to_language/(?P<language>..)$', signbank.dictionary.views.switch_to_language,name='switch_to_language'),
     url(r'^recently_added_glosses/$', signbank.dictionary.views.recently_added_glosses,name='recently_added_glosses'),
 
@@ -61,6 +61,8 @@ urlpatterns = [
     url(r'^import_videos/$', signbank.dictionary.views.import_media,{'video':True}),
     url(r'^import_other_media/$', signbank.dictionary.views.import_other_media),
 
+    url(r'find_and_save_variants/$',signbank.dictionary.views.find_and_save_variants),
+    url(r'find_homonyms/$',signbank.dictionary.views.find_homonyms),
     url(r'update_cngt_counts/$', signbank.dictionary.views.update_cngt_counts),
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', signbank.dictionary.views.update_cngt_counts),
 
@@ -77,6 +79,7 @@ urlpatterns = [
     url(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
     url(r'^morphemes/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view()), name='admin_morpheme_list'),
     url(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view'),
+    url(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     url(r'^morpheme/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(MorphemeDetailView.as_view()), name='admin_morpheme_view'),
 ]
 

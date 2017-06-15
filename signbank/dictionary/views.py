@@ -30,7 +30,7 @@ import signbank.tools
 from signbank.tools import save_media, compare_valuedict_to_gloss, MachineValueNotFoundError
 
 import signbank.settings
-from signbank.settings.base import WRITABLE_FOLDER
+from signbank.settings.base import WRITABLE_FOLDER, URL
 from django.utils.translation import override
 
 from urllib.parse import urlencode, urlparse
@@ -921,6 +921,263 @@ def update_cngt_counts(request,folder_index=None):
     updated_glosses = '</li><li>'.join(updated_glosses)
     return HttpResponse('<p>No glosses were found for these names:</p><ul><li>'+glosses_not_in_signbank_str+'</li></ul>'+\
                         '<p>Updated glosses</p><ul><li>'+updated_glosses+'</li></ul>')
+
+def find_and_save_variants(request):
+
+    variant_pattern_glosses = Gloss.objects.filter(annotation_idgloss__regex=r"^(.*)\-([A-Z])$").order_by('annotation_idgloss')
+
+    gloss_table_prefix = '<!DOCTYPE html>\n' \
+                         '<html>\n' \
+                         '<body>\n' \
+                         '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
+                         '<thead>\n' \
+                         '<tr>\n' \
+                         '<th style="width:10em; text-align:left;">Focus Gloss</th>\n' \
+                         '<th style="width:15em; text-align:left;">Other Relations</th>\n' \
+                         '<th style="width:20em; text-align:left;">Variant Relations (PRE)</th>\n' \
+                         '<th style="width:20em; text-align:left;">Candidate Variants</th>\n' \
+                         '<th style="width:25em; text-align:left;">Variant Relations (POST)</th>\n' \
+                          '</tr>\n' \
+                         '</thead>\n' \
+                         '<tbody>\n'
+    gloss_table_suffix = '</tbody>\n' \
+                         '</table>\n' \
+                         '</body>\n' \
+                         '</html>'
+
+    gloss_pattern_table = dict()
+    gloss_table_rows = ''
+
+    for gloss in variant_pattern_glosses:
+
+        dict_key = int(gloss.id)
+        gloss_pattern_table[dict_key] = '<td>' + str(gloss.idgloss) + '</td>'
+#        print(gloss.id, '\t', str(gloss.idgloss))
+        other_relations_of_sign = gloss.other_relations()
+
+        if other_relations_of_sign:
+
+            gloss_pattern_table[dict_key] += '<td>'
+
+            for x in other_relations_of_sign:
+                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
+
+            gloss_pattern_table[dict_key] += '</td>'
+
+        else:
+            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+
+        #        if (len(other_relations_of_sign) > 0):
+        #            print('Other relations: ', other_relation_objects )
+
+        variant_relations_of_sign = gloss.variant_relations()
+
+        if variant_relations_of_sign:
+
+            gloss_pattern_table[dict_key] += '<td>'
+
+            for x in variant_relations_of_sign:
+                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
+
+            gloss_pattern_table[dict_key] += '</td>'
+
+        else:
+            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+
+
+        other_relation_objects = [x.target for x in other_relations_of_sign]
+        variant_relation_objects = [x.target for x in variant_relations_of_sign]
+        this_sign_stem = gloss.has_stem()
+        length_this_sign_stem = len(this_sign_stem)
+        this_matches = r'^' + re.escape(this_sign_stem) + r'\-[A-Z]$'
+        candidate_variants = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=gloss).exclude(
+            idgloss__in=other_relation_objects).exclude(idgloss__in=variant_relation_objects)
+
+        if candidate_variants:
+            gloss_pattern_table[dict_key] += '<td>'
+
+            for x in candidate_variants:
+                gloss_pattern_table[dict_key] += str(x.idgloss) + ' '
+
+            gloss_pattern_table[dict_key] += '</td>'
+
+        else:
+            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+
+
+        for target in candidate_variants:
+
+ #           print('UPDATE REL: source=', gloss, ', target=', target)
+            rel = Relation(source=gloss, target=target, role='variant')
+            rel.save()
+
+        updated_variants = gloss.variant_relations()
+
+        if updated_variants:
+
+            gloss_pattern_table[dict_key] += '<td>'
+
+            for x in updated_variants:
+                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
+
+            gloss_pattern_table[dict_key] += '</td>'
+
+        else:
+            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+
+#        print('Dictionary key: ', dict_key, ', ', gloss_pattern_table[dict_key])
+        gloss_table_rows = gloss_table_rows + '<tr>' + gloss_pattern_table[dict_key] + '</tr>\n'
+
+
+    return HttpResponse(gloss_table_prefix+gloss_table_rows+gloss_table_suffix)
+
+
+def find_homonyms(request):
+
+    relation_homonyms = Relation.objects.filter(role='homonym')
+
+    all_glosses = Gloss.objects.exclude((Q(**{'handedness__isnull':True})|Q(**{'handedness':0})))
+
+
+    relation_table_prefix = '<!DOCTYPE html>\n' \
+                         '<html>\n' \
+                         '<body>\n' \
+                         '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
+                         '<thead>\n' \
+                         '<tr>\n' \
+                         '<th style="width:20em; text-align:left;">Focus Gloss</th>\n' \
+                         '<th style="width:25em; text-align:left;">Homonym Relations (SAVED)</th>\n' \
+                         '<th style="width:40em; text-align:left;">Homonym Relations (NOT SAVED)</th>\n' \
+                         '<th style="width:40em; text-align:left;">Homonym Relations (DIFFERENT PHONOLOGY)</th>\n' \
+                         '</tr>\n' \
+                         '</thead>\n' \
+                         '<tbody>\n'
+    relation_table_suffix = '</tbody>\n' \
+                         '</table>\n' \
+                         '</body>\n' \
+                         '</html>'
+
+    relation_table = dict()
+    relation_table_rows = ''
+    new_relations_hym_targets_dict = dict()
+    relations_to_remove_dict = dict()
+
+    for gloss in all_glosses:
+
+        dict_key = int(gloss.id)
+
+        already_saved_relation_homonyms_of_gloss = Relation.objects.filter(role='homonym', source=gloss.id)
+
+        dict_key_string = str(dict_key)
+        gloss_identifier = gloss.idgloss
+
+        gloss_link = "<a href='" + URL + "/dictionary/gloss/" + dict_key_string + "'>" + gloss_identifier + "</a>"
+
+        targets_of_already_saved_homonyms_of_gloss = [ r.target for r in already_saved_relation_homonyms_of_gloss ]
+
+        dict_key_index_td = '<td>' + gloss_link + '</td>'
+
+        relation_table[dict_key] = ''
+        new_relations_hym_targets_dict[dict_key] = []
+        relations_to_remove_dict[dict_key] = []
+
+        already_saved_homonyms = gloss.relation_sources.filter(role='homonym')
+
+        gloss_saved_homonyms = ''
+        gloss_saved_homonyms_list = []
+        for rel in already_saved_homonyms:
+            gloss_identifier = str(rel.target.id)
+            gloss_label = str(rel.target.annotation_idgloss)
+            gloss_link = "<a href='" + URL + "/dictionary/gloss/" + gloss_identifier + "'>" + gloss_label + "</a>"
+
+            gloss_saved_homonyms += gloss_link
+            gloss_saved_homonyms += ' '
+            gloss_saved_homonyms_list += [str(rel.target.annotation_idgloss)]
+
+        # second column of table
+        if gloss_saved_homonyms_list:
+            relation_table[dict_key] += '<td>' + gloss_saved_homonyms + '</td>'
+        else:
+            relation_table[dict_key] += '<td/>'
+
+        (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gloss.homonyms()
+
+        new_relations_hym_targets = []
+
+        new_homonyms_targets = ''
+
+        homonyms_post = ''
+
+        for gl in homonyms_of_this_gloss:
+            if (gl in targets_of_already_saved_homonyms_of_gloss):
+                 pass
+            else:
+                 gloss_identifier = str(gl.id)
+                 gloss_label = str(gl.annotation_idgloss)
+                 gloss_link = "<a href='" + URL + "/dictionary/gloss/" + gloss_identifier + "'>" + gloss_label + "</a>"
+
+                 new_homonyms_targets += gloss_link
+                 new_homonyms_targets += ' '
+                 new_relations_hym_targets += [gl]
+            homonyms_post += str(gl)
+            homonyms_post += ' '
+
+        ids_of_homonym_targets = [ h.id for h in new_relations_hym_targets]
+
+        fake_homonyms = ''
+        remove_relations_fake_homonyms = []
+
+        for gl in saved_but_not_homonyms:
+            gloss_identifier = str(gl.id)
+            gloss_label = str(gl.annotation_idgloss)
+            gloss_link = "<a href='" + URL + "/dictionary/gloss/" + gloss_identifier + "'>" + gloss_label + "</a>"
+
+            fake_homonyms += gloss_link
+            fake_homonyms += ' '
+            remove_relations_fake_homonyms += [gl]
+
+        ids_of_fake_homonym_targets = [h.id for h in remove_relations_fake_homonyms]
+
+        if (new_homonyms_targets):
+            relation_table[dict_key] += '<td>' + new_homonyms_targets + '</td>'
+        else:
+            relation_table[dict_key] += '<td/>'
+
+        if (fake_homonyms):
+            relation_table[dict_key] += '<td>' + fake_homonyms + '</td>'
+        else:
+            relation_table[dict_key] += '<td/>'
+
+        # if (homonyms_post or fake_homonyms):
+        #     relation_table[dict_key] += '<td>' + fake_homonyms + homonyms_post + '</td>'
+        # else:
+        #     relation_table[dict_key] += '<td/>'
+
+        if (gloss_saved_homonyms_list or new_homonyms_targets or fake_homonyms):
+            relation_table_rows = relation_table_rows + '<tr>' + dict_key_index_td + relation_table[dict_key] + '</tr>\n'
+
+        new_relations_hym_targets_dict[dict_key] = ids_of_homonym_targets
+
+        relations_to_remove_dict[dict_key] = ids_of_fake_homonym_targets
+
+    # for gloss in all_glosses:
+    #
+    #       dict_key = int(gloss.id)
+    #       for t in new_relations_hym_targets_dict[dict_key]:
+    #           # print('NEW HOMONYM: source=', dict_key, ', target=', t)
+    #           source_gloss = Gloss.objects.filter(id=dict_key)[0]
+    #           target_gloss = Gloss.objects.filter(id=t)[0]
+    #           # print('source= ', source_gloss, " target= ", target_gloss)
+    #           rel = Relation(source=source_gloss, target=target_gloss, role='homonym')
+    #           rel.save()
+
+          # for d in relations_to_remove_dict[dict_key]:
+          #     rel = Relation.objects.get(source=dict_key, target=d)
+          #     relation_id = rel.id
+          #
+          #     print("DELETE HOMONYM: id=", relation_id, " source= ", rel.source, " target= ", rel.target)
+
+    return HttpResponse(relation_table_prefix+relation_table_rows+relation_table_suffix)
 
 def get_unused_videos(request):
 

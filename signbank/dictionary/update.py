@@ -62,6 +62,8 @@ def update_gloss(request, glossid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return HttpResponseForbidden("Gloss Update Not Allowed")
 
+    # print('Inside of update_gloss')
+
     if request.method == "POST":
 
         gloss = get_object_or_404(Gloss, id=glossid)
@@ -70,6 +72,8 @@ def update_gloss(request, glossid):
         field = request.POST.get('id', '')
         value = request.POST.get('value', '')
         original_value = '' #will in most cases be set later, but can't be empty in case it is not set
+
+        # print('field is: ', field)
 
         if len(value) == 0:
             value = ' '
@@ -252,14 +256,19 @@ def update_gloss(request, glossid):
                 if not isinstance(value,bool):
 
                     field_category = fieldname_to_category(field)
+
+                    # print('field category: ', field_category)
                     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                     newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                    category_value = 'phonology'
 
         #This is because you cannot concat none to a string in py3
         if original_value == None:
             original_value = ''
 
-        return HttpResponse(str(original_value)+'\t'+newvalue, {'content-type': 'text/plain'})
+        return HttpResponse(
+            str(original_value) + str('\t') + str(newvalue) + str('\t') + str(category_value),
+            {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
@@ -277,7 +286,7 @@ def update_keywords(gloss, field, value):
     
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.all()])
     
-    return HttpResponse(newvalue, {'content-type': 'text/plain'})
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
@@ -303,7 +312,7 @@ def update_relation(gloss, field, value):
         if reverse_relations.count() > 0:
             reverse_relations[0].delete()
 
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrel')
+        return HttpResponse('', {'content-type': 'text/plain'})
     elif what == 'relationrole':
         rel.role = value
         rel.save()
@@ -321,8 +330,12 @@ def update_relation(gloss, field, value):
         
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})           
     
-    return HttpResponse(newvalue, {'content-type': 'text/plain'})
-            
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+def delete_relation(gloss, field):
+
+    return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
+
 def update_relationtoforeignsign(gloss, field, value):
     """Update one of the relations for this gloss"""
     
@@ -337,10 +350,11 @@ def update_relationtoforeignsign(gloss, field, value):
     if not rel.gloss == gloss:
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
-    if what == 'relationforeigndelete':
+    if what == 'relationforeign_delete':
         print("DELETE: ", rel)
         rel.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
+        # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
+        return HttpResponse('', {'content-type': 'text/plain'})
     elif what == 'relationforeign_loan':
         rel.loan = value == 'YES';
         rel.save();
@@ -357,10 +371,10 @@ def update_relationtoforeignsign(gloss, field, value):
         
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})           
     
-    return HttpResponse(value, {'content-type': 'text/plain'})
+    return HttpResponse(str(value), {'content-type': 'text/plain'})
 
 def gloss_from_identifier(value):
-    """Given an id of the form idgloss (pk) return the
+    """Given an id of the form "idgloss (pk)" return the
     relevant gloss or None if none is found
     BUT: first check if a unique hit can be found by the string alone (if it is not empty)
     """
@@ -369,16 +383,16 @@ def gloss_from_identifier(value):
     match = re.match('(.*) \((\d+)\)', value)
     if match:
         print("MATCH: ", match)
-        idgloss = match.group(1)
+        annotation_idgloss = match.group(1)
         pk = match.group(2)
-        print("INFO: ", idgloss, pk)
+        print("INFO: ", annotation_idgloss, pk)
         
         target = Gloss.objects.get(pk=int(pk))
         print("TARGET: ", target)
         return target
     elif value != '':
-        idgloss = value
-        target = Gloss.objects.get(idgloss=idgloss)
+        annotation_idgloss = value
+        target = Gloss.objects.get(annotation_idgloss=annotation_idgloss)
         return target
     else:
         return None
@@ -450,7 +464,7 @@ def update_definition(request, gloss, field, value):
         newvalue = defn.get_role_display()
 
 
-    return HttpResponse(newvalue, {'content-type': 'text/plain'})
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 def update_other_media(request,gloss,field,value):
 
@@ -478,7 +492,7 @@ def update_other_media(request,gloss,field,value):
 
     other_media.save()
 
-    return HttpResponse(value, {'content-type': 'text/plain'})
+    return HttpResponse(str(value), {'content-type': 'text/plain'})
 
 def add_relation(request):
     """Add a new relation instance"""
@@ -496,6 +510,7 @@ def add_relation(request):
             try:
                 source = Gloss.objects.get(pk=int(sourceid))
             except:
+                print("source gloss not found")
                 return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
             
             target = gloss_from_identifier(targetid)
@@ -508,13 +523,63 @@ def add_relation(request):
                 reverse_relation.save()
 
                 
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
+                # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
+
+
             else:
+                print("target gloss not found")
                 return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
         else:
             print(form)
 
     # fallback to redirecting to the requesting page
+    return HttpResponseRedirect('/')
+
+
+@permission_required('dictionary.change_gloss')
+def variants_of_gloss(request):
+
+#    thisgloss = get_object_or_404(Gloss, id=glossid)
+
+    if request.method == "POST":
+
+        form = VariantsForm(request.POST)
+
+        if form.is_valid():
+            role = 'variant'
+            sourceid = form.cleaned_data['sourceid']
+            targetid = form.cleaned_data['targetid']
+
+#            print('Source id: ', sourceid)
+#            print('Target id: ', targetid)
+
+#            try:
+#                source = Gloss.objects.get(pk=int(sourceid))
+#            except:
+#                return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
+
+            source = str(sourceid)
+            target = str(targetid)
+
+#            print('Source from identifier: ', source)
+#            print('Target from identifier: ', target)
+
+            source_object = Gloss.objects.get(pk=int(source))
+            target_object = Gloss.objects.get(pk=int(target))
+
+#            print('Source object: ', source_object)
+#            print('Target object: ', target_object)
+
+
+            rel = Relation(source=source_object, target=target_object, role=role)
+            rel.save()
+
+            return HttpResponse(json.dumps(rel), content_type="application/json")
+        else:
+#            print('invalid form')
+            print(form)
+
     return HttpResponseRedirect('/')
 
 def add_relationtoforeignsign(request):
@@ -713,7 +778,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
 
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
-    return HttpResponse(newvalue, {'content-type': 'text/plain'})
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 
 def add_morpheme(request):
@@ -767,6 +832,7 @@ def update_morpheme(request, morphemeid):
         field = request.POST.get('id', '')
         value = request.POST.get('value', '')
         original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
+        category_value = ''
 
         if len(value) == 0:
             value = ' '
@@ -922,8 +988,9 @@ def update_morpheme(request, morphemeid):
                     field_category = fieldname_to_category(field)
                     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                     newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
+                    category_value = 'phonology'
 
-        return HttpResponse(str(original_value) + '\t' + str(newvalue), {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value), {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):

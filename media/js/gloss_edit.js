@@ -75,7 +75,7 @@ var original_values_for_changes_made = new Array();
 function disable_edit() {
     $('.edit').editable('disable');
     $('.edit').css('color', 'black');
-    $('#edit_message').text(''); 
+    $('#edit_message').text('');
     $('.editform').hide();
     $('#delete_gloss_btn').hide();
     $('#delete_morpheme_btn').hide();
@@ -111,12 +111,14 @@ function disable_edit() {
         $(this).html('-')
     });
 
+    check_phonology_modified();
 };
 
 function enable_edit() {
     $('.edit').editable('enable');
     $('.edit').css('color', 'red');
-    $('#edit_message').text('Click on red text to edit  '); 
+    $('#edit_message').text('Click on red text to edit  ');
+    $('#edit_message').css('color', 'black');
     $('.editform').show();
     $('#delete_gloss_btn').show().addClass('btn-danger');
     $('#delete_morpheme_btn').show().addClass('btn-danger');
@@ -131,8 +133,10 @@ function enable_edit() {
     $('#add_morphemedefinition_form').show();
     $('.definition_delete').show();
     $('.relation_delete').show();
+    $('.relation_delete').css('color', 'black');
     $('.other-video-delete').show();
     $('.relationtoforeignsign_delete').show();
+    $('.relationtoforeignsign_delete').css('color', 'black');
     $('.morphology-definition-delete').show();
     $('.morpheme-definition-delete').show();
 
@@ -243,7 +247,7 @@ function configure_edit() {
      });     
      $('.edit_check').editable(edit_post_url, {
          type      : 'checkbox',
-         checkbox: { trueValue: 'Yes', falseValue: 'No' },
+         checkbox: { trueValue: 'True', falseValue: 'False' },
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_relation_role').editable(edit_post_url, {
@@ -254,6 +258,16 @@ function configure_edit() {
      $('.edit_relation_target').editable(edit_post_url, {
          type      : 'glosstypeahead',
 		 callback : update_view_and_remember_original_value
+     });
+     $('.edit_relation_delete').editable(edit_post_url, {
+        type    : 'select',
+        data    : relation_delete_choices,
+        callback : update_relation_delete
+     });
+     $('.edit_foreign_delete').editable(edit_post_url, {
+        type    : 'select',
+        data    : relation_delete_choices,
+        callback : update_foreign_delete
      });
      $('.edit_compoundpart').editable(edit_post_url, {
          type      : 'glosstypeahead',
@@ -286,22 +300,52 @@ function configure_edit() {
 			 callback : update_view_and_remember_original_value
 		 });
      });
-
+     $('.edit_variants').editable(edit_post_url, {
+		 type      : 'select',
+		 data       : relation_role_choices,
+		 callback : update_view_and_remember_original_value
+     });
 }
 
 function update_view_and_remember_original_value(change_summary)
 {
-	split_values = change_summary.split('\t');
-	original_value = split_values[0];
-  	new_value = split_values[1];
-	id = $(this).attr('id');
-  	$(this).html(new_value);
+	split_values_count = change_summary.split('\t').length - 1;
+	if (split_values_count > 0)
+	{
+	    if (split_values_count < 2) {
+	        console.log("update_view_and_remember_original_value: not enough returned values")
+	        return
+	    }
+        split_values = change_summary.split('\t');
+        original_value = split_values[0];
+        new_value = split_values[1];
+        category_value = split_values[2];
+        console.log("change summary: ", change_summary);
+        console.log("category value: ", category_value);
 
-	if (original_values_for_changes_made[id] == undefined)
-  	{
-    	original_values_for_changes_made[id] = original_value;                          
-		console.log(original_values_for_changes_made); 
-	}
+        id = $(this).attr('id');
+        $(this).html(new_value);
+        console.log('field changed: ', id);
+
+        if (original_values_for_changes_made[id] == undefined)
+        {
+            original_values_for_changes_made[id] = original_value;
+            console.log("original value: ", original_value);
+            console.log("new value: ", new_value);
+            $(this).parent().removeClass('empty_row');
+            $(this).parent().attr("value", new_value);
+        }
+        if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' || new_value == 'False')
+        {
+            console.log("new value is empty: ", new_value);
+            $(this).parent().addClass('empty_row');
+            $(this).parent().attr("value", new_value);
+            $(this).html("------");
+        }
+        if (category_value == 'phonology') {
+            console.log('phonology modified');
+        }
+    }
 }
 
 var gloss_bloodhound = new Bloodhound({
@@ -321,7 +365,7 @@ function glosstypeahead(target) {
           templates: {
               suggestion: function(gloss) {
                   // Issue #121: remove  (SN: " + gloss.sn + ")
-                  return("<p><strong>" + gloss.idgloss +  "</strong></p>");
+                  return("<p><strong>" + gloss.annotation_idgloss +  "</strong></p>");
               }
           }
       });
@@ -362,7 +406,7 @@ function morphtypeahead(target) {
           templates: {
               suggestion: function(gloss) {
                   // Issue #121: remove (SN: " + gloss.sn + ")
-                  return("<p><strong>" + gloss.idgloss + "</strong></p>");
+                  return("<p><strong>" + gloss.annotation_idgloss + "</strong></p>");
               }
           }
       });
@@ -436,8 +480,30 @@ $.editable.addInputType("multiselect", {
     }
 });
 
+function update_foreign_delete(change_summary)
+{
+    var deleted_relation_for_gloss = $(this).attr('id');
+    var deleted_relation = deleted_relation_for_gloss.split('_');
+    var deleted_relation_id = deleted_relation[1];
+    $(this).css("color", "black");
+    console.log("Delete foreign relation: ", deleted_relation_id);
+    var search_id = 'foreign_' + deleted_relation_id;
+    $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
+  	$(this).html('');
+}
 
-     
+function update_relation_delete(change_summary)
+{
+    var deleted_relation_for_gloss = $(this).attr('id');
+    var deleted_relation = deleted_relation_for_gloss.split('_');
+    var deleted_relation_id = deleted_relation[1];
+    $(this).css("color", "black");
+    console.log("Delete relation: ", deleted_relation_id);
+    var search_id = 'row_' + deleted_relation_id;
+    $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
+  	$(this).html('');
+}
+
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie != '') {
@@ -527,4 +593,22 @@ function rewind()
 
 	delayed_reload(c*100);
 
+}
+
+function check_phonology_modified()
+{
+    var phonology_keys = ["handedness", "domhndsh", "subhndsh", "handCh", "relatArtic", "locprim", "locVirtObj",
+                      "relOriMov", "relOriLoc", "oriCh", "contType", "movSh", "movDir", "repeat", "altern", "phonOth",
+                      "mouthG",
+                      "mouthing", "phonetVar"];
+    for (key in original_values_for_changes_made)
+    {
+        for (var i = 0; i < phonology_keys.length; i++) {
+            if (phonology_keys[i] == key)
+            {
+	            $(document.getElementById('edit_message')).text('The phonology has been changed, please remember to reload the page when finished editing!');
+	            $(document.getElementById('edit_message')).css('color', 'red');
+            }
+        }
+    }
 }
