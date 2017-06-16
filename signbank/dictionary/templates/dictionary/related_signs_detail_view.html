@@ -18,6 +18,12 @@
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
+<a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+
+{% if gloss.annotation_idgloss %}
+<a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.annotation_idgloss}}.html">{% trans "Public View" %}</a>
+{% endif %}
+
 <div  class="panel panel-default">
 
 <table class='table table-condensed'>
@@ -49,7 +55,7 @@
               </div>
               {% endif %}
             </td>
-          <td id='src_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{% value gloss.idgloss %}</a></td>
+          <td id='src_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{% value gloss.annotation_idgloss %}</a></td>
           <td  id='src_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{% value gloss.annotation_idgloss_en %}</a></td>
           <td id='src_keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td  id='src_handedness'>{% value gloss.get_handedness_display %}</td>
@@ -95,7 +101,7 @@
               </div>
               {% endif %}
             </td>
-          <td id='homo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='homo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
           <td id='homo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
           <td id='homo_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td id='homo_handedness'>{% value rel.target.get_handedness_display %}</td>
@@ -141,7 +147,7 @@
               </div>
               {% endif %}
             </td>
-          <td id='syno_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='syno_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
           <td id='syno_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
           <td id='syno_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td id='syno_handedness'>{% value rel.target.get_handedness_display %}</td>
@@ -187,7 +193,7 @@
               </div>
               {% endif %}
           </td>
-          <td id='anto_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='anto_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
           <td id='anto_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
           <td id='anto_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td id='anto_handedness'>{% value rel.target.get_handedness_display %}</td>
@@ -233,7 +239,7 @@
               </div>
               {% endif %}
           </td>
-          <td id='hypo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='hypo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
           <td id='hypo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
           <td id='hypo_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td id='hypo_handedness'>{% value rel.target.get_handedness_display %}</td>
@@ -279,7 +285,7 @@
               </div>
               {% endif %}
           </td>
-          <td id='hyper_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='hyper_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
           <td id='hyper_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
           <td id='hyper_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td id='hyper_handedness'>{% value rel.target.get_handedness_display %}</td>
@@ -325,7 +331,7 @@
               </div>
               {% endif %}
           </td>
-          <td id='seealso_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target}}</a></td>
+          <td id='seealso_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
           <td id='seealso_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
           <td id='seealso_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td id='seealso_handedness'>{% value rel.target.get_handedness_display %}</td>
@@ -370,7 +376,7 @@
               </div>
               {% endif %}
           </td>
-          <td id='var_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl.idgloss}}</a></td>
+          <td id='var_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl.annotation_idgloss}}</a></td>
           <td id='var_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{% value gl.annotation_idgloss_en %}</a></td>
           <td id='var_keywords'>{% for trn in gl.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td id='var_handedness'>{% value gl.get_handedness_display %}</td>
@@ -411,7 +417,7 @@
               </div>
               {% endif %}
           </td>
-          <td id='mp_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.idgloss }}</a></td>
+          <td id='mp_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td>
           <td id='mp_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{% value gl.annotation_idgloss_en %}</a></td>
           <td id='mp_keywords'>{% for trn in gl.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
 
