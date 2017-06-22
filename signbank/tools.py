@@ -259,7 +259,7 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
                     destination = WRITABLE_FOLDER + GLOSS_IMAGE_DIRECTORY + os.sep + gloss_prefix
                     still_goal_location = destination + os.sep + filename
                     if not os.path.isdir(destination):
-                        os.makedirs(destination, 0o750)
+                        os.makedirs(destination, 0o770)
                     elif os.path.isfile(still_goal_location):
                         # Make a backup
                         backup_id = 1
