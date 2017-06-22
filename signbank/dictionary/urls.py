@@ -57,12 +57,12 @@ urlpatterns = [
 
     url(r'^missingvideo.html$', signbank.dictionary.views.missing_video_view),
 
-    url(r'^import_images/$', signbank.dictionary.views.import_media,{'video':False}),
-    url(r'^import_videos/$', signbank.dictionary.views.import_media,{'video':True}),
-    url(r'^import_other_media/$', signbank.dictionary.views.import_other_media),
+    url(r'^import_images/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':False}),
+    url(r'^import_videos/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':True}),
+    url(r'^import_other_media/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_other_media)),
 
-    url(r'find_and_save_variants/$',signbank.dictionary.views.find_and_save_variants),
-    url(r'find_homonyms/$',signbank.dictionary.views.find_homonyms),
+    url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
+    url(r'find_homonyms/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_homonyms)),
     url(r'update_cngt_counts/$', signbank.dictionary.views.update_cngt_counts),
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', signbank.dictionary.views.update_cngt_counts),
 
