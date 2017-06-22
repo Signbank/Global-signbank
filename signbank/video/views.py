@@ -112,6 +112,10 @@ def deletevideo(request, videoid):
         log_entry = GlossVideoHistory(action="delete", gloss=gloss, actor=request.user)
         log_entry.save()
 
+        #Extra check: if the file is still there, delete it manually
+        if os.path.isfile(WRITABLE_FOLDER + gloss.get_video_path()):
+            os.remove(WRITABLE_FOLDER + gloss.get_video_path())
+
     deleted_video = DeletedGlossOrMedia()
     deleted_video.item_type = 'video'
     deleted_video.idgloss = gloss.idgloss
