@@ -438,7 +438,7 @@ class GlossListView(ListView):
 
         #If we wanted to get everything, we're done now
         if show_all:
-            return qs
+            return order_queryset_by_sort_order(self.request.GET, qs)
 
         #If not, we will go trhough a long list of filters
         if 'search' in get and get['search'] != '':
