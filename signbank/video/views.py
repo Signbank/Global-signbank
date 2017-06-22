@@ -171,7 +171,7 @@ def create_still_images(request):
     processed_videos = []
     for gloss in Gloss.objects.all():
         video_path = WRITABLE_FOLDER + gloss.get_video_path()
-        if os.path.isfile(video_path):
+        if os.path.isfile(video_path.encode('UTF-8')):
             idgloss_prefix = gloss.idgloss[:2]
             (folder, basename) = os.path.split(video_path)
             generate_still_image(idgloss_prefix, folder + os.sep, basename)
