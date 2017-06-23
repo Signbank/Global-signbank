@@ -241,7 +241,8 @@ class Gloss(models.Model):
                 pass
             
         return d
-    
+
+    # not called anywhere
     def admin_fields(self):
         """Return a list of field values in settings.ADMIN_RESULT_FIELDS 
         for use in the admin list view"""
@@ -720,6 +721,7 @@ minor or insignificant ways that can be ignored.""")
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
 
                 non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
+                # print('empty_non_empty_phonology: human value: ', str(human_value))
             else:
                 empty_phonology = empty_phonology + [(field,str(label))]
 
@@ -767,6 +769,7 @@ minor or insignificant ways that can be ignored.""")
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
 
                 non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
+                # print('non_empty_phonology: human value: ', str(human_value))
 
         return non_empty_phonology
 
@@ -848,6 +851,16 @@ minor or insignificant ways that can be ignored.""")
 
     def minimal_pairs_dict(self):
 
+        fieldKind = {'handedness': 'list', 'domhndsh': 'list', 'subhndsh': 'list',
+                      'handCh': 'list', 'relatArtic': 'list',
+                      'locprim': 'list', 'locVirtObj': 'text',
+                      'relOriMov': 'list', 'relOriLoc': 'list',
+                      'oriCh': 'list',
+                      'contType': 'list', 'movSh': 'list', 'movDir': 'list',
+                      'repeat': 'check',
+                      'altern': 'check', 'phonOth': 'text', 'mouthG': 'text',
+                      'mouthing': 'text', 'phonetVar': 'text'}
+
         wmp = self.minimal_pairs_objects()
 
         if (self.handedness is None or self.handedness == '0'):
@@ -859,25 +872,27 @@ minor or insignificant ways that can be ignored.""")
         (ep, nep) = self.empty_non_empty_phonology()
 
         minimal_pairs_fields = {}
-        matching_phonology_fields = []
-        defined_nep = len(nep)
-        (hnyms, hnew, hrm) = self.homonyms()
 
         for o in wmp:
             different_fields = {}
             onep = o.non_empty_phonology()
             for f,n,v in onep:
+                fc = fieldname_to_category(f)
                 self_value_f = getattr(self,f)
-                if self_value_f != getattr(o,f):
-                     different_fields[f] = (n,v)
+                other_value_f = getattr(o,f)
+                if self_value_f != other_value_f:
+                     different_fields[f] = (n, fc,self_value_f,other_value_f,fieldKind[f])
             if (len(list(different_fields.keys())) == 0):
                 for sf,sn,sv in nep:
-                    if (getattr(self, sf) != getattr(o, sf)):
-                        different_fields[sf] = (sn, '')
+                    sfc = fieldname_to_category(sf)
+                    self_value_sf = getattr(self, sf)
+                    other_value_sf = getattr(o,sf)
+                    if other_value_sf != self_value_sf:
+                        different_fields[sf] = (sn, sfc,self_value_sf,'',fieldKind[sf])
 
             minimal_pairs_fields[o] = different_fields
 
-        return (minimal_pairs_fields,matching_phonology_fields)
+        return minimal_pairs_fields
 
 
     def homonyms(self):

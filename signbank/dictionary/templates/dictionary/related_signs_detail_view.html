@@ -12,11 +12,17 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
-{% endblock %}
+    <script type='text/javascript'>
 
+    var choice_lists = {{ choice_lists | safe }};
+
+    </script>
+{% endblock %}
 
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
+{% load field_choice %}
+
 
 <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
 
@@ -55,18 +61,30 @@
               </div>
               {% endif %}
             </td>
-          <td id='src_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{% value gloss.annotation_idgloss %}</a></td>
-          <td  id='src_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{% value gloss.annotation_idgloss_en %}</a></td>
+          <td id='src_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{{gloss.annotation_idgloss}}</a></td>
+          <td  id='src_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{{gloss.annotation_idgloss_en}}</a></td>
           <td id='src_keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td  id='src_handedness'>{% value gloss.get_handedness_display %}</td>
-          <td  id='src_domhndsh'>{% value gloss.get_domhndsh_display %}</td>
-          <td  id='src_subhndsh'>{% value gloss.get_subhndsh_display %}</td>
-          <td  id='src_locprim'>{% value gloss.get_locprim_display %}</td>
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td id='src_handedness_nl'>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td id='src_domhndsh_nl'>{{ gloss.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='src_subhndsh_nl'>{{ gloss.subhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='src_locprim_nl'>{{ gloss.locprim|translate_to_dutch:"Location" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td id='src_handedness_cn'>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td id='src_domhndsh_cn'>{{ gloss.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='src_subhndsh_cn'>{{ gloss.subhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='src_locprim_cn'>{{ gloss.locprim|translate_to_chinese:"Location" }}</td>
+            {% else %}
+                <td id='src_handedness'>{{ gloss.get_handedness_display }}</td>
+                <td id='src_domhndsh'>{{ gloss.get_domhndsh_display }}</td>
+                <td id='src_subhndsh'>{{ gloss.get_subhndsh_display }}</td>
+                <td id='src_locprim'>{{ gloss.get_locprim_display }}</td>
+            {% endif %}
+
           {% load underscore_to_space %}
           <td>{% for tag in gloss.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
       </tr>
     </tbody>
-
 
 
        <thead>
@@ -102,12 +120,24 @@
               {% endif %}
             </td>
           <td id='homo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='homo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='homo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
           <td id='homo_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td id='homo_handedness'>{% value rel.target.get_handedness_display %}</td>
-          <td id='homo_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
-          <td id='homo_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
-          <td id='homo_locprim'>{% value rel.target.get_locprim_display %}</td>
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td id='homo_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td id='homo_domhndsh_nl'>{{ rel.target.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='homo_subhndsh_nl'>{{ rel.target.subhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='homo_locprim_nl'>{{ rel.target.locprim|translate_to_dutch:"Location" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td id='homo_handedness_cn'>{{ rel.target.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td id='homo_domhndsh_cn'>{{ rel.target.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='homo_subhndsh_cn'>{{ rel.target.subhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='homo_locprim_cn'>{{ rel.target.locprim|translate_to_chinese:"Location" }}</td>
+            {% else %}
+                <td id='homo_handedness'>{{ rel.target.get_handedness_display }}</td>
+                <td id='homo_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
+                <td id='homo_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
+                <td id='homo_locprim'>{{ rel.target.get_locprim_display }}</td>
+            {% endif %}
           {% load underscore_to_space %}
           <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
       </tr>
@@ -148,12 +178,24 @@
               {% endif %}
             </td>
           <td id='syno_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='syno_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='syno_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
           <td id='syno_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td id='syno_handedness'>{% value rel.target.get_handedness_display %}</td>
-          <td id='syno_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
-          <td id='syno_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
-          <td id='syno_locprim'>{% value rel.target.get_locprim_display %}</td>
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td id='syno_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td id='syno_domhndsh_nl'>{{ rel.target.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='syno_subhndsh_nl'>{{ rel.target.subhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='syno_locprim_nl'>{{ rel.target.locprim|translate_to_dutch:"Location" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td id='syno_handedness_cn'>{{ rel.target.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td id='syno_domhndsh_cn'>{{ rel.target.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='syno_subhndsh_cn'>{{ rel.target.subhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='syno_locprim_cn'>{{ rel.target.locprim|translate_to_chinese:"Location" }}</td>
+            {% else %}
+                <td id='syno_handedness'>{{ rel.target.get_handedness_display }}</td>
+                <td id='syno_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
+                <td id='syno_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
+                <td id='syno_locprim'>{{ rel.target.get_locprim_display }}</td>
+            {% endif %}
           {% load underscore_to_space %}
           <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
       </tr>
@@ -194,12 +236,24 @@
               {% endif %}
           </td>
           <td id='anto_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='anto_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='anto_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
           <td id='anto_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td id='anto_handedness'>{% value rel.target.get_handedness_display %}</td>
-          <td id='anto_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
-          <td id='anto_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
-          <td id='anto_locprim'>{% value rel.target.get_locprim_display %}</td>
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td id='anto_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td id='anto_domhndsh_nl'>{{ rel.target.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='anto_subhndsh_nl'>{{ rel.target.subhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='anto_locprim_nl'>{{ rel.target.locprim|translate_to_dutch:"Location" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td id='anto_handedness_cn'>{{ rel.target.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td id='anto_domhndsh_cn'>{{ rel.target.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='anto_subhndsh_cn'>{{ rel.target.subhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='anto_locprim_cn'>{{ rel.target.locprim|translate_to_chinese:"Location" }}</td>
+            {% else %}
+                <td id='anto_handedness'>{{ rel.target.get_handedness_display }}</td>
+                <td id='anto_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
+                <td id='anto_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
+                <td id='anto_locprim'>{{ rel.target.get_locprim_display }}</td>
+            {% endif %}
           {% load underscore_to_space %}
           <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
       </tr>
@@ -240,12 +294,24 @@
               {% endif %}
           </td>
           <td id='hypo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='hypo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='hypo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
           <td id='hypo_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td id='hypo_handedness'>{% value rel.target.get_handedness_display %}</td>
-          <td id='hypo_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
-          <td id='hypo_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
-          <td id='hypo_locprim'>{% value rel.target.get_locprim_display %}</td>
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td id='hypo_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td id='hypo_domhndsh_nl'>{{ rel.target.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='hypo_subhndsh_nl'>{{ rel.target.subhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='hypo_locprim_nl'>{{ rel.target.locprim|translate_to_dutch:"Location" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td id='hypo_handedness_cn'>{{ rel.target.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td id='hypo_domhndsh_cn'>{{ rel.target.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='hypo_subhndsh_cn'>{{ rel.target.subhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='hypo_locprim_cn'>{{ rel.target.locprim|translate_to_chinese:"Location" }}</td>
+            {% else %}
+                <td id='hypo_handedness'>{{ rel.target.get_handedness_display }}</td>
+                <td id='hypo_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
+                <td id='hypo_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
+                <td id='hypo_locprim'>{{ rel.target.get_locprim_display }}</td>
+            {% endif %}
           {% load underscore_to_space %}
           <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
       </tr>
@@ -286,12 +352,24 @@
               {% endif %}
           </td>
           <td id='hyper_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='hyper_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='hyper_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
           <td id='hyper_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td id='hyper_handedness'>{% value rel.target.get_handedness_display %}</td>
-          <td id='hyper_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
-          <td id='hyper_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
-          <td id='hyper_locprim'>{% value rel.target.get_locprim_display %}</td>
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td id='hyper_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td id='hyper_domhndsh_nl'>{{ rel.target.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='hyper_subhndsh_nl'>{{ rel.target.subhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='hyper_locprim_nl'>{{ rel.target.locprim|translate_to_dutch:"Location" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td id='hyper_handedness_cn'>{{ rel.target.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td id='hyper_domhndsh_cn'>{{ rel.target.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='hyper_subhndsh_cn'>{{ rel.target.subhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='hyper_locprim_cn'>{{ rel.target.locprim|translate_to_chinese:"Location" }}</td>
+            {% else %}
+                <td id='hyper_handedness'>{{ rel.target.get_handedness_display }}</td>
+                <td id='hyper_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
+                <td id='hyper_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
+                <td id='hyper_locprim'>{{ rel.target.get_locprim_display }}</td>
+            {% endif %}
           {% load underscore_to_space %}
           <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
       </tr>
@@ -332,12 +410,24 @@
               {% endif %}
           </td>
           <td id='seealso_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='seealso_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{% value rel.target.annotation_idgloss_en %}</a></td>
+          <td id='seealso_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
           <td id='seealso_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td id='seealso_handedness'>{% value rel.target.get_handedness_display %}</td>
-          <td id='seealso_domhndsh'>{% value rel.target.get_domhndsh_display %}</td>
-          <td id='seealso_subhndsh'>{% value rel.target.get_subhndsh_display %}</td>
-          <td id='seealso_locprim'>{% value rel.target.get_locprim_display %}</td>
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td id='seealso_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td id='seealso_domhndsh_nl'>{{ rel.target.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='seealso_subhndsh_nl'>{{ rel.target.subhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='seealso_locprim_nl'>{{ rel.target.locprim|translate_to_dutch:"Location" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td id='seealso_handedness_cn'>{{ rel.target.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td id='seealso_domhndsh_cn'>{{ rel.target.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='seealso_subhndsh_cn'>{{ rel.target.subhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='seealso_locprim_cn'>{{ rel.target.locprim|translate_to_chinese:"Location" }}</td>
+            {% else %}
+                <td id='seealso_handedness'>{{ rel.target.get_handedness_display }}</td>
+                <td id='seealso_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
+                <td id='seealso_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
+                <td id='seealso_locprim'>{{ rel.target.get_locprim_display }}</td>
+            {% endif %}
           {% load underscore_to_space %}
           <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
       </tr>
@@ -377,19 +467,31 @@
               {% endif %}
           </td>
           <td id='var_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl.annotation_idgloss}}</a></td>
-          <td id='var_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{% value gl.annotation_idgloss_en %}</a></td>
+          <td id='var_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl.annotation_idgloss_en}}</a></td>
           <td id='var_keywords'>{% for trn in gl.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td id='var_handedness'>{% value gl.get_handedness_display %}</td>
-          <td id='var_domhndsh'>{% value gl.get_domhndsh_display %}</td>
-          <td id='var_subhndsh'>{% value gl.get_subhndsh_display %}</td>
-          <td id='var_locprim'>{% value gl.get_locprim_display %}</td>
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td id='var_handedness_nl'>{{ gl.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td id='var_domhndsh_nl'>{{ gl.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='var_subhndsh_nl'>{{ gl.subhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td id='var_locprim_nl'>{{ gl.locprim|translate_to_dutch:"Location" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td id='var_handedness_cn'>{{ gl.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td id='var_domhndsh_cn'>{{ gl.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='var_subhndsh_cn'>{{ gl.subhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td id='var_locprim_cn'>{{ gl.locprim|translate_to_chinese:"Location" }}</td>
+            {% else %}
+                <td id='var_handedness'>{{ gl.get_handedness_display }}</td>
+                <td id='var_domhndsh'>{{ gl.get_domhndsh_display }}</td>
+                <td id='var_subhndsh'>{{ gl.get_subhndsh_display }}</td>
+                <td id='var_locprim'>{{ gl.get_locprim_display }}</td>
+            {% endif %}
           {% load underscore_to_space %}
           <td>{% for tag in gl.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
       </tr>
       {% endfor %}
     </tbody>
     {% with gloss.minimal_pairs_dict as mpd %}
-    {% if mpd.0 %}
+    {% if mpd %}
     <thead>
        <tr>
            <th style="width:8em; color:darkred">{% trans "Minimal Pairs" %}</th>
@@ -400,14 +502,15 @@
            <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
             {% endif %}
 
-           <th style='width:12em'>{% trans "Translation equivalents" %}</th>
-           <th style="width:20em" colspan="3">{% trans "Field name" %}</th>
-           <th style="width:20em" colspan="2">{% trans "Value" %}</th>
+           <th style="width:20em" colspan="2">{% trans "Field name" %}</th>
+           <th style="width:20em" colspan="2">{% trans "Source Sign Value" %}</th>
+           <th style="width:20em" colspan="2">{% trans "Contrasting Sign Value" %}</th>
 
        </tr>
     </thead>
     <tbody>
-     {% for gl,dict in mpd.0.items %}
+     {% load field_choice %}
+     {% for gl,dict in mpd.items %}
 		<tr>
           <td>{%if gl.get_image_path != None %}
               <div class="thumbnail_container">
@@ -418,12 +521,26 @@
               {% endif %}
           </td>
           <td id='mp_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td>
-          <td id='mp_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{% value gl.annotation_idgloss_en %}</a></td>
-          <td id='mp_keywords'>{% for trn in gl.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td id='mp_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl.annotation_idgloss_en}}</a></td>
 
             {% for k,d in dict.items %}
-                <td colspan="3">{{ d.0 }}</td>
-                <td colspan="2">{{ d.1 }}</td>
+                {% with d.0 as field_name %}
+                {% with d.1|add:" " as field_category %}
+                {% with d.2|stringformat:"s" as field_value %}
+                {% with d.3|stringformat:"s" as other_field_value %}
+                {% with request.LANGUAGE_CODE as language %}
+                {% with field_category|add:language as args %}
+                <td colspan="2">{% trans d.0 %}</td>
+                <td colspan="2">{% if d.4 == "check" and d.2 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
+                        {% else %}{{ field_value|machine_field_translate:args }}{% endif %}</td>
+                <td colspan="2">{% if d.4 == "check" and d.3 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
+                        {% else %}{{ other_field_value|machine_field_translate:args }}{% endif %}</td>
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
             {% endfor %}
         </tr>
      {% endfor %}

@@ -27,6 +27,7 @@
     var edit_post_url = '{% url 'dictionary:update_morpheme' morpheme.id %}';
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
+    var relation_delete_choices = '{ "delete" : "Delete" }';
     var languages = {{morpheme.language_choices|safe}};
     var dialects = {{morpheme.dialect_choices|safe}};
     var mrptype_choices = {{morpheme.mrptype_choices|safe}};
