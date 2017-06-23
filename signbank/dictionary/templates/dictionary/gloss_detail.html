@@ -632,17 +632,35 @@
             <table class='table table-condensed'>
 
             {% with gloss.minimal_pairs_dict as mpd %}
-            {% if mpd.0 %}
+            {% if mpd %}
                <tr>
                    <th style="width:auto; padding:0px 0px;">{% trans "ID Gloss" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Field name" %}</th>
-                   <th style="width:auto; padding:0px 0px;">{% trans "Value" %}</th>
+                   <th style="width:auto; padding:0px 0px;">{% trans "Source Sign Value" %}</th>
+                   <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
                 </tr>
-
-                {% for gl, dict in mpd.0.items %}
+                {% load field_choice %}
+                {% for gl, dict in mpd.items %}
                 <tr>
                 {% for k, d in dict.items %}
-                    <td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td><td>{{ d.0 }}</td><td>{{ d.1 }}</td>
+                    {% with d.0 as field_name %}
+                    {% with d.1|add:" " as field_category %}
+                    {% with d.2|stringformat:"s" as field_value %}
+                    {% with d.3|stringformat:"s" as other_field_value %}
+                    {% with request.LANGUAGE_CODE as language %}
+                    {% with field_category|add:language as args %}
+                    <td style="width:auto; padding:0px 0px;"><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td>
+                    <td style="width:auto; padding:0px 0px;">{% trans d.0 %}</td>
+                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and d.2 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
+                        {% else %}{{ field_value|machine_field_translate:args }}{% endif %}</td>
+                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and d.3 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
+                        {% else %}{{ other_field_value|machine_field_translate:args }}{% endif %}</td>
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
                 {% endfor %}
                 </tr>
                 {% endfor %}
