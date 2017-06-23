@@ -72,6 +72,7 @@ def update_gloss(request, glossid):
         field = request.POST.get('id', '')
         value = request.POST.get('value', '')
         original_value = '' #will in most cases be set later, but can't be empty in case it is not set
+        category_value = ''
 
         # print('field is: ', field)
 
@@ -178,8 +179,8 @@ def update_gloss(request, glossid):
         elif field in 'inWeb':
             # only modify if we have publish permission
             if request.user.has_perm('dictionary.can_publish'):
-                gloss.inWeb = (value == 'Yes')
-                gloss.save() 
+                gloss.inWeb = value in ['Yes','yes','true','True',True,1]
+                gloss.save()
             
             if gloss.inWeb:
                 newvalue = 'Yes'
@@ -189,10 +190,20 @@ def update_gloss(request, glossid):
         elif field in 'isNew':
             # only modify if we have publish permission
 
-            gloss.isNew = (value == 'Yes')
+            gloss.isNew = value in ['Yes','yes','true','True',True,1]
             gloss.save()
 
             if gloss.isNew:
+                newvalue = 'Yes'
+            else:
+                newvalue = 'No'
+        elif field in 'excludeFromEcv':
+            # only modify if we have publish permission
+
+            gloss.excludeFromEcv = value in ['Yes','yes','true','True',True,1]
+            gloss.save()
+
+            if gloss.excludeFromEcv:
                 newvalue = 'Yes'
             else:
                 newvalue = 'No'
