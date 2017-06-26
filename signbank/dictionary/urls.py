@@ -63,10 +63,10 @@ urlpatterns = [
 
     url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
     url(r'find_homonyms/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_homonyms)),
-    url(r'update_cngt_counts/$', signbank.dictionary.views.update_cngt_counts),
-    url(r'update_cngt_counts/(?P<folder_index>\d+)$', signbank.dictionary.views.update_cngt_counts),
+    url(r'update_cngt_counts/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.update_cngt_counts)),
+    url(r'update_cngt_counts/(?P<folder_index>\d+)$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.update_cngt_counts)),
 
-    url(r'get_unused_videos/$',signbank.dictionary.views.get_unused_videos),
+    url(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     url(r'all_field_choices.tsv/$',signbank.dictionary.views.list_all_fieldchoice_names),
     url(r'package/$', signbank.dictionary.views.package),
     url(r'info/$', signbank.dictionary.views.info),
@@ -74,7 +74,7 @@ urlpatterns = [
 
     # Admin views
     url(r'^try/$', signbank.dictionary.views.try_code), #A view for the developer to try out some things
-    url(r'^import_authors/$', signbank.dictionary.views.import_authors),
+    url(r'^import_authors/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_authors)),
 
     url(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
     url(r'^morphemes/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view()), name='admin_morpheme_list'),
