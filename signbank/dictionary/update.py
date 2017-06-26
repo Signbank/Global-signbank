@@ -224,7 +224,7 @@ def update_gloss(request, glossid):
             #Translate the value if a boolean
             if isinstance(gloss._meta.get_field(field),NullBooleanField):
                 newvalue = value;
-                value = (value == 'Yes')
+                value = (value in ['Yes','yes','true','True',True,1])
 
             # special value of 'notset' or -1 means remove the value
             if value == 'notset' or value == -1 or value == '':
