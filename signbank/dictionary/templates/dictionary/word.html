@@ -81,6 +81,9 @@
         <div class='btn-group'>
             {# Translators: Navigation detailed view  #}
            <a id='editbutton' class='btn btn-default navbar-btn' href="{% url 'dictionary:admin_gloss_view' pk=gloss.id %}">{% blocktrans %}Detail View{% endblocktrans %}</a>
+
+            <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+
         </div>
         {% endif %}
     
