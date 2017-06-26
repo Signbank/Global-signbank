@@ -888,7 +888,7 @@ minor or insignificant ways that can be ignored.""")
                     self_value_sf = getattr(self, sf)
                     other_value_sf = getattr(o,sf)
                     if other_value_sf != self_value_sf:
-                        different_fields[sf] = (sn, sfc,self_value_sf,'',fieldKind[sf])
+                        different_fields[sf] = (sn, sfc,self_value_sf,'0',fieldKind[sf])
 
             minimal_pairs_fields[o] = different_fields
 
