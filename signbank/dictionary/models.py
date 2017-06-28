@@ -1273,7 +1273,6 @@ class MorphologyDefinition(models.Model):
     morpheme = models.ForeignKey(Gloss,related_name="morphemes")
 
     def __str__(self):
-
         return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
 
 class Morpheme(Gloss):
@@ -1330,6 +1329,14 @@ class Morpheme(Gloss):
 
         return json.dumps(OrderedDict(reformatted_li))
 
+class SimultaneousMorphologyDefinition(models.Model):
+
+    parent_gloss = models.ForeignKey(Gloss,related_name='parent_gloss')
+    role = models.CharField(max_length=100)
+    morpheme = models.ForeignKey(Morpheme,related_name='morpheme')
+
+    def __str__(self):
+        return self.parent_gloss.idgloss + ' consists of ' + self.morpheme.idgloss
 
 class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""

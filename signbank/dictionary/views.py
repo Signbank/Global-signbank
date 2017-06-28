@@ -481,18 +481,14 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    result = 'hoi'
-    for tagged_item in TaggedItem.objects.all():
+    result = 'OK'
 
-        if tagged_item.tag.pk == 13: #13 = radboud sign
-
-            try:
-                pk = tagged_item.object_id
-                gloss = Gloss.objects.get(pk=pk)
-                gloss.inWeb = True
-                gloss.save()
-            except ObjectDoesNotExist:
-                continue
+    for gloss in Gloss.objects.all():
+        for morphemePart in gloss.morphemePart.all():
+            definition = SimultaneousMorphologyDefinition()
+            definition.morpheme = morphemePart
+            definition.parent_gloss = gloss
+            #definition.save()
 
     return HttpResponse(result)
 

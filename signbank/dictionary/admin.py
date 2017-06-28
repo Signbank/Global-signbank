@@ -173,6 +173,7 @@ admin.site.register(Morpheme, GlossAdmin)
 admin.site.register(Keyword, KeywordAdmin)
 admin.site.register(FieldChoice,FieldChoiceAdmin)
 admin.site.register(MorphologyDefinition)
+admin.site.register(SimultaneousMorphologyDefinition)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
