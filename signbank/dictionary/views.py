@@ -483,12 +483,12 @@ def try_code(request):
 
     result = 'OK'
 
-    for gloss in Gloss.objects.all():
-        for morphemePart in gloss.morphemePart.all():
-            definition = SimultaneousMorphologyDefinition()
-            definition.morpheme = morphemePart
-            definition.parent_gloss = gloss
-            #definition.save()
+    # for gloss in Gloss.objects.all():
+    #     for morphemePart in gloss.morphemePart.all():
+    #         definition = SimultaneousMorphologyDefinition()
+    #         definition.morpheme = morphemePart
+    #         definition.parent_gloss = gloss
+    #         definition.save()
 
     return HttpResponse(result)
 

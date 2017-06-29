@@ -1331,9 +1331,9 @@ class Morpheme(Gloss):
 
 class SimultaneousMorphologyDefinition(models.Model):
 
-    parent_gloss = models.ForeignKey(Gloss,related_name='parent_gloss')
+    parent_gloss = models.ForeignKey(Gloss,related_name='simultaneous_morphology')
     role = models.CharField(max_length=100)
-    morpheme = models.ForeignKey(Morpheme,related_name='morpheme')
+    morpheme = models.ForeignKey(Morpheme,related_name='glosses_containing')
 
     def __str__(self):
         return self.parent_gloss.idgloss + ' consists of ' + self.morpheme.idgloss

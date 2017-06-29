@@ -490,9 +490,10 @@
               {% if gloss.morphemePart.all.count > 0 %}
                 <tr>
                     <th style='width:2em'></th>
+                    <th style='width:2em'>{% trans "Description" %}</th>
                     <th style='width:12em'>{% trans "Morpheme" %}</th>
                 </tr>
-                {% for morpheme in gloss.morphemePart.all %}
+                {% for morpheme in gloss.simultaneous_morphology.all %}
                 <tr>
                     <!-- Facility to delete this morpheme -->
                      <td>
@@ -523,7 +524,8 @@
                          </div>
 
                     </td>
-                    <td class='edit edit_morpheme' id='morpheme-definition_{{morpheme.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.pk %}'>{{morpheme}}</a></td>
+                    <td>{{morpheme.role}}</td>
+                    <td class='edit edit_morpheme' id='morpheme-definition_{{morpheme.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morpheme.morpheme}}</a></td>
                 </tr>
                 {% endfor %}
 
