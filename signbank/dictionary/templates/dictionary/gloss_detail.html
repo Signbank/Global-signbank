@@ -497,9 +497,9 @@
                 <tr>
                     <!-- Facility to delete this morpheme -->
                      <td>
-                        <span class='glyphicon glyphicon-trash morpheme-definition-delete' data-toggle='modal' data-target='#delete_morpheme-definition_modal_{{morpheme.id}}'></span>
+                        <span class='glyphicon glyphicon-trash morpheme-definition-delete' data-toggle='modal' data-target='#delete_morpheme-definition_modal_{{morpheme.pk}}'></span>
 
-                         <div class="modal fade" id="delete_morpheme-definition_modal_{{morpheme.id}}" role="dialog" aria-labelledby="#modalTitleMrp" aria-hidden="true">
+                         <div class="modal fade" id="delete_morpheme-definition_modal_{{morpheme.pk}}" role="dialog" aria-labelledby="#modalTitleMrp" aria-hidden="true">
                              <div class="modal-dialog modal-sm">
                                 <div class="modal-content">
                                     <div class='modal-header'>
@@ -511,7 +511,7 @@
                                      </div>
                                   <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                                       {% csrf_token %}
-                                      <input type='hidden' name='id' value='morpheme-definition-delete_{{morpheme.id}}'>
+                                      <input type='hidden' name='id' value='morpheme-definition-delete_{{morpheme.pk}}'>
                                       <input type='hidden' name='value' value='confirmed'>
                                       <div class="modal-footer">
                                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>

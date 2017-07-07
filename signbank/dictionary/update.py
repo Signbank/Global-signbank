@@ -1010,15 +1010,9 @@ def update_morpheme_definition(gloss, field, value):
     (what, morph_def_id) = field.split('_')
     what = what.replace('-','_');
 
-    try:
-        # morph_def = MorphologyDefinition.objects.get(id=morph_def_id)
-        morph_def = gloss.morphemePart.get(id=morph_def_id)
-    except:
-        return HttpResponseBadRequest("Bad Morpheme Definition ID '%s'" % morph_def_id, {'content-type': 'text/plain'})
-
     if what == 'morpheme_definition_delete':
-        print("REMOVE: ", morph_def, " FROM: ", gloss)
-        gloss.morphemePart.remove(morph_def)
+        definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
+        definition.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     else:
 
