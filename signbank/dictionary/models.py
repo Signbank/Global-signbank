@@ -1353,7 +1353,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User,related_name="user_profile_user")
 
     # Other fields here
-    last_used_language = models.CharField(max_length=5, default=settings.LANGUAGE_CODE)
+    last_used_language = models.CharField(max_length=20, default=settings.LANGUAGE_CODE)
     expiry_date = models.DateField(null=True, blank=True)
     number_of_logins = models.IntegerField(null=True,default=0)
     comments = models.CharField(max_length=500,null=True, blank=True)
