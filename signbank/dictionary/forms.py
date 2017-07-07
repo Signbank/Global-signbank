@@ -287,11 +287,11 @@ class GlossMorphologyForm(forms.ModelForm):
 
 
 class GlossMorphemeForm(forms.Form):
-    """Specify [morphemePart] components belonging to a Gloss"""
+    """Specify simultaneous morphology components belonging to a Gloss"""
 
     host_gloss_id = forms.CharField(label=_(u'Host Gloss'))
+    description = forms.CharField()
     morph_id = forms.CharField(label=_(u'Morpheme'))
-
 
 class MorphemeMorphologyForm(forms.ModelForm):
     """Morphology specification for a Morpheme"""

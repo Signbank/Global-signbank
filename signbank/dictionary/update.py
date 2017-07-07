@@ -685,15 +685,15 @@ def add_morpheme_definition(request, glossid):
 
         if form.is_valid():
 
-            host_gloss = form.cleaned_data['host_gloss_id']
             morph_id = form.cleaned_data['morph_id']
             morph = morph_from_identifier(morph_id)
 
             if morph != None:
-
-                # Add this morpheme to the "morphemePart" field of the gloss instance
-                thisgloss.morphemePart.add(morph)
-                thisgloss.save()
+                definition = SimultaneousMorphologyDefinition()
+                definition.parent_gloss = thisgloss
+                definition.morpheme = morph
+                definition.role = form.cleaned_data['description']
+                definition.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
