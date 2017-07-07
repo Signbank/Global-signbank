@@ -63,7 +63,7 @@ def page(request, url='/'):
     if request.LANGUAGE_CODE == 'nl':
         f.title = mark_safe(f.title_dutch)
         f.content = mark_safe(f.content_dutch)
-    elif request.LANGUAGE_CODE == 'cn':
+    elif request.LANGUAGE_CODE == 'zh-hans':
         f.title = mark_safe(f.title_chinese)
         f.content = mark_safe(f.content_chinese)
     else:

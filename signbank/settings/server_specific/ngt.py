@@ -23,7 +23,7 @@ ALLOWED_HOSTS = ['signbank.science.ru.nl']
 LANGUAGES = (
   ('en', 'English'),
   ('nl', 'Dutch'),
-  ('cn', 'Chinese')
+  ('zh-hans', 'Chinese')
 )
 LANGUAGE_CODE = "en"
 
@@ -103,5 +103,5 @@ API_FIELDS = [
 LANGUAGE_CODE_MAP = [
     {2:'nl',3:'nld'},
     {2:'en',3:'eng'},
-    {2:'cn',3:'chi'}
+    {2:'zh-hans',3:'chi'}
 ]
