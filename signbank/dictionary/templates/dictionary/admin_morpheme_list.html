@@ -396,7 +396,7 @@ function do_adminsearch(el) {
             <input class='btn btn-default' type='submit' name='format' value='CSV'>
             {% endif %}
             <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
-            <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
+            <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
         </div>
 
         <div class='form-group' id='paginate_by'>

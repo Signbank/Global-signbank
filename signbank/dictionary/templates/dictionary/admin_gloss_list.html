@@ -451,7 +451,7 @@ function do_adminsearch(el) {
         {% if perms.dictionary.export_ecv %}
         <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
         {% endif %}
-        <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);"
+        <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
                value='{% trans "Reset" %}'>
     </div>
 
