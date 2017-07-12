@@ -487,7 +487,6 @@
                 <tr>
                     <th style='...'>{% trans "Simultaneous Morphology" %}</th>
                 </tr>
-              {% if gloss.morphemePart.all.count > 0 %}
                 <tr>
                     <th style='width:2em'></th>
                     <th style='width:2em'>{% trans "Description" %}</th>
@@ -528,10 +527,6 @@
                     <td class='edit edit_morpheme' id='morpheme-definition_{{morpheme.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morpheme.morpheme}}</a></td>
                 </tr>
                 {% endfor %}
-
-            {% else %}
-                <tr><td><i>({% trans "Use [Edit] to define any morphemes used in this sign" %})</i></td></tr>
-            {% endif %}
             </table>
 
             <!-- Facilitate adding and deleting morphemes that are used in this sign -->
