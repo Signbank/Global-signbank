@@ -210,7 +210,7 @@ VIDEO_UPLOAD_LOCATION = "upload"
 ATTACHMENT_LOCATION = 'attachments'
 
 # which fields from the Gloss model should be included in the quick update form on the sign view
-QUICK_UPDATE_GLOSS_FIELDS = ['language', 'dialect']
+QUICK_UPDATE_GLOSS_FIELDS = ['signlanguage', 'dialect']
 
 # should we always require a login for viewing dictionary content
 ALWAYS_REQUIRE_LOGIN = True

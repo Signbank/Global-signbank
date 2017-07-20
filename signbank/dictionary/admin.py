@@ -100,7 +100,7 @@ class GlossAdmin(VersionAdmin):
 
     list_display += ['morph', 'sense', 'sn']
     search_fields = ['^idgloss', '=sn', '^annotation_idgloss']
-    list_filter = ['language', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
+    list_filter = ['signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
     inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 
     history_latest_first = True
@@ -116,8 +116,8 @@ class DialectInline(admin.TabularInline):
 class DialectAdmin(VersionAdmin):
     model = Dialect
  
-class LanguageAdmin(VersionAdmin):
-    model = Language
+class SignLanguageAdmin(VersionAdmin):
+    model = SignLanguage
     inlines = [DialectInline]
 
 # Define an inline admin descriptor for UserProfile model
@@ -167,7 +167,7 @@ class FieldChoiceAdmin(VersionAdmin):
         obj.save()
 
 admin.site.register(Dialect, DialectAdmin)
-admin.site.register(Language, LanguageAdmin) 
+admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin) 
 admin.site.register(Morpheme, GlossAdmin)
 admin.site.register(Keyword, KeywordAdmin)

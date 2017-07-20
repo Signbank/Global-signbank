@@ -148,7 +148,7 @@ class Definition(models.Model):
         search_fields = ['gloss__idgloss']
 
 
-class Language(models.Model):
+class SignLanguage(models.Model):
     """A sign language name"""
         
     class Meta:
@@ -164,14 +164,14 @@ class Dialect(models.Model):
     """A dialect name - a regional dialect of a given Language"""
     
     class Meta:
-        ordering = ['language', 'name']
+        ordering = ['signlanguage', 'name']
     
-    language = models.ForeignKey(Language)
+    signlanguage = models.ForeignKey(SignLanguage)
     name = models.CharField(max_length=20)
     description = models.TextField()
     
     def __str__(self):
-        return self.language.name+"/"+self.name  
+        return self.signlanguage.name + "/" + self.name
 
 class RelationToForeignSign(models.Model):
     """Defines a relationship to another sign in another language (often a loan)"""
@@ -284,7 +284,7 @@ have the same 'Annotation Idgloss' that means they differ in form in only
 minor or insignificant ways that can be ignored.""") 
 
     # languages that this gloss is part of
-    language = models.ManyToManyField(Language)
+    signlanguage = models.ManyToManyField(SignLanguage)
 
     # these language fields are subsumed by the language field above
     bsltf = models.NullBooleanField(_("BSL sign"), null=True, blank=True)
@@ -1119,11 +1119,11 @@ minor or insignificant ways that can be ignored.""")
 
         return json.dumps(OrderedDict(reformatted_li))
 
-    def language_choices(self):
+    def signlanguage_choices(self):
         """Return JSON for langauge choices"""
         
         d = dict()
-        for l in Language.objects.all():
+        for l in SignLanguage.objects.all():
             d[l.name] = l.name
 
         return json.dumps(d)

@@ -235,7 +235,7 @@ function configure_edit() {
          data      : definition_role_choices,
 		 callback : update_view_and_remember_original_value
      });
-     $('.edit_language').editable(edit_post_url, {
+     $('.edit_signlanguage').editable(edit_post_url, {
          type      : 'multiselect',
          data      : languages,
 		 callback : update_view_and_remember_original_value

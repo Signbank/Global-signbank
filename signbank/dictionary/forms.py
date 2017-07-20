@@ -137,7 +137,7 @@ class GlossSearchForm(forms.ModelForm):
 
         model = Gloss
         fields = ('idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'morph', 'sense', 
-                   'sn', 'StemSN', 'comptf', 'compound', 'language', 'dialect',
+                   'sn', 'StemSN', 'comptf', 'compound', 'signlanguage', 'dialect',
                    'inWeb', 'isNew',
                    'initial_relative_orientation', 'final_relative_orientation',
                    'initial_palm_orientation', 'final_palm_orientation', 
@@ -212,7 +212,7 @@ class MorphemeSearchForm(forms.ModelForm):
 
         model = Morpheme
         fields = ('idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'morph', 'sense',
-                  'sn', 'StemSN', 'comptf', 'compound', 'language', 'dialect',
+                  'sn', 'StemSN', 'comptf', 'compound', 'signlanguage', 'dialect',
                   'inWeb', 'isNew',
                   'initial_relative_orientation', 'final_relative_orientation',
                   'initial_palm_orientation', 'final_palm_orientation',
