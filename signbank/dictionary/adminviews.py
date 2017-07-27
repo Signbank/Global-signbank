@@ -365,7 +365,7 @@ class GlossListView(ListView):
                     row.append(value)
 
             # get languages
-            signlanguages = [signlanguage.name for signlanguage in gloss.language.all()]
+            signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
             row.append(", ".join(signlanguages));
 
             # get dialects
