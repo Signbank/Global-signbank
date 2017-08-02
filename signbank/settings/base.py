@@ -107,6 +107,7 @@ ROOT_URLCONF = 'signbank.urls'
 WSGI_APPLICATION = 'signbank.wsgi.application'
 
 INSTALLED_APPS = (
+    'modeltranslation',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

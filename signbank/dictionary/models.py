@@ -1378,3 +1378,21 @@ def create_user_profile(sender, instance, created, **kwargs):
         UserProfile.objects.create(user=instance)
 
 post_save.connect(create_user_profile, sender=User)
+
+class Language(models.Model):
+    """A written language, used for translations in written languages."""
+    name = models.CharField(max_length=50)
+    language_code_2char = models.CharField(max_length=7, unique=False, null=False, blank=False, help_text=_(
+        """Language code (2 characters long) of a written language. This also includes codes of the form zh-Hans, cf. IETF BCP 47"""))
+    language_code_3char = models.CharField(max_length=3, unique=False, null=False, blank=False, help_text=_(
+        """ISO 639-3 language code (3 characters long) of a written language."""))
+    description = models.TextField(null=True, blank=True)
+
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+

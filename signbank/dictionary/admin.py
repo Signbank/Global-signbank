@@ -4,6 +4,7 @@ from signbank.dictionary.models import *
 from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
 from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
+from modeltranslation.admin import TranslationAdmin
 
 class KeywordAdmin(VersionAdmin):
     search_fields = ['^text']
@@ -166,6 +167,10 @@ class FieldChoiceAdmin(VersionAdmin):
 
         obj.save()
 
+class LanguageAdmin(TranslationAdmin):
+    pass
+
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin) 
@@ -178,3 +183,4 @@ admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
 admin.site.register(UserProfile)
+admin.site.register(Language, LanguageAdmin)
