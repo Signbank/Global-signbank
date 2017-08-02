@@ -39,7 +39,14 @@ def build_choice_list(field):
 
 
 def get_default_language_id():
-    return Language.objects.get(name="Dutch").id
+    dutch = Language.objects.get(name="Dutch")
+    if dutch is not None:
+        return dutch.id
+    else:
+        dutch = Language(name="Dutch", language_code_2char="nl", language_code_3char="nld")
+        dutch.save()
+        return dutch.id
+    return None
 
 
 class Translation(models.Model):

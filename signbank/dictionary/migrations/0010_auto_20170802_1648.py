@@ -19,9 +19,4 @@ class Migration(migrations.Migration):
             name='language',
             field=models.ForeignKey(default=signbank.dictionary.models.get_default_language_id, on_delete=django.db.models.deletion.CASCADE, to='dictionary.Language'),
         ),
-        migrations.AlterField(
-            model_name='gloss',
-            name='contType',
-            field=models.CharField(blank=True, choices=[('0', '-'), ('1', 'N/A'), ('2', 'Brush'), ('6', 'Continuous'), ('8', 'Continuous > final'), ('13', 'Continuous > none'), ('12', 'Double'), ('4', 'Final'), ('14', 'Final > continuous'), ('5', 'Initial'), ('11', 'None > final'), ('9', 'None > initial')], max_length=5, null=True, verbose_name='Contact Type'),
-        ),
     ]
