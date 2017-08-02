@@ -38,10 +38,15 @@ def build_choice_list(field):
         pass
 
 
+def get_default_language_id():
+    return Language.objects.get(name="Dutch").id
+
+
 class Translation(models.Model):
     """A Dutch translation of NGT signs"""
-     
+
     gloss = models.ForeignKey("Gloss")
+    language = models.ForeignKey("Language", default=get_default_language_id)
     translation = models.ForeignKey("Keyword")
     index = models.IntegerField("Index")
     
@@ -62,13 +67,12 @@ class Translation(models.Model):
         
     
     class Meta:
+        unique_together = (("gloss", "language", "translation"),)
         ordering = ['gloss', 'index']
         
     class Admin:
         list_display = ['gloss', 'translation']
         search_fields = ['gloss__idgloss']
-    
-    
     
 class Keyword(models.Model):
     """A Dutch keyword that is a possible translation equivalent of a sign"""
