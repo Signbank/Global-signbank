@@ -356,7 +356,7 @@ def import_media(request,video):
         overwritten, was_allowed = save_media(import_folder,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
         if not was_allowed:
-            errors.append('Failed two overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?')
+            errors.append('Failed to overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?')
             continue
 
         out += '<li>'+filename+'</li>'
