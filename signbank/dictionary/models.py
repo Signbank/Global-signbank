@@ -15,7 +15,7 @@ import json
 from collections import OrderedDict
 from datetime import datetime, date
 
-from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE
+from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 
 import signbank.settings
@@ -39,13 +39,9 @@ def build_choice_list(field):
 
 
 def get_default_language_id():
-    dutch = Language.objects.get(name="Dutch")
-    if dutch is not None:
-        return dutch.id
-    else:
-        dutch = Language(name="Dutch", language_code_2char="nl", language_code_3char="nld")
-        dutch.save()
-        return dutch.id
+    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
+    if language is not None:
+        return language.id
     return None
 
 

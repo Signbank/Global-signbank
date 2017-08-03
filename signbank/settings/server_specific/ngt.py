@@ -30,6 +30,8 @@ LANGUAGE_CODE = "en"
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = True
 
+DEFAULT_KEYWORDS_LANGUAGE = {'name': 'Dutch'}
+
 FIELDS = {}
 
 FIELDS['main'] = ['useInstr','wordClass']

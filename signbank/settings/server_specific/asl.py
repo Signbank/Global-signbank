@@ -15,12 +15,15 @@ ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 SIGNBANK_VERSION_CODE = 'ASL'
 URL = 'http://applejack.science.ru.nl/asl-signbank'
 
+gettext = lambda s: s
 LANGUAGES = (
-  ('en_US', 'American English'),
+  ('en_US', gettext('American English')),
 )
 LANGUAGE_CODE = "en-us"
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = False
+
+DEFAULT_KEYWORDS_LANGUAGE = {'name': 'English'}
 
 FIELDS = {}
 
