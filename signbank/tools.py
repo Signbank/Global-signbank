@@ -41,7 +41,7 @@ def save_media(source_folder,goal_folder,gloss,extension):
         overwritten = False
 
     try:
-        shutil.copy(source,goal)
+        shutil.copyfile(source,goal)
         was_allowed = True
     except IOError:
         was_allowed = False
