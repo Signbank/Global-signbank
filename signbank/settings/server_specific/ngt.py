@@ -30,7 +30,7 @@ LANGUAGE_CODE = "en"
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = True
 
-DEFAULT_KEYWORDS_LANGUAGE = {'name': 'Dutch'}
+DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'nl'}
 
 FIELDS = {}
 

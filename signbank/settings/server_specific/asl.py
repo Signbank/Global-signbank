@@ -23,7 +23,7 @@ LANGUAGE_CODE = "en-us"
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = False
 
-DEFAULT_KEYWORDS_LANGUAGE = {'name': 'English'}
+DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en'}
 
 FIELDS = {}
 
