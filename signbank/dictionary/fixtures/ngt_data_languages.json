@@ -1,0 +1,22 @@
+[
+  {
+    "model": "dictionary.language",
+    "pk": 1,
+    "fields": {
+      "name": "English",
+      "language_code_2char": "en",
+      "language_code_3char": "eng",
+      "description": ""
+    }
+  },
+  {
+    "model": "dictionary.language",
+    "pk": 2,
+    "fields": {
+      "name": "Dutch",
+      "language_code_2char": "nl",
+      "language_code_3char": "nld",
+      "description": ""
+    }
+  }
+]

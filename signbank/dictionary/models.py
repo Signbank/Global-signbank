@@ -15,7 +15,7 @@ import json
 from collections import OrderedDict
 from datetime import datetime, date
 
-from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE
+from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 
 import signbank.settings
@@ -38,10 +38,18 @@ def build_choice_list(field):
         pass
 
 
+def get_default_language_id():
+    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
+    if language is not None:
+        return language.id
+    return None
+
+
 class Translation(models.Model):
     """A Dutch translation of NGT signs"""
-     
+
     gloss = models.ForeignKey("Gloss")
+    language = models.ForeignKey("Language", default=get_default_language_id)
     translation = models.ForeignKey("Keyword")
     index = models.IntegerField("Index")
     
@@ -62,13 +70,12 @@ class Translation(models.Model):
         
     
     class Meta:
+        unique_together = (("gloss", "language", "translation"),)
         ordering = ['gloss', 'index']
         
     class Admin:
         list_display = ['gloss', 'translation']
         search_fields = ['gloss__idgloss']
-    
-    
     
 class Keyword(models.Model):
     """A Dutch keyword that is a possible translation equivalent of a sign"""
@@ -1378,3 +1385,21 @@ def create_user_profile(sender, instance, created, **kwargs):
         UserProfile.objects.create(user=instance)
 
 post_save.connect(create_user_profile, sender=User)
+
+class Language(models.Model):
+    """A written language, used for translations in written languages."""
+    name = models.CharField(max_length=50)
+    language_code_2char = models.CharField(max_length=7, unique=False, null=False, blank=False, help_text=_(
+        """Language code (2 characters long) of a written language. This also includes codes of the form zh-Hans, cf. IETF BCP 47"""))
+    language_code_3char = models.CharField(max_length=3, unique=False, null=False, blank=False, help_text=_(
+        """ISO 639-3 language code (3 characters long) of a written language."""))
+    description = models.TextField(null=True, blank=True)
+
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
