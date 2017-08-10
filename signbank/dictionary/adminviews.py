@@ -1,6 +1,6 @@
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
-from django.db.models import Q
+from django.db.models import Q, F, ExpressionWrapper, IntegerField
 from django.db.models import CharField, Value as V
 from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField
@@ -104,7 +104,7 @@ class GlossListView(ListView):
     paginate_by = 500
     only_export_ecv = False #Used to call the 'export ecv' functionality of this view without the need for an extra GET parameter
     search_type = 'sign'
-    
+
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(GlossListView, self).get_context_data(**kwargs)
@@ -484,7 +484,7 @@ class GlossListView(ListView):
                       'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'namEnt', 'semField', 'valence',
                       'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
-                      'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
+                      'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
 
         #Language and basic property filters
         vals = get.getlist('dialect', [])
@@ -601,7 +601,7 @@ class GlossListView(ListView):
         if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
 
             pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()];
-            print('pks_for_glosses',pks_for_glosses_with_relations)
+            # print('pks_for_glosses',pks_for_glosses_with_relations)
 
             if get['hasRelationToForeignSign'] == '1': #We only want glosses with a relation to a foreign sign
                 qs = qs.filter(pk__in=pks_for_glosses_with_relations)
@@ -1180,7 +1180,7 @@ class MorphemeListView(ListView):
         if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
 
             pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()];
-            print('pks_for_glosses', pks_for_glosses_with_relations)
+            # print('pks_for_glosses', pks_for_glosses_with_relations)
 
             if get['hasRelationToForeignSign'] == '1':  # We only want glosses with a relation to a foreign sign
                 qs = qs.filter(pk__in=pks_for_glosses_with_relations)
@@ -1395,6 +1395,405 @@ class MorphemeListView(ListView):
 
         return response
 
+class HandshapeDetailView(DetailView):
+    model = Handshape
+    template_name = 'dictionary/handshape_detail.html'
+    context_object_name = 'handshape'
+
+    class Meta:
+        verbose_name_plural = "Handshapes"
+        ordering = ['machine_value']
+
+    def get_context_data(self, **kwargs):
+        context = super(HandshapeDetailView, self).get_context_data(**kwargs)
+        hs = context['handshape']
+        labels = hs.field_labels()
+        # print('labels: ', labels)
+        context['imageform'] = ImageUploadForHandshapeForm()
+
+        context['choice_lists'] = {}
+        context['handshape_fields'] = []
+        oChoiceLists = {}
+
+        context['handshape_fields_FS1'] = []
+        context['handshape_fields_FS2'] = []
+        context['handshape_fields_FC1'] = []
+        context['handshape_fields_FC2'] = []
+        context['handshape_fields_UF'] = []
+
+        for field in FIELDS['handshape']:
+
+            #Get and save the choice list for this field
+            fieldchoice_category = fieldname_to_category(field)
+            # print('fieldchoice_category', fieldchoice_category)
+
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
+
+            if len(choice_list) > 0:
+                context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
+
+            # print('choice list: ', choice_list)
+            #Take the human value in the language we are using
+            machine_value = getattr(hs, field)
+            human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
+            # print("Human value: " + str(human_value))
+
+            #And add the kind of field
+            if field in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP',
+                         'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
+                         'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
+                kind = 'check'
+            else:
+                kind = 'list'
+
+            # print('handshape field', field)
+            field_label = labels[field]
+            if field_label in ['Finger selection', 'T', 'I', 'M', 'R', 'P']:
+                if field_label != 'Finger selection':
+                    context['handshape_fields_FS1'].append([human_value, field, field_label, kind])
+            elif field_label in ['Finger selection 2', 'T2', 'I2', 'M2', 'R2', 'P2']:
+                if field_label != 'Finger selection 2':
+                    context['handshape_fields_FS2'].append([human_value, field, field_label, kind])
+            elif field_label in ['Unselected fingers', 'Tu', 'Iu', 'Mu', 'Ru', 'Pu']:
+                if field_label != 'Unselected fingers':
+                    context['handshape_fields_UF'].append([human_value, field, field_label, kind])
+            # elif field_label == 'Finger configuration 1':
+                # context['handshape_fields_FC1'].append([human_value, field, field_label, kind])
+            # elif field_label == 'Finger configuration 2':
+                # context['handshape_fields_FC2'].append([human_value, field, field_label, kind])
+            else:
+                context['handshape_fields'].append([human_value, field, field_label, kind])
+
+        context['choice_lists'] = json.dumps(context['choice_lists'])
+        # temp = context['handshape_fields']
+        # print('handshape fields: ', temp)
+        # temp2 = context['choice_lists']
+        # print('choice lists: ', temp2)
+
+        return context
+
+
+class HandshapeListView(ListView):
+
+    model = Handshape
+    template_name = 'dictionary/admin_handshape_list.html'
+    paginate_by = 5
+    search_type = 'handshape'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(HandshapeListView, self).get_context_data(**kwargs)
+        # Add in a QuerySet of all the books
+
+        search_form = HandshapeSearchForm(self.request.GET)
+
+        # Retrieve the search_type,so that we know whether the search should be restricted to Gloss or not
+        if 'search_type' in self.request.GET:
+            self.search_type = self.request.GET['search_type']
+        else:
+            self.search_type = 'handshape'
+
+        context['searchform'] = search_form
+        context['search_type'] = self.search_type
+        # if self.search_type == 'sign_handshape':
+        #     context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
+        # else:
+        #     context['glosscount'] = Gloss.objects.count()  # Count the glosses + morphemes
+
+        context['handshapecount'] = Handshape.objects.all().count()
+        context['signscount'] = Gloss.objects.all().count()
+        context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
+
+        context['handshape_fields_FS1'] = []
+
+
+        context['choice_lists'] = {}
+
+        for field in FIELDS['handshape']:
+
+            # Get and save the choice list for this field
+            fieldchoice_category = fieldname_to_category(field)
+            # print('fieldchoice_category', fieldchoice_category)
+
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
+
+            if len(choice_list) > 0:
+                context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list,
+                                                                                        self.request.LANGUAGE_CODE, id_prefix='')
+
+        context['choice_lists'] = json.dumps(context['choice_lists'])
+        # print('choice lists: ', context['choice_lists'])
+
+        if 'paginate_by' in self.request.GET:
+            self.paginate_by = self.request.GET.get('paginate_by', self.paginate_by)
+        else:
+            self.paginage_by = 5
+
+        context['paginate_by'] = self.paginate_by
+
+        context['handshapescount'] = Handshape.objects.count()
+
+        return context
+
+    def get_paginate_by(self, queryset):
+        """
+        Paginate by specified value in querystring, or use default class property value.
+        """
+        # print("inside paginate by")
+
+        return self.request.GET.get('paginate_by', self.paginate_by)
+
+    def get_queryset(self):
+
+        # print("inside get queryset")
+
+        choice_lists = {}
+
+        for field in FIELDS['handshape']:
+
+            # Get and save the choice list for this field
+            fieldchoice_category = fieldname_to_category(field)
+            # print('fieldchoice_category', fieldchoice_category)
+
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
+
+            if len(choice_list) > 0:
+                choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,
+                                                                                        self.request.LANGUAGE_CODE, id_prefix='')
+
+        # get query terms from self.request
+        get = self.request.GET
+
+
+
+        #Then check what kind of stuff we want
+        if 'search_type' in get:
+            self.search_type = get['search_type']
+        else:
+            self.search_type = 'handshape'
+
+        setattr(self.request, 'search_type', self.search_type)
+
+        # #Get the initial selection
+        # if len(get) > 0 or show_all:
+        #     if self.search_type == 'sign':
+        #         # Get all the GLOSS items that are not member of the sub-class Morpheme
+        #         qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
+        #     else:
+        #         qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
+        #
+        # #No filters or 'show_all' specified? show nothing
+        # else:
+        #     qs = Gloss.objects.none()
+
+
+
+        # if len(get) > 0:
+            # if self.search_type == 'handshape':
+
+        qs = Handshape.objects.all().order_by('machine_value')
+
+        # else:
+        #     qs = Handshape.objects.none()
+
+        #Don't show anything when we're not searching yet
+        # else:
+            # qs = Handshape.objects.none()
+
+        # if 'search' in get and get['search'] != '':
+        #     val = get['search']
+        #     query = Q(idgloss__iregex=val) | \
+        #             Q(annotation_idgloss__iregex=val)
+        #
+        #     if re.match('^\d+$', val):
+        #         query = query | Q(sn__exact=val)
+        #
+        #     qs = qs.filter(query)
+        #     # print "A: ", len(qs)
+
+        fieldnames = ['machine_value', 'english_name', 'dutch_name', 'chinese_name',
+                      'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2', 'hsAperture',
+                      'hsThumb', 'hsSpread', 'hsFingUnsel', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
+                      'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
+                      'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
+
+        ## phonology and semantics field filters
+        for fieldname in fieldnames:
+
+            if fieldname in get:
+                key = fieldname + '__exact'
+                val = get[fieldname]
+
+                if fieldname == 'hsNumSel' and val != '':
+                    fieldlabel = choice_lists[fieldname][val]
+                    # print("get_queryset: fieldname: ", fieldname, ", val: ", val, ", fieldlabel: ", fieldlabel)
+                    if fieldlabel == 'one':
+                        qs = qs.annotate(
+                            count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=1) | Q(hsNumSel=val))
+                    elif fieldlabel == 'two':
+                        qs = qs.annotate(
+                            count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=2) | Q(hsNumSel=val))
+                    elif fieldlabel == 'three':
+                        qs = qs.annotate(
+                            count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=3) | Q(hsNumSel=val))
+                    elif fieldlabel == 'four':
+                        qs = qs.annotate(
+                            count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=4) | Q(hsNumSel=val))
+                    elif fieldlabel == 'all':
+                        qs = qs.annotate(
+                            count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
+                                                        output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(hsNumSel=val))
+
+                if isinstance(Handshape._meta.get_field(fieldname), NullBooleanField):
+                    # print('get_query: val: ', val)
+                    val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]
+
+
+                if self.request.LANGUAGE_CODE == 'nl' and fieldname == 'dutch_name' and val != '':
+                    # print("query dutch")
+                    query = Q(dutch_name__icontains=val)
+                    qs = qs.filter(query)
+
+                if self.request.LANGUAGE_CODE == 'cn' and fieldname == 'chinese_name' and val != '':
+                    # print("query chinese")
+                    query = Q(chinese_name__icontains=val)
+                    qs = qs.filter(query)
+
+                if fieldname == 'english_name' and val != '':
+                    # print("query english")
+                    query = Q(english_name__icontains=val)
+                    qs = qs.filter(query)
+
+
+                if val != '' and fieldname != 'hsNumSel' and fieldname != 'dutch_name' and fieldname != 'chinese_name' and fieldname != 'english_name':
+                    kwargs = {key: val}
+                    qs = qs.filter(**kwargs)
+
+        # Saving querysets results to sessions, these results can then be used elsewhere (like in gloss_detail)
+        # Flush the previous queryset (just in case)
+        # self.request.session['search_results'] = None
+        # Handshape searching of signs relies on using the search_results in order to search signs that have the handshapes
+        # The search_results is no longer set to None
+
+        # Make sure that the QuerySet has filters applied (user is searching for something instead of showing all results [objects.all()])
+
+        # print(qs.query)
+
+        if hasattr(qs.query.where, 'children') and len(qs.query.where.children) > 0:
+
+            items = []
+
+            for item in qs:
+                if self.request.LANGUAGE_CODE == 'nl':
+                    items.append(dict(id = item.machine_value, handshape = item.dutch_name))
+                elif self.request.LANGUAGE_CODE == 'cn':
+                    items.append(dict(id = item.machine_value, handshape = item.chinese_name))
+                else:
+                    items.append(dict(id = item.machine_value, handshape = item.english_name))
+
+            self.request.session['search_results'] = items
+
+        qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
+
+        if self.search_type == 'sign_handshape':
+
+            # search for signs with found hadnshapes
+            # find relevant machine values for handshapes
+            selected_handshapes = [ h.machine_value for h in qs ]
+            # print("selected handshapes: ", selected_handshapes)
+
+            # print("qeury: ", qs.query)
+            if len(selected_handshapes) == (Handshape.objects.all().count()):
+                # print("searching for all handshapes")
+
+                qs = Gloss.objects.filter(Q(domhndsh__in=selected_handshapes) | Q(domhndsh__isnull=True) | Q(domhndsh__exact='0')
+                                          | Q(subhndsh__in=selected_handshapes) | Q(subhndsh__isnull=True) | Q(subhndsh__exact='0'))
+
+            else:
+                qs = Gloss.objects.filter(Q(domhndsh__in=selected_handshapes) | Q(subhndsh__in=selected_handshapes))
+
+        return qs
+
+def order_handshape_queryset_by_sort_order(get, qs):
+    """Change the sort-order of the query set, depending on the form field [sortOrder]
+
+    This function is used both by HandshapeListView.
+    The value of [sortOrder] is 'machine_value' by default.
+    [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_handshape_list.html
+    Its value is changed by clicking the up/down buttons in the second row of the search result table
+    """
+
+    def get_string_from_tuple_list(lstTuples, number):
+        """Get the string value corresponding to a number in a list of number-string tuples"""
+        sBack = [tup[1] for tup in lstTuples if tup[0] == number]
+        return sBack
+
+    # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
+    def order_queryset_by_tuple_list(qs, sOrder, sListName):
+        """Order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]"""
+
+        # Get a list of tuples for this sort-order
+        tpList = build_choice_list(sListName)
+        # Determine sort order: ascending is default
+        bReversed = False
+        if (sOrder[0:1] == '-'):
+            # A starting '-' sign means: descending order
+            sOrder = sOrder[1:]
+            bReversed = True
+
+        # Order the list of tuples alphabetically
+        # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
+        tpList = sorted(tpList, key=operator.itemgetter(1))
+        # Order by the string-values in the tuple list
+        return sorted(qs, key=lambda x: get_string_from_tuple_list(tpList, getattr(x, sOrder)), reverse=bReversed)
+
+    # Set the default sort order
+    sOrder = 'machine_value'  # Default sort order if nothing is specified
+    # See if the form contains any sort-order information
+    if ('sortOrder' in get and get['sortOrder'] != ''):
+        # Take the user-indicated sort order
+        sOrder = get['sortOrder']
+
+    # The ordering method depends on the kind of field:
+    # (1) text fields are ordered straightforwardly
+    # (2) fields made from a choice_list need special treatment
+    if (sOrder.endswith('hsThumb')):
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Thumb")
+    elif (sOrder.endswith('hsFingConf') or sOrder.endswith('hsFingConf2')):
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "JointConfiguration")
+    elif (sOrder.endswith('hsAperture')):
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Aperture")
+    elif (sOrder.endswith('hsSpread')):
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Spreading")
+    elif (sOrder.endswith('hsNumSel')):
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Quantity")
+    elif (sOrder.endswith('hsFingSel') or sOrder.endswith('hsFingSel2') or sOrder.endswith('hsFingUnsel')):
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "FingerSelection")
+    else:
+        # Use straightforward ordering on field [sOrder]
+
+        bReversed = False
+        if (sOrder[0:1] == '-'):
+            # A starting '-' sign means: descending order
+            sOrder = sOrder[1:]
+            bReversed = True
+
+        qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'})
+        qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'})
+
+        ordered = sorted(qs_letters, key=lambda x: getattr(x, sOrder))
+        ordered += sorted(qs_special, key=lambda x: getattr(x, sOrder))
+
+        if bReversed:
+            ordered.reverse()
+
+    # return the ordered list
+    return ordered
+
 
 class MorphemeDetailView(DetailView):
     model = Morpheme
@@ -1513,6 +1912,24 @@ def gloss_ajax_complete(request, prefix):
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
+def handshape_ajax_complete(request, prefix):
+    """Return a list of handshapes matching the search term
+    as a JSON structure suitable for typeahead."""
+
+    if request.LANGUAGE_CODE == 'nl':
+        query = Q(dutch_name__istartswith=prefix)
+    elif request.LANGUAGE_CODE == 'cn':
+        query = Q(chinese_name__istartswith=prefix)
+    else:
+        query = Q(english_name__istartswith=prefix)
+
+    qs = Handshape.objects.filter(query)
+
+    result = []
+    for g in qs:
+        result.append({'dutch_name': g.dutch_name, 'english_name': g.english_name, 'machine_value': g.machine_value, 'chinese_name': g.chinese_name})
+
+    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
 def morph_ajax_complete(request, prefix):
     """Return a list of morphs matching the search term

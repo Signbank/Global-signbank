@@ -822,6 +822,68 @@ def delete_image(request, pk):
         url = '/'
     return redirect(url)
 
+def add_handshape_image(request):
+
+    if 'HTTP_REFERER' in request.META:
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
+
+    if request.method == 'POST':
+
+        form = ImageUploadForHandshapeForm(request.POST, request.FILES)
+
+        if form.is_valid():
+
+            handshape_id = form.cleaned_data['handshape_id']
+            handshape = get_object_or_404(Handshape, machine_value=handshape_id)
+
+            imagefile = form.cleaned_data['imagefile']
+            extension = '.'+imagefile.name.split('.')[-1]
+
+            if extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+
+                params = {'warning':'File extension not supported! Please convert to png or jpg'}
+                return redirect(add_params_to_url(url,params))
+
+            elif imagefile._size > settings.MAXIMUM_UPLOAD_SIZE:
+
+                params = {'warning':'Uploaded file too large!'}
+                return redirect(add_params_to_url(url,params))
+
+            # construct a filename for the image, use sn
+            # if present, otherwise use idgloss+gloss id
+            imagefile.name = "handshape_" + str(handshape.machine_value) + extension
+
+            redirect_url = form.cleaned_data['redirect']
+
+            # deal with any existing image for this sign
+            goal_path =  settings.WRITABLE_FOLDER+settings.HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
+            goal_location = goal_path + 'handshape_' + str(handshape.machine_value) + extension
+
+            #First make the dir if needed
+            try:
+                os.mkdir(goal_path)
+            except OSError:
+                pass
+
+            #Remove previous video
+            if handshape.get_image_path():
+                os.remove(settings.WRITABLE_FOLDER+handshape.get_image_path())
+
+            with open(goal_location, 'wb+') as destination:
+                for chunk in imagefile.chunks():
+                    destination.write(chunk)
+
+            return redirect(redirect_url)
+
+    # if we can't process the form, just redirect back to the
+    # referring page, should just be the case of hitting
+    # Upload without choosing a file but could be
+    # a malicious request, if no referrer, go back to root
+    return redirect(url)
+
+
 def update_cngt_counts(request,folder_index=None):
 
     #Run the counter script
@@ -1178,6 +1240,93 @@ def find_homonyms(request):
           #     print("DELETE HOMONYM: id=", relation_id, " source= ", rel.source, " target= ", rel.target)
 
     return HttpResponse(relation_table_prefix+relation_table_rows+relation_table_suffix)
+
+
+def configure_handshapes(request):
+
+    # def values_Quantity():
+#
+#         insert_Quantity_fields = "INSERT INTO dictionary_fieldchoice VALUES(1130,'Quantity','one','one',3,'one'); \
+# INSERT INTO dictionary_fieldchoice VALUES(1131,'Quantity','two','two',4,'two'); \
+# INSERT INTO dictionary_fieldchoice VALUES(1132,'Quantity','three','three',5,'three'); \
+# INSERT INTO dictionary_fieldchoice VALUES(1133,'Quantity','four','four',6,'four'); \
+# INSERT INTO dictionary_fieldchoice VALUES(1134,'Quantity','all','all',7,'all');"
+#
+#         quantity_table_prefix = '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
+#                          '<thead>\n' \
+#                          '<tr>\n' \
+#                          '<th style="width:20em; text-align:left;">Field</th>\n' \
+#                          '<th style="width:40em; text-align:left;">Machine Value</th>\n' \
+#                          '<th style="width:25em; text-align:left;">English Name</th>\n' \
+#                          '<th style="width:40em; text-align:left;">Dutch Name</th>\n' \
+#                          '<th style="width:40em; text-align:left;">Chinese Name</th>\n' \
+#                          '</tr>\n' \
+#                          '</thead>\n' \
+#                          '<tbody>\n'
+#         quantity_table_suffix = '</tbody>\n' \
+#                                   '</table>\n'
+#         quantity_fields = ''
+#
+#         # new_handshape = FieldChoice(field='Quantity', machine_value='3', english_name='one', dutch_name='one', chinese_name='one')
+#         # new_handshape.save()
+#
+#         # quantity_fields += '<tr><td>' + 'Quantity' + '</td><td>' + '3' + '</td><td>' + 'one' + '</td><td>' + 'one' + '</td><td>' + 'one' + '</td></tr>\n'
+#
+#
+#         return quantity_table_prefix + quantity_fields + quantity_table_suffix
+
+
+    output_string = '<!DOCTYPE html>\n' \
+                         '<html>\n' \
+                         '<body>\n'
+    handshapes_table_pre = '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
+                         '<thead>\n' \
+                         '<tr>\n' \
+                         '<th style="width:20em; text-align:left;">Machine Value</th>\n' \
+                         '<th style="width:25em; text-align:left;">English Name</th>\n' \
+                         '<th style="width:40em; text-align:left;">Dutch Name</th>\n' \
+                         '<th style="width:40em; text-align:left;">Chinese Name</th>\n' \
+                         '</tr>\n' \
+                         '</thead>\n' \
+                         '<tbody>\n'
+
+    handshapes_table_suffix = '</tbody>\n' \
+                         '</table>\n'
+
+    output_string_suffix = '</body>\n' \
+                         '</html>'
+
+    # check if the Handshape table has been filled, if so don't do anything
+    already_filled_handshapes = Handshape.objects.count()
+    if already_filled_handshapes:
+        return HttpResponse(output_string + '<p>Handshapes are already configured.</p>' + output_string_suffix)
+    else:
+
+        output_string += handshapes_table_pre
+
+        handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
+
+        for o in handshapes:
+
+            new_id = o.machine_value
+            new_machine_value = o.machine_value
+            new_english_name = o.english_name
+            new_dutch_name = o.dutch_name
+            new_chinese_name = o.chinese_name
+
+            new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
+            new_handshape.save()
+
+            output_string += '<tr><td>' + str(new_machine_value) + '</td><td>' + new_english_name + '</td><td>' + new_dutch_name + '</td><td>' + new_chinese_name + '</td></tr>\n'
+
+        output_string += handshapes_table_suffix
+
+        # Add FieldChoice types for Handshape objects
+        # output_string += values_Quantity()
+
+        output_string += output_string_suffix
+
+        return HttpResponse(output_string)
 
 def get_unused_videos(request):
 

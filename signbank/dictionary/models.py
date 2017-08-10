@@ -208,6 +208,126 @@ class FieldChoice(models.Model):
     class Meta:
         ordering = ['field','machine_value']
 
+class Handshape(models.Model):
+    machine_value = models.IntegerField(primary_key=True)
+    english_name = models.CharField(max_length=50)
+    dutch_name = models.CharField(max_length=50)
+    chinese_name = models.CharField(max_length=50, blank=True)
+    hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"), max_length=5)
+    hsFingSel = models.CharField(_("Finger selection"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
+    hsFingSel2 = models.CharField(_("Finger selection 2"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
+    hsFingConf = models.CharField(_("Finger configuration"), blank=True, null=True, choices=build_choice_list("JointConfiguration"), max_length=5)
+    hsFingConf2 = models.CharField(_("Finger configuration 2"), blank=True, null=True, choices=build_choice_list("JointConfiguration"), max_length=5)
+    hsAperture = models.CharField(_("Aperture"), blank=True, null=True, choices=build_choice_list("Aperture"), max_length=5)
+    hsThumb = models.CharField(_("Thumb"), blank=True, null=True, choices=build_choice_list("Thumb"), max_length=5)
+    hsSpread = models.CharField(_("Spreading"), blank=True,  null=True, choices=build_choice_list("Spreading"), max_length=5)
+    hsFingUnsel = models.CharField(_("Unselected fingers"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
+    fsT = models.NullBooleanField(_("T"), null=True, default=False)
+    fsI = models.NullBooleanField(_("I"), null=True, default=False)
+    fsM = models.NullBooleanField(_("M"), null=True, default=False)
+    fsR = models.NullBooleanField(_("R"), null=True, default=False)
+    fsP = models.NullBooleanField(_("P"), null=True, default=False)
+    fs2T = models.NullBooleanField(_("T2"), null=True, default=False)
+    fs2I = models.NullBooleanField(_("I2"), null=True, default=False)
+    fs2M = models.NullBooleanField(_("M2"), null=True, default=False)
+    fs2R = models.NullBooleanField(_("R2"), null=True, default=False)
+    fs2P = models.NullBooleanField(_("P2"), null=True, default=False)
+    ufT = models.NullBooleanField(_("Tu"), null=True, default=False)
+    ufI = models.NullBooleanField(_("Iu"), null=True, default=False)
+    ufM = models.NullBooleanField(_("Mu"), null=True, default=False)
+    ufR = models.NullBooleanField(_("Ru"), null=True, default=False)
+    ufP = models.NullBooleanField(_("Pu"), null=True, default=False)
+
+    def field_labels(self):
+        """Return the dictionary of field labels for use in a template"""
+
+        d = dict()
+        for f in self._meta.fields:
+            try:
+                d[f.name] = _(self._meta.get_field(f.name).verbose_name)
+            except:
+                pass
+
+        return d
+
+    def get_image_path(self,check_existance=True):
+        """Returns the path within the writable and static folder"""
+
+        foldername = str(self.machine_value)+'/'
+        filename_without_extension = 'handshape_'+str(self.machine_value)
+
+        dir_path = settings.WRITABLE_FOLDER+settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername
+
+        if check_existance:
+            try:
+                for filename in os.listdir(dir_path):
+
+                    if filename_without_extension in filename:
+                        return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+            except OSError:
+                return None
+        else:
+            return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename_without_extension
+
+    def get_fingerSelection_display(self):
+
+        selection = ''
+        if self.fsT:
+            selection += 'T'
+        if self.fsI:
+            selection += 'I'
+        if self.fsM:
+            selection += 'M'
+        if self.fsR:
+            selection += 'R'
+        if self.fsP:
+            selection += 'P'
+        return selection
+
+    def get_fingerSelection2_display(self):
+
+        selection = ''
+        if self.fs2T:
+            selection += 'T'
+        if self.fs2I:
+            selection += 'I'
+        if self.fs2M:
+            selection += 'M'
+        if self.fs2R:
+            selection += 'R'
+        if self.fs2P:
+            selection += 'P'
+        return selection
+
+    def get_unselectedFingers_display(self):
+
+        selection = ''
+        if self.ufT:
+            selection += 'T'
+        if self.ufI:
+            selection += 'I'
+        if self.ufM:
+            selection += 'M'
+        if self.ufR:
+            selection += 'R'
+        if self.ufP:
+            selection += 'P'
+        return selection
+
+    def count_selected_fingers(self):
+
+        count_selected_fingers = 0
+        if self.fsT:
+            count_selected_fingers += 1
+        if self.fsI:
+            count_selected_fingers += 1
+        if self.fsM:
+            count_selected_fingers += 1
+        if self.fsR:
+            count_selected_fingers += 1
+        if self.fsP:
+            count_selected_fingers += 1
+        return count_selected_fingers
 
 class Gloss(models.Model):
     
@@ -888,7 +1008,7 @@ minor or insignificant ways that can be ignored.""")
                     self_value_sf = getattr(self, sf)
                     other_value_sf = getattr(o,sf)
                     if other_value_sf != self_value_sf:
-                        different_fields[sf] = (sn, sfc,self_value_sf,'',fieldKind[sf])
+                        different_fields[sf] = (sn, sfc,self_value_sf,'0',fieldKind[sf])
 
             minimal_pairs_fields[o] = different_fields
 
@@ -1236,6 +1356,18 @@ def fieldname_to_category(fieldname):
         field_category = 'MorphologyType'
     elif fieldname == 'hasMorphemeOfType':
         field_category = 'MorphemeType'
+    elif fieldname in ['hsFingSel', 'hsFingSel2', 'hsFingUnsel']:
+        field_category = 'FingerSelection'
+    elif fieldname in ['hsFingConf', 'hsFingConf2']:
+        field_category = 'JointConfiguration'
+    elif fieldname == 'hsNumSel':
+        field_category = 'Quantity'
+    elif fieldname == 'hsAperture':
+        field_category = 'Aperture'
+    elif fieldname == 'hsThumb':
+        field_category = 'Thumb'
+    elif fieldname == 'hsSpread':
+        field_category = 'Spreading'
     else:
         field_category = fieldname
 

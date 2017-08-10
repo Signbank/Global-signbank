@@ -223,7 +223,7 @@ def update_gloss(request, glossid):
 
             #Translate the value if a boolean
             if isinstance(gloss._meta.get_field(field),NullBooleanField):
-                newvalue = value;
+                newvalue = value
                 value = (value == 'Yes')
 
             # special value of 'notset' or -1 means remove the value
@@ -720,6 +720,92 @@ def add_morphemeappearance(request):
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     raise Http404('Incorrect request');
+
+def update_handshape(request, handshapeid):
+
+    if request.method == "POST":
+
+        hs = get_object_or_404(Handshape, machine_value=handshapeid)
+        hs.save() # This updates the lastUpdated field
+
+        field = request.POST.get('id', '')
+        value = request.POST.get('value', '')
+        original_value = ''
+        value = str(value)
+        newPattern = ''
+
+        if len(value) == 0:
+            value = ' '
+
+        elif value[0] == '_':
+            value = value[1:]
+
+        values = request.POST.getlist('value[]')  # in case we need multiple values
+
+        if value == '':
+            hs.__setattr__(field, None)
+            hs.save()
+            newvalue = ''
+        else:
+            original_value = getattr(hs, field)
+            hs.__setattr__(field, value)
+            hs.save()
+            newvalue = value
+
+            if not isinstance(value, bool):
+                field_category = fieldname_to_category(field)
+                # print('field category: ', field_category)
+                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
+
+        # Finger selections are saved as both boolean values per finger and as patterns that include the fingers
+        # The patterns, such as TIM, are stored as choice lists in FieldChoice.
+        # This is done automatically for display and sorting purposes.
+        # A user always modifies the selected fingers data per finger.
+
+        if field in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP']:
+            category_value = 'fingerSelection1'
+
+            if newvalue != original_value:
+                hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
+                newPattern = hs_mod.get_fingerSelection_display()
+                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection', english_name__iexact=newPattern)
+                if object_fingSelection:
+                    mv = object_fingSelection[0].machine_value
+                    hs_mod.__setattr__('hsFingSel', mv)
+                    hs_mod.save()
+                else:
+                    print("finger selection not found: ", newPattern)
+        elif field in ['fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P']:
+            category_value = 'fingerSelection2'
+
+            if newvalue != original_value:
+                hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
+                newPattern = hs_mod.get_fingerSelection2_display()
+                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection',
+                                                                  english_name__iexact=newPattern)
+                if object_fingSelection:
+                    mv = object_fingSelection[0].machine_value
+                    hs_mod.__setattr__('hsFingSel2', mv)
+                    hs_mod.save()
+                else:
+                    print("finger selection not found: ", newPattern)
+        elif field in ['ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
+            category_value = 'unselectedFingers'
+
+            if newvalue != original_value:
+                hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
+                newPattern = hs_mod.get_unselectedFingers_display()
+                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection',
+                                                                  english_name__iexact=newPattern)
+                if object_fingSelection:
+                    mv = object_fingSelection[0].machine_value
+                    hs_mod.__setattr__('hsFingUnsel', mv)
+                    hs_mod.save()
+        else:
+            category_value = 'fieldChoice'
+
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
 
 def add_othermedia(request):
 

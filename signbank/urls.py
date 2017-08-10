@@ -20,7 +20,7 @@ import django_summernote.urls
 
 from signbank.dictionary.models import Gloss
 from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeListView
-from signbank.dictionary.views import add_image, delete_image, add_new_morpheme
+from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
 admin.autodiscover()
@@ -42,6 +42,7 @@ urlpatterns = [
     url(r'^video/', include(signbank.video.urls)),
 
     url(r'^image/upload/', add_image),
+    url(r'^handshapeimage/upload/', add_handshape_image),
     url(r'^image/delete/(?P<pk>[0-9]+)$', delete_image),
 
     #(r'^register.html', 'signbank.views.index'),

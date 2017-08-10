@@ -105,6 +105,11 @@ class GlossAdmin(VersionAdmin):
 
     history_latest_first = True
 
+
+class HandshapeAdmin(VersionAdmin):
+
+    list_display = ['machine_value', 'english_name', 'dutch_name']
+
 class RegistrationProfileAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'activation_key_expired', )
     search_fields = ('user__username', 'user__first_name', )
@@ -175,5 +180,6 @@ admin.site.register(FieldChoice,FieldChoiceAdmin)
 admin.site.register(MorphologyDefinition)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+admin.site.register(Handshape, HandshapeAdmin)
 
 admin.site.register(UserProfile)

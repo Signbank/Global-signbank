@@ -1,0 +1,782 @@
+﻿{% extends "baselayout.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Search Handshapes{% endblock %}
+{% block extrahead %}
+{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+
+    <script type='text/javascript'>
+    var url = '{{ URL }}'
+
+    <!--var edit_mode_str = '{% trans "Edit" %}'-->
+    <!--var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'-->
+    var saving_str = '{% trans "Saving..." %}'
+    var current_language_code = '{{ request.LANGUAGE_CODE }}'
+    if (current_language_code == 'nl') {
+        current_language_code = 'dutch'
+    }
+    else if (current_language_code == 'cn') {
+        current_language_code = 'chinese'
+    }
+    else {
+        current_language_code = 'english'
+
+    }
+
+    var choice_lists = {{choice_lists|safe}};
+    <!--console.log(JSON.stringify(choice_lists));-->
+    var csrf_token = '{{csrf_token}}';
+
+    </script>
+
+    <script type='text/javascript'>
+
+
+// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
+function clearForm(myFormElement) {
+
+  var elements = myFormElement.elements;
+  <!--alert('bla');-->
+  <!--console.log("inside ClearForm");-->
+  myFormElement.reset();
+  <!--console.log("number of elements to traverse: " + elements.length);-->
+
+  for(i=0; i<elements.length; i++) {
+
+      field_type = elements[i].type.toLowerCase();
+      <!--console.log("field type: " + field_type);-->
+      field_name = elements[i].name;
+      <!--console.log("field name: " + field_name);-->
+      <!--console.log("element " + i + " has name " + field_name + " and type " + field_type);-->
+
+      if (field_name == 'paginate_by') {
+        elements[i].selectedIndex = 0;
+      }
+      else if (field_name == 'search_type') {
+        elements[i].value = "handshape";
+      }
+      else if (field_name == 'sortOrder') {
+        elements[i].value = "machine_value";
+        <!--console.log("name is sortOrder");-->
+      }
+      else {
+          <!--console.log("after testing sortOrder");-->
+          switch(field_type) {
+
+            case "text":
+            case "textarea":
+
+              elements[i].value = "";
+              break;
+
+            case "radio":
+            case "checkbox":
+              if (elements[i].checked) {
+                  elements[i].checked = false;
+              }
+              break;
+
+            case "select-one":
+            case "select-multiple":
+              elements[i].selectedIndex = -1;
+              break;
+
+            default:
+              break;
+          }
+      }
+  }
+  return(false);
+  <!--document.getElementById('adminsearch').submit();-->
+}
+
+/**
+ * @param {string} field_name - name of the field to sort on
+ * @param {string} action     - one of: desc, asc, del
+ * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
+ * @returns {void}
+ */
+function do_sort_column(field_name, action, frmName) {
+  // Combine @field_name and @action into [sOrder]
+  var sOrder = field_name;
+  <!--console.log("sOrder: " + sOrder);-->
+
+  if (action == 'desc') {
+    // Descending sort order is signified by a '-' prefix
+    sOrder = '-' + sOrder;
+  } else if (action == 'del') {
+    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'machine_value' sort order
+    sOrder = 'machine_value';
+  }
+
+  // Set the value of the [sortOrder] field defined in dictionary/forms.py::HandshapeSearchForm
+  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
+
+  // Submit the form with the indicated name
+  $("#" + frmName).submit();
+}
+
+
+/**
+ * @returns {void}
+ */
+function do_adminsearch(el) {
+ var sSearchType = $(el).attr('value');
+ $(el).selected = true;
+ <!--console.log("inside of do_adminsearch with sSearchType: " + sSearchType);-->
+  $("#adminsearch input[name='search_type']").val(sSearchType);
+  switch(sSearchType) {
+    case "sign_handshape":
+        <!--console.log("request to search sign");-->
+        $("#adminsearch").attr('action', '{{URL}}/dictionary/handshapes/');
+        break;
+    case "handshape":
+        $("#adminsearch").attr('action', '{{URL}}/dictionary/handshapes/');
+        break;
+  }
+  document.getElementById('adminsearch').submit();
+}
+   </script>
+
+    <script type='text/javascript' src="{{ STATIC_URL }}js/handshape_search.js"></script>
+
+    <!-- Expand and collapse all panels -->
+    <script type='text/javascript'>
+        $('#expand-panels').on('click', function() {
+            $('#finger_selection .collapse').collapse('show');
+        });
+        $('#collapse-panels').on('click', function() {
+            $('#finger_selection .collapse').collapse('hide');
+        });
+         <!--$('#panel-expand-collapse-btn-toolbar').css({-->
+            <!--'height': $('#panel-expand-collapse-btn-group').css('height'),-->
+         <!--});-->
+    </script>
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock">
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+</div>
+<div id='searchformwell' class='well'>
+<form name='adminsearch' id='adminsearch'>
+<div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}</div>
+<div id='query-area' class='collapse {% if not request.GET.search and not request.GET.keyword and not request.GET.englishGloss and not show_all %} in {% endif %}'>
+        <div class="hidden">
+            <input name='sortOrder' class='form-control' value='machine_value' >
+            <input name='search_type' class='form-control' value='handshape'>
+        </div>
+
+        <div  class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Handshape" %}</div>
+
+            <div id='searchpanels' class='panel-collapse collapse'>
+                {% with request.LANGUAGE_CODE as language %}
+                {% if language == 'nl' %}
+                <div id='handshape_name'>
+                    {% csrf_token %}
+                    <table class='table'>
+                        <tr id='handshape_name_field'>
+                            <td><label for='id_dutch_name'></label>{% trans "Handshape name" %}</td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='dutch_name' type='text' value='{{searchform.dutch_name.value}}'/></td>
+                        </tr>
+                    </table>
+                </div>
+                {% elif language == 'cn' %}
+                <div id='handshape_name'>
+                    {% csrf_token %}
+                    <table class='table'>
+                        <tr id='handshape_name_field'>
+                            <td><label for='id_chinese_name'>{% trans "Handshape name" %}</label></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='chinese_name' type='text' value='{{searchform.chinese_name.value}}'/></td>
+                        </tr>
+                    </table>
+                </div>
+                {% else %}
+                <div id='handshape_name'>
+                    {% csrf_token %}
+                    <table class='table'>
+                        <tr id='handshape_name_field'>
+                            <td><label for='id_english_name'>{% trans "Handshape name" %}</label></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='english_name' type='text' value='{{searchform.english_name.value}}'/></td>
+                        </tr>
+                    </table>
+                </div>
+                {% endif %}
+                {% endwith %}
+                {# spacing div to allow room for typeahead dropdown #}
+                <div style='height: 4em'></div>
+
+                <div class="panel-heading" data-toggle="collapse" data-target="#finger_selection" id="fingerSelectionPanels">
+                    <div class='panel-title' id='finger_selection_heading'>
+                        <a data-toggle='collapse' href='#finger_selection'><label>{% trans "Finger selection" %}</label></a>
+                    </div>
+                    <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
+                    <div class="pull-right">
+                            <div class="btn-group" id="panel-expand-collapse-btn-group" style="top: -20px;">
+                                <button id="expand-panels" type="button" class="btn btn-default btn-xs">
+                                        <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+                                </button>
+                                <button id="collapse-panels" type="button" class="btn btn-default btn-xs">
+                                    <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id='finger_selection'>
+                    <div class="panel panel-default" id="selectFirstFingers">
+                        <div class="panel-heading">
+                            <div class='panel-title'>
+                                <a data-toggle='collapse' href='#finger_selection_1' for='id_hsFingSel'>{{searchform.hsFingSel.label}}</a>
+                            </div>
+                        </div>
+                        <div id='finger_selection_1' class='panel-collapse collapse'>
+                            <table class='table'>
+                                <tr>
+                                    <td/>
+                                    <td>
+                                        <div class='input-group'>
+                                        <label class='input-group-addon' for='id_fsT'>T</label>
+                                        {{searchform.fsT}}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class='input-group'>
+                                        <label class='input-group-addon' for='id_fsI'>I</label>
+                                        {{searchform.fsI}}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class='input-group'>
+                                        <label class='input-group-addon' for='id_fsM'>M</label>
+                                        {{searchform.fsM}}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class='input-group'>
+                                        <label class='input-group-addon' for='id_fsR'>R</label>
+                                        {{searchform.fsR}}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class='input-group'>
+                                        <label class='input-group-addon' for='id_fsP'>P</label>
+                                        {{searchform.fsP}}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                </div>
+                <div class="panel panel-default" id="selectSecondFingers">
+                    <div class="panel-heading">
+                        <div class='panel-title'>
+                            <a data-toggle='collapse' href='#finger_selection_2' for='id_hsFingSel2'>{{searchform.hsFingSel2.label}}</a>
+                        </div>
+                    </div>
+                    <div id='finger_selection_2' class='panel-collapse collapse'>
+                        <table class='table'>
+                            <tr>
+                                <td/>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_fs2T'>T</label>
+                                    {{searchform.fs2T}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_fs2I'>I</label>
+                                    {{searchform.fs2I}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_fs2M'>M</label>
+                                    {{searchform.fs2M}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_fs2R'>R</label>
+                                    {{searchform.fs2R}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_fs2P'>P</label>
+                                    {{searchform.fs2P}}
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="panel panel-default" id="selectThirdFingers">
+                    <div class="panel-heading">
+                        <div class='panel-title'>
+                            <a data-toggle='collapse' href='#unselected_fingers' for='id_hsFingUnsel'>{{searchform.hsFingUnsel.label}}</a>
+                        </div>
+                    </div>
+                    <div id='unselected_fingers' class='panel-collapse collapse'>
+                        <table class='table'>
+                            <tr>
+                                <td/>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_ufT'>T</label>
+                                    {{searchform.ufT}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_ufI'>I</label>
+                                    {{searchform.ufI}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_ufM'>M</label>
+                                    {{searchform.ufM}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_ufR'>R</label>
+                                    {{searchform.ufR}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                    <label class='input-group-addon' for='id_ufP'>P</label>
+                                    {{searchform.ufP}}
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                </div>
+
+                <table class='table'>
+                        <tr><td><label for='id_hsFingConf'>{{searchform.hsFingConf.label}}</label></td><td>{{searchform.hsFingConf}}</td></tr>
+                        <tr><td><label for='id_hsFingConf2'>{{searchform.hsFingConf2.label}}</label></td><td>{{searchform.hsFingConf2}}</td></tr>
+                        <tr><td><label for='id_hsNumSel'>{{searchform.hsNumSel.label}}</label></td><td>{{searchform.hsNumSel}}</td></tr>
+                        <tr><td><label for='id_hsThumb'>{{searchform.hsThumb.label}}</label></td><td>{{searchform.hsThumb}}</td></tr>
+                        <tr><td><label for='id_hsSpread'>{{searchform.hsSpread.label}}</label></td><td>{{searchform.hsSpread}}</td></tr>
+                        <tr><td><label for='id_hsAperture'>{{searchform.hsAperture.label}}</label></td><td>{{searchform.hsAperture}}</td></tr>
+                </table>
+            </div>
+          </div>
+</div>
+
+<div class='btn-group'>
+    <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
+    <div class="btn-group">
+        <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
+            <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="{{search_type}}">
+                {% if search_type == 'handshape' %}
+                {% trans "Search handshape" %}
+                {% else %}
+                {% trans "Search sign by handshape" %}
+                {% endif %}
+            </span>&nbsp;<span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-left">
+            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="handshape">{% trans "Search handshape" %}</a></li>
+
+            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_handshape">{% trans "Search sign by handshape" %}</a></li>
+        </ul>
+    </div>
+    <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
+    <input type="submit" style="visibility: hidden;" />
+
+    <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
+</div>
+
+<div class='form-group' id='paginate_by'>
+    <label for='paginate_by'>{% trans "Results per page" %}</label>
+    <select class='form-control' name="paginate_by" type="paginate_by" value="{{paginate_by}}">
+        <option {% if paginate_by == "5" %}selected{% endif %} value="5">5</option>
+        <option {% if paginate_by == "10" %}selected{% endif %} value="10">10</option>
+        <option {% if paginate_by == "25" %}selected{% endif %} value="25">25</option>
+        <option {% if paginate_by == "50" %}selected{% endif %} value="50">50</option>
+    </select>
+</div>
+</form>
+</div>
+
+<div><p></p><p></p></div>
+
+{% if search_type == 'handshape' %}
+
+<p>{% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{handshapescount}}.</p>
+
+{% if object_list %}
+
+{% load field_choice %}
+
+{% with request.LANGUAGE_CODE as language %}
+
+
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+          <th>{% trans "Handshape" %}</th>
+          {% if language == 'nl' %}
+          <th>{% trans "Dutch name" %}</th>
+        {% elif language == 'cn' %}
+          <th>{% trans "Chinese name" %}</th>
+        {% else %}
+          <th>{% trans "English name" %}</th>
+        {% endif %}
+          <th>{% trans "Finger selection" %}</th>
+          <th>{% trans "Finger configuration" %}</th>
+          <th>{% trans "Finger selection 2" %}</th>
+          <th>{% trans "Finger configuration 2" %}</th>
+          <th>{% trans "Quantity" %}</th>
+          <th>{% trans "Thumb" %}</th>
+          <th>{% trans "Unselected fingers" %}</th>
+          <th>{% trans "Spreading" %}</th>
+          <th>{% trans "Aperture" %}</th>
+      </tr>
+    <tr>
+       <th></th>
+        {% if language == 'nl' %}
+       <th>
+         <a href="#" onclick="do_sort_column('dutch_name','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'dutch_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('dutch_name','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-dutch_name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-dutch_name' or searchform.sortOrder and searchform.sortOrder.value == 'dutch_name'  %}
+           <a href="#" onclick="do_sort_column('dutch_name','del', 'adminsearch')">x</a>
+         {% endif %}
+       </th>
+        {% elif language == 'cn' %}
+        <th>
+         <a href="#" onclick="do_sort_column('chinese_name','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'chinese_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('chinese_name','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-chinese_name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-chinese_name' or searchform.sortOrder and searchform.sortOrder.value == 'chinese_name'  %}
+           <a href="#" onclick="do_sort_column('chinese_name','del', 'adminsearch')">x</a>
+         {% endif %}
+       </th>
+        {% else %}
+       <th>
+         <a href="#" onclick="do_sort_column('english_name','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'english_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('english_name','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-english_name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-english_name' or searchform.sortOrder and searchform.sortOrder.value == 'english_name'  %}
+           <a href="#" onclick="do_sort_column('english_name','del', 'adminsearch')">x</a>
+         {% endif %}
+       </th>
+        {% endif %}
+        <th>
+         <a href="#" onclick="do_sort_column('hsFingSel','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('hsFingSel','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingSel' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingSel' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel'  %}
+           <a href="#" onclick="do_sort_column('hsFingSel','del', 'adminsearch')">x</a>
+         {% endif %}
+        </th>
+       <th>
+         <a href="#" onclick="do_sort_column('hsFingConf','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingConf' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('hsFingConf','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingConf' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingConf' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingConf'  %}
+           <a href="#" onclick="do_sort_column('hsFingConf','del', 'adminsearch')">x</a>
+         {% endif %}
+       </th>
+        <th>
+         <a href="#" onclick="do_sort_column('hsFingSel2','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel2' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('hsFingSel2','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingSel2' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingSel2' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel2'  %}
+           <a href="#" onclick="do_sort_column('hsFingSel2','del', 'adminsearch')">x</a>
+         {% endif %}
+        </th>
+       <th>
+         <a href="#" onclick="do_sort_column('hsFingConf2','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingConf2' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('hsFingConf2','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingConf2' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingConf2' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingConf2'  %}
+           <a href="#" onclick="do_sort_column('hsFingConf2','del', 'adminsearch')">x</a>
+         {% endif %}
+       </th>
+        <th>
+         <a href="#" onclick="do_sort_column('hsNumSel','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsNumSel' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('hsNumSel','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsNumSel' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsNumSel' or searchform.sortOrder and searchform.sortOrder.value == 'hsNumSel'  %}
+           <a href="#" onclick="do_sort_column('hsNumSel','del', 'adminsearch')">x</a>
+         {% endif %}
+       </th>
+       <th>
+         <a href="#" onclick="do_sort_column('hsThumb','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsThumb' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('hsThumb','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsThumb' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsThumb' or searchform.sortOrder and searchform.sortOrder.value == 'hsThumb'  %}
+           <a href="#" onclick="do_sort_column('hsThumb','del', 'adminsearch')">x</a>
+         {% endif %}
+       </th>
+        <th>
+         <a href="#" onclick="do_sort_column('hsFingUnsel','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingUnsel' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('hsFingUnsel','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingUnsel' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingUnsel' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingUnsel'  %}
+           <a href="#" onclick="do_sort_column('hsFingUnsel','del', 'adminsearch')">x</a>
+         {% endif %}
+        </th>
+       <th>
+         <a href="#" onclick="do_sort_column('hsSpread','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsSpread' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('hsSpread','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsSpread' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsSpread' or searchform.sortOrder and searchform.sortOrder.value == 'hsSpread'  %}
+           <a href="#" onclick="do_sort_column('hsSpread','del', 'adminsearch')">x</a>
+         {% endif %}
+       </th>
+       <th>
+         <a href="#" onclick="do_sort_column('hsAperture','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsAperture' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         </a>
+         <a href="#" onclick="do_sort_column('hsAperture','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsAperture' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         </a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsAperture' or searchform.sortOrder and searchform.sortOrder.value == 'hsAperture'  %}
+           <a href="#" onclick="do_sort_column('hsAperture','del', 'adminsearch')">x</a>
+         {% endif %}
+       </th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for handshape in object_list %}
+    <tr>
+
+      <td>{%if handshape.get_image_path %}<div class="thumbnail_container"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{handshape.get_image_path}}"></div>{% endif %}</td>
+
+        {% if language == 'nl' %}
+        <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
+        {% elif language == 'cn' %}
+        <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.chinese_name}}</a></td>
+        {% else %}
+        <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.english_name}}</a></td>
+        {% endif %}
+            {% with handshape.hsFingSel as field_value %}
+            {% with "FingerSelection " as field_category %}
+            {% with field_category|add:language as args %}
+            <td>{{ field_value|machine_field_translate:args }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% with handshape.hsFingConf as field_value %}
+            {% with "JointConfiguration " as field_category %}
+            {% with field_category|add:language as args %}
+            <td>{{ field_value|machine_field_translate:args }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% with handshape.hsFingSel2 as field_value %}
+            {% with "FingerSelection " as field_category %}
+            {% with field_category|add:language as args %}
+            <td>{{ field_value|machine_field_translate:args }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% with handshape.hsFingConf2 as field_value %}
+            {% with "JointConfiguration " as field_category %}
+            {% with field_category|add:language as args %}
+            <td>{{ field_value|machine_field_translate:args }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% with handshape.hsNumSel as field_value %}
+            {% with "Quantity " as field_category %}
+            {% with field_category|add:language as args %}
+            <td>{{ field_value|machine_field_translate:args }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% with handshape.hsThumb as field_value %}
+            {% with "Thumb " as field_category %}
+            {% with field_category|add:language as args %}
+            <td>{{ field_value|machine_field_translate:args }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% with handshape.hsFingUnsel as field_value %}
+            {% with "FingerSelection " as field_category %}
+            {% with field_category|add:language as args %}
+            <td>{{ field_value|machine_field_translate:args }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% with handshape.hsSpread as field_value %}
+            {% with "Spreading " as field_category %}
+            {% with field_category|add:language as args %}
+            <td>{{ field_value|machine_field_translate:args }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% with handshape.hsAperture as field_value %}
+            {% with "Aperture " as field_category %}
+            {% with field_category|add:language as args %}
+            <td>{{ field_value|machine_field_translate:args }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+    </tr>
+    {% endfor %}
+  </tbody>
+    {% endwith %}
+</table>
+
+{% endif %}
+
+{% elif search_type == 'sign_handshape' %}
+
+<p>{% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{signscount}}.</p>
+
+{% if object_list %}
+
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+          <th></th>
+           <th>{% trans "Annotation ID Gloss" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+      </tr>
+
+    </thead>
+    <tbody>
+
+    {% with request.LANGUAGE_CODE as language %}
+
+    {% for gloss in object_list %}
+
+    <tr>
+      <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
+          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+      </td>
+
+        {% if language == 'nl' %}
+      <td>
+          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
+
+      </td>
+        {% else %}
+      <td>
+          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
+
+      </td>
+        {% endif %}
+
+            {% load field_choice %}
+
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
+                <td>{{ gloss.domhndsh|translate_to_dutch:"Handshape" }}</td>
+                <td>{{ gloss.subhndsh|translate_to_dutch:"Handshape" }}</td>
+            {% elif request.LANGUAGE_CODE == 'cn' %}
+                <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
+                <td>{{ gloss.domhndsh|translate_to_chinese:"Handshape" }}</td>
+                <td>{{ gloss.subhndsh|translate_to_chinese:"Handshape" }}</td>
+            {% else %}
+                <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
+                <td>{{ gloss.domhndsh|translate_to_english:"Handshape" }}</td>
+                <td>{{ gloss.subhndsh|translate_to_english:"Handshape" }}</td>
+            {% endif %}
+
+    </tr>
+    {% endfor %}
+    {% endwith %}
+  </tbody>
+</table>
+
+{% endif %}
+
+{% endif %}
+
+
+<div class="pagination">
+    <span class="step-links">
+
+        <ul class='pagination pagination-sm'>
+        {% if page_obj.has_previous %}
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&laquo;</a></li>
+        {% endif %}
+
+          {% if  page_obj.number > 10 %}
+            <li><a>...</a></li>
+          {% endif %}
+
+          {% for p in page_obj.paginator.page_range %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+             <li {% ifequal p page_obj.number %}class='active'{% endifequal %}>
+             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
+             </li>
+             {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+            <li><a>...</a></li>
+            <li>
+            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
+            </li>
+          {% endif %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&raquo;</a></li>
+
+
+      </ul>
+
+
+        {% endif %}
+    </span>
+</div>
+
+{% endblock %}

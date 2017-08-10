@@ -192,6 +192,7 @@ DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'deictic', 'modifier
 
 ADMIN_RESULT_FIELDS = ['annotation_idgloss', 'annotation_idgloss_en', 'handedness', 'domhndsh', 'subhndsh', 'locprim']
 
+HANDSHAPE_RESULT_FIELDS = ['machine_value', 'english_name', 'dutch_name', 'hsFingSel', 'hsFingConf', 'hsThumb', 'hsSpread']
 
 # location and URL for uploaded files
 UPLOAD_ROOT = MEDIA_ROOT + "upload/"

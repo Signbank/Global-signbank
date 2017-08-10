@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, build_choice_list, OtherMedia
+from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, build_choice_list, OtherMedia, Handshape
 from django.conf import settings
 from tagging.models import Tag
 
@@ -298,11 +298,11 @@ class MorphemeMorphologyForm(forms.ModelForm):
 
     parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
     role = forms.ChoiceField(label=_(u'Type'),choices=build_choice_list('MorphologyType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    morpheme_id = forms.CharField(label=_(u'Morpheme'));
+    morpheme_id = forms.CharField(label=_(u'Morpheme'))
 
     class Meta:
         model = MorphologyDefinition;
-        fields = ['role'];
+        fields = ['role']
 
 class OtherMediaForm(forms.ModelForm):
 
@@ -324,4 +324,88 @@ class ImageUploadForGlossForm(forms.Form):
 
     imagefile = forms.FileField(label="Upload Image")
     gloss_id = forms.CharField(widget=forms.HiddenInput)
+    redirect = forms.CharField(widget=forms.HiddenInput, required=False)
+
+
+FINGER_SELECTION_CHOICES = [('','---------')] + build_choice_list('FingerSelection')
+FINGER_CONFIGURATION_CHOICES = [('','---------')] + build_choice_list('JointConfiguration')
+QUANTITY_CHOICES = [('','---------')] + build_choice_list('Quantity')
+THUMB_CHOICES = [('','---------')] + build_choice_list('Thumb')
+SPREADING_CHOICES = [('','---------')] + build_choice_list('Spreading')
+APERTURE_CHOICES = [('','---------')] + build_choice_list('Aperture')
+attrs_default = {'class': 'form-control'}
+FINGER_SELECTION = ((True, 'True'), (False, 'False'), (None, 'Either'))
+
+class HandshapeSearchForm(forms.ModelForm):
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    search = forms.CharField(label=_("Handshape"))
+    sortOrder = forms.CharField(label=_("Sort Order"),
+                                initial="machine_value")  # Used in Handshapelistview to store user-selection
+
+    fingerSelection = forms.ChoiceField(label=_(u'Finger Selection'), choices=FINGER_SELECTION_CHOICES,
+                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    fingerConfiguration = forms.ChoiceField(label=_(u'Finger Configuration'), choices=FINGER_CONFIGURATION_CHOICES,
+                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+    numSelected = forms.ChoiceField(label=_(u'Quantity'),
+                               choices=QUANTITY_CHOICES ,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    thumb = forms.ChoiceField(label=_(u'Thumb'),
+                               choices=THUMB_CHOICES ,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+    spreading = forms.ChoiceField(label=_(u'Spreading'), choices=SPREADING_CHOICES,
+                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    aperture = forms.ChoiceField(label=_(u'Aperture'), choices=APERTURE_CHOICES,
+                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+    fsT = forms.NullBooleanSelect()
+    fsI = forms.NullBooleanSelect()
+    fsM = forms.NullBooleanSelect()
+    fsR = forms.NullBooleanSelect()
+    fsP = forms.NullBooleanSelect()
+    fs2T = forms.NullBooleanSelect()
+    fs2I = forms.NullBooleanSelect()
+    fs2M = forms.NullBooleanSelect()
+    fs2R = forms.NullBooleanSelect()
+    fs2P = forms.NullBooleanSelect()
+    ufT = forms.NullBooleanSelect()
+    ufI = forms.NullBooleanSelect()
+    ufM = forms.NullBooleanSelect()
+    ufR = forms.NullBooleanSelect()
+    ufP = forms.NullBooleanSelect()
+
+    class Meta:
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = Handshape
+        fields = ('machine_value', 'english_name', 'dutch_name', 'chinese_name',
+				  'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2',
+				  'hsAperture', 'hsThumb', 'hsSpread', 'hsFingUnsel',
+                  'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
+                  'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
+                  'ufT', 'ufI', 'ufM', 'ufR', 'ufP')
+        widgets = {
+                'fsT' : forms.RadioSelect(choices = FINGER_SELECTION),
+                'fsI': forms.RadioSelect(choices=FINGER_SELECTION),
+                'fsM': forms.RadioSelect(choices=FINGER_SELECTION),
+                'fsR': forms.RadioSelect(choices=FINGER_SELECTION),
+                'fsP': forms.RadioSelect(choices=FINGER_SELECTION),
+                'fs2T': forms.RadioSelect(choices=FINGER_SELECTION),
+                'fs2I': forms.RadioSelect(choices=FINGER_SELECTION),
+                'fs2M': forms.RadioSelect(choices=FINGER_SELECTION),
+                'fs2R': forms.RadioSelect(choices=FINGER_SELECTION),
+                'fs2P': forms.RadioSelect(choices=FINGER_SELECTION),
+                'ufT': forms.RadioSelect(choices=FINGER_SELECTION),
+                'ufI': forms.RadioSelect(choices=FINGER_SELECTION),
+                'ufM': forms.RadioSelect(choices=FINGER_SELECTION),
+                'ufR': forms.RadioSelect(choices=FINGER_SELECTION),
+                'ufP': forms.RadioSelect(choices=FINGER_SELECTION),
+        }
+
+
+class ImageUploadForHandshapeForm(forms.Form):
+    """Form for video upload for a particular gloss"""
+
+    imagefile = forms.FileField(label="Upload Image")
+    handshape_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)

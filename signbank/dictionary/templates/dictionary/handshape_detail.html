@@ -1,0 +1,219 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <style>
+        #panel-expand-collapse-btn-group.affix {
+            position:fixed;
+        }
+    </style>
+{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+
+    <script type='text/javascript'>
+    var url = '{{ URL }}'
+
+    var edit_mode_str = '{% trans "Edit" %}'
+    var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
+    var saving_str = '{% trans "Saving..." %}'
+
+    var edit_post_url = '{% url 'dictionary:update_handshape' handshape.machine_value %}';
+
+    var choice_lists = {{choice_lists|safe}};
+    <!--console.log(JSON.stringify(choice_lists));-->
+    var csrf_token = '{{csrf_token}}';
+
+    // This script gets and inserts the users last searched items on the handshape page
+    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+    var req = $.ajax({
+        url: search_results_url,
+        dataType: "json",
+        context: document.body
+    })
+    req.done(function(json_data) {
+        for (var key in json_data) {
+            if (json_data.hasOwnProperty(key)) {
+                var a = document.createElement("a");
+                a.setAttribute("class", "btn btn-default");
+                a.style["float"] = "none";
+                a.href = "{% url 'root_page' %}dictionary/handshape/" + json_data[key].id + "/";
+                a.id = json_data[key].id;
+                var linktext = document.createTextNode(json_data[key].handshape);
+                a.appendChild(linktext);
+                $( "#results-inline" ).append(a);
+            }
+        }
+        /* Determine the active button (if any), center the horizontal list according to the active button */
+        // Make sure that we are showing search results
+        if ($('#results-inline').length > 0) {
+            // Setting a button active according to which handshape page we are on. A.id should equal to handshape.machine_value.
+            $('#results-inline #{{ handshape.machine_value }}').addClass('active');
+            var scrollPanel = $('#searchresults');
+            var activeButton = $('#results-inline a.active');
+            // Make sure that activeButton exists
+            if (activeButton.length > 0) {
+                // Calculating the left offset position so that the button is centered
+                var leftOffset = activeButton.offset().left - scrollPanel.offset().left - (scrollPanel.width() / 2) + (activeButton.width() / 2);
+                // Scrolling to the active button
+                $('#searchresults').scrollLeft(leftOffset);
+            }
+        }
+    });
+
+    </script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/handshape_edit.js"></script>
+
+    <!-- Expand and collapse all panels -->
+    <script type='text/javascript'>
+        $('#expand-panels').on('click', function() {
+            $('#definition .collapse').collapse('show');
+        });
+        $('#collapse-panels').on('click', function() {
+            $('#definition .collapse').collapse('hide');
+        });
+    </script>
+
+{% endblock %}
+
+{% block content %}
+
+<div id="searchresults" style="overflow-y:hidden;">
+    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
+    </div>
+    {% endif %}
+</div>
+
+{% if request.GET.warning %}
+<div class="alert alert-warning">{{ request.GET.warning }}</div>
+{% endif %}
+
+<div id="signinfo" class='navbar navbar-default navbar-collapse'>
+    <div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
+    </div>
+
+    <div>
+    <div id="listhandshapes">
+    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/handshapes/">{% trans "Handshapes List" %}</a>
+    </div>
+
+    <div class='pull-right'>
+         <span id='edit_message' style="padding-right: 1.8em;"></span>
+         <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
+
+    </div>
+    </div>
+</div>
+
+    <!-- Image -->
+    <div id="leftblock">
+        <div id="imagecontainer">
+        {% if handshape.get_image_path %}
+        <img class="citation_form_image" src="{{protected_media_url}}{{handshape.get_image_path}}">
+        {% else %}
+        <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
+        {% endif %}
+        </div>
+
+        {% if perms.dictionary.change_gloss %}
+        <div class='editform'>
+            <fieldset>
+                <legend>{% trans "Upload New Handshape Image" %}</legend>
+                <form action="{{URL}}/handshapeimage/upload/" method="post" enctype="multipart/form-data">
+                  {% csrf_token %}
+                  <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+                <table id="staffops">
+                  <tr>
+                      <td>{{imageform.imagefile}}</td>
+                  </tr>
+                  <tr>
+                      <td><input type='hidden' name='handshape_id' value='{{handshape.machine_value}}'>
+                          <input class='btn btn-primary' type='submit' value='Upload Handshape Image'/></td>
+                  </tr>
+                </table>
+                </form>
+            </fieldset>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Fields -->
+    <div class='panel-group' id="handshape">
+        <fieldset>
+            <table class='table table-condensed'>
+                <tr><th style="width:15em;">{% trans "Handshape " %}</th><td id='idhandshape'>{% value handshape.english_name %}</td></tr>
+                <tr><th style="width:15em;">Finger selection</th>
+                    <td id="#fingerSelection1">{{ handshape.get_fingerSelection_display }}</td></tr>
+                <tr class="empty_row">
+                    <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
+                </tr>
+                <tr class="empty_row">
+                    <td/>
+		        {% for value,name,label,kind in handshape_fields_FS1 %}
+                    {% if kind == "check" and value %}
+                    <td class="edit edit_{{kind}}" id='{{name}}' checked="checked" value="{{value}}">{% trans "True" %}</td>
+                    {% else %}
+                    <td class="edit edit_{{kind}}" id='{{name}}' checked="" value="{{value}}">{% trans "False" %}</td>
+                    {% endif %}
+		        {% endfor %}
+                </tr>
+
+		{% for value,name,label,kind in handshape_fields %}
+                {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
+                    <tr value="{{value}}" class="empty_row">
+                    <th style="width:15em;">{{label}}</th>
+                    <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
+                    </tr>
+                {% else %}
+                    <tr value="{{value}}">
+                    <th style="width:15em;">{{label}}</th>
+                    <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
+                    </tr>
+                {% endif %}
+		{% endfor %}
+
+                <tr><th style="width:15em;">Finger selection 2</th>
+                    <td id="#otherFingerSection" name="#otherFingerSection">{{ handshape.get_fingerSelection2_display }}</td></tr>
+                <tr class="empty_row">
+                    <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
+                </tr>
+                <tr class="empty_row">
+                    <td/>
+		        {% for value,name,label,kind in handshape_fields_FS2 %}
+                    {% if kind == "check" and value %}
+                    <td class="edit edit_{{kind}}" id='{{name}}' checked="checked" value="{{value}}">{% trans "True" %}</td>
+                    {% else %}
+                    <td class="edit edit_{{kind}}" id='{{name}}' checked="" value="{{value}}">{% trans "False" %}</td>
+                    {% endif %}
+		        {% endfor %}
+                </tr>
+
+                <tr><th style="width:15em;">Unselected fingers</th>
+                    <td id="#unselectedFingers">{{ handshape.get_unselectedFingers_display }}</td></tr>
+                <tr class="empty_row">
+                    <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
+                </tr>
+                <tr class="empty_row">
+                    <td/>
+		        {% for value,name,label,kind in handshape_fields_UF %}
+                    {% if kind == "check" and value %}
+                    <td class="edit edit_{{kind}}" id='{{name}}' checked="checked" value="{{value}}">{% trans "True" %}</td>
+                    {% else %}
+                    <td class="edit edit_{{kind}}" id='{{name}}' checked="" value="{{value}}">{% trans "False" %}</td>
+                    {% endif %}
+		        {% endfor %}
+                </tr>
+
+            </table>
+        </fieldset>
+    </div>
+
+{% endblock %}

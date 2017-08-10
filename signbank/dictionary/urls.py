@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossRelationsDetailView, MorphemeDetailView, MorphemeListView
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossRelationsDetailView, MorphemeDetailView, MorphemeListView, HandshapeDetailView, HandshapeListView
 
 #These are needed for the urls below
 import signbank.dictionary.views
@@ -29,6 +29,7 @@ urlpatterns = [
     url(r'^search/$', signbank.dictionary.views.search, name="search"),
     url(r'^search_morpheme/$', signbank.dictionary.views.search_morpheme, name="search_morpheme"),
     url(r'^update/gloss/(?P<glossid>\d+)$', signbank.dictionary.update.update_gloss, name='update_gloss'),
+    url(r'^update/handshape/(?P<handshapeid>\d+)$', signbank.dictionary.update.update_handshape, name='update_handshape'),
     url(r'^update/morpheme/(?P<morphemeid>\d+)$', signbank.dictionary.update.update_morpheme, name='update_morpheme'),
     url(r'^update/tag/(?P<glossid>\d+)$', signbank.dictionary.update.add_tag, name='add_tag'),
     url(r'^update/morphemetag/(?P<morphemeid>\d+)$', signbank.dictionary.update.add_morphemetag, name='add_morphemetag'),
@@ -52,6 +53,7 @@ urlpatterns = [
     url(r'^ajax/keyword/(?P<prefix>.*)$', signbank.dictionary.views.keyword_value_list),
     url(r'^ajax/tags/$', signbank.dictionary.tagviews.taglist_json),
     url(r'^ajax/gloss/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
+    url(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
     url(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
     url(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),
 
@@ -65,6 +67,8 @@ urlpatterns = [
     url(r'find_homonyms/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_homonyms)),
     url(r'update_cngt_counts/$', signbank.dictionary.views.update_cngt_counts),
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', signbank.dictionary.views.update_cngt_counts),
+    url(r'configure_handshapes/$',
+        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_handshapes)),
 
     url(r'get_unused_videos/$',signbank.dictionary.views.get_unused_videos),
     url(r'all_field_choices.tsv/$',signbank.dictionary.views.list_all_fieldchoice_names),
@@ -78,9 +82,11 @@ urlpatterns = [
 
     url(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
     url(r'^morphemes/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view()), name='admin_morpheme_list'),
+    url(r'^handshapes/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
     url(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view'),
     url(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     url(r'^morpheme/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(MorphemeDetailView.as_view()), name='admin_morpheme_view'),
+    url(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
 ]
 
 

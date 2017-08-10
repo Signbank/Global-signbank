@@ -42,6 +42,12 @@ FIELDS['semantics'] = ['iconImg','namEnt','semField','valence']
 FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                        'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
 
+FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
+                       'hsFingConf2', 'hsAperture',
+                       'hsThumb', 'hsSpread', 'hsFingUnsel', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
+                       'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
+                       'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
+
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 ECV_SETTINGS = {
     'CV_ID': 'CNGT_RU-lexicon',
@@ -76,6 +82,7 @@ ECV_SETTINGS = {
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
 CROP_GLOSS_IMAGES = True
+HANDSHAPE_IMAGE_DIRECTORY = 'handshapeimage'
 OTHER_MEDIA_DIRECTORY = WRITABLE_FOLDER+'othermedia/'
 WSGI_FILE = ROOT+'lib/python2.7/site-packages/signbank/wsgi.py'
 IMAGES_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_images/'
