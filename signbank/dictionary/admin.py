@@ -90,7 +90,7 @@ class GlossAdmin(VersionAdmin):
     if SEPARATE_ENGLISH_IDGLOSS_FIELD:
         idgloss_fields.append('annotation_idgloss_en')
 
-    fieldsets = ((None, {'fields': ('dataset')+tuple(idgloss_fields)+tuple(FIELDS['main'])+('signlanguage', 'dialect')}, ),
+    fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('dataset, ''signlanguage', 'dialect')}, ),
                  ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate','alternative_id'),
                                        'classes': ('collapse',)}, ),
                  ('Phonology', {'fields': FIELDS['phonology'], 'classes': ('collapse',)}, ),
