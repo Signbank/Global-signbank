@@ -390,7 +390,7 @@ class Gloss(models.Model):
         return result
 
     dataset = models.ForeignKey("Dataset", verbose_name=_("Glosses dataset"),
-                                help_text=_("Dataset a gloss is part of"))
+                                help_text=_("Dataset a gloss is part of"), null=True)
     
     idgloss = models.CharField(_("Lemma ID Gloss"), max_length=50, help_text="""
     This is the unique identifying name of an entry of a sign form in the
