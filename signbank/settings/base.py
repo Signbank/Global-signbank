@@ -95,6 +95,7 @@ TEMPLATES = [
 AUTHENTICATION_BACKENDS = (
     "signbank.registration.EmailBackend",
     "django.contrib.auth.backends.ModelBackend",
+    'guardian.backends.ObjectPermissionBackend',
 )
 
 AUTH_PROFILE_MODULE = 'dictionary.UserProfile'
@@ -127,6 +128,7 @@ INSTALLED_APPS = (
     'reversion',
     #'django_mobile',
     'tagging',
+    'guardian',
 )
 
 # A sample logging configuration. The only tangible logging
