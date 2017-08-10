@@ -3,28 +3,60 @@
  *  (as defined by the 'Morpheme' model, which takes Gloss as basis)
  */
 
-var morph_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: '/dictionary/ajax/morph/%QUERY'
+ $(document).ready(function() {
+
+//    handshapetypeahead($('.handshapetypeahead'));
+
+    // setup requried for Ajax POST
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrf_token);
+            }
+        }
     });
 
-morph_bloodhound.initialize();
+ });
 
+var handshape_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/handshape/%QUERY'
+    });
 
-function morphtypeahead(target) {
+handshape_bloodhound.initialize();
+
+function handshapetypeahead(target) {
 
      $(target).typeahead(null, {
-          name: 'morphtarget',
-          displayKey: 'pk',
-          source: morph_bloodhound.ttAdapter(),
+          name: 'handshapetarget',
+          displayKey: current_language_code+'_name',
+          source: handshape_bloodhound.ttAdapter(),
           templates: {
-              suggestion: function(gloss) {
-                  // Issue #121: remove (SN: " + gloss.sn + ")
-                  return("<p><strong>" + gloss.idgloss + "</strong></p>");
+              suggestion: function(hs) {
+                  return("<p><strong>" + hs[current_language_code + '_name'] + "</strong></p>");
               }
           }
       });
 };
 
-morphtypeahead($('.morphtypeahead'));
+handshapetypeahead($('.handshapetypeahead'));
+
+
+$.editable.addInputType('handshapetypeahead', {
+
+   element: function(settings, original) {
+      var input = $('<input type="text" class="handshapetypeahead">');
+      $(this).append(input);
+
+      handshapetypeahead(input);
+
+      return (input);
+   },
+});
