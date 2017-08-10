@@ -1,26 +1,26 @@
 
-INSERT INTO dictionary_fieldchoice VALUES(1121,'Spreading','Unspread','Unspread',3,'Unspread');"
-INSERT INTO dictionary_fieldchoice VALUES(1122,'Spreading','Spread','Spread',4,'Spread');"
-INSERT INTO dictionary_fieldchoice VALUES(1123,'Spreading','Stacked','Stacked',5,'Stacked');"
-INSERT INTO dictionary_fieldchoice VALUES(1124,'Spreading','Crossed','Crossed',6,'Crossed');"
+INSERT INTO dictionary_fieldchoice VALUES(1121,'Spreading','Unspread','Unspread',3,'Unspread');
+INSERT INTO dictionary_fieldchoice VALUES(1122,'Spreading','Spread','Spread',4,'Spread');
+INSERT INTO dictionary_fieldchoice VALUES(1123,'Spreading','Stacked','Stacked',5,'Stacked');
+INSERT INTO dictionary_fieldchoice VALUES(1124,'Spreading','Crossed','Crossed',6,'Crossed');
 
-INSERT INTO dictionary_fieldchoice\" VALUES(1140,'Thumb','Extended','Extended',3,'Extended');"
-INSERT INTO dictionary_fieldchoice\" VALUES(1141,'Thumb','Opposed','Opposed',4,'Opposed');"
+INSERT INTO dictionary_fieldchoice VALUES(1140,'Thumb','Extended','Extended',3,'Extended');
+INSERT INTO dictionary_fieldchoice VALUES(1141,'Thumb','Opposed','Opposed',4,'Opposed');
 
-INSERT INTO dictionary_fieldchoice VALUES(1151,'Aperture','Open','Open',3,'Open');"
-INSERT INTO dictionary_fieldchoice VALUES(1152,'Aperture','Closed','Closed',4,'Closed');"
+INSERT INTO dictionary_fieldchoice VALUES(1151,'Aperture','Open','Open',3,'Open');
+INSERT INTO dictionary_fieldchoice VALUES(1152,'Aperture','Closed','Closed',4,'Closed');
 
-INSERT INTO dictionary_fieldchoice VALUES(1100,'JointConfiguration','extended','extended',3,'extended');"
-INSERT INTO dictionary_fieldchoice VALUES(1101,'JointConfiguration','open','open',4,'open');"
-INSERT INTO dictionary_fieldchoice VALUES(1102,'JointConfiguration','curved','curved',5,'curved');"
-INSERT INTO dictionary_fieldchoice VALUES(1103,'JointConfiguration','curved-open','curved-open',6,'curved-open');"
-INSERT INTO dictionary_fieldchoice VALUES(1104,'JointConfiguration','curved-closed','curved-closed',7,'curved-closed');"
-INSERT INTO dictionary_fieldchoice VALUES(1105,'JointConfiguration','bent','bent',8,'bent');"
-INSERT INTO dictionary_fieldchoice VALUES(1106,'JointConfiguration','flat','flat',9,'flat');"
-INSERT INTO dictionary_fieldchoice VALUES(1107,'JointConfiguration','flat-open','flat-open',10,'flat-open');"
-INSERT INTO dictionary_fieldchoice VALUES(1108,'JointConfiguration','flat-closed','flat-closed',11,'flat-closed');"
-INSERT INTO dictionary_fieldchoice VALUES(1109,'JointConfiguration','closed','closed',12,'closed');"
-INSERT INTO dictionary_fieldchoice VALUES(1110,'JointConfiguration','crossed','crossed',13,'crossed');"
+INSERT INTO dictionary_fieldchoice VALUES(1100,'JointConfiguration','extended','extended',3,'extended');
+INSERT INTO dictionary_fieldchoice VALUES(1101,'JointConfiguration','open','open',4,'open');
+INSERT INTO dictionary_fieldchoice VALUES(1102,'JointConfiguration','curved','curved',5,'curved');
+INSERT INTO dictionary_fieldchoice VALUES(1103,'JointConfiguration','curved-open','curved-open',6,'curved-open');
+INSERT INTO dictionary_fieldchoice VALUES(1104,'JointConfiguration','curved-closed','curved-closed',7,'curved-closed');
+INSERT INTO dictionary_fieldchoice VALUES(1105,'JointConfiguration','bent','bent',8,'bent');
+INSERT INTO dictionary_fieldchoice VALUES(1106,'JointConfiguration','flat','flat',9,'flat');
+INSERT INTO dictionary_fieldchoice VALUES(1107,'JointConfiguration','flat-open','flat-open',10,'flat-open');
+INSERT INTO dictionary_fieldchoice VALUES(1108,'JointConfiguration','flat-closed','flat-closed',11,'flat-closed');
+INSERT INTO dictionary_fieldchoice VALUES(1109,'JointConfiguration','closed','closed',12,'closed');
+INSERT INTO dictionary_fieldchoice VALUES(1110,'JointConfiguration','crossed','crossed',13,'crossed');
 
 INSERT INTO dictionary_fieldchoice VALUES(1130,'Quantity','one','one',3,'one');
 INSERT INTO dictionary_fieldchoice VALUES(1131,'Quantity','two','two',4,'two');
