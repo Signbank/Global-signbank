@@ -137,7 +137,7 @@ class GlossSearchForm(forms.ModelForm):
 
         model = Gloss
         fields = ('idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'morph', 'sense', 
-                   'sn', 'StemSN', 'comptf', 'compound', 'language', 'dialect',
+                   'sn', 'StemSN', 'comptf', 'compound', 'signlanguage', 'dialect',
                    'inWeb', 'isNew',
                    'initial_relative_orientation', 'final_relative_orientation',
                    'initial_palm_orientation', 'final_palm_orientation', 
@@ -212,7 +212,7 @@ class MorphemeSearchForm(forms.ModelForm):
 
         model = Morpheme
         fields = ('idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'morph', 'sense',
-                  'sn', 'StemSN', 'comptf', 'compound', 'language', 'dialect',
+                  'sn', 'StemSN', 'comptf', 'compound', 'signlanguage', 'dialect',
                   'inWeb', 'isNew',
                   'initial_relative_orientation', 'final_relative_orientation',
                   'initial_palm_orientation', 'final_palm_orientation',
@@ -287,11 +287,11 @@ class GlossMorphologyForm(forms.ModelForm):
 
 
 class GlossMorphemeForm(forms.Form):
-    """Specify [morphemePart] components belonging to a Gloss"""
+    """Specify simultaneous morphology components belonging to a Gloss"""
 
     host_gloss_id = forms.CharField(label=_(u'Host Gloss'))
+    description = forms.CharField()
     morph_id = forms.CharField(label=_(u'Morpheme'))
-
 
 class MorphemeMorphologyForm(forms.ModelForm):
     """Morphology specification for a Morpheme"""

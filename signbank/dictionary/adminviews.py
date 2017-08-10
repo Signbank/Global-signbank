@@ -338,7 +338,7 @@ class GlossListView(ListView):
         with override(LANGUAGE_CODE):
             header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii','ignore').decode() for f in fields]
 
-        for extra_column in ['Languages','Dialects','Keywords','Morphology','Relations to other signs','Relations to foreign signs',]:
+        for extra_column in ['SignLanguages','Dialects','Keywords','Morphology','Relations to other signs','Relations to foreign signs',]:
             header.append(extra_column);
 
         writer.writerow(header)
@@ -365,8 +365,8 @@ class GlossListView(ListView):
                     row.append(value)
 
             # get languages
-            languages = [language.name for language in gloss.language.all()]
-            row.append(", ".join(languages));
+            signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
+            row.append(", ".join(signlanguages));
 
             # get dialects
             dialects = [dialect.name for dialect in gloss.dialect.all()]
@@ -486,14 +486,14 @@ class GlossListView(ListView):
                       'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
                       'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
 
-        #Language and basic property filters
+        # SignLanguage and basic property filters
         vals = get.getlist('dialect', [])
         if vals != []:
             qs = qs.filter(dialect__in=vals)
 
-        vals = get.getlist('language', [])
+        vals = get.getlist('signlanguage', [])
         if vals != []:
-            qs = qs.filter(language__in=vals)
+            qs = qs.filter(signlanguage__in=vals)
 
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
@@ -1069,14 +1069,14 @@ class MorphemeListView(ListView):
                       'tokNoSgnrA',
                       'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
 
-        # Language and basic property filters
+        # SignLanguage and basic property filters
         vals = get.getlist('dialect', [])
         if vals != []:
             qs = qs.filter(dialect__in=vals)
 
-        vals = get.getlist('language', [])
+        vals = get.getlist('signlanguage', [])
         if vals != []:
-            qs = qs.filter(language__in=vals)
+            qs = qs.filter(signlanguage__in=vals)
 
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
@@ -1327,7 +1327,7 @@ class MorphemeListView(ListView):
         with override(LANGUAGE_CODE):
             header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
 
-        for extra_column in ['Languages', 'Dialects', 'Keywords', 'Morphology', 'Relations to other signs',
+        for extra_column in ['SignLanguages', 'Dialects', 'Keywords', 'Morphology', 'Relations to other signs',
                              'Relations to foreign signs', 'Appears in signs', ]:
             header.append(extra_column);
 
@@ -1356,8 +1356,8 @@ class MorphemeListView(ListView):
                     row.append(value)
 
             # get languages
-            languages = [language.name for language in gloss.language.all()]
-            row.append(", ".join(languages));
+            signlanguages = [signlanguage.name for signlanguage in gloss.language.all()]
+            row.append(", ".join(signlanguages));
 
             # get dialects
             dialects = [dialect.name for dialect in gloss.dialect.all()]

@@ -50,7 +50,7 @@ def machine_field_translate(field_value, args):
     language_code = arg_list[1]
     if language_code == 'nl':
         translation_function = translate_to_dutch(field_value,field_category)
-    elif language_code == 'cn':
+    elif language_code == 'zh-hans':
         translation_function = translate_to_chinese(field_value,field_category)
     else:
         translation_function = translate_to_english(field_value,field_category)

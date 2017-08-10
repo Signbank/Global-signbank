@@ -174,8 +174,8 @@ function do_adminsearch(el) {
                       <tr>
                         <td>
                             <div class='input-group'>
-                                <label class='input-group-addon' for='id_language'>{{searchform.language.label}}</label>
-                                {{searchform.language}}
+                                <label class='input-group-addon' for='id_signlanguage'>{{searchform.signlanguage.label}}</label>
+                                {{searchform.signlanguage}}
                             </div>
                         </td>
                         <td>
@@ -392,11 +392,15 @@ function do_adminsearch(el) {
                     <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
                 </ul>
             </div>
+
+            <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
+            <input type="submit" style="visibility: hidden;"/>
+
             {% if perms.dictionary.export_csv %}
             <input class='btn btn-default' type='submit' name='format' value='CSV'>
             {% endif %}
             <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
-            <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
+            <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
         </div>
 
         <div class='form-group' id='paginate_by'>

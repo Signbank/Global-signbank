@@ -41,7 +41,7 @@ def save_media(source_folder,goal_folder,gloss,extension):
         overwritten = False
 
     try:
-        shutil.copy(source,goal)
+        shutil.copyfile(source,goal)
         was_allowed = True
     except IOError:
         was_allowed = False
@@ -186,17 +186,18 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
     static_urls = {}
 
     for subfolder_name in os.listdir(full_root_path):
-        for filename in os.listdir(full_root_path+subfolder_name):
+        if os.path.isdir(subfolder_name):
+            for filename in os.listdir(full_root_path+subfolder_name):
 
-            if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
-                res = re.search(r'(.+)\.[^\.]*', filename)
+                if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
+                    res = re.search(r'(.+)\.[^\.]*', filename)
 
-                try:
-                    gloss_id = res.group(1)
-                except AttributeError:
-                    continue
+                    try:
+                        gloss_id = res.group(1)
+                    except AttributeError:
+                        continue
 
-                static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+quote(subfolder_name)+'/'+quote(filename)
+                    static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+quote(subfolder_name)+'/'+quote(filename)
 
     return static_urls
 

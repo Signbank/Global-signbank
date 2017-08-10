@@ -28,7 +28,7 @@
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
-    var languages = {{morpheme.language_choices|safe}};
+    var languages = {{morpheme.signlanguage_choices|safe}};
     var dialects = {{morpheme.dialect_choices|safe}};
     var mrptype_choices = {{morpheme.mrptype_choices|safe}};
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
@@ -272,7 +272,7 @@
                 <th>{% trans "Morpheme type" %}</th>
                 <td class='edit edit_mrptype' id='mrpType'>{{ morpheme.get_mrpType_display }}</td>
             </tr>
-            <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language'>{% for lang in morpheme.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage'>{% for lang in morpheme.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
         </table>
 			 

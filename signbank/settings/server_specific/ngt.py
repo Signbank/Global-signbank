@@ -20,14 +20,17 @@ SIGNBANK_VERSION_CODE = 'NGT'
 URL = 'https://signbank.science.ru.nl/'
 ALLOWED_HOSTS = ['signbank.science.ru.nl']
 
+gettext = lambda s: s
 LANGUAGES = (
-  ('en', 'English'),
-  ('nl', 'Dutch'),
-  ('cn', 'Chinese')
+  ('en', gettext('English')),
+  ('nl', gettext('Dutch')),
+  ('zh-hans', gettext('Chinese'))
 )
 LANGUAGE_CODE = "en"
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = True
+
+DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'nl'}
 
 FIELDS = {}
 
@@ -110,5 +113,5 @@ API_FIELDS = [
 LANGUAGE_CODE_MAP = [
     {2:'nl',3:'nld'},
     {2:'en',3:'eng'},
-    {2:'cn',3:'chi'}
+    {2:'zh-hans',3:'chi'}
 ]

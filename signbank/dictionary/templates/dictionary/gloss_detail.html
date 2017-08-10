@@ -33,7 +33,7 @@
     var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
     var relation_delete_choices = '{ "delete" : "Delete" }';
-    var languages = {{gloss.language_choices|safe}};
+    var languages = {{gloss.signlanguage_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
@@ -416,7 +416,7 @@
 
                <table class='table table-condensed'>
                    <tr>
-                       <th style='...'>{% trans "Sequential Morphology" %}</th>
+                       <th colspan="3" style='...'>{% trans "Sequential Morphology" %}</th>
                    </tr>
                    {% if gloss.parent_glosses.count > 0 %}
                   <tr>
@@ -472,9 +472,9 @@
                <input type='hidden' name='parent_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td style="width:2em;"></td>
+                       <td style="width:10em;"></td>
                        <td style="width:12em;">{{morphologyform.role}}</td>
-                       <td><input class='form-control glosstypeahead' placeholder='{% trans "ID Gloss of Morpheme" %}' name='morpheme_id'></td>
+                       <td><input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID gloss" %}' name='morpheme_id'></td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
                    </tr>
                </table>
@@ -485,20 +485,20 @@
 
             <table class='table table-condensed'>
                 <tr>
-                    <th style='...'>{% trans "Simultaneous Morphology" %}</th>
+                    <th colspan="3" style='...'>{% trans "Simultaneous Morphology" %}</th>
                 </tr>
-              {% if gloss.morphemePart.all.count > 0 %}
                 <tr>
                     <th style='width:2em'></th>
+                    <th style='width:10em'>{% trans "Meaning in this sign" %}</th>
                     <th style='width:12em'>{% trans "Morpheme" %}</th>
                 </tr>
-                {% for morpheme in gloss.morphemePart.all %}
+                {% for morpheme in gloss.simultaneous_morphology.all %}
                 <tr>
                     <!-- Facility to delete this morpheme -->
                      <td>
-                        <span class='glyphicon glyphicon-trash morpheme-definition-delete' data-toggle='modal' data-target='#delete_morpheme-definition_modal_{{morpheme.id}}'></span>
+                        <span class='glyphicon glyphicon-trash morpheme-definition-delete' data-toggle='modal' data-target='#delete_morpheme-definition_modal_{{morpheme.pk}}'></span>
 
-                         <div class="modal fade" id="delete_morpheme-definition_modal_{{morpheme.id}}" role="dialog" aria-labelledby="#modalTitleMrp" aria-hidden="true">
+                         <div class="modal fade" id="delete_morpheme-definition_modal_{{morpheme.pk}}" role="dialog" aria-labelledby="#modalTitleMrp" aria-hidden="true">
                              <div class="modal-dialog modal-sm">
                                 <div class="modal-content">
                                     <div class='modal-header'>
@@ -510,7 +510,7 @@
                                      </div>
                                   <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                                       {% csrf_token %}
-                                      <input type='hidden' name='id' value='morpheme-definition-delete_{{morpheme.id}}'>
+                                      <input type='hidden' name='id' value='morpheme-definition-delete_{{morpheme.pk}}'>
                                       <input type='hidden' name='value' value='confirmed'>
                                       <div class="modal-footer">
                                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
@@ -523,13 +523,10 @@
                          </div>
 
                     </td>
-                    <td class='edit edit_morpheme' id='morpheme-definition_{{morpheme.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.pk %}'>{{morpheme}}</a></td>
+                    <td>{{morpheme.role}}</td>
+                    <td class='edit edit_morpheme' id='morpheme-definition_{{morpheme.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morpheme.morpheme}}</a></td>
                 </tr>
                 {% endfor %}
-
-            {% else %}
-                <tr><td><i>({% trans "Use [Edit] to define any morphemes used in this sign" %})</i></td></tr>
-            {% endif %}
             </table>
 
             <!-- Facilitate adding and deleting morphemes that are used in this sign -->
@@ -540,7 +537,8 @@
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td><input class='form-control morphtypeahead' placeholder='{% trans "ID Morpheme/Annotation ID Morpheme" %}' name='morph_id'></td>
+                       <td><input class='form-control morphtypeahead' placeholder='{% trans "Morpheme gloss" %}' name='morph_id'></td>
+                       <td><input class='form-control' placeholder='{% trans "Meaning in this sign" %}' name='description'></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
                    </tr>
                </table>
@@ -696,7 +694,7 @@
         </div>
         <div id='languagedialect' class='panel-collapse collapse'>
             <table class="table table-condensed">
-            <tr><th>{% trans "Language" %}</th><td class='edit edit_language' id='language' colspan="2">{% for lang in gloss.language.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage' colspan="2">{% for lang in gloss.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
 
             </table>

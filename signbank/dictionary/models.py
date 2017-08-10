@@ -15,7 +15,7 @@ import json
 from collections import OrderedDict
 from datetime import datetime, date
 
-from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE
+from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 
 import signbank.settings
@@ -38,10 +38,18 @@ def build_choice_list(field):
         pass
 
 
+def get_default_language_id():
+    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
+    if language is not None:
+        return language.id
+    return None
+
+
 class Translation(models.Model):
     """A Dutch translation of NGT signs"""
-     
+
     gloss = models.ForeignKey("Gloss")
+    language = models.ForeignKey("Language", default=get_default_language_id)
     translation = models.ForeignKey("Keyword")
     index = models.IntegerField("Index")
     
@@ -62,13 +70,12 @@ class Translation(models.Model):
         
     
     class Meta:
+        unique_together = (("gloss", "language", "translation"),)
         ordering = ['gloss', 'index']
         
     class Admin:
         list_display = ['gloss', 'translation']
         search_fields = ['gloss__idgloss']
-    
-    
     
 class Keyword(models.Model):
     """A Dutch keyword that is a possible translation equivalent of a sign"""
@@ -148,7 +155,7 @@ class Definition(models.Model):
         search_fields = ['gloss__idgloss']
 
 
-class Language(models.Model):
+class SignLanguage(models.Model):
     """A sign language name"""
         
     class Meta:
@@ -164,14 +171,14 @@ class Dialect(models.Model):
     """A dialect name - a regional dialect of a given Language"""
     
     class Meta:
-        ordering = ['language', 'name']
+        ordering = ['signlanguage', 'name']
     
-    language = models.ForeignKey(Language)
+    signlanguage = models.ForeignKey(SignLanguage)
     name = models.CharField(max_length=20)
     description = models.TextField()
     
     def __str__(self):
-        return self.language.name+"/"+self.name  
+        return self.signlanguage.name + "/" + self.name
 
 class RelationToForeignSign(models.Model):
     """Defines a relationship to another sign in another language (often a loan)"""
@@ -381,7 +388,9 @@ class Gloss(models.Model):
 
 
         return result
-        
+
+    dataset = models.ForeignKey("Dataset", verbose_name=_("Glosses dataset"),
+                                help_text=_("Dataset a gloss is part of"))
     
     idgloss = models.CharField(_("Lemma ID Gloss"), max_length=50, help_text="""
     This is the unique identifying name of an entry of a sign form in the
@@ -404,7 +413,7 @@ have the same 'Annotation Idgloss' that means they differ in form in only
 minor or insignificant ways that can be ignored.""") 
 
     # languages that this gloss is part of
-    language = models.ManyToManyField(Language)
+    signlanguage = models.ManyToManyField(SignLanguage)
 
     # these language fields are subsumed by the language field above
     bsltf = models.NullBooleanField(_("BSL sign"), null=True, blank=True)
@@ -1239,11 +1248,11 @@ minor or insignificant ways that can be ignored.""")
 
         return json.dumps(OrderedDict(reformatted_li))
 
-    def language_choices(self):
+    def signlanguage_choices(self):
         """Return JSON for langauge choices"""
         
         d = dict()
-        for l in Language.objects.all():
+        for l in SignLanguage.objects.all():
             d[l.name] = l.name
 
         return json.dumps(d)
@@ -1405,7 +1414,6 @@ class MorphologyDefinition(models.Model):
     morpheme = models.ForeignKey(Gloss,related_name="morphemes")
 
     def __str__(self):
-
         return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
 
 class Morpheme(Gloss):
@@ -1462,6 +1470,14 @@ class Morpheme(Gloss):
 
         return json.dumps(OrderedDict(reformatted_li))
 
+class SimultaneousMorphologyDefinition(models.Model):
+
+    parent_gloss = models.ForeignKey(Gloss,related_name='simultaneous_morphology')
+    role = models.CharField(max_length=100)
+    morpheme = models.ForeignKey(Morpheme,related_name='glosses_containing')
+
+    def __str__(self):
+        return self.parent_gloss.idgloss + ' consists of ' + self.morpheme.idgloss
 
 class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""
@@ -1478,7 +1494,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User,related_name="user_profile_user")
 
     # Other fields here
-    last_used_language = models.CharField(max_length=5, default=settings.LANGUAGE_CODE)
+    last_used_language = models.CharField(max_length=20, default=settings.LANGUAGE_CODE)
     expiry_date = models.DateField(null=True, blank=True)
     number_of_logins = models.IntegerField(null=True,default=0)
     comments = models.CharField(max_length=500,null=True, blank=True)
@@ -1503,3 +1519,37 @@ def create_user_profile(sender, instance, created, **kwargs):
         UserProfile.objects.create(user=instance)
 
 post_save.connect(create_user_profile, sender=User)
+
+class Language(models.Model):
+    """A written language, used for translations in written languages."""
+    name = models.CharField(max_length=50)
+    language_code_2char = models.CharField(max_length=7, unique=False, null=False, blank=False, help_text=_(
+        """Language code (2 characters long) of a written language. This also includes codes of the form zh-Hans, cf. IETF BCP 47"""))
+    language_code_3char = models.CharField(max_length=3, unique=False, null=False, blank=False, help_text=_(
+        """ISO 639-3 language code (3 characters long) of a written language."""))
+    description = models.TextField(null=True, blank=True)
+
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class Dataset(models.Model):
+    """A dataset, can be public/private and can be of only one SignLanguage"""
+    name = models.CharField(unique=True, blank=False, null=False, max_length=60)
+    is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
+    signlanguage = models.ForeignKey("SignLanguage")
+    translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
+                                                                          "for translation equivalents.")
+    description = models.TextField()
+
+    class Meta:
+        permissions = (
+            ('view_dataset', _('View dataset')),
+        )
+
+    def __unicode__(self):
+        return self.name

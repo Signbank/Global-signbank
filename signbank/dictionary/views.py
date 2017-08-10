@@ -356,7 +356,8 @@ def import_media(request,video):
         overwritten, was_allowed = save_media(import_folder,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
         if not was_allowed:
-            errors.append('Failed two overwrite '+gloss.annotation_idgloss+'. Maybe this file is not owned by the webserver?')
+            errors.append('Failed to move media file for '+gloss.annotation_idgloss+
+                          '. Either the source could not be read or the destination could not be written.')
             continue
 
         out += '<li>'+filename+'</li>'
@@ -366,17 +367,35 @@ def import_media(request,video):
             annotation_id = gloss.annotation_idgloss
             destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
             video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
+            video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
 
             try:
+                print("Trying to resize video " + destination_folder+video_filename)
+
+                if os.path.isfile(video_filepath_small):
+                    print("Making a backup of " + video_filepath_small)
+                    # Make a backup
+                    backup_id = 1
+                    made_backup = False
+                    while not made_backup:
+                        if not os.path.isfile(video_filepath_small + '_' + str(backup_id)):
+                            os.rename(video_filepath_small, video_filepath_small + '_' + str(backup_id))
+                            made_backup = True
+                        else:
+                            backup_id += 1
+
                 from CNGT_scripts.python.resizeVideos import VideoResizer
                 from signbank.settings.server_specific import FFMPEG_PROGRAM
                 resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
                 resizer.run()
             except ImportError as i:
                 print(i.message)
+            except IOError as io:
+                print(io.message)
 
             # Issue #255: generate still image
             try:
+                print("Trying to generate still images for " + destination_folder+video_filename)
                 from signbank.tools import generate_still_image
                 generate_still_image(annotation_id[:2],
                                      destination_folder,
@@ -481,18 +500,14 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    result = 'hoi'
-    for tagged_item in TaggedItem.objects.all():
+    result = 'OK'
 
-        if tagged_item.tag.pk == 13: #13 = radboud sign
-
-            try:
-                pk = tagged_item.object_id
-                gloss = Gloss.objects.get(pk=pk)
-                gloss.inWeb = True
-                gloss.save()
-            except ObjectDoesNotExist:
-                continue
+    # for gloss in Gloss.objects.all():
+    #     for morphemePart in gloss.morphemePart.all():
+    #         definition = SimultaneousMorphologyDefinition()
+    #         definition.morpheme = morphemePart
+    #         definition.parent_gloss = gloss
+    #         definition.save()
 
     return HttpResponse(result)
 

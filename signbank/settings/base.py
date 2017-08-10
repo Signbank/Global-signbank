@@ -95,6 +95,7 @@ TEMPLATES = [
 AUTHENTICATION_BACKENDS = (
     "signbank.registration.EmailBackend",
     "django.contrib.auth.backends.ModelBackend",
+    'guardian.backends.ObjectPermissionBackend',
 )
 
 AUTH_PROFILE_MODULE = 'dictionary.UserProfile'
@@ -107,6 +108,7 @@ ROOT_URLCONF = 'signbank.urls'
 WSGI_APPLICATION = 'signbank.wsgi.application'
 
 INSTALLED_APPS = (
+    'modeltranslation',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -126,6 +128,7 @@ INSTALLED_APPS = (
     'reversion',
     #'django_mobile',
     'tagging',
+    'guardian',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -211,7 +214,7 @@ VIDEO_UPLOAD_LOCATION = "upload"
 ATTACHMENT_LOCATION = 'attachments'
 
 # which fields from the Gloss model should be included in the quick update form on the sign view
-QUICK_UPDATE_GLOSS_FIELDS = ['language', 'dialect']
+QUICK_UPDATE_GLOSS_FIELDS = ['signlanguage', 'dialect']
 
 # should we always require a login for viewing dictionary content
 ALWAYS_REQUIRE_LOGIN = True

@@ -1,148 +1,149 @@
-# Dutch language file for NGT Signbank.
-# Copyright (C) 2015 Radboud University
-# This file is distributed under the same license as the NGT Signbank package.
-# Richard Bank <r.bank@let.ru.nl>, Onno Crasborn <o.crasborn@let.ru.nl>, Wessel Stoop <w.stoop@let.ru.nl>, 2015.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-07 17:07+0200\n"
-"PO-Revision-Date: 2016-12-18 18:06+0200\n"
-"Last-Translator: Richard <r.bankl@let.ru.nl>\n"
-"Language-Team: Dutch <LL@li.org>\n"
-"Language: nl\n"
+"POT-Creation-Date: 2017-07-07 17:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.8.11\n"
 
 #: signbank/dictionary/admin.py:47
 msgid "number of senses"
-msgstr "aantal betekenissen"
+msgstr "感官数量"
 
 #: signbank/dictionary/admin.py:60
 msgid "No Senses"
-msgstr "Geen betekenissen"
+msgstr "没有感知"
 
 #: signbank/dictionary/admin.py:61
 msgid "More than one"
-msgstr "Meer dan een"
+msgstr "不止一个"
 
 #: signbank/dictionary/forms.py:15
 msgid "Glosses containing"
-msgstr "Glossen met"
+msgstr "释义项"
 
 #: signbank/dictionary/forms.py:16 signbank/dictionary/forms.py:38
 msgid "Translations containing"
-msgstr "Vertaling bevat"
+msgstr "翻译项"
 
 #: signbank/dictionary/forms.py:17
 msgid "Search"
-msgstr "Zoeken"
+msgstr "搜索"
 
 #: signbank/dictionary/forms.py:36
+#, fuzzy
 msgid "Morphemes containing"
-msgstr "Morfemen met"
+msgstr "释义项"
 
 #: signbank/dictionary/forms.py:93 signbank/dictionary/forms.py:163
 msgid "Dutch Gloss"
-msgstr "Nederlandse glos"
+msgstr "荷语释义"
 
 #: signbank/dictionary/forms.py:94 signbank/dictionary/forms.py:164
 #, fuzzy
 msgid "Sort Order"
-msgstr "Volgorde"
+msgstr "排序"
 
 #: signbank/dictionary/forms.py:95 signbank/dictionary/forms.py:166
 msgid "English Gloss"
-msgstr "Engelse glos"
+msgstr "英文释义"
 
 #: signbank/dictionary/forms.py:98 signbank/dictionary/forms.py:169
 msgid "Translations"
-msgstr "Mogelijke vertalingen"
+msgstr "翻译"
 
 #: signbank/dictionary/forms.py:99 signbank/dictionary/forms.py:170
 msgid "Has Video"
-msgstr "Video beschikbaar"
+msgstr "有视频"
 
 #: signbank/dictionary/forms.py:100 signbank/dictionary/forms.py:171
 msgid "All Definitions Published"
-msgstr "Alle definities gepubliceerd"
+msgstr "所有公布了的定义"
 
 #: signbank/dictionary/forms.py:102 signbank/dictionary/forms.py:173
 msgid "Search Definition/Notes"
-msgstr "Zoek Definitie/Aantekeningen"
+msgstr "搜索定义/备注"
 
 #: signbank/dictionary/forms.py:105 signbank/dictionary/forms.py:175
 msgid "Search for gloss of related signs"
-msgstr "Zoek op glos van een verwant gebaar"
+msgstr "搜索相关手势的释义"
 
 #: signbank/dictionary/forms.py:106 signbank/dictionary/forms.py:177
 msgid "Search for gloss of foreign signs"
-msgstr "Zoek op de glos in een andere gebarentaal"
+msgstr "搜索外来手势词的释义"
 
 #: signbank/dictionary/forms.py:107 signbank/dictionary/forms.py:179
 msgid "Search for gloss with this as morpheme"
-msgstr "Zoek voor een glos met dit morfeem"
+msgstr "搜索与这个语素有关的释义"
 
 #: signbank/dictionary/forms.py:109 signbank/dictionary/models.py:342
 msgid "Abduction change"
-msgstr "Abductieverandering"
+msgstr ""
 
 #: signbank/dictionary/forms.py:110 signbank/dictionary/models.py:343
+#, fuzzy
 msgid "Flexion change"
-msgstr "Flectieverandering"
+msgstr "方向变化"
 
 #: signbank/dictionary/forms.py:112 signbank/dictionary/forms.py:182
 msgid "Phonology other"
-msgstr "Fonologie: overig"
+msgstr "音韵学等"
 
 #: signbank/dictionary/forms.py:114 signbank/dictionary/forms.py:184
 msgid "Related to foreign sign or not"
-msgstr "Verwant aan gebaar uit andere taal of niet"
+msgstr "是否与外来手势词有关"
 
 #: signbank/dictionary/forms.py:115 signbank/dictionary/forms.py:187
 msgid "Type of relation"
-msgstr "Type relatie"
+msgstr "关系类型"
 
 #: signbank/dictionary/forms.py:117
 msgid "Has compound component type"
-msgstr "Heeft samenstelling-deel van type"
+msgstr ""
 
 #: signbank/dictionary/forms.py:119 signbank/dictionary/forms.py:189
 msgid "Has morpheme type"
-msgstr "Heeft morfeem-type"
+msgstr "语素类型"
 
 #: signbank/dictionary/forms.py:121 signbank/dictionary/forms.py:192
 msgid "Repeating Movement"
-msgstr "Herhaalde beweging"
+msgstr "重复动作"
 
 #: signbank/dictionary/forms.py:122 signbank/dictionary/forms.py:194
 #: signbank/dictionary/models.py:383
 msgid "Alternating Movement"
-msgstr "Alternerende beweging"
+msgstr "交替动作"
 
 #: signbank/dictionary/forms.py:124 signbank/dictionary/forms.py:197
 msgid "Is a proposed new sign"
-msgstr "Voorstel voor nieuw gebaar"
+msgstr "是否提议新新手势词"
 
 #: signbank/dictionary/forms.py:125 signbank/dictionary/forms.py:199
 msgid "Is in Web dictionary"
-msgstr "In woordenboek"
+msgstr "是否出现在网上字典中"
 
 #: signbank/dictionary/forms.py:126 signbank/dictionary/forms.py:201
 msgid "Note type"
-msgstr "Type aantekening"
+msgstr "备注类型"
 
 #: signbank/dictionary/forms.py:127 signbank/dictionary/forms.py:203
 msgid "Note contains"
-msgstr "Aantekening bevat"
+msgstr "备注项"
 
 #: signbank/dictionary/forms.py:129 signbank/dictionary/forms.py:205
 msgid "Created before"
-msgstr "Toegevoegd vóór"
+msgstr "创建前"
 
 #: signbank/dictionary/forms.py:129 signbank/dictionary/forms.py:130
 msgid "mm/dd/yyyy"
@@ -150,13 +151,13 @@ msgstr ""
 
 #: signbank/dictionary/forms.py:130 signbank/dictionary/forms.py:206
 msgid "Created after"
-msgstr "Aangemaakt na"
+msgstr "创建后"
 
 #: signbank/dictionary/forms.py:132 signbank/dictionary/forms.py:208
 #, fuzzy
 #| msgid "Created before"
 msgid "Created by"
-msgstr "Toegevoegd vóór"
+msgstr "创建前"
 
 #: signbank/dictionary/forms.py:238 signbank/dictionary/forms.py:281
 #: signbank/dictionary/forms.py:300
@@ -165,39 +166,40 @@ msgstr "Toegevoegd vóór"
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:417
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:517
 msgid "Type"
-msgstr "Type"
+msgstr "类型"
 
 #: signbank/dictionary/forms.py:247 signbank/dictionary/forms.py:258
 #: signbank/dictionary/forms.py:266
 msgid "Source Gloss"
-msgstr "Bron-glos"
+msgstr "资源语释义"
 
 #: signbank/dictionary/forms.py:248 signbank/dictionary/forms.py:259
 msgid "Target Gloss"
-msgstr "Doel-glos"
+msgstr "目标语释义"
 
 #: signbank/dictionary/forms.py:268
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:762
 msgid "Related Language"
-msgstr "Verwante taal"
+msgstr "同族语言"
 
 #: signbank/dictionary/forms.py:269
 msgid "Gloss in Related Language"
-msgstr "Glos in een verwante taal"
+msgstr "标注语言"
 
 #: signbank/dictionary/forms.py:280 signbank/dictionary/forms.py:299
 msgid "Parent Gloss"
-msgstr "Ouder-glos"
+msgstr "上位释义"
 
 #: signbank/dictionary/forms.py:282 signbank/dictionary/forms.py:294
 #: signbank/dictionary/forms.py:301
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:494
 msgid "Morpheme"
-msgstr "Morfeem"
+msgstr "语素"
 
 #: signbank/dictionary/forms.py:292
+#, fuzzy
 msgid "Host Gloss"
-msgstr "Ouder-glos"
+msgstr "荷语释义"
 
 #: signbank/dictionary/models.py:266
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:20
@@ -205,63 +207,63 @@ msgstr "Ouder-glos"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:321
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:268
 msgid "Lemma ID Gloss"
-msgstr "Lemma-ID-Glos"
+msgstr "引理ID释义"
 
 #: signbank/dictionary/models.py:271
 msgid "Annotation ID Gloss: Dutch"
-msgstr "Annotatie-ID-Glos: Nederlands"
+msgstr "标注识别释义：荷语"
 
 #: signbank/dictionary/models.py:279
 msgid "Annotation ID Gloss: English"
-msgstr "Annotatie-ID-Glos: Engels"
+msgstr "标注识别释义：英语"
 
 #: signbank/dictionary/models.py:290
 msgid "BSL sign"
-msgstr "BSL-gebaar"
+msgstr "英国手语手势"
 
 #: signbank/dictionary/models.py:291
 msgid "ASL sign"
-msgstr "ASL-gebaar"
+msgstr "美国手语手势"
 
 #: signbank/dictionary/models.py:294
 msgid "ASL gloss"
-msgstr "ASL-glos"
+msgstr "美国手语释义"
 
 #: signbank/dictionary/models.py:295
 msgid "ASL loan sign"
-msgstr "Leengebaar uit ASL"
+msgstr "美国手语借词手势"
 
 #: signbank/dictionary/models.py:298
 msgid "BSL gloss"
-msgstr "BSL-glos"
+msgstr "英国手语释义"
 
 #: signbank/dictionary/models.py:299
 msgid "BSL loan sign"
-msgstr "Leengebaar uit BSL"
+msgstr "英国手语借词手势"
 
 #: signbank/dictionary/models.py:301
 msgid "Annotation instructions"
-msgstr "Annotatieinstructies"
+msgstr "标注说明"
 
 #: signbank/dictionary/models.py:302
 msgid "Remarks"
-msgstr "Opmerkingen"
+msgstr "备考"
 
 #: signbank/dictionary/models.py:309
 msgid "Blend of"
-msgstr "Blend van"
+msgstr "混合"
 
 #: signbank/dictionary/models.py:310
 msgid "Blend"
-msgstr "Blend"
+msgstr "混合"
 
 #: signbank/dictionary/models.py:312
 msgid "Compound of"
-msgstr "Samenstelling van"
+msgstr "复合"
 
 #: signbank/dictionary/models.py:313
 msgid "Compound"
-msgstr "Samenstelling"
+msgstr "复合"
 
 #: signbank/dictionary/models.py:317
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:522
@@ -275,23 +277,23 @@ msgstr "Samenstelling"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:392
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:450
 msgid "Handedness"
-msgstr "Handigheid"
+msgstr "惯用手或手的使用情况"
 
 #: signbank/dictionary/models.py:319
 msgid "Strong Hand"
-msgstr "Sterke hand"
+msgstr "强手"
 
 #: signbank/dictionary/models.py:320
 msgid "Weak Hand"
-msgstr "Zwakke hand"
+msgstr "弱手"
 
 #: signbank/dictionary/models.py:322
 msgid "Final Dominant Handshape"
-msgstr ""
+msgstr "最后的主控手手形"
 
 #: signbank/dictionary/models.py:323
 msgid "Final Subordinate Handshape"
-msgstr ""
+msgstr "最后的辅助手手形"
 
 #: signbank/dictionary/models.py:325
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:525
@@ -305,51 +307,51 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:395
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:453
 msgid "Location"
-msgstr "Plaats"
+msgstr "手的位置"
 
 #: signbank/dictionary/models.py:326
 msgid "Final Primary Location"
-msgstr ""
+msgstr "最后的主要位置"
 
 #: signbank/dictionary/models.py:327
 msgid "Virtual Object"
-msgstr "Virtueel object"
+msgstr "虚拟对象"
 
 #: signbank/dictionary/models.py:329
 msgid "Secondary Location"
-msgstr ""
+msgstr "第二个位置"
 
 #: signbank/dictionary/models.py:331
 msgid "Initial Subordinate Location"
-msgstr ""
+msgstr "辅助手的起始的位置"
 
 #: signbank/dictionary/models.py:332
 msgid "Final Subordinate Location"
-msgstr ""
+msgstr "辅助手的最终位置"
 
 #: signbank/dictionary/models.py:334
 msgid "Initial Palm Orientation"
-msgstr ""
+msgstr "辅助手的最终位置"
 
 #: signbank/dictionary/models.py:335
 msgid "Final Palm Orientation"
-msgstr ""
+msgstr "手掌初始方向"
 
 #: signbank/dictionary/models.py:337
 msgid "Initial Interacting Dominant Hand Part"
-msgstr ""
+msgstr "最初与始主控手联系的部分"
 
 #: signbank/dictionary/models.py:338
 msgid "Final Interacting Dominant Hand Part"
-msgstr ""
+msgstr "最后与主控手联系的部分"
 
 #: signbank/dictionary/models.py:346
 msgid "In the Web dictionary"
-msgstr "In het woordenboek"
+msgstr "在网上词典里"
 
 #: signbank/dictionary/models.py:347
 msgid "Is this a proposed new sign?"
-msgstr "Voorstel voor nieuw gebaar?"
+msgstr "这是新提议的手势吗？"
 
 #: signbank/dictionary/models.py:348
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:855
@@ -358,91 +360,92 @@ msgstr ""
 
 #: signbank/dictionary/models.py:352
 msgid "Morphemic Analysis"
-msgstr "Morfeemanalyse"
+msgstr "语素分析"
 
 #: signbank/dictionary/models.py:357
 msgid "Signed English definition available"
-msgstr ""
+msgstr "手势英语定义可用"
 
 #: signbank/dictionary/models.py:358
 msgid "Signed English gloss"
-msgstr ""
+msgstr "手势英语释义"
 
 #: signbank/dictionary/models.py:360
 msgid "Sense Number"
-msgstr ""
+msgstr "感官数量"
 
 #: signbank/dictionary/models.py:363
 msgid "Sign Number"
-msgstr "Gebaarnummer"
+msgstr "手势数量"
 
 #: signbank/dictionary/models.py:370
 msgid "Relation between Articulators"
-msgstr "Relatie tussen articulatoren"
+msgstr "发音器官之间的关系"
 
 #: signbank/dictionary/models.py:372
 msgid "Absolute Orientation: Palm"
-msgstr "Absolute oriëntatie: palm"
+msgstr "相对方向：手掌"
 
 #: signbank/dictionary/models.py:373
 msgid "Absolute Orientation: Fingers"
-msgstr "Absolute oriëntatie: vingers"
+msgstr "相对方向：手指"
 
 #: signbank/dictionary/models.py:375
 msgid "Relative Orientation: Movement"
-msgstr "Relatieve oriëntatie: beweging"
+msgstr "相对方向：运动"
 
 #: signbank/dictionary/models.py:376
 msgid "Relative Orientation: Location"
-msgstr "Relatieve oriëntatie: locatie"
+msgstr "相对定向：位置"
 
 #: signbank/dictionary/models.py:378
 msgid "Orientation Change"
-msgstr "Oriëntatieverandering"
+msgstr "方向变化"
 
 #: signbank/dictionary/models.py:380
 msgid "Handshape Change"
-msgstr "Handvormverandering"
+msgstr "手形变化"
 
 #: signbank/dictionary/models.py:382
 msgid "Repeated Movement"
-msgstr "Herhaalde beweging"
+msgstr "重复动作"
 
 #: signbank/dictionary/models.py:385
 msgid "Movement Shape"
-msgstr "Vorm van de beweging"
+msgstr "动作形态"
 
 #: signbank/dictionary/models.py:386
 msgid "Movement Direction"
-msgstr "Richting van de beweging"
+msgstr "运动方向"
 
 #: signbank/dictionary/models.py:387
 msgid "Movement Manner"
-msgstr "Manier van bewegen"
+msgstr "运动方式"
 
 #: signbank/dictionary/models.py:388
 msgid "Contact Type"
-msgstr "Type contact"
+msgstr "接触类型"
 
 #: signbank/dictionary/models.py:390
 msgid "Phonology Other"
-msgstr "Fonologie: overig"
+msgstr "音韵学等"
 
 #: signbank/dictionary/models.py:392
 msgid "Mouth Gesture"
-msgstr "Orale component"
+msgstr "姿势口动"
 
 #: signbank/dictionary/models.py:393
 msgid "Mouthing"
-msgstr "Gesproken component"
+msgstr "语词口动"
 
 #: signbank/dictionary/models.py:394
 msgid "Phonetic Variation"
-msgstr "Fonetische variatie"
+msgstr "语音变异"
 
 #: signbank/dictionary/models.py:396
+#, fuzzy
 msgid "Placement Active Articulator LH"
-msgstr ""
+msgstr "发音器官之间的关系"
 
 #: signbank/dictionary/models.py:397
 msgid "Placement Focal Site RH"
@@ -453,126 +456,131 @@ msgid "Placement Focal site LH"
 msgstr ""
 
 #: signbank/dictionary/models.py:399
+#, fuzzy
 msgid "Orientation RH (initial)"
-msgstr ""
+msgstr "方向变化"
 
 #: signbank/dictionary/models.py:400
+#, fuzzy
 msgid "Orientation RH (final)"
-msgstr ""
+msgstr "方向变化"
 
 #: signbank/dictionary/models.py:401
+#, fuzzy
 msgid "Orientation LH (initial)"
-msgstr ""
+msgstr "方向变化"
 
 #: signbank/dictionary/models.py:402
+#, fuzzy
 msgid "Orientation LH (final)"
-msgstr ""
+msgstr "方向变化"
 
 #: signbank/dictionary/models.py:406
 msgid "Iconic Image"
-msgstr "Iconisch beeld"
+msgstr "象似性图像"
 
 #: signbank/dictionary/models.py:407
+#, fuzzy
 msgid "Type of iconicity"
-msgstr "Type iconiciteit"
+msgstr "关系类型"
 
 #: signbank/dictionary/models.py:409
 msgid "Named Entity"
-msgstr "Naam"
+msgstr "命名实体"
 
 #: signbank/dictionary/models.py:410
 msgid "Semantic Field"
-msgstr "Semantisch veld"
+msgstr "语议场"
 
 #: signbank/dictionary/models.py:413
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:295
 msgid "Word class"
-msgstr "Woordsoort"
+msgstr ""
 
 #: signbank/dictionary/models.py:414
 msgid "Word class 2"
-msgstr "Woordsoort 2"
+msgstr ""
 
 #: signbank/dictionary/models.py:415
 msgid "Derivation history"
-msgstr "Derivatieachtergrond"
+msgstr ""
 
 #: signbank/dictionary/models.py:416
 msgid "Lexical category notes"
-msgstr "Opmerkingen over woordsoort"
+msgstr ""
 
 #: signbank/dictionary/models.py:417
 msgid "Valence"
-msgstr "Valence"
+msgstr ""
 
 #: signbank/dictionary/models.py:421
 msgid "Number of Occurrences"
-msgstr "Aantal voorkomens"
+msgstr "出现的次数"
 
 #: signbank/dictionary/models.py:422
 msgid "Number of Signers"
-msgstr "Aantal gebaarders"
+msgstr "手语者的人次"
 
 #: signbank/dictionary/models.py:423
 msgid "Number of Occurrences in Amsterdam"
-msgstr "Aantal voorkomens in Amsterdam"
+msgstr "在阿姆斯丹出现的次数"
 
 #: signbank/dictionary/models.py:424
 msgid "Number of Occurrences in Voorburg"
-msgstr "Aantal voorkomens in Voorburg"
+msgstr "在沃尔堡出现的次数"
 
 #: signbank/dictionary/models.py:425
 msgid "Number of Occurrences in Rotterdam"
-msgstr "Aantal voorkomens in Rotterdam"
+msgstr "在鹿特丹出现的次数"
 
 #: signbank/dictionary/models.py:426
 msgid "Number of Occurrences in Gestel"
-msgstr "Aantal voorkomens in Gestel"
+msgstr "在Gestel出现的次数"
 
 #: signbank/dictionary/models.py:427
 msgid "Number of Occurrences in Groningen"
-msgstr "Aantal voorkomens in Groningen"
+msgstr "在格罗宁根出现的次数"
 
 #: signbank/dictionary/models.py:428
 msgid "Number of Occurrences in Other Regions"
-msgstr "Aantal voorkomens in andere regio's"
+msgstr "其它地区出现的次数"
 
 #: signbank/dictionary/models.py:430
 msgid "Number of Amsterdam Signers"
-msgstr "Aantal gebaarders uit Amsterdam"
+msgstr "阿姆斯丹手语者出现的次数"
 
 #: signbank/dictionary/models.py:431
 msgid "Number of Voorburg Signers"
-msgstr "Aantal gebaarders uit Voorburg"
+msgstr "沃尔堡手语者出现的次数"
 
 #: signbank/dictionary/models.py:432
 msgid "Number of Rotterdam Signers"
-msgstr "Aantal gebaarders uit Rotterdam"
+msgstr "鹿特丹手语者出现的次数"
 
 #: signbank/dictionary/models.py:433
 msgid "Number of Gestel Signers"
-msgstr "Aantal gebaarders uit Gestel"
+msgstr "Gestel手势出现的次数"
 
 #: signbank/dictionary/models.py:434
 msgid "Number of Groningen Signers"
-msgstr "Aantal gebaarders uit Groningen"
+msgstr "格罗宁根手语者出现的次数"
 
 #: signbank/dictionary/models.py:435
 msgid "Number of Other Region Signers"
-msgstr "Aantal gebaarders uit andere regio's"
+msgstr "其它地区手语者出现的次数"
 
 #: signbank/dictionary/models.py:437
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Creation date"
-msgstr "Aanmaakdatum"
+msgstr "创建日期"
 
 #: signbank/dictionary/models.py:438
 msgid "Last updated"
-msgstr "Laatste update"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:17
 msgid "Please provide some initial data"
-msgstr "Geef hier wat data om mee te beginnen"
+msgstr "请提供一些原始数据"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:23
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:44
@@ -580,7 +588,7 @@ msgstr "Geef hier wat data om mee te beginnen"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:618
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:640
 msgid "ID Gloss"
-msgstr "ID-Glos"
+msgstr "ID释义"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:26
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:21
@@ -589,7 +597,7 @@ msgstr "ID-Glos"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:322
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (Dutch)"
-msgstr "Annotatie-ID-Glos (Nederlands)"
+msgstr "标注识别释义(荷语)"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:33
 #: signbank/dictionary/templates/dictionary/add_gloss_form.html:22
@@ -598,46 +606,49 @@ msgstr "Annotatie-ID-Glos (Nederlands)"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:353
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Annotation ID Gloss (English)"
-msgstr "Annotatie-ID-Glos (Engels)"
+msgstr "标注识别释义(英语)"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:44
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:479
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:495
 msgid "Add New Sign"
-msgstr "Voeg nieuw gebaar toe"
+msgstr "添加新手势"
 
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:38
+#, fuzzy
 msgid "Please provide some initial data for this new morpheme"
-msgstr "Geef hier wat begininformatie over dit nieuwe morfeem"
+msgstr "请提供一些原始数据"
 
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:64
 #: signbank/dictionary/templates/dictionary/add_morpheme_form.html:23
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:471
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:272
+#, fuzzy
 msgid "Morpheme type"
-msgstr "Morfeem-type"
+msgstr "语素类型"
 
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:69
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:423
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:441
+#, fuzzy
 msgid "Add New Morpheme"
-msgstr "Voeg nieuw morfeem toe"
+msgstr "语素"
 
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:72
 #: signbank/dictionary/templates/dictionary/add_morpheme_form.html:42
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:449
 msgid "You are not authorized to add a morpheme"
-msgstr "Je hebt niet genoeg rechten om een morfeem toe te voegen"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:127
 msgid "Form your query"
-msgstr "Formuleer zoek-opdracht"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:148
 #, fuzzy
 #| msgid "Note contains"
 msgid "contains A"
-msgstr "Aantekening bevat"
+msgstr "备注项"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:151
 msgid "starts with A"
@@ -662,78 +673,82 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:189
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:170
 msgid "Search by Language and Basic Properties"
-msgstr "Zoek op Taal en Basiseigenschappen"
+msgstr "根据语种何语言的基本属性搜索"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:223
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:199
 msgid "Search by Morphology"
-msgstr "Zoek op Morfologie"
+msgstr "根据形态学搜索"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:233
+#, fuzzy
 msgid "Morpheme Gloss"
-msgstr "Morfeem-Glos"
+msgstr "识别释义/标注识别释义"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:246
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:217
 msgid "Search by Phonology"
-msgstr "Zoek op Fonologie"
+msgstr "根据音韵学搜索"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:269
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:240
 msgid "Search by Semantics"
-msgstr "Zoek op Semantiek"
+msgstr "根据语义学搜索"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:294
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:265
 msgid "Search by Relation"
-msgstr "Zoek op Relaties"
+msgstr "相关搜索"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:339
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:310
 msgid "Search by Publication Status and Notes"
-msgstr "Zoek op Publicatiestatus en Aantekeningen"
+msgstr "根据出版状态和备释义检索"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:426
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:433
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:444
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:390
+#, fuzzy
 msgid "Search sign"
-msgstr "Zoek gebaar"
+msgstr "搜索"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:428
+#, fuzzy
 msgid "Search sign or morpheme"
-msgstr "Zoek gebaar of morfeem"
+msgstr "搜索与这个语素有关的释义"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:434
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:387
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:391
+#, fuzzy
 msgid "Search morpheme"
-msgstr "Zoek morfeem"
+msgstr "根据形态学搜索"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:436
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:392
 msgid "Sign or morpheme"
-msgstr "Gebaar of morfeem"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:455
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:399
 msgid "Reset"
-msgstr "Reset"
+msgstr "重设"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:459
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:403
 msgid "Results per page"
-msgstr "Hits per pagina"
+msgstr "搜索结果显示页"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:508
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:457
 msgid "Number of matches:"
-msgstr "Aantal hits:"
+msgstr "匹配数目"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:508
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:457
 msgid "out of"
-msgstr "van"
+msgstr "离开"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:515
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:464
@@ -747,7 +762,7 @@ msgstr "van"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:443
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:499
 msgid "Annotation ID gloss: Dutch"
-msgstr "Annotatie-ID-Glos: Nederlands"
+msgstr "标注识别释义：荷语"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:518
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:467
@@ -761,7 +776,7 @@ msgstr "Annotatie-ID-Glos: Nederlands"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:446
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:502
 msgid "Annotation ID gloss: English"
-msgstr "Annotatie-ID-Glos: Engels"
+msgstr "标注识别释义：英语"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:521
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:46
@@ -775,7 +790,7 @@ msgstr "Annotatie-ID-Glos: Engels"
 #, fuzzy
 #| msgid "Translation equivalents in Dutch"
 msgid "Translation equivalents"
-msgstr "Mogelijke vertalingen in het Nederlands"
+msgstr "荷语翻译等值"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:523
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:473
@@ -788,7 +803,7 @@ msgstr "Mogelijke vertalingen in het Nederlands"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:393
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:451
 msgid "Strong hand"
-msgstr "Sterke hand"
+msgstr "强势手"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:524
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:474
@@ -801,7 +816,7 @@ msgstr "Sterke hand"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:394
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:452
 msgid "Weak hand"
-msgstr "Zwakke hand"
+msgstr "弱势手"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:526
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:476
@@ -815,86 +830,85 @@ msgstr "Zwakke hand"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:396
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:454
 msgid "Tags"
-msgstr "Labels"
+msgstr "标签"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:580
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:611
 #, fuzzy
 #| msgid "Morpheme"
 msgid "morphemes"
-msgstr "Morfeem"
+msgstr "语素"
 
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:470
 msgid "Abstract Meaning"
-msgstr "Mogelijke vertalingen"
+msgstr "翻译对等词"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:26
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:174
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:21
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:132
 msgid "Edit"
-msgstr "Bewerk"
+msgstr "编辑"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:27
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:22
 msgid "Turn off edit mode"
-msgstr "Zet edit-stand uit"
+msgstr "关闭编辑模式"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:28
 msgid "Delete this gloss"
-msgstr "Verwijder deze glos"
+msgstr "删除这个释义"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:29
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:24
 msgid "Saving..."
-msgstr "Opslaan..."
+msgstr "保存"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:30
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:25
 msgid "This idgloss already exists"
-msgstr "Deze idgloss bestaat al"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:147
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:110
 #, python-format
 msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
-msgstr "\"Gebaar %(glossposn)s van %(glosscount)s in NGT Signbank\" "
+msgstr "\"在荷兰手语词典 %(glossposn)s of %(glosscount)s\" "
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:151
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:114
 msgid "Next Sign &raquo;"
-msgstr "Volgende gebaar"
+msgstr "下一个手势词语&"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:158
 #, fuzzy
 #| msgid "Detail View"
 msgid "Relations View"
-msgstr "Detailbeeld"
+msgstr "细节界面"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:161
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:122
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:30
 msgid "Public View"
-msgstr "Publieke Versie"
+msgstr "公开的界面"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:165
 msgid "Delete Sign"
-msgstr "Verwijder gebaar"
+msgstr "删除手势"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:173
 msgid "Edit next gloss"
-msgstr "Bewerk volgende glos"
+msgstr "编辑下一释义"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:180
 msgid "Delete This Sign"
-msgstr "Verwijder dit gebaar"
+msgstr "删除这个手语势"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:183
 msgid ""
 "This action will delete this sign and all associated records. It cannot be "
 "undone."
-msgstr ""
-"Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
+msgstr "这样做将删除这个手势词相关的所有的记录。删除后则不能复原。"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:190
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:449
@@ -906,7 +920,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:541
 #: signbank/dictionary/templates/dictionary/update_video.html:78
 msgid "Cancel"
-msgstr "Annuleer"
+msgstr "取消"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:191
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:450
@@ -917,35 +931,36 @@ msgstr "Annuleer"
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:446
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:542
 msgid "Confirm Delete"
-msgstr "Bevestig verwijderen"
+msgstr "确认删除"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:237
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:239
 msgid "Provide feedback about this sign"
-msgstr "Geef feedback over dit gebaar"
+msgstr "请提供与这个手势有关的反馈信息"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:250
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:208
 msgid "Upload New Video"
-msgstr "Nieuwe video uploaden"
+msgstr "上传新视频"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:251
 #, python-format
 msgid " We have %(gloss.count_videos)s videos for this sign. "
-msgstr "We hebben %(gloss.count_videos)s video's voor dit gebaar"
+msgstr "我们有%(gloss.count_videos)s手语视频 "
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:273
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:242
 msgid "Upload New Citation Form Image"
-msgstr "Upload een nieuwe foto"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:295
+#, fuzzy
 msgid "Delete Media"
-msgstr "Verwijder media"
+msgstr "删除手势"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:382
 msgid "Translation equivalents in Dutch"
-msgstr "Mogelijke vertalingen in het Nederlands"
+msgstr "荷语翻译等值"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:385
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:573
@@ -963,7 +978,7 @@ msgstr "Mogelijke vertalingen in het Nederlands"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:534
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:536
 msgid "Yes"
-msgstr "Ja"
+msgstr "是"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:385
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:573
@@ -981,60 +996,58 @@ msgstr "Ja"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:534
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:536
 msgid "No"
-msgstr "Nee"
+msgstr "否"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:410
 msgid "Morphology"
-msgstr "Morfologie"
+msgstr "形态学"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:419
 #, fuzzy
 #| msgid "Search by Morphology"
 msgid "Sequential Morphology"
-msgstr "Zoek op Morfologie"
+msgstr "根据形态学搜索"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:424
+#, fuzzy
 msgid "Compound part"
-msgstr "Samenstelling-deel"
+msgstr "复合"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:425
 msgid "Component sign"
-msgstr "Deelgebaar"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:438
+#, fuzzy
 msgid "Delete This Compound part"
-msgstr "Verwijder dit deel van de samenstelling"
+msgstr "删除此记录"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:442
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:510
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:999
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:534
 msgid "Are you sure you want to delete this? This cannot be undone."
-msgstr ""
-"Weet je zeker dat je dit wilt verwijderen? Het kan niet ongedaan gemaakt "
-"worden."
+msgstr "你确定要删除这个？一旦删除就不能复原。"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:465
 msgid "If this is a compound, use [Edit] to define its components"
 msgstr ""
-"Als dit een compound is, kun je de delen specificeren door op [Bewerk] te "
-"klikken"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:477
 #, fuzzy
 #| msgid "Annotation ID Gloss"
 msgid "Annotation ID gloss"
-msgstr "Annotatie-ID-Glos"
+msgstr "识别释义/标注识别释义"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:478
 msgid "Add Component"
-msgstr "Voeg deel toe"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:488
 #, fuzzy
 #| msgid "Morphology"
 msgid "Simultaneous Morphology"
-msgstr "Morfologie"
+msgstr "形态学"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:493
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:546
@@ -1043,27 +1056,28 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:506
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:138
+#, fuzzy
 msgid "Delete This Morpheme"
-msgstr "Verwijder dit morfeem"
+msgstr "删除这个形态学"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:533
 msgid "Use [Edit] to define any morphemes used in this sign"
-msgstr "Klik [Bewerk] om morfemen in dit gebaar te specificeren"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:545
 #, fuzzy
-#| msgid "Morpheme Gloss"
 msgid "Morpheme gloss"
-msgstr "Morfeem-Glos"
+msgstr "识别释义/标注识别释义"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:547
+#, fuzzy
 msgid "Add Morpheme"
-msgstr "Voeg morfeem toe"
+msgstr "语素"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:564
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:322
 msgid "Phonology"
-msgstr "Fonologie"
+msgstr "音韵学"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:592
 msgid "Identical phonology but not marked as homonym"
@@ -1083,7 +1097,7 @@ msgstr ""
 #, fuzzy
 #| msgid "template name"
 msgid "Field name"
-msgstr "templaatnaam"
+msgstr "模板名称"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:642
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:506
@@ -1098,177 +1112,183 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:680
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:339
 msgid "Semantics"
-msgstr "Semantiek"
+msgstr "语义学"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:697
+#, fuzzy
 msgid "Language & Dialect"
-msgstr "Taal & dialect"
+msgstr "语言"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:702
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:275
 msgid "Language"
-msgstr "Taal"
+msgstr "语言"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:703
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:276
 msgid "Dialect"
-msgstr "Dialect"
+msgstr "方言"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:715
 msgid "Relations to Other Signs"
-msgstr "Relaties met andere gebaren"
+msgstr "关系到其他手势"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:736
 msgid "Annotation ID Gloss"
-msgstr "Annotatie-ID-Glos"
+msgstr "识别释义/标注识别释义"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:754
 msgid "Relations to Foreign Signs"
-msgstr "Relaties met gebaren uit andere talen"
+msgstr "与外来手势的关系"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:761
 msgid "Loan"
-msgstr "Leenwoord"
+msgstr "借用"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:763
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:783
 msgid "Gloss in related language"
-msgstr "Glos in een verwante taal"
+msgstr "同族语言的释义"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:782
 msgid "Related language"
-msgstr "Verwante taal"
+msgstr "同族语言"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:784
 msgid "Add Relation to Foreign Sign"
-msgstr "Voeg relatie toe"
+msgstr "添加与外来手势的关系"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:801
 msgid "Frequency"
-msgstr "Frequentie"
+msgstr "频率"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:818
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:359
 msgid "Publication Status"
-msgstr "Publicatiestatus"
+msgstr "出版状态"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:826
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:367
 msgid "Creation Date"
-msgstr "Aanmaakdatum"
+msgstr "创建日期"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:827
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:368
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:19
 msgid "Creator"
-msgstr "Toegevoegd door"
+msgstr "创建者"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:839
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:380
 msgid "In Web Dictionary"
-msgstr "In woordenboek"
+msgstr "网上词典"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:847
 msgid "Proposed New Sign"
-msgstr "Voorstel voor nieuw gebaar"
+msgstr "创建新手语势"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:872
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:405
 msgid "Notes"
-msgstr "Aantekeningen"
+msgstr "备注"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:880
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:415
 msgid "Published"
-msgstr "Gepubliceerd"
+msgstr "发表了"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:881
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:416
 msgid "Index"
-msgstr ""
+msgstr "索引"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:883
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:418
 msgid "Text"
-msgstr "Tekst"
+msgstr "文本"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:899
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:434
 msgid "Delete This Note"
-msgstr "Verwijder deze aantekening"
+msgstr "删除此记录"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:903
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:438
 msgid "This action will delete this note. It cannot be undone."
-msgstr ""
-"Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
+msgstr "这样做将会删除这个备注。一旦删除不能复原。"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:908
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:443
 msgid "confirmed"
-msgstr "Verwijder"
+msgstr "确定"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:949
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:484
 msgid "Enter new note"
-msgstr "Vul nieuwe aantekening in"
+msgstr "输入新的备注"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:956
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:491
+#, fuzzy
 msgid "Save new note"
-msgstr "Bewaar nieuwe aantekening"
+msgstr "输入新的备注"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:973
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:508
+#, fuzzy
 msgid "Other media"
-msgstr "Andere media"
+msgstr "其它视频"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:981
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:516
+#, fuzzy
 msgid "Image/Video"
-msgstr "Afbeelding/video"
+msgstr "图像"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:983
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1036
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:518
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:571
 msgid "Alternative gloss"
-msgstr "Alternatieve glos"
+msgstr "可替换的释义"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:995
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:530
+#, fuzzy
 msgid "Delete This Media"
-msgstr "Verwijder dit bestand"
+msgstr "删除这个手语势"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1034
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:569
+#, fuzzy
 msgid "Upload media"
-msgstr "Upload media"
+msgstr "上传视频"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1041
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:576
+#, fuzzy
 msgid "Save"
-msgstr "Bewaar"
+msgstr "另存为新文件"
 
 #: signbank/dictionary/templates/dictionary/gloss_list.html:42
 #: signbank/dictionary/templates/dictionary/search_result.html:94
 msgid "Jump to results page:"
-msgstr "Ga naar de resultatenlijst:"
+msgstr "跳转到结果页面"
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:19
 #: signbank/dictionary/templates/dictionary/morphemetags.html:20
 msgid "delete this tag"
-msgstr "verwijder dit label"
+msgstr "删除这个标记"
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:35
 msgid "Add Tag"
-msgstr "Voeg label toe"
+msgstr "添加标记"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:32
 #, fuzzy
 #| msgid "Upload your changed CSV here:"
 msgid "Upload your changed CSV here::"
-msgstr "Upload hier het gewijzigde CSV-bestand:"
+msgstr "在这里上传更改了的csv"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:43
 msgid "Browse&hellip;"
@@ -1277,11 +1297,11 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/import_csv.html:46
 #: signbank/dictionary/templates/dictionary/search_result.html:20
 msgid "Submit"
-msgstr "Bevestig"
+msgstr "提交"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:67
 msgid "The following changes were detected:"
-msgstr "De volgende wijzigingen zijn vastgesteld:"
+msgstr "检测出如下变化"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:71
 #, python-format
@@ -1295,107 +1315,107 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:79
 msgid "Make changes"
-msgstr "Wijzig"
+msgstr "进行更改"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:86
 msgid "Changes are live."
-msgstr "Wijzigingen zijn gepubliceerd."
+msgstr "即时更改"
 
 #. Translators: Welcome message
 #: signbank/dictionary/templates/dictionary/index.html:7
 #, fuzzy, python-format
-#| msgid ""
-#| "Welcome to the Sign Search section of the %(language)s SignBank. Here\n"
-#| "    you can search for a sign using a Dutch translation in the search "
-#| "box\n"
-#| "    above, or browse words starting with any letter below."
 msgid ""
 "Welcome to the Sign Search section of the %(language)s SignBank. Here you "
 "can search for a sign using a Dutch translation in the search box above, or "
 "browse words starting with any letter below."
 msgstr ""
-"Welkom bij de zoekpagina van %(language)s SignBank. Hier\n"
-"   kun je zoeken naar een gebaar op basis van de Nederlandse vertaling,\n"
-"   of gebaren bekijken in de lijst hieronder."
+"欢迎到手语词库搜索% (language)s Here\n"
+"这里你能在上面搜索框用荷语翻译找到一个手势＼n或者在搜括框下面浏览不同字母起首"
+"的词语."
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:23
+#, fuzzy
 msgid "Delete this morpheme"
-msgstr "Verwijder dit morfeem"
+msgstr "删除此记录"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:123
+#, fuzzy
 msgid "Delete Morpheme"
-msgstr "Verwijder dit morfeem"
+msgstr "语素"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:131
+#, fuzzy
 msgid "Edit next morpheme"
-msgstr "Bewerk volgende morfeem"
+msgstr "编辑下一释义"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:141
+#, fuzzy
 msgid ""
 "This action will delete this morpheme and all associated records. It cannot "
 "be undone."
-msgstr ""
-"Je verwijdert zo dit morfeem en alle verwante records, dit kan niet ongedaan "
-"gemaakt worden."
+msgstr "这样做将删除这个手势词相关的所有的记录。删除后则不能复原。"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:195
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:197
+#, fuzzy
 msgid "Provide feedback about this morpheme"
-msgstr "Geef feedback over dit morfeem"
+msgstr "请提供与这个手势有关的反馈信息"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:209
-#, python-format
+#, fuzzy, python-format
 msgid " We have %(morpheme.count_videos)s videos for this morpheme. "
-msgstr "We hebben %(morpheme.count_videos)s video's voor dit morfeem."
+msgstr "我们有%(gloss.count_videos)s手语视频 "
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:227
 msgid "Delete/Revert Video"
-msgstr "Verwijder video"
+msgstr "删除/恢复视频"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:230
 msgid ""
 "This will delete the most recent upload and restore the most recent earlier "
 "version."
-msgstr ""
-"Zo wordt de meest recente video verwijderd en de vorige versie getoond."
+msgstr "这样做将会删除最新上传的资料, 还原成之前的版本"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:270
 #, fuzzy
 #| msgid "Abstract Meaning"
 msgid "Abstract meaning"
-msgstr "Mogelijke vertalingen"
+msgstr "翻译对等词"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:285
 msgid "Appears in"
-msgstr "Komt voor in"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:296
+#, fuzzy
 msgid "Gloss"
-msgstr "Glos"
+msgstr "ID释义"
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:308
 msgid "This morpheme does not occur in any sign"
-msgstr "Dit morfeem komt in geen enkel gebaar voor"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:388
+#, fuzzy
 msgid "Proposed New Morpheme"
-msgstr "Voorstel voor nieuw morfeem"
+msgstr "创建新手语势"
 
 #: signbank/dictionary/templates/dictionary/morphemetags.html:36
+#, fuzzy
 msgid "Add morpheme Tag"
-msgstr "Voeg morfeem-label toe"
+msgstr "添加标记"
 
 #. Translators: Navigation detailed view
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:27
 #: signbank/dictionary/templates/dictionary/word.html:83
 msgid "Detail View"
-msgstr "Detailbeeld"
+msgstr "细节界面"
 
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:38
 #, fuzzy
 #| msgid "Source Gloss"
 msgid "Source Sign"
-msgstr "Bron-glos"
+msgstr "资源语释义"
 
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:93
 msgid "Homonyms"
@@ -1427,35 +1447,32 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/search_result.html:27
 msgid "There is no exact match to the word you typed."
-msgstr "Er is geen resultaat dat precies overeenkomst met het zoekwoord."
+msgstr "没有与你输入的单词匹配的。"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:33
 #, python-format
 msgid ""
 " There really is no %(language)s sign in the database for which that word is "
 "a good translation "
-msgstr ""
-"Er is geen %(language)s-gebaar in de database waarvoor dat woord een goede "
-"vertaling is."
+msgstr "这个数据库里没有与这个词匹配的正确的翻译 %(language)s"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:35
 msgid ""
 "You have mis-typed the word or you have added unnecessary word endings. "
 "Follow these search tips:"
-msgstr ""
-"Je hebt mogelijk een typefout gemaakt of een verbogen vorm van het woord "
-"gebruikt. Gebruik deze zoektips:"
+msgstr "你输入词语错误或者在词尾添加了多余成分"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:37
 msgid "type only the first few letters of a word"
-msgstr "type alleen de eerste letters van een woord"
+msgstr "只输入单词的第一个字母"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:39
+#, fuzzy
 msgid "type words with no word endings like ‘-en’, ‘-end’, or ‘-t’."
-msgstr "type woorden zonder uitgangen zoals '-t', '-en', '-de' of '-te'."
+msgstr "输入的词没有'-en', '-end', or '-t'词尾"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:42
-#, python-format
+#, fuzzy, python-format
 msgid ""
 " The match is blocked in the public view of %(language)s Signbank because "
 "the word/sign is\n"
@@ -1472,142 +1489,139 @@ msgid ""
 "\n"
 "            matching words/signs if they exist in %(language)s. "
 msgstr ""
+"匹配结果在手语词库的公开界面不能显示出来, 因为这个手语词在荷语是不良或使人反"
+"感的词语。(学校和家长多次要求这类手势词语只能在注册成员界面可以显示。)你必须"
+"注册登录后才能看到这种手势词语"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:60
 msgid ""
 "There is one word that fully or partially match your query. Please select "
 "the word below."
-msgstr ""
-"Er is een woord dat (deels of helemaal) overeenkomt met je zoekopdracht."
-"Selecteer het woord hieronder."
+msgstr "这里有一个词 与你查询的词 全部或者部分匹配。请选择下面的词字"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:62
 #, python-format
 msgid ""
 " There are %(wordcount)s words that fully or partially match your query. "
-msgstr ""
-" Er zijn %(wordcount)s woorden die (deels of helemaal) met je zoekopdracht "
-"overeenkomen."
+msgstr "这里有 %(wordcount)s 个词与你查询的词全部或部分匹配。"
 
 #: signbank/dictionary/templates/dictionary/search_result.html:97
 #: signbank/dictionary/templates/dictionary/search_result.html:99
 msgid "Start"
-msgstr "Start"
+msgstr "开始"
 
 #: signbank/dictionary/templates/dictionary/update_result.html:9
 msgid "The update to the gloss {{ gloss }} was successful"
-msgstr "De update van glos {{ gloss }} is gelukt"
+msgstr "释义{{ gloss }}更新成功了 "
 
 #: signbank/dictionary/templates/dictionary/update_result.html:12
 #, python-format
 msgid " Return to <a href=\"%(referer)s\">the gloss page. "
-msgstr " Ga terug naar <a href=\"%(referer)s\">de glos-pagina. "
+msgstr " Return to <a href=\"%(referer)s\">the gloss page "
 
 #: signbank/dictionary/templates/dictionary/update_result.html:15
 msgid "Errors in the update form: "
-msgstr "Fouten in het updateformulier"
+msgstr "更新表出现错误"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:43
 msgid "Update Video for Gloss <em>{{gloss.idgloss}}</em>"
-msgstr "Update de video voor glos <em>{{gloss.idgloss}}</em>"
+msgstr "更新的视频解释<em>{{gloss.idgloss}}</em>"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:46
 msgid "Replacement of video cancelled."
-msgstr "Vervangen van video geannuleerd"
+msgstr "更换视频被取消"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:48
 #: signbank/dictionary/templates/dictionary/update_video.html:54
 msgid "Close Window"
-msgstr "Sluit scherm"
+msgstr "关闭浏览器窗口"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:52
 msgid "Replacement of video completed."
-msgstr "Vervangen van video afgerond."
+msgstr "视频更换完毕"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:63
 msgid "Existing Video"
-msgstr "Bestaande video"
+msgstr "现有的视频"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:63
 msgid "New Video"
-msgstr "Nieuwe video"
+msgstr "新的视频"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:76
 msgid "Confirm update of this video:"
-msgstr "Bevestig update van deze video:"
+msgstr "确认更新的视频"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:93
 msgid "Upload Video"
-msgstr "Upload video"
+msgstr "上传视频"
 
 #: signbank/dictionary/templates/dictionary/warning.html:8
 msgid "Click here to go back."
-msgstr "Klik hier om terug te gaan"
+msgstr "点击此处返回"
 
 #. Translators: Page title
 #: signbank/dictionary/templates/dictionary/word.html:5
 #, python-format
 msgid "NGT: sign for %(translation)s"
-msgstr "NGT: gebaar voor %(translation)s"
+msgstr "荷兰手语：手势表示语 %(translation)s"
 
 #. Translators: Navigation
 #: signbank/dictionary/templates/dictionary/word.html:41
 msgid "Previous Sign"
-msgstr "Vorige gebaar"
+msgstr "上个手语势"
 
 #. Translators: Sign x of n(signs)
 #: signbank/dictionary/templates/dictionary/word.html:45
-#, python-format
+#, fuzzy, python-format
 msgid ""
 "Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the NGT "
 "Dictionary"
-msgstr ""
-"Gebaar %(glossposn)s van %(glosscount)s <span class='hidden-xs'>in NGT "
-"Signbank"
+msgstr "在荷兰手语词典"
 
 #: signbank/dictionary/templates/dictionary/word.html:50
 msgid "Next Sign"
-msgstr "Volgende gebaar"
+msgstr "下个手语势"
 
 #. Translators: Navbar text
 #: signbank/dictionary/templates/dictionary/word.html:61
 #, python-format
 msgid "Matches for the word <em>%(translation|safe)s"
-msgstr "Resultaten voor het woord <em>%(translation|safe)s"
+msgstr "与词<em>%(translation|safe)s 匹配"
 
 #. Translators: Navigation
 #: signbank/dictionary/templates/dictionary/word.html:74
 msgid "Return to Matches"
-msgstr "Terug naar de zoekresultaten"
+msgstr "返回匹配条目"
 
 #. Translators: Keywords
 #: signbank/dictionary/templates/dictionary/word.html:107
 #, fuzzy
 #| msgid "Translation equivalents in Dutch"
 msgid "Translation equivalents:"
-msgstr "Mogelijke vertalingen in het Nederlands"
+msgstr "荷语翻译等值"
 
 #. Translators: Header4
 #: signbank/dictionary/templates/dictionary/word.html:117
 msgid "Sign Distribution"
-msgstr "Gebaarverdeling"
+msgstr "手势分布"
 
 #. Translators: Header2
 #: signbank/dictionary/templates/dictionary/word.html:130
 msgid "Sign Definition"
-msgstr "Gebaardefinitie"
+msgstr "手势定义"
 
 #: signbank/dictionary/update.py:36 signbank/dictionary/update.py:807
 msgid "Annotation ID Gloss not unique."
-msgstr "Annotatie-ID-Glos is niet uniek"
+msgstr "标注识别释义并不是唯一的"
 
 #: signbank/dictionary/update.py:38 signbank/dictionary/update.py:810
 msgid "English annotation ID gloss not unique."
-msgstr "Annotatie-ID-Glos: Engels is niet uniek"
+msgstr "英文标注识别释义并不是唯一的"
 
 #: signbank/dictionary/update.py:40 signbank/dictionary/update.py:812
 msgid "Dutch annotation ID gloss cannot be empty."
-msgstr "Annotatie-ID-glos: Nederlands mag niet leeg zijn"
+msgstr "荷兰标注识别释义不能填空"
 
 #: signbank/pages/admin.py:14 signbank/pages/models.py:10
 msgid "URL"
@@ -1617,215 +1631,211 @@ msgstr "URL"
 msgid ""
 "Example: '/about/contact/'. Make sure to have leading and trailing slashes."
 msgstr ""
-"Voorbeeld: '/about/contact/'. Zorg dat je spaties aan begin en eind hebt."
 
 #: signbank/pages/admin.py:27
 msgid "Uploaded video will be converted to Flash"
-msgstr "De geüploade video zal naar Flash worden geconverteerd"
+msgstr "上传的视频将被转换为Flash"
 
 #: signbank/pages/admin.py:54 signbank/pages/admin.py:59
 msgid "Advanced options"
-msgstr "Geavanceerde opties"
+msgstr "高级选项"
 
 #: signbank/pages/models.py:12
 msgid "English title"
-msgstr "Engelse titel"
+msgstr "英文标题"
 
 #: signbank/pages/models.py:13
 msgid "Dutch title"
-msgstr "Nederlandse titel"
+msgstr "荷语标题"
 
 #: signbank/pages/models.py:14
+#, fuzzy
 msgid "Chinese title"
-msgstr "Chinese titel"
+msgstr "英文标题"
 
 #: signbank/pages/models.py:16
 msgid "English content"
-msgstr "Engelse inhoud"
+msgstr "英文内容"
 
 #: signbank/pages/models.py:17
 msgid "Dutch content"
-msgstr "Nederlandse inhoud"
+msgstr "荷兰内容"
 
 #: signbank/pages/models.py:18
+#, fuzzy
 msgid "Chinese content"
-msgstr "Chinese inhoud"
+msgstr "英文内容"
 
 #: signbank/pages/models.py:20
 msgid "template name"
-msgstr "templaatnaam"
+msgstr "模板名称"
 
 #: signbank/pages/models.py:21
 msgid ""
 "Example: 'pages/contact_page.html'. If this isn't provided, the system will "
 "use 'pages/default.html'."
 msgstr ""
-"Voorbeeld: 'pages/contact_page.html'. Als deze niet aanwezig is, zal het "
-"systeem 'pages/default.html' gebruiken."
+"例如：'pages/contact_page.html'。如果没有, 系统将用'pages/contact_page.html'"
 
 #: signbank/pages/models.py:22
 msgid "publish"
-msgstr "publiceer"
+msgstr "发表"
 
 #: signbank/pages/models.py:22
 msgid "If this is checked, the page will be included in the site menus."
-msgstr ""
-"Als dit is aangevinkt, wordt de pagina opgenomen in de menu's van de site."
+msgstr "如果选中此选项, 页面将包含在该网站的菜单。"
 
 #: signbank/pages/models.py:23
 msgid ""
 "Leave blank for a top level menu entry.  Top level entries that have sub-"
 "pages should be empty as they will not be linked in the menu."
 msgstr ""
-"Laat leeg voor een top-levelmenuitem. Top-levelitems die subpagina'shebben "
-"moeten leeg blijven omdat ze niet in het menu gelinkt worden."
+"顶层菜单输入处留空白, 顶层输入处有下属页面留着空白, 因为他们将不与菜单链接。"
 
 #: signbank/pages/models.py:24
 msgid "ordering index"
-msgstr "sorteerindex"
+msgstr "序列目录"
 
 #: signbank/pages/models.py:24
 msgid "Used to order pages in the menu"
-msgstr "Gebruikt om pagina's in het menu te sorteren"
+msgstr "用来根据菜单排列网页"
 
 #: signbank/pages/models.py:25
+#, fuzzy
 msgid ""
 "This page will only be visible to members of these groups, leave blank to "
 "allow anyone to access."
-msgstr ""
-"Deze pagina is alleen zichtbaar voor leden van deze groepen, laatleeg om "
-"iedereen toegang te geven."
+msgstr "允许任何人浏览"
 
 #: signbank/pages/models.py:28
 msgid "page"
-msgstr "pagina"
+msgstr "页"
 
 #: signbank/pages/models.py:29
 msgid "pages"
-msgstr "pagina's"
+msgstr "页数"
 
 #: signbank/pages/models.py:40
 msgid "title"
-msgstr "titel"
+msgstr "标题"
 
 #: signbank/pages/models.py:41
 msgid "number"
-msgstr "nummer"
+msgstr "数字"
 
 #: templates/ASL-templates/baselayout.html:50
 #: templates/NGT-templates/baselayout.html:57
 msgid "The NGT Signbank</span> is licensed under a "
-msgstr "Gebruik van NGT Signbank</span> valt onder een"
+msgstr "NGT手语词库</ span >许可证"
 
 #: templates/ASL-templates/baselayout.html:50
 #: templates/NGT-templates/baselayout.html:57
 msgid "Creative Commons BY-NC-SA 4.0 International License"
-msgstr "Creative Commons BY-NC-SA 4.0 International-Licentie"
+msgstr "创作共用BY-NC-SA 4.O国际许可证"
 
 #: templates/ASL-templates/baselayout.html:53
 #: templates/NGT-templates/baselayout.html:60
 msgid "Provide feedback on the site"
-msgstr "Geef feedback over dit gebaar"
+msgstr "本网站反馈意见留言板"
 
 #: templates/ASL-templates/loginform.html:12
 #: templates/NGT-templates/loginform.html:12
 msgid "Sign In"
-msgstr "Inloggen"
+msgstr "登录"
 
 #: templates/ASL-templates/loginform.html:14
 #: templates/NGT-templates/loginform.html:14
 #, fuzzy
 #| msgid "Username"
 msgid "User name"
-msgstr "Gebruikersnaam"
+msgstr "用户名"
 
 #: templates/ASL-templates/loginform.html:20
 #: templates/NGT-templates/loginform.html:20
 msgid "Password"
-msgstr "Wachtwoord"
+msgstr "密码"
 
 #: templates/ASL-templates/loginform.html:27
 #: templates/NGT-templates/loginform.html:27
 msgid "Sign in"
-msgstr "Inloggen"
+msgstr "登录"
 
 #: templates/ASL-templates/loginform.html:38
 #: templates/ASL-templates/loginform.html:41
 #: templates/NGT-templates/loginform.html:43
 #: templates/NGT-templates/loginform.html:46
 msgid "Register"
-msgstr "Aanmelden"
+msgstr "注册"
 
 #: templates/ASL-templates/loginform.html:40
 #: templates/NGT-templates/loginform.html:45
 msgid "Register for free to provide feedback on the Signbank."
-msgstr "Meld je gratis aan om feedback op Signbank te kunnen geven."
+msgstr "为手语词库提供反馈信息注册免费"
 
 #: templates/ASL-templates/loginform.html:47
 #: templates/NGT-templates/loginform.html:52
 msgid "Lost Password"
-msgstr "Wachtwoord vergeten"
+msgstr "忘记密码"
 
 #: templates/ASL-templates/loginform.html:48
 #: templates/NGT-templates/loginform.html:53
+#, fuzzy
 msgid ""
 "If you've lost or forgotten your password, enter your email address here and "
 "we'll reset it and send you a reminder."
-msgstr ""
-"Wachtwoord vergeten? Vul hieronder je e-mailadres in om een nieuwe "
-"toegestuurd te krijgen."
+msgstr "我们将会发送重置密码提示"
 
 #: templates/ASL-templates/loginform.html:53
 #: templates/NGT-templates/loginform.html:58
 msgid "Email"
-msgstr "E-mail"
+msgstr "电子邮箱"
 
 #: templates/ASL-templates/loginform.html:57
 #: templates/NGT-templates/loginform.html:62
 msgid "Request Password"
-msgstr "Stel mijn wachtwoord opnieuw in"
+msgstr "请求密码"
 
 #: templates/ASL-templates/menu.html:46 templates/NGT-templates/menu.html:67
 msgid "Search gloss"
-msgstr "Glos zoeken"
+msgstr "搜索释义"
 
 #: templates/ASL-templates/menu.html:48 templates/NGT-templates/menu.html:69
 msgid "Search translation"
-msgstr "Vertaling zoeken"
+msgstr "搜索翻译"
 
 #: templates/ASL-templates/menu.html:50 templates/NGT-templates/menu.html:71
 msgid "Sign search"
-msgstr "Gebaar zoeken"
+msgstr "搜索手势词"
 
 #: templates/ASL-templates/menu.html:55 templates/NGT-templates/menu.html:76
 msgid "Logout"
-msgstr "Uitloggen"
+msgstr "退出"
 
 #: templates/ASL-templates/menu.html:57 templates/NGT-templates/menu.html:78
 msgid "Login"
-msgstr "Inloggen"
+msgstr "登录"
 
 #: templates/ASL-templates/pages/default.html:9
 #: templates/NGT-templates/pages/default.html:9
 msgid "Edit Page"
-msgstr "Bewerk pagina"
+msgstr "编辑页面"
 
 #: templates/ASL-templates/registration/password_reset_complete.html:5
 #: templates/ASL-templates/registration/password_reset_complete.html:9
 #: templates/NGT-templates/registration/password_reset_complete.html:5
 #: templates/NGT-templates/registration/password_reset_complete.html:9
 msgid "Password reset complete"
-msgstr "Het wachtwoord is opnieuw ingesteld"
+msgstr "密码重置完成"
 
 #: templates/ASL-templates/registration/password_reset_complete.html:11
 #: templates/NGT-templates/registration/password_reset_complete.html:11
 msgid "Your password has been set.  You may go ahead and log in now."
-msgstr "Je wachtwoord is ingesteld. Je kunt nu inloggen."
+msgstr ""
 
 #: templates/ASL-templates/registration/password_reset_complete.html:13
 #: templates/NGT-templates/registration/password_reset_complete.html:13
 msgid "Log in"
-msgstr "Inloggen"
+msgstr "登录"
 
 #: templates/ASL-templates/registration/password_reset_confirm.html:5
 #: templates/ASL-templates/registration/password_reset_form.html:4
@@ -1836,358 +1846,385 @@ msgstr "Inloggen"
 #: templates/NGT-templates/registration/password_reset_form.html:6
 #: templates/NGT-templates/registration/password_reset_form.html:10
 msgid "Password reset"
-msgstr "Wachtwoord opnieuw instellen"
+msgstr "密码重置"
 
 #: templates/ASL-templates/registration/password_reset_confirm.html:13
 #: templates/NGT-templates/registration/password_reset_confirm.html:13
 msgid "Enter new password"
-msgstr "Vul nieuw wachtwoord in"
+msgstr "输入新密码"
 
 #: templates/ASL-templates/registration/password_reset_confirm.html:15
 #: templates/NGT-templates/registration/password_reset_confirm.html:15
 msgid ""
 "Please enter your new password twice so we can verify you typed it in "
 "correctly."
-msgstr ""
-"Vul je nieuwe wachtwoord twee keer in zodat we kunnen controleren of ze "
-"gelijk zijn."
+msgstr "请输入新密码并进行确认正确"
 
 #: templates/ASL-templates/registration/password_reset_confirm.html:19
 #: templates/NGT-templates/registration/password_reset_confirm.html:19
 msgid "New password:"
-msgstr "Nieuw wachtwoord:"
+msgstr "新密码"
 
 #: templates/ASL-templates/registration/password_reset_confirm.html:22
 #: templates/NGT-templates/registration/password_reset_confirm.html:22
 msgid "Confirm password:"
-msgstr "Bevestig nieuw wachtwoord:"
+msgstr "确认密码"
 
 #: templates/ASL-templates/registration/password_reset_confirm.html:24
 #: templates/NGT-templates/registration/password_reset_confirm.html:24
 msgid "Change my password"
-msgstr "Verander mijn wachtwoord:"
+msgstr "更改密码"
 
 #: templates/ASL-templates/registration/password_reset_confirm.html:29
 #: templates/NGT-templates/registration/password_reset_confirm.html:29
 msgid "Password reset unsuccessful"
-msgstr "Wachtwoord opnieuw instellen is mislukt"
+msgstr "密码重置失败"
 
 #: templates/ASL-templates/registration/password_reset_confirm.html:31
 #: templates/NGT-templates/registration/password_reset_confirm.html:31
 msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used.  Please request a new password reset."
-msgstr ""
-"De link om het wachtwoord opnieuw in te stellen is waarschijnlijk al een "
-"keer gebruikt. Vraag opnieuw een nieuw wachtwoord aan."
+msgstr "密码重置无效, 可能是被盗用使用过, 请重新的密码"
 
 #: templates/ASL-templates/registration/password_reset_done.html:6
 #: templates/NGT-templates/registration/password_reset_done.html:6
 msgid "An email has been sent to your address with a new password."
-msgstr "Er is een mail naar je gestuurd met een nieuw wachtwoord."
+msgstr ""
 
 #: templates/ASL-templates/registration/password_reset_email.html:2
 #: templates/NGT-templates/registration/password_reset_email.html:2
+#, fuzzy
 msgid ""
 "You're receiving this email because you requested a password reset for your "
 "user account at Signbank."
 msgstr ""
-"Je ontvangt deze mail omdat je het wachtwoord voor je Signbankaccount "
-"opnieuw in wilt stellen."
+"你申请更改密码, 已发送您的邮箱你申请更改密码, 已发送您的邮箱% (site_name)s"
 
 #: templates/ASL-templates/registration/password_reset_email.html:4
 #: templates/NGT-templates/registration/password_reset_email.html:4
 msgid "Please go to the following page and choose a new password:"
-msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen:"
+msgstr "请转到页面, 选择一个新的密码"
 
 #: templates/ASL-templates/registration/password_reset_email.html:9
 #: templates/NGT-templates/registration/password_reset_email.html:9
 msgid "Thanks for using our site!"
-msgstr "Bedankt voor het gebruik van onze site! "
+msgstr "感谢您的使用我们的网站"
 
 #: templates/ASL-templates/registration/password_reset_email.html:11
 #: templates/NGT-templates/registration/password_reset_email.html:11
+#, fuzzy
 msgid "The Signbank team"
-msgstr "Het Signbank-team"
+msgstr "这% (site_name)团队"
 
 #: templates/ASL-templates/registration/password_reset_form.html:4
 #: templates/NGT-templates/registration/password_reset_form.html:4
 msgid "Home"
-msgstr "Home"
+msgstr "主页"
 
 #: templates/ASL-templates/registration/password_reset_form.html:12
 #: templates/NGT-templates/registration/password_reset_form.html:12
 msgid ""
 "Forgotten your password? Enter your e-mail address below, and we'll reset "
 "your password and e-mail the new one to you."
-msgstr ""
-"Wachtwoord vergeten? Vul hieronder je e-mailadres in om een nieuwe "
-"toegestuurd te krijgen."
+msgstr "忘了密码？请输入您的电子邮件, 我们将重新设置设置密码发送邮件通知"
 
 #: templates/ASL-templates/registration/password_reset_form.html:17
 #: templates/NGT-templates/registration/password_reset_form.html:17
 msgid "E-mail address:"
-msgstr "E-mailadres:"
+msgstr "电子邮箱地址"
 
 #: templates/ASL-templates/registration/password_reset_form.html:17
 #: templates/NGT-templates/registration/password_reset_form.html:17
 msgid "Reset my password"
-msgstr "Stel mijn wachtwoord opnieuw in"
+msgstr "重置我的密码"
 
 #: templates/ASL-templates/registration/password_reset_subject.txt:2
 #: templates/NGT-templates/registration/password_reset_subject.txt:2
 #, fuzzy
 #| msgid "Password reset"
 msgid "Password reset for Signbank"
-msgstr "Wachtwoord opnieuw instellen"
+msgstr "密码重置"
+
+#~ msgid "Afrikaans"
+#~ msgstr "南非语"
 
 #~ msgid "Arabic"
-#~ msgstr "Arabisch"
+#~ msgstr "阿拉伯语"
 
 #~ msgid "Azerbaijani"
-#~ msgstr "Azerbeidzjaans"
+#~ msgstr "阿塞拜疆语"
 
 #~ msgid "Bulgarian"
-#~ msgstr "Bulgaars"
+#~ msgstr "保加利亚语"
 
 #~ msgid "Belarusian"
-#~ msgstr "Witrussisch"
+#~ msgstr "白俄罗斯语"
 
 #~ msgid "Bengali"
-#~ msgstr "Bengaals"
+#~ msgstr "孟加拉语"
 
 #~ msgid "Breton"
-#~ msgstr "Bretons"
+#~ msgstr "布列塔尼语"
 
 #~ msgid "Bosnian"
-#~ msgstr "Bosnisch"
+#~ msgstr "波斯尼亚语"
 
 #~ msgid "Catalan"
-#~ msgstr "Catalaans"
+#~ msgstr "加泰罗尼亚语"
 
 #~ msgid "Czech"
-#~ msgstr "Tsjechisch"
+#~ msgstr "捷克语"
+
+#~ msgid "Welsh"
+#~ msgstr "威尔士语"
 
 #~ msgid "Danish"
-#~ msgstr "Deens"
+#~ msgstr "丹麦语"
 
 #~ msgid "German"
-#~ msgstr "Duits"
+#~ msgstr "德国"
 
 #~ msgid "Greek"
-#~ msgstr "Grieks"
+#~ msgstr "希腊语"
 
 #~ msgid "English"
-#~ msgstr "Engels"
+#~ msgstr "英语"
 
 #~ msgid "British English"
-#~ msgstr "Brits Engels"
+#~ msgstr "英式英语"
+
+#~ msgid "Esperanto"
+#~ msgstr "世界语"
 
 #~ msgid "Spanish"
-#~ msgstr "Spaans"
+#~ msgstr "西班牙语"
 
 #~ msgid "Argentinian Spanish"
-#~ msgstr "Argentijns Spaans"
+#~ msgstr "阿根廷式西班牙语"
 
 #~ msgid "Mexican Spanish"
-#~ msgstr "Mexicaans Spaans"
+#~ msgstr "墨西哥式西班牙语"
 
 #~ msgid "Nicaraguan Spanish"
-#~ msgstr "Nicaraguaans Spaans"
+#~ msgstr "尼加拉瓜式西班牙语"
 
 #~ msgid "Venezuelan Spanish"
-#~ msgstr "Venezuelaans Spaans"
+#~ msgstr "委内瑞拉式西班牙语"
 
 #~ msgid "Estonian"
-#~ msgstr "Ests"
+#~ msgstr "爱沙尼亚语"
 
 #~ msgid "Basque"
-#~ msgstr "Bsks"
+#~ msgstr "巴斯克语"
 
 #~ msgid "Persian"
-#~ msgstr "Perzisch"
+#~ msgstr "波斯语"
 
 #~ msgid "Finnish"
-#~ msgstr "Fins"
+#~ msgstr "芬兰语"
 
 #~ msgid "French"
-#~ msgstr "Frans"
+#~ msgstr "法语"
 
 #~ msgid "Frisian"
-#~ msgstr "Fries"
+#~ msgstr "弗里斯兰语"
 
 #~ msgid "Irish"
-#~ msgstr "Iers"
+#~ msgstr "爱尔兰语"
 
 #~ msgid "Galician"
-#~ msgstr "Galicisch"
+#~ msgstr "加利西亚语"
 
 #~ msgid "Hebrew"
-#~ msgstr "Hebreeuws"
+#~ msgstr "希伯来语"
+
+#~ msgid "Hindi"
+#~ msgstr "印地语"
 
 #~ msgid "Croatian"
-#~ msgstr "Kroatisch"
+#~ msgstr "克罗地亚语"
 
 #~ msgid "Hungarian"
-#~ msgstr "Hongaars"
+#~ msgstr "匈牙利语"
+
+#~ msgid "Interlingua"
+#~ msgstr "国际语"
 
 #~ msgid "Indonesian"
-#~ msgstr "Indonesisch"
+#~ msgstr "印度尼西亚语"
 
 #~ msgid "Icelandic"
-#~ msgstr "IJslands"
+#~ msgstr "冰岛语"
 
 #~ msgid "Italian"
-#~ msgstr "Italiaans"
+#~ msgstr "意大利语"
 
 #~ msgid "Japanese"
-#~ msgstr "Japans"
+#~ msgstr "日本语"
 
 #~ msgid "Georgian"
-#~ msgstr "Georgisch"
+#~ msgstr "格鲁吉亚语"
 
 #~ msgid "Kazakh"
-#~ msgstr "Kazachs"
+#~ msgstr "哈萨克语"
+
+#~ msgid "Khmer"
+#~ msgstr "高棉语"
+
+#~ msgid "Kannada"
+#~ msgstr "卡纳达语"
 
 #~ msgid "Korean"
-#~ msgstr "Koreaans"
+#~ msgstr "韩语"
 
 #~ msgid "Luxembourgish"
-#~ msgstr "Luxemburgs"
+#~ msgstr "卢森堡语"
 
 #~ msgid "Lithuanian"
-#~ msgstr "Litouws"
+#~ msgstr "立陶宛语"
 
 #~ msgid "Latvian"
-#~ msgstr "Lets"
+#~ msgstr "拉脱维亚语"
 
 #~ msgid "Macedonian"
-#~ msgstr "Macedonisch "
+#~ msgstr "马其顿语"
 
 #~ msgid "Malayalam"
-#~ msgstr "Maleis"
+#~ msgstr "马来西亚语"
 
 #~ msgid "Mongolian"
-#~ msgstr "Mongools"
+#~ msgstr "蒙古语"
 
 #~ msgid "Burmese"
-#~ msgstr "Burmees"
+#~ msgstr "缅甸语"
 
 #~ msgid "Norwegian Bokmal"
-#~ msgstr "Noorweegs Bokmal"
+#~ msgstr "挪威语"
 
 #~ msgid "Nepali"
-#~ msgstr "Nepalees"
+#~ msgstr "尼泊尔语"
 
 #~ msgid "Dutch"
-#~ msgstr "Nederlands"
+#~ msgstr "荷兰语"
 
 #~ msgid "Norwegian Nynorsk"
-#~ msgstr "Noorweegs Nynorsk"
+#~ msgstr "耐诺斯克挪威语"
 
 #~ msgid "Ossetic"
-#~ msgstr "Ossetisch"
+#~ msgstr "奥塞梯语"
 
 #~ msgid "Punjabi"
-#~ msgstr "Punjaabs"
+#~ msgstr "旁遮普语"
 
 #~ msgid "Polish"
-#~ msgstr "Pools"
+#~ msgstr "波兰语"
 
 #~ msgid "Portuguese"
-#~ msgstr "Portugees"
+#~ msgstr "葡萄牙语"
 
 #~ msgid "Brazilian Portuguese"
-#~ msgstr "Braziliaans Portugees"
+#~ msgstr "巴西式葡萄牙语"
 
 #~ msgid "Romanian"
-#~ msgstr "Romaans"
+#~ msgstr "罗马尼亚语"
 
 #~ msgid "Russian"
-#~ msgstr "Russisch"
+#~ msgstr "俄语"
 
 #~ msgid "Slovak"
-#~ msgstr "Slovaaks"
+#~ msgstr "斯洛伐克语"
 
 #~ msgid "Slovenian"
-#~ msgstr "Sloveens"
+#~ msgstr "斯洛文尼亚语"
 
 #~ msgid "Albanian"
-#~ msgstr "Albanees"
+#~ msgstr "阿尔巴尼亚语"
 
 #~ msgid "Serbian"
-#~ msgstr "Servisch"
+#~ msgstr "塞尔维亚语"
 
 #~ msgid "Serbian Latin"
-#~ msgstr "Servisch Latijn"
+#~ msgstr "塞尔维亚拉丁语"
 
 #~ msgid "Swedish"
-#~ msgstr "Zweeds"
+#~ msgstr "瑞典语"
+
+#~ msgid "Swahili"
+#~ msgstr "斯瓦希里语"
+
+#~ msgid "Tamil"
+#~ msgstr "泰米尔语"
+
+#~ msgid "Telugu"
+#~ msgstr "泰卢固语"
 
 #~ msgid "Thai"
-#~ msgstr "Thais"
+#~ msgstr "泰语"
 
 #~ msgid "Turkish"
-#~ msgstr "Turks"
+#~ msgstr "土耳其语"
 
 #~ msgid "Tatar"
-#~ msgstr "Tataars"
+#~ msgstr "鞑靼语"
 
 #~ msgid "Udmurt"
-#~ msgstr "Oedmoerts"
+#~ msgstr "乌德穆尔特语"
 
 #~ msgid "Ukrainian"
-#~ msgstr "Oekraïens"
+#~ msgstr "乌克兰语"
+
+#~ msgid "Urdu"
+#~ msgstr "乌尔都语"
 
 #~ msgid "Vietnamese"
-#~ msgstr "Vietnamees"
+#~ msgstr "越南语"
 
 #~ msgid "Simplified Chinese"
-#~ msgstr "Versimpeld Chinees"
+#~ msgstr "简体中文"
 
 #~ msgid "Traditional Chinese"
-#~ msgstr "Traditioneel Chinees"
+#~ msgstr "繁体中文"
 
 #~ msgid "Enter a valid value."
-#~ msgstr "Vul een geldige waarde in."
+#~ msgstr "输入一个有效值"
 
 #~ msgid "Enter a valid URL."
-#~ msgstr "Vul een geldige URL in."
+#~ msgstr "输入一个有效的URL网址"
 
 #~ msgid "Enter a valid integer."
-#~ msgstr "Vul een geldig getal in."
+#~ msgstr "输入有效的整数值"
 
 #~ msgid "Enter a valid email address."
-#~ msgstr "Vul een geldig e-mailadres in."
+#~ msgstr "输入有效的电子邮件地址"
 
 #~ msgid ""
 #~ "Enter a valid 'slug' consisting of letters, numbers, underscores or "
 #~ "hyphens."
-#~ msgstr ""
-#~ "Vul een geldige regel in, bestaande uit letters, cijfers, underscores of "
-#~ "streepjes."
+#~ msgstr "请输入有效的字符包括字母、数字、下划线或连字符"
 
 #~ msgid "Enter a valid IPv4 address."
-#~ msgstr "Vul een geldig IPv4-adres in."
+#~ msgstr "请输入有效的IPv4地址"
 
 #~ msgid "Enter a valid IPv6 address."
-#~ msgstr "Vul een geldig IPv6-adres in."
+#~ msgstr "请输入有效的IPv6地址"
 
 #~ msgid "Enter a valid IPv4 or IPv6 address."
-#~ msgstr "Vul een geldig IPv4- of IPv6-adres in."
+#~ msgstr "请输入有效的IPv4或IPv6地址"
 
 #~ msgid "Enter only digits separated by commas."
-#~ msgstr "Vul alleen cijfers in, gescheiden door komma's"
+#~ msgstr "只能输入数字可以用逗号分隔"
 
 #~ msgid "Ensure this value is %(limit_value)s (it is %(show_value)s)."
-#~ msgstr "Zorg dat deze waarde %(limit_value)s is (nu %(show_value)s)."
+#~ msgstr "确保该值为 %(limit_value)s ((it is %(show_value)s)"
 
 #~ msgid "Ensure this value is less than or equal to %(limit_value)s."
-#~ msgstr "Zorg dat deze waarde kleiner of gelijk aan %(limit_value)s is."
+#~ msgstr "确保数值小于或等于 %(limit_value)s"
 
 #~ msgid "Ensure this value is greater than or equal to %(limit_value)s."
-#~ msgstr "Zorg dat deze waarde groter of gelijk aan %(limit_value)s is."
+#~ msgstr "确保数值大于或等于%(limit_value)s。"
 
+#, fuzzy
 #~ msgid ""
 #~ "Ensure this value has at least %(limit_value)d character (it has "
 #~ "%(show_value)d)."
@@ -2195,333 +2232,302 @@ msgstr "Wachtwoord opnieuw instellen"
 #~ "Ensure this value has at least %(limit_value)d characters (it has "
 #~ "%(show_value)d)."
 #~ msgstr[0] ""
-#~ "Zorg dat deze waarde tenminste %(limit_value)d teken heeft (heeft nu "
-#~ "%(show_value)d)."
+#~ "确保这个变量至少包含 %(limit_value)d 字符(目前字符数 %(show_value)d)。"
 #~ msgstr[1] ""
-#~ "Zorg dat deze waarde tenminste %(limit_value)d tekens heeft (heeft nu "
-#~ "%(show_value)d)."
-
-#~ msgid ""
-#~ "Ensure this value has at most %(limit_value)d character (it has "
-#~ "%(show_value)d)."
-#~ msgid_plural ""
-#~ "Ensure this value has at most %(limit_value)d characters (it has "
-#~ "%(show_value)d)."
-#~ msgstr[0] ""
-#~ "Zorg dat deze waarde hooguit %(limit_value)d teken heeft (heeft nu "
-#~ "%(show_value)d)."
-#~ msgstr[1] ""
-#~ "Zorg dat deze waarde hooguit %(limit_value)d tekens heeft (heeft nu "
-#~ "%(show_value)d)."
-
-#~ msgid "%(field_name)s must be unique for %(date_field)s %(lookup)s."
-#~ msgstr "%(field_name)s moet uniek zijn voor %(date_field)s %(lookup)s."
+#~ "确保这个变量至少包含 %(limit_value)d 字符(目前字符数 %(show_value)d)。"
 
 #~ msgid "and"
-#~ msgstr "en"
+#~ msgstr "和"
 
 #~ msgid "%(model_name)s with this %(field_label)s already exists."
-#~ msgstr "%(model_name)s met dit %(field_label)s bestaat al"
+#~ msgstr "包含 %(field_label)s 的 %(model_name)s 已经存在。"
 
 #~ msgid "Value %(value)r is not a valid choice."
-#~ msgstr "Waarde %(value)r is geen geldige keuze."
+#~ msgstr "值 %(value)r 不是有效选项。"
 
 #~ msgid "This field cannot be null."
-#~ msgstr "Dit veld mag niet leeg zijn."
+#~ msgstr "这个值不能为 空的。"
 
 #~ msgid "This field cannot be blank."
-#~ msgstr "Dit veld mag niet leeg zijn."
+#~ msgstr "此字段不能为空的。"
 
 #~ msgid "Field of type: %(field_type)s"
-#~ msgstr "Veldtype: %(field_type)s"
+#~ msgstr "类型区域：%(field_type)s"
 
 #~ msgid "Integer"
-#~ msgstr "Geheel getal"
+#~ msgstr "整数"
 
 #~ msgid "'%(value)s' value must be an integer."
-#~ msgstr "'%(value)s' waarde moet een geheel getal zijn."
+#~ msgstr "'%(value)s' 必须为整数。"
 
 #~ msgid "'%(value)s' value must be either True or False."
-#~ msgstr "'%(value)s' waarde moet True of False zijn."
+#~ msgstr "'%(value)s' 答案必须为真 或假。"
 
 #~ msgid "Boolean (Either True or False)"
-#~ msgstr "Boolean (True of False)"
+#~ msgstr "布尔值(真或假)"
 
 #~ msgid "String (up to %(max_length)s)"
-#~ msgstr "String (maximaal %(max_length)s tekens)"
+#~ msgstr "字符串(最长 %(max_length)s 位)"
 
 #~ msgid "Comma-separated integers"
-#~ msgstr "Komma-gescheiden gehele getallen"
+#~ msgstr "逗号分隔的整数"
 
+#, fuzzy
 #~ msgid ""
 #~ "'%(value)s' value has an invalid date format. It must be in YYYY-MM-DD "
 #~ "format."
-#~ msgstr ""
-#~ "'%(value)s' waarde is ongeldig als datumindeling, het moet in YYYY-MM-DD "
-#~ "indeling."
+#~ msgstr "%(value)s' 必须为合法的日期格式, 请使用 YYYY-MM-DD 格式"
 
+#, fuzzy
 #~ msgid ""
 #~ "'%(value)s' value has the correct format (YYYY-MM-DD) but it is an "
 #~ "invalid date."
-#~ msgstr ""
-#~ "'%(value)s' waarde heeft de juiste indeling (YYYY-MM-DD) maar is een "
-#~ "ongeldige datum."
+#~ msgstr "输入正确日期格式(YYY-MM-DD)但是输入的日期无效"
 
 #~ msgid "Date (without time)"
-#~ msgstr "Datum (zonder tijd)"
+#~ msgstr "日期(不含时间)"
 
+#, fuzzy
 #~ msgid ""
 #~ "'%(value)s' value has an invalid format. It must be in YYYY-MM-DD HH:MM[:"
 #~ "ss[.uuuuuu]][TZ] format."
-#~ msgstr ""
-#~ "'%(value)s' waarde heeft een ongeldige indeling. De indeling moet zijn: "
-#~ "YYYY-MM-DD HH:MM[:ss[.uuuuuu]][TZ]."
+#~ msgstr "%(value)s' 必须为合法的日期格式, 请使用 YYYY-MM-DD 格式"
 
+#, fuzzy
 #~ msgid ""
 #~ "'%(value)s' value has the correct format (YYYY-MM-DD HH:MM[:ss[.uuuuuu]]"
 #~ "[TZ]) but it is an invalid date/time."
-#~ msgstr ""
-#~ "'%(value)s' waarde heeft de juiste indeling (YYYY-MM-DD HH:MM[:ss[."
-#~ "uuuuuu]][TZ]), maar is een ongeldige datum/tijd."
+#~ msgstr "'%(value)s' 值的格式正确时：分：秒但是输入时间无效。"
 
 #~ msgid "Date (with time)"
-#~ msgstr "Datum (met tijd)"
+#~ msgstr "日期(含带时间)"
 
 #~ msgid "'%(value)s' value must be a decimal number."
-#~ msgstr "'%(value)s' waarde moet een decimaal getal zijn."
+#~ msgstr "'%(value)s' 必须为十进制数字。"
 
 #~ msgid "Decimal number"
-#~ msgstr "Decimaal getal"
+#~ msgstr "小数"
 
 #~ msgid "Email address"
-#~ msgstr "E-mailadres"
+#~ msgstr "邮件地址"
 
 #~ msgid "File path"
-#~ msgstr "Pad naar bestand"
+#~ msgstr "文件路径"
 
 #~ msgid "'%(value)s' value must be a float."
-#~ msgstr "'%(value)s' waarde moet een float zijn (zwevendekommagetal)."
+#~ msgstr "'%(value)s' 必须为浮点数字。"
 
 #~ msgid "Floating point number"
-#~ msgstr "Zwevendekommagetal"
+#~ msgstr "浮点数"
+
+#~ msgid "Big (8 byte) integer"
+#~ msgstr "大整数(8字节)"
 
 #~ msgid "IPv4 address"
-#~ msgstr "IPv4-adres"
+#~ msgstr "IPv4 地址"
 
 #~ msgid "IP address"
-#~ msgstr "IP-adres"
+#~ msgstr "IP 地址"
 
 #~ msgid "'%(value)s' value must be either None, True or False."
-#~ msgstr "'%(value)s' waarde moet None, True of False zijn."
+#~ msgstr "'%(value)s' 必须为无, 真或假。"
 
 #~ msgid "Boolean (Either True, False or None)"
-#~ msgstr "Boolean (True, False of None)"
+#~ msgstr "布尔值(真、假或无)"
 
 #~ msgid "Positive integer"
-#~ msgstr "Positief geheel getal"
+#~ msgstr "正整数"
 
 #~ msgid "Positive small integer"
-#~ msgstr "Positief klein geheel getal"
+#~ msgstr "正小整数"
 
+#, fuzzy
 #~ msgid "Slug (up to %(max_length)s)"
-#~ msgstr "Regel (maximaal %(max_length)s)"
+#~ msgstr "字符串(最长 %(max_length)s 位)"
 
 #~ msgid "Small integer"
-#~ msgstr "Klein geheel getal"
+#~ msgstr "小整数"
 
+#, fuzzy
 #~ msgid ""
 #~ "'%(value)s' value has an invalid format. It must be in HH:MM[:ss[."
 #~ "uuuuuu]] format."
-#~ msgstr ""
-#~ "'%(value)s' waarde heeft een ongeldige indeling, het moet in HH:MM[:ss[."
-#~ "uuuuuu]] indeling."
+#~ msgstr "%(value)s' 必须为合法的日期格式, 请使用 YYYY-MM-DD 格式"
 
 #~ msgid ""
 #~ "'%(value)s' value has the correct format (HH:MM[:ss[.uuuuuu]]) but it is "
 #~ "an invalid time."
-#~ msgstr ""
-#~ "'%(value)s' waarde heeft de juiste indeling (HH:MM[:ss[.uuuuuu]]) maar is "
-#~ "ongeldig als tijd."
+#~ msgstr "'%(value)s' 值的格式正确时：分：秒但是输入时间无效。"
 
 #~ msgid "Time"
-#~ msgstr "Tijd"
+#~ msgstr "时间"
 
 #~ msgid "Raw binary data"
-#~ msgstr "Ruwe binaire data"
+#~ msgstr "原始二进制数据"
 
 #~ msgid "File"
-#~ msgstr "Bestand"
+#~ msgstr "文件"
 
 #~ msgid "Image"
-#~ msgstr "Afbeelding"
-
-#~ msgid "%(model)s instance with pk %(pk)r does not exist."
-#~ msgstr "%(model)s-instantie met pk %(pk)r bestaat niet."
+#~ msgstr "图像"
 
 #~ msgid "Foreign Key (type determined by related field)"
-#~ msgstr "Foreign key (type bepaald door verwant veld)"
+#~ msgstr "外键(由相关字段确定)"
 
 #~ msgid "One-to-one relationship"
-#~ msgstr "Een-op-een relatie"
+#~ msgstr "一一对应关系"
 
 #~ msgid "Many-to-many relationship"
-#~ msgstr "Veel-op-veel relatie"
+#~ msgstr "多对多关系"
 
 #~ msgid "This field is required."
-#~ msgstr "Dit veld is verplicht."
+#~ msgstr "这个项是必填的"
 
 #~ msgid "Enter a whole number."
-#~ msgstr "Vul een geheel getal in."
+#~ msgstr "输入整数"
 
 #~ msgid "Enter a number."
-#~ msgstr "Vul een nummer in."
+#~ msgstr "输一个数字"
 
 #~ msgid "Ensure that there are no more than %(max)s digit in total."
 #~ msgid_plural "Ensure that there are no more than %(max)s digits in total."
-#~ msgstr[0] "Zorg dat er niet meer dan %(max)s cijfer is."
-#~ msgstr[1] "Zorg dat er niet meer dan %(max)s cijfers zijn."
+#~ msgstr[0] "确认总共不超过 %(max)s 个数字"
+#~ msgstr[1] ""
 
 #~ msgid "Ensure that there are no more than %(max)s decimal place."
 #~ msgid_plural "Ensure that there are no more than %(max)s decimal places."
-#~ msgstr[0] "Zorg dat er niet meer dan %(max)s cijfer achter de komma is."
-#~ msgstr[1] "Zorg dat er niet meer dan %(max)s cijfers achter de komma zijn"
+#~ msgstr[0] "确认小数不超过 %(max)s 位."
+#~ msgstr[1] "确认小数不超过 %(max)s 位."
 
 #~ msgid ""
 #~ "Ensure that there are no more than %(max)s digit before the decimal point."
 #~ msgid_plural ""
 #~ "Ensure that there are no more than %(max)s digits before the decimal "
 #~ "point."
-#~ msgstr[0] "Zorg dat er niet meer dan %(max)s cijfer voor de komma is."
-#~ msgstr[1] "Zorg dat er niet meer dan %(max)s cijfers voor de komma zijn."
+#~ msgstr[0] "确认小数点前不超过 %(max)s 位。"
+#~ msgstr[1] "确认小数点前不超过 %(max)s 位。"
 
 #~ msgid "Enter a valid date."
-#~ msgstr "Vul een geldige datum in. "
+#~ msgstr "输入一个有效的日期。"
 
 #~ msgid "Enter a valid time."
-#~ msgstr "Vul een geldige tijd in."
+#~ msgstr "输入一个有效的时间。"
 
 #~ msgid "Enter a valid date/time."
-#~ msgstr "Vul een geldige datum/tijd in."
+#~ msgstr "输入一个有效的日期/时间。"
 
 #~ msgid "No file was submitted. Check the encoding type on the form."
-#~ msgstr ""
-#~ "Er werd geen bestand verstuurd. Controleer het coderingstype in het "
-#~ "formulier."
+#~ msgstr "未提交文件。请检查表格里的编码类型。"
 
 #~ msgid "No file was submitted."
-#~ msgstr "Er werd geen bestand verstuurd."
+#~ msgstr "未提交文件。"
 
 #~ msgid "The submitted file is empty."
-#~ msgstr "Het verstuurde bestand is leeg."
+#~ msgstr "所提交的是空文件。"
 
 #~ msgid ""
 #~ "Ensure this filename has at most %(max)d character (it has %(length)d)."
 #~ msgid_plural ""
 #~ "Ensure this filename has at most %(max)d characters (it has %(length)d)."
-#~ msgstr[0] ""
-#~ "Zorg dat de bestandsnaam hooguit %(max)d teken bevat (is nu %(length)d)."
-#~ msgstr[1] ""
-#~ "Zorg dat de bestandsnaam hooguit %(max)d tekens bevat (is nu %(length)d)."
+#~ msgstr[0] "确保该文件名长度不超过 %(max)d 字符(目前字符数 %(length)d)。"
+#~ msgstr[1] "确保该文件名长度不超过 %(max)d 字符(目前字符数 %(length)d)。"
 
 #~ msgid "Please either submit a file or check the clear checkbox, not both."
-#~ msgstr "Verstuur een file of vink het clear-vakje aan, niet beide."
+#~ msgstr "请提交文件或勾选清除复选框, 两者其一即可。"
 
 #~ msgid ""
 #~ "Upload a valid image. The file you uploaded was either not an image or a "
 #~ "corrupted image."
-#~ msgstr ""
-#~ "Upload een geldige afbeelding. Het bestand dat werd geüpload is geen "
-#~ "afbeelding, of een beschadigd bestand"
+#~ msgstr "请上传一张有效的图片。您所上传的文件不是图片或者已损坏的图片"
 
 #~ msgid ""
 #~ "Select a valid choice. %(value)s is not one of the available choices."
-#~ msgstr ""
-#~ "Selecteer een geldige keuze. %(value)s is niet beschikbaar als keuze."
+#~ msgstr "选择一个有效的选项。 %(value)s 不在可用的选项中。"
 
 #~ msgid "Enter a list of values."
-#~ msgstr "Voor een lijst met waardes in."
+#~ msgstr "输入一系列数值。"
 
 #~ msgid ":"
 #~ msgstr ":"
 
 #~ msgid "(Hidden field %(name)s) %(error)s"
-#~ msgstr "(Verborgen veld %(name)s) %(error)s"
+#~ msgstr "隐藏字段 %(name)s) %(error)s"
 
 #~ msgid ":?.!"
 #~ msgstr ":?.!"
 
 #~ msgid "ManagementForm data is missing or has been tampered with"
-#~ msgstr "ManagementForm-data ontbreekt of er is mee geknoeid. "
+#~ msgstr "管理表单的数据缺失或者已被篡改"
 
 #~ msgid "Please submit %d or fewer forms."
 #~ msgid_plural "Please submit %d or fewer forms."
-#~ msgstr[0] "Verstuur %d of minder formulieren."
-#~ msgstr[1] "Verstuur %d of minder formulieren."
+#~ msgstr[0] "请提交不超过 %d 个表格。"
+#~ msgstr[1] "请提交不超过 %d 个表格。"
 
 #~ msgid "Order"
-#~ msgstr "Volgorde"
+#~ msgstr "排序"
 
 #~ msgid "Delete"
-#~ msgstr "Verwijder"
+#~ msgstr "删除"
 
 #~ msgid "Please correct the duplicate data for %(field)s."
-#~ msgstr "Corrigeer de dubbele gegevens voor %(field)s."
+#~ msgstr "请修改%(field)s的重复数据"
 
 #~ msgid ""
 #~ "Please correct the duplicate data for %(field)s, which must be unique."
-#~ msgstr "Corrigeer de dubbele gegevens voor %(field)s, moet uniek zijn."
+#~ msgstr "请修改%(field)s的重复数据.这个字段必须唯一"
 
 #~ msgid ""
 #~ "Please correct the duplicate data for %(field_name)s which must be unique "
 #~ "for the %(lookup)s in %(date_field)s."
 #~ msgstr ""
-#~ "Corrigeer de dubbele gegevens voor %(field_name)s, moet uniek zijn voor "
-#~ "de %(lookup)s in %(date_field)s."
+#~ "请修正%(date_field)s的重要数据 %(lookup)s 在 %(field_name)s 不能重复"
 
 #~ msgid "Please correct the duplicate values below."
-#~ msgstr "Corrigeer de dubbele gegevens voor onderstaande waardes. "
+#~ msgstr "请修正重复的数据."
 
 #~ msgid ""
 #~ "The inline foreign key did not match the parent instance primary key."
-#~ msgstr ""
-#~ "De inline foreign key komt niet overeen met de parent instance primary "
-#~ "key."
+#~ msgstr "内联外键与上位实例主键不匹配。"
 
 #~ msgid ""
 #~ "Select a valid choice. That choice is not one of the available choices."
-#~ msgstr ""
-#~ "Maak een geldige keuze. Deze keuze behoort niet tot de mogelijkheden."
+#~ msgstr "选择一个有效的选项。 该选择不在可用的选项中。"
 
 #~ msgid "\"%(pk)s\" is not a valid value for a primary key."
-#~ msgstr "\"%(pk)s\" is geen geldige waarde voor een primary key."
+#~ msgstr "\"%(pk)s\" 不是一个有效的主键值."
 
 #~ msgid ""
 #~ "Hold down \"Control\", or \"Command\" on a Mac, to select more than one."
 #~ msgstr ""
-#~ "Houdt \"Control\", of \"Command\" op een Mac, ingedrukt om meer dan een "
-#~ "te selecteren."
+#~ " Hold down \"Control\", or \"Command\" on a Mac, to select more than one "
 
 #~ msgid ""
 #~ "%(datetime)s couldn't be interpreted in time zone %(current_timezone)s; "
 #~ "it may be ambiguous or it may not exist."
 #~ msgstr ""
-#~ "%(datetime)s kon niet als tijdzone %(current_timezone)s worden "
-#~ "geïnterpreteerd; het kan dubbelzinnig zijn of het bestaat niet. "
+#~ "%(datetime)s 不能在时区 %(current_timezone)s正确解读 可能时间有歧义或者不"
+#~ "存"
 
 #~ msgid "Currently"
-#~ msgstr "Huidig"
+#~ msgstr "目前"
 
 #~ msgid "Change"
-#~ msgstr "Verander"
+#~ msgstr "修改"
 
 #~ msgid "Clear"
-#~ msgstr "Wis"
+#~ msgstr "­清除"
 
 #~ msgid "Unknown"
-#~ msgstr "Onbekend"
+#~ msgstr "未知"
 
 #~ msgid "yes,no,maybe"
-#~ msgstr "ja,nee,misschien"
+#~ msgstr "是, 否, 也许"
+
+#~ msgid "%(size)d byte"
+#~ msgid_plural "%(size)d bytes"
+#~ msgstr[0] "%(size)d 字节"
+#~ msgstr[1] ""
 
 #~ msgid "%s KB"
 #~ msgstr "%s KB"
@@ -2530,7 +2536,7 @@ msgstr "Wachtwoord opnieuw instellen"
 #~ msgstr "%s MB"
 
 #~ msgid "%s GB"
-#~ msgstr "%s GB"
+#~ msgstr "%s GB "
 
 #~ msgid "%s TB"
 #~ msgstr "%s TB"
@@ -2539,534 +2545,729 @@ msgstr "Wachtwoord opnieuw instellen"
 #~ msgstr "%s PB"
 
 #~ msgid "p.m."
-#~ msgstr "p.m."
+#~ msgstr "下午."
 
 #~ msgid "a.m."
-#~ msgstr "a.m."
+#~ msgstr "上午."
 
 #~ msgid "PM"
-#~ msgstr "PM"
+#~ msgstr "下午"
 
 #~ msgid "AM"
-#~ msgstr "AM"
+#~ msgstr "上午"
 
 #~ msgid "midnight"
-#~ msgstr "middernacht"
+#~ msgstr "午夜"
 
 #~ msgid "noon"
-#~ msgstr "'s middags"
+#~ msgstr "中午"
 
 #~ msgid "Monday"
-#~ msgstr "maandag"
+#~ msgstr "星期一"
 
 #~ msgid "Tuesday"
-#~ msgstr "dinsdag"
+#~ msgstr "星期二"
 
 #~ msgid "Wednesday"
-#~ msgstr "woensdag"
+#~ msgstr "星期三"
 
 #~ msgid "Thursday"
-#~ msgstr "donderdag"
+#~ msgstr "星期四"
 
 #~ msgid "Friday"
-#~ msgstr "vrijdag"
+#~ msgstr "星期五"
 
 #~ msgid "Saturday"
-#~ msgstr "zaterdag"
+#~ msgstr "星期六"
 
 #~ msgid "Sunday"
-#~ msgstr "zondag"
+#~ msgstr "星期日"
 
 #~ msgid "Mon"
-#~ msgstr "ma"
+#~ msgstr "星期一"
 
 #~ msgid "Tue"
-#~ msgstr "di"
+#~ msgstr "星期二"
 
 #~ msgid "Wed"
-#~ msgstr "wo"
+#~ msgstr "星期三"
 
 #~ msgid "Thu"
-#~ msgstr "do"
+#~ msgstr "星期四"
 
 #~ msgid "Fri"
-#~ msgstr "vrij"
+#~ msgstr "星期五"
 
 #~ msgid "Sat"
-#~ msgstr "za"
+#~ msgstr "星期六"
 
 #~ msgid "Sun"
-#~ msgstr "zo"
+#~ msgstr "星期日"
 
 #~ msgid "January"
-#~ msgstr "januari"
+#~ msgstr "一月"
 
 #~ msgid "February"
-#~ msgstr "februari"
+#~ msgstr "二月"
 
 #~ msgid "March"
-#~ msgstr "maart"
+#~ msgstr "三月"
 
 #~ msgid "April"
-#~ msgstr "april"
+#~ msgstr "四月"
 
 #~ msgid "May"
-#~ msgstr "mei"
+#~ msgstr "五月"
 
 #~ msgid "June"
-#~ msgstr "juni"
+#~ msgstr "六月"
 
 #~ msgid "July"
-#~ msgstr "juli"
+#~ msgstr "七月"
 
 #~ msgid "August"
-#~ msgstr "augustus"
+#~ msgstr "八月"
 
 #~ msgid "September"
-#~ msgstr "september"
+#~ msgstr "九月"
 
 #~ msgid "October"
-#~ msgstr "oktober"
+#~ msgstr "十月"
 
 #~ msgid "November"
-#~ msgstr "november"
+#~ msgstr "十一月"
 
 #~ msgid "December"
-#~ msgstr "december"
+#~ msgstr "十二月"
+
+#~ msgid "jan"
+#~ msgstr "一月"
+
+#~ msgid "feb"
+#~ msgstr "二月"
 
 #~ msgid "mar"
-#~ msgstr "mrt"
+#~ msgstr "三月"
+
+#~ msgid "apr"
+#~ msgstr "四月"
 
 #~ msgid "may"
-#~ msgstr "mei"
+#~ msgstr "五月"
+
+#~ msgid "jun"
+#~ msgstr "六月"
+
+#~ msgid "jul"
+#~ msgstr "七月"
+
+#~ msgid "aug"
+#~ msgstr "八月"
+
+#~ msgid "sep"
+#~ msgstr "九月"
 
 #~ msgid "oct"
-#~ msgstr "okt"
+#~ msgstr "十月"
+
+#~ msgid "nov"
+#~ msgstr "十一月"
+
+#~ msgid "dec"
+#~ msgstr "十二月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "Jan."
-#~ msgstr "jan."
+#~ msgstr "一月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "Feb."
-#~ msgstr "feb."
+#~ msgstr "二月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "March"
-#~ msgstr "maart"
+#~ msgstr "三月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "April"
-#~ msgstr "april"
+#~ msgstr "四月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "May"
-#~ msgstr "mei"
+#~ msgstr "五月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "June"
-#~ msgstr "juni"
+#~ msgstr "六月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "July"
-#~ msgstr "juli"
+#~ msgstr "七月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "Aug."
-#~ msgstr "aug."
+#~ msgstr "八月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "Sept."
-#~ msgstr "sep."
+#~ msgstr "九月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "Oct."
-#~ msgstr "okt."
+#~ msgstr "十月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "Nov."
-#~ msgstr "nov."
+#~ msgstr "十一月"
 
 #~ msgctxt "abbrev. month"
 #~ msgid "Dec."
-#~ msgstr "dec."
+#~ msgstr "十二月"
 
 #~ msgctxt "alt. month"
 #~ msgid "January"
-#~ msgstr "januari"
+#~ msgstr "一月"
 
 #~ msgctxt "alt. month"
 #~ msgid "February"
-#~ msgstr "februari"
+#~ msgstr "二月"
 
 #~ msgctxt "alt. month"
 #~ msgid "March"
-#~ msgstr "maart"
+#~ msgstr "三月"
 
 #~ msgctxt "alt. month"
 #~ msgid "April"
-#~ msgstr "april"
+#~ msgstr "四月"
 
 #~ msgctxt "alt. month"
 #~ msgid "May"
-#~ msgstr "mei"
+#~ msgstr "五月"
 
 #~ msgctxt "alt. month"
 #~ msgid "June"
-#~ msgstr "juni"
+#~ msgstr "六月"
 
 #~ msgctxt "alt. month"
 #~ msgid "July"
-#~ msgstr "juli"
+#~ msgstr "七月"
 
 #~ msgctxt "alt. month"
 #~ msgid "August"
-#~ msgstr "augustus"
+#~ msgstr "八月"
 
 #~ msgctxt "alt. month"
 #~ msgid "September"
-#~ msgstr "september"
+#~ msgstr "九月"
 
 #~ msgctxt "alt. month"
 #~ msgid "October"
-#~ msgstr "oktober"
+#~ msgstr "十月"
 
 #~ msgctxt "alt. month"
 #~ msgid "November"
-#~ msgstr "november"
+#~ msgstr "十一月"
 
 #~ msgctxt "alt. month"
 #~ msgid "December"
-#~ msgstr "december"
-
-#~ msgid "Neither Pillow nor PIL could be imported: %s"
-#~ msgstr "Zowel Pillow als PIL kon niet worden geïmporteerd: %s"
-
-#~ msgid "The '_imaging' module for the PIL could not be imported: %s"
-#~ msgstr "De '_imaging' module voor de PIL kon niet worden geïmporteerd: %s"
+#~ msgstr "十二月"
 
 #~ msgid "This is not a valid IPv6 address."
-#~ msgstr "Dit is geen geldig IPv6-adres."
+#~ msgstr "该值不是有效的IPv6地址。"
+
+#~ msgctxt "String to return when truncating text"
+#~ msgid "%(truncated_text)s..."
+#~ msgstr "%(truncated_text)s..."
 
 #~ msgid "or"
-#~ msgstr "of"
+#~ msgstr "or"
 
 #~ msgid ", "
 #~ msgstr ", "
 
 #~ msgid "%d year"
 #~ msgid_plural "%d years"
-#~ msgstr[0] "%d jaar"
-#~ msgstr[1] "%d jaar"
+#~ msgstr[0] "%d 年"
+#~ msgstr[1] "%d 年"
 
 #~ msgid "%d month"
 #~ msgid_plural "%d months"
-#~ msgstr[0] "%d maand"
-#~ msgstr[1] "%d maanden"
+#~ msgstr[0] "%d 月"
+#~ msgstr[1] "%d 月"
 
 #~ msgid "%d week"
 #~ msgid_plural "%d weeks"
-#~ msgstr[0] "%d week"
-#~ msgstr[1] "%d weken"
+#~ msgstr[0] "%d 周"
+#~ msgstr[1] "%d 周"
 
 #~ msgid "%d day"
 #~ msgid_plural "%d days"
-#~ msgstr[0] "%d dag"
-#~ msgstr[1] "%d dagen"
+#~ msgstr[0] "%d 天"
+#~ msgstr[1] "%d 天"
 
 #~ msgid "%d hour"
 #~ msgid_plural "%d hours"
-#~ msgstr[0] "%d uur"
-#~ msgstr[1] "%d uur"
+#~ msgstr[0] "%d 小时"
+#~ msgstr[1] "%d 小时"
 
 #~ msgid "%d minute"
 #~ msgid_plural "%d minutes"
-#~ msgstr[0] "%d minuut"
-#~ msgstr[1] "%d minuten"
+#~ msgstr[0] "%d 分钟"
+#~ msgstr[1] "%d 分钟"
 
 #~ msgid "0 minutes"
-#~ msgstr "0 minuten"
+#~ msgstr "0分钟"
 
 #~ msgid "Directory indexes are not allowed here."
-#~ msgstr "Directory indexen zijn hier niet toegestaan."
+#~ msgstr "此无法生成索引目录"
 
+#, fuzzy
 #~ msgid "\"%(path)s\" does not exist"
-#~ msgstr "\"%(path)s\" bestaat niet"
+#~ msgstr "\"%(path)s\" 不存在"
 
 #~ msgid "Index of %(directory)s"
-#~ msgstr "Index van %(directory)s"
+#~ msgstr "指数 %(directory)s"
 
 #~ msgid "No year specified"
-#~ msgstr "Geen jaar opgegeven"
+#~ msgstr "没有输入年"
 
 #~ msgid "No month specified"
-#~ msgstr "Geen maand opgegeven"
+#~ msgstr "没有输入月份"
 
 #~ msgid "No day specified"
-#~ msgstr "Geen dag opgegeven"
+#~ msgstr " 没有输入日期"
 
 #~ msgid "No week specified"
-#~ msgstr "Geen week opgegeven"
+#~ msgstr "没有输入周"
 
 #~ msgid "No %(verbose_name_plural)s available"
-#~ msgstr "Geen %(verbose_name_plural)s beschikbaar"
+#~ msgstr "%(verbose_name_plural)s 不存在"
 
 #~ msgid ""
 #~ "Future %(verbose_name_plural)s not available because %(class_name)s."
 #~ "allow_future is False."
 #~ msgstr ""
-#~ "Toekomstige %(verbose_name_plural)s is niet beschikbaar omdat "
-#~ "%(class_name)s allow_future False is."
+#~ "Futre %(verbose_name_plural)s 不适用, 因为 %(class_name)s.allow future 是"
+#~ "假的"
 
 #~ msgid "Invalid date string '%(datestr)s' given format '%(format)s'"
-#~ msgstr ""
-#~ "Ongeldige datumstring '%(datestr)s' opgegeven, indeling '%(format)s'"
+#~ msgstr "日期字符串 '%(datestr)s' 与格式 '%(format)s' 不匹配"
 
 #~ msgid "No %(verbose_name)s found matching the query"
-#~ msgstr "Geen %(verbose_name)s gevonden die de query matched"
+#~ msgstr "没有找到符合查询的 %(verbose_name)s"
 
 #~ msgid "Page is not 'last', nor can it be converted to an int."
-#~ msgstr "Pagina is niet 'last', kan ook niet worden omgezet in een int."
+#~ msgstr "页面不是'最后'或者它不能被转换。"
 
 #~ msgid "Invalid page (%(page_number)s): %(message)s"
-#~ msgstr "Ongeldige pagina (%(page_number)s): %(message)s"
+#~ msgstr "无效页面 (%(page_number)s): %(message)s"
 
 #~ msgid "Empty list and '%(class_name)s.allow_empty' is False."
-#~ msgstr "Lege lijst en '%(class_name)s.allow_empty' is False."
+#~ msgstr "列表是空的并且'%(class_name)s.allow_empty 设置为 假'"
 
 #~ msgid "field_1"
-#~ msgstr "veld_1"
+#~ msgstr "区域_1"
 
 #~ msgid "field_2"
-#~ msgstr "veld_2"
+#~ msgstr "区域_2"
 
 #~ msgid "test"
-#~ msgstr "test"
+#~ msgstr "测试"
 
 #~ msgid "Error."
-#~ msgstr "Fout."
+#~ msgstr "错误"
 
 #~ msgid "Anything"
-#~ msgstr "Wat dan ook"
+#~ msgstr "任何东西"
 
 #~ msgid "Company"
-#~ msgstr "Bedrijf"
+#~ msgstr "公司"
 
 #~ msgid "Add %(name)s"
-#~ msgstr "Voeg %(name)s toe"
+#~ msgstr "增加Add %(name)s"
 
 #~ msgid "Some other string"
-#~ msgstr "Een ander string"
+#~ msgstr "其他字符串"
 
 #~ msgid "%d good result"
 #~ msgid_plural "%d good results"
-#~ msgstr[0] "%d treffer"
-#~ msgstr[1] "%d treffers"
+#~ msgstr[0] "%d 效果良好"
+#~ msgstr[1] "%d 效果良好"
 
 #~ msgctxt "Exclamation"
 #~ msgid "%d good result"
 #~ msgid_plural "%d good results"
-#~ msgstr[0] "%d treffer"
-#~ msgstr[1] "%d treffers"
+#~ msgstr[0] "%d效果良好"
+#~ msgstr[1] "%d效果良好"
 
 #~ msgid "good result"
 #~ msgid_plural "good results"
-#~ msgstr[0] "%d treffer"
-#~ msgstr[1] "%d treffers"
+#~ msgstr[0] "效果良好"
+#~ msgstr[1] ""
 
 #~ msgid "Hi %(name)s, %(num)d good result"
 #~ msgid_plural "Hi %(name)s, %(num)d good results"
-#~ msgstr[0] "Dag %(name)s, %(num)d treffer"
-#~ msgstr[1] "Dag %(name)s, %(num)d treffers"
+#~ msgstr[0] "嗨 %(name)s, %(num)d 的效果良好"
+#~ msgstr[1] ""
 
 #~ msgctxt "Greeting"
 #~ msgid "Hi %(name)s, %(num)d good result"
 #~ msgid_plural "Hi %(name)s, %(num)d good results"
-#~ msgstr[0] "Dag %(name)s, %(num)d treffer"
-#~ msgstr[1] "Dag %(name)s, %(num)d treffers"
+#~ msgstr[0] "­问候"
+#~ msgstr[1] "你好嗨 %(name)s, %(num)d 的效果良好"
 
 #~ msgctxt "unexisting"
 #~ msgid "May"
-#~ msgstr "mei"
+#~ msgstr "五月"
 
 #~ msgctxt "month name"
 #~ msgid "May"
-#~ msgstr "mei"
+#~ msgstr "也许"
 
 #~ msgctxt "verb"
 #~ msgid "May"
-#~ msgstr "mei"
+#~ msgstr "可以"
 
 #~ msgctxt "search"
 #~ msgid "%d result"
 #~ msgid_plural "%d results"
-#~ msgstr[0] "%d treffer"
-#~ msgstr[1] "%d treffers"
+#~ msgstr[0] "%d结果"
+#~ msgstr[1] "%d结果"
+
+#~ msgid "Mac\rEOF\r"
+#~ msgstr "Mac\rEOF\r"
+
+#, fuzzy
+#~ msgid ""
+#~ "Win\r\n"
+#~ "EOF\r\n"
+#~ msgstr "EOF\r\n"
 
 #~ msgid "Date/time"
-#~ msgstr "Datum/tijd"
+#~ msgstr "日期/时间"
 
 #~ msgid "This is a translatable string."
-#~ msgstr "Dit is een vertaalbare string."
+#~ msgstr "这是一个可以翻译的字符串"
 
 #~ msgid "This is another translatable string."
-#~ msgstr "Dit is een andere vertaalbare string"
+#~ msgstr "这是另一个可以翻译的字符串"
 
 #~ msgid "This should be ignored."
-#~ msgstr "Dit moet genegeerd worden."
+#~ msgstr "请忽略这个"
 
 #~ msgid "This literal should be included."
-#~ msgstr "Deze literal moet worde opgenomen."
+#~ msgstr "包含文字"
+
+#~ msgid ""
+#~ "This literal should also be included wrapped or not wrapped depending on "
+#~ "the use of the --no-wrap option."
+#~ msgstr "这里字符可以分行, 根据是否使用揣行选项"
+
+#~ msgid "I think that 100%% is more that 50%% of anything."
+#~ msgstr "我认为100%%大于50%%"
+
+#, fuzzy
+#~ msgid "I think that 100%% is more that 50%% of %(obj)s."
+#~ msgstr "我认为100% 大于50% "
+
+#~ msgid "Translatable literal #1a"
+#~ msgstr "直译 ＃1a"
+
+#~ msgid "Translatable literal #1b"
+#~ msgstr "直译 ＃2b"
+
+#~ msgid "Translatable literal #2a"
+#~ msgstr "直译 ＃2a"
+
+#~ msgid "Translatable literal #2b"
+#~ msgstr "直译 #2b"
+
+#~ msgid "Translatable literal #3a"
+#~ msgstr "直译 #3a"
+
+#~ msgid "Translatable literal #3b"
+#~ msgstr "直译＃3b"
+
+#~ msgid "Translatable literal #4a"
+#~ msgstr "直译 #4a"
+
+#~ msgid "Translatable literal #4b"
+#~ msgstr "直译 #4b"
+
+#~ msgid "Translatable literal #5a"
+#~ msgstr "直译 #5a"
+
+#~ msgid "Translatable literal #6b"
+#~ msgstr "直译 #6b"
+
+#~ msgctxt "Special trans context #1"
+#~ msgid "Translatable literal #7a"
+#~ msgstr "直译 #7a"
+
+#~ msgctxt "Special trans context #2"
+#~ msgid "Translatable literal #7b"
+#~ msgstr "直译 #7b"
+
+#~ msgctxt "Special trans context #3"
+#~ msgid "Translatable literal #7c"
+#~ msgstr "直译#7c "
+
+#~ msgctxt "Special blocktrans context #1"
+#~ msgid "Translatable literal #8a"
+#~ msgstr "直译 #8a"
+
+#~ msgctxt "Special blocktrans context #2"
+#~ msgid "Translatable literal #8b-singular"
+#~ msgid_plural "Translatable literal #8b-plural"
+#~ msgstr[0] "直译＃8a-singular单数形式"
+#~ msgstr[1] "直译＃8b－plural复数形式"
+
+#~ msgctxt "Special blocktrans context #3"
+#~ msgid "Translatable literal #8c-singular"
+#~ msgid_plural "Translatable literal #8c-plural"
+#~ msgstr[0] "直译 #8c-单数"
+#~ msgstr[1] "直译 ＃8c－复数"
+
+#~ msgctxt "Special blocktrans context #4"
+#~ msgid "Translatable literal #8d %(a)s"
+#~ msgstr "直译 ＃8d %(a)s"
+
+#~ msgid "Blocktrans extraction shouldn't double escape this: %%, a=%(a)s"
+#~ msgstr "Blocktrans提取不应该双倍逃脱这个: %%, a=%(a)s"
+
+#~ msgid "Literal with a percent symbol at the end %%"
+#~ msgstr "后面百分号 %% 的字符"
+
+#~ msgid "Literal with a percent %% symbol in the middle"
+#~ msgstr "中间含百分号 %% 的字符 %% "
+
+#~ msgid "Completed 50%% of all the tasks"
+#~ msgstr "完成 50%% 的全部任务"
+
+#~ msgctxt "ctx0"
+#~ msgid "Completed 99%% of all the tasks"
+#~ msgstr "完成 99%% 的全部任务"
+
+#~ msgid "Shouldn't double escape this sequence: %% (two percent signs)"
+#~ msgstr "不应该双倍逃脱这个序列：%%(两个百分号)"
+
+#~ msgctxt "ctx1"
+#~ msgid "Shouldn't double escape this sequence %% either"
+#~ msgstr "不应该双倍逃脱这个序列：% % "
+
+#~ msgid "Looks like a str fmt spec %%s but shouldn't be interpreted as such"
+#~ msgstr "看起来特殊格式化的规格%%s但它并不是这样的解释"
+
+#~ msgid "Looks like a str fmt spec %% o but shouldn't be interpreted as such"
+#~ msgstr "看起来像一个FMT规格%%但它并不是这样解释"
+
+#~ msgctxt "Context wrapped in single quotes"
+#~ msgid "Translatable literal with context wrapped in single quotes"
+#~ msgstr "直译文字内容要加单引号"
+
+#~ msgctxt "Context wrapped in double quotes"
+#~ msgid "Translatable literal with context wrapped in double quotes"
+#~ msgstr "直译文字内容时要加双引号"
+
+#~ msgctxt "Special blocktrans context wrapped in single quotes"
+#~ msgid "Translatable literal with context wrapped in single quotes"
+#~ msgstr "直译文字内容时要加单引号"
+
+#~ msgctxt "Special blocktrans context wrapped in double quotes"
+#~ msgid "Translatable literal with context wrapped in double quotes"
+#~ msgstr "直译文字内容时要加双引号"
+
+#~ msgid "This should be ignored too."
+#~ msgstr "这可以忽略不计"
+
+#~ msgid "^translated/$"
+#~ msgstr "^翻译/$"
+
+#~ msgid "^translated/(?P<slug>[\\w-]+)/$"
+#~ msgstr "^翻译/(?P<slug>[\\w-]+)/$"
+
+#~ msgid "^users/$"
+#~ msgstr "^用户/$"
+
+#~ msgid "^account/"
+#~ msgstr "^帐户/"
+
+#~ msgid "^register/$"
+#~ msgstr "^注册/$"
+
+#~ msgid "^register-without-slash$"
+#~ msgstr "^注册－无－削减$"
+
+#~ msgid ""
+#~ "Subject\n"
+#~ "Injection Test"
+#~ msgstr ""
+#~ "主题\n"
+#~ " 注水试验"
+
+#~ msgid "Subject"
+#~ msgstr "主题"
 
 #~ msgid "name"
-#~ msgstr "naam"
+#~ msgstr "姓名"
 
 #~ msgid "once"
-#~ msgstr "eenmaal"
+#~ msgstr "一次"
 
 #~ msgid "never"
-#~ msgstr "nooit"
+#~ msgstr "决不"
 
 #~ msgid "username"
-#~ msgstr "gebruikersnaam"
+#~ msgstr "用户名"
 
 #~ msgid "this is to be translated"
-#~ msgstr "dit moet vertaald worden"
-
-#~ msgid "ID Morpheme/Annotation ID Morpheme"
-#~ msgstr "ID-glos morfeem/Annotatie-ID-Glos morfeem"
+#~ msgstr "这也要翻译"
 
 #, fuzzy
 #~ msgid "Compound sign"
-#~ msgstr "Samenstelling"
-
-#~ msgid "This gloss is not defined as part of a compound"
-#~ msgstr "Dit gebaar is niet onderdeel van een samenstelling"
+#~ msgstr "复合"
 
 #~ msgid "Delete This Relation"
-#~ msgstr "Verwijder deze relatie"
+#~ msgstr "删除这个关系"
 
 #~ msgid ""
 #~ " This action will delete the %(rel.get_role_display)s relation between "
 #~ "%(rel.source)s and %(rel.target)s. It cannot be undone. "
 #~ msgstr ""
-#~ "Zo wordt de %(rel.get_role_display)s-relatie tussen %(rel.source)s en "
-#~ "%(rel.target)s verwijderd. Dit kan niet ongedaan gemaakt worden."
+#~ "这样做将会删除 %(rel.get_role_display)s  %(rel.source)s. 以及 %(rel."
+#~ "target)s 之间关系.一旦删除不能复原 "
 
 #~ msgid "Annotation Instructions"
-#~ msgstr "Annotatieinstructies"
-
-#~ msgid "From word class"
-#~ msgstr "Van woordsoort"
-
-#~ msgid "To word class"
-#~ msgstr "Naar woordsoort"
+#~ msgstr "标注说明"
 
 #~ msgid "Keywords:"
-#~ msgstr "Vertalingen:"
+#~ msgstr "关键词"
 
 #~ msgid "Report a missing sign"
-#~ msgstr "Geef een ontbrekend gebaar door"
+#~ msgstr "报告遗漏的手势"
 
 #~ msgid "Provide general site feedback"
-#~ msgstr "Geef algemene feedback op de site"
+#~ msgstr "提供网站反馈意见"
 
 #~ msgid ""
 #~ "This value must contain only letters, numbers, underscores, dashes or "
 #~ "slashes."
-#~ msgstr ""
-#~ "Deze waarde mag alleen letters, cijfers, underscores, streepjes of "
-#~ "slashes hebben."
+#~ msgstr "这里输入的内容只能是字母, 数字, 下划线, 破折号或斜杠"
 
 #~ msgid "Your Email Address"
-#~ msgstr "Je emailadres"
+#~ msgstr "你的邮件地址"
 
 #~ msgid "Password (again)"
-#~ msgstr "Wachtwoord (opnieuw)"
+#~ msgstr "密码(重复一次)"
 
 #~ msgid "This username is already taken. Please choose another."
-#~ msgstr "Deze gebruikersnaam is al bezet. Kies een andere."
+#~ msgstr "该用户名已被使用, 请选择别的"
 
 #~ msgid "You must type the same password each time"
-#~ msgstr "Je moet hetzelfde wachtwoord twee keer typen"
+#~ msgstr "每次必须输入相同的密码"
 
 #~ msgid "I have read and agree to the Terms of Service"
-#~ msgstr "Ik heb de Gebruikersvoorwaarden gelezen en ga ermee akkoord."
+#~ msgstr "我已阅读并同意服务条款"
 
 #~ msgid "You must agree to the terms to register"
-#~ msgstr "Je moet de Gebruikersvoorwaarden accepteren om je aan te melden"
+#~ msgstr "你必须同意本使用条款才能注册"
 
+#, fuzzy
 #~ msgid ""
 #~ "This email address is already in use. Please supply a different email "
 #~ "address."
-#~ msgstr "Dit emailadres is al in gebruik. Gebruik een ander emailadres."
+#~ msgstr "禁止使用免费的电子邮件地址注册。请提供另一个的电子邮件地址"
 
 #~ msgid ""
 #~ "Registration using free email addresses is prohibited. Please supply a "
 #~ "different email address."
-#~ msgstr ""
-#~ "Aanmelden met een gratis emailadres is niet toegestaan. Geef een ander "
-#~ "mailadres op."
+#~ msgstr "禁止使用免费的电子邮件地址注册。请提供另一个的电子邮件地址"
 
 #~ msgid "What is your background?"
-#~ msgstr "Wat is je achtergrond?"
+#~ msgstr "你是什么背景？"
 
 #~ msgid ""
 #~ "Please enter a correct email and password. Note that password is case-"
 #~ "sensitive."
-#~ msgstr ""
-#~ "Geef alsjeblieft een correct emailadres en wachtwoord op. Het wachtwoord "
-#~ "is hoofdletter-gevoelig."
+#~ msgstr "请输入有效的电子邮件和密码。注意密码区分大小写。"
 
 #~ msgid "This account is inactive."
-#~ msgstr "Deze account is niet actief."
+#~ msgstr "这个账户尚未激活"
 
 #~ msgid ""
 #~ "Your Web browser doesn't appear to have cookies enabled. Cookies are "
 #~ "required for logging in."
-#~ msgstr ""
-#~ "Je webbrowser accepteert nu geen cookies. Deze zijn nodig om in te loggen."
+#~ msgstr "你的浏览器不显示已经启用cookies.登录需要启用cookies"
 
 #~ msgid "user"
-#~ msgstr "gebruiker"
+#~ msgstr "用户"
+
+#~ msgid "activation key"
+#~ msgstr "激活序列号"
 
 #~ msgid "registration profile"
-#~ msgstr "registratieprofiel"
+#~ msgstr "注册的个人资料"
 
 #~ msgid "registration profiles"
-#~ msgstr "registratieprofielen"
-
-#~ msgid "This account has expired. Please contact o.crasborn@let.ru.nl."
-#~ msgstr "Deze account is verlopen. Neem contact op met o.crasborn@let.ru.nl."
-
-#~ msgid "The username or password is incorrect."
-#~ msgstr "De gebruikersnaam of het wachtwoord is fout."
+#~ msgstr "注册的个人资料"
 
 #~ msgid "Email:"
-#~ msgstr "Gebruikersnaam"
+#~ msgstr "电子邮箱"
+
+#~ msgid "Save New"
+#~ msgstr "另存为新文件"
+
+#~ msgid "Password reset complete."
+#~ msgstr "密码重置完成"
+
+#~ msgid ""
+#~ "'%(value)s' 数值格式错误, 必须为 YYYY-MM-DD HH:MM[:ss］. '%(value)s' "
+#~ "value has an invalid format. It must be in YYYY-MM-DD HH:MM[:ss］.uuuuuu]]"
+#~ "[TZ] format."
+#~ msgstr "［uuuuuu][TZ]格式。"
+
+#~ msgid ""
+#~ "'%(value)s' 值的格式正确(HH:MM[:ss[.uuuuuu]]'%(value)s' value has the "
+#~ "correct format (YYYY-MM-DD HH:MM[:ss[.uuuuuu]][TZ]) but it is an invalid "
+#~ "date/time."
+#~ msgstr "数值的格式正确(年－月－日 时：分：秒) 但是输入的日期/时间无效。"
+
+#~ msgid "字符块(up to %(max_length)s)"
+#~ msgstr "字符(多达 %(max_length)s)"
+
+#~ msgid ""
+#~ "'%(value)s' 值格式错误, 必须为时：分：秒'%(value)s' value has an invalid "
+#~ "format. It must be in HH:MM[:ss[.uuuuuu]] format."
+#~ msgstr "格式"
 
 #~ msgid "view"
-#~ msgstr "toon"
+#~ msgstr "查看"
+
+#~ msgid "Add Morphology Definition"
+#~ msgstr "添加形态学定义"
 
 #~ msgid "Video"
-#~ msgstr "video"
+#~ msgstr "视频"
 
-#, fuzzy
 #~ msgid "Delete This Other Video"
-#~ msgstr "Verwijder deze aantekening"
+#~ msgstr "删除其它视频"
 
-#, fuzzy
 #~ msgid "Save new other video"
-#~ msgstr "Andere video's"
+#~ msgstr "另存为新的其它的视频"
+
+#~ msgid ""
+#~ " 手语%(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the NGT "
+#~ "Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the NGT "
+#~ "Dictionary"
+#~ msgstr "词典"
+
+#~ msgid ""
+#~ "该邮件地址已被使用, 请提供另一个电子邮件This email address is already in "
+#~ "use. Please supply a different email address."
+#~ msgstr "地址"
 
 #~ msgid "History"
-#~ msgstr "Geschiedenis"
+#~ msgstr "历史"
 
 #~ msgid "View on site"
-#~ msgstr "Bekijk op de site"
-
-#~ msgid "Password:"
-#~ msgstr "Wachtwoord:"
-
-#~ msgid "Return to <a href="
-#~ msgstr "Terug naar <a href="
+#~ msgstr "现场查看"

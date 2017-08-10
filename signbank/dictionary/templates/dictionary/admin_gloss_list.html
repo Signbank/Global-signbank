@@ -193,8 +193,8 @@ function do_adminsearch(el) {
                               <tr>
                                 <td>
                                     <div class='input-group'>
-                                        <label class='input-group-addon' for='id_language'>{{searchform.language.label}}</label>
-                                        {{searchform.language}}
+                                        <label class='input-group-addon' for='id_signlanguage'>{{searchform.signlanguage.label}}</label>
+                                        {{searchform.signlanguage}}
                                     </div>
                                 </td>
                                 <td>
@@ -451,7 +451,7 @@ function do_adminsearch(el) {
         {% if perms.dictionary.export_ecv %}
         <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
         {% endif %}
-        <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);"
+        <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
                value='{% trans "Reset" %}'>
     </div>
 
@@ -648,7 +648,7 @@ function do_adminsearch(el) {
                 <td>{{ gloss.domhndsh|translate_to_dutch:"Handshape" }}</td>
                 <td>{{ gloss.subhndsh|translate_to_dutch:"Handshape" }}</td>
                 <td>{{ gloss.locprim|translate_to_dutch:"Location" }}</td>
-            {% elif request.LANGUAGE_CODE == 'cn' %}
+            {% elif request.LANGUAGE_CODE == 'zh-hans' %}
                 <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
                 <td>{{ gloss.domhndsh|translate_to_chinese:"Handshape" }}</td>
                 <td>{{ gloss.subhndsh|translate_to_chinese:"Handshape" }}</td>

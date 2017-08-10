@@ -126,16 +126,16 @@ def update_gloss(request, glossid):
 
             return update_other_media(request,gloss, field, value)
 
-        elif field == 'language':
+        elif field == 'signlanguage':
             # expecting possibly multiple values
 
             try:
-                gloss.language.clear()
+                gloss.signlanguage.clear()
                 for value in values:
-                    lang = Language.objects.get(name=value)
-                    gloss.language.add(lang)
+                    lang = SignLanguage.objects.get(name=value)
+                    gloss.signlanguage.add(lang)
                 gloss.save()
-                newvalue = ", ".join([str(g) for g in gloss.language.all()])
+                newvalue = ", ".join([str(g) for g in gloss.signlanguage.all()])
             except:                
                 return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
                 
@@ -224,7 +224,7 @@ def update_gloss(request, glossid):
             #Translate the value if a boolean
             if isinstance(gloss._meta.get_field(field),NullBooleanField):
                 newvalue = value
-                value = (value == 'Yes')
+                value = (value in ['Yes','yes','true','True',True,1])
 
             # special value of 'notset' or -1 means remove the value
             if value == 'notset' or value == -1 or value == '':
@@ -685,15 +685,15 @@ def add_morpheme_definition(request, glossid):
 
         if form.is_valid():
 
-            host_gloss = form.cleaned_data['host_gloss_id']
             morph_id = form.cleaned_data['morph_id']
             morph = morph_from_identifier(morph_id)
 
             if morph != None:
-
-                # Add this morpheme to the "morphemePart" field of the gloss instance
-                thisgloss.morphemePart.add(morph)
-                thisgloss.save()
+                definition = SimultaneousMorphologyDefinition()
+                definition.parent_gloss = thisgloss
+                definition.morpheme = morph
+                definition.role = form.cleaned_data['description']
+                definition.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
@@ -979,7 +979,7 @@ def update_morpheme(request, morphemeid):
             try:
                 morpheme.language.clear()
                 for value in values:
-                    lang = Language.objects.get(name=value)
+                    lang = SignLanguage.objects.get(name=value)
                     morpheme.language.add(lang)
                     morpheme.save()
                 newvalue = ", ".join([str(g) for g in morpheme.language.all()])
@@ -1096,15 +1096,9 @@ def update_morpheme_definition(gloss, field, value):
     (what, morph_def_id) = field.split('_')
     what = what.replace('-','_');
 
-    try:
-        # morph_def = MorphologyDefinition.objects.get(id=morph_def_id)
-        morph_def = gloss.morphemePart.get(id=morph_def_id)
-    except:
-        return HttpResponseBadRequest("Bad Morpheme Definition ID '%s'" % morph_def_id, {'content-type': 'text/plain'})
-
     if what == 'morpheme_definition_delete':
-        print("REMOVE: ", morph_def, " FROM: ", gloss)
-        gloss.morphemePart.remove(morph_def)
+        definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
+        definition.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     else:
 
