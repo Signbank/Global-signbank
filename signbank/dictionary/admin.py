@@ -5,6 +5,13 @@ from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
 from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
 from modeltranslation.admin import TranslationAdmin
+from guardian.admin import GuardedModelAdmin
+
+
+class DatasetAdmin(GuardedModelAdmin):
+    model = Dataset
+    list_display = ('name', 'is_public', 'signlanguage',)
+
 
 class KeywordAdmin(VersionAdmin):
     search_fields = ['^text']
@@ -83,7 +90,7 @@ class GlossAdmin(VersionAdmin):
     if SEPARATE_ENGLISH_IDGLOSS_FIELD:
         idgloss_fields.append('annotation_idgloss_en')
 
-    fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('signlanguage', 'dialect')}, ),
+    fieldsets = ((None, {'fields': ('dataset')+tuple(idgloss_fields)+tuple(FIELDS['main'])+('signlanguage', 'dialect')}, ),
                  ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate','alternative_id'),
                                        'classes': ('collapse',)}, ),
                  ('Phonology', {'fields': FIELDS['phonology'], 'classes': ('collapse',)}, ),
@@ -94,14 +101,14 @@ class GlossAdmin(VersionAdmin):
     save_on_top = True
     save_as = True
 
-    list_display = ['idgloss','annotation_idgloss']
+    list_display = ['idgloss','annotation_idgloss','dataset']
 
     if SEPARATE_ENGLISH_IDGLOSS_FIELD:
         list_display += ['annotation_idgloss_en']
 
     list_display += ['morph', 'sense', 'sn']
     search_fields = ['^idgloss', '=sn', '^annotation_idgloss']
-    list_filter = ['signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
+    list_filter = ['dataset', 'signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
     inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 
     history_latest_first = True
@@ -184,3 +191,4 @@ admin.site.register(User, UserAdmin)
 
 admin.site.register(UserProfile)
 admin.site.register(Language, LanguageAdmin)
+admin.site.register(Dataset, DatasetAdmin)

@@ -268,7 +268,9 @@ class Gloss(models.Model):
 
 
         return result
-        
+
+    dataset = models.ForeignKey("Dataset", verbose_name=_("Glosses dataset"),
+                                help_text=_("Dataset a gloss is part of"))
     
     idgloss = models.CharField(_("Lemma ID Gloss"), max_length=50, help_text="""
     This is the unique identifying name of an entry of a sign form in the
@@ -1403,3 +1405,19 @@ class Language(models.Model):
         return self.name
 
 
+class Dataset(models.Model):
+    """A dataset, can be public/private and can be of only one SignLanguage"""
+    name = models.CharField(unique=True, blank=False, null=False, max_length=60)
+    is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
+    signlanguage = models.ForeignKey("SignLanguage")
+    translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
+                                                                          "for translation equivalents.")
+    description = models.TextField()
+
+    class Meta:
+        permissions = (
+            ('view_dataset', _('View dataset')),
+        )
+
+    def __unicode__(self):
+        return self.name
