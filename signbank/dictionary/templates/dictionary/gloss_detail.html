@@ -542,11 +542,10 @@
                        <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
                    </tr>
                </table>
-           </form>
+               {# spacing div to allow room for typeahead dropdown #}
+               <div style='height: 10em'></div>
+            </form>
             {% endif %}
-
-           {# spacing div to allow room for typeahead dropdown #}
-           <div style='height: 10em'></div>
 
         </div>
 
@@ -732,12 +731,11 @@
                            <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
                        </tr>
                    </table>
+                   {# spacing div to allow room for typeahead dropdown #}
+                   <div style='height: 10em'></div>
                 </form>
                 {% endif %}
 
-           {# spacing div to allow room for typeahead dropdown #}
-           <div style='height: 10em'></div>
-           
         </div>
     </div>
 
@@ -779,12 +777,11 @@
                            <td><input class='btn btn-primary' value='{% trans "Add Relation to Foreign Sign" %}' type='submit'></td>
                        </tr>
                    </table>
-                </form>
-                {% endif %}
-                               
-           {# spacing div to allow room for typeahead dropdown #}
-           <div style='height: 10em'></div>
-           
+                   {# spacing div to allow room for typeahead dropdown #}
+                   <div style='height: 10em'></div>
+               </form>
+               {% endif %}
+
         </div>
     </div>
     {% endif %}
