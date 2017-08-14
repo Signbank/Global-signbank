@@ -184,7 +184,8 @@ function do_adminsearch(el) {
                     <table class='table'>
                         <tr id='handshape_name_field'>
                             <td><label for='id_dutch_name'></label>{% trans "Handshape name" %}</td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='dutch_name' type='text' value='{{searchform.dutch_name.value}}'/></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='dutch_name' type='text'
+                                       value='{{searchform.dutch_name.value|default:'' }}'/></td>
                         </tr>
                     </table>
                 </div>
@@ -194,7 +195,8 @@ function do_adminsearch(el) {
                     <table class='table'>
                         <tr id='handshape_name_field'>
                             <td><label for='id_chinese_name'>{% trans "Handshape name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='chinese_name' type='text' value='{{searchform.chinese_name.value}}'/></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='chinese_name' type='text'
+                                       value='{{searchform.chinese_name.value|default:'' }}'/></td>
                         </tr>
                     </table>
                 </div>
@@ -204,7 +206,8 @@ function do_adminsearch(el) {
                     <table class='table'>
                         <tr id='handshape_name_field'>
                             <td><label for='id_english_name'>{% trans "Handshape name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='english_name' type='text' value='{{searchform.english_name.value}}'/></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='english_name' type='text'
+                                       value='{{searchform.english_name.value|default:'' }}'/></td>
                         </tr>
                     </table>
                 </div>
