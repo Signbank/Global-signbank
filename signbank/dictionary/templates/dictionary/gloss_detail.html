@@ -416,19 +416,19 @@
 
                <table class='table table-condensed'>
                    <tr>
-                       <th colspan="3" style='...'>{% trans "Sequential Morphology" %}</th>
+                       <th colspan="3">{% trans "Sequential Morphology" %}</th>
                    </tr>
                    {% if gloss.parent_glosses.count > 0 %}
                   <tr>
-                      <th style='width:2em'></th>
-                      <th style='width:12em'>{% trans "Compound part" %}</th>
-                      <th style='width:12em'>{% trans "Component sign" %}</th>
+                      <th style="width:2em;"></th>
+                      <th style="width:12em;">{% trans "Compound part" %}</th>
+                      <th>{% trans "Component sign" %}</th>
                   </tr>
 
                    {% for morphdef, translated_role in morphdefs %}
 
                    <tr>
-                         <td>
+                         <td style='width:2em;'>
                             <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphdef.id}}'></span>
 
                              <div class="modal fade" id="delete_morphology-definition_modal_{{morphdef.id}}" role="dialog" aria-labelledby="#modalTitle2" aria-hidden="true">
@@ -472,7 +472,7 @@
                <input type='hidden' name='parent_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td style="width:10em;"></td>
+                       <td style="width:2em;"></td>
                        <td style="width:12em;">{{morphologyform.role}}</td>
                        <td><input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID gloss" %}' name='morpheme_id'></td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
@@ -485,12 +485,12 @@
 
             <table class='table table-condensed'>
                 <tr>
-                    <th colspan="3" style='...'>{% trans "Simultaneous Morphology" %}</th>
+                    <th colspan="4">{% trans "Simultaneous Morphology" %}</th>
                 </tr>
                 <tr>
-                    <th style='width:2em'></th>
-                    <th style='width:10em'>{% trans "Meaning in this sign" %}</th>
-                    <th style='width:12em'>{% trans "Morpheme" %}</th>
+                    <th style="width:2em;"></th>
+                    <th style="width:22em;">{% trans "Morpheme gloss" %}</th>
+                    <th colspan="2">{% trans "Meaning in this sign" %}</th>
                 </tr>
                 {% for morpheme in gloss.simultaneous_morphology.all %}
                 <tr>
@@ -523,9 +523,9 @@
                          </div>
 
                     </td>
-                    <td>{{morpheme.role}}</td>
                     <td class='edit edit_morpheme' id='morpheme-definition_{{morpheme.id}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morpheme.morpheme}}</a></td>
-                </tr>
+                    <td>{{morpheme.role}}</td>
+               </tr>
                 {% endfor %}
             </table>
 
@@ -537,8 +537,8 @@
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td><input class='form-control morphtypeahead' placeholder='{% trans "Morpheme gloss" %}' name='morph_id'></td>
-                       <td><input class='form-control' placeholder='{% trans "Meaning in this sign" %}' name='description'></td>
+                       <td style="width:22em;"><input class='form-control morphtypeahead' placeholder='{% trans "Morpheme gloss" %}' name='morph_id' value="{{morphemeform.morph_id.value|default:''}}"/></td>
+                       <td><input class='form-control' placeholder='{% trans "Meaning in this sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
                    </tr>
                </table>
