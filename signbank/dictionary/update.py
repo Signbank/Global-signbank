@@ -80,7 +80,7 @@ def update_gloss(request, glossid):
             value = ' '
 
         elif value[0] == '_':
-            value = value[1:];
+            value = value[1:]
         
         values = request.POST.getlist('value[]')   # in case we need multiple values 
 
@@ -303,7 +303,7 @@ def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
     
     (what, relid) = field.split('_')
-    what = what.replace('-','_');
+    what = what.replace('-','_')
 
     try:
         rel = Relation.objects.get(id=relid)
@@ -351,7 +351,7 @@ def update_relationtoforeignsign(gloss, field, value):
     """Update one of the relations for this gloss"""
     
     (what, relid) = field.split('_')
-    what = what.replace('-','_');
+    what = what.replace('-','_')
 
     try:
         rel = RelationToForeignSign.objects.get(id=relid)
@@ -367,16 +367,16 @@ def update_relationtoforeignsign(gloss, field, value):
         # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
         return HttpResponse('', {'content-type': 'text/plain'})
     elif what == 'relationforeign_loan':
-        rel.loan = value == 'YES';
-        rel.save();
+        rel.loan = value == 'YES'
+        rel.save()
 
     elif what == 'relationforeign_other_lang':
-        rel.other_lang = value;
-        rel.save();
+        rel.other_lang = value
+        rel.save()
 
     elif what == 'relationforeign_other_lang_gloss':
-        rel.other_lang_gloss = value;
-        rel.save();
+        rel.other_lang_gloss = value
+        rel.save()
 
     else:
         
@@ -1049,7 +1049,7 @@ def update_morpheme(request, morphemeid):
 
             # Translate the value if a boolean
             if isinstance(morpheme._meta.get_field(field), NullBooleanField):
-                newvalue = value;
+                newvalue = value
                 value = (value == 'Yes')
 
             # special value of 'notset' or -1 means remove the value
@@ -1093,20 +1093,28 @@ def update_morpheme(request, morphemeid):
 def update_morpheme_definition(gloss, field, value):
     """Update the morpheme definition for this gloss"""
 
+    newvalue = value
+    original_value = ''
+    category_value = 'simultaneous_morphology'
     (what, morph_def_id) = field.split('_')
-    what = what.replace('-','_');
+    what = what.replace('-','_')
 
     if what == 'morpheme_definition_delete':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         definition.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
+    elif what == 'morpheme_definition_meaning':
+        definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
+        original_value = getattr(definition, 'role')
+        definition.__setattr__('role', value)
+        definition.save()
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value), {'content-type': 'text/plain'})
+
     else:
 
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
-    return HttpResponse(newvalue, {'content-type': 'text/plain'})
-
-
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 
 @permission_required('dictionary.change_gloss')
