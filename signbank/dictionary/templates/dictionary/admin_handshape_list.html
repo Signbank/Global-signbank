@@ -55,7 +55,8 @@ function clearForm(myFormElement) {
       <!--console.log("element " + i + " has name " + field_name + " and type " + field_type);-->
 
       if (field_name == 'paginate_by') {
-        elements[i].selectedIndex = 0;
+        elements[i].selectedIndex = 3;
+        elements[i].prop('selectedIndex',3).val('3').attr("selected", true);
       }
       else if (field_name == 'search_type') {
         elements[i].value = "handshape";

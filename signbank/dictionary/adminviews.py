@@ -1490,7 +1490,7 @@ class HandshapeListView(ListView):
 
     model = Handshape
     template_name = 'dictionary/admin_handshape_list.html'
-    paginate_by = 5
+    paginate_by = 50
     search_type = 'handshape'
 
     def get_context_data(self, **kwargs):
@@ -1540,7 +1540,7 @@ class HandshapeListView(ListView):
         if 'paginate_by' in self.request.GET:
             self.paginate_by = self.request.GET.get('paginate_by', self.paginate_by)
         else:
-            self.paginage_by = 5
+            self.paginage_by = 50
 
         context['paginate_by'] = self.paginate_by
 
