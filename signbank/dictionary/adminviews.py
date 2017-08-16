@@ -1472,8 +1472,8 @@ class HandshapeDetailView(DetailView):
                     context['handshape_fields_UF'].append([human_value, field, field_label, kind])
             # elif field_label == 'Finger configuration 1':
                 # context['handshape_fields_FC1'].append([human_value, field, field_label, kind])
-            # elif field_label == 'Finger configuration 2':
-                # context['handshape_fields_FC2'].append([human_value, field, field_label, kind])
+            elif field_label == 'Finger configuration 2':
+                context['handshape_fields_FC2'].append([human_value, field, field_label, kind])
             else:
                 context['handshape_fields'].append([human_value, field, field_label, kind])
 

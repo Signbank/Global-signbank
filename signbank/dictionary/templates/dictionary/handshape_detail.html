@@ -196,6 +196,21 @@
 		        {% endfor %}
                 </tr>
 
+                <!--Finger configuration 2 is a singleton list-->
+		        {% for value,name,label,kind in handshape_fields_FC2 %}
+                    {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
+                        <tr value="{{value}}" class="empty_row">
+                        <th style="width:15em;">{{label}}</th>
+                        <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
+                        </tr>
+                    {% else %}
+                        <tr value="{{value}}">
+                        <th style="width:15em;">{{label}}</th>
+                        <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
+                        </tr>
+                    {% endif %}
+		        {% endfor %}
+
                 <tr><th style="width:15em;">Unselected fingers</th>
                     <td id="#unselectedFingers">{{ handshape.get_unselectedFingers_display }}</td></tr>
                 <tr class="empty_row">
