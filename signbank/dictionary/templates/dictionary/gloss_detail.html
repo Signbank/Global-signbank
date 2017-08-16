@@ -556,6 +556,11 @@
         <div class='panel-heading'>
             <div class='panel-title' id='phonology_heading'>
                 <a data-toggle='collapse' href='#phonology'>{% trans "Phonology" %}</a><span id='phonology_message'></span>
+                {% if handedness and domhndsh %}
+                <div class="pull-right">
+                <span id="hands-icon"><img id='phono-hands' src='{{ STATIC_URL }}images/raised_hand_with_fingers_splayed.png' style="width:30px; height:auto; margin: 0px;"></span>
+                </div>
+                {% endif %}
             </div>
         </div>
         <div id='phonology' class='panel-collapse collapse'>
@@ -707,6 +712,11 @@
         <div class='panel-heading'>
             <div class='panel-title'>
                 <a data-toggle='collapse' href='#relations'>{% trans "Relations to Other Signs" %}</a>
+                {% if gloss.relation_sources %}
+                <div class="pull-right">
+                <span id="relations-icon"><img id='relations-arrows' src='{{ STATIC_URL }}images/leftwards_arrow_over_rightwards_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
+                </div>
+                {% endif %}
             </div>
         </div>
         <div id='relations' class='collapse'>
@@ -745,6 +755,11 @@
         <div class='panel-heading'>
             <div class='panel-title'>
                 <a data-toggle='collapse' href='#relationsforeign'>{% trans "Relations to Foreign Signs" %}</a>
+                {% if gloss.relationtoforeignsign_set.all %}
+                <div class="pull-right">
+                <span id="forrelations-icon"><img id='forrelations-arrows' src='{{ STATIC_URL }}images/left_right_triangleheaded_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
+                </div>
+                {% endif %}
             </div>
         </div>
         <div id='relationsforeign' class='collapse'>
@@ -791,6 +806,28 @@
             <div class='panel-heading'>
                 <div class='panel-title'>
                     <a data-toggle='collapse' href='#frequency'>{% trans "Frequency" %}</a>
+                    {% if tokNo == 1 %}
+                    <div class="pull-right">
+                    <span id="freqency-one-star-icon">
+                        <img id='frequency-one-star' src='{{ STATIC_URL }}images/black_star.png' style="width:20; height:auto; margin: 0px;">
+                    </span>
+                    </div>
+                    {% elif tokNo > 1 and tokNo < 6 %}
+                    <div class="pull-right">
+                    <span id="freqency-two-stars-icon">
+                        <img id='frequency-two-stars_1' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
+                        <img id='frequency-two-stars_2' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
+                    </span>
+                    </div>
+                    {% elif tokNo > 5 %}
+                    <div class="pull-right">
+                    <span id="freqency-three-stars-icon">
+                        <img id='frequency-three-stars_1' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
+                        <img id='frequency-three-stars_2' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
+                        <img id='frequency-three-stars_3' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
+                    </span>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             <div id='frequency' class='panel-collapse collapse'>
@@ -862,6 +899,11 @@
         <div class='panel-heading'>
             <div class='panel-title'>
                 <a data-toggle='collapse' href='#definitions'>{% trans "Notes" %}</a>
+                {% if notes_groupedby_role.items %}
+                <div class="pull-right">
+                <span id="document-icon"><img id='document' src='{{ STATIC_URL }}images/document_with_text_and_picture.png' style="width:30px; height:auto; margin: 0px;"></span>
+                </div>
+                {% endif %}
             </div>
         </div>
         <div id='definitions' class='collapse'>
@@ -963,6 +1005,11 @@
         <div class='panel-heading'>
             <div class='panel-title'>
                 <a data-toggle='collapse' href='#othermedia'>{% trans "Other media" %}</a>
+                {% if other_media %}
+                <div class="pull-right">
+                <span id="camera-icon"><img id='camera' src='{{ STATIC_URL }}images/camera.png' style="width:25px; height:25px; margin: 0px;"></span>
+                </div>
+                {% endif %}
             </div>
         </div>
         <div id='othermedia' class='collapse'>
@@ -971,11 +1018,12 @@
               <tr>
                   <th style='width:2em'></th>
                   <th style='width:12em'>{% trans "Image/Video" %}</th>
+                  <th style='width:12em'>{% trans "File Type" %}</th>
                   <th style='width:12em'>{% trans "Type" %}</th>
                   <th style='width:12em'>{% trans "Alternative gloss" %}</th>
               </tr>
 
-               {% for pk,path,type,alternative_gloss in other_media %}
+               {% for pk,path,file_type,type,alternative_gloss in other_media %}
                <tr>
                      <td>
                         <span class='glyphicon glyphicon-trash other-video-delete' data-toggle='modal' data-target='#delete_other_media_{{pk}}'></span>
@@ -1007,6 +1055,7 @@
                     </td>
 
                     <td><a download="other_media.jpg" href="{{ path }}">Download</a></td>
+                    <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
                     <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
                 </tr>

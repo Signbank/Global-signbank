@@ -279,11 +279,11 @@ class GlossMorphologyForm(forms.ModelForm):
 
     parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
     role = forms.ChoiceField(label=_(u'Type'),choices=build_choice_list('MorphologyType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    morpheme_id = forms.CharField(label=_(u'Morpheme'));
+    morpheme_id = forms.CharField(label=_(u'Morpheme'))
 
     class Meta:
-        model = MorphologyDefinition;
-        fields = ['role'];
+        model = MorphologyDefinition
+        fields = ['role']
 
 
 class GlossMorphemeForm(forms.Form):

@@ -763,6 +763,9 @@ class GlossDetailView(DetailView):
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
+        context['handedness'] = int(self.object.handedness) > 1   # minimal machine value is 2
+        context['domhndsh'] = int(self.object.domhndsh) > 2       # minimal machine value -s 3
+        context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
         next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
         if next_gloss == None:
@@ -775,8 +778,8 @@ class GlossDetailView(DetailView):
             context['glossposn'] =  Gloss.objects.filter(sn__lt=context['gloss'].sn).count()+1
 
         #Pass info about which fields we want to see
-        gl = context['gloss'];
-        labels = gl.field_labels();
+        gl = context['gloss']
+        labels = gl.field_labels()
 
         context['choice_lists'] = {}
 
@@ -794,16 +797,16 @@ class GlossDetailView(DetailView):
                     context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
 
                 #Take the human value in the language we are using
-                machine_value = getattr(gl,field);
+                machine_value = getattr(gl,field)
                 human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                 #And add the kind of field
                 if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
-                    kind = 'text';
+                    kind = 'text'
                 elif field in ['repeat','altern','oriChAbd','oriChFlex']:
-                    kind = 'check';
+                    kind = 'check'
                 else:
-                    kind = 'list';
+                    kind = 'list'
 
                 context[topic+'_fields'].append([human_value,field,labels[field],kind]);
 
@@ -843,7 +846,17 @@ class GlossDetailView(DetailView):
             human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
             path = settings.URL+'dictionary/protected_media/othermedia/'+other_media.path
-            context['other_media'].append([other_media.pk, path, human_value_media_type, other_media.alternative_gloss])
+            # print("path: ", other_media.path)
+            other_media_filename = other_media.path.split('/')[1]
+            # print("path: ", other_media_filename)
+            if other_media_filename.split('.')[-1] == 'mp4':
+                file_type = 'video/mp4'
+            elif other_media_filename.split('.')[-1] == 'png':
+                file_type = 'image/png'
+            else:
+                file_type = ''
+
+            context['other_media'].append([other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss])
 
             #Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
             context['choice_lists']['other-media-type_'+str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list,self.request.LANGUAGE_CODE)
@@ -906,14 +919,14 @@ class GlossRelationsDetailView(DetailView):
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
 
         #Pass info about which fields we want to see
-        gl = context['gloss'];
-        labels = gl.field_labels();
+        gl = context['gloss']
+        labels = gl.field_labels()
 
         context['choice_lists'] = {}
 
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['main','phonology','semantics','frequency']:
-            context[topic+'_fields'] = [];
+            context[topic+'_fields'] = []
 
             for field in FIELDS[topic]:
 
@@ -930,13 +943,13 @@ class GlossRelationsDetailView(DetailView):
 
                 #And add the kind of field
                 if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
-                    kind = 'text';
+                    kind = 'text'
                 elif field in ['repeat','altern','oriChAbd','oriChFlex']:
-                    kind = 'check';
+                    kind = 'check'
                 else:
-                    kind = 'list';
+                    kind = 'list'
 
-                context[topic+'_fields'].append([human_value,field,labels[field],kind]);
+                context[topic+'_fields'].append([human_value,field,labels[field],kind])
 
         #Add morphology to choice lists
         context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
@@ -1085,15 +1098,15 @@ class MorphemeListView(ListView):
         for fieldname in fieldnames:
 
             if fieldname in get:
-                key = fieldname + '__exact';
-                val = get[fieldname];
+                key = fieldname + '__exact'
+                val = get[fieldname]
 
                 if isinstance(Gloss._meta.get_field(fieldname), NullBooleanField):
-                    val = {'0': '', '1': None, '2': True, '3': False}[val];
+                    val = {'0': '', '1': None, '2': True, '3': False}[val]
 
                 if val != '':
-                    kwargs = {key: val};
-                    qs = qs.filter(**kwargs);
+                    kwargs = {key: val}
+                    qs = qs.filter(**kwargs)
 
         if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
             val = get['initial_relative_orientation']
@@ -1179,7 +1192,7 @@ class MorphemeListView(ListView):
 
         if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
 
-            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()];
+            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
             # print('pks_for_glosses', pks_for_glosses_with_relations)
 
             if get['hasRelationToForeignSign'] == '1':  # We only want glosses with a relation to a foreign sign
@@ -1197,19 +1210,19 @@ class MorphemeListView(ListView):
 
             # Find all relations with this role
             if get['hasRelation'] == 'all':
-                relations_with_this_role = Relation.objects.all();
+                relations_with_this_role = Relation.objects.all()
             else:
-                relations_with_this_role = Relation.objects.filter(role__exact=get['hasRelation']);
+                relations_with_this_role = Relation.objects.filter(role__exact=get['hasRelation'])
 
             # Remember the pk of all glosses that take part in the collected relations
-            pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role];
+            pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
         if 'morpheme' in get and get['morpheme'] != '':
-            potential_morphemes = Gloss.objects.filter(idgloss__icontains=get['morpheme']);
+            potential_morphemes = Gloss.objects.filter(idgloss__icontains=get['morpheme'])
             potential_morphdefs = MorphologyDefinition.objects.filter(
                 morpheme__in=[morpheme.pk for morpheme in potential_morphemes])
-            potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs];
+            potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs]
             qs = qs.filter(pk__in=potential_pks)
 
         if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
@@ -1217,7 +1230,7 @@ class MorphemeListView(ListView):
             # Get all Morphemes of the indicated mrpType
             target_morphemes = Morpheme.objects.filter(mrpType__exact=get['hasMorphemeOfType'])
             # Turn this into a list with pks
-            pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in target_morphemes];
+            pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in target_morphemes]
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
 #        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
@@ -1230,19 +1243,19 @@ class MorphemeListView(ListView):
 
             # Find all definitions with this role
             if get['definitionRole'] == 'all':
-                definitions_with_this_role = Definition.objects.all();
+                definitions_with_this_role = Definition.objects.all()
             else:
-                definitions_with_this_role = Definition.objects.filter(role__exact=get['definitionRole']);
+                definitions_with_this_role = Definition.objects.filter(role__exact=get['definitionRole'])
 
             # Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role];
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
         if 'definitionContains' in get and get['definitionContains'] != '':
-            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains']);
+            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
 
             # Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text];
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
         if 'createdBefore' in get and get['createdBefore'] != '':
