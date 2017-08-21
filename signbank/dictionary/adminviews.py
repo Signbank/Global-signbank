@@ -9,6 +9,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import override
 from django.forms.fields import TypedChoiceField, ChoiceField
+from django.shortcuts import *
 
 import csv
 import operator
@@ -726,7 +727,7 @@ class GlossDetailView(DetailView):
             self.object = self.get_object()
         except Http404:
             # return custom template
-            return render(request, 'no_object.html', status=404)
+            return render(request, 'dictionary/warning.html', status=404)
 
         if request.user.is_authenticated():
             if not request.user.has_perm('dictionary.search_gloss'):
@@ -1402,7 +1403,7 @@ class MorphemeListView(ListView):
                 try:
                     safe_row.append(column.encode('utf-8').decode())
                 except AttributeError:
-                    safe_row.append(None);
+                    safe_row.append(None)
 
             writer.writerow(safe_row)
 
@@ -1417,9 +1418,56 @@ class HandshapeDetailView(DetailView):
         verbose_name_plural = "Handshapes"
         ordering = ['machine_value']
 
+    #Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+
+        # print("args: ", kwargs['pk'])
+        match_machine_value = int(kwargs['pk'])
+
+        try:
+            self.object = self.get_object()
+        except Http404:
+
+            # check to see if this handshape has been created but not yet viewed
+            # if that is the case, create a new handshape object and view that,
+            # otherwise return an error
+
+            handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
+            handshape_not_created = 1
+
+            for o in handshapes:
+                # print('o machine_value: ', o.machine_value)
+                if o.machine_value == match_machine_value: # only one match
+                    new_id = o.machine_value
+                    new_machine_value = o.machine_value
+                    new_english_name = o.english_name
+                    new_dutch_name = o.dutch_name
+                    new_chinese_name = o.chinese_name
+
+                    new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name,
+                                              dutch_name=new_dutch_name, chinese_name=new_chinese_name)
+                    new_handshape.save()
+                    # print("New handshape: ", new_id)
+                    handshape_not_created = 0
+                    self.object = new_handshape
+                    break;
+
+            if handshape_not_created:
+                return HttpResponse('<p>Handshape not configured.</p>')
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
     def get_context_data(self, **kwargs):
-        context = super(HandshapeDetailView, self).get_context_data(**kwargs)
+
+        try:
+            context = super(HandshapeDetailView, self).get_context_data(**kwargs)
+        except:
+            # return custom template
+            return HttpResponse('invalid', {'content-type': 'text/plain'})
+
         hs = context['handshape']
+
         labels = hs.field_labels()
         # print('labels: ', labels)
         context['imageform'] = ImageUploadForHandshapeForm()
@@ -1513,7 +1561,7 @@ class HandshapeListView(ListView):
         # else:
         #     context['glosscount'] = Gloss.objects.count()  # Count the glosses + morphemes
 
-        context['handshapecount'] = Handshape.objects.all().count()
+        context['handshapefieldchoicecount'] = FieldChoice.objects.filter(field__iexact='Handshape').count()
         context['signscount'] = Gloss.objects.all().count()
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
 
@@ -1552,13 +1600,10 @@ class HandshapeListView(ListView):
         """
         Paginate by specified value in querystring, or use default class property value.
         """
-        # print("inside paginate by")
 
         return self.request.GET.get('paginate_by', self.paginate_by)
 
     def get_queryset(self):
-
-        # print("inside get queryset")
 
         choice_lists = {}
 
@@ -1578,7 +1623,6 @@ class HandshapeListView(ListView):
         get = self.request.GET
 
 
-
         #Then check what kind of stuff we want
         if 'search_type' in get:
             self.search_type = get['search_type']
@@ -1587,42 +1631,36 @@ class HandshapeListView(ListView):
 
         setattr(self.request, 'search_type', self.search_type)
 
-        # #Get the initial selection
-        # if len(get) > 0 or show_all:
-        #     if self.search_type == 'sign':
-        #         # Get all the GLOSS items that are not member of the sub-class Morpheme
-        #         qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
-        #     else:
-        #         qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
-        #
-        # #No filters or 'show_all' specified? show nothing
-        # else:
-        #     qs = Gloss.objects.none()
-
-
-
-        # if len(get) > 0:
-            # if self.search_type == 'handshape':
-
         qs = Handshape.objects.all().order_by('machine_value')
 
-        # else:
-        #     qs = Handshape.objects.none()
+        handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
+        # Find out if any Handshapes exist for which no Handshape object has been created
 
-        #Don't show anything when we're not searching yet
-        # else:
-            # qs = Handshape.objects.none()
+        existing_handshape_objects_machine_values = [ o.machine_value for o in qs ]
 
-        # if 'search' in get and get['search'] != '':
-        #     val = get['search']
-        #     query = Q(idgloss__iregex=val) | \
-        #             Q(annotation_idgloss__iregex=val)
-        #
-        #     if re.match('^\d+$', val):
-        #         query = query | Q(sn__exact=val)
-        #
-        #     qs = qs.filter(query)
-        #     # print "A: ", len(qs)
+
+        new_handshape_created = 0
+
+        for h in handshapes:
+            if h.machine_value in existing_handshape_objects_machine_values:
+                pass
+            else:
+                # create a new Handshape object
+                new_id = h.machine_value
+                new_machine_value = h.machine_value
+                new_english_name = h.english_name
+                new_dutch_name = h.dutch_name
+                new_chinese_name = h.chinese_name
+
+                new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name,
+                                          dutch_name=new_dutch_name, chinese_name=new_chinese_name)
+                new_handshape.save()
+                new_handshape_created = 1
+
+
+        if new_handshape_created: # if a new Handshape object was created, reload the query result
+
+            qs = Handshape.objects.all().order_by('machine_value')
 
         fieldnames = ['machine_value', 'english_name', 'dutch_name', 'chinese_name',
                       'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2', 'hsAperture',
