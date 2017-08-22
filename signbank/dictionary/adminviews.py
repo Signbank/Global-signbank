@@ -504,15 +504,15 @@ class GlossListView(ListView):
         for fieldname in fieldnames:
 
             if fieldname in get:
-                key = fieldname+'__exact';
-                val = get[fieldname];
+                key = fieldname+'__exact'
+                val = get[fieldname]
 
                 if isinstance(Gloss._meta.get_field(fieldname),NullBooleanField):
-                    val = {'0':'','1': None, '2': True, '3': False}[val];
+                    val = {'0':'','1': None, '2': True, '3': False}[val]
 
                 if val != '':
-                    kwargs = {key:val};
-                    qs = qs.filter(**kwargs);
+                    kwargs = {key:val}
+                    qs = qs.filter(**kwargs)
 
 
         if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
@@ -764,8 +764,8 @@ class GlossDetailView(DetailView):
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
-        context['handedness'] = int(self.object.handedness) > 1   # minimal machine value is 2
-        context['domhndsh'] = int(self.object.domhndsh) > 2       # minimal machine value -s 3
+        context['handedness'] = (int(self.object.handedness) > 1) if self.object.handedness else 0  # minimal machine value is 2
+        context['domhndsh'] = (int(self.object.domhndsh) > 2) if self.object.subhndsh else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
         context['StrongHand'] = self.object.domhndsh
         context['WeakHand'] = self.object.subhndsh
@@ -1911,11 +1911,11 @@ class MorphemeDetailView(DetailView):
 
                 # And add the kind of field
                 if field in ['phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'locVirtObj']:
-                    kind = 'text';
+                    kind = 'text'
                 elif field in ['repeat', 'altern']:
-                    kind = 'check';
+                    kind = 'check'
                 else:
-                    kind = 'list';
+                    kind = 'list'
 
                 context[topic + '_fields'].append([human_value, field, labels[field], kind]);
 
