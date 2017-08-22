@@ -691,6 +691,11 @@
         <div class='panel-heading'>
             <div class='panel-title'>
                 <a data-toggle='collapse' href='#semantics'>{% trans "Semantics" %}</a>
+                {% if SemanticFieldDefined %}
+                <div class="pull-right">
+                <span id="semantics-icon"><img id='ball' src='{{ STATIC_URL }}images/black_circle.png' style="width:25px; height:25px; margin: 0px;"></span>
+                </div>
+                {% endif %}
             </div>
         </div>
         <div id='semantics' class='panel-collapse collapse'>

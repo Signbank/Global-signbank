@@ -770,6 +770,12 @@ class GlossDetailView(DetailView):
         context['StrongHand'] = self.object.domhndsh
         context['WeakHand'] = self.object.subhndsh
 
+        # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
+        context['SemanticFieldDefined'] = (int(self.object.semField) > 1) if self.object.semField else 0  # minimal machine value is 2
+        # context['ValenceDefined'] = (int(self.object.valence) > 1) if self.object.valence else 0          # minimal machine value is 2
+        # context['IconicImageDefined'] = self.object.iconImage                                             # exists if not emtpy
+
+
         next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
         if next_gloss == None:
             context['nextglossid'] = context['gloss'].pk #context['gloss']
