@@ -273,6 +273,14 @@ def update_gloss(request, glossid):
                     newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
                     category_value = 'phonology'
 
+                else:
+                    # value is a Boolean
+                    category_value = 'phonology'
+                    if value:
+                        newvalue = 'Yes'
+                    else:
+                        newvalue = 'No'
+
         #This is because you cannot concat none to a string in py3
         if original_value == None:
             original_value = ''
