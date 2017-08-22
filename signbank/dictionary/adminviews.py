@@ -767,6 +767,8 @@ class GlossDetailView(DetailView):
         context['handedness'] = int(self.object.handedness) > 1   # minimal machine value is 2
         context['domhndsh'] = int(self.object.domhndsh) > 2       # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
+        context['StrongHand'] = self.object.domhndsh
+        context['WeakHand'] = self.object.subhndsh
 
         next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
         if next_gloss == None:

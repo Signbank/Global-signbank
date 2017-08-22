@@ -645,18 +645,69 @@ function do_adminsearch(el) {
 
             {% if request.LANGUAGE_CODE == 'nl' %}
                 <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
-                <td>{{ gloss.domhndsh|translate_to_dutch:"Handshape" }}</td>
-                <td>{{ gloss.subhndsh|translate_to_dutch:"Handshape" }}</td>
+
+                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
+
+                {% with gloss.domhndsh|translate_to_dutch:"Handshape" as domhndsh_display %}
+                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                        <td>{{ domhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+                {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
+                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                        <td>{{ subhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+
                 <td>{{ gloss.locprim|translate_to_dutch:"Location" }}</td>
+
             {% elif request.LANGUAGE_CODE == 'zh-hans' %}
                 <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
-                <td>{{ gloss.domhndsh|translate_to_chinese:"Handshape" }}</td>
-                <td>{{ gloss.subhndsh|translate_to_chinese:"Handshape" }}</td>
+
+                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
+
+                {% with gloss.domhndsh|translate_to_chinese:"Handshape" as domhndsh_display %}
+                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                        <td>{{ domhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+                {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
+                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                        <td>{{ subhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+
                 <td>{{ gloss.locprim|translate_to_chinese:"Location" }}</td>
+
             {% else %}
                 <td>{{ gloss.get_handedness_display }}</td>
-                <td>{{ gloss.get_domhndsh_display }}</td>
-                <td>{{ gloss.get_subhndsh_display }}</td>
+
+                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
+                <!--The translate_to_english function is needed to avoid None values showing up in display-->
+
+                {% with gloss.domhndsh|translate_to_english:"Handshape" as domhndsh_display %}
+                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                        <td>{{ domhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+                {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
+                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                        <td>{{ subhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+
                 <td>{{ gloss.get_locprim_display }}</td>
             {% endif %}
 

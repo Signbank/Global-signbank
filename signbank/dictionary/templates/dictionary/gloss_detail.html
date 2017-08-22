@@ -570,6 +570,20 @@
                 <tr value="{{value}}" class="empty_row">
                 <th>{{label}}</th>
                 <td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
+                {% elif name == 'domhndsh' %}
+                <tr value="{{value}}">
+                <th>{{label}}</th>
+                <td class="edit edit_list" id='{{name}}'>
+                    <a style="color: inherit;" href="{{ URL }}/dictionary/handshape/{{StrongHand}}/">{{value}}</a>
+                </td>
+                </tr>
+                {% elif name == 'subhndsh' %}
+                <tr value="{{value}}">
+                <th>{{label}}</th>
+                <td class="edit edit_list" id='{{name}}'>
+                    <a style="color: inherit;" href="{{ URL }}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
+                </td>
+                </tr>
                 {% else %}
                 <tr value="{{value}}">
                 <th>{{label}}</th>

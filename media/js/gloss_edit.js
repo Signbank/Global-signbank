@@ -76,6 +76,8 @@ function disable_edit() {
     $('.edit').editable('disable');
     $('.edit').css('color', 'black');
     $('#edit_message').text('');
+    $('#domhndsh').css('color', 'blue');
+    $('#subhndsh').css('color', 'blue');
     $('.editform').hide();
     $('#delete_gloss_btn').hide();
     $('#delete_morpheme_btn').hide();
