@@ -28,6 +28,10 @@
     var delete_this_gloss_str = '{% trans "Delete this gloss" %}'
     var saving_str = '{% trans "Saving..." %}'
     var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}'
+    var yes_str = '{% trans "Yes" %}'
+    var no_str = '{% trans "No" %}'
+    var original_strong_hand = '{{StrongHand}}'
+    var original_weak_hand = '{{WeakHand}}'
 
     var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
     var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
@@ -574,14 +578,14 @@
                 <tr value="{{value}}">
                 <th>{{label}}</th>
                 <td class="edit edit_list" id='{{name}}'>
-                    <a style="color: inherit;" href="{{ URL }}/dictionary/handshape/{{StrongHand}}/">{{value}}</a>
+                    <a id="strong_hand_link" style="color: inherit; display: visible;" href="{{ URL }}/dictionary/handshape/{{StrongHand}}/">{{value}}</a>
                 </td>
                 </tr>
                 {% elif name == 'subhndsh' %}
                 <tr value="{{value}}">
                 <th>{{label}}</th>
                 <td class="edit edit_list" id='{{name}}'>
-                    <a style="color: inherit;" href="{{ URL }}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
+                    <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{ URL }}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
                 </td>
                 </tr>
                 {% else %}

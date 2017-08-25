@@ -3,7 +3,12 @@
  */
 
 //Keep track of the original values of the changes made, so we can rewind it later if needed
+//Keep track of the new values in order to generate hyperlinks for Handshapes
 var original_values_for_changes_made = new Array();
+var new_values_for_changes_made = new Array();
+//var original_strong_hand_link = '';
+//var original_weak_hand_link = '';
+var busy_editing = 0;
 
  $(document).ready(function() {
      configure_edit();
@@ -76,6 +81,36 @@ function disable_edit() {
     $('.edit').editable('disable');
     $('.edit').css('color', 'black');
     $('#edit_message').text('');
+    if (busy_editing) {
+        strong_hand = $('#domhndsh').text();
+        weak_hand = $('#subhndsh').text();
+        console.log('new strong hand: ' + strong_hand);
+        console.log('new weak hand: ' + weak_hand);
+        strong_machine_value = new_values_for_changes_made['domhndsh'];
+        weak_machine_value = new_values_for_changes_made['subhndsh'];
+        if (strong_machine_value == undefined) {
+            if (original_strong_hand) {
+                strong_hand_href = url + 'dictionary/handshape/'+ original_strong_hand + '/';
+                console.log('strong hand ref: ' + strong_hand_href);
+                $('#domhndsh').html('<a id="strong_hand_link" style="color: inherit; display: visible;" href="' + strong_hand_href + '">' + strong_hand + '</a>');
+            }
+        } else {
+            strong_hand_href = url + 'dictionary/handshape/'+ strong_machine_value + '/';
+            console.log('strong hand ref: ' + strong_hand_href);
+            $('#domhndsh').html('<a id="strong_hand_link" style="color: inherit; display: visible;" href="' + strong_hand_href + '">' + strong_hand + '</a>');
+        };
+        if (weak_machine_value == undefined) {
+            if (original_weak_hand) {
+                weak_hand_href = url + 'dictionary/handshape/'+ original_weak_hand + '/';
+                console.log('weak hand ref: ' + weak_hand_href);
+                $('#subhndsh').html('<a id="weak_hand_link" style="color: inherit; display: visible;" href="' + weak_hand_href + '">' + weak_hand + '</a>');
+            }
+         } else {
+            weak_hand_href = url + 'dictionary/handshape/'+ weak_machine_value + '/';
+            console.log('weak hand ref: ' + weak_hand_href);
+            $('#subhndsh').html('<a id="weak_hand_link" style="color: inherit; display: visible;" href="' + weak_hand_href + '">' + weak_hand + '</a>');
+        };
+    };
     $('#domhndsh').css('color', 'blue');
     $('#subhndsh').css('color', 'blue');
     $('.editform').hide();
@@ -121,6 +156,14 @@ function enable_edit() {
     $('.edit').css('color', 'red');
     $('#edit_message').text('Click on red text to edit  ');
     $('#edit_message').css('color', 'black');
+    strong_hand = $('#domhndsh').text();
+    weak_hand = $('#subhndsh').text();
+    console.log("original strong hand: " + strong_hand);
+    console.log("original weak hand: " + weak_hand);
+    $('#domhndsh').children().remove();
+    $('#domhndsh').html(strong_hand);
+    $('#subhndsh').children().remove();
+    $('#subhndsh').html(weak_hand);
     $('.editform').show();
     $('#delete_gloss_btn').show().addClass('btn-danger');
     $('#delete_morpheme_btn').show().addClass('btn-danger');
@@ -152,6 +195,7 @@ function enable_edit() {
             $(this).html('------')
         }
     });
+    busy_editing = 1;
 };
 
 function toggle_edit(redirect_to_next) {
@@ -249,7 +293,7 @@ function configure_edit() {
      });     
      $('.edit_check').editable(edit_post_url, {
          type      : 'checkbox',
-         checkbox: { trueValue: 'True', falseValue: 'False' },
+         checkbox: { trueValue: yes_str, falseValue: no_str },
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_relation_role').editable(edit_post_url, {
@@ -314,20 +358,23 @@ function update_view_and_remember_original_value(change_summary)
 	split_values_count = change_summary.split('\t').length - 1;
 	if (split_values_count > 0)
 	{
-	    if (split_values_count < 2) {
+	    if (split_values_count < 3) {
 	        console.log("update_view_and_remember_original_value: not enough returned values")
 	        return
 	    }
         split_values = change_summary.split('\t');
         original_value = split_values[0];
         new_value = split_values[1];
-        category_value = split_values[2];
+        machine_value = split_values[2];
+        category_value = split_values[3];
         console.log("change summary: ", change_summary);
+        console.log("machine value: ", machine_value);
         console.log("category value: ", category_value);
 
         id = $(this).attr('id');
         $(this).html(new_value);
         console.log('field changed: ', id);
+        new_values_for_changes_made[id] = machine_value;
 
         if (original_values_for_changes_made[id] == undefined)
         {

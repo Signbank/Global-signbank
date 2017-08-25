@@ -73,6 +73,7 @@ def update_gloss(request, glossid):
         value = request.POST.get('value', '')
         original_value = '' #will in most cases be set later, but can't be empty in case it is not set
         category_value = ''
+        field_category = ''
 
         # print('field is: ', field)
 
@@ -222,9 +223,14 @@ def update_gloss(request, glossid):
             # - tags
 
             #Translate the value if a boolean
+            # Language values are needed here!
+
             if isinstance(gloss._meta.get_field(field),NullBooleanField):
+                # value is the html 'value' received during editing
                 newvalue = value
-                value = (value in ['Yes','yes','true','True',True,1])
+                # print("new boolean value: ", newvalue)
+                # value gets converted to a Boolean by the following statement
+                value = (value in ['Yes','yes', 'ja', 'Ja', '是', 'true','True',True,1])
 
             # special value of 'notset' or -1 means remove the value
             if value == 'notset' or value == -1 or value == '':
@@ -271,22 +277,22 @@ def update_gloss(request, glossid):
                     # print('field category: ', field_category)
                     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                     newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
-                    category_value = 'phonology'
 
-                else:
-                    # value is a Boolean
-                    category_value = 'phonology'
-                    if value:
-                        newvalue = 'Yes'
-                    else:
-                        newvalue = 'No'
+                if field_category in FIELDS['phonology']:
+
+                     category_value = 'phonology'
+
+        # if field == 'domhndsh':
+            # value should be the machine_value representation, please confirm if modifying the above code
+            # print("Strong Hand: ", newvalue, ", ", value)
 
         #This is because you cannot concat none to a string in py3
         if original_value == None:
             original_value = ''
 
+        # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
         return HttpResponse(
-            str(original_value) + str('\t') + str(newvalue) + str('\t') + str(category_value),
+            str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value),
             {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
@@ -813,7 +819,7 @@ def update_handshape(request, handshapeid):
         else:
             category_value = 'fieldChoice'
 
-        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
 
 def add_othermedia(request):
 
@@ -1095,7 +1101,7 @@ def update_morpheme(request, morphemeid):
                     newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
                     category_value = 'phonology'
 
-        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value), {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value), {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):
@@ -1116,7 +1122,7 @@ def update_morpheme_definition(gloss, field, value):
         original_value = getattr(definition, 'role')
         definition.__setattr__('role', value)
         definition.save()
-        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value), {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' +  str(value) + str('\t') + str(category_value), {'content-type': 'text/plain'})
 
     else:
 
