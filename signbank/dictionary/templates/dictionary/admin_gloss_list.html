@@ -186,7 +186,31 @@ function do_adminsearch(el) {
 
                             <td><div class='input-group'>
 
-                                <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
+                                <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}
+                                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                                          title="
+                                          <table>
+                                            <tr>
+                                                <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                                            </tr>
+                                          </table>
+                                          "></span>
+                                </label>
                                 <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
                             </td>
                         </tr>
@@ -707,10 +731,11 @@ function do_adminsearch(el) {
                 <td>{{ gloss.locprim|translate_to_chinese:"Location" }}</td>
 
             {% else %}
-                <td>{{ gloss.get_handedness_display }}</td>
 
                 <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
                 <!--The translate_to_english function is needed to avoid None values showing up in display-->
+
+                <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
 
                 {% with gloss.domhndsh|translate_to_english:"Handshape" as domhndsh_display %}
                     {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
@@ -727,7 +752,7 @@ function do_adminsearch(el) {
                     {% endif %}
                 {% endwith %}
 
-                <td>{{ gloss.get_locprim_display }}</td>
+                <td>{{ gloss.locprim|translate_to_english:"Location" }}</td>
             {% endif %}
 
             {% load underscore_to_space %}

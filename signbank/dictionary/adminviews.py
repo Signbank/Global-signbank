@@ -444,8 +444,7 @@ class GlossListView(ListView):
         #If not, we will go trhough a long list of filters
         if 'search' in get and get['search'] != '':
             val = get['search']
-            query = Q(idgloss__iregex=val) | \
-                    Q(annotation_idgloss__iregex=val)
+            query = Q(annotation_idgloss__iregex=val)
 
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
@@ -459,7 +458,7 @@ class GlossListView(ListView):
 
         if 'lemmaGloss' in get and get['lemmaGloss'] != '':
             val = get['lemmaGloss']
-            qs = qs.filter(idgloss__iexact=val)
+            qs = qs.filter(idgloss__iregex=val)
 
         if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']
@@ -1052,8 +1051,7 @@ class MorphemeListView(ListView):
 
         if 'search' in get and get['search'] != '':
             val = get['search']
-            query = Q(idgloss__iregex=val) | \
-                    Q(annotation_idgloss__iregex=val)
+            query = Q(annotation_idgloss__iregex=val)
 
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
@@ -1067,7 +1065,7 @@ class MorphemeListView(ListView):
 
         if 'lemmaGloss' in get and get['lemmaGloss'] != '':
             val = get['lemmaGloss']
-            qs = qs.filter(idgloss__iexact=val)
+            qs = qs.filter(idgloss__iregex=val)
 
         if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']
