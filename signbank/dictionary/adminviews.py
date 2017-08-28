@@ -457,6 +457,10 @@ class GlossListView(ListView):
             val = get['englishGloss']
             qs = qs.filter(annotation_idgloss_en__iregex=val)
 
+        if 'lemmaGloss' in get and get['lemmaGloss'] != '':
+            val = get['lemmaGloss']
+            qs = qs.filter(idgloss__iexact=val)
+
         if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']
             qs = qs.filter(translation__translation__text__iregex=val)
@@ -1059,7 +1063,11 @@ class MorphemeListView(ListView):
 
         if 'englishGloss' in get and get['englishGloss'] != '':
             val = get['englishGloss']
-            qs = qs.filter(annotation_idgloss_en__iregex=val)
+            qs = qs.filter(idgloss__iregex=val)
+
+        if 'lemmaGloss' in get and get['lemmaGloss'] != '':
+            val = get['lemmaGloss']
+            qs = qs.filter(idgloss__iexact=val)
 
         if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']

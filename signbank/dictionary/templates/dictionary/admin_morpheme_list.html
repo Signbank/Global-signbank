@@ -156,7 +156,11 @@ function do_adminsearch(el) {
                         <input name='englishGloss' class='form-control' {% if searchform.englishGloss.value %}value='{{searchform.englishGloss.value}}'{% endif %}></div>
                     </td>
                     {% endif %}
+                    <td><div class='input-group'>
 
+                        <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
+                        <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
+                    </td>
                     <td><div class='input-group'>
                         <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
                         <input name='keyword' class='form-control' {% if searchform.keyword.value %}value='{{searchform.keyword.value}}'{% endif %}></div>

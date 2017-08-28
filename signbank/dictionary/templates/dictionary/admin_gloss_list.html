@@ -176,9 +176,18 @@ function do_adminsearch(el) {
                             </td>
                             {% endif %}
 
+                        </tr>
+                        <tr>
+
                             <td><div class='input-group'>
                                 <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
                                 <input name='keyword' class='form-control' {% if searchform.keyword.value %}value='{{searchform.keyword.value}}'{% endif %}></div>
+                            </td>
+
+                            <td><div class='input-group'>
+
+                                <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
+                                <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
                             </td>
                         </tr>
                     </table>
@@ -483,7 +492,7 @@ function do_adminsearch(el) {
              {% csrf_token %}
              <table class='table'>
                  <tr>
-                     <th><label for='id_idgloss'>ID Gloss</label></th>
+                     <th><label for='id_idgloss'>Lemma ID Gloss</label></th>
                      <th><label for='id_annotation_idgloss'>Annotation ID Gloss (Dutch)</label></th>
                      <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
                      <th></th>
@@ -518,6 +527,8 @@ function do_adminsearch(el) {
            <th>{% trans "Annotation ID gloss: English" %}</th>
             {% endif %}
 
+          <th>{% trans "Lemma ID gloss" %}</th>
+
            <th>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
            <th>{% trans "Strong hand" %}</th>
@@ -528,7 +539,7 @@ function do_adminsearch(el) {
       <!-- EK: this second header row contains clickable sort-order buttons -->
       <tr>
           <th></th>
-           {% with "annotation_idgloss annotation_idgloss_en translation handedness domhndsh subhndsh locprim" as head_fields %}
+           {% with "annotation_idgloss annotation_idgloss_en idgloss translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD or field != annotation_idgloss_en %}
            {% with minfield="-"|add:field %}
@@ -629,6 +640,14 @@ function do_adminsearch(el) {
 
       </td>
       {% endif %}
+
+      <td>
+          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
+          <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.idgloss}}</a></div>
+          {% else %}
+          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.idgloss}}</a></div>
+          {% endif %}
+      </td>
 
       <td>
       {% for translation in gloss.translation_set.all %}
