@@ -93,6 +93,7 @@ class GlossSearchForm(forms.ModelForm):
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"), initial="idgloss")       # Used in glosslistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))
+    lemmaGloss = forms.CharField(label=_("Lemma Gloss"))
     tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
     nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
     keyword = forms.CharField(label=_(u'Translations'))
@@ -164,6 +165,7 @@ class MorphemeSearchForm(forms.ModelForm):
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="idgloss")  # Used in morphemelistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))
+    lemmaGloss = forms.CharField(label=_("Lemma Gloss"))
     tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_', ' ')) for tag in Tag.objects.all()])
     nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
     keyword = forms.CharField(label=_(u'Translations'))
