@@ -20,7 +20,7 @@
     if (current_language_code == 'nl') {
         current_language_code = 'dutch'
     }
-    else if (current_language_code == 'cn') {
+    else if (current_language_code == 'zh-hans') {
         current_language_code = 'chinese'
     }
     else {
@@ -190,7 +190,7 @@ function do_adminsearch(el) {
                         </tr>
                     </table>
                 </div>
-                {% elif language == 'cn' %}
+                {% elif language == 'zh-hans' %}
                 <div id='handshape_name'>
                     {% csrf_token %}
                     <table class='table'>
@@ -437,7 +437,7 @@ function do_adminsearch(el) {
           <th>{% trans "Handshape" %}</th>
           {% if language == 'nl' %}
           <th>{% trans "Dutch name" %}</th>
-        {% elif language == 'cn' %}
+        {% elif language == 'zh-hans' %}
           <th>{% trans "Chinese name" %}</th>
         {% else %}
           <th>{% trans "English name" %}</th>
@@ -466,7 +466,7 @@ function do_adminsearch(el) {
            <a href="#" onclick="do_sort_column('dutch_name','del', 'adminsearch')">x</a>
          {% endif %}
        </th>
-        {% elif language == 'cn' %}
+        {% elif language == 'zh-hans' %}
         <th>
          <a href="#" onclick="do_sort_column('chinese_name','asc', 'adminsearch')">
            {% if searchform.sortOrder and searchform.sortOrder.value == 'chinese_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
@@ -600,7 +600,7 @@ function do_adminsearch(el) {
 
         {% if language == 'nl' %}
         <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
-        {% elif language == 'cn' %}
+        {% elif language == 'zh-hans' %}
         <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.chinese_name}}</a></td>
         {% else %}
         <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.english_name}}</a></td>
@@ -722,7 +722,7 @@ function do_adminsearch(el) {
                 <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
                 <td>{{ gloss.domhndsh|translate_to_dutch:"Handshape" }}</td>
                 <td>{{ gloss.subhndsh|translate_to_dutch:"Handshape" }}</td>
-            {% elif request.LANGUAGE_CODE == 'cn' %}
+            {% elif request.LANGUAGE_CODE == 'zh-hans' %}
                 <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
                 <td>{{ gloss.domhndsh|translate_to_chinese:"Handshape" }}</td>
                 <td>{{ gloss.subhndsh|translate_to_chinese:"Handshape" }}</td>

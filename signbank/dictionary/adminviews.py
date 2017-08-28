@@ -1717,7 +1717,7 @@ class HandshapeListView(ListView):
                     query = Q(dutch_name__icontains=val)
                     qs = qs.filter(query)
 
-                if self.request.LANGUAGE_CODE == 'cn' and fieldname == 'chinese_name' and val != '':
+                if self.request.LANGUAGE_CODE == 'zh-hans' and fieldname == 'chinese_name' and val != '':
                     # print("query chinese")
                     query = Q(chinese_name__icontains=val)
                     qs = qs.filter(query)
@@ -1749,7 +1749,7 @@ class HandshapeListView(ListView):
             for item in qs:
                 if self.request.LANGUAGE_CODE == 'nl':
                     items.append(dict(id = item.machine_value, handshape = item.dutch_name))
-                elif self.request.LANGUAGE_CODE == 'cn':
+                elif self.request.LANGUAGE_CODE == 'zh-hans':
                     items.append(dict(id = item.machine_value, handshape = item.chinese_name))
                 else:
                     items.append(dict(id = item.machine_value, handshape = item.english_name))
@@ -1977,7 +1977,7 @@ def handshape_ajax_complete(request, prefix):
 
     if request.LANGUAGE_CODE == 'nl':
         query = Q(dutch_name__istartswith=prefix)
-    elif request.LANGUAGE_CODE == 'cn':
+    elif request.LANGUAGE_CODE == 'zh-hans':
         query = Q(chinese_name__istartswith=prefix)
     else:
         query = Q(english_name__istartswith=prefix)
