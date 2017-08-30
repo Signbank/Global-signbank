@@ -491,14 +491,14 @@ function do_adminsearch(el) {
     <div class='form-group' id='paginate_by'>
         <label for='paginate_by'>{% trans "Results per page" %}</label>
         <select class='form-control' name="paginate_by">
-            <option {% if paginate_by == "3000" %}selected{% endif %}>3000</option>
-            <option {% if paginate_by == "2000" %}selected{% endif %}>2000</option>
-            <option {% if paginate_by == "1000" %}selected{% endif %}>1000</option>
-            <option {% if paginate_by == "500" %}selected{% endif %}>500</option>
-            <option {% if paginate_by == "100" %}selected{% endif %}>100</option>
-            <option {% if paginate_by == "50" %}selected{% endif %}>50</option>
-            <option {% if paginate_by == "25" %}selected{% endif %}>25</option>
-            <option {% if paginate_by == "10" %}selected{% endif %}>10</option>
+            <option {% if paginate_by == 3000 %}selected{% endif %}>3000</option>
+            <option {% if paginate_by == 2000 %}selected{% endif %}>2000</option>
+            <option {% if paginate_by == 1000 %}selected{% endif %}>1000</option>
+            <option {% if paginate_by == 500 %}selected{% endif %}>500</option>
+            <option {% if paginate_by == 100 %}selected{% endif %}>100</option>
+            <option {% if paginate_by == 50 %}selected{% endif %}>50</option>
+            <option {% if paginate_by == 25 %}selected{% endif %}>25</option>
+            <option {% if paginate_by == 10 %}selected{% endif %}>10</option>
         </select>
     </div>
 

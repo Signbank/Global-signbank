@@ -409,10 +409,10 @@ function do_adminsearch(el) {
 <div class='form-group' id='paginate_by'>
     <label for='paginate_by'>{% trans "Results per page" %}</label>
     <select class='form-control' name="paginate_by" type="paginate_by" value="{{paginate_by}}">
-        <option {% if paginate_by == "5" %}selected{% endif %} value="5">5</option>
-        <option {% if paginate_by == "10" %}selected{% endif %} value="10">10</option>
-        <option {% if paginate_by == "25" %}selected{% endif %} value="25">25</option>
-        <option {% if paginate_by == "50" %}selected{% endif %} value="50">50</option>
+        <option {% if paginate_by == 5 %}selected{% endif %} value="5">5</option>
+        <option {% if paginate_by == 10 %}selected{% endif %} value="10">10</option>
+        <option {% if paginate_by == 25 %}selected{% endif %} value="25">25</option>
+        <option {% if paginate_by == 50 %}selected{% endif %} value="50">50</option>
     </select>
 </div>
 </form>
