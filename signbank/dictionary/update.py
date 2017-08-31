@@ -819,7 +819,7 @@ def update_handshape(request, handshapeid):
         else:
             category_value = 'fieldChoice'
 
-        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
 
 def add_othermedia(request):
 
