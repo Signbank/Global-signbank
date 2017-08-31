@@ -569,8 +569,37 @@
         </div>
         <div id='phonology' class='panel-collapse collapse'>
             <table class='table table-condensed'>
-		{% for value,name,label,kind in phonology_fields %}
-                {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
+		    {% for value,name,label,kind in phonology_fields %}
+                {% if name == 'handedness' %}
+                    <tr class="empty_row">
+                        <th/><th/><th>WD</th><th>WP</th>
+                    </tr>
+                    {% if value == '-' or value == ' ' or value == '' or value == None %}
+                    <tr value="{{value}}" class="empty_row">
+                        <th>{{label}}</th>
+                        <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
+                        {% for value,name,label,kind in handedness_fields %}
+                            {% if label == 'WD' %}
+                            <td class="edit edit_WD" id='{{name}}' value="{{value}}">{% if value %}WD{% else %}&nbsp;{% endif %}</td>
+                            {% else %}
+                            <td class="edit edit_WP" id='{{name}}' value="{{value}}">{% if value %}WP{% else %}&nbsp;{% endif %}</td>
+                            {% endif %}
+		                {% endfor %}
+                    </tr>
+                    {% else %}
+                    <tr value="{{value}}">
+                        <th>{{label}}</th>
+                        <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
+                        {% for value,name,label,kind in handedness_fields %}
+                            {% if label == 'WD' %}
+                            <td class="edit edit_WD" id='{{name}}' value="{{value}}">{% if value %}WD{% else %}&nbsp;{% endif %}</td>
+                            {% else %}
+                            <td class="edit edit_WP" id='{{name}}' value="{{value}}">{% if value %}WP{% else %}&nbsp;{% endif %}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endif %}
+                {% elif value == '-' or value == ' ' or value == '' or value == None or value == False %}
                 <tr value="{{value}}" class="empty_row">
                 <th>{{label}}</th>
                 <td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
@@ -593,7 +622,7 @@
                 <th>{{label}}</th>
                 <td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
                 {% endif %}
-		{% endfor %}
+		    {% endfor %}
 
             </table>
         </div>

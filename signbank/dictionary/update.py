@@ -212,6 +212,7 @@ def update_gloss(request, glossid):
         else:
 
             original_value = getattr(gloss,field)
+            print("update gloss, original value for field ", field, ": ", original_value)
 
             if not field in [f.name for f in Gloss._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
@@ -228,9 +229,14 @@ def update_gloss(request, glossid):
             if isinstance(gloss._meta.get_field(field),NullBooleanField):
                 # value is the html 'value' received during editing
                 newvalue = value
-                # print("new boolean value: ", newvalue)
+                print("new boolean value: ", newvalue)
                 # value gets converted to a Boolean by the following statement
-                value = (value in ['Yes','yes', 'ja', 'Ja', '是', 'true','True',True,1])
+                if field == 'weakdrop' or field == 'weakprop':
+                    category_value = 'phonology'
+
+                    value = (value in ['WD', 'WP'])
+                else:
+                    value = (value in ['Yes','yes', 'ja', 'Ja', '是', 'true','True',True,1])
 
             # special value of 'notset' or -1 means remove the value
             if value == 'notset' or value == -1 or value == '':

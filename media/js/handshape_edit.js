@@ -187,6 +187,7 @@ function update_view_and_remember_original_value(change_summary)
         new_value = split_values[1];
         category_value = split_values[2];
         new_pattern = split_values[3];
+        console.log('new pattern: ', new_pattern);
 
         id = $(this).attr('id');
         $(this).html(new_value);

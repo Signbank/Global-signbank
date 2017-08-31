@@ -793,34 +793,52 @@ class GlossDetailView(DetailView):
         gl = context['gloss']
         labels = gl.field_labels()
 
+        # set up weak drop weak prop fields
+
+        context['handedness_fields'] = []
+        weak_drop = getattr(gl, 'weakdrop')
+        weak_prop = getattr(gl, 'weakprop')
+        weak_drop = (weak_drop in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+        weak_prop = (weak_prop in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+
+        # weakdrop_human_value = machine_value_to_translated_human_value(weak_drop, [], self.request.LANGUAGE_CODE)
+        # weakprop_human_value = machine_value_to_translated_human_value(weak_prop, [], self.request.LANGUAGE_CODE)
+        context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'check'])
+        context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'check'])
+
+        temp = context['handedness_fields']
+        print('handedness fields: ', temp)
+
         context['choice_lists'] = {}
 
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['main','phonology','semantics','frequency']:
-            context[topic+'_fields'] = [];
+            context[topic+'_fields'] = []
 
             for field in FIELDS[topic]:
 
-                #Get and save the choice list for this field
-                fieldchoice_category = fieldname_to_category(field)
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                # the following check will be used when querying is added, at the moment these don't appear in the phonology list
+                if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']:
+                    #Get and save the choice list for this field
+                    fieldchoice_category = fieldname_to_category(field)
+                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-                if len(choice_list) > 0:
-                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
+                    if len(choice_list) > 0:
+                        context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
 
-                #Take the human value in the language we are using
-                machine_value = getattr(gl,field)
-                human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
+                    #Take the human value in the language we are using
+                    machine_value = getattr(gl,field)
+                    human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
-                #And add the kind of field
-                if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
-                    kind = 'text'
-                elif field in ['repeat','altern','oriChAbd','oriChFlex']:
-                    kind = 'check'
-                else:
-                    kind = 'list'
+                    #And add the kind of field
+                    if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
+                        kind = 'text'
+                    elif field in ['repeat','altern','oriChAbd','oriChFlex']:
+                        kind = 'check'
+                    else:
+                        kind = 'list'
 
-                context[topic+'_fields'].append([human_value,field,labels[field],kind]);
+                    context[topic+'_fields'].append([human_value,field,labels[field],kind])
 
         #Add morphology to choice lists
         context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),

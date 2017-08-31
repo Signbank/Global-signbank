@@ -296,6 +296,16 @@ function configure_edit() {
          checkbox: { trueValue: yes_str, falseValue: no_str },
 		 callback : update_view_and_remember_original_value
      });
+     $('.edit_WD').editable(edit_post_url, {
+         type      : 'checkbox',
+         checkbox: { trueValue: 'WD', falseValue: '&nbsp;' },
+		 callback : update_view_and_remember_original_value
+     });
+     $('.edit_WP').editable(edit_post_url, {
+         type      : 'checkbox',
+         checkbox: { trueValue: 'WP', falseValue: '&nbsp;' },
+		 callback : update_view_and_remember_original_value
+     });
      $('.edit_relation_role').editable(edit_post_url, {
          type      : 'select',
          data      : relation_role_choices,
@@ -382,14 +392,25 @@ function update_view_and_remember_original_value(change_summary)
             console.log("original value: ", original_value);
             console.log("new value: ", new_value);
             $(this).parent().removeClass('empty_row');
-            $(this).parent().attr("value", new_value);
+            if (id == 'weakprop' || id == 'weakdrop') {
+                $(this).attr("value", new_value);
+            }
+            else {
+                $(this).parent().attr("value", new_value);
+            }
         }
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' || new_value == 'False')
         {
             console.log("new value is empty: ", new_value);
-            $(this).parent().addClass('empty_row');
-            $(this).parent().attr("value", new_value);
-            $(this).html("------");
+            if (id == 'weakprop' || id == 'weakdrop') {
+                $(this).attr("value", new_value);
+                $(this).html("");
+            }
+            else {
+                $(this).parent().addClass('empty_row');
+                $(this).parent().attr("value", new_value);
+                $(this).html("------");
+            }
         }
         if (category_value == 'phonology') {
             console.log('phonology modified');
