@@ -180,34 +180,34 @@ def update_gloss(request, glossid):
         elif field in 'inWeb':
             # only modify if we have publish permission
             if request.user.has_perm('dictionary.can_publish'):
-                gloss.inWeb = value in ['Yes','yes','true','True',True,1]
+                gloss.inWeb = value.lower() in [_('Yes').lower(),'true',True,1]
                 gloss.save()
             
             if gloss.inWeb:
-                newvalue = 'Yes'
+                newvalue = _('Yes')
             else:
-                newvalue = 'No'
+                newvalue = _('No')
 
         elif field in 'isNew':
             # only modify if we have publish permission
-
-            gloss.isNew = value in ['Yes','yes','true','True',True,1]
+            print(_('yes'))
+            gloss.isNew = value.lower() in [_('Yes').lower(),'true',True,1]
             gloss.save()
 
             if gloss.isNew:
-                newvalue = 'Yes'
+                newvalue = _('Yes')
             else:
-                newvalue = 'No'
+                newvalue = _('No')
         elif field in 'excludeFromEcv':
             # only modify if we have publish permission
 
-            gloss.excludeFromEcv = value in ['Yes','yes','true','True',True,1]
+            gloss.excludeFromEcv = value.lower() in [_('Yes').lower(),'true',True,1]
             gloss.save()
 
             if gloss.excludeFromEcv:
-                newvalue = 'Yes'
+                newvalue = _('Yes')
             else:
-                newvalue = 'No'
+                newvalue = _('No')
 
         else:
 
@@ -236,7 +236,7 @@ def update_gloss(request, glossid):
 
                     value = (value in ['WD', 'WP'])
                 else:
-                    value = (value in ['Yes','yes', 'ja', 'Ja', '是', 'true','True',True,1])
+                    value = (value.lower() in [_('Yes').lower(),'true',True,1])
 
             # special value of 'notset' or -1 means remove the value
             if value == 'notset' or value == -1 or value == '':
