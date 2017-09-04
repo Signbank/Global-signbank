@@ -115,6 +115,8 @@ class GlossListView(ListView):
         if 'search_type' in self.request.GET:
             self.search_type = self.request.GET['search_type']
 
+        # self.request.session['search_type'] = self.search_type
+
         search_form = GlossSearchForm(self.request.GET)
 
         #Translations for field choices dropdown menu
@@ -721,6 +723,8 @@ class GlossListView(ListView):
         # print "Final :", len(qs)
         # Sort the queryset by the parameters given
         qs = order_queryset_by_sort_order(self.request.GET, qs)
+
+        self.request.session['search_type'] = self.search_type
 
         # Return the resulting filtered and sorted queryset
         return qs
@@ -1594,6 +1598,8 @@ class HandshapeListView(ListView):
         else:
             self.search_type = 'handshape'
 
+        # self.request.session['search_type'] = self.search_type
+
         context['searchform'] = search_form
         context['search_type'] = self.search_type
         # if self.search_type == 'sign_handshape':
@@ -1807,6 +1813,8 @@ class HandshapeListView(ListView):
             else:
                 qs = Gloss.objects.filter(Q(domhndsh__in=selected_handshapes) | Q(subhndsh__in=selected_handshapes))
 
+        self.request.session['search_type'] = self.search_type
+
         return qs
 
 def order_handshape_queryset_by_sort_order(get, qs):
@@ -1983,7 +1991,18 @@ class MorphemeDetailView(DetailView):
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
 
-    return HttpResponse(json.dumps(request.session['search_results']))
+    if request.session['search_type'] == 'sign' or request.session['search_type'] == 'morpheme' or request.session['search_type'] == 'sign_or_morpheme':
+        return HttpResponse(json.dumps(request.session['search_results']))
+    else:
+        return HttpResponse(json.dumps(None))
+
+def handshape_ajax_search_results(request):
+    """Returns a JSON list of handshapes that match the previous search stored in sessions"""
+
+    if request.session['search_type'] == 'handshape':
+        return HttpResponse(json.dumps(request.session['search_results']))
+    else:
+        return HttpResponse(json.dumps(None))
 
 def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term

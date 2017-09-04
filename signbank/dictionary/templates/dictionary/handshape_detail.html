@@ -31,7 +31,7 @@
     var csrf_token = '{{csrf_token}}';
 
     // This script gets and inserts the users last searched items on the handshape page
-    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+    var search_results_url = '{% url 'dictionary:handshape_ajax_search_results' %}';
     var req = $.ajax({
         url: search_results_url,
         dataType: "json",
