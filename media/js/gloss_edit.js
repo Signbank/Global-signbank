@@ -139,7 +139,11 @@ function disable_edit() {
     {
         if ($(this).html() == '------')
         {
-            $(this).html('-');
+            if ($(this).attr('id') == 'weakdrop' || $(this).attr('id') == 'weakprop') {
+                $(this).html('&nbsp;');
+            } else {
+                $(this).html('-');
+            }
         }
     });
 
@@ -190,7 +194,7 @@ function enable_edit() {
     //To prevent RSI
     $('.edit').each(function()
     {
-        if ($(this).html() == '-')
+        if ($(this).html() == '-' || $(this).html() == '&nbsp;')
         {
             $(this).html('------')
         }
@@ -394,6 +398,9 @@ function update_view_and_remember_original_value(change_summary)
             $(this).parent().removeClass('empty_row');
             if (id == 'weakprop' || id == 'weakdrop') {
                 $(this).attr("value", new_value);
+                if (new_value == '&nbsp;') {
+                    $(this).html("------");
+                }
             }
             else {
                 $(this).parent().attr("value", new_value);
@@ -404,7 +411,7 @@ function update_view_and_remember_original_value(change_summary)
             console.log("new value is empty: ", new_value);
             if (id == 'weakprop' || id == 'weakdrop') {
                 $(this).attr("value", new_value);
-                $(this).html("");
+                $(this).html("------");
             }
             else {
                 $(this).parent().addClass('empty_row');
@@ -670,7 +677,7 @@ function check_phonology_modified()
     var phonology_keys = ["handedness", "domhndsh", "subhndsh", "handCh", "relatArtic", "locprim", "locVirtObj",
                       "relOriMov", "relOriLoc", "oriCh", "contType", "movSh", "movDir", "repeat", "altern", "phonOth",
                       "mouthG",
-                      "mouthing", "phonetVar"];
+                      "mouthing", "phonetVar", "weakprop", "weakdrop"];
     for (key in original_values_for_changes_made)
     {
         for (var i = 0; i < phonology_keys.length; i++) {

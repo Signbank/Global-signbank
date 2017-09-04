@@ -163,6 +163,15 @@ class GlossListView(ListView):
 
                 context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
+        context['input_names_fields_labels_handedness'] = []
+        field = search_form['weakprop']
+        label = field.label
+        context['input_names_fields_labels_handedness'].append(('weakprop',field,label))
+        field = search_form['weakdrop']
+        label = field.label
+        context['input_names_fields_labels_handedness'].append(('weakdrop',field,label))
+
+
         try:
             context['show_all'] = self.kwargs['show_all']
         except KeyError:
@@ -485,7 +494,7 @@ class GlossListView(ListView):
 
         fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
-                      'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                      'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'namEnt', 'semField', 'valence',
                       'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
                       'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
@@ -516,7 +525,6 @@ class GlossListView(ListView):
                 if val != '':
                     kwargs = {key:val}
                     qs = qs.filter(**kwargs)
-
 
         if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
             val = get['initial_relative_orientation']

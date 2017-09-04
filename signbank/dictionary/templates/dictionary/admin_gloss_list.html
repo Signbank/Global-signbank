@@ -286,7 +286,14 @@ function do_adminsearch(el) {
                             <table class='table table-condensed'>
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
-                                    <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+                                    <tr>
+                                        <td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td>
+                                        {% if fieldname == 'handedness' %}
+                                            {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
+                                                <td><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td>{{handednessfield}}</td>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </tr>
 
                                 {% endfor %}
 
