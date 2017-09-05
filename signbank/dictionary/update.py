@@ -231,10 +231,11 @@ def update_gloss(request, glossid):
                 newvalue = value
                 print("new boolean value: ", newvalue)
                 # value gets converted to a Boolean by the following statement
-                if field == 'weakdrop' or field == 'weakprop':
+                if field == 'weakdrop' or field == 'weakprop' or field == 'domhndsh_letter' or field == 'domhndsh_number' or \
+                                                    field == 'subhndsh_letter' or field == 'subhndsh_number':
                     category_value = 'phonology'
 
-                    value = (value in ['WD', 'WP'])
+                    value = (value in ['WD', 'WP', 'letter', 'number'])
                 else:
                     value = (value.lower() in [_('Yes').lower(),'true',True,1])
 

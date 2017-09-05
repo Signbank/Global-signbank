@@ -68,7 +68,7 @@ class TagUpdateForm(forms.Form):
 
 YESNOCHOICES = (("unspecified", "Unspecified" ), ('yes', 'Yes'), ('no', 'No'))
 NULLBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
-NONEBOOLEANCHOICES = [(0,'---------'),(1,'None'),(2,'True'),(3,'False')]
+NEUTRALBOOLEANCHOICES = [(0,'---------'),(1,'Neutral'),(2,'Yes'),(3,'No')]
 
 RELATION_ROLE_CHOICES = (('','---------'),
                          ('all', 'All'),
@@ -81,11 +81,10 @@ RELATION_ROLE_CHOICES = (('','---------'),
                          ('seealso', 'See Also'),
                          )
 
-DEFN_ROLE_CHOICES = [('','---------'),('all','All')] + build_choice_list('NoteType');
-COMPONENT_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphologyType');
-MORPHEME_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphemeType');
-ATTRS_FOR_FORMS = {'class':'form-control'};
-
+DEFN_ROLE_CHOICES = [('','---------'),('all','All')] + build_choice_list('NoteType')
+COMPONENT_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphologyType')
+MORPHEME_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphemeType')
+ATTRS_FOR_FORMS = {'class':'form-control'}
 
 class GlossSearchForm(forms.ModelForm):
 
@@ -122,8 +121,8 @@ class GlossSearchForm(forms.ModelForm):
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
     altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
-    weakprop = forms.ChoiceField(label=_(u'Weak prop'),choices=NONEBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
-    weakdrop = forms.ChoiceField(label=_(u'Weak drop'),choices=NONEBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
+    weakprop = forms.ChoiceField(label=_(u'Weak prop'),choices=NEUTRALBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
+    weakdrop = forms.ChoiceField(label=_(u'Weak drop'),choices=NEUTRALBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
 
     isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     inWeb = forms.ChoiceField(label=_(u'Is in Web dictionary'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))

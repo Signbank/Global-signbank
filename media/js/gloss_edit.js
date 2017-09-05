@@ -139,7 +139,8 @@ function disable_edit() {
     {
         if ($(this).html() == '------')
         {
-            if ($(this).attr('id') == 'weakdrop' || $(this).attr('id') == 'weakprop') {
+            id = $(this).attr('id');
+            if (id == 'weakdrop' || id == 'weakprop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
                 $(this).html('&nbsp;');
             } else {
                 $(this).html('-');
@@ -310,6 +311,16 @@ function configure_edit() {
          checkbox: { trueValue: 'WP', falseValue: '&nbsp;' },
 		 callback : update_view_and_remember_original_value
      });
+     $('.edit_letter').editable(edit_post_url, {
+         type      : 'checkbox',
+         checkbox: { trueValue: 'letter', falseValue: '&nbsp;' },
+		 callback : update_view_and_remember_original_value
+     });
+     $('.edit_number').editable(edit_post_url, {
+         type      : 'checkbox',
+         checkbox: { trueValue: 'number', falseValue: '&nbsp;' },
+		 callback : update_view_and_remember_original_value
+     });
      $('.edit_relation_role').editable(edit_post_url, {
          type      : 'select',
          data      : relation_role_choices,
@@ -388,15 +399,22 @@ function update_view_and_remember_original_value(change_summary)
         id = $(this).attr('id');
         $(this).html(new_value);
         console.log('field changed: ', id);
+        console.log('new value: ', new_value);
+        console.log("original value: ", original_value);
+
         new_values_for_changes_made[id] = machine_value;
+        if (new_value == '&nbsp;') {
+            new_value = 'False';
+            console.log("new value changed from &nbsp; to False");
+        }
 
         if (original_values_for_changes_made[id] == undefined)
         {
             original_values_for_changes_made[id] = original_value;
-            console.log("original value: ", original_value);
-            console.log("new value: ", new_value);
+            console.log("undefined in array, original value: ", original_value);
+            console.log("undefined in array, new value: ", new_value);
             $(this).parent().removeClass('empty_row');
-            if (id == 'weakprop' || id == 'weakdrop') {
+            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
                 $(this).attr("value", new_value);
                 if (new_value == '&nbsp;') {
                     $(this).html("------");
@@ -406,10 +424,11 @@ function update_view_and_remember_original_value(change_summary)
                 $(this).parent().attr("value", new_value);
             }
         }
-        if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' || new_value == 'False')
+        if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
+                        new_value == 'False' || new_value == 0 || new_value == False || new_value == None || new_value == '&nbsp;')
         {
-            console.log("new value is empty: ", new_value);
-            if (id == 'weakprop' || id == 'weakdrop') {
+            console.log("new value is empty, new value is: ", new_value);
+            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
                 $(this).attr("value", new_value);
                 $(this).html("------");
             }
@@ -677,7 +696,7 @@ function check_phonology_modified()
     var phonology_keys = ["handedness", "domhndsh", "subhndsh", "handCh", "relatArtic", "locprim", "locVirtObj",
                       "relOriMov", "relOriLoc", "oriCh", "contType", "movSh", "movDir", "repeat", "altern", "phonOth",
                       "mouthG",
-                      "mouthing", "phonetVar", "weakprop", "weakdrop"];
+                      "mouthing", "phonetVar", "weakprop", "weakdrop", "domhndsh_letter", "domhndsh_number", "subhndsh_letter", "subhndsh_number"];
     for (key in original_values_for_changes_made)
     {
         for (var i = 0; i < phonology_keys.length; i++) {

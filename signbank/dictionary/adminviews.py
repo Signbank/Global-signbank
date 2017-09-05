@@ -818,8 +818,30 @@ class GlossDetailView(DetailView):
         context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'check'])
         context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'check'])
 
-        temp = context['handedness_fields']
-        print('handedness fields: ', temp)
+        # temp = context['handedness_fields']
+        # print('handedness fields: ', temp)
+
+        context['etymology_fields_dom'] = []
+        domhndsh_letter = getattr(gl, 'domhndsh_letter')
+        domhndsh_number = getattr(gl, 'domhndsh_number')
+        domhndsh_letter = (domhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+        domhndsh_number = (domhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+
+        context['etymology_fields_sub'] = []
+        subhndsh_letter = getattr(gl, 'subhndsh_letter')
+        subhndsh_number = getattr(gl, 'subhndsh_number')
+        subhndsh_letter = (subhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+        subhndsh_number = (subhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+
+        context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'check'])
+        context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'check'])
+        context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
+        context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
+
+        temp_dom = context['etymology_fields_dom']
+        print('etymology_fields_dom fields: ', temp_dom)
+        temp_sub = context['etymology_fields_sub']
+        print('etymology_fields_sub fields: ', temp_sub)
 
         context['choice_lists'] = {}
 
@@ -1387,7 +1409,7 @@ class MorphemeListView(ListView):
 
         for extra_column in ['SignLanguages', 'Dialects', 'Keywords', 'Morphology', 'Relations to other signs',
                              'Relations to foreign signs', 'Appears in signs', ]:
-            header.append(extra_column);
+            header.append(extra_column)
 
         writer.writerow(header)
 
@@ -1415,11 +1437,11 @@ class MorphemeListView(ListView):
 
             # get languages
             signlanguages = [signlanguage.name for signlanguage in gloss.language.all()]
-            row.append(", ".join(signlanguages));
+            row.append(", ".join(signlanguages))
 
             # get dialects
             dialects = [dialect.name for dialect in gloss.dialect.all()]
-            row.append(", ".join(dialects));
+            row.append(", ".join(dialects))
 
             # get translations
             trans = [t.translation.text for t in gloss.translation_set.all()]
