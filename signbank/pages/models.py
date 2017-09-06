@@ -29,7 +29,7 @@ class Page(models.Model):
         verbose_name_plural = _('pages')
         ordering = ('url', 'index')
 
-    def __unicode__(self):
+    def __str__(self):
         return u"%s -- %s" % (self.url, self.title)
 
     def get_absolute_url(self):
@@ -41,7 +41,7 @@ class PageVideo(models.Model):
     number = models.PositiveIntegerField(_('number'))
     video = models.FileField(upload_to=settings.PAGES_VIDEO_LOCATION, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "Page Video: %s" % (self.title,)
 
 
