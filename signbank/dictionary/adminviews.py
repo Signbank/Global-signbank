@@ -17,6 +17,7 @@ import re
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import datetime as DT
+from guardian.core import ObjectPermissionChecker
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -1842,6 +1843,28 @@ class HandshapeListView(ListView):
         self.request.session['search_type'] = self.search_type
 
         return qs
+
+
+class DatasetListView(ListView):
+    model = Dataset
+    template_name = 'dictionary/admin_dataset_list.html'
+
+    # def get_context_data(self, **kwargs):
+    #     # Call the base implementation first to get a context
+    #     context = super(DatasetListView, self).get_context_data(**kwargs)
+
+    def get_queryset(self):
+        qs = Dataset.objects.all()
+        user = self.request.user
+        checker = ObjectPermissionChecker(user)
+
+        checker.prefetch_perms(qs)
+
+        for dataset in qs:
+            checker.has_perm('view_dataset', dataset)
+
+        return qs
+
 
 def order_handshape_queryset_by_sort_order(get, qs):
     """Change the sort-order of the query set, depending on the form field [sortOrder]

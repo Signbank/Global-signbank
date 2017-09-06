@@ -19,7 +19,7 @@ import django.contrib.admindocs.urls
 import django_summernote.urls
 
 from signbank.dictionary.models import Gloss
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeListView
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeListView, DatasetListView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -89,6 +89,8 @@ urlpatterns = [
     url(r'^test/(?P<videofile>.*)$', TemplateView.as_view(template_name="test.html")),
 
     url(r'reload_signbank/$',signbank.tools.reload_signbank),
+
+    url(r'^datasets/available', DatasetListView.as_view(), name='admin_dataset_view'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
