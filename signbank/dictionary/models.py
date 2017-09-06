@@ -1237,6 +1237,12 @@ minor or insignificant ways that can be ignored.""")
         
         return self.options_to_json(RELATION_ROLE_CHOICES)
 
+    def etymology_choices_json(self):
+        """Return JSON for the etymology choice list"""
+        from signbank.dictionary.forms import NEUTRALBOOLEANCHOICES
+
+        return self.options_to_json(NEUTRALBOOLEANCHOICES)
+
     @staticmethod
     def variant_role_choices():
 

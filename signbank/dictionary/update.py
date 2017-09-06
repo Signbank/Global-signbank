@@ -234,8 +234,16 @@ def update_gloss(request, glossid):
                 if field == 'weakdrop' or field == 'weakprop' or field == 'domhndsh_letter' or field == 'domhndsh_number' or \
                                                     field == 'subhndsh_letter' or field == 'subhndsh_number':
                     category_value = 'phonology'
+                    if field == 'weakdrop' or field == 'weakprop':
 
-                    value = (value in ['WD', 'WP', 'letter', 'number'])
+                        value = (value in ['WD', 'WP'])
+                    elif field == 'domhndsh_letter' or field == 'subhndsh_letter':
+                        value = {'1': None, '2': True, '3': False}[value]
+                        newvalue = {'1': '&nbsp;', '2': '+letter', '3': '-letter'}[newvalue]
+                    else:
+                        value = {'1': None, '2': True, '3': False}[value]
+                        newvalue = {'1': '&nbsp;', '2': '+number', '3': '-number'}[newvalue]
+
                 else:
                     value = (value.lower() in [_('Yes').lower(),'true',True,1])
 

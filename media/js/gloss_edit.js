@@ -312,13 +312,13 @@ function configure_edit() {
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_letter').editable(edit_post_url, {
-         type      : 'checkbox',
-         checkbox: { trueValue: 'letter', falseValue: '&nbsp;' },
+         type      : 'select',
+         data: handshape_etymology_choices,
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_number').editable(edit_post_url, {
-         type      : 'checkbox',
-         checkbox: { trueValue: 'number', falseValue: '&nbsp;' },
+         type      : 'select',
+         data: handshape_etymology_choices,
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_relation_role').editable(edit_post_url, {

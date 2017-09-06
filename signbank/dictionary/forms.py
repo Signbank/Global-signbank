@@ -68,7 +68,7 @@ class TagUpdateForm(forms.Form):
 
 YESNOCHOICES = (("unspecified", "Unspecified" ), ('yes', 'Yes'), ('no', 'No'))
 NULLBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
-NEUTRALBOOLEANCHOICES = [(0,'---------'),(1,'Neutral'),(2,'Yes'),(3,'No')]
+NEUTRALBOOLEANCHOICES = [(1,'Neutral'),(2,'Yes'),(3,'No')]
 
 RELATION_ROLE_CHOICES = (('','---------'),
                          ('all', 'All'),

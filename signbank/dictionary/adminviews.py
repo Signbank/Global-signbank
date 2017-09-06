@@ -823,20 +823,24 @@ class GlossDetailView(DetailView):
 
         context['etymology_fields_dom'] = []
         domhndsh_letter = getattr(gl, 'domhndsh_letter')
+        print('domhndsh_letter: ', domhndsh_letter)
         domhndsh_number = getattr(gl, 'domhndsh_number')
-        domhndsh_letter = (domhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
-        domhndsh_number = (domhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+        print('domhndsh_number: ', domhndsh_number)
+        # domhndsh_letter = (domhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+        # domhndsh_number = (domhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
         context['etymology_fields_sub'] = []
         subhndsh_letter = getattr(gl, 'subhndsh_letter')
+        print('subhndsh_letter: ', subhndsh_letter)
         subhndsh_number = getattr(gl, 'subhndsh_number')
-        subhndsh_letter = (subhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
-        subhndsh_number = (subhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+        print('subhndsh_number: ', subhndsh_number)
+        # subhndsh_letter = (subhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+        # subhndsh_number = (subhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
-        context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'check'])
-        context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'check'])
-        context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
-        context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
+        context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'list'])
+        context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'list'])
+        context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'list'])
+        context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'list'])
 
         temp_dom = context['etymology_fields_dom']
         print('etymology_fields_dom fields: ', temp_dom)
