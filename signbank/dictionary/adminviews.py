@@ -1,6 +1,6 @@
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
-from django.db.models import Q, F, ExpressionWrapper, IntegerField
+from django.db.models import Q, F, ExpressionWrapper, IntegerField, Count
 from django.db.models import CharField, Value as V
 from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField
@@ -1884,6 +1884,8 @@ class DatasetListView(ListView):
 
         for dataset in qs:
             checker.has_perm('view_dataset', dataset)
+
+        qs = qs.annotate(Count('gloss')).order_by('name'    )
 
         return qs
 

@@ -14,7 +14,7 @@
       <tr>
           <th>{% trans "Name" %}</th>
           <th>{% trans "Access" %}</th>
-          <th></th>
+          <th>{% trans "Number of signs" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -27,15 +27,19 @@
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
                 {% if "view_dataset" in dataset_perms %}
                 {% trans "Yes" %}
+                {% else %}
+                {% trans "No" %}
                 {% endif %}
             </td>
             <td>
-
+                {{ dataset.gloss__count }}
             </td>
         </tr>
     {% endfor %}
     </tbody>
 </table>
+{% else %}
+{% trans "No datasets found." %}
 {% endif %}
 
 {% endblock content %}
