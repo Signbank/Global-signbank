@@ -173,6 +173,21 @@ class GlossListView(ListView):
         label = field.label
         context['input_names_fields_labels_handedness'].append(('weakdrop',field,label))
 
+        context['input_names_fields_labels_domhndsh'] = []
+        field = search_form['domhndsh_letter']
+        label = field.label
+        context['input_names_fields_labels_domhndsh'].append(('domhndsh_letter',field,label))
+        field = search_form['domhndsh_number']
+        label = field.label
+        context['input_names_fields_labels_domhndsh'].append(('domhndsh_number',field,label))
+
+        context['input_names_fields_labels_subhndsh'] = []
+        field = search_form['subhndsh_letter']
+        label = field.label
+        context['input_names_fields_labels_subhndsh'].append(('subhndsh_letter',field,label))
+        field = search_form['subhndsh_number']
+        label = field.label
+        context['input_names_fields_labels_subhndsh'].append(('subhndsh_number',field,label))
 
         try:
             context['show_all'] = self.kwargs['show_all']
@@ -497,6 +512,7 @@ class GlossListView(ListView):
         fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
                       'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
+                      'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'namEnt', 'semField', 'valence',
                       'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
                       'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
