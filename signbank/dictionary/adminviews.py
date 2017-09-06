@@ -1483,6 +1483,7 @@ class HandshapeDetailView(DetailView):
     model = Handshape
     template_name = 'dictionary/handshape_detail.html'
     context_object_name = 'handshape'
+    search_type = 'handshape'
 
     class Meta:
         verbose_name_plural = "Handshapes"
@@ -1537,6 +1538,8 @@ class HandshapeDetailView(DetailView):
             return HttpResponse('invalid', {'content-type': 'text/plain'})
 
         hs = context['handshape']
+
+        setattr(self.request, 'search_type', self.search_type)
 
         labels = hs.field_labels()
         # print('labels: ', labels)
@@ -1600,6 +1603,25 @@ class HandshapeDetailView(DetailView):
         # print('handshape fields: ', temp)
         # temp2 = context['choice_lists']
         # print('choice lists: ', temp2)
+
+        # if there are no current handshape search results in the current session, display all of them in the navigation bar
+        if self.request.session['search_type'] != 'handshape':
+
+            self.request.session['search_type'] = self.search_type
+
+            qs = Handshape.objects.all().order_by('machine_value')
+
+            items = []
+
+            for item in qs:
+                if self.request.LANGUAGE_CODE == 'nl':
+                    items.append(dict(id=item.machine_value, handshape=item.dutch_name))
+                elif self.request.LANGUAGE_CODE == 'zh-hans':
+                    items.append(dict(id=item.machine_value, handshape=item.chinese_name))
+                else:
+                    items.append(dict(id=item.machine_value, handshape=item.english_name))
+
+            self.request.session['search_results'] = items
 
         return context
 
@@ -2026,6 +2048,8 @@ def handshape_ajax_search_results(request):
     """Returns a JSON list of handshapes that match the previous search stored in sessions"""
 
     if request.session['search_type'] == 'handshape':
+
+        # print('search results handshape ajax search: ', request.session['search_results'])
         return HttpResponse(json.dumps(request.session['search_results']))
     else:
         return HttpResponse(json.dumps(None))
