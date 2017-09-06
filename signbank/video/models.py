@@ -27,7 +27,7 @@ class Video(models.Model):
     # video file name relative to MEDIA_ROOT
     videofile = models.FileField("Video file in h264 mp4 format", upload_to=settings.VIDEO_UPLOAD_LOCATION)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.videofile.name
 
     def process(self):
@@ -154,7 +154,7 @@ class GlossVideoHistory(models.Model):
     # One-to-many link: to the Gloss in dictionary.models.Gloss
     gloss = models.ForeignKey(Gloss)
 
-    def __unicode__(self):
+    def __str__(self):
 
         # Basic feedback from one History item: gloss-action-date
         name = self.gloss.idgloss + ': ' + self.action + ', (' + str(self.datestamp) + ')'
@@ -295,7 +295,7 @@ class GlossVideo(models.Model):
         self.save()
 
 
-    def __unicode__(self):
+    def __str__(self):
         return self.videofile.name
 
 

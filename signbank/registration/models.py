@@ -202,7 +202,7 @@ class RegistrationProfile(models.Model):
         list_display = ('__str__', 'activation_key_expired')
         search_fields = ('user__username', 'user__first_name')
         
-    def __unicode__(self):
+    def __str__(self):
         return u"Registration information for %s" % self.user
     
     def activation_key_expired(self):
