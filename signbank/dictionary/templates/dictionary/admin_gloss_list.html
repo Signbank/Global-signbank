@@ -292,6 +292,14 @@ function do_adminsearch(el) {
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
                                                 <td><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td>{{handednessfield}}</td>
                                             {% endfor %}
+                                        {% elif fieldname == 'domhndsh' %}
+                                            {% for domhndshfieldname,domhndshfield,domhndshlabel in input_names_fields_labels_domhndsh %}
+                                                <td><label for='id_{{domhndshfieldname}}'>{{domhndshlabel}}</label></td><td>{{domhndshfield}}</td>
+                                            {% endfor %}
+                                        {% elif fieldname == 'subhndsh' %}
+                                            {% for subhndshfieldname,subhndshfield,subhndshlabel in input_names_fields_labels_subhndsh %}
+                                                <td><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td>{{subhndshfield}}</td>
+                                            {% endfor %}
                                         {% endif %}
                                     </tr>
 
