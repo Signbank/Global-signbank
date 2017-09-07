@@ -1899,14 +1899,15 @@ class DatasetListView(ListView):
     def get_queryset(self):
         qs = Dataset.objects.all()
         user = self.request.user
-        checker = ObjectPermissionChecker(user)
+        if user.is_authenticated():
+            checker = ObjectPermissionChecker(user)
 
-        checker.prefetch_perms(qs)
+            checker.prefetch_perms(qs)
 
-        for dataset in qs:
-            checker.has_perm('view_dataset', dataset)
+            for dataset in qs:
+                checker.has_perm('view_dataset', dataset)
 
-        qs = qs.annotate(Count('gloss')).order_by('name'    )
+        qs = qs.annotate(Count('gloss')).order_by('name')
 
         return qs
 
