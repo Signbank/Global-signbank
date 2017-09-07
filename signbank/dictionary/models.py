@@ -207,7 +207,7 @@ class FieldChoice(models.Model):
     chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(help_text="The actual numeric value stored in the database. Created automatically.")
 
-    def __str__(self):
+    def __unicode__(self):
 
         name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
         return name.encode('ascii',errors='replace');
