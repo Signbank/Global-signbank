@@ -47,7 +47,7 @@ FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNo
 
 FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
                        'hsFingConf2', 'hsAperture',
-                       'hsThumb', 'hsSpread', 'hsFingUnsel', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
+                       'hsSpread', 'hsFingUnsel', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                        'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
 

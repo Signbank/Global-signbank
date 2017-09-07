@@ -149,8 +149,8 @@
     <div class='panel-group' id="handshape">
         <fieldset>
             <table class='table table-condensed'>
-                <tr><th style="width:15em;">{% trans "Handshape " %}</th><td id='idhandshape'>{% value handshape.english_name %}</td></tr>
-                <tr><th style="width:15em;">Finger selection</th>
+                <tr><th style="width:18em;">{% trans "Handshape " %}</th><td id='idhandshape'>{% value handshape.english_name %}</td></tr>
+                <tr><th style="width:18em;">Finger selection</th>
                     <td id="#fingerSelection1">{{ handshape.get_fingerSelection_display }}</td></tr>
                 <tr class="empty_row">
                     <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
@@ -169,18 +169,34 @@
 		{% for value,name,label,kind in handshape_fields %}
                 {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
                     <tr value="{{value}}" class="empty_row">
-                    <th style="width:15em;">{{label}}</th>
+                    <th style="width:18em;">{{label}}</th>
                     <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
                     </tr>
                 {% else %}
                     <tr value="{{value}}">
-                    <th style="width:15em;">{{label}}</th>
+                    <th style="width:18em;">{{label}}</th>
                     <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
                     </tr>
                 {% endif %}
 		{% endfor %}
 
-                <tr><th style="width:15em;">Finger selection 2</th>
+                <tr><th style="width:18em;">{% trans "Unselected fingers extended" %}</th>
+                    <td id="#unselectedFingers">{{ handshape.get_unselectedFingers_display }}</td></tr>
+                <tr class="empty_row">
+                    <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
+                </tr>
+                <tr class="empty_row">
+                    <td/>
+		        {% for value,name,label,kind in handshape_fields_UF %}
+                    {% if kind == "check" and value %}
+                    <td class="edit edit_{{kind}}" id='{{name}}' checked="checked" value="{{value}}">{% trans "True" %}</td>
+                    {% else %}
+                    <td class="edit edit_{{kind}}" id='{{name}}' checked="" value="{{value}}">{% trans "False" %}</td>
+                    {% endif %}
+		        {% endfor %}
+                </tr>
+
+                <tr><th style="width:18em;">Finger selection 2</th>
                     <td id="#otherFingerSection" name="#otherFingerSection">{{ handshape.get_fingerSelection2_display }}</td></tr>
                 <tr class="empty_row">
                     <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
@@ -200,32 +216,16 @@
 		        {% for value,name,label,kind in handshape_fields_FC2 %}
                     {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
                         <tr value="{{value}}" class="empty_row">
-                        <th style="width:15em;">{{label}}</th>
+                        <th style="width:18em;">{{label}}</th>
                         <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
                         </tr>
                     {% else %}
                         <tr value="{{value}}">
-                        <th style="width:15em;">{{label}}</th>
+                        <th style="width:18em;">{{label}}</th>
                         <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
                         </tr>
                     {% endif %}
 		        {% endfor %}
-
-                <tr><th style="width:15em;">Unselected fingers</th>
-                    <td id="#unselectedFingers">{{ handshape.get_unselectedFingers_display }}</td></tr>
-                <tr class="empty_row">
-                    <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
-                </tr>
-                <tr class="empty_row">
-                    <td/>
-		        {% for value,name,label,kind in handshape_fields_UF %}
-                    {% if kind == "check" and value %}
-                    <td class="edit edit_{{kind}}" id='{{name}}' checked="checked" value="{{value}}">{% trans "True" %}</td>
-                    {% else %}
-                    <td class="edit edit_{{kind}}" id='{{name}}' checked="" value="{{value}}">{% trans "False" %}</td>
-                    {% endif %}
-		        {% endfor %}
-                </tr>
 
             </table>
         </fieldset>

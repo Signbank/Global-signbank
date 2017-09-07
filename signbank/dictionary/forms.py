@@ -362,9 +362,12 @@ class HandshapeSearchForm(forms.ModelForm):
 
     numSelected = forms.ChoiceField(label=_(u'Quantity'),
                                choices=QUANTITY_CHOICES ,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    thumb = forms.ChoiceField(label=_(u'Thumb'),
-                               choices=THUMB_CHOICES ,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    # thumb = forms.ChoiceField(label=_(u'Thumb'),
+                               # choices=THUMB_CHOICES ,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
+    # this is used to pass the label to the handshapes list view
+    unselectedFingers = forms.ChoiceField(label=_(u'Unselected fingers extended'), choices=FINGER_SELECTION_CHOICES,
+                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     spreading = forms.ChoiceField(label=_(u'Spreading'), choices=SPREADING_CHOICES,
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     aperture = forms.ChoiceField(label=_(u'Aperture'), choices=APERTURE_CHOICES,

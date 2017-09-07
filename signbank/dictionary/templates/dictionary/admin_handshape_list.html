@@ -327,7 +327,7 @@ function do_adminsearch(el) {
                 <div class="panel panel-default" id="selectThirdFingers">
                     <div class="panel-heading">
                         <div class='panel-title'>
-                            <a data-toggle='collapse' href='#unselected_fingers' for='id_hsFingUnsel'>{{searchform.hsFingUnsel.label}}</a>
+                            <a data-toggle='collapse' href='#unselected_fingers' for='id_hsFingUnsel'>{{searchform.unselectedFingers.label}}</a>
                         </div>
                     </div>
                     <div id='unselected_fingers' class='panel-collapse collapse'>
@@ -374,7 +374,7 @@ function do_adminsearch(el) {
                         <tr><td><label for='id_hsFingConf'>{{searchform.hsFingConf.label}}</label></td><td>{{searchform.hsFingConf}}</td></tr>
                         <tr><td><label for='id_hsFingConf2'>{{searchform.hsFingConf2.label}}</label></td><td>{{searchform.hsFingConf2}}</td></tr>
                         <tr><td><label for='id_hsNumSel'>{{searchform.hsNumSel.label}}</label></td><td>{{searchform.hsNumSel}}</td></tr>
-                        <tr><td><label for='id_hsThumb'>{{searchform.hsThumb.label}}</label></td><td>{{searchform.hsThumb}}</td></tr>
+                        <!--<tr><td><label for='id_hsThumb'>{{searchform.hsThumb.label}}</label></td><td>{{searchform.hsThumb}}</td></tr>-->
                         <tr><td><label for='id_hsSpread'>{{searchform.hsSpread.label}}</label></td><td>{{searchform.hsSpread}}</td></tr>
                         <tr><td><label for='id_hsAperture'>{{searchform.hsAperture.label}}</label></td><td>{{searchform.hsAperture}}</td></tr>
                 </table>
@@ -447,8 +447,8 @@ function do_adminsearch(el) {
           <th>{% trans "Finger selection 2" %}</th>
           <th>{% trans "Finger configuration 2" %}</th>
           <th>{% trans "Quantity" %}</th>
-          <th>{% trans "Thumb" %}</th>
-          <th>{% trans "Unselected fingers" %}</th>
+          <!--<th>{% trans "Thumb" %}</th>-->
+          <th>{% trans "Unselected fingers extended" %}</th>
           <th>{% trans "Spreading" %}</th>
           <th>{% trans "Aperture" %}</th>
       </tr>
@@ -546,17 +546,17 @@ function do_adminsearch(el) {
            <a href="#" onclick="do_sort_column('hsNumSel','del', 'adminsearch')">x</a>
          {% endif %}
        </th>
-       <th>
-         <a href="#" onclick="do_sort_column('hsThumb','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsThumb' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('hsThumb','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsThumb' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsThumb' or searchform.sortOrder and searchform.sortOrder.value == 'hsThumb'  %}
-           <a href="#" onclick="do_sort_column('hsThumb','del', 'adminsearch')">x</a>
-         {% endif %}
-       </th>
+       <!--<th>-->
+         <!--<a href="#" onclick="do_sort_column('hsThumb','asc', 'adminsearch')">-->
+           <!--{% if searchform.sortOrder and searchform.sortOrder.value == 'hsThumb' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}-->
+         <!--</a>-->
+         <!--<a href="#" onclick="do_sort_column('hsThumb','desc', 'adminsearch')">-->
+           <!--{% if searchform.sortOrder and searchform.sortOrder.value == '-hsThumb' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}-->
+         <!--</a>-->
+         <!--{% if searchform.sortOrder and searchform.sortOrder.value == '-hsThumb' or searchform.sortOrder and searchform.sortOrder.value == 'hsThumb'  %}-->
+           <!--<a href="#" onclick="do_sort_column('hsThumb','del', 'adminsearch')">x</a>-->
+         <!--{% endif %}-->
+       <!--</th>-->
         <th>
          <a href="#" onclick="do_sort_column('hsFingUnsel','asc', 'adminsearch')">
            {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingUnsel' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
@@ -640,13 +640,13 @@ function do_adminsearch(el) {
             {% endwith %}
             {% endwith %}
             {% endwith %}
-            {% with handshape.hsThumb as field_value %}
-            {% with "Thumb " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
+            <!--{% with handshape.hsThumb as field_value %}-->
+            <!--{% with "Thumb " as field_category %}-->
+            <!--{% with field_category|add:language as args %}-->
+            <!--<td>{{ field_value|machine_field_translate:args }}</td>-->
+            <!--{% endwith %}-->
+            <!--{% endwith %}-->
+            <!--{% endwith %}-->
             {% with handshape.hsFingUnsel as field_value %}
             {% with "FingerSelection " as field_category %}
             {% with field_category|add:language as args %}
