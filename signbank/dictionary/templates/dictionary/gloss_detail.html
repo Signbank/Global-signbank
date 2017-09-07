@@ -829,7 +829,7 @@
         <div class='panel-heading'>
             <div class='panel-title'>
                 <a data-toggle='collapse' href='#relations'>{% trans "Relations to Other Signs" %}</a>
-                {% if gloss.relation_sources %}
+                {% if gloss.relations_count %}
                 <div class="pull-right">
                 <span id="relations-icon"><img id='relations-arrows' src='{{ STATIC_URL }}images/leftwards_arrow_over_rightwards_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
                 </div>
@@ -926,7 +926,7 @@
                     {% if tokNo == 1 %}
                     <div class="pull-right">
                     <span id="freqency-one-star-icon">
-                        <img id='frequency-one-star' src='{{ STATIC_URL }}images/black_star.png' style="width:20; height:auto; margin: 0px;">
+                        <img id='frequency-one-star' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
                     </span>
                     </div>
                     {% elif tokNo > 1 and tokNo < 6 %}
