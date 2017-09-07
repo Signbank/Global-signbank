@@ -212,7 +212,7 @@ def update_gloss(request, glossid):
         else:
 
             original_value = getattr(gloss,field)
-            print("update gloss, original value for field ", field, ": ", original_value)
+            # print("update gloss, original value for field ", field, ": ", original_value)
 
             if not field in [f.name for f in Gloss._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
@@ -229,26 +229,28 @@ def update_gloss(request, glossid):
             if isinstance(gloss._meta.get_field(field),NullBooleanField):
                 # value is the html 'value' received during editing
                 newvalue = value
-                print("new boolean value: ", newvalue)
+                # print("new boolean value: ", newvalue)
                 # value gets converted to a Boolean by the following statement
                 if field == 'weakdrop' or field == 'weakprop' or field == 'domhndsh_letter' or field == 'domhndsh_number' or \
                                                     field == 'subhndsh_letter' or field == 'subhndsh_number':
                     category_value = 'phonology'
-                    if field == 'weakdrop' or field == 'weakprop':
+                    if field == 'weakdrop':
+                        value = {'1': None, '2': True, '3': False}[value]
+                        newvalue = {'1': '&nbsp;', '2': '+WD', '3': '-WD'}[newvalue]
 
-                        value = (value in ['WD', 'WP'])
-                    elif field == 'domhndsh_letter' or field == 'subhndsh_letter':
+                    elif field == 'weakprop':
                         value = {'1': None, '2': True, '3': False}[value]
-                        newvalue = {'1': '&nbsp;', '2': '+letter', '3': '-letter'}[newvalue]
+                        newvalue = {'1': '&nbsp;', '2': '+WP', '3': '-WP'}[newvalue]
+
                     else:
-                        value = {'1': None, '2': True, '3': False}[value]
-                        newvalue = {'1': '&nbsp;', '2': '+number', '3': '-number'}[newvalue]
+                        value = (value in ['letter', 'number'])
 
                 else:
                     value = (value.lower() in [_('Yes').lower(),'true',True,1])
 
             # special value of 'notset' or -1 means remove the value
             if value == 'notset' or value == -1 or value == '':
+                # print("update gloss: save None value for field ", field)
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''

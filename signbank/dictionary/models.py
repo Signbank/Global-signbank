@@ -1234,7 +1234,7 @@ minor or insignificant ways that can be ignored.""")
         
         return self.options_to_json(RELATION_ROLE_CHOICES)
 
-    def etymology_choices_json(self):
+    def handedness_weak_choices_json(self):
         """Return JSON for the etymology choice list"""
         from signbank.dictionary.forms import NEUTRALBOOLEANCHOICES
 

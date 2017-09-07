@@ -37,7 +37,7 @@
     var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
     var relation_delete_choices = '{ "delete" : "Delete" }';
-    var handshape_etymology_choices = {{gloss.etymology_choices_json|safe}}
+    var handedness_weak_choices = {{gloss.handedness_weak_choices_json|safe}}
     var languages = {{gloss.signlanguage_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
     var mrptype_choices = {};
@@ -581,9 +581,11 @@
                         <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
                             {% if label == 'WD' %}
-                            <td class="edit edit_WD" id='{{name}}' value="{{value}}">{% if value %}WD{% else %}&nbsp;{% endif %}</td>
+                            <td class="edit edit_WD" id='{{name}}'
+                                value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
                             {% else %}
-                            <td class="edit edit_WP" id='{{name}}' value="{{value}}">{% if value %}WP{% else %}&nbsp;{% endif %}</td>
+                            <td class="edit edit_WP" id='{{name}}'
+                                value="{{value}}">{% if value %}+WP{% elif value == None %}&nbsp;{% else %}-WP{% endif %}</td>
                             {% endif %}
 		                {% endfor %}
                     </tr>
@@ -593,9 +595,11 @@
                         <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
                             {% if label == 'WD' %}
-                            <td class="edit edit_WD" id='{{name}}' value="{{value}}">{% if value %}WD{% else %}&nbsp;{% endif %}</td>
+                            <td class="edit edit_WD" id='{{name}}'
+                                value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
                             {% else %}
-                            <td class="edit edit_WP" id='{{name}}' value="{{value}}">{% if value %}WP{% else %}&nbsp;{% endif %}</td>
+                            <td class="edit edit_WP" id='{{name}}'
+                                value="{{value}}">{% if value %}+WP{% elif value == None %}&nbsp;{% else %}-WP{% endif %}</td>
                             {% endif %}
                         {% endfor %}
                     </tr>
@@ -611,10 +615,10 @@
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if label == 'letter' %}
                             <td class="edit edit_letter" id='{{name}}'
-                                value="{{value}}">{% if value %}+letter{% elif value == 0 %}-letter{% else %}&nbsp;{% endif %}</td>
+                                value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                             {% else %}
                             <td class="edit edit_number" id='{{name}}'
-                                value="{{value}}">{% if value %}+number{% elif value == 0 %}-number{% else %}&nbsp;{% endif %}</td>
+                                value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
                             {% endif %}
 		                {% endfor %}
                     </tr>
@@ -627,10 +631,10 @@
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if label == 'letter' %}
                             <td class="edit edit_letter" id='{{name}}'
-                                value="{{value}}">{% if value %}+letter{% elif value == 0 %}-letter{% else %}&nbsp;{% endif %}</td>
+                                value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                             {% else %}
                             <td class="edit edit_number" id='{{name}}'
-                                value="{{value}}">{% if value %}+number{% elif value == 0 %}-number{% else %}&nbsp;{% endif %}</td>
+                                value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
                             {% endif %}
                         {% endfor %}
                     </tr>
@@ -646,10 +650,10 @@
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if label == 'letter' %}
                             <td class="edit edit_letter" id='{{name}}'
-                                value="{{value}}">{% if value %}+letter{% elif value == None %}&nbsp;{% else %}-letter{% endif %}</td>
+                                value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                             {% else %}
                             <td class="edit edit_number" id='{{name}}'
-                                value="{{value}}">{% if value %}+number{% elif value == None %}&nbsp;{% else %}-number{% endif %}</td>
+                                value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
                             {% endif %}
 		                {% endfor %}
                     </tr>
@@ -662,10 +666,10 @@
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if label == 'letter' %}
                             <td class="edit edit_letter" id='{{name}}'
-                                value="{{value}}">{% if value %}+letter{% elif value == None %}&nbsp;{% else %}-letter{% endif %}</td>
+                                value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                             {% else %}
                             <td class="edit edit_number" id='{{name}}'
-                                value="{{value}}">{% if value %}+number{% elif value == None %}&nbsp;{% else %}-number{% endif %}</td>
+                                value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
                             {% endif %}
                         {% endfor %}
                     </tr>

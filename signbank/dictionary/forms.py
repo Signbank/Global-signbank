@@ -69,8 +69,9 @@ class TagUpdateForm(forms.Form):
 YESNOCHOICES = (("unspecified", "Unspecified" ), ('yes', 'Yes'), ('no', 'No'))
 NULLBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
 NONEBOOLEANCHOICES = [(0,'---------'),(1,'None'),(2,'True'),(3,'False')]
+UNKNOWNBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
 NEUTRALBOOLEANCHOICES = [(1,'Neutral'),(2,'Yes'),(3,'No')]
-ETYMOLOGYCHOICES = [(0,'---------'),(1,'Neutral'),(2,'True'),(3,'False')]
+NEUTRALQUERYCHOICES = [(0,'---------'),(1,'Neutral'),(2,'True'),(3,'False')]
 
 RELATION_ROLE_CHOICES = (('','---------'),
                          ('all', 'All'),
@@ -123,13 +124,13 @@ class GlossSearchForm(forms.ModelForm):
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
     altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
-    weakprop = forms.ChoiceField(label=_(u'Weak prop'),choices=NONEBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
-    weakdrop = forms.ChoiceField(label=_(u'Weak drop'),choices=NONEBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
+    weakprop = forms.ChoiceField(label=_(u'Weak prop'),choices=NEUTRALQUERYCHOICES)
+    weakdrop = forms.ChoiceField(label=_(u'Weak drop'),choices=NEUTRALQUERYCHOICES)
 
-    domhndsh_letter = forms.ChoiceField(label=_(u'letter'),choices=ETYMOLOGYCHOICES)
-    domhndsh_number = forms.ChoiceField(label=_(u'number'),choices=ETYMOLOGYCHOICES)
-    subhndsh_letter = forms.ChoiceField(label=_(u'letter'),choices=ETYMOLOGYCHOICES)
-    subhndsh_number = forms.ChoiceField(label=_(u'number'),choices=ETYMOLOGYCHOICES)
+    domhndsh_letter = forms.ChoiceField(label=_(u'letter'),choices=UNKNOWNBOOLEANCHOICES)
+    domhndsh_number = forms.ChoiceField(label=_(u'number'),choices=UNKNOWNBOOLEANCHOICES)
+    subhndsh_letter = forms.ChoiceField(label=_(u'letter'),choices=UNKNOWNBOOLEANCHOICES)
+    subhndsh_number = forms.ChoiceField(label=_(u'number'),choices=UNKNOWNBOOLEANCHOICES)
 
     isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     inWeb = forms.ChoiceField(label=_(u'Is in Web dictionary'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))

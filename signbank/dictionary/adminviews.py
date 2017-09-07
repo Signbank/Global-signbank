@@ -167,12 +167,13 @@ class GlossListView(ListView):
                 context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
         context['input_names_fields_labels_handedness'] = []
+        field = search_form['weakdrop']
+        label = field.label
+        context['input_names_fields_labels_handedness'].append(('weakdrop', field, label))
         field = search_form['weakprop']
         label = field.label
         context['input_names_fields_labels_handedness'].append(('weakprop',field,label))
-        field = search_form['weakdrop']
-        label = field.label
-        context['input_names_fields_labels_handedness'].append(('weakdrop',field,label))
+
 
         context['input_names_fields_labels_domhndsh'] = []
         field = search_form['domhndsh_letter']
@@ -273,7 +274,7 @@ class GlossListView(ListView):
         desc = ""
         if include_phonology_and_frequencies:
             description_fields = ['handedness','domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir','movSh', 'tokNo',
-                          'tokNoSgnr'];
+                          'tokNoSgnr']
 
             for f in description_fields:
                 if f in FIELDS['phonology']:
@@ -367,7 +368,7 @@ class GlossListView(ListView):
             header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii','ignore').decode() for f in fields]
 
         for extra_column in ['SignLanguages','Dialects','Keywords','Morphology','Relations to other signs','Relations to foreign signs',]:
-            header.append(extra_column);
+            header.append(extra_column)
 
         writer.writerow(header)
 
@@ -388,13 +389,13 @@ class GlossListView(ListView):
                     #     value = str(value.encode('ascii','xmlcharrefreplace'));
 
                     if not isinstance(value,str):
-                        value = str(value);
+                        value = str(value)
 
                     row.append(value)
 
             # get languages
             signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
-            row.append(", ".join(signlanguages));
+            row.append(", ".join(signlanguages))
 
             # get dialects
             dialects = [dialect.name for dialect in gloss.dialect.all()]
@@ -631,7 +632,7 @@ class GlossListView(ListView):
 
         if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
 
-            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()];
+            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
             # print('pks_for_glosses',pks_for_glosses_with_relations)
 
             if get['hasRelationToForeignSign'] == '1': #We only want glosses with a relation to a foreign sign
@@ -650,31 +651,31 @@ class GlossListView(ListView):
 
             #Find all relations with this role
             if get['hasRelation'] == 'all':
-                relations_with_this_role = Relation.objects.all();
+                relations_with_this_role = Relation.objects.all()
             else:
-                relations_with_this_role = Relation.objects.filter(role__exact=get['hasRelation']);
+                relations_with_this_role = Relation.objects.filter(role__exact=get['hasRelation'])
 
             #Remember the pk of all glosses that take part in the collected relations
-            pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role];
+            pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
         if 'id_morpheme' in get and get['id_morpheme'] != '':
 
             # Filter all glosses that contain a morpheme with the indicated text in its gloss
             # Step 1: get all morphemes containing the indicated text
-            potential_morphemes = Morpheme.objects.filter(idgloss__exact=get['id_morpheme']);
+            potential_morphemes = Morpheme.objects.filter(idgloss__exact=get['id_morpheme'])
             if (potential_morphemes.count() > 0):
                 # At least one has been found: take the first one
-                selected_morpheme = potential_morphemes[0];
+                selected_morpheme = potential_morphemes[0]
                 # Step 2: get all Glosses containing the above morphemes
-                potential_pks = [appears.pk for appears in Gloss.objects.filter(morphemePart=selected_morpheme)];
+                potential_pks = [appears.pk for appears in Gloss.objects.filter(morphemePart=selected_morpheme)]
                 qs = qs.filter(pk__in=potential_pks)
 
         if 'hasComponentOfType' in get and get['hasComponentOfType'] != '':
 
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasComponentOfType']);
-            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role];
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasComponentOfType'])
+            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
         if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
@@ -684,27 +685,27 @@ class GlossListView(ListView):
             # Get all glosses that have one of the morphemes in this set
             glosses_with_correct_mrpType = Gloss.objects.filter(morphemePart__in=target_morphemes)
             # Turn this into a list with pks
-            pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in glosses_with_correct_mrpType];
+            pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in glosses_with_correct_mrpType]
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
 
             #Find all definitions with this role
             if get['definitionRole'] == 'all':
-                definitions_with_this_role = Definition.objects.all();
+                definitions_with_this_role = Definition.objects.all()
             else:
-                definitions_with_this_role = Definition.objects.filter(role__exact=get['definitionRole']);
+                definitions_with_this_role = Definition.objects.filter(role__exact=get['definitionRole'])
 
             #Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role];
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
         if 'definitionContains' in get and get['definitionContains'] != '':
 
-            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains']);
+            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
 
             #Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text];
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
         if 'createdBefore' in get and get['createdBefore'] != '':
@@ -826,43 +827,47 @@ class GlossDetailView(DetailView):
 
         context['handedness_fields'] = []
         weak_drop = getattr(gl, 'weakdrop')
+        # print('weak_drop: ', weak_drop)
+
         weak_prop = getattr(gl, 'weakprop')
-        weak_drop = (weak_drop in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
-        weak_prop = (weak_prop in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+        # print('weak_prop: ', weak_prop)
+
+        # weak_drop = (weak_drop in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+        # weak_prop = (weak_prop in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
         # weakdrop_human_value = machine_value_to_translated_human_value(weak_drop, [], self.request.LANGUAGE_CODE)
         # weakprop_human_value = machine_value_to_translated_human_value(weak_prop, [], self.request.LANGUAGE_CODE)
-        context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'check'])
-        context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'check'])
+        context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'list'])
+        context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'list'])
 
         # temp = context['handedness_fields']
         # print('handedness fields: ', temp)
 
         context['etymology_fields_dom'] = []
         domhndsh_letter = getattr(gl, 'domhndsh_letter')
-        print('domhndsh_letter: ', domhndsh_letter)
+        # print('domhndsh_letter: ', domhndsh_letter)
         domhndsh_number = getattr(gl, 'domhndsh_number')
-        print('domhndsh_number: ', domhndsh_number)
+        # print('domhndsh_number: ', domhndsh_number)
         # domhndsh_letter = (domhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
         # domhndsh_number = (domhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
         context['etymology_fields_sub'] = []
         subhndsh_letter = getattr(gl, 'subhndsh_letter')
-        print('subhndsh_letter: ', subhndsh_letter)
+        # print('subhndsh_letter: ', subhndsh_letter)
         subhndsh_number = getattr(gl, 'subhndsh_number')
-        print('subhndsh_number: ', subhndsh_number)
+        # print('subhndsh_number: ', subhndsh_number)
         # subhndsh_letter = (subhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
         # subhndsh_number = (subhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
-        context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'list'])
-        context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'list'])
-        context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'list'])
-        context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'list'])
+        context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'check'])
+        context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'check'])
+        context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
+        context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
 
         temp_dom = context['etymology_fields_dom']
-        print('etymology_fields_dom fields: ', temp_dom)
+        # print('etymology_fields_dom fields: ', temp_dom)
         temp_sub = context['etymology_fields_sub']
-        print('etymology_fields_sub fields: ', temp_sub)
+        # print('etymology_fields_sub fields: ', temp_sub)
 
         context['choice_lists'] = {}
 
