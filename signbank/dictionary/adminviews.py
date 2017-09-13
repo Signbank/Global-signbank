@@ -350,7 +350,8 @@ class GlossListView(ListView):
         #We want to manually set which fields to export here
 
         fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'StemSN', 'rmrks', 'handedness',
-                      'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc', 'oriCh', 'contType',
+                      'domhndsh', 'domhndsh_letter', 'domhndsh_number', 'subhndsh', 'subhndsh_letter', 'subhndsh_number',
+                      'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc', 'oriCh', 'contType',
                       'movSh', 'movDir', 'repeat', 'altern', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType',
                       'namEnt', 'semField', 'valence', 'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe',
@@ -378,7 +379,7 @@ class GlossListView(ListView):
 
                 #Try the value of the choicelist
                 try:
-                    row.append(getattr(gloss, 'get_'+f.name+'_display')())
+                    value = getattr(gloss, 'get_' + f.name + '_display')()
 
                 #If it's not there, try the raw value
                 except AttributeError:
@@ -388,10 +389,21 @@ class GlossListView(ListView):
                     # if isinstance(value,unicode):
                     #     value = str(value.encode('ascii','xmlcharrefreplace'));
 
-                    if not isinstance(value,str):
-                        value = str(value)
+                if not isinstance(value,str):
+                    value = str(value)
 
-                    row.append(value)
+                # A handshape name can begin with =. To avoid Office thinking this is a formula, preface with '
+                if value[:1] == '=':
+                    value = '\'' + value
+                elif value == 'None' and f.name in ['tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr',
+                                                    'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
+                                                    'tokNoSgnrGr', 'tokNoSgnrO']:
+                    # value is a frequency, change None to numerical value
+                    value = '0'
+
+                # print('export CSV value: ', value)
+
+                row.append(value)
 
             # get languages
             signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
@@ -410,12 +422,28 @@ class GlossListView(ListView):
             row.append(", ".join(morphemes))
 
             # get relations to other signs
-            relations = [relation.target.idgloss for relation in Relation.objects.filter(source=gloss)]
-            row.append(", ".join(relations))
+            relations = [(relation.role, relation.target.idgloss) for relation in Relation.objects.filter(source=gloss)]
+            relations_with_categories = []
+            for rel_cat in relations:
+                relations_with_categories.append(': '.join(rel_cat))
+            # print("export csv relations_with_categories: ", relations_with_categories)
+
+            relations_categories = ", ".join(relations_with_categories)
+            row.append(relations_categories)
+
+            # print("export csv relations_categories: ", relations_categories)
 
             # get relations to foreign signs
-            relations = [relation.other_lang_gloss for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
-            row.append(", ".join(relations))
+            relations = [(relation.other_lang, relation.other_lang_gloss) for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
+            relations_with_categories = []
+            for rel_cat in relations:
+                relations_with_categories.append(': '.join(rel_cat))
+            # print("export csv foreign relations_with_categories: ", relations_with_categories)
+
+            relations_categories = ", ".join(relations_with_categories)
+            row.append(relations_categories)
+
+            # print("export csv foreign relations_categories: ", relations_categories)
 
 
             #Make it safe for weird chars
