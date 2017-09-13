@@ -1918,11 +1918,11 @@ class HandshapeListView(ListView):
 
 class DatasetListView(ListView):
     model = Dataset
-    template_name = 'dictionary/admin_dataset_list.html'
 
-    # def get_context_data(self, **kwargs):
-    #     # Call the base implementation first to get a context
-    #     context = super(DatasetListView, self).get_context_data(**kwargs)
+    def get_template_names(self):
+        if 'select' in self.kwargs:
+            return ['dictionary/admin_dataset_select_list.html']
+        return ['dictionary/admin_dataset_list.html']
 
     def get_queryset(self):
         qs = Dataset.objects.all()
