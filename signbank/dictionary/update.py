@@ -315,8 +315,15 @@ def update_gloss(request, glossid):
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
 
-    kwds = [k.strip() for k in value.split(',')]
-    # remove current keywords 
+    kwds_all = [k.strip() for k in value.split(',')]
+
+    # Make the list unique (probably computationally not the fastest implementation)
+    kwds = []
+    for kwd in kwds_all:
+        if kwd not in kwds:
+            kwds.append(kwd)
+
+    # remove current keywords
     current_trans = gloss.translation_set.all()
     #current_kwds = [t.translation for t in current_trans]
     current_trans.delete()
