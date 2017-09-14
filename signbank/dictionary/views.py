@@ -1494,3 +1494,28 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     else:
         from django.views.static import serve
         return serve(request, filename, document_root, show_indexes)
+
+@login_required_config
+def show_unassigned_glosses(request):
+    from django.db.models import OuterRef, Subquery, Count, Prefetch
+    unassigned_glosses = Gloss.objects.filter(
+                dataset=None,
+                signlanguage=OuterRef('pk')
+            ).order_by().values('signlanguage')
+    count_unassigned_glosses = unassigned_glosses.annotate(cnt=Count('pk')).values('cnt')
+    signlanguages = SignLanguage.objects.prefetch_related(
+        Prefetch(
+            'dataset_set',
+            queryset=Dataset.objects.all(),
+            to_attr='datasets'
+        )
+    ).annotate(
+        num_unassigned_glosses=Subquery(
+            count_unassigned_glosses,
+            output_field=models.IntegerField()
+        )
+    )
+    print(signlanguages.query)
+    return render(request,"dictionary/unassigned_glosses.html",
+                  {"signlanguages":signlanguages}
+                  )

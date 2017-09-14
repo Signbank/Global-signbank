@@ -1,0 +1,55 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+
+{% block bootstrap3_title %}Signbank: Unassigned glosses{% endblock %}
+
+
+{% block content %}
+
+{% if signlanguages %}
+
+<table class='table table-condensed'>
+    <thead>
+        <tr>
+            <th>
+                {% trans "Sign Language" %}
+            </th>
+            <th>
+                {% trans "Number of unassigned glosses" %}
+            </th>
+            <th>
+                {% trans "Possible datasets" %}
+            </th>
+            <th>
+
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for signlanguage in signlanguages %}
+        <tr>
+            <td>
+                {{ signlanguage.name }} - {{ signlanguage.description }}
+            </td>
+            <td>
+                {{ signlanguage.num_unassigned_glosses }}
+            </td>
+            <td>
+                {% for dataset in signlanguage.datasets %}
+                {{ dataset.name }},
+                {% endfor %}
+            </td>
+            <td>
+
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+{% trans "No unassigned glosses found." %}
+{% endif %}
+
+{% endblock content %}
