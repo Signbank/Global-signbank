@@ -1221,3 +1221,29 @@ def add_morphemetag(request, morphemeid):
 
     return response
 
+def change_dataset_selection(request):
+    """View to change dataset selection"""
+    dataset_prefix = 'dataset_'
+
+    if request.method == "POST":
+        user = request.user
+        user_profile = UserProfile.objects.get(user=user)
+
+        user_profile.selected_datasets.clear()
+        selected_datasets = []
+        for attribute in request.POST:
+            print('Attribute: ' + attribute)
+            if attribute[:len(dataset_prefix)] == dataset_prefix:
+                dataset_name = attribute[len(dataset_prefix):]
+                selected_datasets.append(dataset_name)
+
+        if selected_datasets:
+            user_profile = UserProfile.objects.get(user=user)
+            for dataset_name in selected_datasets:
+                try:
+                    dataset = Dataset.objects.get(name=dataset_name)
+                    user_profile.selected_datasets.add(dataset)
+                except:
+                    pass
+
+    return HttpResponseRedirect(reverse('admin_dataset_select'))

@@ -15,6 +15,7 @@
           <th>{% trans "Name" %}</th>
           <th>{% trans "Access" %}</th>
           <th>{% trans "Number of signs" %}</th>
+          <th>{% trans "Selected" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -33,6 +34,13 @@
             </td>
             <td>
                 {{ dataset.gloss__count }}
+            </td>
+            <td>
+                {% if dataset.user.0.user %}
+                  {% trans "Yes" %}
+                {% else %}
+                  {% trans "No" %}
+                {% endif %}
             </td>
         </tr>
     {% endfor %}

@@ -1498,6 +1498,24 @@ class OtherMedia(models.Model):
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
 
+
+class Dataset(models.Model):
+    """A dataset, can be public/private and can be of only one SignLanguage"""
+    name = models.CharField(unique=True, blank=False, null=False, max_length=60)
+    is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
+    signlanguage = models.ForeignKey("SignLanguage")
+    translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
+                                                                          "for translation equivalents.")
+    description = models.TextField()
+
+    class Meta:
+        permissions = (
+            ('view_dataset', _('View dataset')),
+        )
+
+    def __str__(self):
+        return self.name
+
 # This is the wrong location, but I can't think of a better one:
 
 class UserProfile(models.Model):
@@ -1509,6 +1527,7 @@ class UserProfile(models.Model):
     expiry_date = models.DateField(null=True, blank=True)
     number_of_logins = models.IntegerField(null=True,default=0)
     comments = models.CharField(max_length=500,null=True, blank=True)
+    selected_datasets = models.ManyToManyField(Dataset)
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -1548,19 +1567,3 @@ class Language(models.Model):
         return self.name
 
 
-class Dataset(models.Model):
-    """A dataset, can be public/private and can be of only one SignLanguage"""
-    name = models.CharField(unique=True, blank=False, null=False, max_length=60)
-    is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
-    signlanguage = models.ForeignKey("SignLanguage")
-    translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
-                                                                          "for translation equivalents.")
-    description = models.TextField()
-
-    class Meta:
-        permissions = (
-            ('view_dataset', _('View dataset')),
-        )
-
-    def __str__(self):
-        return self.name

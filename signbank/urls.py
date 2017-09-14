@@ -92,6 +92,7 @@ urlpatterns = [
 
     url(r'^datasets/available', DatasetListView.as_view(), name='admin_dataset_view'),
     url(r'^datasets/select', DatasetListView.as_view(), {'select': True}, name='admin_dataset_select'),
+    url(r'^datasets/change_selection', signbank.dictionary.update.change_dataset_selection, name='change_dataset_selection')
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
