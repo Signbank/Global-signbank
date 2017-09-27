@@ -559,6 +559,7 @@ function do_adminsearch(el) {
 <table class='table table-condensed'>
     <thead>
       <tr>
+          <th>{% trans "Dataset" %}</th>
           <th></th>
            <th>{% trans "Annotation ID gloss: Dutch" %}</th>
 
@@ -577,6 +578,7 @@ function do_adminsearch(el) {
       </tr>
       <!-- EK: this second header row contains clickable sort-order buttons -->
       <tr>
+          <th></th>
           <th></th>
            {% with "annotation_idgloss annotation_idgloss_en idgloss translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
@@ -614,6 +616,7 @@ function do_adminsearch(el) {
                 <tr>
             {% endif %}
 
+        <td>{{ gloss.dataset.name }}</td>
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
           <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
