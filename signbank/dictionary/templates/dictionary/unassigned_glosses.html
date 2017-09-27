@@ -9,7 +9,8 @@
 {% block content %}
 
 {% if signlanguages %}
-
+<form name="assignglosses" id="assignglosses" method="post" action="{{URL}}/datasets/unassigned_glosses">
+{% csrf_token %}
 <table class='table table-condensed'>
     <thead>
         <tr>
@@ -28,18 +29,52 @@
         </tr>
     </thead>
     <tbody>
+        <tr>
+            <td>
+                <i>{% trans "No sign language" %}</i>
+            </td>
+            <td>
+                {{ number_of_unassigned_glosses_without_signlanguage }}
+            </td>
+            <td>
+                {% if all_datasets and number_of_unassigned_glosses_without_signlanguage %}
+                <select class="form-control" name="sign-language__">
+                <option value="">-</option>
+                {% for dataset in all_datasets %}
+                <option value="{{ dataset.id }}">{{ dataset.name }}</option>
+                {% endfor %}
+                </select>
+                {% else %}
+                {% trans "No datasets for this sign language" %}
+                {% endif %}
+            </td>
+            <td>
+
+            </td>
+        </tr>
     {% for signlanguage in signlanguages %}
         <tr>
             <td>
                 {{ signlanguage.name }} - {{ signlanguage.description }}
             </td>
             <td>
-                {{ signlanguage.num_unassigned_glosses }}
+                {% if signlanguage.num_unassigned_glosses %}
+                    {{ signlanguage.num_unassigned_glosses }}
+                {% else %}
+                    0
+                {% endif %}
             </td>
             <td>
+                {% if signlanguage.datasets and signlanguage.num_unassigned_glosses %}
+                <select class="form-control" name="sign-language__{{ signlanguage.id }}">
+                <option value="">-</option>
                 {% for dataset in signlanguage.datasets %}
-                {{ dataset.name }},
+                <option value="{{ dataset.id }}">{{ dataset.name }}</option>
                 {% endfor %}
+                </select>
+                {% else %}
+                {% trans "No datasets for this sign language" %}
+                {% endif %}
             </td>
             <td>
 
@@ -48,6 +83,9 @@
     {% endfor %}
     </tbody>
 </table>
+    <button class="btn btn-default pull-right" type="submit">{% trans 'Assign glosses' %}</button>
+</form>
+
 {% else %}
 {% trans "No unassigned glosses found." %}
 {% endif %}
