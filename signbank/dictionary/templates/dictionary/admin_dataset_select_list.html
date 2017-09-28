@@ -1,0 +1,41 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+
+{% block bootstrap3_title %}Signbank: Dataset selection{% endblock %}
+
+
+{% block content %}
+
+{% if object_list %}
+<form name="selectdatasets" id="selectdatasets" method="post" action="{{URL}}/datasets/change_selection">
+{% csrf_token %}
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+          <th>{% trans "Name" %}</th>
+          <th>{% trans "Selected" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for dataset in object_list %}
+          {% get_obj_perms request.user for dataset as "dataset_perms" %}
+            {% if "view_dataset" in dataset_perms %}
+            <tr>
+                <td>
+                    {{ dataset.name }}
+                </td>
+                <td><input type="checkbox" name="dataset_{{ dataset.name }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
+            </tr>
+            {% endif %}
+      {% endfor %}
+    </tbody>
+</table>
+<input class="pull-right" type="submit" value="{% trans 'Save selection' %}"/>
+</form>
+{% else %}
+{% trans "No datasets found." %}
+{% endif %}
+
+{% endblock content %}

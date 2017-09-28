@@ -1928,16 +1928,24 @@ class HandshapeListView(ListView):
 
 class DatasetListView(ListView):
     model = Dataset
-    template_name = 'dictionary/admin_dataset_list.html'
 
-    # def get_context_data(self, **kwargs):
-    #     # Call the base implementation first to get a context
-    #     context = super(DatasetListView, self).get_context_data(**kwargs)
+    def get_template_names(self):
+        if 'select' in self.kwargs:
+            return ['dictionary/admin_dataset_select_list.html']
+        return ['dictionary/admin_dataset_list.html']
 
     def get_queryset(self):
-        qs = Dataset.objects.all()
         user = self.request.user
         if user.is_authenticated():
+            from django.db.models import Prefetch
+            qs = Dataset.objects.all().prefetch_related(
+                Prefetch(
+                    "userprofile_set",
+                    queryset=UserProfile.objects.filter(user=user),
+                    to_attr="user"
+                )
+            )
+
             checker = ObjectPermissionChecker(user)
 
             checker.prefetch_perms(qs)
@@ -1945,9 +1953,11 @@ class DatasetListView(ListView):
             for dataset in qs:
                 checker.has_perm('view_dataset', dataset)
 
-        qs = qs.annotate(Count('gloss')).order_by('name')
+            qs = qs.annotate(Count('gloss')).order_by('name')
 
-        return qs
+            return qs
+
+        return None
 
 
 def order_handshape_queryset_by_sort_order(get, qs):

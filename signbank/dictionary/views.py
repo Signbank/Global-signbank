@@ -1582,3 +1582,66 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     else:
         from django.views.static import serve
         return serve(request, filename, document_root, show_indexes)
+
+@login_required_config
+def show_unassigned_glosses(request):
+    if request.method == 'POST':
+        dataset_select_prefix = "sign-language__"
+        for key, new_value in request.POST.items():
+            if key.startswith(dataset_select_prefix) and new_value != "":
+                # print("Signlanguage: %s; dataset: %s" % (key, new_value))
+                try:
+                    signlanguage_id = int(key[len(dataset_select_prefix):])
+                    dataset_id = int(new_value)
+                    dataset = Dataset.objects.get(pk=int(dataset_id))
+                    print("Signlanguage: %s; dataset: %s" % (signlanguage_id, dataset_id))
+                    if signlanguage_id == "":
+                        glosses_to_be_assigned = Gloss.objects.filter(
+                            signlanguage=None,
+                            dataset=None
+                        )
+                    else:
+                        glosses_to_be_assigned = Gloss.objects.filter(
+                            signlanguage__pk=signlanguage_id,
+                            dataset=None
+                        )
+                    for gloss in glosses_to_be_assigned:
+                        gloss.dataset = dataset
+                        gloss.save()
+                except ObjectDoesNotExist as e:
+                    print('Assigning glosses to a dataset resulted in an error: ' + o.message)
+
+        return HttpResponseRedirect(reverse('show_unassigned_glosses'))
+    else:
+        from django.db.models import OuterRef, Subquery, Count, Prefetch
+        unassigned_glosses = Gloss.objects.filter(
+                    dataset=None,
+                    signlanguage=OuterRef('pk')
+                ).order_by().values('signlanguage')
+        count_unassigned_glosses = unassigned_glosses.annotate(cnt=Count('pk')).values('cnt')
+        signlanguages = SignLanguage.objects.prefetch_related(
+            Prefetch(
+                'dataset_set',
+                queryset=Dataset.objects.all(),
+                to_attr='datasets'
+            )
+        ).annotate(
+            num_unassigned_glosses=Subquery(
+                count_unassigned_glosses,
+                output_field=models.IntegerField()
+            )
+        )
+        # print(signlanguages.query)
+
+        number_of_unassigned_glosses_without_signlanguage = Gloss.objects.filter(
+            dataset=None,
+            signlanguage=None
+        ).count()
+
+        all_datasets = Dataset.objects.all()
+
+        return render(request,"dictionary/unassigned_glosses.html", {
+                        "signlanguages":signlanguages,
+                        "number_of_unassigned_glosses_without_signlanguage":number_of_unassigned_glosses_without_signlanguage,
+                        "all_datasets":all_datasets
+                      })
