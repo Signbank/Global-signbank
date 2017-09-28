@@ -21,7 +21,7 @@ import re
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
-from signbank.dictionary.update import update_keywords
+from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, update_sequential_morphology, update_simultaneous_morphology
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
 
@@ -585,7 +585,7 @@ def add_new_morpheme(request):
     # And add the kind of field
     kind = 'list';
 
-    oContext['morph_fields'].append(['(Make a choice)', field, "Morpheme type", kind]);
+    oContext['morph_fields'].append(['(Make a choice)', field, "Morpheme type", kind])
 
     # Continue
     oBack = render(request,'dictionary/add_morpheme.html', oContext)
@@ -608,6 +608,8 @@ def import_csv(request):
         csv_text = request.FILES['file'].read().decode('UTF-8')
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
 
+        # print('import CSV: csv_lines: ', csv_lines)
+
         for nl, line in enumerate(csv_lines):
 
             #The first line contains the keys
@@ -627,6 +629,7 @@ def import_csv(request):
                 except IndexError:
                     pass
 
+            # print("import CSV: value_dict: ", value_dict)
             try:
                 pk = int(value_dict['Signbank ID'])
             except ValueError:
@@ -646,18 +649,39 @@ def import_csv(request):
                 continue
 
             try:
-                changes += compare_valuedict_to_gloss(value_dict,gloss)
+                (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss)
+                changes += changes_found
+                # changes += compare_valuedict_to_gloss(value_dict,gloss)
+
+                if len(errors_found):
+                    # more than one error found
+                    errors_found_string = '\n'.join(errors_found)
+                    # print("errors found string: ", errors_found_string)
+
+                    if not error:
+                        error = [errors_found_string]
+                    else:
+                        error.append(errors_found_string)
+
             except MachineValueNotFoundError as e:
 
+                # print('exception changes: ', e)
+
+                s = str(e)
+
+                # allow for returning multiple error messages via the exception
                 if not error:
                     error = [e]
                 else:
+                    # print('else case')
                     error.append(e)
 
         stage = 1
 
     #Do changes
     elif len(request.POST) > 0:
+
+        # print('update fields: ', request.POST.items())
 
         for key, new_value in request.POST.items():
 
@@ -677,6 +701,68 @@ def import_csv(request):
                 gloss.save()
                 continue
 
+            if fieldname == 'SignLanguages':
+
+                # print('update SignLanguages')
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+                # print('Sign languages new list: ', new_human_value_list)
+
+                update_signlanguage(gloss,None,new_human_value_list)
+                gloss.save()
+                continue
+
+            if fieldname == 'Dialects':
+
+                # print('update Dialects')
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+                # print('Dialects new list: ', new_human_value_list)
+
+                update_dialect(gloss,None,new_human_value_list)
+                gloss.save()
+                continue
+
+            if fieldname == 'Sequential Morphology':
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+                # print('Sequential Morphology new list: ', new_human_value_list)
+
+                update_sequential_morphology(gloss,None,new_human_value_list)
+
+                continue
+
+            if fieldname == 'Simultaneous Morphology':
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+                # print('Sequential Simultaneous new list: ', new_human_value_list)
+
+                update_simultaneous_morphology(gloss,None,new_human_value_list)
+
+                continue
+
+            if fieldname == 'Relations to other signs':
+
+                # print('update Relations to other signs')
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+                # print('Relations to other signs new list: ', new_human_value_list)
+
+                subst_relations(gloss,None,new_human_value_list)
+                gloss.save()    # is this needed?
+                continue
+
+            if fieldname == 'Relations to foreign signs':
+
+                # print('update Relations to foreign signs')
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+                # print('Relations to foreign signs new list: ', new_human_value_list)
+
+                subst_foreignrelations(gloss,None,new_human_value_list)
+                gloss.save()    # is this needed?
+                continue
+
             with override(settings.LANGUAGE_CODE):
 
                 #Replace the value for bools
@@ -684,6 +770,8 @@ def import_csv(request):
 
                     if new_value in ['true','True']:
                         new_value = True
+                    elif new_value == 'None':
+                        new_value = None
                     else:
                         new_value = False
 

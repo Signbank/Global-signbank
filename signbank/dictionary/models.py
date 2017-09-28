@@ -22,16 +22,16 @@ import signbank.settings
 
 def build_choice_list(field):
 
-    choice_list = [];
+    choice_list = []
 
     # Get choices for a certain field in FieldChoices, append machine_value and english_name
     try:
         for choice in FieldChoice.objects.filter(field__iexact=field):
-            choice_list.append((str(choice.machine_value),choice.english_name));
+            choice_list.append((str(choice.machine_value),choice.english_name))
 
-        choice_list = sorted(choice_list,key=lambda x: x[1]);
+        choice_list = sorted(choice_list,key=lambda x: x[1])
 
-        return [('0','-'),('1','N/A')] + choice_list;
+        return [('0','-'),('1','N/A')] + choice_list
 
     # Enter this exception if for example the db has no data yet (without this it is impossible to migrate)
     except:
@@ -687,8 +687,8 @@ minor or insignificant ways that can be ignored.""")
         if set:
             return set[0]
         else:
-            return None     
-             
+            return None
+
     def get_absolute_url(self):
         return "/dictionary/gloss/%s.html" % self.idgloss
     
@@ -1280,7 +1280,7 @@ minor or insignificant ways that can be ignored.""")
     def get_choice_lists(self):
         """Return JSON for the location choice list"""
  
-        choice_lists = {}; 
+        choice_lists = {}
 
         #Start with your own choice lists
         for fieldname in ['handedness','locprim','domhndsh','subhndsh',
@@ -1289,17 +1289,17 @@ minor or insignificant ways that can be ignored.""")
 							'movDir','movMan','contType','namEnt','oriCh','semField']:
 
             #Get the list of choices for this field
-            li = self._meta.get_field(fieldname).choices;
+            li = self._meta.get_field(fieldname).choices
 
             #Sort the list
-            sorted_li = sorted(li,key=lambda x: x[1]);
+            sorted_li = sorted(li,key=lambda x: x[1])
 
             #Put it in another format
             reformatted_li = [('_'+str(value),text) for value,text in sorted_li]
-            choice_lists[fieldname] = OrderedDict(reformatted_li);
+            choice_lists[fieldname] = OrderedDict(reformatted_li)
 
         #Choice lists for other models
-        choice_lists['morphology_role'] = [human_value for machine_value,human_value in build_choice_list('MorphologyType')];
+        choice_lists['morphology_role'] = [human_value for machine_value,human_value in build_choice_list('MorphologyType')]
 
         return json.dumps(choice_lists)
 

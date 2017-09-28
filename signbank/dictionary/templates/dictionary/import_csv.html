@@ -58,19 +58,37 @@
 
             <ul>
             {% for e in error %}
-                <li>{{ e }}</li>
+                <li>{{ e | linebreaks }}</li>
             {% endfor %}
             </ul>
 
         {% else %}
 
+            {% if changes %}
             <div>{% blocktrans %}The following changes were detected:{% endblocktrans %}</div>
             <ul>
             {% for change in changes %}
 
-                {% blocktrans with pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
-                    <li>For {{ idgloss }} ({{pk}}), <em>{{ human_key }}</em> changes from {{ original_human_value }} ({{ original_machine_value }}) to {{new_human_value}} ({{ new_machine_value }}).</li>
-                {% endblocktrans %}
+                {% if change.original_human_value == change.original_machine_value and change.new_human_value == change.new_machine_value %}
+                    {% if original_human_value %}
+                    {% blocktrans with pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+
+                    <li>For {{ idgloss }} ({{pk}}), <em>{{ human_key }}</em> changes from
+                        {{ original_human_value }} to {{new_human_value}}.</li>
+                    {% endblocktrans %}
+                    {% else %}
+                    {% blocktrans with pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+
+                    <li>For {{ idgloss }} ({{pk}}), <em>{{ human_key }}</em> changes to {{new_human_value}}.</li>
+                    {% endblocktrans %}
+                    {% endif %}
+                {% else %}
+                    {% blocktrans with pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+
+                    <li>For {{ idgloss }} ({{pk}}), <em>{{ human_key }}</em> changes from
+                        <br>{{ original_human_value }} ({{ original_machine_value }}) to <br>{{new_human_value}} ({{ new_machine_value }}).</li>
+                    {% endblocktrans %}
+                {% endif %}
 
                 <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
             {% endfor %}
@@ -78,6 +96,9 @@
             </ul>
             <input type="submit" value="{% blocktrans %}Make changes{% endblocktrans %}" />
 
+            {% else %}
+            <div>{% blocktrans %}No changes were found.{% endblocktrans %}</div>
+            {% endif %}
         {% endif %}
 
     </form>

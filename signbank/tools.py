@@ -12,8 +12,9 @@ from urllib.parse import quote
 from django.utils.translation import override
 
 from signbank.dictionary.models import *
+from signbank.dictionary.update import gloss_from_identifier, morph_from_identifier
 from django.utils.dateformat import format
-
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
 def save_media(source_folder,goal_folder,gloss,extension):
@@ -57,17 +58,25 @@ def unescape(string):
 class MachineValueNotFoundError(Exception):
     pass
 
+
 def compare_valuedict_to_gloss(valuedict,gloss):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
 
+    errors_found = []
+
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
-        fields = {field.verbose_name: field for field in gloss._meta.fields}
+        fields = {field.verbose_name: field for field in Gloss._meta.fields}
 
         differences = []
 
         #Go through all values in the value dict, looking for differences with the gloss
         for human_key, new_human_value in valuedict.items():
+
+            new_human_value_list = []
+
+            if new_human_value:
+                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
             new_human_value = new_human_value.strip()
 
@@ -75,10 +84,10 @@ def compare_valuedict_to_gloss(valuedict,gloss):
             if human_key.lower() == 'id gloss':
                 human_key = 'ID Gloss'
 
-            #If these are not fields, but relations to other parts of the database, go look for differenes elsewhere
+            #If these are not fields, but relations to other parts of the database, compare complex values
             if human_key == 'Keywords':
 
-                current_keyword_string = str(', '.join([str(translation.translation.text.encode('utf-8')) for translation in gloss.translation_set.all()]))
+                current_keyword_string = str(', '.join([str(translation.translation.text) for translation in gloss.translation_set.all()]))
 
                 if current_keyword_string != new_human_value:
                     differences.append({'pk':gloss.pk,
@@ -90,32 +99,204 @@ def compare_valuedict_to_gloss(valuedict,gloss):
                                         'new_machine_value':new_human_value,
                                         'new_human_value':new_human_value})
 
+            elif human_key == 'SignLanguages':
+
+                # print('check sign languages: (', new_human_value_list, ')')
+
+                current_signlanguages_string = str(', '.join([str(lang.name) for lang in gloss.signlanguage.all()]))
+
+                (found, not_found, errors) = check_existance_signlanguage(gloss, new_human_value_list)
+
+                if len(errors):
+                    errors_found += errors
+
+                if current_signlanguages_string != new_human_value:
+                    differences.append({'pk':gloss.pk,
+                                        'idgloss':gloss.idgloss,
+                                        'machine_key':human_key,
+                                        'human_key':human_key,
+                                        'original_machine_value':current_signlanguages_string,
+                                        'original_human_value':current_signlanguages_string,
+                                        'new_machine_value':new_human_value,
+                                        'new_human_value':new_human_value})
+
+            elif human_key == 'Dialects':
+                current_dialects_string = str(', '.join([str(dia.name) for dia in gloss.dialect.all()]))
+
+                (found, not_found, errors) = check_existance_dialect(gloss, new_human_value_list)
+
+                if len(errors):
+                    errors_found += errors
+
+                elif current_dialects_string != new_human_value:
+                    differences.append({'pk': gloss.pk,
+                                        'idgloss': gloss.idgloss,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': current_dialects_string,
+                                        'original_human_value': current_dialects_string,
+                                        'new_machine_value': new_human_value,
+                                        'new_human_value': new_human_value})
+
+            elif human_key == 'Relations to other signs':
+                relations = [(relation.role, relation.target.idgloss) for relation in gloss.relation_sources.all()]
+
+                # sort tuples on other gloss to allow comparison with imported values
+
+                sorted_relations = sorted(relations, key=lambda tup: tup[1])
+                # print("sorted_relations: ", sorted_relations)
+
+                relations_with_categories = []
+                for rel_cat in sorted_relations:
+                    relations_with_categories.append(':'.join(rel_cat))
+                current_relations_string = ",".join(relations_with_categories)
+
+                # print('Relations current: ', current_relations_string)
+
+                (checked_new_human_value, errors) = check_existance_relations(gloss, relations_with_categories, new_human_value_list)
+
+                # print('Relations new: ', checked_new_human_value)
+
+                if len(errors):
+                    errors_found += errors
+
+                elif current_relations_string != checked_new_human_value:
+                    differences.append({'pk': gloss.pk,
+                                        'idgloss': gloss.idgloss,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': current_relations_string,
+                                        'original_human_value': current_relations_string,
+                                        'new_machine_value': checked_new_human_value,
+                                        'new_human_value': checked_new_human_value})
+
+            elif human_key == 'Relations to foreign signs':
+                relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss)
+                             for relation in gloss.relationtoforeignsign_set.all().order_by('other_lang_gloss')]
+
+                relations_with_categories = []
+                for rel_cat in relations:
+                    relations_with_categories.append(':'.join(rel_cat))
+                current_relations_foreign_string = ",".join(relations_with_categories)
+
+                # print('Relations foreign current: ', current_relations_foreign_string)
+
+                (checked_new_human_value, errors) = check_existance_foreign_relations(gloss, relations_with_categories, new_human_value_list)
+
+                # print('Relations foreign new: ', checked_new_human_value)
+
+                if len(errors):
+                    errors_found += errors
+
+                elif current_relations_foreign_string != checked_new_human_value:
+                    differences.append({'pk': gloss.pk,
+                                        'idgloss': gloss.idgloss,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': current_relations_foreign_string,
+                                        'original_human_value': current_relations_foreign_string,
+                                        'new_machine_value': checked_new_human_value,
+                                        'new_human_value': checked_new_human_value})
+
+            elif human_key == 'Sequential Morphology':
+
+                morphemes = [morpheme.morpheme.annotation_idgloss for morpheme in
+                             MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+                morphemes_string = ", ".join(morphemes)
+
+                # print('Sequential Morphology import: ', morphemes_string)
+
+                (found, not_found, errors) = check_existance_sequential_morphology(gloss, new_human_value_list)
+
+                # print('Sequential Morphology new: ', new_human_value)
+
+                if len(errors):
+                    errors_found += errors
+
+                elif morphemes_string != new_human_value:
+                    differences.append({'pk': gloss.pk,
+                                        'idgloss': gloss.idgloss,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': morphemes_string,
+                                        'original_human_value': morphemes_string,
+                                        'new_machine_value': new_human_value,
+                                        'new_human_value': new_human_value})
+
+            elif human_key == 'Simultaneous Morphology':
+
+                morphemes = [(m.morpheme.annotation_idgloss, m.role) for m in gloss.simultaneous_morphology.all()]
+                sim_morphs = []
+                for m in morphemes:
+                    sim_morphs.append(':'.join(m))
+                simultaneous_morphemes = ','.join(sim_morphs)
+
+                # print('Simultaneous Morphology import: ', simultaneous_morphemes)
+
+                (checked_new_human_value, errors) = check_existance_simultaneous_morphology(gloss, new_human_value_list)
+
+                # print('Simultaneous Morphology new: ', checked_new_human_value)
+
+                if len(errors):
+                    errors_found += errors
+
+                elif simultaneous_morphemes != checked_new_human_value:
+                    differences.append({'pk': gloss.pk,
+                                        'idgloss': gloss.idgloss,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': simultaneous_morphemes,
+                                        'original_human_value': simultaneous_morphemes,
+                                        'new_machine_value': checked_new_human_value,
+                                        'new_human_value': checked_new_human_value})
+
             #If not, find the matching field in the gloss, and remember its 'real' name
             try:
                 field = fields[human_key]
                 machine_key = field.name
+                # print('SUCCESS: accessing field name: (', human_key, ')')
+
             except KeyError:
+
+                # Signbank ID is skipped, for this purpose it was popped from the fields to compare
+                # Skip above fields with complex values: Keywords, Signlanguages, Dialects, Relations to other signs, Relations to foreign signs, Morphology.
+
+                # print('Skipping field name: (', human_key, ')')
                 continue
+
+            # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, ')')
 
             #Try to translate the value to machine values if needed
             if len(field.choices) > 0:
                 human_to_machine_values = {human_value: machine_value for machine_value, human_value in field.choices}
-
+                # print('Import CSV: human_to_machine_values: ', human_to_machine_values)
                 try:
+                    # print('new human value: ', new_human_value)
+
+                    # Because some Handshape names can start with =, a special character ' is tested for in the name
+                    if new_human_value[:1] == '\'':
+                        new_human_value = new_human_value[1:]
+                        # print('revised human value: ', new_human_value)
+
                     new_machine_value = human_to_machine_values[new_human_value]
                 except KeyError:
 
                     #If you can't find a corresponding human value, maybe it's empty
-                    if new_human_value in ['',' ']:
+                    if new_human_value in ['',' ', None, 'None']:
+                        # print('exception in new human value to machine value: ', new_human_value)
                         new_human_value = 'None'
                         new_machine_value = None
 
                     #If not, stop trying
                     else:
-                        raise MachineValueNotFoundError('At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key)
+                        # raise MachineValueNotFoundError('At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key)
+                        error_string = 'At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key
 
+                        errors_found += [error_string]
             #Do something special for integers and booleans
             elif field.__class__.__name__ == 'IntegerField':
+
+                # print('import CSV IntegerField human value for ', human_key, ': ', new_human_value)
 
                 try:
                     new_machine_value = int(new_human_value)
@@ -124,13 +305,19 @@ def compare_valuedict_to_gloss(valuedict,gloss):
                     new_machine_value = None
             elif field.__class__.__name__ == 'NullBooleanField':
 
+                # print('import CSV NullBooleanField human value for ', human_key, ': ', new_human_value)
+
                 if new_human_value in ['True','true']:
                     new_machine_value = True
+                elif new_human_value == 'None':
+                    new_machine_value = None
                 else:
                     new_machine_value = False
 
             #If all the above does not apply, this is a None value or plain text
             else:
+                # print('Import CSV 148: not Integer, not Boolean: new human value: (', new_human_value, ')')
+
                 if new_human_value == 'None':
                     new_machine_value = None
                 else:
@@ -146,6 +333,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
             try:
                 original_human_value = dict(field.choices)[original_machine_value]
             except KeyError:
+
                 original_human_value = original_machine_value
 
             #Remove any weird char
@@ -155,8 +343,21 @@ def compare_valuedict_to_gloss(valuedict,gloss):
             except TypeError:
                 pass
 
+            # test if blank value
+
+            original_human_value = str(original_human_value)
+            new_human_value = str(new_human_value)
+            # print("Hex values for machine key: ", machine_key)
+            # print('Hex original: (', ", ".join([hex(ord(x)) for x in original_human_value]), ')')
+            # print('Hex new:      (', ", ".join([hex(ord(x)) for x in new_human_value]), ')')
+
+            s1 = re.sub(' ','',original_human_value)
+            s2 = re.sub(' ','',new_human_value)
+
+            if s1 == '' and s2 == '':
+                pass
             #Check for change, and save your findings if there is one
-            if original_machine_value != new_machine_value:
+            elif original_machine_value != new_machine_value:
                 differences.append({'pk':gloss.pk,
                                     'idgloss':gloss.idgloss,
                                     'machine_key':machine_key,
@@ -166,7 +367,265 @@ def compare_valuedict_to_gloss(valuedict,gloss):
                                     'new_machine_value':new_machine_value,
                                     'new_human_value':new_human_value})
 
-    return differences
+    return (differences, errors_found)
+
+
+def check_existance_dialect(gloss, values):
+
+    errors = []
+    found = []
+    not_found = []
+
+    for new_value in values:
+        if Dialect.objects.filter(name=new_value):
+            if new_value in found:
+                error_string = 'WARNING: For gloss ' + gloss.idgloss + ' (' + str(
+                    gloss.pk) + '), new Dialect value ' + str(new_value) + ' is duplicate.'
+                errors.append(error_string)
+            else:
+                found += [new_value]
+        else:
+            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) + '), new Dialect value ' + str(new_value) + ' not found.'
+            errors.append(error_string)
+            not_found += [new_value]
+        continue
+
+    return (found, not_found, errors)
+
+
+def check_existance_signlanguage(gloss, values):
+
+    errors = []
+    found = []
+    not_found = []
+
+    for new_value in values:
+        if SignLanguage.objects.filter(name=new_value):
+            if new_value in found:
+                error_string = 'WARNING: For gloss ' + gloss.idgloss + ' (' + str(
+                    gloss.pk) + '), new Sign Language value ' + str(new_value) + ' is duplicate.'
+                errors.append(error_string)
+            else:
+                found += [new_value]
+        else:
+            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) + '), new Sign Language value ' + str(new_value) + ' not found.'
+
+            errors.append(error_string)
+            not_found += [new_value]
+        continue
+
+    return (found, not_found, errors)
+
+def check_existance_sequential_morphology(gloss, values):
+
+    errors = []
+    found = []
+    not_found = []
+
+    for new_value in values:
+
+        try:
+
+            # get the id for the morpheme identifier
+            # morpheme_id = gloss_from_identifier(new_value)
+            # print('check_existance_sequential_morphology, new_value: ', new_value)
+            # this is a gloss, make sure it exists
+            morpheme = gloss_from_identifier(new_value)
+
+            if new_value in found:
+                error_string = 'WARNING: For gloss ' + gloss.idgloss + ' (' + str(
+                    gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' is duplicate.'
+                errors.append(error_string)
+            else:
+                found += [new_value]
+
+        # except ObjectDoesNotExist:
+        except:
+            if new_value in not_found:
+                error_string = 'WARNING: For gloss ' + gloss.idgloss + ' (' + str(
+                    gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' is duplicate.'
+            else:
+                error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(
+                    gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' not found.'
+            errors.append(error_string)
+            not_found += [new_value]
+
+            continue
+
+    if len(values) > 4:
+        error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) + ', too many Sequential Morphology components.'
+        errors.append(error_string)
+
+    return (found, not_found, errors)
+
+def check_existance_simultaneous_morphology(gloss, values):
+
+    errors = []
+    tuples_list = []
+    checked = ''
+    index_sim_morph = 0
+
+    # check syntax
+    for new_value_tuple in values:
+        try:
+            (morpheme, role) = new_value_tuple.split(':')
+            role = role.strip()
+            morpheme = morpheme.strip()
+            # print('taken apart: role: (', role, '), morpheme: (', morpheme, ')')
+            tuples_list.append((morpheme,role))
+        except ValueError:
+            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+                           + '), formatting error in Simultaneous Morphology: ' + str(new_value_tuple) + '. Tuple morpheme:role expected.'
+            errors.append(error_string)
+
+    for (morpheme, role) in tuples_list:
+
+        try:
+
+            # get the id for the morpheme identifier
+            # morpheme_id = gloss_from_identifier(new_value)
+            # print('check_existance_simultaneous_morphology, new_value: ', morpheme)
+            # this is a gloss, make sure it exists
+            morpheme_gloss = gloss_from_identifier(morpheme)
+            morpheme_id = Morpheme.objects.filter(gloss_ptr_id=morpheme_gloss)
+
+            # print('check_existance_simultaneous_morphology, morpheme_id: ', morpheme_id, ' morpheme_gloss: ', morpheme_gloss)
+
+            if not morpheme_id:
+                # print('check_existance_simultaneous_morphology: morpheme not found')
+                error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(
+                    gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
+                errors.append(error_string)
+                continue
+
+            if checked:
+                checked += ',' + ':'.join([morpheme, role])
+            else:
+                checked = ':'.join([morpheme, role])
+
+        except ObjectDoesNotExist:
+            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(
+                gloss.pk) + '), new Simultaneous Morphology value ' + str(morpheme) + ' is not a gloss.'
+            errors.append(error_string)
+
+            continue
+
+    return (checked, errors)
+
+RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant',
+                         'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
+
+
+def check_existance_relations(gloss, relations, values):
+
+    errors = []
+    checked = ''
+    sorted_values = []
+
+    # check syntax
+    for new_value_tuple in values:
+        try:
+            (role, other_gloss) = new_value_tuple.split(':')
+            role = role.strip()
+
+            role = role.replace(' ', '')
+            role = role.lower()
+            other_gloss = other_gloss.strip()
+            # print('taken apart: role: (', role, '), other gloss: (', other_gloss, ')')
+            sorted_values.append((role,other_gloss))
+        except ValueError:
+            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+                           + '), formatting error in Relation to other sign: ' + str(new_value_tuple) + '. Tuple role:gloss expected.'
+            errors.append(error_string)
+
+    # remove duplicates
+    sorted_values = list(set(sorted_values))
+
+    sorted_values = sorted(sorted_values, key=lambda tup: tup[1])
+    # print("sorted values: ", sorted_values)
+
+    # check roles
+    for (role, other_gloss) in sorted_values:
+
+        try:
+            if role not in RELATION_ROLES:
+                raise ValueError
+        except ValueError:
+            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+                           + '), formatting error in Relation to other sign: ' + role + ':' + other_gloss + '. Role ' + role + ' not found.'
+            errors.append(error_string)
+
+    # check other glosses
+    for (role, other_gloss) in sorted_values:
+
+        try:
+
+            target_gloss = gloss_from_identifier(other_gloss)
+
+            if not target_gloss:
+                raise ValueError
+
+            if checked:
+                checked += ',' + ':'.join([role, other_gloss])
+            else:
+                checked = ':'.join([role, other_gloss])
+
+        except ObjectDoesNotExist:
+            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+                           + '), formatting error in Relation to other sign: ' + role + ':' + other_gloss + '. Gloss ' + other_gloss + ' not found.'
+            errors.append(error_string)
+
+            pass
+
+    return (checked, errors)
+
+
+def check_existance_foreign_relations(gloss, relations, values):
+
+    errors = []
+    checked = ''
+    sorted_values = []
+
+    for new_value_tuple in values:
+        try:
+            (loan_word, other_lang, other_lang_gloss) = new_value_tuple.split(':')
+            # print('taken apart: loan: (', loan_word, '), other: (', other_lang, '), gloss: (', other_lang_gloss, ')')
+            sorted_values.append((loan_word,other_lang,other_lang_gloss))
+        except ValueError:
+            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+                           + '), formatting error in Relation to foreign sign: ' + str(new_value_tuple) + '. Tuple bool:string:string expected.'
+            errors.append(error_string)
+
+    # remove duplicates
+    sorted_values = list(set(sorted_values))
+
+    sorted_values = sorted(sorted_values, key=lambda tup: tup[2])
+    # print("sorted values: ", sorted_values)
+
+    for (loan_word, other_lang, other_lang_gloss) in sorted_values:
+
+        # check the syntax of the tuple of changes
+        try:
+            loan_word = loan_word.strip()
+            if loan_word not in ['false', 'False', 'true', 'True']:
+                raise ValueError
+            other_lang = other_lang.strip()
+            other_lang_gloss = other_lang_gloss.strip()
+            # print('taken apart: loan: (', loan_word, '), other: (', other_lang, '), gloss: (', other_lang_gloss, ')')
+            if checked:
+                checked += ',' + ':'.join([loan_word, other_lang, other_lang_gloss])
+            else:
+                checked = ':'.join([loan_word,other_lang,other_lang_gloss])
+            # print('checked: ', checked)
+        except ValueError:
+            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+                           + '), formatting error in Relation to foreign sign: ' \
+                           + loan_word + ':' + other_lang + ':' + other_lang_gloss + '. Tuple bool:string:string expected.'
+            errors.append(error_string)
+
+            pass
+
+    return (checked, errors)
 
 def reload_signbank(request=None):
     """Functions to clear the cache of Apache, also works as view"""

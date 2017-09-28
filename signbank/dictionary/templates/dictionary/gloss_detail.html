@@ -838,7 +838,7 @@
         </div>
         <div id='relations' class='collapse'>
                <table class='table table-condensed'>
-                   {% for rel in gloss.relation_sources.all %}
+                   {% for rel in gloss.relation_sources.all|dictsort:"target.annotation_idgloss" %}
                     <tr id='row_{{rel.id}}'>
                         <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}'><span class='glyphicon glyphicon-trash relation_delete'></span></td>
                         <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>

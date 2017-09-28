@@ -363,12 +363,17 @@ class GlossListView(ListView):
 
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
+        # print('export csv header columns: ', fields)
+
         writer = csv.writer(response)
 
         with override(LANGUAGE_CODE):
-            header = ['Signbank ID'] + [f.verbose_name.title().encode('ascii','ignore').decode() for f in fields]
+            header = ['Signbank ID'] + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
-        for extra_column in ['SignLanguages','Dialects','Keywords','Morphology','Relations to other signs','Relations to foreign signs',]:
+        # print('export csv header: ', header)
+
+        for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology',
+                             'Relations to other signs','Relations to foreign signs',]:
             header.append(extra_column)
 
         writer.writerow(header)
@@ -395,13 +400,6 @@ class GlossListView(ListView):
                 # A handshape name can begin with =. To avoid Office thinking this is a formula, preface with '
                 if value[:1] == '=':
                     value = '\'' + value
-                elif value == 'None' and f.name in ['tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr',
-                                                    'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
-                                                    'tokNoSgnrGr', 'tokNoSgnrO']:
-                    # value is a frequency, change None to numerical value
-                    value = '0'
-
-                # print('export CSV value: ', value)
 
                 row.append(value)
 
@@ -411,21 +409,30 @@ class GlossListView(ListView):
 
             # get dialects
             dialects = [dialect.name for dialect in gloss.dialect.all()]
-            row.append(", ".join(dialects));
+            row.append(", ".join(dialects))
 
-            # get translations
+            # get translations (keywords)
             trans = [t.translation.text for t in gloss.translation_set.all()]
             row.append(", ".join(trans))
 
             # get morphology
+            # Sequential Morphology
             morphemes = [morpheme.morpheme.annotation_idgloss for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
             row.append(", ".join(morphemes))
+
+            # Simultaneous Morphology
+            morphemes = [(m.morpheme.annotation_idgloss, m.role) for m in gloss.simultaneous_morphology.all()]
+            sim_morphs = []
+            for m in morphemes:
+                sim_morphs.append(':'.join(m))
+            simultaneous_morphemes = ', '.join(sim_morphs)
+            row.append(simultaneous_morphemes)
 
             # get relations to other signs
             relations = [(relation.role, relation.target.idgloss) for relation in Relation.objects.filter(source=gloss)]
             relations_with_categories = []
             for rel_cat in relations:
-                relations_with_categories.append(': '.join(rel_cat))
+                relations_with_categories.append(':'.join(rel_cat))
             # print("export csv relations_with_categories: ", relations_with_categories)
 
             relations_categories = ", ".join(relations_with_categories)
@@ -434,10 +441,10 @@ class GlossListView(ListView):
             # print("export csv relations_categories: ", relations_categories)
 
             # get relations to foreign signs
-            relations = [(relation.other_lang, relation.other_lang_gloss) for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
+            relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss) for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
             relations_with_categories = []
             for rel_cat in relations:
-                relations_with_categories.append(': '.join(rel_cat))
+                relations_with_categories.append(':'.join(rel_cat))
             # print("export csv foreign relations_with_categories: ", relations_with_categories)
 
             relations_categories = ", ".join(relations_with_categories)
@@ -447,12 +454,12 @@ class GlossListView(ListView):
 
 
             #Make it safe for weird chars
-            safe_row = [];
+            safe_row = []
             for column in row:
                 try:
                     safe_row.append(column.encode('utf-8').decode())
                 except AttributeError:
-                    safe_row.append(None);
+                    safe_row.append(None)
 
             writer.writerow(safe_row)
 
@@ -815,6 +822,8 @@ class GlossDetailView(DetailView):
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
 
+        # context['otherrelations'] = self.relation_sources.all().order_by('annotation_idgloss')
+
         context['morphologyform'] = GlossMorphologyForm()
         context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
             choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
@@ -941,6 +950,7 @@ class GlossDetailView(DetailView):
             translated_role = machine_value_to_translated_human_value(morphdef.role,morphdef_roles,self.request.LANGUAGE_CODE)
             morphdefs.append((morphdef,translated_role))
 
+        morphdefs = sorted(morphdefs, key=lambda tup: tup[1])
         context['morphdefs'] = morphdefs
 
         # Regroup notes
@@ -1490,7 +1500,7 @@ class MorphemeListView(ListView):
                     row.append(value)
 
             # get languages
-            signlanguages = [signlanguage.name for signlanguage in gloss.language.all()]
+            signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
             row.append(", ".join(signlanguages))
 
             # get dialects
@@ -1571,7 +1581,7 @@ class HandshapeDetailView(DetailView):
                     # print("New handshape: ", new_id)
                     handshape_not_created = 0
                     self.object = new_handshape
-                    break;
+                    break
 
             if handshape_not_created:
                 return HttpResponse('<p>Handshape not configured.</p>')

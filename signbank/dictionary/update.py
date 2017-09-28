@@ -130,28 +130,12 @@ def update_gloss(request, glossid):
         elif field == 'signlanguage':
             # expecting possibly multiple values
 
-            try:
-                gloss.signlanguage.clear()
-                for value in values:
-                    lang = SignLanguage.objects.get(name=value)
-                    gloss.signlanguage.add(lang)
-                gloss.save()
-                newvalue = ", ".join([str(g) for g in gloss.signlanguage.all()])
-            except:                
-                return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
-                
+            return update_signlanguage(gloss, field, values)
+
         elif field == 'dialect':
             # expecting possibly multiple values
 
-            try:
-                gloss.dialect.clear()
-                for value in values:
-                    lang = Dialect.objects.get(name=value)
-                    gloss.dialect.add(lang)
-                gloss.save()
-                newvalue = ", ".join([str(g.name) for g in gloss.dialect.all()])
-            except:                
-                return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
+            return update_dialect(gloss, field, values)
                 
         elif field == "sn":
             # sign number must be unique, return error message if this SN is 
@@ -316,18 +300,294 @@ def update_keywords(gloss, field, value):
     """Update the keyword field"""
 
     kwds = [k.strip() for k in value.split(',')]
+
+    keywords_list = []
+
+    # omit duplicates
+    for kwd in kwds:
+        if kwd not in keywords_list:
+            keywords_list.append(kwd)
+
+    # convert to unique
+    # kwds = list(set(kwds))
+    print('update_keywords unique retain order: ', keywords_list)
+
     # remove current keywords 
     current_trans = gloss.translation_set.all()
     #current_kwds = [t.translation for t in current_trans]
     current_trans.delete()
     # add new keywords
-    for i in range(len(kwds)):
-        (kobj, created) = Keyword.objects.get_or_create(text=kwds[i])
+    for i in range(len(keywords_list)):
+        (kobj, created) = Keyword.objects.get_or_create(text=keywords_list[i])
         trans = Translation(gloss=gloss, translation=kobj, index=i)
         trans.save()
     
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.all()])
     
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+def update_signlanguage(gloss, field, values):
+    # expecting possibly multiple values
+
+    try:
+        gloss.signlanguage.clear()
+        for value in values:
+            lang = SignLanguage.objects.get(name=value)
+            gloss.signlanguage.add(lang)
+        gloss.save()
+        newvalue = ", ".join([str(g) for g in gloss.signlanguage.all()])
+    except:
+        return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
+
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+def update_dialect(gloss, field, values):
+    # expecting possibly multiple values
+
+    try:
+        gloss.dialect.clear()
+        for value in values:
+            lang = Dialect.objects.get(name=value)
+            gloss.dialect.add(lang)
+        gloss.save()
+        newvalue = ", ".join([str(g.name) for g in gloss.dialect.all()])
+    except:
+        return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
+
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+def update_sequential_morphology(gloss, field, values):
+    # expecting possibly multiple values
+
+    morphemes = [morpheme.id for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+
+    # print('update_sequential_morphology: ', values)
+    role = 2
+
+    # the existance of the morphemes in parameter values has already been checked
+    try:
+        for morpheme_def_id in morphemes:
+            old_morpheme = MorphologyDefinition.objects.get(id=morpheme_def_id)
+            print("DELETE: ", old_morpheme)
+            old_morpheme.delete()
+        # gloss.morphemePart.clear()
+        for value in values:
+            # print(role, ' value: ', value)
+            morpheme = gloss_from_identifier(value)
+            # print('morpheme: ', morpheme)
+            morph_def = MorphologyDefinition()
+            # print('after create new MorphologyDefinition')
+            morph_def.parent_gloss = gloss
+            # print('after assign gloss value: ', gloss)
+            morph_def.role = role
+            # print('after assign role value: ', role)
+            morph_def.morpheme = morpheme
+            # print('after assign morpheme value: ', morpheme)
+            morph_def.save()
+            # gloss.morphemePart.add(morph_def)
+            # print('gloss morphemePart created')
+            role = role + 1
+    except:
+        return HttpResponseBadRequest("Unknown Morpheme %s" % values, {'content-type': 'text/plain'})
+
+    newvalue = ", ".join([str(g.idgloss) for g in gloss.morphemePart.all()])
+
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+def update_simultaneous_morphology(gloss, field, values):
+    # expecting possibly multiple values
+
+    existing_sim_ids = [morpheme.id for morpheme in SimultaneousMorphologyDefinition.objects.filter(parent_gloss_id=gloss)]
+
+    new_sim_tuples = []
+
+    for value in values:
+        (morpheme, role) = value.split(':')
+        new_sim_tuples.append((morpheme,role))
+
+    # print('new sim tuples: ', new_sim_tuples)
+
+    # delete any existing simultaneous morphology objects rather than update
+    # to allow (re-)insertion in the correct order
+
+    for sim_id in existing_sim_ids:
+        sim = SimultaneousMorphologyDefinition.objects.get(id=sim_id)
+        print("DELETE: ", sim)
+        sim.delete()
+
+    # the existance of the morphemes has already been checked, but check again anyway
+
+    for (morpheme, role) in new_sim_tuples:
+
+        # print('next tuple (morpheme,role): (', morpheme, ',', role, ')')
+
+        try:
+            morpheme_gloss = gloss_from_identifier(morpheme)
+
+            if not morpheme_gloss:
+                # print('check_existance_simultaneous_morphology: morpheme not found: ', morpheme)
+                raise ValueError
+
+            # print('check_existance_simultaneous_morphology, morpheme_id: ', morpheme_gloss)
+
+            # create new morphology
+            sim = SimultaneousMorphologyDefinition()
+            sim.parent_gloss_id = gloss.id
+            sim.morpheme_id = morpheme_gloss.id
+            # print('morpheme id value: ', morpheme_gloss.id)
+            sim.role = role
+            # print('role value: ', role)
+            sim.save()
+        except:
+            print("morpheme not found")
+            continue
+
+
+    # Refresh Simultaneous Morphology with newly inserted objects
+    # morphemes = [(m.morpheme.annotation_idgloss, m.role) for m in gloss.simultaneous_morphology.all()]
+    morphemes = [(morpheme.morpheme.annotation_idgloss, morpheme.role)
+                 for morpheme in SimultaneousMorphologyDefinition.objects.filter(parent_gloss_id=gloss)]
+    # print('morphemes list: ', morphemes)
+    sim_morphs = []
+    for m in morphemes:
+        sim_morphs.append(':'.join(m))
+    simultaneous_morphemes = ', '.join(sim_morphs)
+
+    newvalue = simultaneous_morphemes
+
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+def subst_foreignrelations(gloss, field, values):
+    # expecting possibly multiple values
+    # values is a list of values, where each value is a tuple of the form 'Boolean:String:String'
+    # The format of argument values has been checked before calling this function
+
+    existing_relations = [(relation.id, relation.other_lang_gloss) for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
+
+    existing_relation_ids = [r[0] for r in existing_relations]
+    existing_relation_other_glosses = [r[1] for r in existing_relations]
+
+    new_relations = []
+    new_relation_tuples = []
+
+    for value in values:
+        (loan_word, other_lang, other_lang_gloss) = value.split(':')
+        new_relation_tuples.append((loan_word,other_lang,other_lang_gloss))
+
+    new_relations = [ t[2] for t in new_relation_tuples]
+
+    # delete any existing relations with obsolete other language gloss
+
+    for rel_id in existing_relation_ids:
+        rel = RelationToForeignSign.objects.get(id=rel_id)
+        if rel.other_lang_gloss not in new_relations:
+            print("DELETE: ", rel)
+            rel.delete()
+
+    # all remaining existing relations are to be updated
+    for (loan_word, other_lang, other_lang_gloss) in new_relation_tuples:
+
+        if other_lang_gloss in existing_relation_other_glosses:
+            # update existing relation
+            rel = RelationToForeignSign.objects.get(gloss=gloss, other_lang_gloss=other_lang_gloss)
+            rel.loan = loan_word in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]
+            rel.other_lang = other_lang
+            rel.save()
+        else:
+            # create new relation
+            new_relations += [other_lang_gloss]
+            rel = RelationToForeignSign(gloss=gloss,loan=loan_word,other_lang=other_lang,other_lang_gloss=other_lang_gloss)
+            rel.save()
+
+    new_relations_refresh = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss) for relation in
+                 RelationToForeignSign.objects.filter(gloss=gloss)]
+    relations_with_categories = []
+    for rel_cat in new_relations_refresh:
+        relations_with_categories.append(':'.join(rel_cat))
+    print("subst foreign relations_with_categories: ", relations_with_categories)
+
+    relations_categories = ", ".join(relations_with_categories)
+
+    newvalue = relations_categories
+
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+def subst_relations(gloss, field, values):
+    # expecting possibly multiple values
+    # values is a list of values, where each value is a tuple of the form 'Role:String'
+    # The format of argument values has been checked before calling this function
+
+    existing_relations = [(relation.id, relation.role, relation.target.idgloss) for relation in Relation.objects.filter(source=gloss)]
+
+    existing_relation_ids = [ r[0] for r in existing_relations ]
+
+    existing_relations_by_role = dict()
+
+    # for r in ['homonym','synonyn','antonym','hyponym','hypernym','seealso','variant']:
+
+    for (rel_id, rel_role, rel_other_gloss) in existing_relations:
+
+        if rel_role in existing_relations_by_role:
+            existing_relations_by_role[rel_role].append(rel_other_gloss)
+        else:
+            existing_relations_by_role[rel_role] = [rel_other_gloss]
+
+    new_tuples_to_add = []
+    already_existing_to_keep = []
+
+    for value in values:
+        (role, target) = value.split(':')
+        role = role.strip()
+        target = target.strip()
+        if role in existing_relations_by_role and target in existing_relations_by_role[role]:
+            already_existing_to_keep.append((role,target))
+        else:
+            new_tuples_to_add.append((role, target))
+
+    # delete existing relations and reverse relations involving this gloss
+    for rel_id in existing_relation_ids:
+        rel = Relation.objects.get(id=rel_id)
+
+        if (rel.role, rel.target.idgloss) in already_existing_to_keep:
+            print('subst_relations, keep: ', rel.target)
+            continue
+
+        # Also delete the reverse relation
+        reverse_relations = Relation.objects.filter(source=rel.target, target=rel.source,
+                                                    role=Relation.get_reverse_role(rel.role))
+        if reverse_relations.count() > 0:
+            print("DELETE reverse relation: target: ", rel.target, ", relation: ", reverse_relations[0])
+            reverse_relations[0].delete()
+
+        print("DELETE: ", rel)
+        rel.delete()
+
+    # all remaining existing relations are to be updated
+    for (role, target) in new_tuples_to_add:
+        print('target gloss subst relations: ', target)
+        try:
+            target_gloss =  gloss_from_identifier(target)
+            rel = Relation(source=gloss, role=role, target=target_gloss)
+            rel.save()
+            # Also add the reverse relation
+            reverse_relation = Relation(source=target_gloss, target=gloss, role=Relation.get_reverse_role(role))
+            reverse_relation.save()
+        except:
+            print("target gloss not found")
+            continue
+
+    new_relations_refresh = [ (relation.role, relation.target.idgloss) for relation in
+                 Relation.objects.filter(source=gloss)]
+    relations_with_categories = []
+    for rel_cat in new_relations_refresh:
+        relations_with_categories.append(':'.join(rel_cat))
+
+    relations_categories = ", ".join(relations_with_categories)
+
+    print("subst relations_categories: ", relations_categories)
+
+    newvalue = relations_categories
+
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 def update_relation(gloss, field, value):
@@ -865,13 +1125,13 @@ def add_othermedia(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 
-    raise Http404('Incorrect request');
+    raise Http404('Incorrect request')
 
 def update_morphology_definition(gloss, field, value, language_code = 'en'):
     """Update one of the relations for this gloss"""
 
     (what, morph_def_id) = field.split('_')
-    what = what.replace('-','_');
+    what = what.replace('-','_')
 
     try:
         morph_def = MorphologyDefinition.objects.get(id=morph_def_id)
