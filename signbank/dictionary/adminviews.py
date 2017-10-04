@@ -994,6 +994,15 @@ class GlossDetailView(DetailView):
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
+        user = self.request.user
+        if user.is_authenticated():
+            import guardian
+            qs = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+            dataset_choices = dict()
+            for dataset in qs:
+                dataset_choices[dataset.name] = dataset.name
+            context['dataset_choices'] = json.dumps(dataset_choices)
+
         return context
 
 class GlossRelationsDetailView(DetailView):
