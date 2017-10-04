@@ -40,6 +40,7 @@
     var handedness_weak_choices = {{gloss.handedness_weak_choices_json|safe}}
     var languages = {{gloss.signlanguage_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
+    var dataset_choices = {{gloss.dataset_choices|safe}};
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
@@ -817,6 +818,7 @@
             <table class="table table-condensed">
             <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage' colspan="2">{% for lang in gloss.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset' colspan="2">{{ gloss.dataset }}</td></tr>
 
             </table>
         </div>

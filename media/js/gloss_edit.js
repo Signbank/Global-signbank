@@ -295,7 +295,12 @@ function configure_edit() {
          type      : 'multiselect',
          data      : dialects,
 		 callback : update_view_and_remember_original_value
-     });     
+     });
+     $('.edit_dataset').editable(edit_post_url, {
+         type      : 'select',
+         data      : dataset_choices,
+		 callback : update_view_and_remember_original_value
+     });
      $('.edit_check').editable(edit_post_url, {
          type      : 'checkbox',
          checkbox: { trueValue: yes_str, falseValue: no_str },

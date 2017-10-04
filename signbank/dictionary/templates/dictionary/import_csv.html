@@ -36,8 +36,18 @@
         <div class="form-group">
             <div class="row">
                 <div class="col-sm-1">
-                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
-                          title="CSV files should have min. two columns, the first being the ID number of the sign (obtained through CSV export), the second column the value that needs to be put in the field. Make sure the header row is cf. the CSV export, indicating the fields you want to make changes to. In case of adding new values to comma-separated fields like Translation Equivalents, make sure that the old values that should stay are also in the second column."></span>
+                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom"
+                          data-html="true"
+                          title="<em>Option 1</em>:
+                          CSV files should have min. two columns,
+                          the first being the ID number of the sign (obtained through CSV export),
+                          the second column the value that needs to be put in the field. Make sure the header row is cf. the CSV export,
+                          indicating the fields you want to make changes to.
+                          In case of adding new values to comma-separated fields like Translation Equivalents,
+                          make sure that the old values that should stay are also in the second column.<br>
+                          <em>Option 2</em>:
+                          To import new glosses, CSV files should omit the ID number column, but include the field columns:
+                          ID Gloss, Annotation ID Gloss, and Annotation ID Gloss English."></span>
                 </div>
                 <div class="col-sm-10">
                     <input type="file" required="" name="file" class="filestyle" data-icon="false" data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
@@ -66,36 +76,103 @@
 
             {% if changes %}
             <div>{% blocktrans %}The following changes were detected:{% endblocktrans %}</div>
-            <ul>
+        <br>
+        <table>
+            <tr>
+                <th style="width:20em; text-align:left;">{% trans "Gloss" %}</th>
+                <th style="width:20em; text-align:left;">{% trans "Field" %}</th>
+                <th style="width:20em; text-align:left;">{% trans "Old" %}</th>
+                <th style="width:40em; text-align:left;">{% trans "New" %}</th>
+            </tr>
             {% for change in changes %}
-
+            <!--The following check is necessary to account for None and False values, which are not empty -->
                 {% if change.original_human_value == change.original_machine_value and change.new_human_value == change.new_machine_value %}
                     {% if original_human_value %}
                     {% blocktrans with pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
-
-                    <li>For {{ idgloss }} ({{pk}}), <em>{{ human_key }}</em> changes from
-                        {{ original_human_value }} to {{new_human_value}}.</li>
+            <tr><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td>
+                <td>{{ original_human_value }}</td><td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                     {% else %}
                     {% blocktrans with pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
 
-                    <li>For {{ idgloss }} ({{pk}}), <em>{{ human_key }}</em> changes to {{new_human_value}}.</li>
+            <tr><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>&nbsp;</td><td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                     {% endif %}
                 {% else %}
                     {% blocktrans with pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
 
-                    <li>For {{ idgloss }} ({{pk}}), <em>{{ human_key }}</em> changes from
-                        <br>{{ original_human_value }} ({{ original_machine_value }}) to <br>{{new_human_value}} ({{ new_machine_value }}).</li>
+            <tr><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>{{ original_human_value }}</td>
+                                <td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                 {% endif %}
+            <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
 
-                <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
             {% endfor %}
+        </table>
 
-            </ul>
             <input type="submit" value="{% blocktrans %}Make changes{% endblocktrans %}" />
 
+            {% elif creation or gloss_already_exists or gloss_already_exists_dutch or gloss_already_exists_english %}
+                {% if gloss_already_exists %}
+                {% trans "Already existing Annotation ID Gloss Dutch and Annotation ID Gloss English:" %}
+                <ul>
+                {% for gloss in gloss_already_exists %}
+                    <li>
+                    ({{ gloss.lemma_id_gloss}},
+                        {{ gloss.annotation_id_gloss }},
+                        {{ gloss.annotation_id_gloss_en }}) :
+                        ({{ gloss.lemma_id_gloss_value }},
+                        {{ gloss.annotation_id_gloss_value }},
+                        {{ gloss.annotation_id_gloss_en_value }})
+                    </li>
+                {% endfor %}
+                </ul>
+                {% endif %}
+                {% if gloss_already_exists_dutch %}
+                {% trans "Already existing Annotation ID Gloss Dutch:" %}
+                <ul>
+                {% for gloss in gloss_already_exists_dutch %}
+                    <li>
+                    ({{ gloss.lemma_id_gloss}},
+                        {{ gloss.annotation_id_gloss }},
+                        {{ gloss.annotation_id_gloss_en }}) :
+                        ({{ gloss.lemma_id_gloss_value }},
+                        {{ gloss.annotation_id_gloss_value }},
+                        {{ gloss.annotation_id_gloss_en_value }})
+                    </li>
+                {% endfor %}
+                </ul>
+                {% endif %}
+                {% if gloss_already_exists_english %}
+                {% trans "Already existing Annotation ID Gloss English:" %}
+                <ul>
+                {% for gloss in gloss_already_exists_english %}
+                    <li>
+                    ({{ gloss.lemma_id_gloss}},
+                        {{ gloss.annotation_id_gloss }},
+                        {{ gloss.annotation_id_gloss_en }}) :
+                        ({{ gloss.lemma_id_gloss_value }},
+                        {{ gloss.annotation_id_gloss_value }},
+                        {{ gloss.annotation_id_gloss_en_value }})
+                    </li>
+                {% endfor %}
+                </ul>
+                {% endif %}
+                {% if creation %}
+                {% trans "Glosses to Create:" %}
+                <ul>
+                {% for newgloss in creation %}
+                    <li>
+                    ({{ newgloss.lemma_id_gloss}},
+                        {{ newgloss.annotation_id_gloss }},
+                        {{ newgloss.annotation_id_gloss_en }}) :
+                        ({{ newgloss.lemma_id_gloss_value }},
+                        {{ newgloss.annotation_id_gloss_value }},
+                        {{ newgloss.annotation_id_gloss_en_value }})
+                    </li>
+                {% endfor %}
+                </ul>
+                {% endif %}
             {% else %}
             <div>{% blocktrans %}No changes were found.{% endblocktrans %}</div>
             {% endif %}

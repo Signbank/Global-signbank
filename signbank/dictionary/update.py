@@ -136,7 +136,26 @@ def update_gloss(request, glossid):
             # expecting possibly multiple values
 
             return update_dialect(gloss, field, values)
-                
+
+        elif field == 'dataset':
+            ds = Dataset.objects.get(name=value)
+
+            if ds.is_public:
+                newvalue = value
+                setattr(gloss, field, ds)
+                gloss.save()
+                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+            if request.user.has_perm('view_dataset',ds):
+                newvalue = value
+                setattr(gloss, field, ds)
+                gloss.save()
+                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+            print('no permission for chosen dataset')
+            newvalue = 'None'
+            return HttpResponse(newvalue, {'content-type': 'text/plain'})
+
         elif field == "sn":
             # sign number must be unique, return error message if this SN is 
             # already taken

@@ -58,6 +58,110 @@ def unescape(string):
 class MachineValueNotFoundError(Exception):
     pass
 
+def create_gloss_from_valuedict(valuedict):
+
+    errors_found = []
+    new_gloss = []
+    already_exists = []
+    already_exists_dutch = []
+    already_exists_english = []
+
+    this_gloss = ''
+    dutch_found = False
+    english_found = False
+
+    #Create an overview of all fields, sorted by their human name
+    with override(LANGUAGE_CODE):
+
+        #Go through all values in the value dict, looking for differences with the gloss
+        # for human_key, new_human_value in valuedict.items():
+
+            # print('loop human key: ', human_key)
+
+        lemma_id_gloss = valuedict['Lemma ID Gloss']
+
+        lemma_id_gloss = lemma_id_gloss.strip()
+
+        annotation_id_gloss = valuedict['Annotation ID Gloss: Dutch']
+
+        annotation_id_gloss = annotation_id_gloss.strip()
+
+        annotation_id_gloss_en = valuedict['Annotation ID Gloss: English']
+
+        annotation_id_gloss_en = annotation_id_gloss_en.strip()
+
+        try:
+            dutch_gloss = gloss_from_identifier(annotation_id_gloss)
+
+            if not dutch_gloss:
+                raise ObjectDoesNotExist
+            else:
+                dutch_found = True
+
+        except ObjectDoesNotExist:
+            dutch_gloss = None
+            pass
+
+        try:
+
+            english_gloss = Gloss.objects.get(annotation_idgloss_en=annotation_id_gloss_en)
+
+            if not english_gloss:
+                raise ObjectDoesNotExist
+            else:
+                english_found = True
+
+        except ObjectDoesNotExist:
+            english_gloss = None
+            pass
+
+        if dutch_found and english_found and dutch_gloss == english_gloss:
+            already_exists.append({'lemma_id_gloss': 'Lemma ID Gloss',
+                                         'lemma_id_gloss_value': lemma_id_gloss,
+                                         'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
+                                         'annotation_id_gloss_value': annotation_id_gloss,
+                                         'annotation_id_gloss_en': 'Annotation ID Gloss: English',
+                                         'annotation_id_gloss_en_value': annotation_id_gloss_en})
+        elif dutch_found and english_found:
+            already_exists_dutch.append({'lemma_id_gloss': 'Lemma ID Gloss',
+                                         'lemma_id_gloss_value': lemma_id_gloss,
+                                         'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
+                                         'annotation_id_gloss_value': annotation_id_gloss,
+                                         'annotation_id_gloss_en': 'Annotation ID Gloss: English',
+                                         'annotation_id_gloss_en_value': annotation_id_gloss_en})
+            already_exists_english.append({'lemma_id_gloss': 'Lemma ID Gloss',
+                                           'lemma_id_gloss_value': lemma_id_gloss,
+                                           'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
+                                           'annotation_id_gloss_value': annotation_id_gloss,
+                                           'annotation_id_gloss_en': 'Annotation ID Gloss: English',
+                                           'annotation_id_gloss_en_value': annotation_id_gloss_en})
+        elif dutch_found:
+            already_exists_dutch.append({'lemma_id_gloss': 'Lemma ID Gloss',
+                                         'lemma_id_gloss_value': lemma_id_gloss,
+                                         'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
+                                         'annotation_id_gloss_value': annotation_id_gloss,
+                                         'annotation_id_gloss_en': 'Annotation ID Gloss: English',
+                                         'annotation_id_gloss_en_value': annotation_id_gloss_en})
+        elif english_found:
+            already_exists_english.append({'lemma_id_gloss': 'Lemma ID Gloss',
+                                         'lemma_id_gloss_value': lemma_id_gloss,
+                                         'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
+                                         'annotation_id_gloss_value': annotation_id_gloss,
+                                         'annotation_id_gloss_en': 'Annotation ID Gloss: English',
+                                         'annotation_id_gloss_en_value': annotation_id_gloss_en})
+        else:
+            new_gloss.append({'lemma_id_gloss': 'Lemma ID Gloss',
+                                'lemma_id_gloss_value': lemma_id_gloss,
+                                'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
+                                'annotation_id_gloss_value': annotation_id_gloss,
+                                'annotation_id_gloss_en': 'Annotation ID Gloss: English',
+                                'annotation_id_gloss_en_value': annotation_id_gloss_en})
+
+        # print('create gloss field ', lemma_id_gloss, ' with annotation ', annotation_id_gloss, ' english: ', annotation_id_gloss_en)
+
+        # print('create new gloss: ', new_gloss, ' already exists: ', already_exists, ' errors: ', errors_found)
+
+    return (new_gloss, already_exists, already_exists_dutch, already_exists_english, errors_found)
 
 def compare_valuedict_to_gloss(valuedict,gloss):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
@@ -91,7 +195,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
 
                 if current_keyword_string != new_human_value:
                     differences.append({'pk':gloss.pk,
-                                        'idgloss':gloss.idgloss,
+                                        'idgloss':gloss.annotation_idgloss,
                                         'machine_key':human_key,
                                         'human_key':human_key,
                                         'original_machine_value':current_keyword_string,
@@ -112,7 +216,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
 
                 if current_signlanguages_string != new_human_value:
                     differences.append({'pk':gloss.pk,
-                                        'idgloss':gloss.idgloss,
+                                        'idgloss':gloss.annotation_idgloss,
                                         'machine_key':human_key,
                                         'human_key':human_key,
                                         'original_machine_value':current_signlanguages_string,
@@ -130,7 +234,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
 
                 elif current_dialects_string != new_human_value:
                     differences.append({'pk': gloss.pk,
-                                        'idgloss': gloss.idgloss,
+                                        'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
                                         'original_machine_value': current_dialects_string,
@@ -139,7 +243,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
                                         'new_human_value': new_human_value})
 
             elif human_key == 'Relations to other signs':
-                relations = [(relation.role, relation.target.idgloss) for relation in gloss.relation_sources.all()]
+                relations = [(relation.role, relation.target.annotation_idgloss) for relation in gloss.relation_sources.all()]
 
                 # sort tuples on other gloss to allow comparison with imported values
 
@@ -162,7 +266,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
 
                 elif current_relations_string != checked_new_human_value:
                     differences.append({'pk': gloss.pk,
-                                        'idgloss': gloss.idgloss,
+                                        'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
                                         'original_machine_value': current_relations_string,
@@ -190,7 +294,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
 
                 elif current_relations_foreign_string != checked_new_human_value:
                     differences.append({'pk': gloss.pk,
-                                        'idgloss': gloss.idgloss,
+                                        'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
                                         'original_machine_value': current_relations_foreign_string,
@@ -215,7 +319,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
 
                 elif morphemes_string != new_human_value:
                     differences.append({'pk': gloss.pk,
-                                        'idgloss': gloss.idgloss,
+                                        'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
                                         'original_machine_value': morphemes_string,
@@ -242,7 +346,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
 
                 elif simultaneous_morphemes != checked_new_human_value:
                     differences.append({'pk': gloss.pk,
-                                        'idgloss': gloss.idgloss,
+                                        'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
                                         'original_machine_value': simultaneous_morphemes,
@@ -290,7 +394,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
                     #If not, stop trying
                     else:
                         # raise MachineValueNotFoundError('At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key)
-                        error_string = 'At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key
+                        error_string = 'At '+gloss.annotation_idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key
 
                         errors_found += [error_string]
             #Do something special for integers and booleans
@@ -359,7 +463,7 @@ def compare_valuedict_to_gloss(valuedict,gloss):
             #Check for change, and save your findings if there is one
             elif original_machine_value != new_machine_value:
                 differences.append({'pk':gloss.pk,
-                                    'idgloss':gloss.idgloss,
+                                    'idgloss':gloss.annotation_idgloss,
                                     'machine_key':machine_key,
                                     'human_key':human_key,
                                     'original_machine_value':original_machine_value,
@@ -379,13 +483,13 @@ def check_existance_dialect(gloss, values):
     for new_value in values:
         if Dialect.objects.filter(name=new_value):
             if new_value in found:
-                error_string = 'WARNING: For gloss ' + gloss.idgloss + ' (' + str(
+                error_string = 'WARNING: For gloss ' + gloss.annotation_idgloss + ' (' + str(
                     gloss.pk) + '), new Dialect value ' + str(new_value) + ' is duplicate.'
                 errors.append(error_string)
             else:
                 found += [new_value]
         else:
-            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) + '), new Dialect value ' + str(new_value) + ' not found.'
+            error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) + '), new Dialect value ' + str(new_value) + ' not found.'
             errors.append(error_string)
             not_found += [new_value]
         continue
@@ -402,13 +506,13 @@ def check_existance_signlanguage(gloss, values):
     for new_value in values:
         if SignLanguage.objects.filter(name=new_value):
             if new_value in found:
-                error_string = 'WARNING: For gloss ' + gloss.idgloss + ' (' + str(
+                error_string = 'WARNING: For gloss ' + gloss.annotation_idgloss + ' (' + str(
                     gloss.pk) + '), new Sign Language value ' + str(new_value) + ' is duplicate.'
                 errors.append(error_string)
             else:
                 found += [new_value]
         else:
-            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) + '), new Sign Language value ' + str(new_value) + ' not found.'
+            error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) + '), new Sign Language value ' + str(new_value) + ' not found.'
 
             errors.append(error_string)
             not_found += [new_value]
@@ -433,7 +537,7 @@ def check_existance_sequential_morphology(gloss, values):
             morpheme = gloss_from_identifier(new_value)
 
             if new_value in found:
-                error_string = 'WARNING: For gloss ' + gloss.idgloss + ' (' + str(
+                error_string = 'WARNING: For gloss ' + gloss.annotation_idgloss + ' (' + str(
                     gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' is duplicate.'
                 errors.append(error_string)
             else:
@@ -442,10 +546,10 @@ def check_existance_sequential_morphology(gloss, values):
         # except ObjectDoesNotExist:
         except:
             if new_value in not_found:
-                error_string = 'WARNING: For gloss ' + gloss.idgloss + ' (' + str(
+                error_string = 'WARNING: For gloss ' + gloss.annotation_idgloss + ' (' + str(
                     gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' is duplicate.'
             else:
-                error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(
+                error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(
                     gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' not found.'
             errors.append(error_string)
             not_found += [new_value]
@@ -453,7 +557,7 @@ def check_existance_sequential_morphology(gloss, values):
             continue
 
     if len(values) > 4:
-        error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) + ', too many Sequential Morphology components.'
+        error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) + ', too many Sequential Morphology components.'
         errors.append(error_string)
 
     return (found, not_found, errors)
@@ -474,7 +578,7 @@ def check_existance_simultaneous_morphology(gloss, values):
             # print('taken apart: role: (', role, '), morpheme: (', morpheme, ')')
             tuples_list.append((morpheme,role))
         except ValueError:
-            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+            error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
                            + '), formatting error in Simultaneous Morphology: ' + str(new_value_tuple) + '. Tuple morpheme:role expected.'
             errors.append(error_string)
 
@@ -493,7 +597,7 @@ def check_existance_simultaneous_morphology(gloss, values):
 
             if not morpheme_id:
                 # print('check_existance_simultaneous_morphology: morpheme not found')
-                error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(
+                error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(
                     gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
                 errors.append(error_string)
                 continue
@@ -504,7 +608,7 @@ def check_existance_simultaneous_morphology(gloss, values):
                 checked = ':'.join([morpheme, role])
 
         except ObjectDoesNotExist:
-            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(
+            error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(
                 gloss.pk) + '), new Simultaneous Morphology value ' + str(morpheme) + ' is not a gloss.'
             errors.append(error_string)
 
@@ -534,7 +638,7 @@ def check_existance_relations(gloss, relations, values):
             # print('taken apart: role: (', role, '), other gloss: (', other_gloss, ')')
             sorted_values.append((role,other_gloss))
         except ValueError:
-            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+            error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
                            + '), formatting error in Relation to other sign: ' + str(new_value_tuple) + '. Tuple role:gloss expected.'
             errors.append(error_string)
 
@@ -551,7 +655,7 @@ def check_existance_relations(gloss, relations, values):
             if role not in RELATION_ROLES:
                 raise ValueError
         except ValueError:
-            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+            error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
                            + '), formatting error in Relation to other sign: ' + role + ':' + other_gloss + '. Role ' + role + ' not found.'
             errors.append(error_string)
 
@@ -563,7 +667,7 @@ def check_existance_relations(gloss, relations, values):
             target_gloss = gloss_from_identifier(other_gloss)
 
             if not target_gloss:
-                raise ValueError
+                raise ObjectDoesNotExist
 
             if checked:
                 checked += ',' + ':'.join([role, other_gloss])
@@ -571,7 +675,7 @@ def check_existance_relations(gloss, relations, values):
                 checked = ':'.join([role, other_gloss])
 
         except ObjectDoesNotExist:
-            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+            error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
                            + '), formatting error in Relation to other sign: ' + role + ':' + other_gloss + '. Gloss ' + other_gloss + ' not found.'
             errors.append(error_string)
 
@@ -592,7 +696,7 @@ def check_existance_foreign_relations(gloss, relations, values):
             # print('taken apart: loan: (', loan_word, '), other: (', other_lang, '), gloss: (', other_lang_gloss, ')')
             sorted_values.append((loan_word,other_lang,other_lang_gloss))
         except ValueError:
-            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+            error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
                            + '), formatting error in Relation to foreign sign: ' + str(new_value_tuple) + '. Tuple bool:string:string expected.'
             errors.append(error_string)
 
@@ -618,7 +722,7 @@ def check_existance_foreign_relations(gloss, relations, values):
                 checked = ':'.join([loan_word,other_lang,other_lang_gloss])
             # print('checked: ', checked)
         except ValueError:
-            error_string = 'ERROR: For gloss ' + gloss.idgloss + ' (' + str(gloss.pk) \
+            error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
                            + '), formatting error in Relation to foreign sign: ' \
                            + loan_word + ':' + other_lang + ':' + other_lang_gloss + '. Tuple bool:string:string expected.'
             errors.append(error_string)

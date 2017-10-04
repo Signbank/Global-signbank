@@ -1276,7 +1276,15 @@ minor or insignificant ways that can be ignored.""")
             d[l.name] = l.name
 
         return json.dumps(d)
-    
+
+    def dataset_choices(self):
+
+        d = dict()
+        for s in Dataset.objects.all():
+            d[s.name] = s.name
+
+        return json.dumps(d)
+
     def get_choice_lists(self):
         """Return JSON for the location choice list"""
  

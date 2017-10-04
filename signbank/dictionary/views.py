@@ -26,7 +26,7 @@ from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dic
 import signbank.dictionary.forms
 
 from signbank.video.forms import VideoUploadForGlossForm
-import signbank.tools
+from signbank.tools import *
 from signbank.tools import save_media, compare_valuedict_to_gloss, MachineValueNotFoundError
 
 import signbank.settings
@@ -600,13 +600,22 @@ def import_csv(request):
     uploadform = signbank.dictionary.forms.CSVUploadForm
     changes = []
     error = False
+    creation = []
+    gloss_already_exists = []
+    gloss_already_exists_dutch = []
+    gloss_already_exists_english = []
 
     #Propose changes
     if len(request.FILES) > 0:
 
         changes = []
+        gloss_already_exists = []
+        gloss_already_exists_dutch = []
+        gloss_already_exists_english = []
+
         csv_text = request.FILES['file'].read().decode('UTF-8')
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
+        creation = []
 
         # print('import CSV: csv_lines: ', csv_lines)
 
@@ -631,8 +640,21 @@ def import_csv(request):
 
             # print("import CSV: value_dict: ", value_dict)
             try:
-                pk = int(value_dict['Signbank ID'])
+                if 'Signbank ID' in value_dict:
+                    pk = int(value_dict['Signbank ID'])
+                else:
+                    (new_gloss, already_exists, already_exists_dutch, already_exists_english, error_create) = create_gloss_from_valuedict(value_dict)
+                    creation += new_gloss
+                    gloss_already_exists += already_exists
+                    gloss_already_exists_dutch += already_exists_dutch
+                    gloss_already_exists_english += already_exists_english
+                    if not error:
+                        error = error_create
+                    else:
+                        error.append(error_create)
+                    continue
             except ValueError:
+                print('Signbank ID not an integer value: ', value_dict['Signbank ID'])
                 continue
 
             try:
@@ -646,8 +668,10 @@ def import_csv(request):
                 else:
                     error.append(e)
 
+                print('import_csv gloss does not exist, line ', str(nl), ' gloss id ', str(pk))
                 continue
 
+            # print('line after gloss does not exist, line ', str(nl))
             try:
                 (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss)
                 changes += changes_found
@@ -690,6 +714,7 @@ def import_csv(request):
 
             #In case there's no dot, this is not a value we set at the previous page
             except ValueError:
+                print("no dot in key error")
                 continue
 
             gloss = Gloss.objects.get(pk=pk)
@@ -795,7 +820,15 @@ def import_csv(request):
 
         stage = 0
 
-    return render(request,'dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,'error':error})
+    # print('before return creation: ', creation)
+    # print('before return changes: ', changes)
+
+    return render(request,'dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,
+                                                        'creation':creation,
+                                                        'gloss_already_exists':gloss_already_exists,
+                                                        'gloss_already_exists_dutch':gloss_already_exists_dutch,
+                                                        'gloss_already_exists_english':gloss_already_exists_english,
+                                                        'error':error})
 
 def switch_to_language(request,language):
 
