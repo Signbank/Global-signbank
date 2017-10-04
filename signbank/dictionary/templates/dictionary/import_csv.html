@@ -77,7 +77,7 @@
             {% if changes %}
             <div>{% blocktrans %}The following changes were detected:{% endblocktrans %}</div>
         <br>
-        <table>
+        <table class="table table-striped">
             <tr>
                 <th style="width:20em; text-align:left;">{% trans "Gloss" %}</th>
                 <th style="width:20em; text-align:left;">{% trans "Field" %}</th>
@@ -87,7 +87,7 @@
             {% for change in changes %}
             <!--The following check is necessary to account for None and False values, which are not empty -->
                 {% if change.original_human_value == change.original_machine_value and change.new_human_value == change.new_machine_value %}
-                    {% if original_human_value %}
+                    {% if change.original_human_value %}
                     {% blocktrans with pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
             <tr><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td>
                 <td>{{ original_human_value }}</td><td>{{new_human_value}}</td></tr>
