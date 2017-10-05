@@ -383,28 +383,28 @@ class GlossListView(ListView):
             row = [str(gloss.pk)]
             for f in fields:
 
-                print('export csv, field ', f)
+                # print('export csv, field ', f)
                 #Try the value of the choicelist
                 try:
                     value = getattr(gloss, 'get_' + f.name + '_display')()
 
-                    print('value display okay: ', value)
+                    # print('value display okay: ', value)
                 #If it's not there, try the raw value
                 except AttributeError:
                     value = getattr(gloss,f.name)
-                    print('value display exception: ', value)
+                    # print('value display exception: ', value)
 
                     if f.name == 'weakdrop' or f.name == 'weakprop':
                         if value == None:
                             value = 'Neutral'
-                            print('value display converted: ', value)
+                            # print('value display converted: ', value)
 
                     # This was disabled with the move to Python 3... might not be needed anymore?
                     # if isinstance(value,unicode):
                     #     value = str(value.encode('ascii','xmlcharrefreplace'));
 
                 if not isinstance(value,str):
-                    print('value is not a string, convert it')
+                    # print('value is not a string, convert it')
                     value = str(value)
 
                 # A handshape name can begin with =. To avoid Office thinking this is a formula, preface with '

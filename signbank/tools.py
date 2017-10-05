@@ -192,6 +192,11 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
         differences = []
 
+        if gloss.dataset:
+            current_dataset = gloss.dataset.name
+        else:
+            current_dataset = 'None'
+
         #Go through all values in the value dict, looking for differences with the gloss
         for human_key, new_human_value in valuedict.items():
 
@@ -213,6 +218,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 if current_keyword_string != new_human_value and new_human_value != 'None' and new_human_value != '':
                     differences.append({'pk':gloss.pk,
+                                        'dataset': current_dataset,
                                         'idgloss':gloss.annotation_idgloss,
                                         'machine_key':human_key,
                                         'human_key':human_key,
@@ -238,6 +244,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 if current_signlanguages_string != new_human_value:
                     differences.append({'pk':gloss.pk,
+                                        'dataset': current_dataset,
                                         'idgloss':gloss.annotation_idgloss,
                                         'machine_key':human_key,
                                         'human_key':human_key,
@@ -260,6 +267,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 elif current_dialects_string != new_human_value:
                     differences.append({'pk': gloss.pk,
+                                        'dataset': current_dataset,
                                         'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
@@ -279,6 +287,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 if new_human_value in my_datasets:
                     if current_dataset != new_human_value:
                         differences.append({'pk': gloss.pk,
+                                            'dataset': current_dataset,
                                             'idgloss': gloss.annotation_idgloss,
                                             'machine_key': human_key,
                                             'human_key': human_key,
@@ -321,6 +330,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 elif current_relations_string != checked_new_human_value:
                     differences.append({'pk': gloss.pk,
+                                        'dataset': current_dataset,
                                         'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
@@ -353,6 +363,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 elif current_relations_foreign_string != checked_new_human_value:
                     differences.append({'pk': gloss.pk,
+                                        'dataset': current_dataset,
                                         'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
@@ -381,6 +392,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 elif morphemes_string != new_human_value:
                     differences.append({'pk': gloss.pk,
+                                        'dataset': current_dataset,
                                         'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
@@ -411,6 +423,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 elif simultaneous_morphemes != checked_new_human_value:
                     differences.append({'pk': gloss.pk,
+                                        'dataset': current_dataset,
                                         'idgloss': gloss.annotation_idgloss,
                                         'machine_key': human_key,
                                         'human_key': human_key,
@@ -483,10 +496,12 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                     new_machine_value = None
                 elif new_human_value_lower in ['true', 'yes', '1']:
                     new_machine_value = True
+                    new_human_value = 'True'
                 elif new_human_value_lower == 'none':
                     new_machine_value = None
                 elif new_human_value_lower in ['false', 'no', '0']:
                     new_machine_value = False
+                    new_human_value = 'False'
                 else:
                     # Boolean expected
                     if field.name == 'weakdrop' or field.name == 'weakprop':
@@ -544,8 +559,10 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 # print('for human key: ', human_key)
                 # print('different: original_machine_value: ', original_machine_value, ', new machine value: ', new_machine_value)
                 # print('different: original_human_value: ', original_human_value, ', new human value: ', new_human_value)
-
+                if (human_key == 'WD' or human_key == 'WP') and original_human_value == 'None':
+                    original_human_value = 'Neutral'
                 differences.append({'pk':gloss.pk,
+                                    'dataset': current_dataset,
                                     'idgloss':gloss.annotation_idgloss,
                                     'machine_key':machine_key,
                                     'human_key':human_key,
