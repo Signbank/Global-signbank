@@ -597,6 +597,14 @@ def import_csv(request):
     if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
         return HttpResponse('You are not allowed to see this page.')
 
+    user = request.user
+    import guardian
+    qs = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
+
+    my_datasets = [ dataset.name for dataset in qs ]
+
+    # print('datasets: ', my_datasets)
+
     uploadform = signbank.dictionary.forms.CSVUploadForm
     changes = []
     error = False
@@ -643,15 +651,20 @@ def import_csv(request):
                 if 'Signbank ID' in value_dict:
                     pk = int(value_dict['Signbank ID'])
                 else:
-                    (new_gloss, already_exists, already_exists_dutch, already_exists_english, error_create) = create_gloss_from_valuedict(value_dict)
+                    (new_gloss, already_exists, already_exists_dutch, already_exists_english, error_create) = create_gloss_from_valuedict(value_dict,my_datasets)
                     creation += new_gloss
                     gloss_already_exists += already_exists
                     gloss_already_exists_dutch += already_exists_dutch
                     gloss_already_exists_english += already_exists_english
-                    if not error:
-                        error = error_create
-                    else:
-                        error.append(error_create)
+                    if len(error_create):
+                        # more than one error found
+                        errors_found_string = '\n'.join(error_create)
+                        # print("errors found string: ", errors_found_string)
+
+                        if not error:
+                            error = [errors_found_string]
+                        else:
+                            error.append(errors_found_string)
                     continue
             except ValueError:
                 print('Signbank ID not an integer value: ', value_dict['Signbank ID'])
@@ -673,7 +686,7 @@ def import_csv(request):
 
             # print('line after gloss does not exist, line ', str(nl))
             try:
-                (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss)
+                (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss,my_datasets)
                 changes += changes_found
                 # changes += compare_valuedict_to_gloss(value_dict,gloss)
 
@@ -793,9 +806,9 @@ def import_csv(request):
                 #Replace the value for bools
                 if gloss._meta.get_field(fieldname).__class__.__name__ == 'NullBooleanField':
 
-                    if new_value in ['true','True']:
+                    if new_value in ['true','True', 'TRUE']:
                         new_value = True
-                    elif new_value == 'None':
+                    elif new_value == 'None' or new_value == 'Neutral':
                         new_value = None
                     else:
                         new_value = False

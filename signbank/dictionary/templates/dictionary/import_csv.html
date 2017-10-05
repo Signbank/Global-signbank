@@ -79,7 +79,7 @@
         <br>
         <table class="table table-striped">
             <tr>
-                <th style="width:20em; text-align:left;">{% trans "Gloss" %}</th>
+                <th style="width:20em; text-align:left;">{% trans "Annotation ID Gloss: Dutch" %} ({% trans "Signbank ID" %})</th>
                 <th style="width:20em; text-align:left;">{% trans "Field" %}</th>
                 <th style="width:20em; text-align:left;">{% trans "Old" %}</th>
                 <th style="width:40em; text-align:left;">{% trans "New" %}</th>
@@ -115,63 +115,83 @@
             {% elif creation or gloss_already_exists or gloss_already_exists_dutch or gloss_already_exists_english %}
                 {% if gloss_already_exists %}
                 {% trans "Already existing Annotation ID Gloss Dutch and Annotation ID Gloss English:" %}
-                <ul>
+                <table class="table table-striped">
+                    <tr>
+                        <th>{% trans "Dataset" %}</th>
+                        <th>{% trans "Lemma ID Gloss" %}</th>
+                        <th>{% trans "Annotation ID Gloss: Dutch" %}</th>
+                        <th>{% trans "Annotation ID Gloss: English" %}</th>
+                    </tr>
                 {% for gloss in gloss_already_exists %}
-                    <li>
-                    ({{ gloss.lemma_id_gloss}},
-                        {{ gloss.annotation_id_gloss }},
-                        {{ gloss.annotation_id_gloss_en }}) :
-                        ({{ gloss.lemma_id_gloss_value }},
-                        {{ gloss.annotation_id_gloss_value }},
-                        {{ gloss.annotation_id_gloss_en_value }})
-                    </li>
+                    <tr>
+                    <td>{{ gloss.dataset }}</td>
+                    <td>{{ gloss.lemma_id_gloss_value }}</td>
+                    <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
+                        {{ gloss.annotation_id_gloss_value }}</a></td>
+                    <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
+                        {{ gloss.annotation_id_gloss_en_value }}</a></td>
+                    </tr>
                 {% endfor %}
-                </ul>
+                </table>
                 {% endif %}
                 {% if gloss_already_exists_dutch %}
                 {% trans "Already existing Annotation ID Gloss Dutch:" %}
-                <ul>
+                <table class="table table-striped">
+                    <tr>
+                        <th>{% trans "Dataset" %}</th>
+                        <th>{% trans "Lemma ID Gloss" %}</th>
+                        <th>{% trans "Annotation ID Gloss: Dutch" %}</th>
+                        <th>{% trans "Annotation ID Gloss: English" %}</th>
+                    </tr>
                 {% for gloss in gloss_already_exists_dutch %}
-                    <li>
-                    ({{ gloss.lemma_id_gloss}},
-                        {{ gloss.annotation_id_gloss }},
-                        {{ gloss.annotation_id_gloss_en }}) :
-                        ({{ gloss.lemma_id_gloss_value }},
-                        {{ gloss.annotation_id_gloss_value }},
-                        {{ gloss.annotation_id_gloss_en_value }})
-                    </li>
+                    <tr>
+                        <td>{{ gloss.dataset }}</td>
+                        <td>{{ gloss.lemma_id_gloss_value }}</td>
+                        <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
+                            {{ gloss.annotation_id_gloss_value }}</a></td>
+                        <td>{{ gloss.annotation_id_gloss_en_value }}</td>
+                    </tr>
                 {% endfor %}
-                </ul>
+                </table>
                 {% endif %}
                 {% if gloss_already_exists_english %}
                 {% trans "Already existing Annotation ID Gloss English:" %}
-                <ul>
+                <table class="table table-striped">
+                    <tr>
+                        <th>{% trans "Dataset" %}</th>
+                        <th>{% trans "Lemma ID Gloss" %}</th>
+                        <th>{% trans "Annotation ID Gloss: Dutch" %}</th>
+                        <th>{% trans "Annotation ID Gloss: English" %}</th>
+                    </tr>
                 {% for gloss in gloss_already_exists_english %}
-                    <li>
-                    ({{ gloss.lemma_id_gloss}},
-                        {{ gloss.annotation_id_gloss }},
-                        {{ gloss.annotation_id_gloss_en }}) :
-                        ({{ gloss.lemma_id_gloss_value }},
-                        {{ gloss.annotation_id_gloss_value }},
-                        {{ gloss.annotation_id_gloss_en_value }})
-                    </li>
+                    <tr>
+                        <td>{{ gloss.dataset }}</td>
+                        <td>{{ gloss.lemma_id_gloss_value }}</td>
+                        <td>{{ gloss.annotation_id_gloss_value }}</td>
+                        <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
+                            {{ gloss.annotation_id_gloss_en_value }}</a></td>
+                    </tr>
                 {% endfor %}
-                </ul>
+                </table>
                 {% endif %}
                 {% if creation %}
                 {% trans "Glosses to Create:" %}
-                <ul>
+                <table class="table table-striped">
+                    <tr>
+                        <th>{% trans "Dataset" %}</th>
+                        <th>{% trans "Lemma ID Gloss" %}</th>
+                        <th>{% trans "Annotation ID Gloss: Dutch" %}</th>
+                        <th>{% trans "Annotation ID Gloss: English" %}</th>
+                    </tr>
                 {% for newgloss in creation %}
-                    <li>
-                    ({{ newgloss.lemma_id_gloss}},
-                        {{ newgloss.annotation_id_gloss }},
-                        {{ newgloss.annotation_id_gloss_en }}) :
-                        ({{ newgloss.lemma_id_gloss_value }},
-                        {{ newgloss.annotation_id_gloss_value }},
-                        {{ newgloss.annotation_id_gloss_en_value }})
-                    </li>
+                    <tr>
+                        <td>{{ newgloss.dataset }}</td>
+                        <td>{{ newgloss.lemma_id_gloss_value }}</td>
+                        <td>{{ newgloss.annotation_id_gloss_value }}</td>
+                        <td>{{ newgloss.annotation_id_gloss_en_value }}</td>
+                    </tr>
                 {% endfor %}
-                </ul>
+                </table>
                 {% endif %}
             {% else %}
             <div>{% blocktrans %}No changes were found.{% endblocktrans %}</div>

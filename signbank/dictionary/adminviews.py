@@ -349,7 +349,8 @@ class GlossListView(ListView):
 #        fields = [f.name for f in Gloss._meta.fields]
         #We want to manually set which fields to export here
 
-        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'StemSN', 'rmrks', 'handedness',
+        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'dataset',
+                      'useInstr', 'sense', 'StemSN', 'rmrks', 'handedness', 'weakdrop', 'weakprop',
                       'domhndsh', 'domhndsh_letter', 'domhndsh_number', 'subhndsh', 'subhndsh_letter', 'subhndsh_number',
                       'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc', 'oriCh', 'contType',
                       'movSh', 'movDir', 'repeat', 'altern', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
@@ -382,19 +383,28 @@ class GlossListView(ListView):
             row = [str(gloss.pk)]
             for f in fields:
 
+                print('export csv, field ', f)
                 #Try the value of the choicelist
                 try:
                     value = getattr(gloss, 'get_' + f.name + '_display')()
 
+                    print('value display okay: ', value)
                 #If it's not there, try the raw value
                 except AttributeError:
                     value = getattr(gloss,f.name)
+                    print('value display exception: ', value)
+
+                    if f.name == 'weakdrop' or f.name == 'weakprop':
+                        if value == None:
+                            value = 'Neutral'
+                            print('value display converted: ', value)
 
                     # This was disabled with the move to Python 3... might not be needed anymore?
                     # if isinstance(value,unicode):
                     #     value = str(value.encode('ascii','xmlcharrefreplace'));
 
                 if not isinstance(value,str):
+                    print('value is not a string, convert it')
                     value = str(value)
 
                 # A handshape name can begin with =. To avoid Office thinking this is a formula, preface with '
@@ -1460,7 +1470,7 @@ class MorphemeListView(ListView):
         #        fields = [f.name for f in Gloss._meta.fields]
         # We want to manually set which fields to export here
 
-        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en',
+        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'dataset',
                       'mrpType',
                       'useInstr', 'sense', 'StemSN', 'rmrks',
                       'handedness',

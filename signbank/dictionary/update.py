@@ -138,6 +138,7 @@ def update_gloss(request, glossid):
             return update_dialect(gloss, field, values)
 
         elif field == 'dataset':
+            original_value = getattr(gloss,field)
             ds = Dataset.objects.get(name=value)
 
             if ds.is_public:
@@ -146,14 +147,15 @@ def update_gloss(request, glossid):
                 gloss.save()
                 return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-            if request.user.has_perm('view_dataset',ds):
+            import guardian
+            if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
                 newvalue = value
                 setattr(gloss, field, ds)
                 gloss.save()
                 return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
             print('no permission for chosen dataset')
-            newvalue = 'None'
+            newvalue = original_value
             return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
         elif field == "sn":
