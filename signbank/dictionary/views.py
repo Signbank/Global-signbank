@@ -650,6 +650,22 @@ def import_csv(request):
             try:
                 if 'Signbank ID' in value_dict:
                     pk = int(value_dict['Signbank ID'])
+                # no column Signbank ID
+                elif not ('Lemma ID Gloss' in value_dict
+                          and 'Annotation ID Gloss: Dutch' in value_dict
+                          and 'Annotation ID Gloss: English' in value_dict
+                          and 'Dataset' in value_dict):
+                    # not enough columns for creating glosses, input file needs fixing
+                    e1 = 'To create glosses, the following columns are required: ' \
+                        + 'Dataset, Lemma ID Gloss, Annotation ID Gloss: Dutch, Annotation ID Gloss: English.'
+                    e2 = 'To update glosses, column Signbank ID is required.'
+
+                    if not error:
+                        error = [e1, e2]
+                    else:
+                        error.append(e1).append(e2)
+                    break
+
                 else:
                     (new_gloss, already_exists, already_exists_dutch, already_exists_english, error_create) = create_gloss_from_valuedict(value_dict,my_datasets)
                     creation += new_gloss
@@ -667,7 +683,13 @@ def import_csv(request):
                             error.append(errors_found_string)
                     continue
             except ValueError:
-                print('Signbank ID not an integer value: ', value_dict['Signbank ID'])
+                e = 'Signbank ID must be numerical: '+ str(value_dict['Signbank ID'])
+
+                if not error:
+                    error = [e]
+                else:
+                    error.append(e)
+
                 continue
 
             try:

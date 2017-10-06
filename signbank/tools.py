@@ -65,6 +65,7 @@ def create_gloss_from_valuedict(valuedict,datasets):
     already_exists = []
     already_exists_dutch = []
     already_exists_english = []
+    glosses_dataset = None
 
     this_gloss = ''
     dutch_found = False
@@ -73,11 +74,14 @@ def create_gloss_from_valuedict(valuedict,datasets):
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
 
-        #Go through all values in the value dict, looking for differences with the gloss
-        # for human_key, new_human_value in valuedict.items():
+        # initialise
+        glosses_dataset = None
 
-            # print('loop human key: ', human_key)
-        glosses_dataset = valuedict['Glosses dataset']
+        glosses_dataset = valuedict['Dataset']
+
+        glosses_dataset = glosses_dataset.strip()
+
+        print('dataset found: ', glosses_dataset)
 
         if glosses_dataset and glosses_dataset != 'None' and not glosses_dataset in datasets:
             error_string = 'Dataset ' + glosses_dataset + ' not found.'
@@ -121,9 +125,10 @@ def create_gloss_from_valuedict(valuedict,datasets):
             english_gloss = None
             pass
 
+        # print('dataset of gloss: ', glosses_dataset)
         if dutch_found and english_found and dutch_gloss == english_gloss:
             already_exists.append({'gloss_pk': dutch_gloss.pk,
-                                    'dataset': dutch_gloss.dataset,
+                                    'dataset': glosses_dataset,
                                     'lemma_id_gloss': 'Lemma ID Gloss',
                                     'lemma_id_gloss_value': lemma_id_gloss,
                                     'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -132,7 +137,7 @@ def create_gloss_from_valuedict(valuedict,datasets):
                                     'annotation_id_gloss_en_value': annotation_id_gloss_en})
         elif dutch_found and english_found:
             already_exists_dutch.append({'gloss_pk': dutch_gloss.pk,
-                                         'dataset': dutch_gloss.dataset,
+                                         'dataset': glosses_dataset,
                                          'lemma_id_gloss': 'Lemma ID Gloss',
                                          'lemma_id_gloss_value': lemma_id_gloss,
                                          'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -140,7 +145,7 @@ def create_gloss_from_valuedict(valuedict,datasets):
                                          'annotation_id_gloss_en': 'Annotation ID Gloss: English',
                                          'annotation_id_gloss_en_value': annotation_id_gloss_en})
             already_exists_english.append({'gloss_pk': english_gloss.pk,
-                                           'dataset': english_gloss.dataset,
+                                           'dataset': glosses_dataset,
                                            'lemma_id_gloss': 'Lemma ID Gloss',
                                            'lemma_id_gloss_value': lemma_id_gloss,
                                            'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -149,7 +154,7 @@ def create_gloss_from_valuedict(valuedict,datasets):
                                            'annotation_id_gloss_en_value': annotation_id_gloss_en})
         elif dutch_found:
             already_exists_dutch.append({'gloss_pk': dutch_gloss.pk,
-                                         'dataset': dutch_gloss.dataset,
+                                         'dataset': glosses_dataset,
                                          'lemma_id_gloss': 'Lemma ID Gloss',
                                          'lemma_id_gloss_value': lemma_id_gloss,
                                          'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -158,7 +163,7 @@ def create_gloss_from_valuedict(valuedict,datasets):
                                          'annotation_id_gloss_en_value': annotation_id_gloss_en})
         elif english_found:
             already_exists_english.append({'gloss_pk': english_gloss.pk,
-                                           'dataset': english_gloss.dataset,
+                                           'dataset': glosses_dataset,
                                          'lemma_id_gloss': 'Lemma ID Gloss',
                                          'lemma_id_gloss_value': lemma_id_gloss,
                                          'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -185,9 +190,15 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
 
     errors_found = []
+    column_name_error = False
 
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
+
+        # There are too many to show the user!
+        # allowed_column_names = [ str(f.verbose_name) for f in Gloss._meta.fields ]
+        # allowed_columns = ', '.join(allowed_column_names)
+
         fields = {field.verbose_name: field for field in Gloss._meta.fields}
 
         differences = []
@@ -212,7 +223,10 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 human_key = 'ID Gloss'
 
             #If these are not fields, but relations to other parts of the database, compare complex values
-            if human_key == 'Keywords':
+            if human_key == 'Signbank ID':
+                continue
+
+            elif human_key == 'Keywords':
 
                 current_keyword_string = str(', '.join([str(translation.translation.text) for translation in gloss.translation_set.all()]))
 
@@ -277,8 +291,11 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                                         'new_human_value': new_human_value})
                 continue
 
-            elif human_key == 'Glosses dataset':
+            elif human_key == 'Dataset' or human_key == 'Glosses dataset':
 
+                # cach legacy value
+                if human_key == 'Glosses dataset':
+                    human_key = 'Dataset'
                 if new_human_value == 'None' or new_human_value == '':
                     continue
 
@@ -444,7 +461,18 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 # Signbank ID is skipped, for this purpose it was popped from the fields to compare
                 # Skip above fields with complex values: Keywords, Signlanguages, Dialects, Relations to other signs, Relations to foreign signs, Morphology.
 
-                # print('Skipping field name: (', human_key, ')')
+                # print('Skipping unknown field name: (', human_key, ')')
+                error_string = 'For ' + gloss.annotation_idgloss + ' (' + str(
+                    gloss.pk) + '), could not identify column name: ' + str(human_key)
+
+                errors_found += [error_string]
+
+                if not column_name_error:
+                    # error_string = 'Allowed column names are: ' + allowed_columns
+                    error_string = 'HINT: Try exporting a CSV file to see what column names can be used.'
+                    errors_found += [error_string]
+                    column_name_error = True
+
                 continue
 
             # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, ')')

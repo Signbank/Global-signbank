@@ -386,7 +386,7 @@ class Gloss(models.Model):
 
         return result
 
-    dataset = models.ForeignKey("Dataset", verbose_name=_("Glosses dataset"),
+    dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
                                 help_text=_("Dataset a gloss is part of"), null=True)
     
     idgloss = models.CharField(_("Lemma ID Gloss"), max_length=50, help_text="""
