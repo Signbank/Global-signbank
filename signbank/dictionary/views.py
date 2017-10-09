@@ -759,12 +759,15 @@ def import_csv(request):
 
         for key, new_value in request.POST.items():
 
+            # print('update ', key, ' value ', new_value)
+            pass
             try:
                 pk, fieldname = key.split('.')
 
             #In case there's no dot, this is not a value we set at the previous page
             except ValueError:
-                print("no dot in key error")
+                # when the database token csrfmiddlewaretoken is passed, there is no dot
+                # print("no dot in key error")
                 continue
 
             gloss = Gloss.objects.get(pk=pk)
@@ -795,6 +798,15 @@ def import_csv(request):
                 # print('Dialects new list: ', new_human_value_list)
 
                 update_dialect(gloss,None,new_human_value_list)
+                gloss.save()
+                continue
+
+            if fieldname == 'Dataset':
+
+                # this has already been checked for existance and permission in the previous step
+                # get dataset identifier
+                new_dataset = qs.get(name=new_value)
+                setattr(gloss,'dataset',new_dataset)
                 gloss.save()
                 continue
 
