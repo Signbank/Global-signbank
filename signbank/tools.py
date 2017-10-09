@@ -81,7 +81,7 @@ def create_gloss_from_valuedict(valuedict,datasets):
 
         glosses_dataset = glosses_dataset.strip()
 
-        print('dataset found: ', glosses_dataset)
+        # print('dataset found: ', glosses_dataset)
 
         if glosses_dataset and glosses_dataset != 'None' and not glosses_dataset in datasets:
             error_string = 'Dataset ' + glosses_dataset + ' not found.'
@@ -747,6 +747,7 @@ def check_existance_simultaneous_morphology(gloss, values):
 RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant',
                          'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
 
+RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, antonym, hyponym, hypernym, seealso'
 
 def check_existance_relations(gloss, relations, values):
 
@@ -767,7 +768,7 @@ def check_existance_relations(gloss, relations, values):
             sorted_values.append((role,other_gloss))
         except ValueError:
             error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
-                           + '), formatting error in Relation to other sign: ' + str(new_value_tuple) + '. Tuple role:gloss expected.'
+                           + '), formatting error in Relations to other signs: ' + str(new_value_tuple) + '. Tuple role:gloss expected.'
             errors.append(error_string)
 
     # remove duplicates
@@ -784,7 +785,8 @@ def check_existance_relations(gloss, relations, values):
                 raise ValueError
         except ValueError:
             error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
-                           + '), formatting error in Relation to other sign: ' + role + ':' + other_gloss + '. Role ' + role + ' not found.'
+                           + '), column Relations to other signs: ' + role + ':' + other_gloss + '. Role ' + role + ' not found.' \
+                    + ' Role should be one of: ' + RELATION_ROLES_DISPLAY + '.'
             errors.append(error_string)
 
     # check other glosses
@@ -804,7 +806,8 @@ def check_existance_relations(gloss, relations, values):
 
         except ObjectDoesNotExist:
             error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
-                           + '), formatting error in Relation to other sign: ' + role + ':' + other_gloss + '. Gloss ' + other_gloss + ' not found.'
+                    + '), column Relations to other signs: ' + role + ':' + other_gloss + '. Other gloss ' + other_gloss + ' not found.' \
+                    + ' Please use Annotation ID Gloss: Dutch to identify the other gloss.'
             errors.append(error_string)
 
             pass
@@ -825,7 +828,7 @@ def check_existance_foreign_relations(gloss, relations, values):
             sorted_values.append((loan_word,other_lang,other_lang_gloss))
         except ValueError:
             error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
-                           + '), formatting error in Relation to foreign sign: ' + str(new_value_tuple) + '. Tuple bool:string:string expected.'
+                           + '), formatting error in Relations to foreign signs: ' + str(new_value_tuple) + '. Tuple bool:string:string expected.'
             errors.append(error_string)
 
     # remove duplicates
@@ -851,7 +854,7 @@ def check_existance_foreign_relations(gloss, relations, values):
             # print('checked: ', checked)
         except ValueError:
             error_string = 'ERROR: For gloss ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) \
-                           + '), formatting error in Relation to foreign sign: ' \
+                           + '), formatting error in Relations to foreign signs: ' \
                            + loan_word + ':' + other_lang + ':' + other_lang_gloss + '. Tuple bool:string:string expected.'
             errors.append(error_string)
 

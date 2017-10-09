@@ -632,6 +632,8 @@ def import_csv(request):
             #The first line contains the keys
             if nl == 0:
                 keys = line.strip().split(',')
+                num_keys = len(keys)
+                # print("number of keys: ", num_keys, ', keys: ', keys)
                 continue
             elif len(line) == 0:
                 continue
@@ -640,10 +642,23 @@ def import_csv(request):
             value_dict = {}
 
             for nv,value in enumerate(values):
+                # print('try import csv: line number: ', nv, ', value: ', value)
 
                 try:
-                    value_dict[keys[nv]] = value
+                    if keys[nv] != '':
+                        value_dict[keys[nv]] = value
+                    else:
+                        if value != '':
+                            # empty column header
+                            e = 'Extra data found in column without header, row ' + str(nl) + ', column ' + str(nv) + ': ' + value
+
+                            if not error:
+                                error = [e]
+                            else:
+                                error.append(e)
+                        pass
                 except IndexError:
+                    print('index error import csv: line number: ', nv, ', value: ', value)
                     pass
 
             # print("import CSV: value_dict: ", value_dict)
