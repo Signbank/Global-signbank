@@ -10,8 +10,11 @@ def get_field_choice(machine_value,field_category):
     elif machine_value == '1':
         return 'N/A'
 
-    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-    return choice_list.filter(machine_value=machine_value)[0]
+    choice_list = FieldChoice.objects.filter(field__iexact=field_category).filter(machine_value=machine_value)
+    if len(choice_list) > 0:
+        return choice_list[0]
+    else:
+        return '-'
 
 register = Library()
 
