@@ -521,7 +521,7 @@ def subst_foreignrelations(gloss, field, values):
     relations_with_categories = []
     for rel_cat in new_relations_refresh:
         relations_with_categories.append(':'.join(rel_cat))
-    print("subst foreign relations_with_categories: ", relations_with_categories)
+    # print("subst foreign relations_with_categories: ", relations_with_categories)
 
     relations_categories = ", ".join(relations_with_categories)
 
@@ -566,7 +566,7 @@ def subst_relations(gloss, field, values):
         rel = Relation.objects.get(id=rel_id)
 
         if (rel.role, rel.target.idgloss) in already_existing_to_keep:
-            print('subst_relations, keep: ', rel.target)
+            # print('subst_relations, keep: ', rel.target)
             continue
 
         # Also delete the reverse relation
@@ -581,7 +581,7 @@ def subst_relations(gloss, field, values):
 
     # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
-        print('target gloss subst relations: ', target)
+        # print('target gloss subst relations: ', target)
         try:
             target_gloss =  gloss_from_identifier(target)
             rel = Relation(source=gloss, role=role, target=target_gloss)
@@ -601,7 +601,7 @@ def subst_relations(gloss, field, values):
 
     relations_categories = ", ".join(relations_with_categories)
 
-    print("subst relations_categories: ", relations_categories)
+    # print("subst relations_categories: ", relations_categories)
 
     newvalue = relations_categories
 
@@ -744,7 +744,8 @@ def morph_from_identifier(value):
 
 def update_definition(request, gloss, field, value):
     """Update one of the definition fields"""
-    
+
+    newvalue = ''
     (what, defid) = field.split('_')
     try:
         defn = Definition.objects.get(id=defid)
@@ -789,6 +790,7 @@ def update_other_media(request,gloss,field,value):
 
     action_or_fieldname, other_media_id = field.split('_')
 
+    other_media = None
     try:
         other_media = OtherMedia.objects.get(id=other_media_id)
     except:

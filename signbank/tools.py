@@ -58,7 +58,7 @@ def unescape(string):
 class MachineValueNotFoundError(Exception):
     pass
 
-def create_gloss_from_valuedict(valuedict,datasets):
+def create_gloss_from_valuedict(valuedict,datasets,row_nr):
 
     errors_found = []
     new_gloss = []
@@ -171,7 +171,7 @@ def create_gloss_from_valuedict(valuedict,datasets):
                                          'annotation_id_gloss_en': 'Annotation ID Gloss: English',
                                          'annotation_id_gloss_en_value': annotation_id_gloss_en})
         else:
-            new_gloss.append({'gloss_pk': None,
+            new_gloss.append({'gloss_pk': str(row_nr),
                                 'dataset': glosses_dataset,
                                 'lemma_id_gloss': 'Lemma ID Gloss',
                                 'lemma_id_gloss_value': lemma_id_gloss,

@@ -682,7 +682,8 @@ def import_csv(request):
                     break
 
                 else:
-                    (new_gloss, already_exists, already_exists_dutch, already_exists_english, error_create) = create_gloss_from_valuedict(value_dict,my_datasets)
+                    (new_gloss, already_exists, already_exists_dutch, already_exists_english, error_create) \
+                        = create_gloss_from_valuedict(value_dict,my_datasets,nl)
                     creation += new_gloss
                     gloss_already_exists += already_exists
                     gloss_already_exists_dutch += already_exists_dutch
@@ -755,127 +756,186 @@ def import_csv(request):
     #Do changes
     elif len(request.POST) > 0:
 
-        # print('update fields: ', request.POST.items())
+        csv_update = False
+        csv_create = False
 
         for key, new_value in request.POST.items():
 
-            # print('update ', key, ' value ', new_value)
-            pass
-            try:
-                pk, fieldname = key.split('.')
+            if key == 'update_or_create' and new_value == 'update':
+                csv_update = True
+            elif key == 'update_or_create' and new_value == 'create':
+                csv_create = True
+            else:
+                pass
 
-            #In case there's no dot, this is not a value we set at the previous page
-            except ValueError:
-                # when the database token csrfmiddlewaretoken is passed, there is no dot
-                # print("no dot in key error")
-                continue
+        if csv_update:
+            for key, new_value in request.POST.items():
 
-            gloss = Gloss.objects.get(pk=pk)
+                try:
+                    pk, fieldname = key.split('.')
 
-            #Updating the keywords is a special procedure, because it has relations to other parts of the database
-            if fieldname == 'Keywords':
+                #In case there's no dot, this is not a value we set at the previous page
+                except ValueError:
+                    # when the database token csrfmiddlewaretoken is passed, there is no dot
+                    # print("no dot in key error")
+                    continue
 
-                update_keywords(gloss,None,new_value)
-                gloss.save()
-                continue
+                gloss = Gloss.objects.get(pk=pk)
 
-            if fieldname == 'SignLanguages':
+                #Updating the keywords is a special procedure, because it has relations to other parts of the database
+                if fieldname == 'Keywords':
 
-                # print('update SignLanguages')
+                    update_keywords(gloss,None,new_value)
+                    gloss.save()
+                    continue
 
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
-                # print('Sign languages new list: ', new_human_value_list)
+                if fieldname == 'SignLanguages':
 
-                update_signlanguage(gloss,None,new_human_value_list)
-                gloss.save()
-                continue
+                    # print('update SignLanguages')
 
-            if fieldname == 'Dialects':
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
+                    # print('Sign languages new list: ', new_human_value_list)
 
-                # print('update Dialects')
+                    update_signlanguage(gloss,None,new_human_value_list)
+                    gloss.save()
+                    continue
 
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
-                # print('Dialects new list: ', new_human_value_list)
+                if fieldname == 'Dialects':
 
-                update_dialect(gloss,None,new_human_value_list)
-                gloss.save()
-                continue
+                    # print('update Dialects')
 
-            if fieldname == 'Dataset':
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
+                    # print('Dialects new list: ', new_human_value_list)
 
-                # this has already been checked for existance and permission in the previous step
-                # get dataset identifier
-                new_dataset = qs.get(name=new_value)
-                setattr(gloss,'dataset',new_dataset)
-                gloss.save()
-                continue
+                    update_dialect(gloss,None,new_human_value_list)
+                    gloss.save()
+                    continue
 
-            if fieldname == 'Sequential Morphology':
+                if fieldname == 'Dataset':
 
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
-                # print('Sequential Morphology new list: ', new_human_value_list)
-
-                update_sequential_morphology(gloss,None,new_human_value_list)
-
-                continue
-
-            if fieldname == 'Simultaneous Morphology':
-
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
-                # print('Sequential Simultaneous new list: ', new_human_value_list)
-
-                update_simultaneous_morphology(gloss,None,new_human_value_list)
-
-                continue
-
-            if fieldname == 'Relations to other signs':
-
-                # print('update Relations to other signs')
-
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
-                # print('Relations to other signs new list: ', new_human_value_list)
-
-                subst_relations(gloss,None,new_human_value_list)
-                gloss.save()    # is this needed?
-                continue
-
-            if fieldname == 'Relations to foreign signs':
-
-                # print('update Relations to foreign signs')
-
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
-                # print('Relations to foreign signs new list: ', new_human_value_list)
-
-                subst_foreignrelations(gloss,None,new_human_value_list)
-                gloss.save()    # is this needed?
-                continue
-
-            with override(settings.LANGUAGE_CODE):
-
-                #Replace the value for bools
-                if gloss._meta.get_field(fieldname).__class__.__name__ == 'NullBooleanField':
-
-                    if new_value in ['true','True', 'TRUE']:
-                        new_value = True
-                    elif new_value == 'None' or new_value == 'Neutral':
-                        new_value = None
+                    # this has already been checked for existance and permission in the previous step
+                    # get dataset identifier
+                    if new_value == 'None':
+                        dataset_id = None
                     else:
-                        new_value = False
+                        dataset_id = Dataset.objects.get(name=new_value)
+                    setattr(gloss,'dataset',dataset_id)
+                    gloss.save()
+                    continue
 
-                #Remember this for renaming the video later
-                if fieldname == 'idgloss':
-                    video_path_before = settings.WRITABLE_FOLDER+gloss.get_video_path()
+                if fieldname == 'Sequential Morphology':
 
-                #The normal change and save procedure
-                setattr(gloss,fieldname,new_value)
-                gloss.save()
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
+                    # print('Sequential Morphology new list: ', new_human_value_list)
 
-                #Also update the video if needed
-                if fieldname == 'idgloss':
-                    video_path_after = settings.WRITABLE_FOLDER+gloss.get_video_path()
-                    os.rename(video_path_before,video_path_after)
+                    update_sequential_morphology(gloss,None,new_human_value_list)
 
-        stage = 2
+                    continue
+
+                if fieldname == 'Simultaneous Morphology':
+
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
+                    # print('Sequential Simultaneous new list: ', new_human_value_list)
+
+                    update_simultaneous_morphology(gloss,None,new_human_value_list)
+
+                    continue
+
+                if fieldname == 'Relations to other signs':
+
+                    # print('update Relations to other signs')
+
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
+                    # print('Relations to other signs new list: ', new_human_value_list)
+
+                    subst_relations(gloss,None,new_human_value_list)
+                    gloss.save()    # is this needed?
+                    continue
+
+                if fieldname == 'Relations to foreign signs':
+
+                    # print('update Relations to foreign signs')
+
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
+                    # print('Relations to foreign signs new list: ', new_human_value_list)
+
+                    subst_foreignrelations(gloss,None,new_human_value_list)
+                    gloss.save()    # is this needed?
+                    continue
+
+                with override(settings.LANGUAGE_CODE):
+
+                    #Replace the value for bools
+                    if gloss._meta.get_field(fieldname).__class__.__name__ == 'NullBooleanField':
+
+                        if new_value in ['true','True', 'TRUE']:
+                            new_value = True
+                        elif new_value == 'None' or new_value == 'Neutral':
+                            new_value = None
+                        else:
+                            new_value = False
+
+                    #Remember this for renaming the video later
+                    if fieldname == 'idgloss':
+                        video_path_before = settings.WRITABLE_FOLDER+gloss.get_video_path()
+
+                    #The normal change and save procedure
+                    setattr(gloss,fieldname,new_value)
+                    gloss.save()
+
+                    #Also update the video if needed
+                    if fieldname == 'idgloss':
+                        video_path_after = settings.WRITABLE_FOLDER+gloss.get_video_path()
+                        os.rename(video_path_before,video_path_after)
+            stage = 2
+
+        elif csv_create:
+            # print('create glosses')
+
+            glosses_to_create = dict()
+
+            for key, new_value in request.POST.items():
+
+                # print('key, new value: ', key, ', ', new_value)
+
+                # obtain tuple values for each proposed gloss
+
+                try:
+                    pk, fieldname = key.split('.')
+                    # print('field name: ', fieldname)
+
+                    if pk not in glosses_to_create.keys():
+                        glosses_to_create[pk] = dict()
+                    glosses_to_create[pk][fieldname] = new_value
+
+                #In case there's no dot, this is not a value we set at the previous page
+                except ValueError:
+                    # when the database token csrfmiddlewaretoken is passed, there is no dot
+                    continue
+            # print('dictionary: ', glosses_to_create)
+
+            # these should be error free based on the django template import_csv.html
+            for row in glosses_to_create.keys():
+                lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss']
+                dataset = glosses_to_create[row]['dataset']
+                annotation_id_gloss = glosses_to_create[row]['annotation_id_gloss']
+                annotation_id_gloss_en = glosses_to_create[row]['annotation_id_gloss_en']
+
+                if dataset == 'None':
+                    dataset_id = None
+                else:
+                    dataset_id = Dataset.objects.get(name=dataset)
+                new_gloss = Gloss()
+                new_gloss.idgloss = lemma_id_gloss
+                new_gloss.dataset = dataset_id
+                new_gloss.annotation_idgloss = annotation_id_gloss
+                new_gloss.annotation_idgloss_en = annotation_id_gloss_en
+                new_gloss.save()
+                # print('new gloss created: ', new_gloss.idgloss)
+
+            stage = 2
+        else:
+            stage = 0
 
     #Show uploadform
     else:

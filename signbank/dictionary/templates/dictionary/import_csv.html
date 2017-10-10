@@ -107,7 +107,7 @@
                     {% endblocktrans %}
                 {% endif %}
             <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
-
+            <input type="hidden" name="update_or_create" value="update">
             {% endfor %}
         </table>
 
@@ -191,8 +191,15 @@
                         <td>{{ newgloss.annotation_id_gloss_value }}</td>
                         <td>{{ newgloss.annotation_id_gloss_en_value }}</td>
                     </tr>
+                <input type="hidden" name="{{newgloss.gloss_pk}}.dataset"  value="{{ newgloss.dataset }}">
+                <input type="hidden" name="{{newgloss.gloss_pk}}.lemma_id_gloss"  value="{{ newgloss.lemma_id_gloss_value }}">
+                <input type="hidden" name="{{newgloss.gloss_pk}}.annotation_id_gloss"  value="{{ newgloss.annotation_id_gloss_value }}">
+                <input type="hidden" name="{{newgloss.gloss_pk}}.annotation_id_gloss_en"  value="{{ newgloss.annotation_id_gloss_en_value }}">
+
+                <input type="hidden" name="update_or_create" value="create">
                 {% endfor %}
                 </table>
+                <input type="submit" value="{% blocktrans %}Create glosses{% endblocktrans %}" />
                 {% endif %}
             {% else %}
             <div>{% blocktrans %}No changes were found.{% endblocktrans %}</div>
