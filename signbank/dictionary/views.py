@@ -1756,7 +1756,7 @@ def show_unassigned_glosses(request):
             if key.startswith(dataset_select_prefix) and new_value != "":
                 # print("Signlanguage: %s; dataset: %s" % (key, new_value))
                 try:
-                    signlanguage_id = int(key[len(dataset_select_prefix):])
+                    signlanguage_id = key[len(dataset_select_prefix):]
                     dataset_id = int(new_value)
                     dataset = Dataset.objects.get(pk=int(dataset_id))
                     print("Signlanguage: %s; dataset: %s" % (signlanguage_id, dataset_id))
