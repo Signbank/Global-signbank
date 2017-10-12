@@ -374,7 +374,7 @@ class GlossListView(ListView):
         # print('export csv header: ', header)
 
         for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology',
-                             'Relations to other signs','Relations to foreign signs',]:
+                             'Relations to other signs','Relations to foreign signs', 'Tags']:
             header.append(extra_column)
 
         writer.writerow(header)
@@ -462,6 +462,17 @@ class GlossListView(ListView):
 
             # print("export csv foreign relations_categories: ", relations_categories)
 
+            # export tags
+            tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
+            tag_names_of_gloss = []
+            for t_obj in tags_of_gloss:
+                tag_id = t_obj.tag_id
+                tag_name = Tag.objects.get(id=tag_id)
+                tag_names_of_gloss += [str(tag_name).replace('_',' ')]
+            # print('tag names: ', tag_names_of_gloss)
+
+            tag_names = ", ".join(tag_names_of_gloss)
+            row.append(tag_names)
 
             #Make it safe for weird chars
             safe_row = []

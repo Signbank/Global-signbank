@@ -16,6 +16,7 @@ from signbank.dictionary.update import gloss_from_identifier, morph_from_identif
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from tagging.models import TaggedItem, Tag
 
 def save_media(source_folder,goal_folder,gloss,extension):
         
@@ -191,6 +192,9 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
     errors_found = []
     column_name_error = False
+    tag_name_error = False
+    all_tags = [t.name for t in Tag.objects.all()]
+    all_tags_display = ', '.join([t.replace('_',' ') for t in all_tags])
 
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
@@ -448,6 +452,65 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                                         'original_human_value': simultaneous_morphemes,
                                         'new_machine_value': checked_new_human_value,
                                         'new_human_value': checked_new_human_value})
+                continue
+
+            elif human_key == 'Tags':
+                if new_human_value == 'None' or new_human_value == '':
+                    continue
+
+                tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
+                tag_names_of_gloss = []
+                for t_obj in tags_of_gloss:
+                    tag_id = t_obj.tag_id
+                    tag_name = Tag.objects.get(id=tag_id)
+                    tag_names_of_gloss += [str(tag_name)]
+                tag_names_of_gloss = sorted(tag_names_of_gloss)
+
+                tag_names = ", ".join(tag_names_of_gloss)
+
+                tag_names_display = [ t.replace('_',' ') for t in tag_names_of_gloss ]
+                tag_names_display = ', '.join(tag_names_display)
+
+                # print('current tag names: ', tag_names)
+
+                new_human_value_list = [v.replace(' ', '_') for v in new_human_value_list]
+
+                new_human_value_list_no_dups = list(set(new_human_value_list))
+                sorted_new_tags = sorted(new_human_value_list_no_dups)
+
+                # check for non-existant tags
+                for t in sorted_new_tags:
+                    if t in all_tags:
+                        pass
+                    else:
+                        error_string = 'For ' + gloss.annotation_idgloss + ' (' + str(
+                            gloss.pk) + '), a new Tag name was found: ' + t.replace('_',' ') + '.'
+
+                        errors_found += [error_string]
+                        if not tag_name_error:
+                            # error_string = 'Allowed column names are: ' + allowed_columns
+                            error_string = 'Current tag names are: ' + all_tags_display + '.'
+                            errors_found += [error_string]
+                            tag_name_error = True
+
+
+                new_tag_names_display = [ t.replace('_',' ') for t in sorted_new_tags ]
+                new_tag_names_display = ', '.join(new_tag_names_display)
+
+                sorted_new_tags = ", ".join(sorted_new_tags)
+
+                # print('Tags list: ', sorted_new_tags)
+
+                if tag_names != sorted_new_tags:
+                    differences.append({'pk': gloss.pk,
+                                        'dataset': current_dataset,
+                                        'idgloss': gloss.annotation_idgloss,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': tag_names_display,
+                                        'original_human_value': tag_names_display,
+                                        'new_machine_value': new_tag_names_display,
+                                        'new_human_value': new_tag_names_display})
                 continue
 
             #If not, find the matching field in the gloss, and remember its 'real' name

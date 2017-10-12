@@ -373,6 +373,42 @@ def update_dialect(gloss, field, values):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
+def update_tags(gloss, field, values):
+    # expecting possibly multiple values
+
+    # print('update_tags, values: ', values)
+
+    current_tag_ids = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
+
+    new_tag_ids = [tag.id for tag in Tag.objects.filter(name__in=values)]
+
+    # print('current tag ids: ', current_tag_ids)
+
+    # print('new tag ids: ', new_tag_ids)
+
+    # the existance of the new tag has already been checked
+    for tag_id in current_tag_ids:
+
+        if tag_id not in new_tag_ids:
+            # delete tag from object
+            tagged_obj = TaggedItem.objects.get(object_id=gloss.id,tag_id=tag_id)
+            print("DELETE TAGGED OBJECT: ", tagged_obj, ' for gloss: ', tagged_obj.object_id)
+            tagged_obj.delete()
+
+    for value in values:
+        # print('new tag value: ', value)
+        Tag.objects.add_tag(gloss, value)
+
+    new_tag_ids = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
+
+    # print('new tag ids: ', new_tag_ids)
+
+    newvalue = ', '.join([str(tag.name).replace('_',' ') for tag in  Tag.objects.filter(id__in=new_tag_ids) ])
+
+    # print('newvalue: ', newvalue)
+
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
 def update_sequential_morphology(gloss, field, values):
     # expecting possibly multiple values
 

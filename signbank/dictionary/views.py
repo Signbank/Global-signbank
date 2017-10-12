@@ -21,7 +21,8 @@ import re
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
-from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, update_sequential_morphology, update_simultaneous_morphology
+from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
+    update_sequential_morphology, update_simultaneous_morphology, update_tags
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
 
@@ -860,6 +861,15 @@ def import_csv(request):
                     # print('Relations to foreign signs new list: ', new_human_value_list)
 
                     subst_foreignrelations(gloss,None,new_human_value_list)
+                    gloss.save()    # is this needed?
+                    continue
+
+                if fieldname == 'Tags':
+
+                    new_human_value_list = [v.strip().replace(' ','_') for v in new_value.split(',')]
+                    # print('Tags list: ', new_human_value_list)
+
+                    update_tags(gloss,None,new_human_value_list)
                     gloss.save()    # is this needed?
                     continue
 
