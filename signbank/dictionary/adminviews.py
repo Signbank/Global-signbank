@@ -244,8 +244,11 @@ class GlossListView(ListView):
             desc_element = ET.SubElement(cv_element, description, myattributes)
             desc_element.text = lang['description']
 
+        # set Dataset to NGT
+        dataset_id = Dataset.objects.get(name='NGT')
+
         # Make sure we iterate only over the none-Morpheme glosses
-        for gloss in Gloss.none_morpheme_objects().filter(excludeFromEcv=False):
+        for gloss in Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(dataset=dataset_id):
             glossid = str(gloss.pk)
             myattributes = {cve_id: glossid, 'EXT_REF':'signbank-ecv'}
             cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
