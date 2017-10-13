@@ -8,12 +8,19 @@ root URLConf to include this URLConf for any URL beginning with
 """
 
 from django.conf.urls import *
+from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 
 # local imports
 from signbank.registration.views import activate, register, mylogin
 from signbank.registration.forms import *
+
+#It's weird that I have to set the correct success url by hand, but it doesn't work any other way
+password_reset_view = auth_views.PasswordResetView
+password_reset_view.success_url = reverse_lazy('registration:password_reset_done')
+password_reset_confirm_view = auth_views.PasswordResetConfirmView
+password_reset_confirm_view.success_url = reverse_lazy('registration:password_reset_complete')
 
 urlpatterns = [
                        # Activation keys get matched by \w+ instead of the more specific
@@ -38,10 +45,10 @@ urlpatterns = [
                            auth_views.PasswordChangeDoneView.as_view(),
                            name='auth_password_change_done'),
                        url(r'^password/reset/$',
-                           auth_views.PasswordResetView.as_view(),
+                           password_reset_view.as_view(),
                            name='auth_password_reset'),
                        url(r'^password/reset/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$',
-                           auth_views.PasswordResetConfirmView.as_view(),
+                           password_reset_confirm_view.as_view(),
                            name='password_reset_confirm'),
                        
                        url(r'^password/reset/complete/$',
