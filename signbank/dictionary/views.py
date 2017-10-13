@@ -80,7 +80,7 @@ def map_image_for_dialects(dialects):
     be in the database
     """
     # we only work for Auslan just now
-    dialects = dialects.filter(language__name__exact="Auslan")
+    dialects = dialects.filter(signlanguage__name__exact="Auslan")
 
     if len(dialects) == 0:
         return
