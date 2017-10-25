@@ -206,7 +206,7 @@ def gloss(request, idgloss):
     # we should only be able to get a single gloss, but since the URL
     # pattern could be spoofed, we might get zero or many
     # so we filter first and raise a 404 if we don't get one
-    glosses = Gloss.objects.filter(idgloss=idgloss)
+    glosses = Gloss.objects.filter(annotation_idgloss=idgloss)
 
     if len(glosses) != 1:
         raise Http404
