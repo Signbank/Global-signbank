@@ -106,6 +106,8 @@ class GlossListView(ListView):
     paginate_by = 500
     only_export_ecv = False #Used to call the 'export ecv' functionality of this view without the need for an extra GET parameter
     search_type = 'sign'
+    view_type = 'gloss_list'
+    show_all = False
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -117,6 +119,11 @@ class GlossListView(ListView):
             self.search_type = self.request.GET['search_type']
 
         # self.request.session['search_type'] = self.search_type
+
+        if 'view_type' in self.request.GET:
+            # user is adjusting the view, leave the rest of the context alone
+            self.view_type = self.request.GET['view_type']
+            context['view_type'] = self.view_type
 
         search_form = GlossSearchForm(self.request.GET)
 
@@ -141,6 +148,8 @@ class GlossListView(ListView):
 
         context['searchform'] = search_form
         context['search_type'] = self.search_type
+        context['view_type'] = self.view_type
+
         if self.search_type == 'sign':
             context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
         else:
@@ -192,7 +201,8 @@ class GlossListView(ListView):
         context['input_names_fields_labels_subhndsh'].append(('subhndsh_number',field,label))
 
         try:
-            context['show_all'] = self.kwargs['show_all']
+            if self.kwargs['show_all']:
+                context['show_all'] = True
         except KeyError:
             context['show_all'] = False
 
@@ -509,6 +519,16 @@ class GlossListView(ListView):
 
         setattr(self.request, 'search_type', self.search_type)
 
+        if 'view_type' in get:
+            self.view_type = get['view_type']
+            # don't change query, just change display
+            # return self.request.session['search_results']
+        else:
+            # set to default
+            self.view_type = 'gloss_list'
+
+        setattr(self.request, 'view_type', self.view_type)
+
         #Get the initial selection
         if len(get) > 0 or show_all:
             if self.search_type == 'sign':
@@ -526,6 +546,7 @@ class GlossListView(ListView):
 
         #If we wanted to get everything, we're done now
         if show_all:
+            print('get_queryset in GlossListView, show_all is true, return')
             return order_queryset_by_sort_order(self.request.GET, qs)
 
         #If not, we will go trhough a long list of filters
@@ -785,7 +806,7 @@ class GlossListView(ListView):
 
         # Saving querysets results to sessions, these results can then be used elsewhere (like in gloss_detail)
         # Flush the previous queryset (just in case)
-        self.request.session['search_results'] = None
+        # self.request.session['search_results'] = None
 
         # Make sure that the QuerySet has filters applied (user is searching for something instead of showing all results [objects.all()])
         if hasattr(qs.query.where, 'children') and len(qs.query.where.children) > 0:

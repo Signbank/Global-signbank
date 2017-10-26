@@ -340,7 +340,8 @@ class Gloss(models.Model):
     
     class Meta:
         verbose_name_plural = "Glosses"
-        ordering = ['idgloss']
+        # ordering: for Lemma View in the Gloss List View, we need to have glosses in the same Lemma Group sorted
+        ordering = ['idgloss','annotation_idgloss']
         permissions = (('update_video', "Can Update Video"),
                        ('search_gloss', 'Can Search/View Full Gloss Details'),
                        ('export_csv', 'Can export sign details as CSV'),

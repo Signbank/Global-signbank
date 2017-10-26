@@ -13,10 +13,10 @@
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
 
     <script type='text/javascript'>
-    
+
      $(document).ready(function(){
-        
-        
+
+
         $('.collapsetoggle').click(function() {
             if ($(this).text() == 'Show') {
                 $(this).text('Hide');
@@ -42,27 +42,27 @@ function clearForm(myFormElement) {
       field_type = elements[i].type.toLowerCase();
 
       switch(field_type) {
-    
+
         case "text":
         case "password":
         case "textarea":
         case "hidden":
-    
+
           elements[i].value = "";
           break;
-    
+
         case "radio":
         case "checkbox":
             if (elements[i].checked) {
               elements[i].checked = false;
           }
           break;
-    
+
         case "select-one":
         case "select-multiple":
                     elements[i].selectedIndex = -1;
           break;
-    
+
         default:
           break;
       }
@@ -109,6 +109,29 @@ function do_adminsearch(el) {
         break;
     case "sign_or_morpheme":
         $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        break;
+  }
+  document.getElementById('adminsearch').submit();
+}
+
+/**
+ * toggle between normal list view and lemma group list view
+ */
+function do_toggle_groups(el) {
+  var sViewType = $(el).attr('value');
+  $("#toggle_groups input[name='view_type']").val(sViewType);
+  console.log('switch');
+  console.log(sViewType);
+  switch(sViewType) {
+    case "lemma_groups":
+        $(el).val('gloss_list');
+        console.log('change to gloss list');
+        $(el).html("Gloss View");
+        break;
+    case "gloss_list":
+        $(el).val('lemma_groups');
+        console.log('change to lemma groups');
+        $(el).html("Lemma View");
         break;
   }
   document.getElementById('adminsearch').submit();
@@ -517,6 +540,19 @@ function do_adminsearch(el) {
         </select>
     </div>
 
+    <div>
+        <a class='btn' style="color:black;" type='submit' onclick="do_toggle_groups(this);">
+            {% if view_type == "gloss_list" %}
+            <label>{% trans "List View" %}</label>&nbsp;
+            <button class="btn btn-primary" type="submit" name="view_type" value='lemma_groups'/>{% trans "Lemma View" %}</button>
+            {% else %}
+            <label>{% trans "Lemma View" %}</label>&nbsp;
+            <button class="btn btn-primary" type="submit" name="view_type" value='gloss_list'/>{% trans "List View" %}</button>
+            {% endif %}
+        </a>
+        {% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{glosscount}}.
+
+    </div>
 </form>
 {% endif %}
 
@@ -549,11 +585,18 @@ function do_adminsearch(el) {
   </div>
   {% endif %}
 
-             
 
-  
 
-<p>{% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{glosscount}}.</p>
+<!--<form id='toggle_groups' name='toggle_groups' method='get'>-->
+    <!--<div class="hidden">-->
+        <!--<input name='view_type' class='form-control' value='{{view_type}}'>-->
+    <!--</div>-->
+
+<!--</form>-->
+
+<!--<p>{% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{glosscount}}.</p>-->
+
+{% if view_type == "gloss_list" %}
 
 {% if object_list %}
 <table class='table table-condensed'>
@@ -685,9 +728,9 @@ function do_adminsearch(el) {
 
       <td>
           {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.idgloss}}</a></div>
+          <div class="morpheme_gloss">{{gloss.idgloss}}</div>
           {% else %}
-          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.idgloss}}</a></div>
+          <div>{{gloss.idgloss}}</div>
           {% endif %}
       </td>
 
@@ -776,7 +819,7 @@ function do_adminsearch(el) {
             {% load underscore_to_space %}
             {% tags_for_object gloss as tag_list %}
             <td>{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
-            
+
         </tr>
     {% endfor %}
   </tbody>
@@ -789,32 +832,32 @@ function do_adminsearch(el) {
         {% if page_obj.has_previous %}
             <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&laquo;</a></li>
         {% endif %}
-          
+
           {% if  page_obj.number > 10 %}
             <li><a>...</a></li>
           {% endif %}
 
           {% for p in page_obj.paginator.page_range %}
-          
+
              {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
              <li {% ifequal p page_obj.number %}class='active'{% endifequal %}>
              <a href='?page={{ p }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
              </li>
              {% endif %}
-         
+
           {% endfor %}
-  
+
           {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
             <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
-      
+
         {% if page_obj.has_next %}
             <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&raquo;</a></li>
 
-            
+
       </ul>
 
 
@@ -827,5 +870,258 @@ function do_adminsearch(el) {
 
 
 {% endif %}
+
+{% else %}  <!--show lemma groups view-->
+
+
+{% if object_list %}
+
+{% regroup object_list by idgloss as lemma_groups %}
+
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+          <th>{% trans "Lemma ID gloss" %}</th>
+          <th>{% trans "Dataset" %}</th>
+          <th></th>
+           <th>{% trans "Annotation ID gloss: Dutch" %}</th>
+
+            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+           <th>{% trans "Annotation ID gloss: English" %}</th>
+            {% endif %}
+
+
+           <th>{% trans "Translation equivalents" %}</th>
+           <th>{% trans "Handedness" %}</th>
+           <th>{% trans "Strong hand" %}</th>
+           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Location" %}</th>
+           <th style="width:255px;">{% trans "Tags" %}</th>
+      </tr>
+      <!-- EK: this second header row contains clickable sort-order buttons -->
+      <!-- Sorting removed for Lemma Groups View -->
+
+    </thead>
+    <tbody>
+    {% for lemma in lemma_groups %}
+        {% if lemma.list|length > 1 %}
+        <tr>
+
+      <td>
+          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
+          <div class="morpheme_gloss">{{lemma.grouper}}</div>
+          {% else %}
+          <div>{{lemma.grouper}}</div>
+          {% endif %}
+      </td>
+        </tr>
+      {% for gloss in lemma.list %}
+        <tr>
+        <td></td>
+        <td>{{ gloss.dataset.name }}</td>
+      <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
+          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+      </td>
+
+      <td>
+          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
+          <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
+          {% else %}
+          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
+          {% endif %}
+
+          {% if gloss.morphemePart.count > 0 %}
+              {% if gloss.morphemePart.count > 3 %}
+                  <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
+              {% else %}
+                  <!-- Number of morphemes is [1-3] -->
+                  <div class="morpheme_in_gloss">
+                  {% for morphdef in gloss.morphemePart.all %}
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  {% endfor %}
+                  </div>
+              {% endif %}
+          {% endif %}
+
+          {% if gloss.parent_glosses.count > 0 %}
+              <div class="component_in_gloss">
+              {% for component in gloss.parent_glosses.all %}
+                  <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
+              {% endfor %}
+              </div>
+          {% endif %}
+
+      </td>
+
+      {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+      <td>
+          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
+            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
+          {% else %}
+            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
+          {% endif %}
+
+          {% if gloss.morphemePart.all.count > 0 %}
+              {% if gloss.morphemePart.count > 3 %}
+                    <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
+              {% else %}
+                    <!-- Number of morphemes is [1-3] -->
+                    <div class="morpheme_in_gloss">
+                    {% for morphdef in gloss.morphemePart.all %}
+                        <span>{{ morphdef.annotation_idgloss_en }}{% if not forloop.last %}, {% endif %}</span>
+                    {% endfor %}
+                    </div>
+              {% endif %}
+          {% endif %}
+
+          {% if gloss.parent_glosses.all.count > 0 %}
+            <div class="component_in_gloss">
+            {% for component in gloss.parent_glosses.all %}
+                <span>{{ component.morpheme.annotation_idgloss_en }}{% if not forloop.last %} + {% endif %}</span>
+            {% endfor %}
+            </div>
+          {% endif %}
+
+      </td>
+      {% endif %}
+
+      <td>
+      {% for translation in gloss.translation_set.all %}
+                {% if forloop.last %}
+                {{ translation.translation }}
+                {% else%}
+                {{ translation.translation }},
+                {% endif %}
+
+      {% endfor %}
+      </td>
+
+            {% load field_choice %}
+
+            {% if request.LANGUAGE_CODE == 'nl' %}
+                <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
+
+                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
+
+                {% with gloss.domhndsh|translate_to_dutch:"Handshape" as domhndsh_display %}
+                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                        <td>{{ domhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+                {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
+                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                        <td>{{ subhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+
+                <td>{{ gloss.locprim|translate_to_dutch:"Location" }}</td>
+
+            {% elif request.LANGUAGE_CODE == 'zh-hans' %}
+                <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
+
+                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
+
+                {% with gloss.domhndsh|translate_to_chinese:"Handshape" as domhndsh_display %}
+                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                        <td>{{ domhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+                {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
+                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                        <td>{{ subhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+
+                <td>{{ gloss.locprim|translate_to_chinese:"Location" }}</td>
+
+            {% else %}
+
+                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
+                <!--The translate_to_english function is needed to avoid None values showing up in display-->
+
+                <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
+
+                {% with gloss.domhndsh|translate_to_english:"Handshape" as domhndsh_display %}
+                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                        <td>{{ domhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+                {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
+                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                        <td>{{ subhndsh_display }}</td>
+                    {% else %}
+                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                    {% endif %}
+                {% endwith %}
+
+                <td>{{ gloss.locprim|translate_to_english:"Location" }}</td>
+            {% endif %}
+
+            {% load underscore_to_space %}
+            {% tags_for_object gloss as tag_list %}
+            <td>{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+
+
+<div class="pagination">
+    <span class="step-links">
+
+        <ul class='pagination pagination-sm'>
+        {% if page_obj.has_previous %}
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&laquo;</a></li>
+        {% endif %}
+
+          {% if  page_obj.number > 10 %}
+            <li><a>...</a></li>
+          {% endif %}
+
+          {% for p in page_obj.paginator.page_range %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+             <li {% ifequal p page_obj.number %}class='active'{% endifequal %}>
+             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
+             </li>
+             {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+            <li><a>...</a></li>
+            <li>
+            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
+            </li>
+          {% endif %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&raquo;</a></li>
+
+
+      </ul>
+
+
+        {% endif %}
+    </span>
+</div>
+
+{% endif %}
+{% endif %}
+
+
+
 
 {% endblock content %}
