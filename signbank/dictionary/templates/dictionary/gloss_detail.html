@@ -324,7 +324,15 @@
         {% include "dictionary/glosstags.html" %}
 
         <table class='table table-condensed'>
-            <tr><th>{% trans "Lemma ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value gloss.idgloss %}</td></tr>
+            <tr><th>{% trans "Lemma ID Gloss" %}</th>
+                <td class='edit edit_text' id='idgloss'>
+                    {% if lemma_group %}
+                        <a href='{{ lemma_group_url }}'>{% value gloss.idgloss %}</a>
+                    {% else %}
+                        {% value gloss.idgloss %}
+                    {% endif %}
+                </td>
+            </tr>
             <tr><th>{% trans "Annotation ID Gloss (Dutch)" %}</th>
                 <td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td>
                 <td>
