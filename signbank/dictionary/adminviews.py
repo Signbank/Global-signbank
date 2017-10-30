@@ -26,6 +26,8 @@ from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
 from signbank.settings import server_specific
+from signbank.settings.server_specific import *
+
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 
 
@@ -254,11 +256,19 @@ class GlossListView(ListView):
             desc_element = ET.SubElement(cv_element, description, myattributes)
             desc_element.text = lang['description']
 
-        # set Dataset to NGT
-        dataset_id = Dataset.objects.get(name='NGT')
+        # set Dataset to NGT or other pre-specified Dataset, otherwise leave it empty
+        try:
+            dataset_id = Dataset.objects.get(name=SIGNBANK_VERSION_CODE)
+        except:
+            dataset_id = ''
+
+        if dataset_id:
+            query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(dataset=dataset_id)
+        else:
+            query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False)
 
         # Make sure we iterate only over the none-Morpheme glosses
-        for gloss in Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(dataset=dataset_id):
+        for gloss in query_dataset:
             glossid = str(gloss.pk)
             myattributes = {cve_id: glossid, 'EXT_REF':'signbank-ecv'}
             cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
