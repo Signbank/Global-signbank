@@ -1250,10 +1250,10 @@ minor or insignificant ways that can be ignored.""")
         """Return JSON for wordclass choices"""
 
         # Get the list of choices for this field
-        li = self._meta.get_field("wordClass").choices;
+        li = self._meta.get_field("wordClass").choices
 
         # Sort the list
-        sorted_li = sorted(li, key=lambda x: x[1]);
+        sorted_li = sorted(li, key=lambda x: x[1])
 
         # Put it in another format
         reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
@@ -1274,9 +1274,16 @@ minor or insignificant ways that can be ignored.""")
         
         d = dict()
         for l in Dialect.objects.all():
-            d[l.name] = l.name
+            # d[l.name] = l.name
+            # d[l.name] = l.signlanguage.name + "/" + l.name
+            dialect_name = l.signlanguage.name + "/" + l.name
+            d[dialect_name] = dialect_name
 
-        return json.dumps(d)
+        dict_list = list(d.items())
+        sorted_dict_list = sorted(dict_list)
+        first_element_sorted_dict_list = [ x[0] for x in sorted_dict_list ]
+
+        return json.dumps(first_element_sorted_dict_list)
 
     def dataset_choices(self):
 

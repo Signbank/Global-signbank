@@ -144,7 +144,7 @@ class GlossSearchForm(forms.ModelForm):
 
     class Meta:
 
-        ATTRS_FOR_FORMS = {'class':'form-control'};
+        ATTRS_FOR_FORMS = {'class':'form-control'}
 
         model = Gloss
         fields = ('idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'morph', 'sense', 
@@ -220,7 +220,7 @@ class MorphemeSearchForm(forms.ModelForm):
     createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     class Meta:
-        ATTRS_FOR_FORMS = {'class': 'form-control'};
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Morpheme
         fields = ('idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'morph', 'sense',
@@ -313,7 +313,7 @@ class MorphemeMorphologyForm(forms.ModelForm):
     morpheme_id = forms.CharField(label=_(u'Morpheme'))
 
     class Meta:
-        model = MorphologyDefinition;
+        model = MorphologyDefinition
         fields = ['role']
 
 class OtherMediaForm(forms.ModelForm):

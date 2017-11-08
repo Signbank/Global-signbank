@@ -361,15 +361,42 @@ def update_signlanguage(gloss, field, values):
 def update_dialect(gloss, field, values):
     # expecting possibly multiple values
 
+    dialect_choices = json.loads(gloss.dialect_choices())
+
+    numerical_values_converted_to_dialects = [ dialect_choices[int(value)] for value in values ]
+
+    error_string_values = ', '.join(numerical_values_converted_to_dialects)
+
+    new_dialects_to_save = []
+
     try:
+        gloss_signlanguages = gloss.signlanguage.all()
+        for value in numerical_values_converted_to_dialects:
+            # Gloss Detail View pairs the Dialect with the Language in the update menu
+            (sign_lang, dia) = value.split('/')
+            lang = SignLanguage.objects.get(name=sign_lang)
+            if not lang in gloss_signlanguages:
+                if gloss_signlanguages:
+                    # There is currently a sign language assigned to this gloss, the new dialect does not match it
+                    raise Exception
+                else:
+                    # currently no sign language has been assigned, assign this one
+                    # this value is not returned to the Gloss Detail View, it is a side effect
+                    gloss.signlanguage.add(lang)
+
+            dialect_objs = Dialect.objects.filter(name=dia).filter(signlanguage_id=lang)
+            for lang in dialect_objs:
+                new_dialects_to_save.append(lang)
+
+        # clear the old dialects only after we've parsed and checked the new ones
         gloss.dialect.clear()
-        for value in values:
-            lang = Dialect.objects.get(name=value)
+        for lang in new_dialects_to_save:
             gloss.dialect.add(lang)
         gloss.save()
-        newvalue = ", ".join([str(g.name) for g in gloss.dialect.all()])
+        newvalue = ", ".join([str(d.signlanguage.name)+'/'+str(d.name) for d in gloss.dialect.all()])
     except:
-        return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
+        return HttpResponseBadRequest("Dialect %s does not match Sign Language of Gloss" % error_string_values,
+                                      {'content-type': 'text/plain'})
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
