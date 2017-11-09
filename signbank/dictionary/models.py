@@ -996,17 +996,18 @@ minor or insignificant ways that can be ignored.""")
                       'altern': 'check', 'phonOth': 'text', 'mouthG': 'text',
                       'mouthing': 'text', 'phonetVar': 'text'}
 
-        wmp = self.minimal_pairs_objects()
+        minimal_pairs_fields = {}
 
         if (self.handedness is None or self.handedness == '0'):
-            return ({}, [], [])
+            return minimal_pairs_fields
 
 #        if (self.domhndsh is None or self.domhndsh == '0'):
-#            return ({}, [], [])
+#            return minimal_pairs_fields
+
+        wmp = self.minimal_pairs_objects()
 
         (ep, nep) = self.empty_non_empty_phonology()
 
-        minimal_pairs_fields = {}
 
         for o in wmp:
             different_fields = {}
