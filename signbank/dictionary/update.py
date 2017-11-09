@@ -346,17 +346,35 @@ def update_keywords(gloss, field, value):
 def update_signlanguage(gloss, field, values):
     # expecting possibly multiple values
 
+    # Sign Language and Dialect are interdependent
+    # When updated in Gloss Detail View, checks are made to insure consistency
+    # Because we use Ajax calls to update the data, two values need to be returned in order to also have a side effect
+    # on the other field. I.e., Changing the Sign Language may cause Dialects to be removed, and changing the Dialect
+    # may cause the Sign Language to be filled in if not already set, with that of the new Dialect
+    # To accommodate this in the interactive user interface for Editting a Gloss, two values are returned
+
+    # The dialects value is set to the current dialects value
+    dialects_value = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in gloss.dialect.all()])
+    current_signlanguages = gloss.signlanguage.all()
+    current_signlanguage_name = ''
+    for lang in current_signlanguages:
+        current_signlanguage_name = lang.name
+
     try:
         gloss.signlanguage.clear()
         for value in values:
             lang = SignLanguage.objects.get(name=value)
             gloss.signlanguage.add(lang)
+            if value != current_signlanguage_name:
+                gloss.dialect.clear()
+                # Has a side effect that the Dialects value is cleared, this will be passed back to the user interface
+                dialects_value = ''
         gloss.save()
-        newvalue = ", ".join([str(g) for g in gloss.signlanguage.all()])
+        new_signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
     except:
         return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
 
-    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+    return HttpResponse(str(new_signlanguage_value) + '\t' + str(dialects_value), {'content-type': 'text/plain'})
 
 def update_dialect(gloss, field, values):
     # expecting possibly multiple values
@@ -393,12 +411,15 @@ def update_dialect(gloss, field, values):
         for lang in new_dialects_to_save:
             gloss.dialect.add(lang)
         gloss.save()
-        newvalue = ", ".join([str(d.signlanguage.name)+'/'+str(d.name) for d in gloss.dialect.all()])
+
+        # The signlanguage value is set to the currect sign languages value
+        signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
+        new_dialects_value = ", ".join([str(d.signlanguage.name)+'/'+str(d.name) for d in gloss.dialect.all()])
     except:
         return HttpResponseBadRequest("Dialect %s does not match Sign Language of Gloss" % error_string_values,
                                       {'content-type': 'text/plain'})
 
-    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+    return HttpResponse(str(signlanguage_value) + '\t' + str(new_dialects_value), {'content-type': 'text/plain'})
 
 def update_tags(gloss, field, values):
     # expecting possibly multiple values
