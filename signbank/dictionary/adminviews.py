@@ -1169,6 +1169,15 @@ class GlossRelationsDetailView(DetailView):
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
+        lemma_group = getattr(gl, 'idgloss')
+        other_glosses_in_lemma_group = Gloss.objects.filter(idgloss__iexact=lemma_group).count()
+        if other_glosses_in_lemma_group > 1:
+            context['lemma_group'] = True
+            context['lemma_group_url'] = settings.URL + 'signs/search/?search_type=sign&view_type=lemma_groups&lemmaGloss=%5E' + lemma_group + '%24'
+        else:
+            context['lemma_group'] = False
+            context['lemma_group_url'] = ''
+
         return context
 
 
