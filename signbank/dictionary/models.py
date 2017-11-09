@@ -692,7 +692,11 @@ minor or insignificant ways that can be ignored.""")
 
     def get_absolute_url(self):
         return "/dictionary/gloss/%s.html" % self.idgloss
-    
+
+    def lemma_group(self):
+        glosses_with_same_lemma_group = Gloss.objects.filter(idgloss__iexact=self.idgloss).exclude(pk=self.pk)
+
+        return glosses_with_same_lemma_group
     
     def homophones(self):
         """Return the set of homophones for this gloss ordered by sense number"""
