@@ -19,7 +19,7 @@ import django.contrib.admindocs.urls
 import django_summernote.urls
 
 from signbank.dictionary.models import Gloss
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeListView, DatasetListView
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeListView, DatasetListView, HandshapeListView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -63,6 +63,7 @@ urlpatterns = [
     url(r'^signs/homonyms/$', signbank.dictionary.views.find_homonyms),
     url(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
     url(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
+    url(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
     url(r'^morphemes/dictionary/$', signbank.dictionary.views.search_morpheme),
     url(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),
     url(r'^morphemes/add/$', permission_required('dictionary.search_gloss')(add_new_morpheme)),
