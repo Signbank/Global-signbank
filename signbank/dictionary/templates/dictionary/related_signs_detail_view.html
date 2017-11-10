@@ -86,7 +86,28 @@
       </tr>
     </tbody>
 
+        {% if gloss.lemma_group %}
+        <thead></thead>
+        <tbody>
+            <tr style="outline: thin solid; color: #ddd;"><th style="width:8em; color:darkred">{% trans "Lemma Group" %}</th>
+                <td id='lemma_group'>
+                    {% if lemma_group %}
+                        <a href='{{ lemma_group_url }}'>{% value gloss.idgloss %}</a>
+                    {% else %}
+                        {% value gloss.idgloss %}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr style="outline: thin solid; color: #ddd;">
+                <th style="width:8em; color:darkred">{% trans "Glosses" %}</th>
+                <td id='lemma_group_glosses' style="color:black;" colspan="8">
+                    <a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{{ gloss.annotation_idgloss }}</a>, {% for gl in gloss.lemma_group %}
+                    <a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            </tr>
+        </tbody>
+        {% endif %}
 
+        <tbody></tbody>
        <thead>
        {% if gloss.homonyms_count %}
        <tr>

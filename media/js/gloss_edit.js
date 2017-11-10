@@ -389,7 +389,20 @@ function update_view_and_remember_original_value(change_summary)
 	if (split_values_count > 0)
 	{
 	    if (split_values_count < 3) {
-	        console.log("update_view_and_remember_original_value: not enough returned values")
+//	        # updates to Sign Language or Dialect returns two values
+            split_values = change_summary.split('\t');
+            language = split_values[0];
+            dialect = split_values[1];
+            if (language) {
+                $('#signlanguage').html(language);
+            } else {
+                $('#signlanguage').html("------");
+            }
+            if (dialect) {
+                $('#dialect').html(dialect);
+            } else {
+                $('#dialect').html("------");
+            }
 	        return
 	    }
         split_values = change_summary.split('\t');
