@@ -848,9 +848,11 @@ class GlossDetailView(DetailView):
 
         try:
             self.object = self.get_object()
-        except Http404:
+        # except Http404:
+        except:
             # return custom template
-            return render(request, 'dictionary/warning.html', status=404)
+            # return render(request, 'dictionary/warning.html', status=404)
+            raise Http404()
 
         if request.user.is_authenticated():
             if not request.user.has_perm('dictionary.search_gloss'):
