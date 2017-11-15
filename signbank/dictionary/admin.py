@@ -6,6 +6,8 @@ from signbank.settings import server_specific
 from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
 from modeltranslation.admin import TranslationAdmin
 from guardian.admin import GuardedModelAdmin
+from django.contrib.auth import get_permission_codename
+from django.contrib import messages
 
 
 class DatasetAdmin(GuardedModelAdmin):
@@ -146,6 +148,8 @@ class UserAdmin(UserAdmin):
 
 class FieldChoiceAdmin(VersionAdmin):
     readonly_fields=['machine_value']
+    actions=['delete_selected']
+
     if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
         show_english_only = True
         list_display = ['english_name', 'machine_value','field']
@@ -159,6 +163,53 @@ class FieldChoiceAdmin(VersionAdmin):
             self.exclude = ('dutch_name', 'chinese_name')
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
         return form
+
+    def has_delete_permission(self, request, obj=None):
+        objects_with_domhndsh = 0
+        objects_with_subhndsh = 0
+        if obj is not None and obj.field == 'Handshape':
+            objects_with_domhndsh = Gloss.objects.filter(domhndsh=obj.machine_value).count()
+            objects_with_subhndsh = Gloss.objects.filter(subhndsh=obj.machine_value).count()
+            if objects_with_domhndsh > 0 or objects_with_subhndsh > 0:
+                return False
+        elif obj is not None and obj.field == 'FingerSelection':
+            # This is a reserved field, used for displaying the Finger Selection
+            # Do not allow deletion
+            return False
+
+        # if it's not a Handshape, then do the BaseAdmin code
+        opts = self.opts
+        codename = get_permission_codename('delete', opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+
+    def has_change_permission(self, request, obj=None):
+
+        if obj is not None and obj.field == 'FingerSelection':
+            # This is a reserved field, used for displaying the Finger Selection
+            # Do not allow deletion
+            return False
+
+        opts = self.opts
+        codename = get_permission_codename('change', opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+
+    def delete_selected(self, request, queryset):
+
+        for obj in queryset:
+            if obj.field == 'FingerSelection':
+                # FingerSelection is used for display in the code, do not allow deletion
+                messages.add_message(request, messages.ERROR, ("Deletion of FingerSelection fields is not allowed."))
+                pass
+            if obj.field == 'Handshape':
+                objects_with_domhndsh = Gloss.objects.filter(domhndsh=obj.machine_value).count()
+                objects_with_subhndsh = Gloss.objects.filter(subhndsh=obj.machine_value).count()
+                if objects_with_domhndsh > 0 or objects_with_subhndsh > 0:
+                    inuse_message = "Handshape " + obj.english_name + " is currently in use."
+                    messages.add_message(request, messages.ERROR, inuse_message)
+                    pass
+            obj.delete()
+
+    delete_selected.short_description = "Delete selected field choices"
 
     def save_model(self, request, obj, form, change):
 
