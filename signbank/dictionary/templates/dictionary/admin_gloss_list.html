@@ -687,7 +687,7 @@ function do_toggle_groups(el) {
           {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
           {% endif %}
@@ -718,7 +718,8 @@ function do_toggle_groups(el) {
           {% if gloss.parent_glosses.all.count > 0 %}
             <div class="component_in_gloss">
             {% for component in gloss.parent_glosses.all %}
-                <span>{{ component.morpheme.annotation_idgloss_en }}{% if not forloop.last %} + {% endif %}</span>
+                <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">
+                    {{ component.morpheme.annotation_idgloss_en }}</a>{% if not forloop.last %} + {% endif %}</span>
             {% endfor %}
             </div>
           {% endif %}
@@ -946,7 +947,7 @@ function do_toggle_groups(el) {
           {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a  class="morpheme_style" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
           {% endif %}
@@ -977,7 +978,8 @@ function do_toggle_groups(el) {
           {% if gloss.parent_glosses.all.count > 0 %}
             <div class="component_in_gloss">
             {% for component in gloss.parent_glosses.all %}
-                <span>{{ component.morpheme.annotation_idgloss_en }}{% if not forloop.last %} + {% endif %}</span>
+                <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss_en }}</a>
+                    {% if not forloop.last %} + {% endif %}</span>
             {% endfor %}
             </div>
           {% endif %}
