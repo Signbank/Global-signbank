@@ -893,7 +893,7 @@ class GlossDetailView(DetailView):
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
         context['handedness'] = (int(self.object.handedness) > 1) if self.object.handedness else 0  # minimal machine value is 2
-        context['domhndsh'] = (int(self.object.domhndsh) > 2) if self.object.subhndsh else 0        # minimal machine value -s 3
+        context['domhndsh'] = (int(self.object.domhndsh) > 2) if self.object.domhndsh else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
         context['StrongHand'] = self.object.domhndsh
         context['WeakHand'] = self.object.subhndsh
