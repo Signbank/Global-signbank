@@ -42,6 +42,7 @@ urlpatterns = [
     url(r'^update/othermedia/', signbank.dictionary.update.add_othermedia, name='add_othermedia'),
     url(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
     url(r'^update/morpheme/', signbank.dictionary.update.add_morpheme, name='add_morpheme'),
+    url(r'^update/blenddefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_blend_definition, name='add_blenddefinition'),
 
     # The next one does not have a permission check because it should be accessible from a cronjob 
     url(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),

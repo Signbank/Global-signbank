@@ -78,6 +78,7 @@ var busy_editing = 0;
  });
 
 function disable_edit() {
+    //$('#affix-bar').show(); // The affix bar appears on top of the Delete modal popup window, so it is hidden during editting
     $('.edit').editable('disable');
     $('.edit').css('color', 'black');
     $('#edit_message').text('');
@@ -122,6 +123,7 @@ function disable_edit() {
     $('#add_relation_form').hide();
     $('#add_relationtoforeignsign_form').hide();
     $('#add_morphologydefinition_form').hide();
+    $('#add_blenddefinition_form').hide();
     $('#add_other_media').hide();
     $('#add_component').hide();
     $('#add_morphemedefinition_form').hide();
@@ -131,6 +133,7 @@ function disable_edit() {
     $('.relationtoforeignsign_delete').hide();
     $('.morphology-definition-delete').hide();
     $('.morpheme-definition-delete').hide();
+    $('.blend-definition-delete').hide();
 
     $('.empty_row').hide();
 
@@ -157,6 +160,7 @@ function disable_edit() {
 };
 
 function enable_edit() {
+    //$('#affix-bar').hide(); // The affix bar appears on top of the Delete modal popup window, so it is hidden during editting
     $('.edit').editable('enable');
     $('.edit').css('color', 'red');
     $('#edit_message').text('Click on red text to edit  ');
@@ -178,6 +182,7 @@ function enable_edit() {
     $('#add_relation_form').show();
     $('#add_relationtoforeignsign_form').show();
     $('#add_morphologydefinition_form').show();
+    $('#add_blenddefinition_form').show();
     $('#add_other_media').show();
     $('#add_component').show();
     $('#add_morphemedefinition_form').show();
@@ -189,6 +194,7 @@ function enable_edit() {
     $('.relationtoforeignsign_delete').css('color', 'black');
     $('.morphology-definition-delete').show();
     $('.morpheme-definition-delete').show();
+    $('.blend-definition-delete').show();
 
     $('.empty_row').show();
 

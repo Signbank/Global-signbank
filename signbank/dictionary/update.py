@@ -123,6 +123,10 @@ def update_gloss(request, glossid):
 
             return update_morpheme_definition(gloss, field, value)
 
+        elif field.startswith('blend-definition'):
+
+            return update_blend_definition(gloss, field, value)
+
         elif field.startswith('other-media'):
 
             return update_other_media(request,gloss, field, value)
@@ -1060,7 +1064,7 @@ def add_morphology_definition(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
-    raise Http404('Incorrect request');
+    raise Http404('Incorrect request')
 
 # Add a 'morpheme' (according to the Morpheme model)
 def add_morpheme_definition(request, glossid):
@@ -1091,7 +1095,7 @@ def add_morpheme_definition(request, glossid):
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
-    raise Http404('Incorrect request');
+    raise Http404('Incorrect request')
 
 def add_morphemeappearance(request):
 
@@ -1113,7 +1117,38 @@ def add_morphemeappearance(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
-    raise Http404('Incorrect request');
+    raise Http404('Incorrect request')
+
+# Add a 'blend' (according to the Blend model)
+def add_blend_definition(request, glossid):
+
+    if request.method == "POST":
+        form = GlossBlendForm(request.POST)
+
+        # Get the glossid at any rate
+        thisgloss = get_object_or_404(Gloss, pk=glossid)
+
+        # check availability of morpheme before continuing
+        if form.data['blend_id'] == "":
+            # The user has obviously not selected a morpheme
+            # Desired action (Issue #199): nothing happens
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'/')
+
+        if form.is_valid():
+
+            blend_id = form.cleaned_data['blend_id']
+            blend = gloss_from_identifier(blend_id)
+
+            if blend != None:
+                definition = BlendMorphology()
+                definition.parent_gloss = thisgloss
+                definition.glosses = blend
+                definition.role = form.cleaned_data['role']
+                definition.save()
+
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'/')
+
+    raise Http404('Incorrect request')
 
 def update_handshape(request, handshapeid):
 
@@ -1499,6 +1534,33 @@ def update_morpheme_definition(gloss, field, value):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morpheme_definition_meaning':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
+        original_value = getattr(definition, 'role')
+        definition.__setattr__('role', value)
+        definition.save()
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' +  str(value) + str('\t') + str(category_value), {'content-type': 'text/plain'})
+
+    else:
+
+        return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
+
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+
+def update_blend_definition(gloss, field, value):
+    """Update the morpheme definition for this gloss"""
+
+    newvalue = value
+    original_value = ''
+    category_value = 'blend_morphology'
+    (what, blend_id) = field.split('_')
+    what = what.replace('-','_')
+
+    if what == 'blend_definition_delete':
+        definition = BlendMorphology.objects.get(id=blend_id)
+        definition.delete()
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'/')
+    elif what == 'blend_definition_role':
+        definition = BlendMorphology.objects.get(id=blend_id)
         original_value = getattr(definition, 'role')
         definition.__setattr__('role', value)
         definition.save()

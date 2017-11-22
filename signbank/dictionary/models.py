@@ -1511,6 +1511,14 @@ class SimultaneousMorphologyDefinition(models.Model):
     def __str__(self):
         return self.parent_gloss.idgloss + ' consists of ' + self.morpheme.idgloss
 
+class BlendMorphology(models.Model):
+    parent_gloss = models.ForeignKey(Gloss,related_name='blend_morphology')
+    role = models.CharField(max_length=100)
+    glosses = models.ForeignKey(Gloss,related_name='glosses_comprising')
+
+    def __str__(self):
+        return self.parent_gloss.idgloss + ' is ' + self.role + ' blend of ' + self.glosses.idgloss
+
 class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""
 

@@ -305,6 +305,13 @@ class GlossMorphemeForm(forms.Form):
     description = forms.CharField(label=_(u'Meaning'))
     morph_id = forms.CharField(label=_(u'Morpheme'))
 
+class GlossBlendForm(forms.Form):
+    """Specify simultaneous morphology components belonging to a Gloss"""
+
+    host_gloss_id = forms.CharField(label=_(u'Host Gloss'))
+    role = forms.CharField(label=_(u'Role'))
+    blend_id = forms.CharField(label=_(u'Blend'))
+
 class MorphemeMorphologyForm(forms.ModelForm):
     """Morphology specification for a Morpheme"""
 

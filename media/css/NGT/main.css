@@ -84,3 +84,7 @@ legend
 {
     width: 467px;
 }
+
+.modal-dialog {
+  margin: 130px auto;
+}

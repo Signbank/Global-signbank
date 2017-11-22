@@ -561,6 +561,73 @@
             </form>
             {% endif %}
 
+
+
+            <table class='table table-condensed'>
+                <tr>
+                    <th colspan="4">{% trans "Blend Morphology" %}</th>
+                </tr>
+                <tr>
+                    <th style="width:2em;"></th>
+                    <th style="width:22em;">{% trans "Blend gloss" %}</th>
+                    <th colspan="2">{% trans "Role in this sign" %}</th>
+                </tr>
+                {% for blend in gloss.blend_morphology.all %}
+                <tr>
+                    <!-- Facility to delete this blend -->
+                     <td>
+                        <span class='glyphicon glyphicon-trash blend-definition-delete' data-toggle='modal' data-target='#delete_blend-definition_modal_{{blend.pk}}'></span>
+
+                         <div class="modal fade" id="delete_blend-definition_modal_{{blend.pk}}" role="dialog"
+                              aria-labelledby="#modalTitleBlend" aria-hidden="true">
+                             <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class='modal-header'>
+                                        <h2 id='modalTitleBlend'>{% trans "Delete This Blend" %}</h2>
+                                    </div>
+                                    <div class='modal-body'>
+
+                                        <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                     </div>
+                                  <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                      {% csrf_token %}
+                                      <input type='hidden' name='id' value='blend-definition-delete_{{blend.pk}}'>
+                                      <input type='hidden' name='value' value='confirmed'>
+                                      <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                      </div>
+                                  </form>
+
+                                </div>
+                              </div>
+                         </div>
+
+                    </td>
+                    <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend.glosses}}</a></td>
+                    <td class='edit edit_text' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
+               </tr>
+                {% endfor %}
+            </table>
+
+            <!-- Facilitate adding and deleting blends that are used in this sign -->
+           {% if perms.dictionary.change_gloss %}
+           <form id='add_blenddefinition_form' method='post' action="{% url 'dictionary:add_blenddefinition' glossid=gloss.id %}">
+               {% csrf_token %}
+               <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
+               <table class='table table-condensed'>
+                   <tr>
+                       <td style="width:2em;"></td>
+                       <td style="width:22em;"><input class='form-control glosstypeahead' placeholder='{% trans "Blend gloss" %}' name='blend_id' value="{{blendform.blend_id.value|default:''}}"/></td>
+                       <td><input class='form-control' placeholder='{% trans "Role in this sign" %}' name='role' value="{{blendform.role.value|default:''}}"/></td>
+                       <td><input class='btn btn-primary' value='{% trans "Add Blend" %}' type='submit'></td>
+                   </tr>
+               </table>
+               {# spacing div to allow room for typeahead dropdown #}
+               <div style='height: 10em'></div>
+            </form>
+            {% endif %}
+
         </div>
 
     </div>

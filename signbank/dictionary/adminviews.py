@@ -887,6 +887,7 @@ class GlossDetailView(DetailView):
                                                                    self.request.LANGUAGE_CODE,ordered=False,id_prefix=''))
 
         context['morphemeform'] = GlossMorphemeForm()
+        context['blendform'] = GlossBlendForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
@@ -1116,6 +1117,7 @@ class GlossRelationsDetailView(DetailView):
                                                                    self.request.LANGUAGE_CODE,ordered=False,id_prefix=''))
 
         context['morphemeform'] = GlossMorphemeForm()
+        context['blendform'] = GlossBlendForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
