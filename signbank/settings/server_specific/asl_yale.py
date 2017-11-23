@@ -11,6 +11,10 @@ DATABASES = {'default':
 
 ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 
+# what do we call this signbank?
+LANGUAGE_NAME = "ASL"
+COUNTRY_NAME = "United States of America"
+
 #Influences which template and css folder are used
 SIGNBANK_VERSION_CODE = 'ASL'
 URL = 'https://aslsignbank.haskins.yale.edu/'

@@ -15,6 +15,10 @@ DATABASES = {'default':
 
 ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 
+# what do we call this signbank?
+LANGUAGE_NAME = "NGT"
+COUNTRY_NAME = "Netherlands"
+
 #Influences which template and css folder are used
 SIGNBANK_VERSION_CODE = 'NGT'
 URL = 'https://signbank.science.ru.nl/'
