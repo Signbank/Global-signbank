@@ -1,0 +1,55 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Homonym list{% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
+
+{% if object_list %}
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+          <th>{% trans "Focus Gloss" %}</th>
+          <th>{% trans "Homonym Relations (SAVED)" %}</th>
+          <th>{% trans "Homonym Relations (SAME PHONOLOGY)" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for focus_gloss in object_list %}
+      {% with focus_gloss.homonym_objects as homonym_objects_of_gloss %}
+      {% with focus_gloss.homonym_relations as homonyms_saved %}
+        {% if homonyms_saved or homonym_objects_of_gloss %}
+        <tr>
+            <td>
+                <a href="{{ URL }}/dictionary/gloss/{{ focus_gloss.id }}/">{{ focus_gloss.annotation_idgloss }}</a>
+            </td>
+            <td>
+                {% for gl in homonyms_saved %}
+                    <a style="padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a>
+                {% endfor %}
+            </td>
+            <td>
+                {% for gl in homonym_objects_of_gloss %}
+                    <a style="padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endif %}
+    {% endwith %}
+    {% endwith %}
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+{% trans "No homonyms found." %}
+{% endif %}
+
+</div>
+
+{% endblock content %}

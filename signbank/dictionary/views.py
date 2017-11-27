@@ -1368,11 +1368,16 @@ def find_homonyms(request):
 
     all_glosses = Gloss.objects.exclude((Q(**{'handedness__isnull':True})|Q(**{'handedness':0})))
 
+    logo_banner = '<div id="header">\n' \
+                  ' <h1>NGT Signbank</h1>\n' \
+                  ' <div id="logoholder" class="visible-lg visible-md visible-sm"></div>\n' \
+                  '</div>\n'
 
-    relation_table_prefix = '<!DOCTYPE html>\n' \
+    html_header = '<!DOCTYPE html>\n' \
                          '<html>\n' \
-                         '<body>\n' \
-                         '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
+                         '<body>\n'
+
+    relation_table_prefix = '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
                          '<thead>\n' \
                          '<tr>\n' \
                          '<th style="width:20em; text-align:left;">Focus Gloss</th>\n' \
@@ -1507,7 +1512,7 @@ def find_homonyms(request):
           #
           #     print("DELETE HOMONYM: id=", relation_id, " source= ", rel.source, " target= ", rel.target)
 
-    return HttpResponse(relation_table_prefix+relation_table_rows+relation_table_suffix)
+    return HttpResponse(html_header+logo_banner+relation_table_prefix+relation_table_rows+relation_table_suffix)
 
 
 def configure_handshapes(request):
