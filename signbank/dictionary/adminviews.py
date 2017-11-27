@@ -1772,6 +1772,26 @@ class HandshapeDetailView(DetailView):
         return context
 
 
+class HomonymListView(ListView):
+    model = Gloss
+    template_name = 'dictionary/admin_homonyms_list.html'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(HomonymListView, self).get_context_data(**kwargs)
+
+        return context
+
+    def get_queryset(self):
+
+        # Get all existing saved Homonyms
+        relation_homonyms = Relation.objects.filter(role='homonym')
+
+        glosses_with_phonology = Gloss.objects.exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
+                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})))
+
+        return glosses_with_phonology
+
 class HandshapeListView(ListView):
 
     model = Handshape
