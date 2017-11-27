@@ -393,7 +393,14 @@
             </tr>
             {% endif %}
 
-            <tr><th>{% trans "Translation equivalents in Dutch" %}</th><td class='edit edit_text' id='keywords' colspan="2">{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            {% for lang, translations in translations_per_language.items %}
+            <tr>
+                <th>
+                    {% trans "Translation equivalents in " %}{{ lang }}
+                </th>
+                <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' colspan="2">{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            </tr>
+            {% endfor %}
 
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
