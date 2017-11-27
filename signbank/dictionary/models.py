@@ -860,7 +860,6 @@ minor or insignificant ways that can be ignored.""")
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
 
                 non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
-                # print('empty_non_empty_phonology: human value: ', str(human_value))
             else:
                 empty_phonology = empty_phonology + [(field,str(label))]
 
@@ -908,7 +907,6 @@ minor or insignificant ways that can be ignored.""")
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
 
                 non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
-                # print('non_empty_phonology: human value: ', str(human_value))
 
         return non_empty_phonology
 
@@ -1087,13 +1085,9 @@ minor or insignificant ways that can be ignored.""")
 
         qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE id != %s AND ' + where_homonyms, [self.id])
 
-        # print('homonym objects for gloss ' + str(self.idgloss) + ': ', qs)
-        # qs = qs.exclude(pk=self.pk)
-
         for o in qs:
             homonym_objects_list.append(o)
 
-        # print('homonym list for gloss ' + str(self.idgloss) + ': ', homonym_objects_list)
         return homonym_objects_list
 
 

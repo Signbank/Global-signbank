@@ -67,8 +67,6 @@ urlpatterns = [
     url(r'^import_other_media/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_other_media)),
 
     url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
-    # url(r'find_homonyms/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_homonyms)),
-    # url(r'^find_homonyms/$', permission_required('dictionary.search_gloss')(HomonymListView.as_view()), name='admin_homonyms_list'),
 
     url(r'update_cngt_counts/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.update_cngt_counts)),
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.update_cngt_counts)),
