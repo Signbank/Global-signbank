@@ -99,7 +99,7 @@ def update_gloss(request, glossid):
             
             return update_definition(request, gloss, field, value)
 
-        elif field == 'keywords':
+        elif field.startswith('keywords'):
 
             return update_keywords(gloss, field, value)
 
@@ -316,6 +316,14 @@ def update_gloss(request, glossid):
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
 
+    # Determine the language of the keywords
+    language = Language.objects.get(id=get_default_language_id())
+    try:
+        language_code_2char = field[len('keywords_'):]
+        language = Language.objects.filter(language_code_2char=language_code_2char)[0]
+    except:
+        pass
+
     kwds = [k.strip() for k in value.split(',')]
 
     keywords_list = []
@@ -326,16 +334,16 @@ def update_keywords(gloss, field, value):
             keywords_list.append(kwd)
 
     # remove current keywords
-    current_trans = gloss.translation_set.all()
+    current_trans = gloss.translation_set.filter(language=language)
     #current_kwds = [t.translation for t in current_trans]
     current_trans.delete()
     # add new keywords
     for i in range(len(keywords_list)):
         (kobj, created) = Keyword.objects.get_or_create(text=keywords_list[i])
-        trans = Translation(gloss=gloss, translation=kobj, index=i)
+        trans = Translation(gloss=gloss, translation=kobj, index=i, language=language)
         trans.save()
     
-    newvalue = ", ".join([t.translation.text for t in gloss.translation_set.all()])
+    newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language)])
     
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 

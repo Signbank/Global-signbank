@@ -1008,6 +1008,15 @@ class GlossDetailView(DetailView):
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
+        # Put translations (keywords) per language in the context
+        context['translations_per_language'] = {}
+        if gl.dataset:
+            for language in gl.dataset.translation_languages.all():
+                context['translations_per_language'][language] = gl.translation_set.filter(language=language)
+        else:
+            language = Language.objects.get(id=get_default_language_id())
+            context['translations_per_language'][language] = gl.translation_set.filter(language=language)
+
         user = self.request.user
         if user.is_authenticated():
             import guardian
