@@ -18,6 +18,7 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import datetime as DT
 from guardian.core import ObjectPermissionChecker
+from guardian.shortcuts import get_objects_for_user, get_perms
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -152,10 +153,27 @@ class GlossListView(ListView):
         context['search_type'] = self.search_type
         context['view_type'] = self.view_type
 
-        if self.search_type == 'sign':
-            context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
+        user = self.request.user
+        user_profile = UserProfile.objects.get(user=user)
+        users_selected_datasets = user_profile.selected_datasets.all()
+        selected_datasets = []
+        for ds in users_selected_datasets:
+            selected_datasets.append(ds)
+        if selected_datasets:
+            pass
         else:
-            context['glosscount'] = Gloss.objects.count()  # Count the glosses + morphemes
+            if user.is_authenticated():
+                all_datasets = Dataset.objects.all()
+                for ds in all_datasets:
+                    if 'view_dataset' in get_perms(user, ds):
+                        selected_datasets.append(ds)
+
+        context['selected_datasets'] = selected_datasets
+
+        if self.search_type == 'sign':
+            context['glosscount'] = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets).count()   # Only count the none-morpheme glosses
+        else:
+            context['glosscount'] = Gloss.objects.filter(dataset__in=selected_datasets).count()  # Count the glosses + morphemes
 
         context['add_gloss_form'] = GlossCreateForm()
         context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
@@ -523,13 +541,32 @@ class GlossListView(ListView):
 
         setattr(self.request, 'view_type', self.view_type)
 
+
+        # restrict query to selected dataset
+        user = self.request.user
+        user_profile = UserProfile.objects.get(user=user)
+        users_selected_datasets = user_profile.selected_datasets.all()
+        selected_datasets = []
+        for ds in users_selected_datasets:
+            # dataset_id = Dataset.objects.get(name=ds)
+            # selected_datasets.append(dataset_id.id)
+            selected_datasets.append(ds)
+        if selected_datasets:
+            pass
+        else:
+            if user.is_authenticated():
+                all_datasets = Dataset.objects.all()   # start out with all, remove those that the user can't view
+                for ds in all_datasets:
+                    if 'view_dataset' in get_perms(user, ds):
+                        selected_datasets.append(ds)
+
         #Get the initial selection
         if len(get) > 0 or show_all:
             if self.search_type == 'sign':
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
-                qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
+                qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
             else:
-                qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
+                qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
 
         #No filters or 'show_all' specified? show nothing
         else:

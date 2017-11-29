@@ -551,7 +551,11 @@ function do_toggle_groups(el) {
             {% endif %}
         </a>
         {% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{glosscount}}.
-
+        {% if selected_datasets %}
+        {% trans "Datasets:" %}
+        {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% endfor %}
+        {% endif %}
     </div>
 </form>
 {% endif %}
