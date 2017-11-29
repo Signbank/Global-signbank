@@ -115,3 +115,7 @@ LANGUAGE_CODE_MAP = [
     {2:'en',3:'eng'},
     {2:'zh-hans',3:'chi'}
 ]
+
+SPEED_UP_RETRIEVING_ALL_SIGNS =	True
+
+

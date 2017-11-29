@@ -22,7 +22,7 @@ LANGUAGES = (
 
 LANGUAGE_CODE = "en-us"
 
-DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en'}
+DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en_US'}
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = False
 
@@ -92,3 +92,4 @@ LANGUAGE_CODE_MAP = [
     {2:'zh-hans',3:'chi'}
 ]
 
+SPEED_UP_RETRIEVING_ALL_SIGNS =	False
