@@ -174,10 +174,6 @@ SOUTH_TESTS_MIGRATE = False
 
 ## Settings controlling page contents
 
-# what do we call this signbank?
-LANGUAGE_NAME = "NGT"
-COUNTRY_NAME = "Netherlands"
-
 # do we implement safe search for anonymous users?
 # if True, any gloss that is tagged lexis:crude will be removed from
 # search results for users who are not logged in
@@ -255,10 +251,6 @@ PRIMARY_CSS = "css/"+SIGNBANK_VERSION_CODE+"/main.css"
 # defines the aspect ratio for videos
 #VIDEO_ASPECT_RATIO = 360.0/640.0
 
-
-# what do we call this signbank?
-LANGUAGE_NAME = "NGT"
-COUNTRY_NAME = "the Netherlands"
 
 # show/don't show sign navigation
 SIGN_NAVIGATION = False

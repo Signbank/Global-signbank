@@ -4,7 +4,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossRelationsDetailView, MorphemeDetailView, MorphemeListView, HandshapeDetailView, HandshapeListView
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossRelationsDetailView, MorphemeDetailView, \
+    MorphemeListView, HandshapeDetailView, HandshapeListView, HomonymListView
 
 #These are needed for the urls below
 import signbank.dictionary.views
@@ -66,7 +67,6 @@ urlpatterns = [
     url(r'^import_other_media/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_other_media)),
 
     url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
-    url(r'find_homonyms/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_homonyms)),
 
     url(r'update_cngt_counts/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.update_cngt_counts)),
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.update_cngt_counts)),
@@ -91,5 +91,3 @@ urlpatterns = [
     url(r'^morpheme/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(MorphemeDetailView.as_view()), name='admin_morpheme_view'),
     url(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
 ]
-
-

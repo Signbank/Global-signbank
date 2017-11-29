@@ -62,8 +62,6 @@ def update_gloss(request, glossid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return HttpResponseForbidden("Gloss Update Not Allowed")
 
-    # print('Inside of update_gloss')
-
     if request.method == "POST":
 
         gloss = get_object_or_404(Gloss, id=glossid)
@@ -74,8 +72,6 @@ def update_gloss(request, glossid):
         original_value = '' #will in most cases be set later, but can't be empty in case it is not set
         category_value = ''
         field_category = ''
-
-        # print('field is: ', field)
 
         if len(value) == 0:
             value = ' '
@@ -103,7 +99,7 @@ def update_gloss(request, glossid):
             
             return update_definition(request, gloss, field, value)
 
-        elif field == 'keywords':
+        elif field.startswith('keywords'):
 
             return update_keywords(gloss, field, value)
 
@@ -221,7 +217,6 @@ def update_gloss(request, glossid):
         else:
 
             original_value = getattr(gloss,field)
-            # print("update gloss, original value for field ", field, ": ", original_value)
 
             if not field in [f.name for f in Gloss._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
@@ -238,7 +233,6 @@ def update_gloss(request, glossid):
             if isinstance(gloss._meta.get_field(field),NullBooleanField):
                 # value is the html 'value' received during editing
                 newvalue = value
-                # print("new boolean value: ", newvalue)
                 # value gets converted to a Boolean by the following statement
                 if field == 'weakdrop' or field == 'weakprop' or field == 'domhndsh_letter' or field == 'domhndsh_number' or \
                                                     field == 'subhndsh_letter' or field == 'subhndsh_number':
@@ -259,7 +253,6 @@ def update_gloss(request, glossid):
 
             # special value of 'notset' or -1 means remove the value
             if value == 'notset' or value == -1 or value == '':
-                # print("update gloss: save None value for field ", field)
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
@@ -300,7 +293,6 @@ def update_gloss(request, glossid):
 
                     field_category = fieldname_to_category(field)
 
-                    # print('field category: ', field_category)
                     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                     newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
 
@@ -324,6 +316,14 @@ def update_gloss(request, glossid):
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
 
+    # Determine the language of the keywords
+    language = Language.objects.get(id=get_default_language_id())
+    try:
+        language_code_2char = field[len('keywords_'):]
+        language = Language.objects.filter(language_code_2char=language_code_2char)[0]
+    except:
+        pass
+
     kwds = [k.strip() for k in value.split(',')]
 
     keywords_list = []
@@ -334,16 +334,16 @@ def update_keywords(gloss, field, value):
             keywords_list.append(kwd)
 
     # remove current keywords
-    current_trans = gloss.translation_set.all()
+    current_trans = gloss.translation_set.filter(language=language)
     #current_kwds = [t.translation for t in current_trans]
     current_trans.delete()
     # add new keywords
     for i in range(len(keywords_list)):
         (kobj, created) = Keyword.objects.get_or_create(text=keywords_list[i])
-        trans = Translation(gloss=gloss, translation=kobj, index=i)
+        trans = Translation(gloss=gloss, translation=kobj, index=i, language=language)
         trans.save()
     
-    newvalue = ", ".join([t.translation.text for t in gloss.translation_set.all()])
+    newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language)])
     
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -428,15 +428,9 @@ def update_dialect(gloss, field, values):
 def update_tags(gloss, field, values):
     # expecting possibly multiple values
 
-    # print('update_tags, values: ', values)
-
     current_tag_ids = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
 
     new_tag_ids = [tag.id for tag in Tag.objects.filter(name__in=values)]
-
-    # print('current tag ids: ', current_tag_ids)
-
-    # print('new tag ids: ', new_tag_ids)
 
     # the existance of the new tag has already been checked
     for tag_id in current_tag_ids:
@@ -448,16 +442,11 @@ def update_tags(gloss, field, values):
             tagged_obj.delete()
 
     for value in values:
-        # print('new tag value: ', value)
         Tag.objects.add_tag(gloss, value)
 
     new_tag_ids = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
 
-    # print('new tag ids: ', new_tag_ids)
-
     newvalue = ', '.join([str(tag.name).replace('_',' ') for tag in  Tag.objects.filter(id__in=new_tag_ids) ])
-
-    # print('newvalue: ', newvalue)
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -466,7 +455,6 @@ def update_sequential_morphology(gloss, field, values):
 
     morphemes = [morpheme.id for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
 
-    # print('update_sequential_morphology: ', values)
     role = 2
 
     # the existance of the morphemes in parameter values has already been checked
@@ -477,20 +465,13 @@ def update_sequential_morphology(gloss, field, values):
             old_morpheme.delete()
         # gloss.morphemePart.clear()
         for value in values:
-            # print(role, ' value: ', value)
             morpheme = gloss_from_identifier(value)
-            # print('morpheme: ', morpheme)
             morph_def = MorphologyDefinition()
-            # print('after create new MorphologyDefinition')
             morph_def.parent_gloss = gloss
-            # print('after assign gloss value: ', gloss)
             morph_def.role = role
-            # print('after assign role value: ', role)
             morph_def.morpheme = morpheme
-            # print('after assign morpheme value: ', morpheme)
             morph_def.save()
             # gloss.morphemePart.add(morph_def)
-            # print('gloss morphemePart created')
             role = role + 1
     except:
         return HttpResponseBadRequest("Unknown Morpheme %s" % values, {'content-type': 'text/plain'})
@@ -510,8 +491,6 @@ def update_simultaneous_morphology(gloss, field, values):
         (morpheme, role) = value.split(':')
         new_sim_tuples.append((morpheme,role))
 
-    # print('new sim tuples: ', new_sim_tuples)
-
     # delete any existing simultaneous morphology objects rather than update
     # to allow (re-)insertion in the correct order
 
@@ -524,24 +503,17 @@ def update_simultaneous_morphology(gloss, field, values):
 
     for (morpheme, role) in new_sim_tuples:
 
-        # print('next tuple (morpheme,role): (', morpheme, ',', role, ')')
-
         try:
             morpheme_gloss = gloss_from_identifier(morpheme)
 
             if not morpheme_gloss:
-                # print('check_existance_simultaneous_morphology: morpheme not found: ', morpheme)
                 raise ValueError
-
-            # print('check_existance_simultaneous_morphology, morpheme_id: ', morpheme_gloss)
 
             # create new morphology
             sim = SimultaneousMorphologyDefinition()
             sim.parent_gloss_id = gloss.id
             sim.morpheme_id = morpheme_gloss.id
-            # print('morpheme id value: ', morpheme_gloss.id)
             sim.role = role
-            # print('role value: ', role)
             sim.save()
         except:
             print("morpheme not found")
@@ -552,7 +524,6 @@ def update_simultaneous_morphology(gloss, field, values):
     # morphemes = [(m.morpheme.annotation_idgloss, m.role) for m in gloss.simultaneous_morphology.all()]
     morphemes = [(morpheme.morpheme.annotation_idgloss, morpheme.role)
                  for morpheme in SimultaneousMorphologyDefinition.objects.filter(parent_gloss_id=gloss)]
-    # print('morphemes list: ', morphemes)
     sim_morphs = []
     for m in morphemes:
         sim_morphs.append(':'.join(m))
@@ -609,7 +580,6 @@ def subst_foreignrelations(gloss, field, values):
     relations_with_categories = []
     for rel_cat in new_relations_refresh:
         relations_with_categories.append(':'.join(rel_cat))
-    # print("subst foreign relations_with_categories: ", relations_with_categories)
 
     relations_categories = ", ".join(relations_with_categories)
 
@@ -654,7 +624,6 @@ def subst_relations(gloss, field, values):
         rel = Relation.objects.get(id=rel_id)
 
         if (rel.role, rel.target.idgloss) in already_existing_to_keep:
-            # print('subst_relations, keep: ', rel.target)
             continue
 
         # Also delete the reverse relation
@@ -669,7 +638,6 @@ def subst_relations(gloss, field, values):
 
     # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
-        # print('target gloss subst relations: ', target)
         try:
             target_gloss =  gloss_from_identifier(target)
             rel = Relation(source=gloss, role=role, target=target_gloss)
@@ -688,8 +656,6 @@ def subst_relations(gloss, field, values):
         relations_with_categories.append(':'.join(rel_cat))
 
     relations_categories = ", ".join(relations_with_categories)
-
-    # print("subst relations_categories: ", relations_categories)
 
     newvalue = relations_categories
 
@@ -960,26 +926,11 @@ def variants_of_gloss(request):
             sourceid = form.cleaned_data['sourceid']
             targetid = form.cleaned_data['targetid']
 
-#            print('Source id: ', sourceid)
-#            print('Target id: ', targetid)
-
-#            try:
-#                source = Gloss.objects.get(pk=int(sourceid))
-#            except:
-#                return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
-
             source = str(sourceid)
             target = str(targetid)
 
-#            print('Source from identifier: ', source)
-#            print('Target from identifier: ', target)
-
             source_object = Gloss.objects.get(pk=int(source))
             target_object = Gloss.objects.get(pk=int(target))
-
-#            print('Source object: ', source_object)
-#            print('Target object: ', target_object)
-
 
             rel = Relation(source=source_object, target=target_object, role=role)
             rel.save()
@@ -1183,7 +1134,6 @@ def update_handshape(request, handshapeid):
 
             if not isinstance(value, bool):
                 field_category = fieldname_to_category(field)
-                # print('field category: ', field_category)
                 choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                 newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
 

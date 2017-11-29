@@ -1034,6 +1034,68 @@ minor or insignificant ways that can be ignored.""")
 
         return minimal_pairs_fields
 
+    # Homonyms
+    # 19 total phonology fields
+    # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
+    # 14
+
+    def homonym_objects(self):
+
+        paren = ')'
+
+        phonology_for_gloss = self.phonology_matrix()
+
+        homonym_objects_list = []
+
+        where_homonyms_filled = ''
+        where_homonyms_empty = ''
+        where_homonyms = ''
+        count_empty = 0
+        count_filled = 0
+
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
+            value_of_this_field = str(phonology_for_gloss[field])
+
+            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
+                if (where_homonyms_empty.endswith(paren)):
+                    where_homonyms_empty += " + (" + field + " IS NOT NULL AND " \
+                                                 + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
+                else:
+                    where_homonyms_empty += "(" + field + " IS NOT NULL AND " \
+                                                 + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
+                count_empty = count_empty + 1
+            elif (value_of_this_field == 'False'):
+                if (where_homonyms_empty.endswith(paren)):
+                    where_homonyms_empty += ' + (' + field + '=1)'
+                else:
+                    where_homonyms_empty += '(' + field + '=1)'
+                count_empty = count_empty + 1
+            elif (value_of_this_field == 'True'):
+                if (where_homonyms_filled.endswith(paren)):
+                    where_homonyms_filled += ' + (' + field + '=0)'
+                else:
+                    where_homonyms_filled += '(' + field + '=0)'
+                count_filled = count_filled + 1
+            else:
+                if (where_homonyms_filled.endswith(paren)):
+                    where_homonyms_filled += ' + (' + field + '!=' + value_of_this_field + ')'
+                else:
+                    where_homonyms_filled += '(' + field + '!=' + value_of_this_field + ')'
+                count_filled = count_filled + 1
+
+        where_homonyms = '(' + where_homonyms_filled +  ' + ' + where_homonyms_empty + ')=0'
+
+        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE id != %s AND ' + where_homonyms, [self.id])
+
+        # print('homonym objects for gloss ' + str(self.idgloss) + ': ', qs)
+        # qs = qs.exclude(pk=self.pk)
+
+        for o in qs:
+            homonym_objects_list.append(o)
+
+        # print('homonym list for gloss ' + str(self.idgloss) + ': ', homonym_objects_list)
+        return homonym_objects_list
+
 
     def homonyms(self):
 
