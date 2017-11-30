@@ -18,6 +18,7 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import datetime as DT
 from guardian.core import ObjectPermissionChecker
+from guardian.shortcuts import get_objects_for_user, get_perms
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -152,10 +153,27 @@ class GlossListView(ListView):
         context['search_type'] = self.search_type
         context['view_type'] = self.view_type
 
-        if self.search_type == 'sign':
-            context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
+        user = self.request.user
+        user_profile = UserProfile.objects.get(user=user)
+        users_selected_datasets = user_profile.selected_datasets.all()
+        selected_datasets = []
+        for ds in users_selected_datasets:
+            selected_datasets.append(ds)
+        if selected_datasets:
+            pass
         else:
-            context['glosscount'] = Gloss.objects.count()  # Count the glosses + morphemes
+            if user.is_authenticated():
+                all_datasets = Dataset.objects.all()
+                for ds in all_datasets:
+                    if 'view_dataset' in get_perms(user, ds):
+                        selected_datasets.append(ds)
+
+        context['selected_datasets'] = selected_datasets
+
+        if self.search_type == 'sign':
+            context['glosscount'] = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets).count()   # Only count the none-morpheme glosses
+        else:
+            context['glosscount'] = Gloss.objects.filter(dataset__in=selected_datasets).count()  # Count the glosses + morphemes
 
         context['add_gloss_form'] = GlossCreateForm()
         context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
@@ -387,14 +405,10 @@ class GlossListView(ListView):
 
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
-        # print('export csv header columns: ', fields)
-
         writer = csv.writer(response)
 
         with override(LANGUAGE_CODE):
             header = ['Signbank ID'] + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
-
-        # print('export csv header: ', header)
 
         for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology',
                              'Relations to other signs','Relations to foreign signs', 'Tags']:
@@ -406,28 +420,23 @@ class GlossListView(ListView):
             row = [str(gloss.pk)]
             for f in fields:
 
-                # print('export csv, field ', f)
                 #Try the value of the choicelist
                 try:
                     value = getattr(gloss, 'get_' + f.name + '_display')()
 
-                    # print('value display okay: ', value)
                 #If it's not there, try the raw value
                 except AttributeError:
                     value = getattr(gloss,f.name)
-                    # print('value display exception: ', value)
 
                     if f.name == 'weakdrop' or f.name == 'weakprop':
                         if value == None:
                             value = 'Neutral'
-                            # print('value display converted: ', value)
 
                     # This was disabled with the move to Python 3... might not be needed anymore?
                     # if isinstance(value,unicode):
                     #     value = str(value.encode('ascii','xmlcharrefreplace'));
 
                 if not isinstance(value,str):
-                    # print('value is not a string, convert it')
                     value = str(value)
 
                 # A handshape name can begin with =. To avoid Office thinking this is a formula, preface with '
@@ -466,24 +475,18 @@ class GlossListView(ListView):
             relations_with_categories = []
             for rel_cat in relations:
                 relations_with_categories.append(':'.join(rel_cat))
-            # print("export csv relations_with_categories: ", relations_with_categories)
 
             relations_categories = ", ".join(relations_with_categories)
             row.append(relations_categories)
-
-            # print("export csv relations_categories: ", relations_categories)
 
             # get relations to foreign signs
             relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss) for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
             relations_with_categories = []
             for rel_cat in relations:
                 relations_with_categories.append(':'.join(rel_cat))
-            # print("export csv foreign relations_with_categories: ", relations_with_categories)
 
             relations_categories = ", ".join(relations_with_categories)
             row.append(relations_categories)
-
-            # print("export csv foreign relations_categories: ", relations_categories)
 
             # export tags
             tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
@@ -492,7 +495,6 @@ class GlossListView(ListView):
                 tag_id = t_obj.tag_id
                 tag_name = Tag.objects.get(id=tag_id)
                 tag_names_of_gloss += [str(tag_name).replace('_',' ')]
-            # print('tag names: ', tag_names_of_gloss)
 
             tag_names = ", ".join(tag_names_of_gloss)
             row.append(tag_names)
@@ -539,13 +541,39 @@ class GlossListView(ListView):
 
         setattr(self.request, 'view_type', self.view_type)
 
+
+        # restrict query to selected dataset
+        user = self.request.user
+        user_profile = UserProfile.objects.get(user=user)
+        users_selected_datasets = user_profile.selected_datasets.all()
+        selected_datasets = []
+        for ds in users_selected_datasets:
+            # dataset_id = Dataset.objects.get(name=ds)
+            # selected_datasets.append(dataset_id.id)
+            selected_datasets.append(ds)
+        if selected_datasets:
+            pass
+        else:
+            if user.is_authenticated():
+                all_datasets = Dataset.objects.all()   # start out with all, remove those that the user can't view
+                for ds in all_datasets:
+                    if 'view_dataset' in get_perms(user, ds):
+                        selected_datasets.append(ds)
+
         #Get the initial selection
         if len(get) > 0 or show_all:
             if self.search_type == 'sign':
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
-                qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
+
+                if SPEED_UP_RETRIEVING_ALL_SIGNS:
+                    qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+                else:
+                    qs = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets)
             else:
-                qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set')
+                if SPEED_UP_RETRIEVING_ALL_SIGNS:
+                    qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+                else:
+                    qs = Gloss.objects.all().filter(dataset__in=selected_datasets)
 
         #No filters or 'show_all' specified? show nothing
         else:
@@ -556,7 +584,6 @@ class GlossListView(ListView):
 
         #If we wanted to get everything, we're done now
         if show_all:
-            print('get_queryset in GlossListView, show_all is true, return')
             return order_queryset_by_sort_order(self.request.GET, qs)
 
         #If not, we will go trhough a long list of filters
@@ -568,7 +595,6 @@ class GlossListView(ListView):
                 query = query | Q(sn__exact=val)
 
             qs = qs.filter(query)
-            #print "A: ", len(qs)
 
         if 'englishGloss' in get and get['englishGloss'] != '':
             val = get['englishGloss']
@@ -587,8 +613,6 @@ class GlossListView(ListView):
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['inWeb'] == 'yes'
             qs = qs.filter(inWeb__exact=val)
-            #print "B :", len(qs)
-
 
         if 'hasvideo' in get and get['hasvideo'] != 'unspecified':
             val = get['hasvideo'] == 'no'
@@ -692,14 +716,10 @@ class GlossListView(ListView):
             # intersection
             qs = qs & tqs
 
-            #print "J :", len(qs)
-
         qs = qs.distinct()
 
         if 'nottags' in get and get['nottags'] != '':
             vals = get.getlist('nottags')
-
-           # print "NOT TAGS: ", vals
 
             tags = []
             for t in vals:
@@ -708,11 +728,8 @@ class GlossListView(ListView):
             # search is an implicit AND so intersection
             tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
 
-           # print "NOT", tags, len(tqs)
             # exclude all of tqs from qs
             qs = [q for q in qs if q not in tqs]
-
-           # print "K :", len(qs)
 
         if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
 
@@ -723,7 +740,6 @@ class GlossListView(ListView):
         if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
 
             pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
-            # print('pks_for_glosses',pks_for_glosses_with_relations)
 
             if get['hasRelationToForeignSign'] == '1': #We only want glosses with a relation to a foreign sign
                 qs = qs.filter(pk__in=pks_for_glosses_with_relations)
@@ -828,7 +844,6 @@ class GlossListView(ListView):
 
             self.request.session['search_results'] = items
 
-        # print "Final :", len(qs)
         # Sort the queryset by the parameters given
         qs = order_queryset_by_sort_order(self.request.GET, qs)
 
@@ -922,47 +937,25 @@ class GlossDetailView(DetailView):
 
         context['handedness_fields'] = []
         weak_drop = getattr(gl, 'weakdrop')
-        # print('weak_drop: ', weak_drop)
 
         weak_prop = getattr(gl, 'weakprop')
-        # print('weak_prop: ', weak_prop)
 
-        # weak_drop = (weak_drop in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
-        # weak_prop = (weak_prop in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
-
-        # weakdrop_human_value = machine_value_to_translated_human_value(weak_drop, [], self.request.LANGUAGE_CODE)
-        # weakprop_human_value = machine_value_to_translated_human_value(weak_prop, [], self.request.LANGUAGE_CODE)
         context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'list'])
         context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'list'])
 
-        # temp = context['handedness_fields']
-        # print('handedness fields: ', temp)
-
         context['etymology_fields_dom'] = []
         domhndsh_letter = getattr(gl, 'domhndsh_letter')
-        # print('domhndsh_letter: ', domhndsh_letter)
         domhndsh_number = getattr(gl, 'domhndsh_number')
-        # print('domhndsh_number: ', domhndsh_number)
-        # domhndsh_letter = (domhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
-        # domhndsh_number = (domhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
         context['etymology_fields_sub'] = []
         subhndsh_letter = getattr(gl, 'subhndsh_letter')
-        # print('subhndsh_letter: ', subhndsh_letter)
         subhndsh_number = getattr(gl, 'subhndsh_number')
-        # print('subhndsh_number: ', subhndsh_number)
-        # subhndsh_letter = (subhndsh_letter in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
-        # subhndsh_number = (subhndsh_number in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+
 
         context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'check'])
         context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'check'])
         context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
         context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
-
-        temp_dom = context['etymology_fields_dom']
-        # print('etymology_fields_dom fields: ', temp_dom)
-        temp_sub = context['etymology_fields_sub']
-        # print('etymology_fields_sub fields: ', temp_sub)
 
         context['choice_lists'] = {}
 
@@ -1032,9 +1025,7 @@ class GlossDetailView(DetailView):
             human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
             path = settings.URL+'dictionary/protected_media/othermedia/'+other_media.path
-            # print("path: ", other_media.path)
             other_media_filename = other_media.path.split('/')[1]
-            # print("path: ", other_media_filename)
             if other_media_filename.split('.')[-1] == 'mp4':
                 file_type = 'video/mp4'
             elif other_media_filename.split('.')[-1] == 'png':
@@ -1268,7 +1259,6 @@ class MorphemeListView(ListView):
                 query = query | Q(sn__exact=val)
 
             qs = qs.filter(query)
-            # print "A: ", len(qs)
 
         if 'englishGloss' in get and get['englishGloss'] != '':
             val = get['englishGloss']
@@ -1286,7 +1276,6 @@ class MorphemeListView(ListView):
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['inWeb'] == 'yes'
             qs = qs.filter(inWeb__exact=val)
-            # print "B :", len(qs)
 
         if 'hasvideo' in get and get['hasvideo'] != 'unspecified':
             val = get['hasvideo'] == 'no'
@@ -1389,14 +1378,10 @@ class MorphemeListView(ListView):
             # intersection
             qs = qs & tqs
 
-            # print "J :", len(qs)
-
         qs = qs.distinct()
 
         if 'nottags' in get and get['nottags'] != '':
             vals = get.getlist('nottags')
-
-            # print "NOT TAGS: ", vals
 
             tags = []
             for t in vals:
@@ -1405,11 +1390,8 @@ class MorphemeListView(ListView):
             # search is an implicit AND so intersection
             tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
 
-            # print "NOT", tags, len(tqs)
             # exclude all of tqs from qs
             qs = [q for q in qs if q not in tqs]
-
-            # print "K :", len(qs)
 
         if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
             relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
@@ -1419,7 +1401,6 @@ class MorphemeListView(ListView):
         if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
 
             pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
-            # print('pks_for_glosses', pks_for_glosses_with_relations)
 
             if get['hasRelationToForeignSign'] == '1':  # We only want glosses with a relation to a foreign sign
                 qs = qs.filter(pk__in=pks_for_glosses_with_relations)
@@ -1512,7 +1493,6 @@ class MorphemeListView(ListView):
 
             self.request.session['search_results'] = items
 
-        # print "Final :", len(qs)
         # Sort the queryset by the parameters given
         qs = order_queryset_by_sort_order(self.request.GET, qs)
 
@@ -1647,7 +1627,6 @@ class HandshapeDetailView(DetailView):
     #Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
 
-        # print("args: ", kwargs['pk'])
         match_machine_value = int(kwargs['pk'])
 
         try:
@@ -1662,7 +1641,6 @@ class HandshapeDetailView(DetailView):
             handshape_not_created = 1
 
             for o in handshapes:
-                # print('o machine_value: ', o.machine_value)
                 if o.machine_value == match_machine_value: # only one match
                     new_id = o.machine_value
                     new_machine_value = o.machine_value
@@ -1673,7 +1651,6 @@ class HandshapeDetailView(DetailView):
                     new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name,
                                               dutch_name=new_dutch_name, chinese_name=new_chinese_name)
                     new_handshape.save()
-                    # print("New handshape: ", new_id)
                     handshape_not_created = 0
                     self.object = new_handshape
                     break
@@ -1697,7 +1674,6 @@ class HandshapeDetailView(DetailView):
         setattr(self.request, 'search_type', self.search_type)
 
         labels = hs.field_labels()
-        # print('labels: ', labels)
         context['imageform'] = ImageUploadForHandshapeForm()
 
         context['choice_lists'] = {}
@@ -1714,18 +1690,15 @@ class HandshapeDetailView(DetailView):
 
             #Get and save the choice list for this field
             fieldchoice_category = fieldname_to_category(field)
-            # print('fieldchoice_category', fieldchoice_category)
 
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
 
             if len(choice_list) > 0:
                 context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
 
-            # print('choice list: ', choice_list)
             #Take the human value in the language we are using
             machine_value = getattr(hs, field)
             human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
-            # print("Human value: " + str(human_value))
 
             #And add the kind of field
             if field in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP',
@@ -1735,7 +1708,6 @@ class HandshapeDetailView(DetailView):
             else:
                 kind = 'list'
 
-            # print('handshape field', field)
             field_label = labels[field]
             if field_label in ['Finger selection', 'T', 'I', 'M', 'R', 'P']:
                 if field_label != 'Finger selection':
@@ -1754,10 +1726,6 @@ class HandshapeDetailView(DetailView):
                 context['handshape_fields'].append([human_value, field, field_label, kind])
 
         context['choice_lists'] = json.dumps(context['choice_lists'])
-        # temp = context['handshape_fields']
-        # print('handshape fields: ', temp)
-        # temp2 = context['choice_lists']
-        # print('choice lists: ', temp2)
 
         # if there are no current handshape search results in the current session, display all of them in the navigation bar
         if self.request.session['search_type'] != 'handshape':
@@ -1843,7 +1811,6 @@ class HandshapeListView(ListView):
 
             # Get and save the choice list for this field
             fieldchoice_category = fieldname_to_category(field)
-            # print('fieldchoice_category', fieldchoice_category)
 
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
 
@@ -1852,7 +1819,6 @@ class HandshapeListView(ListView):
                                                                                         self.request.LANGUAGE_CODE, id_prefix='')
 
         context['choice_lists'] = json.dumps(context['choice_lists'])
-        # print('choice lists: ', context['choice_lists'])
 
         if 'paginate_by' in self.request.GET:
             self.paginate_by = self.request.GET.get('paginate_by', self.paginate_by)
@@ -1880,7 +1846,6 @@ class HandshapeListView(ListView):
 
             # Get and save the choice list for this field
             fieldchoice_category = fieldname_to_category(field)
-            # print('fieldchoice_category', fieldchoice_category)
 
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
 
@@ -1946,7 +1911,6 @@ class HandshapeListView(ListView):
 
                 if fieldname == 'hsNumSel' and val != '':
                     fieldlabel = choice_lists[fieldname][val]
-                    # print("get_queryset: fieldname: ", fieldname, ", val: ", val, ", fieldlabel: ", fieldlabel)
                     if fieldlabel == 'one':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
@@ -1969,22 +1933,18 @@ class HandshapeListView(ListView):
                                                         output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(hsNumSel=val))
 
                 if isinstance(Handshape._meta.get_field(fieldname), NullBooleanField):
-                    # print('get_query: val: ', val)
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]
 
 
                 if self.request.LANGUAGE_CODE == 'nl' and fieldname == 'dutch_name' and val != '':
-                    # print("query dutch")
                     query = Q(dutch_name__icontains=val)
                     qs = qs.filter(query)
 
                 if self.request.LANGUAGE_CODE == 'zh-hans' and fieldname == 'chinese_name' and val != '':
-                    # print("query chinese")
                     query = Q(chinese_name__icontains=val)
                     qs = qs.filter(query)
 
                 if fieldname == 'english_name' and val != '':
-                    # print("query english")
                     query = Q(english_name__icontains=val)
                     qs = qs.filter(query)
 
@@ -2000,8 +1960,6 @@ class HandshapeListView(ListView):
         # The search_results is no longer set to None
 
         # Make sure that the QuerySet has filters applied (user is searching for something instead of showing all results [objects.all()])
-
-        # print(qs.query)
 
         if hasattr(qs.query.where, 'children') and len(qs.query.where.children) > 0:
 
@@ -2024,11 +1982,8 @@ class HandshapeListView(ListView):
             # search for signs with found hadnshapes
             # find relevant machine values for handshapes
             selected_handshapes = [ h.machine_value for h in qs ]
-            # print("selected handshapes: ", selected_handshapes)
 
-            # print("qeury: ", qs.query)
             if len(selected_handshapes) == (Handshape.objects.all().count()):
-                # print("searching for all handshapes")
 
                 qs = Gloss.objects.filter(Q(domhndsh__in=selected_handshapes) | Q(domhndsh__isnull=True) | Q(domhndsh__exact='0')
                                           | Q(subhndsh__in=selected_handshapes) | Q(subhndsh__isnull=True) | Q(subhndsh__exact='0'))
@@ -2259,7 +2214,6 @@ def handshape_ajax_search_results(request):
 
     if request.session['search_type'] == 'handshape':
 
-        # print('search results handshape ajax search: ', request.session['search_results'])
         return HttpResponse(json.dumps(request.session['search_results']))
     else:
         return HttpResponse(json.dumps(None))
