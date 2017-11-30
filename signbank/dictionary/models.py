@@ -7,6 +7,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
+from django.forms.utils import ValidationError
 import tagging
 import re
 
@@ -1658,3 +1659,25 @@ class Language(models.Model):
         return self.name
 
 
+class AnnotationIdglossTranslation(models.Model):
+    """An annotation ID Gloss"""
+    text = models.CharField(_("Annotation ID Gloss"), max_length=30, help_text="""
+        This is the name of a sign used by annotators when glossing the corpus in
+        an ELAN annotation file.""")
+    gloss = models.ForeignKey("Gloss")
+    language = models.ForeignKey("Language")
+
+    class Meta:
+        unique_together = (("gloss", "language"),)
+
+    def save(self, *args, **kwargs):
+        """Before an item is saved the language is checked against the languages of the dataset the gloss is in.
+        Note that bulk updates will not use this method. Therefore, always iterate over a queryset when updating."""
+        if self.gloss.dataset:
+            dataset_languages = self.gloss.dataset.translation_languages.all()
+            if not self.language in dataset_languages:
+                msg = "Language %s is not in the set of language of the dataset gloss %s belongs to" \
+                      % (self.language.name, self.gloss.id)
+                raise ValidationError(msg)
+
+        super(AnnotationIdglossTranslation, self).save(*args, **kwargs)

@@ -1815,3 +1815,44 @@ def show_unassigned_glosses(request):
                         "number_of_unassigned_glosses_without_signlanguage":number_of_unassigned_glosses_without_signlanguage,
                         "all_datasets":all_datasets
                       })
+
+
+def move_annotation_idglosses(request):
+    """This function copies the annotation_idgloss and annotation_idgloss_en from Gloss instances
+    to the AnnotationIdglossTranslation model. """
+
+    # This function is for Publishers only.
+    if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
+        return HttpResponse('You are not allowed to see this page.')
+
+    from django.db.transaction import atomic
+
+    @atomic
+    def move_per_language(language_code_2char, gloss_field_name):
+        number_copied = 0
+        language = Language.objects.get(language_code_2char=language_code_2char)
+        if language is not None:
+            for gl in glosses:
+                annotation_idgloss_translations = AnnotationIdglossTranslation.objects.filter(gloss=gl,
+                                                                                              language=language)
+                if annotation_idgloss_translations is None or len(annotation_idgloss_translations) == 0:
+                    try:
+                        # Saving the new AnnotationIdglossTranslation will not succeed if the language is not in the
+                        # languages of the dataset.
+                        # If so, fail silently. The annotation_idgloss of the gloss will not be copied to the
+                        # AnnotationIdglossTranslation model.
+                        AnnotationIdglossTranslation(gloss=gl, language=language, text=getattr(gl, gloss_field_name)).save()
+                        number_copied += 1
+                    except:
+                        pass
+        return number_copied
+
+    glosses = Gloss.objects.all()
+    number_copied = 0
+    if DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'].startswith('en'):
+        number_copied += move_per_language('en', 'annotation_idgloss')
+    else:
+        number_copied += move_per_language('nl', 'annotation_idgloss')
+        number_copied += move_per_language('en', 'annotation_idgloss_en')
+
+    return HttpResponse('Number of copied annotation idglosses: ' + str(number_copied))
