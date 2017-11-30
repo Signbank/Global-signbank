@@ -571,15 +571,19 @@ function do_toggle_groups(el) {
              {% csrf_token %}
              <table class='table'>
                  <tr>
-                     <th><label for='id_idgloss'>Lemma ID Gloss</label></th>
-                     <th><label for='id_annotation_idgloss'>Annotation ID Gloss (Dutch)</label></th>
-                     <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
+                     <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
+                     <th><label for='id_annotation_idgloss'>{% trans "Annotation ID Gloss (Dutch)" %}</label></th>
+                     {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+                         <th><label for='id_annotation_idgloss_en'>{% trans "Annotation ID Gloss (English)" %}</label></th>
+                     {% endif %}
                      <th></th>
                  </tr>
                  <tr>
                      <td>{{add_gloss_form.idgloss}}</td>
                      <td>{{add_gloss_form.annotation_idgloss}}</td>
-                     <td>{{add_gloss_form.annotation_idgloss_en}}</td>
+                     {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
+                         <td>{{add_gloss_form.annotation_idgloss_en}}</td>
+                     {% endif %}
                      <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'></td>
                  </tr>
              </table>

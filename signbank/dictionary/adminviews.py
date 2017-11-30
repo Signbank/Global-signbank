@@ -400,8 +400,8 @@ class GlossListView(ListView):
                       'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
                       'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
 
-        if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
-            fieldnames.pop(1) # Remove Annotation ID Gloss (Dutch) from list
+        if not SEPARATE_ENGLISH_IDGLOSS_FIELD:
+            fieldnames.remove('annotation_idgloss_en') # Remove Annotation ID Gloss (Dutch) from list
 
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
