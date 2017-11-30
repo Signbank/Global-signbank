@@ -214,6 +214,9 @@ def update_gloss(request, glossid):
             else:
                 newvalue = _('No')
 
+        elif field.startswith('annotation_idgloss'):
+            return update_annotation_idgloss(gloss, field, value)
+
         else:
 
             original_value = getattr(gloss,field)
@@ -346,6 +349,25 @@ def update_keywords(gloss, field, value):
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language)])
     
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+def update_annotation_idgloss(gloss, field, value):
+    """Update the AnnotationIdGlossTranslation"""
+
+    print("update_annotation_idgloss")
+
+    # Determine the language of the keywords
+    language = Language.objects.get(id=get_default_language_id())
+    try:
+        language_code_2char = field[len('annotation_idgloss_'):]
+        language = Language.objects.filter(language_code_2char=language_code_2char)[0]
+    except:
+        pass
+
+    annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
+    annotation_idgloss_translation.text = value
+    annotation_idgloss_translation.save()
+
+    return HttpResponse(str(value), {'content-type': 'text/plain'})
 
 def update_signlanguage(gloss, field, values):
     # expecting possibly multiple values

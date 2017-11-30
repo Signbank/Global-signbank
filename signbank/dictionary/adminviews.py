@@ -1052,6 +1052,16 @@ class GlossDetailView(DetailView):
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
+        # Put annotation_idgloss per language in the context
+        context['annotation_idgloss'] = {}
+        if gl.dataset:
+            for language in gl.dataset.translation_languages.all():
+                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
+                print(context['annotation_idgloss'][language][0].text)
+        else:
+            language = Language.objects.get(id=get_default_language_id())
+            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
+
         # Put translations (keywords) per language in the context
         context['translations_per_language'] = {}
         if gl.dataset:

@@ -1,6 +1,7 @@
 {% extends 'baselayout.html' %}
 {% load i18n %}
 {% load stylesheet %}
+{% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 
 {% block extrahead %}
@@ -333,39 +334,13 @@
                     {% endif %}
                 </td>
             </tr>
-            <tr><th>{% trans "Annotation ID Gloss (Dutch)" %}</th>
-                <td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td>
-                <td>
-                    {% if gloss.morphemePart.all.count > 0 %}
 
-                        {% if gloss.morphemePart.all.count > 2 %}
-                        <span class="gloss_detail_morpheme">({{gloss.morphemePart.all.count}} morphemes)</span>
-                        {% else %}
-                        <!-- Number of morphemes is [1-2] -->
-
-                            {% for morphdef in gloss.morphemePart.all %}
-                            <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.pk %}'>
-                                {% value morphdef.annotation_idgloss %}</a>{% if not forloop.last %}, {% endif %}
-                            </span>
-                            {% endfor %}
-
-                        {% endif %}
-
-                    {% endif %}
-
-                    {% if gloss.parent_glosses.all.count > 0 %}
-                    {% for component in gloss.parent_glosses.all %}
-                    <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component.morpheme.pk %}'>
-                        {% value component.morpheme.annotation_idgloss %}</a>{% if not forloop.last %} + {% endif %}
-                    </span>
-                    {% endfor %}
-                    {% endif %}
-                </td>
-            </tr>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-            <tr><th>{% trans "Annotation ID Gloss (English)" %}</th>
-                <td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td>
+            {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+            <tr>
+                <th>
+                    {% trans "Annotation ID Gloss" %} ({{ lang }})
+                </th>
+                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translations.0.text|safe }}</td>
                 <td>
                     {% if gloss.morphemePart.all.count > 0 %}
 
@@ -375,7 +350,7 @@
                             <!-- Number of morphemes is [1-2] -->
                             {% for morphdef in gloss.morphemePart.all %}
                             <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.pk %}'>
-                                {% value morphdef.annotation_idgloss_en %}</a>{% if not forloop.last %}, {% endif %}
+                                {% value morphdef.gloss_ptr|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %}, {% endif %}
                             </span>
                             {% endfor %}
                         {% endif %}
@@ -385,18 +360,18 @@
                     {% if gloss.parent_glosses.all.count > 0 %}
                     {% for component in gloss.parent_glosses.all %}
                     <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component.morpheme.pk %}'>
-                        {% value component.morpheme.annotation_idgloss_en %}</a>{% if not forloop.last %} + {% endif %}
+                        {% value component.morpheme|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %} + {% endif %}
                     </span>
                     {% endfor %}
                     {% endif %}
                 </td>
             </tr>
-            {% endif %}
+            {% endfor %}
 
             {% for lang, translations in translations_per_language.items %}
             <tr>
                 <th>
-                    {% trans "Translation equivalents in " %}{{ lang }}
+                    {% trans "Translation equivalents" %} ({{ lang }})
                 </th>
                 <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' colspan="2">{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             </tr>
