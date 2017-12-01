@@ -1041,8 +1041,12 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
 
 
 def get_selected_datasets_for_user(user):
-    user_profile = UserProfile.objects.get(user=user)
-    selected_datasets = user_profile.selected_datasets.all()
-    if not selected_datasets:
-        selected_datasets = get_objects_for_user(user, 'view_dataset', Dataset)
-    return selected_datasets
+    if user.is_authenticated:
+        user_profile = UserProfile.objects.get(user=user)
+        selected_datasets = user_profile.selected_datasets.all()
+        if not selected_datasets:
+            selected_datasets = get_objects_for_user(user, 'view_dataset', Dataset)
+        return selected_datasets
+    else:
+        return Dataset.objects.filter(is_public=True)
+

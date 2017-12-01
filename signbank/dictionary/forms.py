@@ -142,6 +142,8 @@ class GlossSearchForm(forms.ModelForm):
 
     createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
+    gloss_search_field_prefix = "glosssearch_"
+
     class Meta:
 
         ATTRS_FOR_FORMS = {'class':'form-control'}
@@ -166,6 +168,16 @@ class GlossSearchForm(forms.ModelForm):
 
                    'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                    'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
+
+    def __init__(self, queryDict, *args, **kwargs):
+        languages = kwargs.pop('languages')
+        super(GlossSearchForm, self).__init__(queryDict, *args, **kwargs)
+
+        for language in languages:
+            glosssearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
+            setattr(self, glosssearch_field_name, forms.CharField(label=_("Gloss")+(" (%s)" % language.name)))
+            if glosssearch_field_name in queryDict:
+                getattr(self, glosssearch_field_name).value = queryDict[glosssearch_field_name]
 
 
 class MorphemeSearchForm(forms.ModelForm):

@@ -30,6 +30,7 @@ from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
+from signbank.dictionary.forms import GlossSearchForm
 
 from signbank.tools import get_selected_datasets_for_user
 
@@ -131,7 +132,12 @@ class GlossListView(ListView):
             self.view_type = self.request.GET['view_type']
             context['view_type'] = self.view_type
 
-        search_form = GlossSearchForm(self.request.GET)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages)
 
         #Translations for field choices dropdown menu
         fields_that_need_translated_options = ['hasComponentOfType','hasMorphemeOfType']
@@ -155,9 +161,6 @@ class GlossListView(ListView):
         context['searchform'] = search_form
         context['search_type'] = self.search_type
         context['view_type'] = self.view_type
-
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
-        context['selected_datasets'] = selected_datasets
 
         if self.search_type == 'sign':
             context['glosscount'] = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets).count()   # Only count the none-morpheme glosses
@@ -567,6 +570,14 @@ class GlossListView(ListView):
                 query = query | Q(sn__exact=val)
 
             qs = qs.filter(query)
+
+        # Evaluate all gloss/language search fields
+        for get_key, get_value in get.items():
+            if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
+                language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
+                               annotationidglosstranslation__language=language)
 
         if 'englishGloss' in get and get['englishGloss'] != '':
             val = get['englishGloss']
