@@ -564,7 +564,7 @@ class GlossListView(ListView):
         #If not, we will go trhough a long list of filters
         if 'search' in get and get['search'] != '':
             val = get['search']
-            query = Q(annotation_idgloss__iregex=val)
+            query = Q(annotationidglosstranslation__text__iregex=val)
 
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
