@@ -18,6 +18,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from tagging.models import TaggedItem, Tag
 
+from guardian.shortcuts import get_objects_for_user
+
 def save_media(source_folder,goal_folder,gloss,extension):
         
     #Add a dot before the extension if needed
@@ -1036,3 +1038,11 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
         print(i.message)
     except IOError as io:
         print(io.message)
+
+
+def get_selected_datasets_for_user(user):
+    user_profile = UserProfile.objects.get(user=user)
+    selected_datasets = user_profile.selected_datasets.all()
+    if not selected_datasets:
+        selected_datasets = get_objects_for_user(user, 'view_dataset', Dataset)
+    return selected_datasets

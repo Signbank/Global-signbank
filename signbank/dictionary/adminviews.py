@@ -18,7 +18,7 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import datetime as DT
 from guardian.core import ObjectPermissionChecker
-from guardian.shortcuts import get_objects_for_user, get_perms
+from guardian.shortcuts import get_objects_for_user
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -30,6 +30,8 @@ from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
+
+from signbank.tools import get_selected_datasets_for_user
 
 
 def order_queryset_by_sort_order(get, qs):
@@ -102,6 +104,7 @@ def order_queryset_by_sort_order(get, qs):
     # return the ordered list
     return ordered
 
+
 class GlossListView(ListView):
     
     model = Gloss
@@ -153,21 +156,7 @@ class GlossListView(ListView):
         context['search_type'] = self.search_type
         context['view_type'] = self.view_type
 
-        user = self.request.user
-        user_profile = UserProfile.objects.get(user=user)
-        users_selected_datasets = user_profile.selected_datasets.all()
-        selected_datasets = []
-        for ds in users_selected_datasets:
-            selected_datasets.append(ds)
-        if selected_datasets:
-            pass
-        else:
-            if user.is_authenticated():
-                all_datasets = Dataset.objects.all()
-                for ds in all_datasets:
-                    if 'view_dataset' in get_perms(user, ds):
-                        selected_datasets.append(ds)
-
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
 
         if self.search_type == 'sign':
@@ -541,24 +530,7 @@ class GlossListView(ListView):
 
         setattr(self.request, 'view_type', self.view_type)
 
-
-        # restrict query to selected dataset
-        user = self.request.user
-        user_profile = UserProfile.objects.get(user=user)
-        users_selected_datasets = user_profile.selected_datasets.all()
-        selected_datasets = []
-        for ds in users_selected_datasets:
-            # dataset_id = Dataset.objects.get(name=ds)
-            # selected_datasets.append(dataset_id.id)
-            selected_datasets.append(ds)
-        if selected_datasets:
-            pass
-        else:
-            if user.is_authenticated():
-                all_datasets = Dataset.objects.all()   # start out with all, remove those that the user can't view
-                for ds in all_datasets:
-                    if 'view_dataset' in get_perms(user, ds):
-                        selected_datasets.append(ds)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         #Get the initial selection
         if len(get) > 0 or show_all:
@@ -1073,8 +1045,7 @@ class GlossDetailView(DetailView):
 
         user = self.request.user
         if user.is_authenticated():
-            import guardian
-            qs = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+            qs = get_objects_for_user(user, 'view_dataset', Dataset)
             dataset_choices = dict()
             for dataset in qs:
                 dataset_choices[dataset.name] = dataset.name
