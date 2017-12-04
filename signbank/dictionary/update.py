@@ -1314,7 +1314,7 @@ def update_morpheme(request, morphemeid):
             value = ' '
 
         elif value[0] == '_':
-            value = value[1:];
+            value = value[1:]
 
         values = request.POST.getlist('value[]')  # in case we need multiple values
 
@@ -1377,6 +1377,28 @@ def update_morpheme(request, morphemeid):
                 newvalue = ", ".join([str(g.name) for g in morpheme.dialect.all()])
             except:
                 return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
+
+        elif field == 'dataset':
+
+            original_value = getattr(morpheme,field)
+            ds = Dataset.objects.get(name=value)
+
+            if ds.is_public:
+                newvalue = value
+                setattr(morpheme, field, ds)
+                morpheme.save()
+                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+            import guardian
+            if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
+                newvalue = value
+                setattr(morpheme, field, ds)
+                morpheme.save()
+                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+            print('no permission for chosen dataset')
+            newvalue = original_value
+            return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
         elif field == "sn":
             # sign number must be unique, return error message if this SN is

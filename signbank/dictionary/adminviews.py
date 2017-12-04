@@ -1061,6 +1061,7 @@ class GlossDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['translations_per_language'][language] = gl.translation_set.filter(language=language)
 
+        context['dataset_choices'] = {}
         user = self.request.user
         if user.is_authenticated():
             import guardian
@@ -2199,6 +2200,7 @@ class MorphemeDetailView(DetailView):
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
+        context['dataset_choices'] = {}
         user = self.request.user
         if user.is_authenticated():
             import guardian
