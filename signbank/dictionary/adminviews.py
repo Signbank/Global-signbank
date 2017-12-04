@@ -400,8 +400,8 @@ class GlossListView(ListView):
                       'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
                       'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
 
-        if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
-            fieldnames.pop(1) # Remove Annotation ID Gloss (Dutch) from list
+        if not SEPARATE_ENGLISH_IDGLOSS_FIELD:
+            fieldnames.remove('annotation_idgloss_en') # Remove Annotation ID Gloss (Dutch) from list
 
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
@@ -564,9 +564,16 @@ class GlossListView(ListView):
         if len(get) > 0 or show_all:
             if self.search_type == 'sign':
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
-                qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+
+                if SPEED_UP_RETRIEVING_ALL_SIGNS:
+                    qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+                else:
+                    qs = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets)
             else:
-                qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+                if SPEED_UP_RETRIEVING_ALL_SIGNS:
+                    qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+                else:
+                    qs = Gloss.objects.all().filter(dataset__in=selected_datasets)
 
         #No filters or 'show_all' specified? show nothing
         else:
