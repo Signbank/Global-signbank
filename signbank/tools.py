@@ -66,7 +66,7 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
     already_exists = []
     already_exists_dutch = []
     already_exists_english = []
-    glosses_dataset = None
+    glosses_dataset = ''
 
     this_gloss = ''
     dutch_found = False
@@ -76,18 +76,26 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
     with override(LANGUAGE_CODE):
 
         # initialise
-        glosses_dataset = None
+        glosses_dataset = ''
 
         glosses_dataset = valuedict['Dataset']
+        # python sets undefined items in dictionary to 'None'
 
         glosses_dataset = glosses_dataset.strip()
 
         # print('dataset found: ', glosses_dataset)
 
-        if glosses_dataset and glosses_dataset != 'None' and not glosses_dataset in datasets:
-            error_string = 'Dataset ' + glosses_dataset + ' not found.'
+        if glosses_dataset != None and glosses_dataset != '' and glosses_dataset != 'None' and not glosses_dataset in datasets:
+            error_string = 'Row ' + str(row_nr + 1) + ': Dataset ' + glosses_dataset + ' not found.'
 
             errors_found += [error_string]
+
+        if not glosses_dataset or glosses_dataset == 'None' or glosses_dataset == None:
+            # Dataset must be non-empty to create a new gloss
+            error_string = 'Row ' + str(row_nr + 1) + ': Dataset must be non-empty.'
+
+            errors_found += [error_string]
+
 
         lemma_id_gloss = valuedict['Lemma ID Gloss']
 
@@ -129,7 +137,7 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
         # print('dataset of gloss: ', glosses_dataset)
         if dutch_found and english_found and dutch_gloss == english_gloss:
             already_exists.append({'gloss_pk': dutch_gloss.pk,
-                                    'dataset': glosses_dataset,
+                                    'dataset': dutch_gloss.dataset,
                                     'lemma_id_gloss': 'Lemma ID Gloss',
                                     'lemma_id_gloss_value': lemma_id_gloss,
                                     'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -138,7 +146,7 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                                     'annotation_id_gloss_en_value': annotation_id_gloss_en})
         elif dutch_found and english_found:
             already_exists_dutch.append({'gloss_pk': dutch_gloss.pk,
-                                         'dataset': glosses_dataset,
+                                         'dataset': dutch_gloss.dataset,
                                          'lemma_id_gloss': 'Lemma ID Gloss',
                                          'lemma_id_gloss_value': lemma_id_gloss,
                                          'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -146,7 +154,7 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                                          'annotation_id_gloss_en': 'Annotation ID Gloss: English',
                                          'annotation_id_gloss_en_value': annotation_id_gloss_en})
             already_exists_english.append({'gloss_pk': english_gloss.pk,
-                                           'dataset': glosses_dataset,
+                                           'dataset': english_gloss.dataset,
                                            'lemma_id_gloss': 'Lemma ID Gloss',
                                            'lemma_id_gloss_value': lemma_id_gloss,
                                            'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -155,7 +163,7 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                                            'annotation_id_gloss_en_value': annotation_id_gloss_en})
         elif dutch_found:
             already_exists_dutch.append({'gloss_pk': dutch_gloss.pk,
-                                         'dataset': glosses_dataset,
+                                         'dataset': dutch_gloss.dataset,
                                          'lemma_id_gloss': 'Lemma ID Gloss',
                                          'lemma_id_gloss_value': lemma_id_gloss,
                                          'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -164,7 +172,7 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                                          'annotation_id_gloss_en_value': annotation_id_gloss_en})
         elif english_found:
             already_exists_english.append({'gloss_pk': english_gloss.pk,
-                                           'dataset': glosses_dataset,
+                                           'dataset': english_gloss.dataset,
                                          'lemma_id_gloss': 'Lemma ID Gloss',
                                          'lemma_id_gloss_value': lemma_id_gloss,
                                          'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
@@ -210,6 +218,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
         if gloss.dataset:
             current_dataset = gloss.dataset.name
         else:
+            # because of legacy code, the current dataset might not have been set
             current_dataset = 'None'
 
         #Go through all values in the value dict, looking for differences with the gloss
@@ -301,10 +310,17 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 if human_key == 'Glosses dataset':
                     human_key = 'Dataset'
                 if new_human_value == 'None' or new_human_value == '':
+                    # This check assumes that if the Dataset column is empty, it means no change
+                    # Since we already know the id of the gloss, we keep the original dataset
+                    # To be safe, confirm the original dataset is not empty, to catch legacy code
+                    if not current_dataset or current_dataset == 'None' or current_dataset == None:
+                        # Dataset must be non-empty to create a new gloss
+                        error_string = 'For ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) + '), Dataset must be non-empty. There is currently no dataset defined for this gloss.'
+
+                        errors_found += [error_string]
                     continue
 
-                current_dataset = gloss.dataset.name
-                # print('Glosses dataset: ', current_dataset, ', new human value: (', new_human_value, '), old machine value: (', current_dataset, ')')
+                # if we get to here, the user has specificed a new value for the dataset
                 if new_human_value in my_datasets:
                     if current_dataset != new_human_value:
                         differences.append({'pk': gloss.pk,
@@ -595,14 +611,17 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                     new_human_value = 'False'
                 else:
                     # Boolean expected
+                    error_string = ''
+                    # If the new value is empty, don't count this as a type error, error_string is generated conditionally
                     if field.name == 'weakdrop' or field.name == 'weakprop':
-                        error_string = 'For ' + gloss.annotation_idgloss + ' (' + str(
-                            gloss.pk) + '), value ' + str(new_human_value) + ' for ' + human_key + ' should be a Boolean or Neutral.'
+                        if new_human_value != None and new_human_value != '' and new_human_value != 'None':
+                            error_string = 'For ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) + '), value ' + str(new_human_value) + ' for ' + human_key + ' should be a Boolean or Neutral.'
                     else:
-                        error_string = 'For ' + gloss.annotation_idgloss + ' (' + str(
-                            gloss.pk) + '), value ' + str(new_human_value) + ' for ' + human_key + ' is not a Boolean.'
+                        if new_human_value != None and new_human_value != '' and new_human_value != 'None':
+                            error_string = 'For ' + gloss.annotation_idgloss + ' (' + str(gloss.pk) + '), value ' + str(new_human_value) + ' for ' + human_key + ' is not a Boolean.'
 
-                    errors_found += [error_string]
+                    if error_string:
+                        errors_found += [error_string]
             #If all the above does not apply, this is a None value or plain text
             else:
                 # print('Import CSV 148: not Integer, not Boolean: new human value: (', new_human_value, ')')
@@ -643,7 +662,8 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
             s1 = re.sub(' ','',original_human_value)
             s2 = re.sub(' ','',new_human_value)
 
-            if s1 == '' and s2 == '':
+            # If the original value is implicitly not set, and the new value is not set, ignore this change
+            if (s1 == '' or s1 == 'None' or s1 == 'False') and s2 == '':
                 pass
             #Check for change, and save your findings if there is one
             elif original_machine_value != new_machine_value and new_machine_value != None:
