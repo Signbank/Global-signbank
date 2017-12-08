@@ -90,6 +90,4 @@ urlpatterns = [
     url(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     url(r'^morpheme/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(MorphemeDetailView.as_view()), name='admin_morpheme_view'),
     url(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
-
-    url(r'^move_annotation_idglosses/$', signbank.dictionary.views.move_annotation_idglosses, name="move_annotation_idglosses")
 ]
