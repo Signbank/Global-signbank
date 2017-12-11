@@ -3,6 +3,40 @@
 {% load bootstrap3 %}
 {% load i18n %}
 
+{% block extrajs %}
+
+    {% if perms.dictionary.change_gloss %}
+
+    <script type="text/javascript">
+
+    $(document).ready(function(){
+        /**
+         * In the 'add gloss' form, toggle the annotation idgloss fields depending on the chosen dataset
+         */
+         set_annotationidglosslanguages();
+
+         $('#id_dataset').change(function() {
+            set_annotationidglosslanguages();
+         });
+
+         function set_annotationidglosslanguages() {
+            var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+            var languages = languages_str.split(",");
+            $("[id*='add_gloss_dataset_']").each(function(){
+                $(this).hide();
+            });
+            for(var id in languages) {
+                $("[id*='add_gloss_dataset_header_" + languages[id] + "']").show();
+                $("[id*='add_gloss_dataset_value_" + languages[id] + "']").show();
+            }
+         }
+    });
+
+    </script>
+
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 
 <!DOCTYPE html>
@@ -20,25 +54,27 @@
          {% csrf_token %}
          <table class='table' style='width: 400px;'>
              <tr>
+                 <th><label for='dataset'>Dataset</label></th>
+                 <td><select id="id_dataset" name="dataset" required="">
+                         <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+                         {% for dataset in selected_datasets %}
+                         <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                         {% endfor %}
+                     </select></td>
+             </tr>
+             <tr>
                  <th><label for='id_idgloss'>{% trans "ID Gloss" %}</label></th><td>{{add_gloss_form.idgloss}}</td>
              </tr>
+             {% for dataset_lang in dataset_languages %}
              <tr>
-                 <th><label for='id_annotation_idgloss'>{% trans "Annotation ID Gloss (Dutch)" %}</label></th>
-
-                 <td>{{add_gloss_form.annotation_idgloss}}</td>
+                 <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}">
+                     <label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
+                 </th>
+                 <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
+                     <input id="glosscreate_{{ dataset_lang.language_code_2char }}" name="glosscreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
+                 </td>
              </tr>
-             <tr>
-                 {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-                 <th><label for='id_annotation_idgloss_en'>
-                        {% trans "Annotation ID Gloss (English)" %}
-                     </label>
-                 </th><td>
-                        {{add_gloss_form.annotation_idgloss_en}}
-                    </td>
-                 {% else %}
-                 <input id="id_annotation_idgloss_en" maxlength="30" name="annotation_idgloss_en" type="hidden" value="unused">
-                 {% endif %}
-             </tr>
+             {% endfor %}
          </table>
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'>

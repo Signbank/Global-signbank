@@ -539,8 +539,14 @@ def import_authors(request):
     return HttpResponse('OKS')
 
 def add_new_sign(request):
+    context = {}
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    context['selected_datasets'] = selected_datasets
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    context['dataset_languages'] = dataset_languages
+    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages)
 
-    return render(request,'dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()})
+    return render(request,'dictionary/add_gloss.html',context)
 
 
 @login_required_config
@@ -562,12 +568,19 @@ def search_morpheme(request):
 
 def add_new_morpheme(request):
 
-    oContext = {'add_morpheme_form': MorphemeCreateForm()}
+    oContext = {}
 
     # Add essential information to the context
     oContext['morph_fields'] = []
     oChoiceLists = {}
     oContext['choice_lists'] = oChoiceLists
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    oContext['selected_datasets'] = selected_datasets
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    oContext['dataset_languages'] = dataset_languages
+    oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages)
+
     field = 'mrpType'
     # Get and save the choice list for this field
     field_category = fieldname_to_category(field)

@@ -17,6 +17,7 @@ from signbank.dictionary.forms import *
 import signbank.settings
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -25,19 +26,28 @@ def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
     
     if request.method == "POST":
+        if 'dataset' in request.POST and request.POST['dataset'] is not None:
+            selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+        else:
+            selected_datasets = get_selected_datasets_for_user(request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        if not settings.SEPARATE_ENGLISH_IDGLOSS_FIELD:
-            request.POST = request.POST.copy() #Make it mutable
-            request.POST['annotation_idgloss_en'] = request.POST['annotation_idgloss']
+        form = GlossCreateForm(request.POST, languages=dataset_languages)
 
-        form = GlossCreateForm(request.POST)
-
-        if len(Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
-            return render(request,'dictionary/warning.html', {'warning':_('Annotation ID Gloss not unique.')})
-        elif len(Gloss.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
-            return render(request,'dictionary/warning.html', {'warning':_('English annotation ID gloss not unique.')})
-        elif len(request.POST['annotation_idgloss']) < 1:
-            return render(request,'dictionary/warning.html', {'warning':_('Dutch annotation ID gloss cannot be empty.')})
+        for item, value in request.POST.items():
+            print("%s %s" % (item, value))
+            annotation_idgloss_prefix = "annotation_idgloss_"
+            if item.startswith(annotation_idgloss_prefix):
+                language_code_2char = item[len(annotation_idgloss_prefix):]
+                print(language_code_2char)
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                print(language)
+                glosses_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
+                    annotationidglosstranslation__language=language,
+                    annotationidglosstranslation__text__exact=value.upper())
+                print(glosses_for_this_language_and_annotation_idgloss)
+                if len(glosses_for_this_language_and_annotation_idgloss) != 0:
+                    return render(request, 'dictionary/warning.html', {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
         if form.is_valid():
             
@@ -768,30 +778,6 @@ def update_relationtoforeignsign(gloss, field, value):
     
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 
-def gloss_from_identifier(value):
-    """Given an id of the form "idgloss (pk)" return the
-    relevant gloss or None if none is found
-    BUT: first check if a unique hit can be found by the string alone (if it is not empty)
-    """
-    
-    
-    match = re.match('(.*) \((\d+)\)', value)
-    if match:
-        print("MATCH: ", match)
-        annotation_idgloss = match.group(1)
-        pk = match.group(2)
-        print("INFO: ", annotation_idgloss, pk)
-        
-        target = Gloss.objects.get(pk=int(pk))
-        print("TARGET: ", target)
-        return target
-    elif value != '':
-        annotation_idgloss = value
-        target = Gloss.objects.get(annotation_idgloss=annotation_idgloss)
-        return target
-    else:
-        return None
-
 
 def morph_from_identifier(value):
     """Given an id of the form idgloss (pk) return the
@@ -1283,22 +1269,24 @@ def add_morpheme(request):
     """Create a new morpheme and redirect to the edit view"""
 
     if request.method == "POST":
+        if 'dataset' in request.POST and request.POST['dataset'] is not None:
+            selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+        else:
+            selected_datasets = get_selected_datasets_for_user(request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        if not settings.SEPARATE_ENGLISH_IDGLOSS_FIELD:
-            request.POST = request.POST.copy()  # Make it mutable
-            request.POST['annotation_idgloss_en'] = request.POST['annotation_idgloss']
+        form = MorphemeCreateForm(request.POST, languages=dataset_languages)
 
-        form = MorphemeCreateForm(request.POST)
-
-        if len(Morpheme.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
-            return render(request,'dictionary/warning.html', {'warning': _('Annotation ID Gloss not unique.')})
-        elif len(Morpheme.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
-            return render(request,'dictionary/warning.html',
-                                      {'warning': _('English annotation ID gloss not unique.')})
-        elif len(request.POST['annotation_idgloss']) < 1:
-            return render(request,'dictionary/warning.html',{'warning': _('Dutch annotation ID gloss cannot be empty.')})
-        # extract the user-chosen mrpType, converting it to...?
-        mrpType = request.POST['mrpType']
+        for item, value in request.POST.items():
+            annotation_idgloss_prefix = "annotation_idgloss_"
+            if item.startswith(annotation_idgloss_prefix):
+                language_code_2char = item[len(annotation_idgloss_prefix):]
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                morphemes_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
+                    annotationidglosstranslation__language=language,
+                    annotationidglosstranslation__text__exact=value.upper())
+                if len(morphemes_for_this_language_and_annotation_idgloss) != 0:
+                    return render(request, 'dictionary/warning.html', {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
         if form.is_valid():
 

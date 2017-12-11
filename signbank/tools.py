@@ -12,7 +12,6 @@ from urllib.parse import quote
 from django.utils.translation import override
 
 from signbank.dictionary.models import *
-from signbank.dictionary.update import gloss_from_identifier, morph_from_identifier
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -1050,3 +1049,26 @@ def get_selected_datasets_for_user(user):
     else:
         return Dataset.objects.filter(is_public=True)
 
+
+def gloss_from_identifier(value):
+    """Given an id of the form "idgloss (pk)" return the
+    relevant gloss or None if none is found
+    BUT: first check if a unique hit can be found by the string alone (if it is not empty)
+    """
+
+    match = re.match('(.*) \((\d+)\)', value)
+    if match:
+        print("MATCH: ", match)
+        annotation_idgloss = match.group(1)
+        pk = match.group(2)
+        print("INFO: ", annotation_idgloss, pk)
+
+        target = Gloss.objects.get(pk=int(pk))
+        print("TARGET: ", target)
+        return target
+    elif value != '':
+        annotation_idgloss = value
+        target = Gloss.objects.get(annotation_idgloss=annotation_idgloss)
+        return target
+    else:
+        return None

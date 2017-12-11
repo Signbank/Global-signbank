@@ -27,6 +27,27 @@
         });
 
         $('[data-toggle="tooltip"]').tooltip();
+
+        /**
+         * In the 'add gloss' form, toggle the annotation idgloss fields depending on the chosen dataset
+         */
+         set_annotationidglosslanguages();
+
+         $('#id_dataset').change(function() {
+            set_annotationidglosslanguages();
+         });
+
+         function set_annotationidglosslanguages() {
+            var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+            var languages = languages_str.split(",");
+            $("[id*='add_gloss_dataset_']").each(function(){
+                $(this).hide();
+            });
+            for(var id in languages) {
+                $("[id*='add_gloss_dataset_header_" + languages[id] + "']").show();
+                $("[id*='add_gloss_dataset_value_" + languages[id] + "']").show();
+            }
+         }
     });
 
 
@@ -137,6 +158,7 @@ function do_toggle_groups(el) {
   }
   document.getElementById('adminsearch').submit();
 }
+
 
    </script>
 {% endblock %}
@@ -568,15 +590,26 @@ function do_toggle_groups(el) {
              {% csrf_token %}
              <table class='table'>
                  <tr>
+                     <th><label for='dataset'>Dataset</label></th>
                      <th><label for='id_idgloss'>Lemma ID Gloss</label></th>
-                     <th><label for='id_annotation_idgloss'>Annotation ID Gloss (Dutch)</label></th>
-                     <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
+                     {% for dataset_lang in dataset_languages %}
+                     <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
+                     {% endfor %}
                      <th></th>
                  </tr>
                  <tr>
+                     <td><select id="id_dataset" name="dataset" required="">
+                         <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+                         {% for dataset in selected_datasets %}
+                         <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                         {% endfor %}
+                     </select></td>
                      <td>{{add_gloss_form.idgloss}}</td>
-                     <td>{{add_gloss_form.annotation_idgloss}}</td>
-                     <td>{{add_gloss_form.annotation_idgloss_en}}</td>
+                     {% for dataset_lang in dataset_languages %}
+                     <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
+                         <input id="glosscreate_{{ dataset_lang.language_code_2char }}" name="glosscreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
+                     </td>
+                     {% endfor %}
                      <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'></td>
                  </tr>
              </table>
