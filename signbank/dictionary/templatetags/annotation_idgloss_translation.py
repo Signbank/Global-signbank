@@ -1,5 +1,5 @@
 from django.template import Library
-from signbank.dictionary.forms import GlossSearchForm
+from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 
 register = Library()
 
@@ -12,6 +12,11 @@ def get_annotation_idgloss_translation(gloss, language):
 @register.filter
 def get_search_field_for_language(form, language):
     return getattr(form, GlossSearchForm.gloss_search_field_prefix + language.language_code_2char)
+
+
+@register.filter
+def get_morpheme_search_field_for_language(form, language):
+    return getattr(form, MorphemeSearchForm.morpheme_search_field_prefix + language.language_code_2char)
 
 
 @register.filter

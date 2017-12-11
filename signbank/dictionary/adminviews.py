@@ -1190,7 +1190,12 @@ class MorphemeListView(ListView):
         context = super(MorphemeListView, self).get_context_data(**kwargs)
         # Add in a QuerySet of all the books
 
-        search_form = MorphemeSearchForm(self.request.GET)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages)
 
         context['searchform'] = search_form
         context['glosscount'] = Morpheme.objects.all().count()
@@ -1257,6 +1262,14 @@ class MorphemeListView(ListView):
                 query = query | Q(sn__exact=val)
 
             qs = qs.filter(query)
+
+        # Evaluate all morpheme/language search fields
+        for get_key, get_value in get.items():
+            if get_key.startswith(MorphemeSearchForm.morpheme_search_field_prefix) and get_value != '':
+                language_code_2char = get_key[len(MorphemeSearchForm.morpheme_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
+                               annotationidglosstranslation__language=language)
 
         if 'englishGloss' in get and get['englishGloss'] != '':
             val = get['englishGloss']
