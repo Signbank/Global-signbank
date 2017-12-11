@@ -2,6 +2,7 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.db.models import Q, F, ExpressionWrapper, IntegerField, Count
 from django.db.models import CharField, Value as V
+from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField
 from django.http import HttpResponse, HttpResponseRedirect
@@ -84,6 +85,19 @@ def order_queryset_by_sort_order(get, qs):
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Handshape")
     elif (sOrder.endswith('locprim')):
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Location")
+    elif "morphemesearch_" in sOrder:
+        print("sOrder: %s" % sOrder)
+        language_code_2char = sOrder[-2:]
+        print("language_code_2char: %s" % language_code_2char)
+        sOrderAsc = sOrder
+        if (sOrder[0:1] == '-'):
+            # A starting '-' sign means: descending order
+            sOrderAsc = sOrder[1:]
+        print("sOrderAsc: %s" % sOrderAsc)
+        annotationidglosstranslation = AnnotationIdglossTranslation.objects.filter(gloss=OuterRef('pk'), language__language_code_2char__iexact=language_code_2char)
+        qs = qs.annotate(**{sOrderAsc: Subquery(annotationidglosstranslation.values('text')[:1])}).order_by(sOrder)
+        print(qs)
+        return qs
     else:
         # Use straightforward ordering on field [sOrder]
 

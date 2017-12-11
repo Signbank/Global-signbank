@@ -522,11 +522,9 @@ function do_adminsearch(el) {
     <thead>
       <tr>
           <th></th>
-           <th>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+          {% for dataset_lang in dataset_languages %}
+          <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+          {% endfor %}
 
            <th>{% trans "Abstract Meaning" %}</th>
            <th>{% trans "Morpheme type" %}</th>
@@ -539,6 +537,24 @@ function do_adminsearch(el) {
       <!-- EK: this second header row contains clickable sort-order buttons -->
       <tr>
           <th></th>
+          {% for dataset_lang in dataset_languages %}
+          {% with "morphemesearch_"|add:dataset_lang.language_code_2char as field %}
+          {% with minfield="-"|add:field %}
+           <th>
+             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+             </a>
+             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+             </a>
+             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
+               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
+             {% endif %}
+           </th>
+           {% endwith %}
+           {% endwith %}
+          {% endfor %}
+
            {% with "annotation_idgloss annotation_idgloss_en translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD or field != annotation_idgloss_en %}
@@ -577,12 +593,14 @@ function do_adminsearch(el) {
 
       <td>{%if morpheme.get_image_path != None %}<div class="thumbnail_container"><img class="thumbnail" src="{{STATIC_URL}}{{morpheme.get_image_path}}"></div>{% endif %}</td>
 
-      <td><a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{morpheme.annotation_idgloss}}</a></td>
-
-      {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-      <td><a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{morpheme.annotation_idgloss_en}}</a></td>
-      {% endif %}
-
+      {% for dataset_lang in dataset_languages %}
+        {% with morpheme.gloss_ptr|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
+      <td>
+          {% ifnotequal annotationidglosstranslation "" %}
+            <a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{ annotationidglosstranslation }}</a></td>
+          {% endifnotequal %}
+        {% endwith %}
+      {% endfor %}
       <td>
       {% for translation in morpheme.translation_set.all %}
                 {% if forloop.last %}
