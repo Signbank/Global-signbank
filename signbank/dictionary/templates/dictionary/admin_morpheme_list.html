@@ -597,8 +597,9 @@ function do_adminsearch(el) {
         {% with morpheme.gloss_ptr|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
-            <a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{ annotationidglosstranslation }}</a></td>
+            <a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{ annotationidglosstranslation }}</a>
           {% endifnotequal %}
+      </td>
         {% endwith %}
       {% endfor %}
       <td>
