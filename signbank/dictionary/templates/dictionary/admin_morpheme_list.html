@@ -555,7 +555,7 @@ function do_adminsearch(el) {
            {% endwith %}
           {% endfor %}
 
-           {% with "annotation_idgloss annotation_idgloss_en translation handedness domhndsh subhndsh locprim" as head_fields %}
+           {% with "translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD or field != annotation_idgloss_en %}
            {% with minfield="-"|add:field %}
