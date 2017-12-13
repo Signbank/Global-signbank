@@ -613,9 +613,9 @@ def import_csv(request):
 
     user = request.user
     import guardian
-    qs = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
-
-    my_datasets = [ dataset.name for dataset in qs ]
+    user_datasets = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
+    user_datasets_names = [ dataset.name for dataset in user_datasets ]
+    dataset_languages = Language.objects.filter(dataset__in=user_datasets).distinct()
 
     # print('datasets: ', my_datasets)
 
@@ -675,15 +675,29 @@ def import_csv(request):
                     print('index error import csv: line number: ', nv, ', value: ', value)
                     pass
 
+            def value_dict_has_required_columns(value_dict):
+                """Checks if all columns for creating a gloss are there. Annotation ID Gloss needs to be
+                checked dynamically for each dataset language."""
+                if 'Lemma ID Gloss' not in value_dict or 'Dataset' not in value_dict:
+                    return False
+                else:
+                    dataset_name = value_dict['Dataset'].strip()
+                    dataset = Dataset.objects.get(name=dataset_name)
+                    if dataset:
+                        for language in dataset.translation_languages.all():
+                            column_name = "Annotation ID Gloss (%s)" % language.name_en
+                            if column_name not in value_dict:
+                                return False
+                    else:
+                        return False
+                return True
+
             # print("import CSV: value_dict: ", value_dict)
             try:
                 if 'Signbank ID' in value_dict:
                     pk = int(value_dict['Signbank ID'])
                 # no column Signbank ID
-                elif not ('Lemma ID Gloss' in value_dict
-                          and 'Annotation ID Gloss: Dutch' in value_dict
-                          and 'Annotation ID Gloss: English' in value_dict
-                          and 'Dataset' in value_dict):
+                elif not value_dict_has_required_columns(value_dict):
                     # not enough columns for creating glosses, input file needs fixing
                     e1 = 'To create glosses, the following columns are required: ' \
                         + 'Dataset, Lemma ID Gloss, Annotation ID Gloss: Dutch, Annotation ID Gloss: English.'
@@ -696,12 +710,11 @@ def import_csv(request):
                     break
 
                 else:
-                    (new_gloss, already_exists, already_exists_dutch, already_exists_english, error_create) \
-                        = create_gloss_from_valuedict(value_dict,my_datasets,nl)
+                    (new_gloss, already_exists, error_create) \
+                        = create_gloss_from_valuedict(value_dict,user_datasets_names,nl)
+                    print(new_gloss)
                     creation += new_gloss
                     gloss_already_exists += already_exists
-                    gloss_already_exists_dutch += already_exists_dutch
-                    gloss_already_exists_english += already_exists_english
                     if len(error_create):
                         # more than one error found
                         errors_found_string = '\n'.join(error_create)
@@ -738,7 +751,7 @@ def import_csv(request):
 
             # print('line after gloss does not exist, line ', str(nl))
             try:
-                (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss,my_datasets)
+                (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss,user_datasets_names)
                 changes += changes_found
                 # changes += compare_valuedict_to_gloss(value_dict,gloss)
 
@@ -943,8 +956,6 @@ def import_csv(request):
             for row in glosses_to_create.keys():
                 lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss']
                 dataset = glosses_to_create[row]['dataset']
-                annotation_id_gloss = glosses_to_create[row]['annotation_id_gloss']
-                annotation_id_gloss_en = glosses_to_create[row]['annotation_id_gloss_en']
 
                 if dataset == 'None':
                     # this is an error, this should have already been caught
@@ -955,9 +966,17 @@ def import_csv(request):
                 new_gloss = Gloss()
                 new_gloss.idgloss = lemma_id_gloss
                 new_gloss.dataset = dataset_id
-                new_gloss.annotation_idgloss = annotation_id_gloss
-                new_gloss.annotation_idgloss_en = annotation_id_gloss_en
                 new_gloss.save()
+
+                for language in dataset_languages:
+                    annotation_id_gloss = glosses_to_create[row]['annotation_id_gloss_' + language.language_code_2char]
+                    if annotation_id_gloss:
+                        annotationidglosstranslation = AnnotationIdglossTranslation()
+                        annotationidglosstranslation.language = language
+                        annotationidglosstranslation.gloss = new_gloss
+                        annotationidglosstranslation.text = annotation_id_gloss
+                        annotationidglosstranslation.save()
+
                 # print('new gloss created: ', new_gloss.idgloss)
 
             stage = 2
@@ -975,9 +994,8 @@ def import_csv(request):
     return render(request,'dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,
                                                         'creation':creation,
                                                         'gloss_already_exists':gloss_already_exists,
-                                                        'gloss_already_exists_dutch':gloss_already_exists_dutch,
-                                                        'gloss_already_exists_english':gloss_already_exists_english,
-                                                        'error':error})
+                                                        'error':error,
+                                                        'dataset_languages':dataset_languages})
 
 def switch_to_language(request,language):
 

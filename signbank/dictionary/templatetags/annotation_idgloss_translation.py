@@ -25,3 +25,10 @@ def get_morpheme_search_field_for_language(form, language):
 @register.filter
 def get_type(obj):
     return type(obj)
+
+
+@register.filter
+def keyvalue(dict, key):
+    if key in dict:
+        return dict[key]
+    return ''
