@@ -1671,13 +1671,27 @@ class AnnotationIdglossTranslation(models.Model):
         unique_together = (("gloss", "language"),)
 
     def save(self, *args, **kwargs):
-        """Before an item is saved the language is checked against the languages of the dataset the gloss is in.
+        """
+        1. Before an item is saved the language is checked against the languages of the dataset the gloss is in.
+        2. The annotation idgloss translation text for a language must be unique within a dataset. 
         Note that bulk updates will not use this method. Therefore, always iterate over a queryset when updating."""
-        if self.gloss.dataset:
+        dataset = self.gloss.dataset
+        if dataset:
+            # Before an item is saved the language is checked against the languages of the dataset the gloss is in.
             dataset_languages = self.gloss.dataset.translation_languages.all()
             if not self.language in dataset_languages:
                 msg = "Language %s is not in the set of language of the dataset gloss %s belongs to" \
                       % (self.language.name, self.gloss.id)
+                raise ValidationError(msg)
+
+            # The annotation idgloss translation text for a language must be unique within a dataset.
+            glosses_with_same_text = dataset.gloss_set.filter(annotationidglosstranslation__text__exact=self.text,
+                                                              annotationidglosstranslation__language=self.language)
+            if not(
+                (len(glosses_with_same_text) == 1 and glosses_with_same_text[0] == self)
+                   or glosses_with_same_text is None or len(glosses_with_same_text) == 0):
+                msg = "The annotation idgloss translation text '%s' is not unique within dataset '%s' for gloss '%s'." \
+                      % (self.text, dataset.name, self.gloss.id)
                 raise ValidationError(msg)
 
         super(AnnotationIdglossTranslation, self).save(*args, **kwargs)
