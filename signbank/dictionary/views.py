@@ -984,6 +984,9 @@ def switch_to_language(request,language):
     return HttpResponse('OK')
 
 def recently_added_glosses(request):
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
     try:
         from signbank.settings.base import RECENTLY_ADDED_SIGNS_PERIOD
         import datetime as DT
@@ -991,10 +994,13 @@ def recently_added_glosses(request):
         return render(request, 'dictionary/recently_added_glosses.html',
                       {'glosses': Gloss.objects.filter(
                           creationDate__range=(recently_added_signs_since_date, DT.datetime.now())).order_by(
-                          'creationDate').reverse()})
+                          'creationDate').reverse(),
+                       'dataset_languages': dataset_languages})
 
     except:
-        return render(request,'dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()})
+        return render(request,'dictionary/recently_added_glosses.html',
+                      {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse(),
+                       'dataset_languages': dataset_languages})
 
 
 def proposed_new_signs(request):
