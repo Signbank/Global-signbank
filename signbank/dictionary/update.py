@@ -1324,7 +1324,7 @@ def update_morpheme(request, morphemeid):
             value = ' '
 
         elif value[0] == '_':
-            value = value[1:];
+            value = value[1:]
 
         values = request.POST.getlist('value[]')  # in case we need multiple values
 
@@ -1362,31 +1362,57 @@ def update_morpheme(request, morphemeid):
 
             return update_other_media(request, morpheme, field, value)
 
-        elif field == 'language':
+        elif field == 'signlanguage':
             # expecting possibly multiple values
 
-            try:
-                morpheme.language.clear()
-                for value in values:
-                    lang = SignLanguage.objects.get(name=value)
-                    morpheme.language.add(lang)
-                    morpheme.save()
-                newvalue = ", ".join([str(g) for g in morpheme.language.all()])
-            except:
-                return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
+            return update_signlanguage(morpheme, field, values)
+
+            # try:
+            #     morpheme.language.clear()
+            #     for value in values:
+            #         lang = SignLanguage.objects.get(name=value)
+            #         morpheme.language.add(lang)
+            #         morpheme.save()
+            #     newvalue = ", ".join([str(g) for g in morpheme.language.all()])
+            # except:
+            #     return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
 
         elif field == 'dialect':
             # expecting possibly multiple values
 
-            try:
-                morpheme.dialect.clear()
-                for value in values:
-                    lang = Dialect.objects.get(name=value)
-                    morpheme.dialect.add(lang)
-                    morpheme.save()
-                newvalue = ", ".join([str(g.name) for g in morpheme.dialect.all()])
-            except:
-                return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
+            return update_dialect(morpheme, field, values)
+
+            # try:
+            #     morpheme.dialect.clear()
+            #     for value in values:
+            #         lang = Dialect.objects.get(name=value)
+            #         morpheme.dialect.add(lang)
+            #         morpheme.save()
+            #     newvalue = ", ".join([str(g.name) for g in morpheme.dialect.all()])
+            # except:
+            #     return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
+
+        elif field == 'dataset':
+
+            original_value = getattr(morpheme,field)
+            ds = Dataset.objects.get(name=value)
+
+            if ds.is_public:
+                newvalue = value
+                setattr(morpheme, field, ds)
+                morpheme.save()
+                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+            import guardian
+            if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
+                newvalue = value
+                setattr(morpheme, field, ds)
+                morpheme.save()
+                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+            print('no permission for chosen dataset')
+            newvalue = original_value
+            return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
         elif field == "sn":
             # sign number must be unique, return error message if this SN is

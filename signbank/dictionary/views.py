@@ -830,7 +830,9 @@ def import_csv(request):
                     # this has already been checked for existance and permission in the previous step
                     # get dataset identifier
                     if new_value == 'None':
-                        dataset_id = None
+                        # don't allow the user to erase the current dataset, this should have already been caught
+                        # dataset_id = None
+                        continue
                     else:
                         dataset_id = Dataset.objects.get(name=new_value)
                     setattr(gloss,'dataset',dataset_id)
@@ -945,7 +947,9 @@ def import_csv(request):
                 annotation_id_gloss_en = glosses_to_create[row]['annotation_id_gloss_en']
 
                 if dataset == 'None':
-                    dataset_id = None
+                    # this is an error, this should have already been caught
+                    # dataset_id = None
+                    continue
                 else:
                     dataset_id = Dataset.objects.get(name=dataset)
                 new_gloss = Gloss()

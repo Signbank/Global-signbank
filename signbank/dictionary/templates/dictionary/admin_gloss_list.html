@@ -590,8 +590,8 @@ function do_toggle_groups(el) {
              {% csrf_token %}
              <table class='table'>
                  <tr>
-                     <th><label for='dataset'>Dataset</label></th>
-                     <th><label for='id_idgloss'>Lemma ID Gloss</label></th>
+                     <th><label for='dataset'>{% trans "Dataset" %}</label></th>
+                     <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
                      {% for dataset_lang in dataset_languages %}
                      <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
                      {% endfor %}

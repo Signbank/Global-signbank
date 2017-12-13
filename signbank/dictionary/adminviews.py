@@ -1076,6 +1076,7 @@ class GlossDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['translations_per_language'][language] = gl.translation_set.filter(language=language)
 
+        context['dataset_choices'] = {}
         user = self.request.user
         if user.is_authenticated():
             qs = get_objects_for_user(user, 'view_dataset', Dataset)
@@ -2231,6 +2232,16 @@ class MorphemeDetailView(DetailView):
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
+
+        context['dataset_choices'] = {}
+        user = self.request.user
+        if user.is_authenticated():
+            import guardian
+            qs = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+            dataset_choices = dict()
+            for dataset in qs:
+                dataset_choices[dataset.name] = dataset.name
+            context['dataset_choices'] = json.dumps(dataset_choices)
 
         return context
 
