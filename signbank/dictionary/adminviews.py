@@ -395,7 +395,7 @@ class GlossListView(ListView):
 #        fields = [f.name for f in Gloss._meta.fields]
         #We want to manually set which fields to export here
 
-        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'dataset',
+        fieldnames = ['idgloss', 'dataset',
                       'useInstr', 'sense', 'StemSN', 'rmrks', 'handedness', 'weakdrop', 'weakprop',
                       'domhndsh', 'domhndsh_letter', 'domhndsh_number', 'subhndsh', 'subhndsh_letter', 'subhndsh_number',
                       'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc', 'oriCh', 'contType',
@@ -405,15 +405,16 @@ class GlossListView(ListView):
                       'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
                       'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
 
-        if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
-            fieldnames.pop(1) # Remove Annotation ID Gloss (Dutch) from list
-
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + language.name_en + ")" for language in dataset_languages]
 
         writer = csv.writer(response)
 
         with override(LANGUAGE_CODE):
-            header = ['Signbank ID'] + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
+            header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
         for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology',
                              'Relations to other signs','Relations to foreign signs', 'Tags']:
@@ -421,8 +422,16 @@ class GlossListView(ListView):
 
         writer.writerow(header)
 
-        for gloss in self.get_queryset():
+        for gloss in self.get_queryset()[:10]:
             row = [str(gloss.pk)]
+
+            for language in dataset_languages:
+                annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+                if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
+                    row.append(annotationidglosstranslations[0].text)
+                else:
+                    row.append("")
+
             for f in fields:
 
                 #Try the value of the choicelist
