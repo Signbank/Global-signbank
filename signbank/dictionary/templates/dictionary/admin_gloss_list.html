@@ -638,11 +638,9 @@ function do_toggle_groups(el) {
       <tr>
           <th>{% trans "Dataset" %}</th>
           <th></th>
-           <th>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           {% for dataset_lang in dataset_languages %}
+          <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+          {% endfor %}
 
           <th>{% trans "Lemma ID gloss" %}</th>
 
@@ -657,9 +655,26 @@ function do_toggle_groups(el) {
       <tr>
           <th></th>
           <th></th>
-           {% with "annotation_idgloss annotation_idgloss_en idgloss translation handedness domhndsh subhndsh locprim" as head_fields %}
+          {% for dataset_lang in dataset_languages %}
+          {% with "annotationidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
+          {% with minfield="-"|add:field %}
+           <th>
+             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+             </a>
+             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+             </a>
+             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
+               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
+             {% endif %}
+           </th>
+           {% endwith %}
+           {% endwith %}
+          {% endfor %}
+
+           {% with "idgloss translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
-           {% if SEPARATE_ENGLISH_IDGLOSS_FIELD or field != annotation_idgloss_en %}
            {% with minfield="-"|add:field %}
            <th>
              <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
@@ -673,7 +688,6 @@ function do_toggle_groups(el) {
              {% endif %}
            </th>
            {% endwith %}
-           {% endif %}
            {% endfor %}
            {% endwith %}
            <th style="width:255px;"></th>
@@ -698,68 +712,40 @@ function do_toggle_groups(el) {
           <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
+      {% for dataset_lang in dataset_languages %}
+        {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
       <td>
-          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
-          {% else %}
-          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
-          {% endif %}
+          {% ifnotequal annotationidglosstranslation "" %}
+            {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
+            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            {% else %}
+            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            {% endif %}
 
-          {% if gloss.morphemePart.count > 0 %}
+            {% if gloss.morphemePart.count > 0 %}
               {% if gloss.morphemePart.count > 3 %}
                   <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
               {% else %}
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.morphemePart.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.gloss_ptr|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
-          {% endif %}
+            {% endif %}
 
-          {% if gloss.parent_glosses.count > 0 %}
+            {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
-          {% endif %}
-
+            {% endif %}
+          {% endifnotequal %}
       </td>
-
-      {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-      <td>
-          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
-          {% else %}
-            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
-          {% endif %}
-
-          {% if gloss.morphemePart.all.count > 0 %}
-              {% if gloss.morphemePart.count > 3 %}
-                    <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
-              {% else %}
-                    <!-- Number of morphemes is [1-3] -->
-                    <div class="morpheme_in_gloss">
-                    {% for morphdef in gloss.morphemePart.all %}
-                        <span>{{ morphdef.annotation_idgloss_en }}{% if not forloop.last %}, {% endif %}</span>
-                    {% endfor %}
-                    </div>
-              {% endif %}
-          {% endif %}
-
-          {% if gloss.parent_glosses.all.count > 0 %}
-            <div class="component_in_gloss">
-            {% for component in gloss.parent_glosses.all %}
-                <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">
-                    {{ component.morpheme.annotation_idgloss_en }}</a>{% if not forloop.last %} + {% endif %}</span>
-            {% endfor %}
-            </div>
-          {% endif %}
-
-      </td>
-      {% endif %}
+        {% endwith %}
+      {% endfor %}
 
       <td>
           {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}

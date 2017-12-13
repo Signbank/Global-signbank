@@ -538,7 +538,7 @@ function do_adminsearch(el) {
       <tr>
           <th></th>
           {% for dataset_lang in dataset_languages %}
-          {% with "morphemesearch_"|add:dataset_lang.language_code_2char as field %}
+          {% with "annotationidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
           {% with minfield="-"|add:field %}
            <th>
              <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
@@ -557,7 +557,6 @@ function do_adminsearch(el) {
 
            {% with "translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
-           {% if SEPARATE_ENGLISH_IDGLOSS_FIELD or field != annotation_idgloss_en %}
            {% with minfield="-"|add:field %}
            <th>
              <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
@@ -571,7 +570,6 @@ function do_adminsearch(el) {
              {% endif %}
            </th>
            {% endwith %}
-           {% endif %}
            {% endfor %}
            {% endwith %}
            <th style="width:255px;"></th>
