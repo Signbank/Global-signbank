@@ -65,136 +65,74 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
     errors_found = []
     new_gloss = []
     already_exists = []
-    already_exists_dutch = []
-    already_exists_english = []
-    glosses_dataset = ''
-
-    this_gloss = ''
-    dutch_found = False
-    english_found = False
 
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
 
         # initialise
-        glosses_dataset = ''
-
-        glosses_dataset = valuedict['Dataset']
+        dataset_name = valuedict['Dataset'].strip()
         # python sets undefined items in dictionary to 'None'
 
-        glosses_dataset = glosses_dataset.strip()
-
-        # print('dataset found: ', glosses_dataset)
-
-        if glosses_dataset != None and glosses_dataset != '' and glosses_dataset != 'None' and not glosses_dataset in datasets:
-            error_string = 'Row ' + str(row_nr + 1) + ': Dataset ' + glosses_dataset + ' not found.'
+        dataset = Dataset.objects.get(name=dataset_name)
+        if not dataset:
+            error_string = 'Row ' + str(row_nr + 1) + ': Dataset ' + dataset_name + ' not found.'
 
             errors_found += [error_string]
 
-        if not glosses_dataset or glosses_dataset == 'None' or glosses_dataset == None:
-            # Dataset must be non-empty to create a new gloss
-            error_string = 'Row ' + str(row_nr + 1) + ': Dataset must be non-empty.'
+        lemma_id_gloss = valuedict['Lemma ID Gloss'].strip()
 
-            errors_found += [error_string]
+        annotationidglosstranslations = {}
+        existing_glosses = {}
+        dataset = Dataset.objects.get(name=dataset_name)
+        if dataset:
+            for language in dataset.translation_languages.all():
+                column_name = "Annotation ID Gloss (%s)" % language.name_en
+                if column_name in valuedict:
+                    annotationidglosstranslation_text = valuedict[column_name].strip()
+                    annotationidglosstranslations[language.language_code_2char] = annotationidglosstranslation_text
 
+                    # The annotation idgloss translation text for a language must be unique within a dataset.
+                    glosses_with_same_text = dataset.gloss_set.filter(
+                        annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
+                        annotationidglosstranslation__language=language)
+                    if len(glosses_with_same_text) > 0:
+                        existing_glosses[language.language_code_2char] = glosses_with_same_text
 
-        lemma_id_gloss = valuedict['Lemma ID Gloss']
+        if existing_glosses:
+            print("Existing glosses : " + str(existing_glosses))
+            for language_code_2char,glosses in existing_glosses.items():
+                for gloss in glosses:
+                    gloss_dict = {
+                         'gloss_pk': gloss.pk,
+                         'dataset': gloss.dataset,
+                         'lemma_id_gloss': 'Lemma ID Gloss',
+                         'lemma_id_gloss_value': lemma_id_gloss
+                    }
+                    for lang in gloss.dataset.translation_languages.all():
+                        gloss_dict['annotation_idgloss_' + lang.language_code_2char] = "Annotation ID Gloss (%s)" % lang.name_en
+                        gloss_dict["annotation_idgloss_%s_value" % lang.language_code_2char] = \
+                            gloss.annotationidglosstranslation_set.filter(language=lang)
+                    already_exists.append(gloss_dict)
 
-        lemma_id_gloss = lemma_id_gloss.strip()
-
-        annotation_id_gloss = valuedict['Annotation ID Gloss: Dutch']
-
-        annotation_id_gloss = annotation_id_gloss.strip()
-
-        annotation_id_gloss_en = valuedict['Annotation ID Gloss: English']
-
-        annotation_id_gloss_en = annotation_id_gloss_en.strip()
-
-        try:
-            dutch_gloss = gloss_from_identifier(annotation_id_gloss)
-
-            if not dutch_gloss:
-                raise ObjectDoesNotExist
-            else:
-                dutch_found = True
-
-        except ObjectDoesNotExist:
-            dutch_gloss = None
-            pass
-
-        try:
-
-            english_gloss = Gloss.objects.get(annotation_idgloss_en=annotation_id_gloss_en)
-
-            if not english_gloss:
-                raise ObjectDoesNotExist
-            else:
-                english_found = True
-
-        except ObjectDoesNotExist:
-            english_gloss = None
-            pass
-
-        # print('dataset of gloss: ', glosses_dataset)
-        if dutch_found and english_found and dutch_gloss == english_gloss:
-            already_exists.append({'gloss_pk': dutch_gloss.pk,
-                                    'dataset': dutch_gloss.dataset,
-                                    'lemma_id_gloss': 'Lemma ID Gloss',
-                                    'lemma_id_gloss_value': lemma_id_gloss,
-                                    'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
-                                    'annotation_id_gloss_value': annotation_id_gloss,
-                                    'annotation_id_gloss_en': 'Annotation ID Gloss: English',
-                                    'annotation_id_gloss_en_value': annotation_id_gloss_en})
-        elif dutch_found and english_found:
-            already_exists_dutch.append({'gloss_pk': dutch_gloss.pk,
-                                         'dataset': dutch_gloss.dataset,
-                                         'lemma_id_gloss': 'Lemma ID Gloss',
-                                         'lemma_id_gloss_value': lemma_id_gloss,
-                                         'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
-                                         'annotation_id_gloss_value': annotation_id_gloss,
-                                         'annotation_id_gloss_en': 'Annotation ID Gloss: English',
-                                         'annotation_id_gloss_en_value': annotation_id_gloss_en})
-            already_exists_english.append({'gloss_pk': english_gloss.pk,
-                                           'dataset': english_gloss.dataset,
-                                           'lemma_id_gloss': 'Lemma ID Gloss',
-                                           'lemma_id_gloss_value': lemma_id_gloss,
-                                           'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
-                                           'annotation_id_gloss_value': annotation_id_gloss,
-                                           'annotation_id_gloss_en': 'Annotation ID Gloss: English',
-                                           'annotation_id_gloss_en_value': annotation_id_gloss_en})
-        elif dutch_found:
-            already_exists_dutch.append({'gloss_pk': dutch_gloss.pk,
-                                         'dataset': dutch_gloss.dataset,
-                                         'lemma_id_gloss': 'Lemma ID Gloss',
-                                         'lemma_id_gloss_value': lemma_id_gloss,
-                                         'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
-                                         'annotation_id_gloss_value': annotation_id_gloss,
-                                         'annotation_id_gloss_en': 'Annotation ID Gloss: English',
-                                         'annotation_id_gloss_en_value': annotation_id_gloss_en})
-        elif english_found:
-            already_exists_english.append({'gloss_pk': english_gloss.pk,
-                                           'dataset': english_gloss.dataset,
-                                         'lemma_id_gloss': 'Lemma ID Gloss',
-                                         'lemma_id_gloss_value': lemma_id_gloss,
-                                         'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
-                                         'annotation_id_gloss_value': annotation_id_gloss,
-                                         'annotation_id_gloss_en': 'Annotation ID Gloss: English',
-                                         'annotation_id_gloss_en_value': annotation_id_gloss_en})
         else:
-            new_gloss.append({'gloss_pk': str(row_nr),
-                                'dataset': glosses_dataset,
+            print('New gloss')
+            gloss_dict = {'gloss_pk': str(row_nr),
+                                'dataset': dataset_name,
                                 'lemma_id_gloss': 'Lemma ID Gloss',
-                                'lemma_id_gloss_value': lemma_id_gloss,
-                                'annotation_id_gloss': 'Annotation ID Gloss: Dutch',
-                                'annotation_id_gloss_value': annotation_id_gloss,
-                                'annotation_id_gloss_en': 'Annotation ID Gloss: English',
-                                'annotation_id_gloss_en_value': annotation_id_gloss_en})
+                                'lemma_id_gloss_value': lemma_id_gloss}
+            annotationidglosstranslation_dict = {}
+            for language in dataset.translation_languages.all():
+                annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language.name_en]
+                #annotationidglosstranslation_dict['annotation_idgloss_' + language.language_code_2char] = "Annotation ID Gloss (%s)" % language.name_en
+                annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
+            gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
+            new_gloss.append(gloss_dict)
 
         # print('create gloss field ', lemma_id_gloss, ' with annotation ', annotation_id_gloss, ' english: ', annotation_id_gloss_en)
 
         # print('create new gloss: ', new_gloss, ' already exists: ', already_exists, ' errors: ', errors_found)
 
-    return (new_gloss, already_exists, already_exists_dutch, already_exists_english, errors_found)
+    return (new_gloss, already_exists, errors_found)
 
 def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
