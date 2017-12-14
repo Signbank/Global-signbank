@@ -183,7 +183,8 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
             elif human_key == 'Keywords':
 
-                current_keyword_string = str(', '.join([str(translation.translation.text) for translation in gloss.translation_set.all()]))
+                current_keyword_string = str(', '.join([str(translation.translation.text)+":"+translation.language.language_code_2char
+                                                       for translation in gloss.translation_set.all()]))
 
                 if current_keyword_string != new_human_value and new_human_value != 'None' and new_human_value != '':
                     differences.append({'pk':gloss.pk,
