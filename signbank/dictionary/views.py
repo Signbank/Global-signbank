@@ -811,8 +811,16 @@ def import_csv(request):
 
                 #Updating the keywords is a special procedure, because it has relations to other parts of the database
                 if fieldname == 'Keywords':
-
-                    update_keywords(gloss,None,new_value)
+                    # The following is necessary to process keywords for multiple languages
+                    keywords_dict = {}
+                    for keyword_string in new_value.split(", "):
+                        (keyword, language_code_2char) = keyword_string.split(":")
+                        if language_code_2char in keywords_dict:
+                            keywords_dict[language_code_2char] += ", " + keyword
+                        else:
+                            keywords_dict[language_code_2char] = keyword
+                    for language_code_2char, keywords in keywords_dict.items():
+                        update_keywords(gloss, "keywords_" + language_code_2char, keywords)
                     gloss.save()
                     continue
 

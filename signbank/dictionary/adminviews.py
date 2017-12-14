@@ -468,7 +468,7 @@ class GlossListView(ListView):
             row.append(", ".join(dialects))
 
             # get translations (keywords)
-            trans = [t.translation.text for t in gloss.translation_set.all()]
+            trans = [t.translation.text + ":" + t.language.language_code_2char for t in gloss.translation_set.all()]
             row.append(", ".join(trans))
 
             # get morphology
