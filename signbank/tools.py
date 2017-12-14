@@ -100,19 +100,23 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
 
         if existing_glosses:
             print("Existing glosses : " + str(existing_glosses))
+            existing_gloss_set = set()
             for language_code_2char,glosses in existing_glosses.items():
                 for gloss in glosses:
-                    gloss_dict = {
-                         'gloss_pk': gloss.pk,
-                         'dataset': gloss.dataset,
-                         'lemma_id_gloss': 'Lemma ID Gloss',
-                         'lemma_id_gloss_value': lemma_id_gloss
-                    }
-                    for lang in gloss.dataset.translation_languages.all():
-                        gloss_dict['annotation_idgloss_' + lang.language_code_2char] = "Annotation ID Gloss (%s)" % lang.name_en
-                        gloss_dict["annotation_idgloss_%s_value" % lang.language_code_2char] = \
-                            gloss.annotationidglosstranslation_set.filter(language=lang)
-                    already_exists.append(gloss_dict)
+                    if gloss not in existing_gloss_set:
+                        gloss_dict = {
+                             'gloss_pk': gloss.pk,
+                             'dataset': gloss.dataset,
+                             'lemma_id_gloss': 'Lemma ID Gloss',
+                             'lemma_id_gloss_value': lemma_id_gloss
+                        }
+                        annotationidglosstranslation_dict = {}
+                        for lang in gloss.dataset.translation_languages.all():
+                            annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % lang.name_en]
+                            annotationidglosstranslation_dict[lang.language_code_2char] = annotationidglosstranslation_text
+                        gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
+                        already_exists.append(gloss_dict)
+                        existing_gloss_set.add(gloss)
 
         else:
             print('New gloss')
@@ -123,7 +127,6 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
             annotationidglosstranslation_dict = {}
             for language in dataset.translation_languages.all():
                 annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language.name_en]
-                #annotationidglosstranslation_dict['annotation_idgloss_' + language.language_code_2char] = "Annotation ID Gloss (%s)" % language.name_en
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
             gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
             new_gloss.append(gloss_dict)

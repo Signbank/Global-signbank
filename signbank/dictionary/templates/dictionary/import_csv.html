@@ -114,24 +114,26 @@
 
             <input type="submit" value="{% blocktrans %}Make changes{% endblocktrans %}" />
 
-            {% elif creation or gloss_already_exists or gloss_already_exists_dutch or gloss_already_exists_english %}
+            {% elif creation or gloss_already_exists %}
                 {% if gloss_already_exists %}
-                {% trans "Already existing Annotation ID Gloss Dutch and Annotation ID Gloss English:" %}
+                {% trans "Already existing Annotation ID Glosses:" %}
                 <table class="table table-striped">
                     <tr>
                         <th>{% trans "Dataset" %}</th>
                         <th>{% trans "Lemma ID Gloss" %}</th>
-                        <th>{% trans "Annotation ID Gloss: Dutch" %}</th>
-                        <th>{% trans "Annotation ID Gloss: English" %}</th>
+                        {% for dataset_lang in dataset_languages %}
+                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+                         {% endfor %}
                     </tr>
                 {% for gloss in gloss_already_exists %}
                     <tr>
                     <td>{{ gloss.dataset }}</td>
                     <td>{{ gloss.lemma_id_gloss_value }}</td>
-                    <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
-                        {{ gloss.annotation_id_gloss_value }}</a></td>
-                    <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
-                        {{ gloss.annotation_id_gloss_en_value }}</a></td>
+
+                    {% for dataset_lang in dataset_languages %}
+                     <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
+                        {{ gloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}</a></td>
+                     {% endfor %}
                     </tr>
                 {% endfor %}
                 </table>
