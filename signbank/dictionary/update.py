@@ -497,7 +497,7 @@ def update_sequential_morphology(gloss, field, values):
             old_morpheme.delete()
         # gloss.morphemePart.clear()
         for value in values:
-            morpheme = gloss_from_identifier(value)
+            morpheme = Gloss.objects.get(pk=value)
             morph_def = MorphologyDefinition()
             morph_def.parent_gloss = gloss
             morph_def.role = role
@@ -520,8 +520,8 @@ def update_simultaneous_morphology(gloss, field, values):
     new_sim_tuples = []
 
     for value in values:
-        (morpheme, role) = value.split(':')
-        new_sim_tuples.append((morpheme,role))
+        (morpheme_id, role) = value.split(':')
+        new_sim_tuples.append((morpheme_id,role))
 
     # delete any existing simultaneous morphology objects rather than update
     # to allow (re-)insertion in the correct order
@@ -533,10 +533,10 @@ def update_simultaneous_morphology(gloss, field, values):
 
     # the existance of the morphemes has already been checked, but check again anyway
 
-    for (morpheme, role) in new_sim_tuples:
+    for (morpheme_id, role) in new_sim_tuples:
 
         try:
-            morpheme_gloss = gloss_from_identifier(morpheme)
+            morpheme_gloss = Gloss.objects.get(pk=morpheme_id)
 
             if not morpheme_gloss:
                 raise ValueError
@@ -554,7 +554,7 @@ def update_simultaneous_morphology(gloss, field, values):
 
     # Refresh Simultaneous Morphology with newly inserted objects
     # morphemes = [(m.morpheme.annotation_idgloss, m.role) for m in gloss.simultaneous_morphology.all()]
-    morphemes = [(morpheme.morpheme.annotation_idgloss, morpheme.role)
+    morphemes = [(str(morpheme.morpheme.id), morpheme.role)
                  for morpheme in SimultaneousMorphologyDefinition.objects.filter(parent_gloss_id=gloss)]
     sim_morphs = []
     for m in morphemes:
@@ -624,7 +624,7 @@ def subst_relations(gloss, field, values):
     # values is a list of values, where each value is a tuple of the form 'Role:String'
     # The format of argument values has been checked before calling this function
 
-    existing_relations = [(relation.id, relation.role, relation.target.idgloss) for relation in Relation.objects.filter(source=gloss)]
+    existing_relations = [(relation.id, relation.role, relation.target.id) for relation in Relation.objects.filter(source=gloss)]
 
     existing_relation_ids = [ r[0] for r in existing_relations ]
 
@@ -655,7 +655,7 @@ def subst_relations(gloss, field, values):
     for rel_id in existing_relation_ids:
         rel = Relation.objects.get(id=rel_id)
 
-        if (rel.role, rel.target.idgloss) in already_existing_to_keep:
+        if (rel.role, rel.target.id) in already_existing_to_keep:
             continue
 
         # Also delete the reverse relation
@@ -671,7 +671,7 @@ def subst_relations(gloss, field, values):
     # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
         try:
-            target_gloss =  gloss_from_identifier(target)
+            target_gloss = Gloss.objects.get(pk=target)
             rel = Relation(source=gloss, role=role, target=target_gloss)
             rel.save()
             # Also add the reverse relation
