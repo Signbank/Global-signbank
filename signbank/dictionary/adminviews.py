@@ -473,11 +473,11 @@ class GlossListView(ListView):
 
             # get morphology
             # Sequential Morphology
-            morphemes = [morpheme.morpheme.annotation_idgloss for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+            morphemes = [str(morpheme.morpheme.id) for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
             row.append(", ".join(morphemes))
 
             # Simultaneous Morphology
-            morphemes = [(m.morpheme.annotation_idgloss, m.role) for m in gloss.simultaneous_morphology.all()]
+            morphemes = [(str(m.morpheme.id), m.role) for m in gloss.simultaneous_morphology.all()]
             sim_morphs = []
             for m in morphemes:
                 sim_morphs.append(':'.join(m))
@@ -485,7 +485,7 @@ class GlossListView(ListView):
             row.append(simultaneous_morphemes)
 
             # get relations to other signs
-            relations = [(relation.role, relation.target.idgloss) for relation in Relation.objects.filter(source=gloss)]
+            relations = [(relation.role, str(relation.target.id)) for relation in Relation.objects.filter(source=gloss)]
             relations_with_categories = []
             for rel_cat in relations:
                 relations_with_categories.append(':'.join(rel_cat))
