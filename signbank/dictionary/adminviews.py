@@ -607,11 +607,6 @@ class GlossListView(ListView):
                 language = Language.objects.filter(language_code_2char=language_code_2char)
                 qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                                annotationidglosstranslation__language=language)
-
-        if 'englishGloss' in get and get['englishGloss'] != '':
-            val = get['englishGloss']
-            qs = qs.filter(annotation_idgloss_en__iregex=val)
-
         if 'lemmaGloss' in get and get['lemmaGloss'] != '':
             val = get['lemmaGloss']
             qs = qs.filter(idgloss__iregex=val)
@@ -637,7 +632,7 @@ class GlossListView(ListView):
             qs = qs.filter(definition__published=val)
 
 
-        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
+        fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
                       'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
                       'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
@@ -1344,10 +1339,6 @@ class MorphemeListView(ListView):
                 qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                                annotationidglosstranslation__language=language)
 
-        if 'englishGloss' in get and get['englishGloss'] != '':
-            val = get['englishGloss']
-            qs = qs.filter(idgloss__iregex=val)
-
         if 'lemmaGloss' in get and get['lemmaGloss'] != '':
             val = get['lemmaGloss']
             qs = qs.filter(idgloss__iregex=val)
@@ -1371,7 +1362,7 @@ class MorphemeListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnames = ['idgloss', 'annotation_idgloss', 'annotation_idgloss_en', 'useInstr', 'sense', 'morph', 'StemSN',
+        fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN',
                       'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic', 'relOriMov', 'relOriLoc', 'oriCh',
                       'handCh', 'repeat', 'altern',
