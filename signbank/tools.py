@@ -183,7 +183,8 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
             elif human_key == 'Keywords':
 
-                current_keyword_string = str(', '.join([str(translation.translation.text) for translation in gloss.translation_set.all()]))
+                current_keyword_string = str(', '.join([str(translation.translation.text)+":"+translation.language.language_code_2char
+                                                       for translation in gloss.translation_set.all()]))
 
                 if current_keyword_string != new_human_value and new_human_value != 'None' and new_human_value != '':
                     differences.append({'pk':gloss.pk,
@@ -286,7 +287,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 if new_human_value == 'None' or new_human_value == '':
                     continue
 
-                relations = [(relation.role, relation.target.annotation_idgloss) for relation in gloss.relation_sources.all()]
+                relations = [(relation.role, str(relation.target.id)) for relation in gloss.relation_sources.all()]
 
                 # sort tuples on other gloss to allow comparison with imported values
 
@@ -356,7 +357,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 if new_human_value == 'None' or new_human_value == '':
                     continue
 
-                morphemes = [morpheme.morpheme.annotation_idgloss for morpheme in
+                morphemes = [str(morpheme.morpheme.id) for morpheme in
                              MorphologyDefinition.objects.filter(parent_gloss=gloss)]
                 morphemes_string = ", ".join(morphemes)
 
@@ -385,7 +386,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 if new_human_value == 'None' or new_human_value == '':
                     continue
 
-                morphemes = [(m.morpheme.annotation_idgloss, m.role) for m in gloss.simultaneous_morphology.all()]
+                morphemes = [(str(m.morpheme.id), m.role) for m in gloss.simultaneous_morphology.all()]
                 sim_morphs = []
                 for m in morphemes:
                     sim_morphs.append(':'.join(m))
@@ -687,7 +688,7 @@ def check_existance_sequential_morphology(gloss, values):
             # morpheme_id = gloss_from_identifier(new_value)
             # print('check_existance_sequential_morphology, new_value: ', new_value)
             # this is a gloss, make sure it exists
-            morpheme = gloss_from_identifier(new_value)
+            morpheme = Gloss.objects.get(pk=new_value)
 
             if new_value in found:
                 error_string = 'WARNING: For gloss ' + gloss.annotation_idgloss + ' (' + str(
@@ -743,7 +744,7 @@ def check_existance_simultaneous_morphology(gloss, values):
             # morpheme_id = gloss_from_identifier(new_value)
             # print('check_existance_simultaneous_morphology, new_value: ', morpheme)
             # this is a gloss, make sure it exists
-            morpheme_gloss = gloss_from_identifier(morpheme)
+            morpheme_gloss = Gloss.objects.get(pk=morpheme)
             morpheme_id = Morpheme.objects.filter(gloss_ptr_id=morpheme_gloss)
 
             # print('check_existance_simultaneous_morphology, morpheme_id: ', morpheme_id, ' morpheme_gloss: ', morpheme_gloss)
@@ -819,7 +820,7 @@ def check_existance_relations(gloss, relations, values):
 
         try:
 
-            target_gloss = gloss_from_identifier(other_gloss)
+            target_gloss = Gloss.objects.get(pk=other_gloss)
 
             if not target_gloss:
                 raise ObjectDoesNotExist
