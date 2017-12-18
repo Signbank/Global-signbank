@@ -2216,8 +2216,19 @@ class MorphemeDetailView(DetailView):
         context['SIGN_NAVIGATION'] = settings.SIGN_NAVIGATION
 
         # Get the set of all the Gloss signs that point to me
-        context['glosslinks'] = Gloss.objects.filter(morphemePart__id=context['morpheme'].id)
-        # context['glosslinks'] = self.gloss_set.all()
+        other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
+        context['appears_in'] = []
+
+        word_class_choices = FieldChoice.objects.filter(field__iexact='WordClass')
+
+        for sim_morph in other_glosses_that_point_to_morpheme:
+            parent_gloss = sim_morph.parent_gloss
+            if parent_gloss.wordClass:
+                translated_word_class = machine_value_to_translated_human_value(parent_gloss.wordClass,word_class_choices,self.request.LANGUAGE_CODE)
+            else:
+                translated_word_class = ''
+
+            context['appears_in'].append((parent_gloss, translated_word_class))
 
         try:
             # Note: setting idgloss to context['morpheme'] is not enough; the ".idgloss" needs to be specified
