@@ -1297,7 +1297,7 @@ def add_morpheme(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}) + '?edit')
         else:
-            return render(request,'dictionary/add_morpheme_form.html',
+            return render(request,'dictionary/add_morpheme.html',
                                       {'add_morpheme_form': form})
 
     return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
