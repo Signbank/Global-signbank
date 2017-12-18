@@ -59,7 +59,7 @@ def add_gloss(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
         else:
-            return render(request,'dictionary/add_gloss_form.html',{'add_gloss_form': form})
+            return render(request,'dictionary/add_gloss.html',{'add_gloss_form': form})
         
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
