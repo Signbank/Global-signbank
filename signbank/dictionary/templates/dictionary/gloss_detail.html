@@ -488,7 +488,7 @@
                     <th style="width:22em;">{% trans "Morpheme gloss" %}</th>
                     <th colspan="2">{% trans "Meaning in this sign" %}</th>
                 </tr>
-                {% for morpheme in gloss.simultaneous_morphology.all %}
+                {% for morpheme, morph_display, morpheme_type in simultaneous_morphology %}
                 <tr>
                     <!-- Facility to delete this morpheme -->
                      <td>
@@ -519,7 +519,8 @@
                          </div>
 
                     </td>
-                    <td id='morpheme-definition_{{morpheme.pk}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morpheme.morpheme}}</a></td>
+                    <td id='morpheme-definition_{{morpheme.pk}}'>
+                        <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
                     <td class='edit edit_text' id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
                </tr>
                 {% endfor %}
