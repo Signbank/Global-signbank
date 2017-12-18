@@ -107,8 +107,6 @@ TMP_DIR = "/tmp"
 
 API_FIELDS = [
     'idgloss',
-    'annotation_idgloss',
-    'annotation_idgloss_en',
 ]
 
 # This is a short mapping between 2 and 3 letter language code

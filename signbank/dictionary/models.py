@@ -570,6 +570,14 @@ minor or insignificant ways that can be ignored.""")
                 else:
                     fields[field.verbose_name.title()] = field.value_to_string(self)
 
+        # Annotation Idgloss translations
+        if self.dataset:
+            for language in self.dataset.translation_languages.all():
+                annotationidglosstranslation = self.annotationidglosstranslation_set.filter(language=language)
+                if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
+                    fields[_("Annotation ID Gloss") + ": %s" % language.name] = annotationidglosstranslation[0].text
+
+
         # Get all the keywords associated with this sign
         allkwds = ", ".join([x.translation.text for x in self.translation_set.all()])
         fields[Translation.__name__ + "s"] = allkwds
