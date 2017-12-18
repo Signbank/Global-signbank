@@ -181,7 +181,6 @@ class GlossListView(ListView):
             context['glosscount'] = Gloss.objects.filter(dataset__in=selected_datasets).count()  # Count the glosses + morphemes
 
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages)
-        context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
 
         if hasattr(settings, 'SHOW_MORPHEME_SEARCH'):
             context['SHOW_MORPHEME_SEARCH'] = settings.SHOW_MORPHEME_SEARCH
@@ -1254,7 +1253,6 @@ class MorphemeListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages)
-        context['ADMIN_RESULT_FIELDS'] = settings.ADMIN_RESULT_FIELDS
 
         # make sure that the morpheme-type options are available to the listview
         oChoiceLists = {}

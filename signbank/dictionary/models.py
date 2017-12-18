@@ -368,26 +368,6 @@ class Gloss(models.Model):
             
         return d
 
-    # not called anywhere
-    def admin_fields(self):
-        """Return a list of field values in settings.ADMIN_RESULT_FIELDS 
-        for use in the admin list view"""
-        
-        result = []
-        for field in settings.ADMIN_RESULT_FIELDS:
-            fname = self._meta.get_field(field).verbose_name
-
-            #First, try to give the human readable choice value back
-            try:
-                result.append((fname, getattr(self, 'get_'+field+'_display')()))
-
-            #If that doesn't work, give the raw value back
-            except AttributeError:
-                result.append((fname, getattr(self, field)))
-
-
-        return result
-
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
                                 help_text=_("Dataset a gloss is part of"), null=True)
     
