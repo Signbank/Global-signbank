@@ -62,8 +62,6 @@ TMP_DIR = "/tmp"
 
 API_FIELDS = [
     'idgloss',
-    'annotation_idgloss',
-    'annotation_idgloss_en',
 ]
 
 SPEED_UP_RETRIEVING_ALL_SIGNS = True
