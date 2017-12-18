@@ -1361,6 +1361,14 @@ minor or insignificant ways that can be ignored.""")
 
         return json.dumps(d)
 
+    def get_annotationidglosstranslation_texts(self):
+        d = dict()
+        annotationidglosstranslations = self.annotationidglosstranslation_set.all()
+        for translation in annotationidglosstranslations:
+            d[translation.language.language_code_2char] = translation.text
+
+        return d
+
     def get_choice_lists(self):
         """Return JSON for the location choice list"""
  
@@ -1520,6 +1528,8 @@ class Morpheme(Gloss):
 
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
+        # return "%s (%s)" % (self.idgloss, self.get_mrpType_display())
+
         return "%s (%s)" % (self.idgloss, self.get_mrpType_display())
 
     def admin_next_morpheme(self):

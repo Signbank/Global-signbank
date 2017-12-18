@@ -1,6 +1,7 @@
 {% extends 'baselayout.html' %}
 {% load i18n %}
 {% load stylesheet %}
+{% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 
 {% block extrahead %}
@@ -124,8 +125,11 @@
          {% endif %}
     </div>
 
-    {% if morpheme.idgloss %}
+    {% if morpheme.annotation_idgloss %}
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/morpheme/{{morpheme.idgloss}}.html">{% trans "Public View" %}</a>
+    {% endif %}
+
+    {% if perms.dictionary.change_gloss %}
     <button id='delete_morpheme_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
     {% endif %}
     
@@ -272,6 +276,16 @@
 
         <table class='table table-condensed'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value morpheme.idgloss %}</td></tr>
+
+            {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+            <tr>
+                <th>
+                    {% trans "Annotation ID Gloss" %} ({{ lang }})
+                </th>
+                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translations.0.text|safe }}</td>
+
+            </tr>
+            {% endfor %}
 
             <tr><th>{% trans "Abstract meaning" %}</th><td class='edit edit_text' id='keywords'>{% for trn in morpheme.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr>

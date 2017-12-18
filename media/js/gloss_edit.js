@@ -361,7 +361,7 @@ function configure_edit() {
      });
      $('.edit_mrptype').editable(edit_post_url, {
          type      : 'select',
-         data      : mrptype_choices,
+         data      : choice_lists['morph_type'],
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_wordclass').editable(edit_post_url, {

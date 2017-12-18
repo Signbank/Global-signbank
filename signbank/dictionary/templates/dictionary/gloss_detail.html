@@ -421,7 +421,7 @@
                       <th>{% trans "Component sign" %}</th>
                   </tr>
 
-                   {% for morphdef, translated_role in morphdefs %}
+                   {% for morphdef, translated_role, sign_display in morphdefs %}
 
                    <tr>
                          <td style='width:2em;'>
@@ -454,7 +454,7 @@
                         </td>
 
                         <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{translated_role}}</td>
-                        <td id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{morphdef.morpheme}}</a></td>
+                        <td id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
                    {% endfor %}
 
             {% else %}
