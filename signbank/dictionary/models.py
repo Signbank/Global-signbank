@@ -1517,7 +1517,7 @@ class MorphologyDefinition(models.Model):
     morpheme = models.ForeignKey(Gloss,related_name="morphemes")
 
     def __str__(self):
-        return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
+        return self.morpheme.idgloss # + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
 
 class Morpheme(Gloss):
     """A morpheme definition uses all the fields of a gloss, but adds its own characteristics (#174)"""
@@ -1529,8 +1529,11 @@ class Morpheme(Gloss):
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
         # return "%s (%s)" % (self.idgloss, self.get_mrpType_display())
+        # The display needs to be overrided to accomodate translations, the mrpType is done in adminviews
+        # The idgloss field is no longer correct
+        # We won't use this method in the interface but leave it for debugging purposes
 
-        return "%s (%s)" % (self.idgloss, self.get_mrpType_display())
+        return "%s" % (self.idgloss)
 
     def admin_next_morpheme(self):
         """next morpheme in the admin view, shortcut for next_dictionary_morpheme with staff=True"""
@@ -1548,14 +1551,14 @@ class Morpheme(Gloss):
 
         if all_morphemes_ordered:
 
-            foundit = False;
+            foundit = False
 
             for morpheme in all_morphemes_ordered:
                 if morpheme == self:
                     foundit = True
                 elif foundit:
-                    return morpheme;
-                    break;
+                    return morpheme
+                    break
 
         else:
             return None
@@ -1565,10 +1568,10 @@ class Morpheme(Gloss):
         """Return JSON for mrptype choices"""
 
         # Get the list of choices for this field
-        li = self._meta.get_field("mrpType").choices;
+        li = self._meta.get_field("mrpType").choices
 
         # Sort the list
-        sorted_li = sorted(li, key=lambda x: x[1]);
+        sorted_li = sorted(li, key=lambda x: x[1])
 
         # Put it in another format
         reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
@@ -1582,7 +1585,7 @@ class SimultaneousMorphologyDefinition(models.Model):
     morpheme = models.ForeignKey(Morpheme,related_name='glosses_containing')
 
     def __str__(self):
-        return self.parent_gloss.idgloss + ' consists of ' + self.morpheme.idgloss
+        return self.parent_gloss.idgloss # + ' consists of ' + self.morpheme.idgloss
 
 class BlendMorphology(models.Model):
     parent_gloss = models.ForeignKey(Gloss,related_name='blend_morphology')

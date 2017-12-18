@@ -290,7 +290,7 @@
             <tr><th>{% trans "Abstract meaning" %}</th><td class='edit edit_text' id='keywords'>{% for trn in morpheme.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr>
                 <th>{% trans "Morpheme type" %}</th>
-                <td class='edit edit_mrptype' id='mrpType'>{{ morpheme.get_mrpType_display }}</td>
+                <td class='edit edit_mrptype' id='mrpType'>{{ morpheme_type }}</td>
             </tr>
             <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage'>{% for lang in morpheme.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>

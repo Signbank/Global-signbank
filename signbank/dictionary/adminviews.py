@@ -1021,6 +1021,7 @@ class GlossDetailView(DetailView):
         morphdefs = sorted(morphdefs, key=lambda tup: tup[1])
         context['morphdefs'] = morphdefs
 
+
         # Regroup notes
         note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
         notes = context['gloss'].definition_set.all()
@@ -1055,7 +1056,6 @@ class GlossDetailView(DetailView):
             #Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
             context['choice_lists']['other-media-type_'+str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
-        #context['choice_lists'] = gl.get_choice_lists()
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
@@ -1074,12 +1074,10 @@ class GlossDetailView(DetailView):
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
                 context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
-                print(context['annotation_idgloss'][language][0].text)
         else:
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
-        print('annotation idgloss languages: ', context['annotation_idgloss'])
         # Put translations (keywords) per language in the context
         context['translations_per_language'] = {}
         if gl.dataset:
@@ -1089,7 +1087,28 @@ class GlossDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['translations_per_language'][language] = gl.translation_set.filter(language=language)
 
-        print('translations per language: ', context['annotation_idgloss'])
+        simultaneous_morphology = []
+        sim_morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
+
+        if gl.simultaneous_morphology:
+            for sim_morph in gl.simultaneous_morphology.all():
+                translated_morph_type = machine_value_to_translated_human_value(sim_morph.morpheme.mrpType,sim_morph_typ_choices,self.request.LANGUAGE_CODE)
+
+                morpheme_annotation_idgloss = {}
+                if sim_morph.morpheme.dataset:
+                    for language in sim_morph.morpheme.dataset.translation_languages.all():
+                        morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
+                else:
+                    language = Language.objects.get(id=get_default_language_id())
+                    morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
+                if morpheme_annotation_idgloss[self.request.LANGUAGE_CODE]:
+                    morpheme_display = morpheme_annotation_idgloss[self.request.LANGUAGE_CODE][0].text
+                else:
+                    morpheme_display = 'not found'
+
+                simultaneous_morphology.append((sim_morph,morpheme_display,translated_morph_type))
+
+        context['simultaneous_morphology'] = simultaneous_morphology
 
         context['dataset_choices'] = {}
         user = self.request.user
@@ -2268,7 +2287,6 @@ class MorphemeDetailView(DetailView):
 
         context['choice_lists']['morph_type'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphemeType'),self.request.LANGUAGE_CODE)
 
-        # context['choice_lists'] = gl.get_choice_lists()
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
         # Put annotation_idgloss per language in the context
@@ -2276,12 +2294,18 @@ class MorphemeDetailView(DetailView):
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
                 context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
-                print(context['annotation_idgloss'][language][0].text)
         else:
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
-        print('morpheme view annotation idgloss languages: ', context['annotation_idgloss'])
+        morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
+
+        if gl.mrpType:
+            translated_morph_type = machine_value_to_translated_human_value(gl.mrpType,morph_typ_choices,self.request.LANGUAGE_CODE)
+        else:
+            translated_morph_type = ''
+
+        context['morpheme_type'] = translated_morph_type
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
