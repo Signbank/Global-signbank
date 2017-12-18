@@ -360,11 +360,19 @@ class GlossListView(ListView):
         return desc
 
     def get_value_for_ecv(self, gloss, fieldname):
-        try:
-            value = getattr(gloss, 'get_'+fieldname+'_display')()
+        value = None
+        annotationidglosstranslation_prefix = "annotationidglosstranslation_"
+        if fieldname.startswith(annotationidglosstranslation_prefix):
+            language_code_2char = fieldname[len(annotationidglosstranslation_prefix):]
+            annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code_2char)
+            if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
+                value = annotationidglosstranslations[0].text
+        else:
+            try:
+                value = getattr(gloss, 'get_'+fieldname+'_display')()
 
-        except AttributeError:
-            value = getattr(gloss,fieldname)
+            except AttributeError:
+                value = getattr(gloss,fieldname)
 
         # This was disabled with the move to python 3... might not be needed anymore
         # if isinstance(value,unicode):

@@ -66,7 +66,7 @@ ECV_SETTINGS = {
         {
             'id': 'nld',
             'description': 'De glossen-CV voor het CNGT (RU)',
-            'annotation_idgloss_fieldname': 'annotation_idgloss',
+            'annotation_idgloss_fieldname': 'annotationidglosstranslation_nl',
             'attributes': {
                 'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138580-001',
                 'LANG_ID': 'nld',
@@ -76,7 +76,7 @@ ECV_SETTINGS = {
         {
             'id': 'eng',
             'description': 'The glosses CV for the CNGT (RU)',
-            'annotation_idgloss_fieldname': 'annotation_idgloss_en',
+            'annotation_idgloss_fieldname': 'annotationidglosstranslation_en',
             'attributes': {
                 'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138502-001',
                 'LANG_ID': 'eng',
