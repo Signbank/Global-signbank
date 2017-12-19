@@ -1342,7 +1342,7 @@ def update_morpheme(request, morphemeid):
 
             return update_definition(request, morpheme, field, value)
 
-        elif field == 'keywords':
+        elif field.startswith('keywords'):
 
             return update_keywords(morpheme, field, value)
 

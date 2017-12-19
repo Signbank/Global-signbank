@@ -2359,6 +2359,17 @@ class MorphemeDetailView(DetailView):
 
         context['morpheme_type'] = translated_morph_type
 
+
+        # Put translations (keywords) per language in the context
+        context['translations_per_language'] = {}
+        if gl.dataset:
+            for language in gl.dataset.translation_languages.all():
+                context['translations_per_language'][language] = gl.translation_set.filter(language=language)
+        else:
+            language = Language.objects.get(id=get_default_language_id())
+            context['translations_per_language'][language] = gl.translation_set.filter(language=language)
+
+
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
         context['dataset_choices'] = {}

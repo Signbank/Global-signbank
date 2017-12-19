@@ -287,13 +287,21 @@
             </tr>
             {% endfor %}
 
-            <tr><th>{% trans "Abstract meaning" %}</th><td class='edit edit_text' id='keywords'>{% for trn in morpheme.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            {% for lang, translations in translations_per_language.items %}
+            <tr>
+                <th>
+                    {% trans "Abstract meaning" %} ({{ lang }})
+                </th>
+                <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' colspan="2">{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            </tr>
+            {% endfor %}
+
             <tr>
                 <th>{% trans "Morpheme type" %}</th>
                 <td class='edit edit_mrptype' id='mrpType'>{{ morpheme_type }}</td>
             </tr>
             <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage'>{% for lang in morpheme.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset'>{{ morpheme.dataset }}</td></tr>
         </table>
 			 
