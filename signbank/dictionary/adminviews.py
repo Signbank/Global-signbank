@@ -1022,6 +1022,27 @@ class GlossDetailView(DetailView):
         context['morphdefs'] = morphdefs
 
 
+        minimal_pairs_dict = gl.minimal_pairs_dict()
+        minimalpairs = []
+
+        for gl, dict in minimal_pairs_dict.items():
+            minimal_pairs_trans = {}
+            if gl.dataset:
+                for language in gl.dataset.translation_languages.all():
+                    minimal_pairs_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+            else:
+                language = Language.objects.get(id=get_default_language_id())
+                minimal_pairs_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+            if minimal_pairs_trans[self.request.LANGUAGE_CODE]:
+                minpar_display = minimal_pairs_trans[self.request.LANGUAGE_CODE][0].text
+            else:
+                # This should be set to the default language if the interface language hasn't been set for this gloss
+                minpar_display = minimal_pairs_trans['en']
+
+            minimalpairs.append((gl,dict,minpar_display))
+
+        context['minimalpairs'] = minimalpairs
+
         # Regroup notes
         note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
         notes = context['gloss'].definition_set.all()
@@ -1160,7 +1181,7 @@ class GlossDetailView(DetailView):
         user = self.request.user
         if user.is_authenticated():
             qs = get_objects_for_user(user, 'view_dataset', Dataset)
-            dataset_choices = dict()
+            dataset_choices = {}
             for dataset in qs:
                 dataset_choices[dataset.name] = dataset.name
             context['dataset_choices'] = json.dumps(dataset_choices)

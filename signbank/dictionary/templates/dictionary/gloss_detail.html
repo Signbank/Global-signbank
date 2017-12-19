@@ -804,8 +804,7 @@
         <div id='minimalpairs' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 
-            {% with gloss.minimal_pairs_dict as mpd %}
-            {% if mpd %}
+            {% if minimalpairs %}
                <tr>
                    <th style="width:auto; padding:0px 0px;">{% trans "ID Gloss" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Field name" %}</th>
@@ -813,7 +812,7 @@
                    <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
                 </tr>
                 {% load field_choice %}
-                {% for gl, dict in mpd.items %}
+                {% for gl, dict, minpar_display in minimalpairs %}
                 <tr>
                 {% for k, d in dict.items %}
                     {% with d.0 as field_name %}
@@ -822,7 +821,7 @@
                     {% with d.3|stringformat:"s" as other_field_value %}
                     {% with request.LANGUAGE_CODE as language %}
                     {% with field_category|add:language as args %}
-                    <td style="width:auto; padding:0px 0px;"><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td>
+                    <td style="width:auto; padding:0px 0px;"><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ minpar_display }}</a></td>
                     <td style="width:auto; padding:0px 0px;">{% trans d.0 %}</td>
                     <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and d.2 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
                         {% else %}{{ field_value|machine_field_translate:args }}{% endif %}</td>
@@ -838,7 +837,6 @@
                 </tr>
                 {% endfor %}
             {% endif %}
-            {% endwith %}
             </table>
         </div>
 </div>

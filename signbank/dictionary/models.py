@@ -989,7 +989,7 @@ minor or insignificant ways that can be ignored.""")
                       'altern': 'check', 'phonOth': 'text', 'mouthG': 'text',
                       'mouthing': 'text', 'phonetVar': 'text'}
 
-        minimal_pairs_fields = {}
+        minimal_pairs_fields = dict() #{}
 
         if (self.handedness is None or self.handedness == '0'):
             return minimal_pairs_fields
@@ -1003,7 +1003,7 @@ minor or insignificant ways that can be ignored.""")
 
 
         for o in wmp:
-            different_fields = {}
+            different_fields = dict() #{}
             onep = o.non_empty_phonology()
             for f,n,v in onep:
                 fc = fieldname_to_category(f)
