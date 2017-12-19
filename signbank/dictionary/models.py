@@ -1581,7 +1581,7 @@ class BlendMorphology(models.Model):
     glosses = models.ForeignKey(Gloss,related_name='glosses_comprising')
 
     def __str__(self):
-        return self.parent_gloss.idgloss + ' is ' + self.role + ' blend of ' + self.glosses.idgloss
+        return self.parent_gloss.idgloss # + ' is ' + self.role + ' blend of ' + self.glosses.idgloss
 
 class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""

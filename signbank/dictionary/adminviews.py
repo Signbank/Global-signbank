@@ -901,8 +901,6 @@ class GlossDetailView(DetailView):
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
 
-        # context['otherrelations'] = self.relation_sources.all().order_by('annotation_idgloss')
-
         context['morphologyform'] = GlossMorphologyForm()
         context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
             choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
@@ -1106,11 +1104,57 @@ class GlossDetailView(DetailView):
                 if morpheme_annotation_idgloss[self.request.LANGUAGE_CODE]:
                     morpheme_display = morpheme_annotation_idgloss[self.request.LANGUAGE_CODE][0].text
                 else:
-                    morpheme_display = 'not found'
+                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    morpheme_display = morpheme_annotation_idgloss['en']
 
                 simultaneous_morphology.append((sim_morph,morpheme_display,translated_morph_type))
 
         context['simultaneous_morphology'] = simultaneous_morphology
+
+
+        blend_morphology = []
+
+        if gl.blend_morphology:
+            for ble_morph in gl.blend_morphology.all():
+
+                glosses_annotation_idgloss = {}
+                if ble_morph.glosses.dataset:
+                    for language in ble_morph.glosses.dataset.translation_languages.all():
+                        glosses_annotation_idgloss[language.language_code_2char] = ble_morph.glosses.annotationidglosstranslation_set.filter(language=language)
+                else:
+                    language = Language.objects.get(id=get_default_language_id())
+                    glosses_annotation_idgloss[language.language_code_2char] = ble_morph.glosses.annotationidglosstranslation_set.filter(language=language)
+                if glosses_annotation_idgloss[self.request.LANGUAGE_CODE]:
+                    morpheme_display = glosses_annotation_idgloss[self.request.LANGUAGE_CODE][0].text
+                else:
+                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    morpheme_display = glosses_annotation_idgloss['en']
+
+                blend_morphology.append((ble_morph,morpheme_display))
+
+        context['blend_morphology'] = blend_morphology
+
+        otherrelations = []
+
+        if gl.relation_sources:
+            for oth_rel in gl.relation_sources.all():
+
+                other_relations_dict = {}
+                if oth_rel.target.dataset:
+                    for language in oth_rel.target.dataset.translation_languages.all():
+                        other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
+                else:
+                    language = Language.objects.get(id=get_default_language_id())
+                    other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
+                if other_relations_dict[self.request.LANGUAGE_CODE]:
+                    target_display = other_relations_dict[self.request.LANGUAGE_CODE][0].text
+                else:
+                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    target_display = other_relations_dict['en']
+
+                otherrelations.append((oth_rel,target_display))
+
+        context['otherrelations'] = otherrelations
 
         context['dataset_choices'] = {}
         user = self.request.user

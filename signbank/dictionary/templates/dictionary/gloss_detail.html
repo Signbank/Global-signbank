@@ -555,7 +555,7 @@
                     <th style="width:22em;">{% trans "Blend gloss" %}</th>
                     <th colspan="2">{% trans "Role in this sign" %}</th>
                 </tr>
-                {% for blend in gloss.blend_morphology.all %}
+                {% for blend, blend_display in blend_morphology %}
                 <tr>
                     <!-- Facility to delete this blend -->
                      <td>
@@ -587,7 +587,7 @@
                          </div>
 
                     </td>
-                    <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend.glosses}}</a></td>
+                    <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend_display}}</a></td>
                     <td class='edit edit_text' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
                </tr>
                 {% endfor %}
@@ -898,11 +898,13 @@
         </div>
         <div id='relations' class='collapse'>
                <table class='table table-condensed'>
-                   {% for rel in gloss.relation_sources.all|dictsort:"target.annotation_idgloss" %}
+                   {% for rel, target_display in otherrelations %}
                     <tr id='row_{{rel.id}}'>
                         <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}'><span class='glyphicon glyphicon-trash relation_delete'></span></td>
                         <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
-                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
+                        <td id='relationtarget_{{rel.id}}'>
+                            <a id='relation_target_hyperlink_{{rel.id}}'
+                               href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
                     </tr>
                    {% endfor %}
                </table>
