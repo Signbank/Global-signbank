@@ -194,7 +194,7 @@ def word(request, keyword, n):
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
-def gloss(request, idgloss):
+def gloss(request, glossid):
     """View of a gloss - mimics the word view, really for admin use
        when we want to preview a particular gloss"""
 
@@ -206,12 +206,10 @@ def gloss(request, idgloss):
     # we should only be able to get a single gloss, but since the URL
     # pattern could be spoofed, we might get zero or many
     # so we filter first and raise a 404 if we don't get one
-    glosses = Gloss.objects.filter(annotation_idgloss=idgloss)
-
-    if len(glosses) != 1:
+    try:
+        gloss = Gloss.objects.get(id=glossid)
+    except ObjectDoesNotExist:
         raise Http404
-
-    gloss = glosses[0]
 
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
 #        return render_to_response('dictionary/not_allowed.html')
@@ -349,15 +347,17 @@ def import_media(request,video):
         extension = parts[-1]
 
         try:
-            gloss = Gloss.objects.get(annotation_idgloss=idgloss)
+            gloss = Gloss.objects.get(id=idgloss)
         except ObjectDoesNotExist:
-            errors.append('Failed at '+filename+'. Could not find '+idgloss+'.')
+            errors.append('Failed at '+filename+'. Could not find '+idgloss+' (it should be a gloss ID).')
             continue
+
+        default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
 
         overwritten, was_allowed = save_media(import_folder,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
         if not was_allowed:
-            errors.append('Failed to move media file for '+gloss.annotation_idgloss+
+            errors.append('Failed to move media file for '+default_annotationidgloss+
                           '. Either the source could not be read or the destination could not be written.')
             continue
 
@@ -365,7 +365,7 @@ def import_media(request,video):
 
         # If it is a video also extract a still image and generate a thumbnail version
         if video:
-            annotation_id = gloss.annotation_idgloss
+            annotation_id = default_annotationidgloss
             destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
             video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
             video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
@@ -1122,12 +1122,14 @@ def delete_image(request, pk):
         gloss = get_object_or_404(Gloss, pk=pk)
         image_path = gloss.get_image_path()
 
+        default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+
         os.remove(settings.WRITABLE_FOLDER+image_path)
 
         deleted_image = DeletedGlossOrMedia()
         deleted_image.item_type = 'image'
         deleted_image.idgloss = gloss.idgloss
-        deleted_image.annotation_idgloss = gloss.annotation_idgloss
+        deleted_image.annotation_idgloss = default_annotationidglosstranslation
         deleted_image.old_pk = gloss.pk
         deleted_image.filename = image_path
         deleted_image.save()
@@ -1237,15 +1239,15 @@ def update_cngt_counts(request,folder_index=None):
     glosses_not_in_signbank = []
     updated_glosses = []
 
-    for idgloss, frequency_info in counts.items():
+    for gloss_id, frequency_info in counts.items():
 
         #Collect the gloss needed
         try:
-            gloss = Gloss.objects.get(annotation_idgloss=idgloss)
+            gloss = Gloss.objects.get(id=gloss_id)
         except ObjectDoesNotExist:
 
-            if idgloss != None:
-                glosses_not_in_signbank.append(idgloss)
+            if gloss_id != None:
+                glosses_not_in_signbank.append(gloss_id)
 
             continue
 

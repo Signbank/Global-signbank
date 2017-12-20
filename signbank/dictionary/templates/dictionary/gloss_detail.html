@@ -165,7 +165,7 @@
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
 
     {% if gloss.annotation_idgloss %}
-    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.annotation_idgloss}}.html">{% trans "Public View" %}</a>
+    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
     {% endif %}
 
         {% if perms.dictionary.change_gloss %}
