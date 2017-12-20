@@ -1305,7 +1305,7 @@ def update_cngt_counts(request,folder_index=None):
 
 def find_and_save_variants(request):
 
-    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").order_by('idgloss')
+    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('idgloss')
 
     gloss_table_prefix = '<!DOCTYPE html>\n' \
                          '<html>\n' \
@@ -1371,7 +1371,7 @@ def find_and_save_variants(request):
         this_sign_stem = gloss.has_stem()
         length_this_sign_stem = len(this_sign_stem)
         this_matches = r'^' + re.escape(this_sign_stem) + r'\-[A-Z]$'
-        candidate_variants = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=gloss).exclude(
+        candidate_variants = Gloss.objects.filter(annotationidglosstranslation__text__regex=this_matches).distinct().exclude(idgloss=gloss).exclude(
             idgloss__in=other_relation_objects).exclude(idgloss__in=variant_relation_objects)
 
         if candidate_variants:

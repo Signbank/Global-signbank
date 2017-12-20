@@ -2574,7 +2574,7 @@ def gloss_ajax_complete(request, prefix):
             Q(sn__startswith=prefix)
     # TODO: possibly reduce the possibilities of [Gloss.objects] to exclude Morphemes??
     # Suggestion: qs = Gloss.none_morpheme_objects.filter(query) -- if that works
-    qs = Gloss.objects.filter(query)
+    qs = Gloss.objects.filter(query).distinct()
 
     result = []
     for g in qs:
@@ -2608,7 +2608,7 @@ def morph_ajax_complete(request, prefix):
     query = Q(idgloss__istartswith=prefix) | \
             Q(annotationidglosstranslation__text__istartswith=prefix) | \
             Q(sn__startswith=prefix)
-    qs = Morpheme.objects.filter(query)
+    qs = Morpheme.objects.filter(query).distinct()
 
     result = []
     for g in qs:
