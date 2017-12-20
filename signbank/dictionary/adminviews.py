@@ -1061,7 +1061,7 @@ class GlossDetailView(DetailView):
                 # This should be set to the default language if the interface language hasn't been set for this gloss
                 homo_display = homo_trans['en'][0].text
 
-            homonyms_different_phonology.append((gl,homo_display))
+            homonyms_different_phonology.append((saved_gl,homo_display))
 
         context['homonyms_different_phonology'] = homonyms_different_phonology
 
@@ -1081,7 +1081,7 @@ class GlossDetailView(DetailView):
                 # This should be set to the default language if the interface language hasn't been set for this gloss
                 homo_display = homo_trans['en'][0].text
 
-            homonyms_but_not_saved.append((gl,homo_display))
+            homonyms_but_not_saved.append((homonym,homo_display))
 
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
