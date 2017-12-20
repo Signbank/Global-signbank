@@ -1538,15 +1538,6 @@ class MorphemeListView(ListView):
         else:
             qs = Morpheme.objects.none()
 
-        if 'search' in get and get['search'] != '':
-            val = get['search']
-            query = Q(annotation_idgloss__iregex=val)
-
-            if re.match('^\d+$', val):
-                query = query | Q(sn__exact=val)
-
-            qs = qs.filter(query)
-
         # Evaluate all morpheme/language search fields
         for get_key, get_value in get.items():
             if get_key.startswith(MorphemeSearchForm.morpheme_search_field_prefix) and get_value != '':
@@ -2579,7 +2570,7 @@ def gloss_ajax_complete(request, prefix):
 
 
     query = Q(idgloss__istartswith=prefix) | \
-            Q(annotation_idgloss__istartswith=prefix) | \
+            Q(annotationidglosstranslation__text__istartswith=prefix) | \
             Q(sn__startswith=prefix)
     # TODO: possibly reduce the possibilities of [Gloss.objects] to exclude Morphemes??
     # Suggestion: qs = Gloss.none_morpheme_objects.filter(query) -- if that works
@@ -2615,7 +2606,7 @@ def morph_ajax_complete(request, prefix):
     as a JSON structure suitable for typeahead."""
 
     query = Q(idgloss__istartswith=prefix) | \
-            Q(annotation_idgloss__istartswith=prefix) | \
+            Q(annotationidglosstranslation__text__istartswith=prefix) | \
             Q(sn__startswith=prefix)
     qs = Morpheme.objects.filter(query)
 
