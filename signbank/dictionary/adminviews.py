@@ -1047,14 +1047,14 @@ class GlossDetailView(DetailView):
         (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gl.homonyms()
         homonyms_different_phonology = []
 
-        for gl in saved_but_not_homonyms:
+        for saved_gl in saved_but_not_homonyms:
             homo_trans = {}
-            if gl.dataset:
-                for language in gl.dataset.translation_languages.all():
-                    homo_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+            if saved_gl.dataset:
+                for language in saved_gl.dataset.translation_languages.all():
+                    homo_trans[language.language_code_2char] = saved_gl.annotationidglosstranslation_set.filter(language=language)
             else:
                 language = Language.objects.get(id=get_default_language_id())
-                homo_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+                homo_trans[language.language_code_2char] = saved_gl.annotationidglosstranslation_set.filter(language=language)
             if homo_trans[self.request.LANGUAGE_CODE]:
                 homo_display = homo_trans[self.request.LANGUAGE_CODE][0].text
             else:
@@ -1067,14 +1067,14 @@ class GlossDetailView(DetailView):
 
         homonyms_but_not_saved = []
 
-        for gl in homonyms_not_saved:
+        for homonym in homonyms_not_saved:
             homo_trans = {}
-            if gl.dataset:
-                for language in gl.dataset.translation_languages.all():
-                    homo_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+            if homonym.dataset:
+                for language in homonym.dataset.translation_languages.all():
+                    homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
             else:
                 language = Language.objects.get(id=get_default_language_id())
-                homo_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+                homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
             if homo_trans[self.request.LANGUAGE_CODE]:
                 homo_display = homo_trans[self.request.LANGUAGE_CODE][0].text
             else:
