@@ -1305,7 +1305,7 @@ def update_cngt_counts(request,folder_index=None):
 
 def find_and_save_variants(request):
 
-    variant_pattern_glosses = Gloss.objects.filter(annotation_idgloss__regex=r"^(.*)\-([A-Z])$").order_by('annotation_idgloss')
+    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").order_by('idgloss')
 
     gloss_table_prefix = '<!DOCTYPE html>\n' \
                          '<html>\n' \
