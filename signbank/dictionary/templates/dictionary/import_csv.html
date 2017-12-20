@@ -81,7 +81,7 @@
         <table class="table table-striped">
             <tr>
                 <th style="width:10em; text-align:left;">{% trans "Dataset" %}</th>
-                <th style="width:20em; text-align:left;">{% trans "Annotation ID Gloss: Dutch" %} ({% trans "Signbank ID" %})</th>
+                <th style="width:20em; text-align:left;">{% trans "Annotation ID Gloss" %} ({% trans "Signbank ID" %})</th>
                 <th style="width:20em; text-align:left;">{% trans "Field" %}</th>
                 <th style="width:20em; text-align:left;">{% trans "Old" %}</th>
                 <th style="width:40em; text-align:left;">{% trans "New" %}</th>
@@ -90,20 +90,20 @@
             <!--The following check is necessary to account for None and False values, which are not empty -->
                 {% if change.original_human_value == change.original_machine_value and change.new_human_value == change.new_machine_value %}
                     {% if change.original_human_value %}
-                    {% blocktrans with dataset=change.dataset pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
-            <tr><td>{{ dataset }}</td><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td>
+                    {% blocktrans with dataset=change.dataset pk=change.pk annotationidglosstranslation=change.annotationidglosstranslation human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+            <tr><td>{{ dataset }}</td><td>{{ annotationidglosstranslation }} ({{pk}})</td><td><em>{{ human_key }}</em></td>
                 <td>{{ original_human_value }}</td><td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                     {% else %}
-                    {% blocktrans with dataset=change.dataset pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+                    {% blocktrans with dataset=change.dataset pk=change.pk annotationidglosstranslation=change.annotationidglosstranslation human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
 
-            <tr><td>{{ dataset }}</td><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>&nbsp;</td><td>{{new_human_value}}</td></tr>
+            <tr><td>{{ dataset }}</td><td>{{ annotationidglosstranslation }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>&nbsp;</td><td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                     {% endif %}
                 {% else %}
-                    {% blocktrans with dataset=change.dataset pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+                    {% blocktrans with dataset=change.dataset pk=change.pk annotationidglosstranslation=change.annotationidglosstranslation human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
 
-            <tr><td>{{ dataset }}</td><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>{{ original_human_value }}</td>
+            <tr><td>{{ dataset }}</td><td>{{ annotationidglosstranslation }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>{{ original_human_value }}</td>
                                 <td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                 {% endif %}
