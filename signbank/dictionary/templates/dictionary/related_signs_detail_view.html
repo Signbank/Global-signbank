@@ -37,11 +37,11 @@
       <tr>
           <th style="width:9em; color:darkred">{% trans "Source Sign" %}</th>
 
-           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+          {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+                <th style='width:12em'>
+                    {% trans "Annotation ID Gloss" %} ({{ lang }})
+                </th>
+          {% endfor %}
 
            <th style='width:12em'>{% trans "Translation equivalents" %}</th>
            <th style="width:8em">{% trans "Handedness" %}</th>
@@ -61,8 +61,12 @@
               </div>
               {% endif %}
             </td>
-          <td id='src_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{{gloss.annotation_idgloss}}</a></td>
-          <td  id='src_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{{gloss.annotation_idgloss_en}}</a></td>
+
+          {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+                <td id='annotation_idgloss_{{ lang.language_code_2char }}'>
+                    <a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{{ annotation_idgloss_translations.0.text|safe }}</a></td>
+          {% endfor %}
+
           <td id='src_keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             {% if request.LANGUAGE_CODE == 'nl' %}
                 <td id='src_handedness_nl'>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
@@ -86,7 +90,7 @@
       </tr>
     </tbody>
 
-        {% if gloss.lemma_group %}
+        {% if lemma_group %}
         <thead></thead>
         <tbody>
             <tr style="outline: thin solid; color: #ddd;"><th style="width:8em; color:darkred">{% trans "Lemma Group" %}</th>
@@ -101,8 +105,10 @@
             <tr style="outline: thin solid; color: #ddd;">
                 <th style="width:8em; color:darkred">{% trans "Glosses" %}</th>
                 <td id='lemma_group_glosses' style="color:black;" colspan="8">
-                    <a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{{ gloss.annotation_idgloss }}</a>, {% for gl in gloss.lemma_group %}
-                    <a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                    {% for gl, gl_display in glosses_in_lemma_group %}
+                    <a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl_display }}</a>{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
             </tr>
         </tbody>
         {% endif %}
@@ -113,11 +119,8 @@
        <tr>
            <th style="width:8em; color:darkred">{% trans "Homonyms" %}</th>
 
-           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           <th style='width:12em'>{% trans "ID Gloss" %}</th>
+           <th style='width:12em'>{% trans "Dataset" %}</th>
 
            <th style='width:12em'>{% trans "Translation equivalents" %}</th>
            <th style="width:8em">{% trans "Handedness" %}</th>
@@ -129,7 +132,7 @@
      {% endif %}
        </thead>
     <tbody>
-     {% for rel in gloss.relation_sources.all %}
+     {% for rel, target_display in otherrelations %}
       {% if rel.role == "homonym" %}
       <tr>
             <td>{%if rel.target.get_image_path != None %}
@@ -140,8 +143,8 @@
               </div>
               {% endif %}
             </td>
-          <td id='homo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='homo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
+          <td id='homo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
+          <td id='homo_dataset'>{{rel.target.dataset}}</td>
           <td id='homo_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             {% if request.LANGUAGE_CODE == 'nl' %}
                 <td id='homo_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
@@ -171,11 +174,8 @@
        <tr>
            <th style="width:8em; color:darkred">{% trans "Synonyms" %}</th>
 
-           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           <th style='width:12em'>{% trans "ID Gloss" %}</th>
+           <th style='width:12em'>{% trans "Dataset" %}</th>
 
            <th style='width:12em'>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
@@ -187,7 +187,7 @@
      {% endif %}
      </thead>
     <tbody>
-     {% for rel in gloss.relation_sources.all %}
+     {% for rel, target_display in otherrelations %}
       {% if rel.role == "synonym" %}
       <tr>
              <td>{%if rel.target.get_image_path != None %}
@@ -198,8 +198,8 @@
               </div>
               {% endif %}
             </td>
-          <td id='syno_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='syno_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
+          <td id='syno_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
+          <td id='syno_dataset'>{{rel.target.dataset}}</td>
           <td id='syno_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             {% if request.LANGUAGE_CODE == 'nl' %}
                 <td id='syno_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
@@ -229,11 +229,8 @@
        <tr>
            <th style="width:8em; color:darkred">{% trans "Antonyms" %}</th>
 
-           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           <th style='width:12em'>{% trans "ID Gloss" %}</th>
+           <th style='width:12em'>{% trans "Dataset" %}</th>
 
            <th style='width:12em'>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
@@ -245,7 +242,7 @@
      {% endif %}
     </thead>
     <tbody>
-     {% for rel in gloss.relation_sources.all %}
+     {% for rel, target_display in otherrelations %}
       {% if rel.role == "antonym" %}
       <tr>
           <td>{%if rel.target.get_image_path != None %}
@@ -256,8 +253,8 @@
               </div>
               {% endif %}
           </td>
-          <td id='anto_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='anto_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
+          <td id='anto_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
+          <td id='anto_dataset'>{{rel.target.dataset}}</td>
           <td id='anto_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             {% if request.LANGUAGE_CODE == 'nl' %}
                 <td id='anto_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
@@ -287,11 +284,8 @@
         <tr>
             <th style="width:8em; color:darkred">{% trans "Hyponyms" %}</th>
 
-           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           <th style='width:12em'>{% trans "ID Gloss" %}</th>
+           <th style='width:12em'>{% trans "Dataset" %}</th>
 
            <th style='width:12em'>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
@@ -303,7 +297,7 @@
      {% endif %}
     </thead>
     <tbody>
-     {% for rel in gloss.relation_sources.all %}
+     {% for rel, target_display in otherrelations %}
       {% if rel.role == "hyponym" %}
       <tr>
           <td>{%if rel.target.get_image_path != None %}
@@ -314,8 +308,8 @@
               </div>
               {% endif %}
           </td>
-          <td id='hypo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='hypo_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
+          <td id='hypo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
+          <td id='hypo_dataset'>{{rel.target.dataset}}</td>
           <td id='hypo_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             {% if request.LANGUAGE_CODE == 'nl' %}
                 <td id='hypo_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
@@ -345,11 +339,8 @@
         <tr>
            <th style="width:8em; color:darkred">{% trans "Hypernyms" %}</th>
 
-           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           <th style='width:12em'>{% trans "ID Gloss" %}</th>
+           <th style='width:12em'>{% trans "Dataset" %}</th>
 
            <th style='width:12em'>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
@@ -361,7 +352,7 @@
      {% endif %}
     </thead>
     <tbody>
-     {% for rel in gloss.relation_sources.all %}
+     {% for rel, target_display in otherrelations %}
       {% if rel.role == "hypernym" %}
       <tr>
           <td>{%if rel.target.get_image_path != None %}
@@ -372,8 +363,8 @@
               </div>
               {% endif %}
           </td>
-          <td id='hyper_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='hyper_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
+          <td id='hyper_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
+          <td id='hyper_dataset'>{{rel.target.dataset}}</td>
           <td id='hyper_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             {% if request.LANGUAGE_CODE == 'nl' %}
                 <td id='hyper_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
@@ -403,11 +394,8 @@
         <tr>
            <th style="width:8em; color:darkred">{% trans "See Also" %}</th>
 
-           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           <th style='width:12em'>{% trans "ID Gloss" %}</th>
+           <th style='width:12em'>{% trans "Dataset" %}</th>
 
            <th style='width:12em'>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
@@ -419,7 +407,7 @@
      {% endif %}
     </thead>
     <tbody>
-     {% for rel in gloss.relation_sources.all %}
+     {% for rel, target_display in otherrelations %}
       {% if rel.role == "seealso" %}
       <tr>
           <td>{%if rel.target.get_image_path != None %}
@@ -430,8 +418,8 @@
               </div>
               {% endif %}
           </td>
-          <td id='seealso_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
-          <td id='seealso_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss_en}}</a></td>
+          <td id='seealso_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
+          <td id='seealso_dataset'>{{rel.target.dataset}}</td>
           <td id='seealso_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             {% if request.LANGUAGE_CODE == 'nl' %}
                 <td id='seealso_handedness_nl'>{{ rel.target.handedness|translate_to_dutch:"Handedness" }}</td>
@@ -461,11 +449,8 @@
        <tr>
            <th style="width:8em; color:darkred">{% trans "Variants" %}</th>
 
-           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           <th style='width:12em'>{% trans "ID Gloss" %}</th>
+           <th style='width:12em'>{% trans "Dataset" %}</th>
 
            <th style='width:12em'>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
@@ -477,7 +462,7 @@
      {% endif %}
        </thead>
     <tbody>
-     {% for gl in gloss.has_variants %}
+     {% for gl, gl_display in variants %}
       <tr>
           <td>{%if gl.get_image_path != None %}
               <div class="thumbnail_container">
@@ -487,8 +472,8 @@
               </div>
               {% endif %}
           </td>
-          <td id='var_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl.annotation_idgloss}}</a></td>
-          <td id='var_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl.annotation_idgloss_en}}</a></td>
+          <td id='var_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl_display}}</a></td>
+          <td id='var_dataset'>{{gl.dataset}}</td>
           <td id='var_keywords'>{% for trn in gl.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             {% if request.LANGUAGE_CODE == 'nl' %}
                 <td id='var_handedness_nl'>{{ gl.handedness|translate_to_dutch:"Handedness" }}</td>
@@ -511,17 +496,13 @@
       </tr>
       {% endfor %}
     </tbody>
-    {% with gloss.minimal_pairs_dict as mpd %}
-    {% if mpd %}
+    {% if minimalpairs %}
     <thead>
        <tr>
            <th style="width:8em; color:darkred">{% trans "Minimal Pairs" %}</th>
 
-           <th style='width:12em'>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th style='width:12em'>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           <th style='width:12em'>{% trans "ID Gloss" %}</th>
+           <th style='width:12em'>{% trans "Dataset" %}</th>
 
            <th style="width:20em" colspan="2">{% trans "Field name" %}</th>
            <th style="width:20em" colspan="2">{% trans "Source Sign Value" %}</th>
@@ -531,7 +512,7 @@
     </thead>
     <tbody>
      {% load field_choice %}
-     {% for gl,dict in mpd.items %}
+     {% for gl, dict, minpar_display in minimalpairs %}
 		<tr>
           <td>{%if gl.get_image_path != None %}
               <div class="thumbnail_container">
@@ -541,8 +522,8 @@
               </div>
               {% endif %}
           </td>
-          <td id='mp_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td>
-          <td id='mp_annotation_idgloss_en'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl.annotation_idgloss_en}}</a></td>
+          <td id='mp_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{minpar_display}}</a></td>
+          <td id='mp_dataset'>{{gl.dataset}}</td>
 
             {% for k,d in dict.items %}
                 {% with d.0 as field_name %}
@@ -568,7 +549,6 @@
     </tbody>
 
      {% endif %}
-     {% endwith %}
 
 </table>
 

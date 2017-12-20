@@ -1349,6 +1349,104 @@ class GlossRelationsDetailView(DetailView):
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
+        lemma_group_glosses = Gloss.objects.filter(idgloss__iexact=lemma_group)
+        glosses_in_lemma_group = []
+
+        if lemma_group_glosses:
+            for gl_lem in lemma_group_glosses:
+
+                lemma_dict = {}
+                if gl_lem.dataset:
+                    for language in gl_lem.dataset.translation_languages.all():
+                        lemma_dict[language.language_code_2char] = gl_lem.annotationidglosstranslation_set.filter(language=language)
+                else:
+                    language = Language.objects.get(id=get_default_language_id())
+                    lemma_dict[language.language_code_2char] = gl_lem.annotationidglosstranslation_set.filter(language=language)
+                if self.request.LANGUAGE_CODE in lemma_dict.keys():
+                    gl_lem_display = lemma_dict[self.request.LANGUAGE_CODE][0].text
+                else:
+                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    gl_lem_display = lemma_dict['en'][0].text
+
+                glosses_in_lemma_group.append((gl_lem,gl_lem_display))
+
+        context['glosses_in_lemma_group'] = glosses_in_lemma_group
+
+        otherrelations = []
+
+        if gl.relation_sources:
+            for oth_rel in gl.relation_sources.all():
+
+                other_relations_dict = {}
+                if oth_rel.target.dataset:
+                    for language in oth_rel.target.dataset.translation_languages.all():
+                        other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
+                else:
+                    language = Language.objects.get(id=get_default_language_id())
+                    other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
+                if self.request.LANGUAGE_CODE in other_relations_dict.keys():
+                    target_display = other_relations_dict[self.request.LANGUAGE_CODE][0].text
+                else:
+                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    target_display = other_relations_dict['en'][0].text
+
+                otherrelations.append((oth_rel,target_display))
+
+        context['otherrelations'] = otherrelations
+
+        has_variants = gl.has_variants()
+        variants = []
+
+        if has_variants:
+            for gl_var in has_variants:
+
+                variants_dict = {}
+                if gl_var.dataset:
+                    for language in gl_var.dataset.translation_languages.all():
+                        variants_dict[language.language_code_2char] = gl_var.annotationidglosstranslation_set.filter(language=language)
+                else:
+                    language = Language.objects.get(id=get_default_language_id())
+                    variants_dict[language.language_code_2char] = gl_var.annotationidglosstranslation_set.filter(language=language)
+                if self.request.LANGUAGE_CODE in variants_dict.keys():
+                    gl_var_display = variants_dict[self.request.LANGUAGE_CODE][0].text
+                else:
+                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    gl_var_display = variants_dict['en'][0].text
+
+                variants.append((gl_var,gl_var_display))
+
+        context['variants'] = variants
+
+        minimal_pairs_dict = gl.minimal_pairs_dict()
+        minimalpairs = []
+
+        for mpg, dict in minimal_pairs_dict.items():
+            minimal_pairs_trans = {}
+            if mpg.dataset:
+                for language in mpg.dataset.translation_languages.all():
+                    minimal_pairs_trans[language.language_code_2char] = mpg.annotationidglosstranslation_set.filter(language=language)
+            else:
+                language = Language.objects.get(id=get_default_language_id())
+                minimal_pairs_trans[language.language_code_2char] = mpg.annotationidglosstranslation_set.filter(language=language)
+            if self.request.LANGUAGE_CODE in minimal_pairs_trans.keys():
+                minpar_display = minimal_pairs_trans[self.request.LANGUAGE_CODE][0].text
+            else:
+                # This should be set to the default language if the interface language hasn't been set for this gloss
+                minpar_display = minimal_pairs_trans['en'][0].text
+
+            minimalpairs.append((mpg,dict,minpar_display))
+
+        context['minimalpairs'] = minimalpairs
+
+        # Put annotation_idgloss per language in the context
+        context['annotation_idgloss'] = {}
+        if gl.dataset:
+            for language in gl.dataset.translation_languages.all():
+                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
+        else:
+            language = Language.objects.get(id=get_default_language_id())
+            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
+
         return context
 
 
