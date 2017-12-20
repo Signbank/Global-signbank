@@ -753,8 +753,7 @@
     </div>
 
     <!-- Minimal Pairs -->
- {% with gloss.homonyms as homs %}
- {% if homs.1 %}
+ {% if homonyms_but_not_saved %}
   <div class="panel panel-default">
 
         <div class='panel-heading'>
@@ -767,14 +766,14 @@
                <tr>
                    <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
                </tr>
-                {% for gl in homs.1 %}
-                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td></tr>
+                {% for gl, homo_display in homonyms_but_not_saved %}
+                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ homo_display }}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
   </div>
  {% endif %}
- {% if homs.2 %}
+ {% if homonyms_different_phonology %}
  <div class="panel panel-default">
 
         <div class='panel-heading'>
@@ -787,14 +786,13 @@
                <tr>
                    <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
                </tr>
-                {% for gl in homs.2 %}
-                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td></tr>
+                {% for gl, homo_display in homonyms_different_phonology %}
+                <tr><td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ homo_display }}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
   </div>
 {% endif %}
-{% endwith %}
 <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>

@@ -1014,7 +1014,7 @@ class GlossDetailView(DetailView):
                 if self.request.LANGUAGE_CODE in morph_texts.keys():
                     sign_display = morph_texts[self.request.LANGUAGE_CODE]
                 elif 'en' in morph_texts.keys():
-                    sign_display = morph_texts['en']
+                    sign_display = morph_texts['en'][0].text
 
             morphdefs.append((morphdef,translated_role,sign_display))
 
@@ -1025,23 +1025,65 @@ class GlossDetailView(DetailView):
         minimal_pairs_dict = gl.minimal_pairs_dict()
         minimalpairs = []
 
-        for gl, dict in minimal_pairs_dict.items():
+        for mpg, dict in minimal_pairs_dict.items():
             minimal_pairs_trans = {}
-            if gl.dataset:
-                for language in gl.dataset.translation_languages.all():
-                    minimal_pairs_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+            if mpg.dataset:
+                for language in mpg.dataset.translation_languages.all():
+                    minimal_pairs_trans[language.language_code_2char] = mpg.annotationidglosstranslation_set.filter(language=language)
             else:
                 language = Language.objects.get(id=get_default_language_id())
-                minimal_pairs_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+                minimal_pairs_trans[language.language_code_2char] = mpg.annotationidglosstranslation_set.filter(language=language)
             if minimal_pairs_trans[self.request.LANGUAGE_CODE]:
                 minpar_display = minimal_pairs_trans[self.request.LANGUAGE_CODE][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
-                minpar_display = minimal_pairs_trans['en']
+                minpar_display = minimal_pairs_trans['en'][0].text
 
-            minimalpairs.append((gl,dict,minpar_display))
+            minimalpairs.append((mpg,dict,minpar_display))
 
         context['minimalpairs'] = minimalpairs
+
+
+        (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gl.homonyms()
+        homonyms_different_phonology = []
+
+        for gl in saved_but_not_homonyms:
+            homo_trans = {}
+            if gl.dataset:
+                for language in gl.dataset.translation_languages.all():
+                    homo_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+            else:
+                language = Language.objects.get(id=get_default_language_id())
+                homo_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+            if homo_trans[self.request.LANGUAGE_CODE]:
+                homo_display = homo_trans[self.request.LANGUAGE_CODE][0].text
+            else:
+                # This should be set to the default language if the interface language hasn't been set for this gloss
+                homo_display = homo_trans['en'][0].text
+
+            homonyms_different_phonology.append((gl,homo_display))
+
+        context['homonyms_different_phonology'] = homonyms_different_phonology
+
+        homonyms_but_not_saved = []
+
+        for gl in homonyms_not_saved:
+            homo_trans = {}
+            if gl.dataset:
+                for language in gl.dataset.translation_languages.all():
+                    homo_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+            else:
+                language = Language.objects.get(id=get_default_language_id())
+                homo_trans[language.language_code_2char] = gl.annotationidglosstranslation_set.filter(language=language)
+            if homo_trans[self.request.LANGUAGE_CODE]:
+                homo_display = homo_trans[self.request.LANGUAGE_CODE][0].text
+            else:
+                # This should be set to the default language if the interface language hasn't been set for this gloss
+                homo_display = homo_trans['en'][0].text
+
+            homonyms_but_not_saved.append((gl,homo_display))
+
+        context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
         # Regroup notes
         note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
@@ -1099,6 +1141,10 @@ class GlossDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
+        print('annotation idgloss gloss view: ', context['annotation_idgloss'])
+        for lang in context['annotation_idgloss'].keys():
+            print('language ', lang, ' has text: ', context['annotation_idgloss'][lang][0].text)
+
         # Put translations (keywords) per language in the context
         context['translations_per_language'] = {}
         if gl.dataset:
@@ -1126,7 +1172,7 @@ class GlossDetailView(DetailView):
                     morpheme_display = morpheme_annotation_idgloss[self.request.LANGUAGE_CODE][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
-                    morpheme_display = morpheme_annotation_idgloss['en']
+                    morpheme_display = morpheme_annotation_idgloss['en'][0].text
 
                 simultaneous_morphology.append((sim_morph,morpheme_display,translated_morph_type))
 
@@ -1149,7 +1195,7 @@ class GlossDetailView(DetailView):
                     morpheme_display = glosses_annotation_idgloss[self.request.LANGUAGE_CODE][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
-                    morpheme_display = glosses_annotation_idgloss['en']
+                    morpheme_display = glosses_annotation_idgloss['en'][0].text
 
                 blend_morphology.append((ble_morph,morpheme_display))
 
@@ -1171,7 +1217,7 @@ class GlossDetailView(DetailView):
                     target_display = other_relations_dict[self.request.LANGUAGE_CODE][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
-                    target_display = other_relations_dict['en']
+                    target_display = other_relations_dict['en'][0].text
 
                 otherrelations.append((oth_rel,target_display))
 
@@ -1290,7 +1336,7 @@ class GlossRelationsDetailView(DetailView):
                 if self.request.LANGUAGE_CODE in morph_texts.keys():
                     sign_display = morph_texts[self.request.LANGUAGE_CODE]
                 elif 'en' in morph_texts.keys():
-                    sign_display = morph_texts['en']
+                    sign_display = morph_texts['en'][0].text
 
             morphdefs.append((morphdef,translated_role,sign_display))
 
