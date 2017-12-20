@@ -847,7 +847,19 @@ class GlossListView(ListView):
             items = []
 
             for item in qs:
-                items.append(dict(id = item.id, gloss = item.annotation_idgloss))
+                annotationidglosstranslations = item.annotationidglosstranslation_set.filter(
+                    language__language_code_2char__exact=self.request.LANGUAGE_CODE
+                )
+                if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
+                    items.append(dict(id = item.id, gloss = annotationidglosstranslations[0].text))
+                else:
+                    annotationidglosstranslations = item.annotationidglosstranslation_set.filter(
+                        language__language_code_2char__exact='en'
+                    )
+                    if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
+                        items.append(dict(id=item.id, gloss=annotationidglosstranslations[0].text))
+                    else:
+                        items.append(dict(id=item.id, gloss=item.idgloss))
 
             self.request.session['search_results'] = items
 
