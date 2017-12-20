@@ -14,7 +14,7 @@ from signbank.dictionary.models import Gloss, DeletedGlossOrMedia
 from signbank.settings.base import GLOSS_VIDEO_DIRECTORY, WRITABLE_FOLDER
 from signbank.settings.server_specific import FFMPEG_PROGRAM
 
-from signbank.tools import generate_still_image
+from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
 
 def addvideo(request):
     """View to present a video upload form and process
@@ -116,10 +116,12 @@ def deletevideo(request, videoid):
         if os.path.isfile(WRITABLE_FOLDER + gloss.get_video_path()):
             os.remove(WRITABLE_FOLDER + gloss.get_video_path())
 
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+
     deleted_video = DeletedGlossOrMedia()
     deleted_video.item_type = 'video'
     deleted_video.idgloss = gloss.idgloss
-    deleted_video.annotation_idgloss = gloss.annotation_idgloss
+    deleted_video.annotation_idgloss = default_annotationidglosstranslation
     deleted_video.old_pk = gloss.pk
     deleted_video.filename = gloss.get_video_path()
     deleted_video.save()
