@@ -26,7 +26,11 @@ def save_media(source_folder,goal_folder,gloss,extension):
         extension = '.' + extension
 
     #Figure out some names
-    annotation_id = gloss.annotation_idgloss
+    annotation_id = ""
+    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
+    annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+    if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
+        annotation_id = annotationidglosstranslations[0].text
     pk = str(gloss.pk)
     destination_folder = goal_folder+annotation_id[:2]+'/'
 
