@@ -1014,7 +1014,7 @@ class GlossDetailView(DetailView):
                 if self.request.LANGUAGE_CODE in morph_texts.keys():
                     sign_display = morph_texts[self.request.LANGUAGE_CODE]
                 elif 'en' in morph_texts.keys():
-                    sign_display = morph_texts['en'][0].text
+                    sign_display = morph_texts['en']
 
             morphdefs.append((morphdef,translated_role,sign_display))
 
@@ -1033,7 +1033,7 @@ class GlossDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 minimal_pairs_trans[language.language_code_2char] = mpg.annotationidglosstranslation_set.filter(language=language)
-            if minimal_pairs_trans[self.request.LANGUAGE_CODE]:
+            if self.request.LANGUAGE_CODE in minimal_pairs_trans.keys():
                 minpar_display = minimal_pairs_trans[self.request.LANGUAGE_CODE][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
@@ -1141,10 +1141,6 @@ class GlossDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
-        print('annotation idgloss gloss view: ', context['annotation_idgloss'])
-        for lang in context['annotation_idgloss'].keys():
-            print('language ', lang, ' has text: ', context['annotation_idgloss'][lang][0].text)
-
         # Put translations (keywords) per language in the context
         context['translations_per_language'] = {}
         if gl.dataset:
@@ -1168,7 +1164,7 @@ class GlossDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-                if morpheme_annotation_idgloss[self.request.LANGUAGE_CODE]:
+                if self.request.LANGUAGE_CODE in morpheme_annotation_idgloss.keys():
                     morpheme_display = morpheme_annotation_idgloss[self.request.LANGUAGE_CODE][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
@@ -1191,7 +1187,7 @@ class GlossDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     glosses_annotation_idgloss[language.language_code_2char] = ble_morph.glosses.annotationidglosstranslation_set.filter(language=language)
-                if glosses_annotation_idgloss[self.request.LANGUAGE_CODE]:
+                if self.request.LANGUAGE_CODE in glosses_annotation_idgloss.keys():
                     morpheme_display = glosses_annotation_idgloss[self.request.LANGUAGE_CODE][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
@@ -1213,7 +1209,7 @@ class GlossDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
-                if other_relations_dict[self.request.LANGUAGE_CODE]:
+                if self.request.LANGUAGE_CODE in other_relations_dict.keys():
                     target_display = other_relations_dict[self.request.LANGUAGE_CODE][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
@@ -1336,12 +1332,11 @@ class GlossRelationsDetailView(DetailView):
                 if self.request.LANGUAGE_CODE in morph_texts.keys():
                     sign_display = morph_texts[self.request.LANGUAGE_CODE]
                 elif 'en' in morph_texts.keys():
-                    sign_display = morph_texts['en'][0].text
+                    sign_display = morph_texts['en']
 
             morphdefs.append((morphdef,translated_role,sign_display))
 
         context['morphdefs'] = morphdefs
-
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
