@@ -125,7 +125,7 @@
          {% endif %}
     </div>
 
-    {% if morpheme.annotation_idgloss %}
+    {% if morpheme.idgloss %}
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/morpheme/{{morpheme.idgloss}}.html">{% trans "Public View" %}</a>
     {% endif %}
 

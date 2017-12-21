@@ -2052,6 +2052,13 @@ class HomonymListView(ListView):
         # Call the base implementation first to get a context
         context = super(HomonymListView, self).get_context_data(**kwargs)
 
+        languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
+        if languages:
+            context['language'] = languages[0]
+        else:
+            context['language'] = Language.objects.get(id=get_default_language_id())
+
+
         return context
 
     def get_queryset(self):
