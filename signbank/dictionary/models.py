@@ -342,7 +342,7 @@ class Gloss(models.Model):
     class Meta:
         verbose_name_plural = "Glosses"
         # ordering: for Lemma View in the Gloss List View, we need to have glosses in the same Lemma Group sorted
-        ordering = ['idgloss','annotation_idgloss']
+        ordering = ['idgloss']
         permissions = (('update_video', "Can Update Video"),
                        ('search_gloss', 'Can Search/View Full Gloss Details'),
                        ('export_csv', 'Can export sign details as CSV'),
@@ -647,9 +647,9 @@ minor or insignificant ways that can be ignored.""")
 
         if staff:
             # Make sure we only include the none-Morpheme glosses
-            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('annotation_idgloss')
+            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('idgloss')
         else:
-            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('annotation_idgloss')
+            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('idgloss')
 
         if all_glosses_ordered:
 
@@ -671,9 +671,9 @@ minor or insignificant ways that can be ignored.""")
         if self.sn == None:
             return None
         elif staff:
-            set = Gloss.objects.filter(sn__lt=self.sn).order_by('-annotation_idgloss')
+            set = Gloss.objects.filter(sn__lt=self.sn).order_by('-idgloss')
         else:
-            set = Gloss.objects.filter(sn__lt=self.sn, inWeb__exact=True).order_by('-annotation_idgloss')
+            set = Gloss.objects.filter(sn__lt=self.sn, inWeb__exact=True).order_by('-idgloss')
         if set:
             return set[0]
         else:
@@ -761,15 +761,21 @@ minor or insignificant ways that can be ignored.""")
 
     def pattern_variants(self):
 
-        this_sign_stem = self.has_stem()
-        length_this_sign_stem = len(this_sign_stem)
-        this_matches = r'^' + re.escape(this_sign_stem) + r'\-[A-Z]$'
-        other_relations_of_sign = self.other_relations()
-        #variant_relations_of_sign = self.variant_relations()
+        # Build query
+        this_sign_stems = self.get_stems()
+        queries = []
+        for this_sign_stem in this_sign_stems:
+            this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
+            queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
+                             dataset=self.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
+        query = queries.pop()
+        for q in queries:
+            query |= q
 
+        other_relations_of_sign = self.other_relations()
         other_relation_objects = [x.target for x in other_relations_of_sign]
 
-        pattern_variants = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=self).exclude(
+        pattern_variants = Gloss.objects.filter(query).exclude(idgloss=self).exclude(
             idgloss__in=other_relation_objects)
 
         return pattern_variants
@@ -794,11 +800,11 @@ minor or insignificant ways that can be ignored.""")
 
         return homonyms
 
-    def has_stem(self):
+    def get_stems(self):
 
-        has_stem = self.annotation_idgloss[:-2]
+        stems = [(x.language, x.text[:-2]) for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-']
 
-        return has_stem
+        return stems
 
     def gloss_relations(self):
 
