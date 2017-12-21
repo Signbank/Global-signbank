@@ -2761,7 +2761,7 @@ def gloss_ajax_complete(request, prefix):
                 language__language_code_2char='en')
             if annotationidglosstranslation:
                 default_annotationidglosstranslation = annotationidglosstranslation.text
-        result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn, 'pk': "%s" % (g.idgloss)})
+        result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn, 'pk': "%s" % (g.id)})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 

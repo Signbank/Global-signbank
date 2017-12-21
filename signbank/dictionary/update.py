@@ -888,7 +888,7 @@ def add_relation(request):
             
             role = form.cleaned_data['role']
             sourceid = form.cleaned_data['sourceid']
-            targetid = form.cleaned_data['targetid']
+            targetid = form.cleaned_data['targetid'] # This is a gloss ID now
             
             try:
                 source = Gloss.objects.get(pk=int(sourceid))
@@ -896,7 +896,7 @@ def add_relation(request):
                 print("source gloss not found")
                 return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
             
-            target = gloss_from_identifier(targetid)
+            target = Gloss.objects.get(id=targetid)
             if target:
                 rel = Relation(source=source, target=target, role=role)
                 rel.save()

@@ -55,7 +55,12 @@ var busy_editing = 0;
 	});
 
     glosstypeahead($('.glosstypeahead'));
+    $('.glosstypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk)
+        });
     morphtypeahead($('.morphtypeahead'));
+    $('.morphtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+        });
 
 
     // setup requried for Ajax POST
@@ -480,7 +485,7 @@ function glosstypeahead(target) {
 
      $(target).typeahead(null, {
           name: 'glosstarget',
-          displayKey: 'pk',
+          displayKey: 'annotation_idgloss',
           source: gloss_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(gloss) {
