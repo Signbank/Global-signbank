@@ -1043,8 +1043,8 @@ def add_morpheme_definition(request, glossid):
 
         if form.is_valid():
 
-            morph_id = form.cleaned_data['morph_id']
-            morph = morph_from_identifier(morph_id)
+            morph_id = form.cleaned_data['morph_id'] ## This is a morpheme ID now
+            morph = Morpheme.objects.get(id=morph_id)
 
             if morph != None:
                 definition = SimultaneousMorphologyDefinition()

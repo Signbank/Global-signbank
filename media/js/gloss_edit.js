@@ -60,6 +60,7 @@ var busy_editing = 0;
         });
     morphtypeahead($('.morphtypeahead'));
     $('.morphtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk)
         });
 
 
@@ -526,7 +527,7 @@ function morphtypeahead(target) {
 
      $(target).typeahead(null, {
           name: 'morphtarget',
-          displayKey: 'pk',
+          displayKey: 'annotation_idgloss',
           source: morph_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(gloss) {

@@ -2805,6 +2805,6 @@ def morph_ajax_complete(request, prefix):
             if annotationidglosstranslation:
                 default_annotationidglosstranslation = annotationidglosstranslation.text
         result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn,
-                       'pk': "%s" % (g.idgloss)})
+                       'pk': "%s" % (g.id)})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})

@@ -535,7 +535,10 @@
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:22em;"><input class='form-control morphtypeahead' placeholder='{% trans "Morpheme gloss" %}' name='morph_id' value="{{morphemeform.morph_id.value|default:''}}"/></td>
+                       <td style="width:22em;">
+                           <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme gloss" %}' value="{{morphemeform.morph_id.value|default:''}}"/>
+                           <input type="hidden" name='morph_id' value=""/>
+                       </td>
                        <td><input class='form-control' placeholder='{% trans "Meaning in this sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
                    </tr>
