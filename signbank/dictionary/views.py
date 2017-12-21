@@ -1244,7 +1244,7 @@ def update_cngt_counts(request,folder_index=None):
         #Collect the gloss needed
         try:
             gloss = Gloss.objects.get(id=gloss_id)
-        except ObjectDoesNotExist:
+        except (ObjectDoesNotExist, ValueError):
 
             if gloss_id != None:
                 glosses_not_in_signbank.append(gloss_id)
