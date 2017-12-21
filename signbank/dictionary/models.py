@@ -18,7 +18,6 @@ from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
-from signbank.tools import get_default_annotationidglosstranslation
 
 import signbank.settings
 
@@ -1398,6 +1397,7 @@ except:
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
 def save_info_about_deleted_gloss(sender,instance,using,**kwarsg):
+    from signbank.tools import get_default_annotationidglosstranslation
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
 
     deleted_gloss = DeletedGlossOrMedia()
