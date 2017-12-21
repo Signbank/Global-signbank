@@ -375,21 +375,6 @@ class Gloss(models.Model):
     This is the unique identifying name of an entry of a sign form in the
 database. No two Sign Entry Names can be exactly the same, but a "Sign
 Entry Name" can be (and often is) the same as the Annotation Idgloss.""")    
-  
-    annotation_idgloss = models.CharField(_("Annotation ID Gloss: Dutch"), unique=False,max_length=30, help_text="""
-    This is the Dutch name of a sign used by annotators when glossing the corpus in
-an ELAN annotation file. The Annotation Idgloss may be the same for two or
-more entries (each with their own 'Sign Entry Name'). If two sign entries
-have the same 'Annotation Idgloss' that means they differ in form in only
-minor or insignificant ways that can be ignored.""") 
-    # the idgloss used in transcription, may be shared between many signs
-
-    annotation_idgloss_en = models.CharField(_("Annotation ID Gloss: English"), unique=False,blank=True, max_length=30, help_text="""
-    This is the English name of a sign used by annotators when glossing the corpus in
-an ELAN annotation file. The Annotation Idgloss may be the same for two or
-more entries (each with their own 'Sign Entry Name'). If two sign entries
-have the same 'Annotation Idgloss' that means they differ in form in only
-minor or insignificant ways that can be ignored.""") 
 
     # languages that this gloss is part of
     signlanguage = models.ManyToManyField(SignLanguage)
