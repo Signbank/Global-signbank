@@ -1,5 +1,6 @@
 ﻿{% extends "baselayout.html" %}
 {% load i18n %}
+{% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 {% block bootstrap3_title %}Signbank: Search Handshapes{% endblock %}
 {% block extrahead %}
@@ -686,7 +687,10 @@ function do_adminsearch(el) {
     <thead>
       <tr>
           <th></th>
-           <th>{% trans "Annotation ID Gloss" %}</th>
+           {% for dataset_lang in dataset_languages %}
+          <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+          {% endfor %}
+          <th>{% trans "Dataset" %}</th>
            <th>{% trans "Handedness" %}</th>
            <th>{% trans "Strong hand" %}</th>
            <th>{% trans "Weak hand" %}</th>
@@ -704,17 +708,16 @@ function do_adminsearch(el) {
           <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
-        {% if language == 'nl' %}
+        {% for dataset_lang in dataset_languages %}
+        {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
       <td>
-          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
-
+          {% ifnotequal annotationidglosstranslation "" %}
+          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+          {% endifnotequal %}
       </td>
-        {% else %}
-      <td>
-          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
-
-      </td>
-        {% endif %}
+        {% endwith %}
+        {% endfor %}
+        <td>{{ gloss.dataset.name }}</td>
 
             {% load field_choice %}
 
