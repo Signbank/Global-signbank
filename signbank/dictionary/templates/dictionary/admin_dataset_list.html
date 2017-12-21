@@ -1,5 +1,6 @@
 {% extends "baselayout.html" %}
 {% load i18n %}
+{% load stylesheet %}
 {% load bootstrap3 %}
 {% load guardian_tags %}
 
@@ -12,10 +13,11 @@
 <table class='table table-condensed'>
     <thead>
       <tr>
-          <th>{% trans "Name" %}</th>
-          <th>{% trans "Access" %}</th>
-          <th>{% trans "Number of signs or morphemes" %}</th>
-          <th>{% trans "Selected" %}</th>
+          <th style="width:300px;">{% trans "Name" %}</th>
+          <th style="width:80px;">{% trans "Access" %}</th>
+          <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
+          <th style="width:80px;">{% trans "Selected" %}</th>
+          <th>{% trans "Export dataset" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -40,6 +42,21 @@
                   {% trans "Yes" %}
                 {% else %}
                   {% trans "No" %}
+                {% endif %}
+            </td>
+            <td>
+                {% if perms.dictionary.export_ecv %}
+                {% get_obj_perms request.user for dataset as "dataset_perms" %}
+                {% if "view_dataset" in dataset_perms %}
+                <form name='export_ecv_form' id='export_ecv_form' method='get'>
+                    <div class="hidden">
+                        <input name='dataset_lang' id='dataset_lang' class='form-control' value='{{dataset.name}}' >
+                    </div>
+                    <div class='btn-group'>
+                        <button id='export_ecv' class='btn btn-primary' type='submit' name='export_ecv' value='ECV'>{% trans "ECV" %}</button>
+                    </div>
+                </form>
+                {% endif %}
                 {% endif %}
             </td>
         </tr>

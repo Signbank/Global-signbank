@@ -538,9 +538,9 @@ function do_toggle_groups(el) {
         <input class='btn btn-default' type='submit' name='format' value='CSV'>
         {% endif %}
         <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
-        {% if perms.dictionary.export_ecv %}
-        <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
-        {% endif %}
+        <!--{% if perms.dictionary.export_ecv %}-->
+        <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
+        <!--{% endif %}-->
         <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
                value='{% trans "Reset" %}'>
     </div>
