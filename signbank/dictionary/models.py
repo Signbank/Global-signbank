@@ -18,6 +18,7 @@ from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
+from signbank.tools import get_default_annotationidglosstranslation
 
 import signbank.settings
 
@@ -1397,10 +1398,12 @@ except:
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
 def save_info_about_deleted_gloss(sender,instance,using,**kwarsg):
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
+
     deleted_gloss = DeletedGlossOrMedia()
     deleted_gloss.item_type = 'gloss'
     deleted_gloss.idgloss = instance.idgloss
-    deleted_gloss.annotation_idgloss = instance.annotation_idgloss
+    deleted_gloss.annotation_idgloss = default_annotationidglosstranslation
     deleted_gloss.old_pk = instance.pk
     deleted_gloss.save()
 
@@ -1409,7 +1412,7 @@ class DeletedGlossOrMedia(models.Model):
 
     item_type = models.CharField(max_length=5,choices=(('gloss','gloss'),('image','image'),('video','video')))
     idgloss = models.CharField("ID Gloss", max_length=50)
-    annotation_idgloss = models.CharField("Annotation ID Gloss: Dutch", max_length=30)
+    annotation_idgloss = models.CharField("Annotation ID Gloss", max_length=30)
     old_pk = models.IntegerField()
 
     filename = models.CharField(max_length=100,blank=True) #For media only
@@ -1539,9 +1542,9 @@ class Morpheme(Gloss):
         """Find the next morpheme in dictionary order"""
 
         if staff:
-            all_morphemes_ordered = Morpheme.objects.all().order_by('annotation_idgloss')
+            all_morphemes_ordered = Morpheme.objects.all().order_by('idgloss')
         else:
-            all_morphemes_ordered = Morpheme.objects.filter(inWeb__exact=True).order_by('annotation_idgloss')
+            all_morphemes_ordered = Morpheme.objects.filter(inWeb__exact=True).order_by('idgloss')
 
         if all_morphemes_ordered:
 

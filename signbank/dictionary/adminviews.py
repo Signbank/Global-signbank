@@ -2590,7 +2590,16 @@ def gloss_ajax_complete(request, prefix):
 
     result = []
     for g in qs:
-        result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn, 'pk': "%s" % (g.idgloss)})
+        default_annotationidglosstranslation = ""
+        annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=request.LANGUAGE_CODE)
+        if annotationidglosstranslation:
+            default_annotationidglosstranslation = annotationidglosstranslation.text
+        else:
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(
+                language__language_code_2char='en')
+            if annotationidglosstranslation:
+                default_annotationidglosstranslation = annotationidglosstranslation.text
+        result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn, 'pk': "%s" % (g.idgloss)})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
@@ -2624,7 +2633,16 @@ def morph_ajax_complete(request, prefix):
 
     result = []
     for g in qs:
-        result.append({'idgloss': g.idgloss, 'annotation_idgloss': g.annotation_idgloss, 'sn': g.sn,
+        default_annotationidglosstranslation = ""
+        annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=request.LANGUAGE_CODE)
+        if annotationidglosstranslation:
+            default_annotationidglosstranslation = annotationidglosstranslation.text
+        else:
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(
+                language__language_code_2char='en')
+            if annotationidglosstranslation:
+                default_annotationidglosstranslation = annotationidglosstranslation.text
+        result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn,
                        'pk': "%s" % (g.idgloss)})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
