@@ -605,7 +605,10 @@
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:22em;"><input class='form-control glosstypeahead' placeholder='{% trans "Blend gloss" %}' name='blend_id' value="{{blendform.blend_id.value|default:''}}"/></td>
+                       <td style="width:22em;">
+                           <input class='form-control glosstypeahead' placeholder='{% trans "Blend gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
+                           <input type="hidden" name='blend_id' value=""/>
+                       </td>
                        <td><input class='form-control' placeholder='{% trans "Role in this sign" %}' name='role' value="{{blendform.role.value|default:''}}"/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Blend" %}' type='submit'></td>
                    </tr>

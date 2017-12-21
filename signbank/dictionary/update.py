@@ -1096,8 +1096,8 @@ def add_blend_definition(request, glossid):
 
         if form.is_valid():
 
-            blend_id = form.cleaned_data['blend_id']
-            blend = gloss_from_identifier(blend_id)
+            blend_id = form.cleaned_data['blend_id'] # This is a gloss ID now
+            blend = Gloss.objects.get(id=blend_id)
 
             if blend != None:
                 definition = BlendMorphology()

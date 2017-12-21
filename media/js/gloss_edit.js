@@ -58,9 +58,15 @@ var busy_editing = 0;
     $('.glosstypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.pk)
         });
+    $('.glosstypeahead').bind("change", function() {
+          $(this).parent().next().val("")
+        });
     morphtypeahead($('.morphtypeahead'));
     $('.morphtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.pk)
+        });
+    $('.morphtypeahead').bind("change", function() {
+          $(this).parent().next().val("")
         });
 
 
