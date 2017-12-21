@@ -468,7 +468,10 @@
                    <tr>
                        <td style="width:2em;"></td>
                        <td style="width:12em;">{{morphologyform.role}}</td>
-                       <td><input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID gloss" %}' name='morpheme_id'></td>
+                       <td>
+                           <input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID gloss" %}' />
+                           <input type="hidden" name="morpheme_id" value=""/>
+                       </td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
                    </tr>
                </table>

@@ -693,6 +693,7 @@ def subst_relations(gloss, field, values):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
+## TODO the function below does not seem to be used
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
     
@@ -1012,8 +1013,8 @@ def add_morphology_definition(request):
 
             parent_gloss = form.cleaned_data['parent_gloss_id']
             role = form.cleaned_data['role']
-            morpheme_id = form.cleaned_data['morpheme_id']
-            morpheme = gloss_from_identifier(morpheme_id)
+            morpheme_id = form.cleaned_data['morpheme_id'] # This is now a gloss ID
+            morpheme = Gloss.objects.get(id=morpheme_id)
 
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
 
