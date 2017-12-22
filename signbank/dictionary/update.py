@@ -15,7 +15,7 @@ from datetime import datetime
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 import signbank.settings
-from signbank.settings.base import OTHER_MEDIA_DIRECTORY
+from signbank.settings.base import OTHER_MEDIA_DIRECTORY,DEFAULT_DATASET_PK
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 
 from django.utils.translation import ugettext_lazy as _
@@ -45,6 +45,10 @@ def add_gloss(request):
             gloss.creationDate = datetime.now()
             gloss.creator.add(request.user)
             gloss.excludeFromEcv = False
+
+            if DEFAULT_DATASET_PK:
+                gloss.dataset = Dataset.objects.get(pk=DEFAULT_DATASET_PK)
+
             gloss.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
