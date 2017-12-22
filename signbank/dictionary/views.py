@@ -501,16 +501,13 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    result = 'OK'
+    dataset = Dataset.objects.get(pk=2)
 
     # for gloss in Gloss.objects.all():
-    #     for morphemePart in gloss.morphemePart.all():
-    #         definition = SimultaneousMorphologyDefinition()
-    #         definition.morpheme = morphemePart
-    #         definition.parent_gloss = gloss
-    #         definition.save()
+    #     gloss.dataset = dataset
+    #     gloss.save()
 
-    return HttpResponse(result)
+    return HttpResponse('ok')
 
 def import_authors(request):
 
