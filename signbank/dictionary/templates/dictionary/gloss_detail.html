@@ -324,13 +324,7 @@
 
         <table class='table table-condensed'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
-                <td class='edit edit_text' id='idgloss'>
-                    {% if lemma_group %}
-                        <a href='{{ lemma_group_url }}'>{% value gloss.idgloss %}</a>
-                    {% else %}
-                        {% value gloss.idgloss %}
-                    {% endif %}
-                </td>
+                <td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{ lemma_group_url }}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>
             </tr>
 
             {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
