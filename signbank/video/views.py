@@ -80,6 +80,8 @@ def addvideo(request):
             from signbank.tools import generate_still_image
             generate_still_image(gloss.idgloss[:2], goal_folder, goal_filename)
 
+            os.chmod(goal_location,644)
+
             # TODO: provide some feedback that it worked (if
             # immediate display of video isn't working)
             return redirect(redirect_url)
