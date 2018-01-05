@@ -26,12 +26,21 @@ html {
 #header h1 {
         height: 110px;
         width: 300px;
-        background-image: url(../../images/NGT/NGT-header.png);
         background-position: 20px 20px;
-        background-repeat: no-repeat;   
-        text-indent: -9000px;
+        background-repeat: no-repeat;
+        color: white;
+        font-family: 'Nunito', sans-serif;
+        font-size: 40px;
+        padding: 22px;
+        padding-left: 33px;
         margin: 0px;
-        
+}
+
+#second-title-part {
+    color: lightgrey;
+    margin-left: 60px;
+    display: block;
+    line-height: 0.2;
 }
 
 #logoholder {
