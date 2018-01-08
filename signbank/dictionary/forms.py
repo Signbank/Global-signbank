@@ -174,7 +174,6 @@ class GlossSearchForm(forms.ModelForm):
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
     
     defsearch = forms.CharField(label=_(u'Search Definition/Notes'))
-    #defrole = forms.ChoiceField(label=_(u'Search Definition/Note Type'), choices=ROLE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
 
     relation = forms.CharField(label=_(u'Search for gloss of related signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     relationToForeignSign = forms.CharField(label=_(u'Search for gloss of foreign signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
@@ -192,8 +191,8 @@ class GlossSearchForm(forms.ModelForm):
     # A "morpheme" is an item from the "Morpheme" list
     hasMorphemeOfType = forms.TypedChoiceField(label=_(u'Has morpheme type'),choices=MORPHEME_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
-    repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
-    altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)#,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
+    repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
+    altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)
     weakprop = forms.ChoiceField(label=_(u'Weak prop'),choices=NEUTRALQUERYCHOICES)
     weakdrop = forms.ChoiceField(label=_(u'Weak drop'),choices=NEUTRALQUERYCHOICES)
 
@@ -284,9 +283,9 @@ class MorphemeSearchForm(forms.ModelForm):
                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),
-                               choices=NULLBOOLEANCHOICES)  # ,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
+                               choices=NULLBOOLEANCHOICES)
     altern = forms.ChoiceField(label=_(u'Alternating Movement'),
-                               choices=NULLBOOLEANCHOICES)  # ,widget=forms.Select(attrs=ATTRS_FOR_FORMS));
+                               choices=NULLBOOLEANCHOICES)
 
     isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'), choices=NULLBOOLEANCHOICES,
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -370,7 +369,6 @@ class VariantsForm(forms.Form):
 class RelationToForeignSignForm(forms.ModelForm):
 
     sourceid = forms.CharField(label=_(u'Source Gloss'))
-    #loan = forms.CharField(label=_(u'Loan'))
     other_lang = forms.CharField(label=_(u'Related Language'))
     other_lang_gloss = forms.CharField(label=_(u'Gloss in Related Language'), required=False)
     
@@ -463,8 +461,6 @@ class HandshapeSearchForm(forms.ModelForm):
 
     numSelected = forms.ChoiceField(label=_(u'Quantity'),
                                choices=QUANTITY_CHOICES ,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    # thumb = forms.ChoiceField(label=_(u'Thumb'),
-                               # choices=THUMB_CHOICES ,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     # this is used to pass the label to the handshapes list view
     unselectedFingers = forms.ChoiceField(label=_(u'Unselected fingers extended'), choices=FINGER_SELECTION_CHOICES,
