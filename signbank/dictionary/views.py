@@ -932,7 +932,8 @@ def import_csv(request):
                     #Also update the video if needed
                     if fieldname == 'idgloss':
                         video_path_after = settings.WRITABLE_FOLDER+gloss.get_video_path()
-                        os.rename(video_path_before,video_path_after)
+                        if os.path.isfile(video_path_before):
+                            os.rename(video_path_before,video_path_after)
             stage = 2
 
         elif csv_create:
