@@ -1087,11 +1087,12 @@ class GlossDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
-            if homo_trans[self.request.LANGUAGE_CODE]:
+            if self.request.LANGUAGE_CODE in homo_trans.items():
                 homo_display = homo_trans[self.request.LANGUAGE_CODE][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
-                homo_display = homo_trans['en'][0].text
+                language = Language.objects.get(id=get_default_language_id())
+                homo_display = homo_trans[language.language_code_2char][0].text
 
             homonyms_but_not_saved.append((homonym,homo_display))
 
