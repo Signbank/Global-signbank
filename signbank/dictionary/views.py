@@ -809,7 +809,22 @@ def import_csv(request):
 
                 gloss = Gloss.objects.get(pk=pk)
 
-                #Updating the keywords is a special procedure, because it has relations to other parts of the database
+                # Updating the annotation idgloss is a special procedure, because it has relations to other parts of the
+                # database
+                annotation_idgloss_key_prefix = "Annotation ID Gloss ("
+                if fieldname.startswith(annotation_idgloss_key_prefix):
+                    language_name = fieldname[len(annotation_idgloss_key_prefix):-1]
+                    languages = Language.objects.filter(name_en=language_name)
+                    if languages:
+                        language = languages[0]
+                        annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
+                        if annotation_idglosses:
+                            annotation_idgloss = annotation_idglosses[0]
+                            annotation_idgloss.text = new_value
+                            annotation_idgloss.save()
+                    continue
+
+                # Updating the keywords is a special procedure, because it has relations to other parts of the database
                 if fieldname == 'Keywords':
                     # The following is necessary to process keywords for multiple languages
                     keywords_dict = {}

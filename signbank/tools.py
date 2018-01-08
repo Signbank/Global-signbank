@@ -187,6 +187,27 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
             if human_key == 'Signbank ID':
                 continue
 
+            annotation_idgloss_key_prefix = "Annotation ID Gloss ("
+            if human_key.startswith(annotation_idgloss_key_prefix):
+                language_name = human_key[len(annotation_idgloss_key_prefix):-1]
+                languages = Language.objects.filter(name_en=language_name)
+                if languages:
+                    language = languages[0]
+                    annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
+                    if annotation_idglosses:
+                        annotation_idgloss_string = annotation_idglosses[0].text
+                        if annotation_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
+                            differences.append({'pk': gloss.pk,
+                                                'dataset': current_dataset,
+                                                'annotationidglosstranslation': default_annotationidglosstranslation,
+                                                'machine_key': human_key,
+                                                'human_key': human_key,
+                                                'original_machine_value': annotation_idgloss_string,
+                                                'original_human_value': annotation_idgloss_string,
+                                                'new_machine_value': new_human_value,
+                                                'new_human_value': new_human_value})
+                continue
+
             elif human_key == 'Keywords':
 
                 current_keyword_string = str(', '.join([str(translation.translation.text)+":"+translation.language.language_code_2char
