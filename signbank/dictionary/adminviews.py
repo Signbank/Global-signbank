@@ -27,6 +27,7 @@ from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
+from signbank.settings.base import DEFAULT_KEYWORDS_LANGUAGE
 from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
@@ -1067,11 +1068,11 @@ class GlossDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 homo_trans[language.language_code_2char] = saved_gl.annotationidglosstranslation_set.filter(language=language)
-            if homo_trans[self.request.LANGUAGE_CODE]:
+            if self.request.LANGUAGE_CODE in homo_trans:
                 homo_display = homo_trans[self.request.LANGUAGE_CODE][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
-                homo_display = homo_trans['en'][0].text
+                homo_display = homo_trans[DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']][0].text
 
             homonyms_different_phonology.append((saved_gl,homo_display))
 
@@ -1087,11 +1088,11 @@ class GlossDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
-            if homo_trans[self.request.LANGUAGE_CODE]:
+            if self.request.LANGUAGE_CODE in homo_trans:
                 homo_display = homo_trans[self.request.LANGUAGE_CODE][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
-                homo_display = homo_trans['en'][0].text
+                homo_display = homo_trans[DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']][0].text
 
             homonyms_but_not_saved.append((homonym,homo_display))
 
