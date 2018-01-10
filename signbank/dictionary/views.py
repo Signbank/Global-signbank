@@ -327,7 +327,19 @@ def missing_video_view(request):
                               {'glosses': glosses})
 
 def import_media(request,video):
-
+    """
+    Importing media is done as follows:
+    1. In the main folder for importing media all folders with names equal to dataset names are opened.
+    2. In each folder with a dataset name all folders with name equal to a three letter language code of the dataset
+    at hand are opened.
+    3 In the folders with a three letter language code as name all media file are imported.
+    
+    E.g. view the following folder structure:
+     <import folder>/ASL/eng/HOUSE.mp4
+     
+     where 'ASL' is the name of a dataset and 'eng' is the three letter language code of English which is one of the 
+     dataset languages of the dataset 'ASL'.
+    """
     out = '<p>Imported</p><ul>'
     overwritten_files = '<p>Of these files, these were overwritten</p><ul>'
     errors = []
@@ -339,73 +351,93 @@ def import_media(request,video):
         import_folder = settings.IMAGES_TO_IMPORT_FOLDER
         goal_directory = settings.GLOSS_IMAGE_DIRECTORY
 
+    print("Import folder: %s" % import_folder)
 
-    for filename in os.listdir(import_folder):
-
-        parts = filename.split('.')
-        idgloss = '.'.join(parts[:-1])
-        extension = parts[-1]
-
-        try:
-            gloss = Gloss.objects.get(id=idgloss)
-        except ObjectDoesNotExist:
-            errors.append('Failed at '+filename+'. Could not find '+idgloss+' (it should be a gloss ID).')
+    for dataset_folder_name in [name for name in os.listdir(import_folder) if os.path.isdir(os.path.join(import_folder, name))]:
+        # Check whether the folder name is equal to a dataset name
+        print("Dataset folder name: %s " % dataset_folder_name)
+        dataset = Dataset.objects.get(name=dataset_folder_name)
+        if not dataset:
             continue
 
-        default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
+        dataset_folder_path = os.path.join(import_folder, dataset_folder_name)
+        for lang3code_folder_name in [name for name in os.listdir(dataset_folder_path) if os.path.isdir(os.path.join(dataset_folder_path, name))]:
+            # Check whether the folder name is equal to a three letter code for language of the dataset at hand
+            print("Lang3code folder name: %s " % lang3code_folder_name)
+            languages = dataset.translation_languages.filter(language_code_3char=lang3code_folder_name)
+            if languages:
+                language = languages[0]
+            else:
+                continue
 
-        overwritten, was_allowed = save_media(import_folder,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
+            lang3code_folder_path = os.path.join(dataset_folder_path, lang3code_folder_name) + "/"
+            for filename in os.listdir(lang3code_folder_path):
 
-        if not was_allowed:
-            errors.append('Failed to move media file for '+default_annotationidgloss+
-                          '. Either the source could not be read or the destination could not be written.')
-            continue
+                (filename_without_extension, extension) = os.path.splitext(filename)
 
-        out += '<li>'+filename+'</li>'
+                try:
+                    glosses = Gloss.objects.filter(dataset=dataset, annotationidglosstranslation__language=language,
+                                                 annotationidglosstranslation__text__exact=filename_without_extension)
+                    if glosses:
+                        gloss = glosses[0]
+                except ObjectDoesNotExist:
+                    errors.append('Failed at '+filename+'. Could not find '+filename_without_extension+' (it should be a gloss ID).')
+                    continue
 
-        # If it is a video also extract a still image and generate a thumbnail version
-        if video:
-            annotation_id = default_annotationidgloss
-            destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
-            video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
-            video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
+                default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
 
-            try:
-                print("Trying to resize video " + destination_folder+video_filename)
+                overwritten, was_allowed = save_media(lang3code_folder_path,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
-                if os.path.isfile(video_filepath_small):
-                    print("Making a backup of " + video_filepath_small)
-                    # Make a backup
-                    backup_id = 1
-                    made_backup = False
-                    while not made_backup:
-                        if not os.path.isfile(video_filepath_small + '_' + str(backup_id)):
-                            os.rename(video_filepath_small, video_filepath_small + '_' + str(backup_id))
-                            made_backup = True
-                        else:
-                            backup_id += 1
+                if not was_allowed:
+                    errors.append('Failed to move media file for '+default_annotationidgloss+
+                                  '. Either the source could not be read or the destination could not be written.')
+                    continue
 
-                from CNGT_scripts.python.resizeVideos import VideoResizer
-                from signbank.settings.server_specific import FFMPEG_PROGRAM
-                resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
-                resizer.run()
-            except ImportError as i:
-                print(i.message)
-            except IOError as io:
-                print(io.message)
+                out += '<li>'+filename+'</li>'
 
-            # Issue #255: generate still image
-            try:
-                print("Trying to generate still images for " + destination_folder+video_filename)
-                from signbank.tools import generate_still_image
-                generate_still_image(annotation_id[:2],
-                                     destination_folder,
-                                     video_filename)
-            except ImportError as i:
-                print(i.message)
+                # If it is a video also extract a still image and generate a thumbnail version
+                if video:
+                    annotation_id = default_annotationidgloss
+                    destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
+                    video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
+                    video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
 
-        if overwritten:
-            overwritten_files += '<li>'+filename+'</li>'
+                    try:
+                        print("Trying to resize video " + destination_folder+video_filename)
+
+                        if os.path.isfile(video_filepath_small):
+                            print("Making a backup of " + video_filepath_small)
+                            # Make a backup
+                            backup_id = 1
+                            made_backup = False
+                            while not made_backup:
+                                if not os.path.isfile(video_filepath_small + '_' + str(backup_id)):
+                                    os.rename(video_filepath_small, video_filepath_small + '_' + str(backup_id))
+                                    made_backup = True
+                                else:
+                                    backup_id += 1
+
+                        from CNGT_scripts.python.resizeVideos import VideoResizer
+                        from signbank.settings.server_specific import FFMPEG_PROGRAM
+                        resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
+                        resizer.run()
+                    except ImportError as i:
+                        print(i.message)
+                    except IOError as io:
+                        print(io.message)
+
+                    # Issue #255: generate still image
+                    try:
+                        print("Trying to generate still images for " + destination_folder+video_filename)
+                        from signbank.tools import generate_still_image
+                        generate_still_image(annotation_id[:2],
+                                             destination_folder,
+                                             video_filename)
+                    except ImportError as i:
+                        print(i.message)
+
+                if overwritten:
+                    overwritten_files += '<li>'+filename+'</li>'
 
     overwritten_files += '</ul>'
     out += '</ul>'+overwritten_files
