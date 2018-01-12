@@ -19,7 +19,7 @@ from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
 
-def save_media(source_folder,goal_folder,gloss,extension):
+def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
         
     #Add a dot before the extension if needed
     if extension[0] != '.':
@@ -27,7 +27,9 @@ def save_media(source_folder,goal_folder,gloss,extension):
 
     #Figure out some names
     annotation_id = ""
-    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
+    language = Language.objects.get(language_code_3char=language_code_3char)
+    if not language:
+        raise ObjectDoesNotExist
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
         annotation_id = annotationidglosstranslations[0].text

@@ -386,7 +386,8 @@ def import_media(request,video):
 
                 default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
 
-                overwritten, was_allowed = save_media(lang3code_folder_path,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
+                overwritten, was_allowed = save_media(lang3code_folder_path,lang3code_folder_name,
+                                                      settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
                 if not was_allowed:
                     errors.append('Failed to move media file for '+default_annotationidgloss+
