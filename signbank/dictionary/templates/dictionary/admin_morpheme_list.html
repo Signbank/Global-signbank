@@ -1,5 +1,6 @@
 ﻿{% extends "baselayout.html" %}
 {% load i18n %}
+{% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 {% load tagging_tags %}
 {% load wrong_sign %}
@@ -25,7 +26,23 @@
             }
         });
         
-        
+        set_annotationidglosslanguages();
+
+         $('#id_dataset').change(function() {
+            set_annotationidglosslanguages();
+         });
+
+         function set_annotationidglosslanguages() {
+            var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+            var languages = languages_str.split(",");
+            $("[id*='add_morpheme_dataset_']").each(function(){
+                $(this).hide();
+            });
+            for(var id in languages) {
+                $("[id*='add_morpheme_dataset_header_" + languages[id] + "']").show();
+                $("[id*='add_morpheme_dataset_value_" + languages[id] + "']").show();
+            }
+         }
     });
 
     {% if perms.dictionary.change_gloss %}
@@ -145,17 +162,42 @@ function do_adminsearch(el) {
         <div>
             <table class='table' id='searchfields'>
                 <tr>
+                    {% for dataset_lang in dataset_languages %}
+                    {% with searchform|get_morpheme_search_field_for_language:dataset_lang as search_field %}
                     <td><div class='input-group'>
-                        <label class='input-group-addon' for='id_annotation_idgloss'>{{searchform.search.label}}</label>
-                        <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}></div>
+                        <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
+                                    {{search_field.label}}
+                                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                                          title="
+                                          <table>
+                                            <tr>
+                                                <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                                            </tr>
+                                          </table>
+                                          "></span>
+                                </label>
+                                <input name='morphemesearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                                </div>
                     </td>
-                    {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-                    <td><div class='input-group'>
-
-                        <label class='input-group-addon' for='id_annotation_idgloss_en'>{{searchform.englishGloss.label}}</label>
-                        <input name='englishGloss' class='form-control' {% if searchform.englishGloss.value %}value='{{searchform.englishGloss.value}}'{% endif %}></div>
-                    </td>
-                    {% endif %}
+                    {% endwith %}
+                    {% endfor %}
+                </tr>
+                <tr>
                     <td><div class='input-group'>
 
                         <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
@@ -435,16 +477,27 @@ function do_adminsearch(el) {
                  {% csrf_token %}
                  <table class='table'>
                      <tr>
+                         <th><label for='dataset'>Dataset</label></th>
                          <th><label for='id_idgloss'>ID Gloss</label></th>
-                         <th><label for='id_annotation_idgloss'>Annotation ID Gloss (Dutch)</label></th>
-                         <th><label for='id_annotation_idgloss_en'>Annotation ID Gloss (English)</label></th>
+                         {% for dataset_lang in dataset_languages %}
+                         <th id="add_morpheme_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
+                         {% endfor %}
                          <th><label for='id_mrp_type'>Morpheme type</label></th>
                          <th></th>
                      </tr>
                      <tr>
+                         <td><select id="id_dataset" name="dataset" required="">
+                             <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+                             {% for dataset in selected_datasets %}
+                             <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                             {% endfor %}
+                         </select></td>
                          <td>{{add_morpheme_form.idgloss}}</td>
-                         <td>{{add_morpheme_form.annotation_idgloss}}</td>
-                         <td>{{add_morpheme_form.annotation_idgloss_en}}</td>
+                         {% for dataset_lang in dataset_languages %}
+                         <td id="add_morpheme_dataset_value_{{ dataset_lang.language_code_2char }}">
+                             <input id="morphemecreate_{{ dataset_lang.language_code_2char }}" name="morphemecreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
+                         </td>
+                         {% endfor %}
                          <td class="edit edit_list"><select id='id_mrptype' name='mrpType'></select></td>
                          <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Morpheme" %}'></td>
                      </tr>
@@ -469,11 +522,9 @@ function do_adminsearch(el) {
     <thead>
       <tr>
           <th></th>
-           <th>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+          {% for dataset_lang in dataset_languages %}
+          <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+          {% endfor %}
 
            <th>{% trans "Abstract Meaning" %}</th>
            <th>{% trans "Morpheme type" %}</th>
@@ -486,9 +537,26 @@ function do_adminsearch(el) {
       <!-- EK: this second header row contains clickable sort-order buttons -->
       <tr>
           <th></th>
-           {% with "annotation_idgloss annotation_idgloss_en translation handedness domhndsh subhndsh locprim" as head_fields %}
+          {% for dataset_lang in dataset_languages %}
+          {% with "annotationidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
+          {% with minfield="-"|add:field %}
+           <th>
+             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+             </a>
+             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+             </a>
+             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
+               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
+             {% endif %}
+           </th>
+           {% endwith %}
+           {% endwith %}
+          {% endfor %}
+
+           {% with "translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
-           {% if SEPARATE_ENGLISH_IDGLOSS_FIELD or field != annotation_idgloss_en %}
            {% with minfield="-"|add:field %}
            <th>
              <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
@@ -502,7 +570,6 @@ function do_adminsearch(el) {
              {% endif %}
            </th>
            {% endwith %}
-           {% endif %}
            {% endfor %}
            {% endwith %}
            <th style="width:255px;"></th>
@@ -524,12 +591,15 @@ function do_adminsearch(el) {
 
       <td>{%if morpheme.get_image_path != None %}<div class="thumbnail_container"><img class="thumbnail" src="{{STATIC_URL}}{{morpheme.get_image_path}}"></div>{% endif %}</td>
 
-      <td><a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{morpheme.annotation_idgloss}}</a></td>
-
-      {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-      <td><a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{morpheme.annotation_idgloss_en}}</a></td>
-      {% endif %}
-
+      {% for dataset_lang in dataset_languages %}
+        {% with morpheme.gloss_ptr|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
+      <td>
+          {% ifnotequal annotationidglosstranslation "" %}
+            <a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{ annotationidglosstranslation }}</a>
+          {% endifnotequal %}
+      </td>
+        {% endwith %}
+      {% endfor %}
       <td>
       {% for translation in morpheme.translation_set.all %}
                 {% if forloop.last %}

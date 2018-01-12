@@ -17,6 +17,7 @@ from signbank.dictionary.forms import *
 import signbank.settings
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY,DEFAULT_DATASET_PK
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -25,19 +26,28 @@ def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
     
     if request.method == "POST":
+        if 'dataset' in request.POST and request.POST['dataset'] is not None:
+            selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+        else:
+            selected_datasets = get_selected_datasets_for_user(request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        if not settings.SEPARATE_ENGLISH_IDGLOSS_FIELD:
-            request.POST = request.POST.copy() #Make it mutable
-            request.POST['annotation_idgloss_en'] = request.POST['annotation_idgloss']
+        form = GlossCreateForm(request.POST, languages=dataset_languages)
 
-        form = GlossCreateForm(request.POST)
-
-        if len(Gloss.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
-            return render(request,'dictionary/warning.html', {'warning':_('Annotation ID Gloss not unique.')})
-        elif len(Gloss.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
-            return render(request,'dictionary/warning.html', {'warning':_('English annotation ID gloss not unique.')})
-        elif len(request.POST['annotation_idgloss']) < 1:
-            return render(request,'dictionary/warning.html', {'warning':_('Dutch annotation ID gloss cannot be empty.')})
+        for item, value in request.POST.items():
+            print("%s %s" % (item, value))
+            annotation_idgloss_prefix = "annotation_idgloss_"
+            if item.startswith(annotation_idgloss_prefix):
+                language_code_2char = item[len(annotation_idgloss_prefix):]
+                print(language_code_2char)
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                print(language)
+                glosses_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
+                    annotationidglosstranslation__language=language,
+                    annotationidglosstranslation__text__exact=value.upper())
+                print(glosses_for_this_language_and_annotation_idgloss)
+                if len(glosses_for_this_language_and_annotation_idgloss) != 0:
+                    return render(request, 'dictionary/warning.html', {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
         if form.is_valid():
             
@@ -53,7 +63,7 @@ def add_gloss(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
         else:
-            return render(request,'dictionary/add_gloss_form.html',{'add_gloss_form': form})
+            return render(request,'dictionary/add_gloss.html',{'add_gloss_form': form})
         
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
@@ -218,6 +228,9 @@ def update_gloss(request, glossid):
             else:
                 newvalue = _('No')
 
+        elif field.startswith('annotation_idgloss'):
+            return update_annotation_idgloss(gloss, field, value)
+
         else:
 
             original_value = getattr(gloss,field)
@@ -293,7 +306,7 @@ def update_gloss(request, glossid):
                         shutil.move(settings.MEDIA_ROOT+'/'+old_image_path,settings.MEDIA_ROOT+'/'+new_image_path+'.'+old_extension)
 
                     #You don't have to do this if there's no image
-                    except (IOError, TypeError):
+                    except (IOError,TypeError):
                         pass
 
                 #If the value is not a Boolean, return the new value
@@ -354,6 +367,25 @@ def update_keywords(gloss, field, value):
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language)])
     
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+def update_annotation_idgloss(gloss, field, value):
+    """Update the AnnotationIdGlossTranslation"""
+
+    print("update_annotation_idgloss")
+
+    # Determine the language of the keywords
+    language = Language.objects.get(id=get_default_language_id())
+    try:
+        language_code_2char = field[len('annotation_idgloss_'):]
+        language = Language.objects.filter(language_code_2char=language_code_2char)[0]
+    except:
+        pass
+
+    annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
+    annotation_idgloss_translation.text = value
+    annotation_idgloss_translation.save()
+
+    return HttpResponse(str(value), {'content-type': 'text/plain'})
 
 def update_signlanguage(gloss, field, values):
     # expecting possibly multiple values
@@ -473,7 +505,7 @@ def update_sequential_morphology(gloss, field, values):
             old_morpheme.delete()
         # gloss.morphemePart.clear()
         for value in values:
-            morpheme = gloss_from_identifier(value)
+            morpheme = Gloss.objects.get(pk=value)
             morph_def = MorphologyDefinition()
             morph_def.parent_gloss = gloss
             morph_def.role = role
@@ -496,8 +528,8 @@ def update_simultaneous_morphology(gloss, field, values):
     new_sim_tuples = []
 
     for value in values:
-        (morpheme, role) = value.split(':')
-        new_sim_tuples.append((morpheme,role))
+        (morpheme_id, role) = value.split(':')
+        new_sim_tuples.append((morpheme_id,role))
 
     # delete any existing simultaneous morphology objects rather than update
     # to allow (re-)insertion in the correct order
@@ -509,10 +541,10 @@ def update_simultaneous_morphology(gloss, field, values):
 
     # the existance of the morphemes has already been checked, but check again anyway
 
-    for (morpheme, role) in new_sim_tuples:
+    for (morpheme_id, role) in new_sim_tuples:
 
         try:
-            morpheme_gloss = gloss_from_identifier(morpheme)
+            morpheme_gloss = Gloss.objects.get(pk=morpheme_id)
 
             if not morpheme_gloss:
                 raise ValueError
@@ -530,7 +562,7 @@ def update_simultaneous_morphology(gloss, field, values):
 
     # Refresh Simultaneous Morphology with newly inserted objects
     # morphemes = [(m.morpheme.annotation_idgloss, m.role) for m in gloss.simultaneous_morphology.all()]
-    morphemes = [(morpheme.morpheme.annotation_idgloss, morpheme.role)
+    morphemes = [(str(morpheme.morpheme.id), morpheme.role)
                  for morpheme in SimultaneousMorphologyDefinition.objects.filter(parent_gloss_id=gloss)]
     sim_morphs = []
     for m in morphemes:
@@ -600,7 +632,7 @@ def subst_relations(gloss, field, values):
     # values is a list of values, where each value is a tuple of the form 'Role:String'
     # The format of argument values has been checked before calling this function
 
-    existing_relations = [(relation.id, relation.role, relation.target.idgloss) for relation in Relation.objects.filter(source=gloss)]
+    existing_relations = [(relation.id, relation.role, relation.target.id) for relation in Relation.objects.filter(source=gloss)]
 
     existing_relation_ids = [ r[0] for r in existing_relations ]
 
@@ -631,7 +663,7 @@ def subst_relations(gloss, field, values):
     for rel_id in existing_relation_ids:
         rel = Relation.objects.get(id=rel_id)
 
-        if (rel.role, rel.target.idgloss) in already_existing_to_keep:
+        if (rel.role, rel.target.id) in already_existing_to_keep:
             continue
 
         # Also delete the reverse relation
@@ -647,7 +679,7 @@ def subst_relations(gloss, field, values):
     # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
         try:
-            target_gloss =  gloss_from_identifier(target)
+            target_gloss = Gloss.objects.get(pk=target)
             rel = Relation(source=gloss, role=role, target=target_gloss)
             rel.save()
             # Also add the reverse relation
@@ -669,6 +701,7 @@ def subst_relations(gloss, field, values):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
+## TODO the function below does not seem to be used
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
     
@@ -753,30 +786,6 @@ def update_relationtoforeignsign(gloss, field, value):
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})           
     
     return HttpResponse(str(value), {'content-type': 'text/plain'})
-
-def gloss_from_identifier(value):
-    """Given an id of the form "idgloss (pk)" return the
-    relevant gloss or None if none is found
-    BUT: first check if a unique hit can be found by the string alone (if it is not empty)
-    """
-    
-    
-    match = re.match('(.*) \((\d+)\)', value)
-    if match:
-        print("MATCH: ", match)
-        annotation_idgloss = match.group(1)
-        pk = match.group(2)
-        print("INFO: ", annotation_idgloss, pk)
-        
-        target = Gloss.objects.get(pk=int(pk))
-        print("TARGET: ", target)
-        return target
-    elif value != '':
-        annotation_idgloss = value
-        target = Gloss.objects.get(annotation_idgloss=annotation_idgloss)
-        return target
-    else:
-        return None
 
 
 def morph_from_identifier(value):
@@ -888,7 +897,7 @@ def add_relation(request):
             
             role = form.cleaned_data['role']
             sourceid = form.cleaned_data['sourceid']
-            targetid = form.cleaned_data['targetid']
+            targetid = form.cleaned_data['targetid'] # This is a gloss ID now
             
             try:
                 source = Gloss.objects.get(pk=int(sourceid))
@@ -896,7 +905,7 @@ def add_relation(request):
                 print("source gloss not found")
                 return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
             
-            target = gloss_from_identifier(targetid)
+            target = Gloss.objects.get(id=targetid)
             if target:
                 rel = Relation(source=source, target=target, role=role)
                 rel.save()
@@ -1012,8 +1021,8 @@ def add_morphology_definition(request):
 
             parent_gloss = form.cleaned_data['parent_gloss_id']
             role = form.cleaned_data['role']
-            morpheme_id = form.cleaned_data['morpheme_id']
-            morpheme = gloss_from_identifier(morpheme_id)
+            morpheme_id = form.cleaned_data['morpheme_id'] # This is now a gloss ID
+            morpheme = Gloss.objects.get(id=morpheme_id)
 
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
 
@@ -1042,8 +1051,8 @@ def add_morpheme_definition(request, glossid):
 
         if form.is_valid():
 
-            morph_id = form.cleaned_data['morph_id']
-            morph = morph_from_identifier(morph_id)
+            morph_id = form.cleaned_data['morph_id'] ## This is a morpheme ID now
+            morph = Morpheme.objects.get(id=morph_id)
 
             if morph != None:
                 definition = SimultaneousMorphologyDefinition()
@@ -1095,8 +1104,8 @@ def add_blend_definition(request, glossid):
 
         if form.is_valid():
 
-            blend_id = form.cleaned_data['blend_id']
-            blend = gloss_from_identifier(blend_id)
+            blend_id = form.cleaned_data['blend_id'] # This is a gloss ID now
+            blend = Gloss.objects.get(id=blend_id)
 
             if blend != None:
                 definition = BlendMorphology()
@@ -1269,22 +1278,24 @@ def add_morpheme(request):
     """Create a new morpheme and redirect to the edit view"""
 
     if request.method == "POST":
+        if 'dataset' in request.POST and request.POST['dataset'] is not None:
+            selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+        else:
+            selected_datasets = get_selected_datasets_for_user(request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        if not settings.SEPARATE_ENGLISH_IDGLOSS_FIELD:
-            request.POST = request.POST.copy()  # Make it mutable
-            request.POST['annotation_idgloss_en'] = request.POST['annotation_idgloss']
+        form = MorphemeCreateForm(request.POST, languages=dataset_languages)
 
-        form = MorphemeCreateForm(request.POST)
-
-        if len(Morpheme.objects.filter(annotation_idgloss=request.POST['annotation_idgloss'].upper())) != 0:
-            return render(request,'dictionary/warning.html', {'warning': _('Annotation ID Gloss not unique.')})
-        elif len(Morpheme.objects.filter(annotation_idgloss_en=request.POST['annotation_idgloss_en'].upper())) != 0:
-            return render(request,'dictionary/warning.html',
-                                      {'warning': _('English annotation ID gloss not unique.')})
-        elif len(request.POST['annotation_idgloss']) < 1:
-            return render(request,'dictionary/warning.html',{'warning': _('Dutch annotation ID gloss cannot be empty.')})
-        # extract the user-chosen mrpType, converting it to...?
-        mrpType = request.POST['mrpType']
+        for item, value in request.POST.items():
+            annotation_idgloss_prefix = "annotation_idgloss_"
+            if item.startswith(annotation_idgloss_prefix):
+                language_code_2char = item[len(annotation_idgloss_prefix):]
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                morphemes_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
+                    annotationidglosstranslation__language=language,
+                    annotationidglosstranslation__text__exact=value.upper())
+                if len(morphemes_for_this_language_and_annotation_idgloss) != 0:
+                    return render(request, 'dictionary/warning.html', {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
         if form.is_valid():
 
@@ -1295,7 +1306,7 @@ def add_morpheme(request):
 
             return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}) + '?edit')
         else:
-            return render(request,'dictionary/add_morpheme_form.html',
+            return render(request,'dictionary/add_morpheme.html',
                                       {'add_morpheme_form': form})
 
     return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
@@ -1322,7 +1333,7 @@ def update_morpheme(request, morphemeid):
             value = ' '
 
         elif value[0] == '_':
-            value = value[1:];
+            value = value[1:]
 
         values = request.POST.getlist('value[]')  # in case we need multiple values
 
@@ -1340,7 +1351,7 @@ def update_morpheme(request, morphemeid):
 
             return update_definition(request, morpheme, field, value)
 
-        elif field == 'keywords':
+        elif field.startswith('keywords'):
 
             return update_keywords(morpheme, field, value)
 
@@ -1360,31 +1371,57 @@ def update_morpheme(request, morphemeid):
 
             return update_other_media(request, morpheme, field, value)
 
-        elif field == 'language':
+        elif field == 'signlanguage':
             # expecting possibly multiple values
 
-            try:
-                morpheme.language.clear()
-                for value in values:
-                    lang = SignLanguage.objects.get(name=value)
-                    morpheme.language.add(lang)
-                    morpheme.save()
-                newvalue = ", ".join([str(g) for g in morpheme.language.all()])
-            except:
-                return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
+            return update_signlanguage(morpheme, field, values)
+
+            # try:
+            #     morpheme.language.clear()
+            #     for value in values:
+            #         lang = SignLanguage.objects.get(name=value)
+            #         morpheme.language.add(lang)
+            #         morpheme.save()
+            #     newvalue = ", ".join([str(g) for g in morpheme.language.all()])
+            # except:
+            #     return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
 
         elif field == 'dialect':
             # expecting possibly multiple values
 
-            try:
-                morpheme.dialect.clear()
-                for value in values:
-                    lang = Dialect.objects.get(name=value)
-                    morpheme.dialect.add(lang)
-                    morpheme.save()
-                newvalue = ", ".join([str(g.name) for g in morpheme.dialect.all()])
-            except:
-                return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
+            return update_dialect(morpheme, field, values)
+
+            # try:
+            #     morpheme.dialect.clear()
+            #     for value in values:
+            #         lang = Dialect.objects.get(name=value)
+            #         morpheme.dialect.add(lang)
+            #         morpheme.save()
+            #     newvalue = ", ".join([str(g.name) for g in morpheme.dialect.all()])
+            # except:
+            #     return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
+
+        elif field == 'dataset':
+
+            original_value = getattr(morpheme,field)
+            ds = Dataset.objects.get(name=value)
+
+            if ds.is_public:
+                newvalue = value
+                setattr(morpheme, field, ds)
+                morpheme.save()
+                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+            import guardian
+            if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
+                newvalue = value
+                setattr(morpheme, field, ds)
+                morpheme.save()
+                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+            print('no permission for chosen dataset')
+            newvalue = original_value
+            return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
         elif field == "sn":
             # sign number must be unique, return error message if this SN is

@@ -2,6 +2,7 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 {% load i18n %}
+{% load annotation_idgloss_translation %}
 {% load tagging_tags %}
 {% load wrong_sign %}
 
@@ -16,7 +17,12 @@
 <body>
 
     <table class="table table-condensed">
-        <tr><th style="width:180px;">{% trans "Annotation ID Gloss (Dutch)" %}</th><th style="width:180px;">{% trans "Annotation ID Gloss (English)" %}</th><th style="width:180px;">{% trans "Creator" %}</th><th>{% trans "Creation date" %}</th></tr>
+        <tr>
+            {% for dataset_lang in dataset_languages %}
+            <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+            {% endfor %}
+            <th style="width:180px;">{% trans "Creator" %}</th>
+            <th>{% trans "Creation date" %}</th></tr>
 
         {% for gloss in glosses %}
         <!-- Apply three-way coloring: (1) tag for wrong sign, (2) availability of video, and (3) gloss database value for 'isNew' -->
@@ -30,8 +36,19 @@
         {% else %}
             <tr>
         {% endif %}
-            <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}">{{gloss.annotation_idgloss}}</a></td>
-            <td><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}">{{gloss.annotation_idgloss_en}}</a></td>
+          {% for dataset_lang in dataset_languages %}
+            {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
+          <td>
+              {% ifnotequal annotationidglosstranslation "" %}
+                {% if gloss.is_morpheme %}
+                <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+                {% else %}
+                <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+                {% endif %}
+              {% endifnotequal %}
+          </td>
+            {% endwith %}
+          {% endfor %}
             <td>
                 {% for creator in gloss.creator.all %}
                     {% if forloop.last %}

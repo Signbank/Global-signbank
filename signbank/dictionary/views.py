@@ -194,7 +194,7 @@ def word(request, keyword, n):
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
-def gloss(request, idgloss):
+def gloss(request, glossid):
     """View of a gloss - mimics the word view, really for admin use
        when we want to preview a particular gloss"""
 
@@ -206,12 +206,10 @@ def gloss(request, idgloss):
     # we should only be able to get a single gloss, but since the URL
     # pattern could be spoofed, we might get zero or many
     # so we filter first and raise a 404 if we don't get one
-    glosses = Gloss.objects.filter(annotation_idgloss=idgloss)
-
-    if len(glosses) != 1:
+    try:
+        gloss = Gloss.objects.get(id=glossid)
+    except ObjectDoesNotExist:
         raise Http404
-
-    gloss = glosses[0]
 
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
 #        return render_to_response('dictionary/not_allowed.html')
@@ -349,15 +347,17 @@ def import_media(request,video):
         extension = parts[-1]
 
         try:
-            gloss = Gloss.objects.get(annotation_idgloss=idgloss)
+            gloss = Gloss.objects.get(id=idgloss)
         except ObjectDoesNotExist:
-            errors.append('Failed at '+filename+'. Could not find '+idgloss+'.')
+            errors.append('Failed at '+filename+'. Could not find '+idgloss+' (it should be a gloss ID).')
             continue
+
+        default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
 
         overwritten, was_allowed = save_media(import_folder,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
         if not was_allowed:
-            errors.append('Failed to move media file for '+gloss.annotation_idgloss+
+            errors.append('Failed to move media file for '+default_annotationidgloss+
                           '. Either the source could not be read or the destination could not be written.')
             continue
 
@@ -365,7 +365,7 @@ def import_media(request,video):
 
         # If it is a video also extract a still image and generate a thumbnail version
         if video:
-            annotation_id = gloss.annotation_idgloss
+            annotation_id = default_annotationidgloss
             destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
             video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
             video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
@@ -536,8 +536,14 @@ def import_authors(request):
     return HttpResponse('OKS')
 
 def add_new_sign(request):
+    context = {}
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    context['selected_datasets'] = selected_datasets
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    context['dataset_languages'] = dataset_languages
+    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages)
 
-    return render(request,'dictionary/add_gloss.html',{'add_gloss_form':GlossCreateForm()})
+    return render(request,'dictionary/add_gloss.html',context)
 
 
 @login_required_config
@@ -559,12 +565,19 @@ def search_morpheme(request):
 
 def add_new_morpheme(request):
 
-    oContext = {'add_morpheme_form': MorphemeCreateForm()}
+    oContext = {}
 
     # Add essential information to the context
     oContext['morph_fields'] = []
     oChoiceLists = {}
     oContext['choice_lists'] = oChoiceLists
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    oContext['selected_datasets'] = selected_datasets
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    oContext['dataset_languages'] = dataset_languages
+    oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages)
+
     field = 'mrpType'
     # Get and save the choice list for this field
     field_category = fieldname_to_category(field)
@@ -597,9 +610,9 @@ def import_csv(request):
 
     user = request.user
     import guardian
-    qs = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
-
-    my_datasets = [ dataset.name for dataset in qs ]
+    user_datasets = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
+    user_datasets_names = [ dataset.name for dataset in user_datasets ]
+    dataset_languages = Language.objects.filter(dataset__in=user_datasets).distinct()
 
     # print('datasets: ', my_datasets)
 
@@ -659,15 +672,29 @@ def import_csv(request):
                     print('index error import csv: line number: ', nv, ', value: ', value)
                     pass
 
+            def value_dict_has_required_columns(value_dict):
+                """Checks if all columns for creating a gloss are there. Annotation ID Gloss needs to be
+                checked dynamically for each dataset language."""
+                if 'Lemma ID Gloss' not in value_dict or 'Dataset' not in value_dict:
+                    return False
+                else:
+                    dataset_name = value_dict['Dataset'].strip()
+                    dataset = Dataset.objects.get(name=dataset_name)
+                    if dataset:
+                        for language in dataset.translation_languages.all():
+                            column_name = "Annotation ID Gloss (%s)" % language.name_en
+                            if column_name not in value_dict:
+                                return False
+                    else:
+                        return False
+                return True
+
             # print("import CSV: value_dict: ", value_dict)
             try:
                 if 'Signbank ID' in value_dict:
                     pk = int(value_dict['Signbank ID'])
                 # no column Signbank ID
-                elif not ('Lemma ID Gloss' in value_dict
-                          and 'Annotation ID Gloss: Dutch' in value_dict
-                          and 'Annotation ID Gloss: English' in value_dict
-                          and 'Dataset' in value_dict):
+                elif not value_dict_has_required_columns(value_dict):
                     # not enough columns for creating glosses, input file needs fixing
                     e1 = 'To create glosses, the following columns are required: ' \
                         + 'Dataset, Lemma ID Gloss, Annotation ID Gloss: Dutch, Annotation ID Gloss: English.'
@@ -680,12 +707,11 @@ def import_csv(request):
                     break
 
                 else:
-                    (new_gloss, already_exists, already_exists_dutch, already_exists_english, error_create) \
-                        = create_gloss_from_valuedict(value_dict,my_datasets,nl)
+                    (new_gloss, already_exists, error_create) \
+                        = create_gloss_from_valuedict(value_dict,user_datasets_names,nl)
+                    print(new_gloss)
                     creation += new_gloss
                     gloss_already_exists += already_exists
-                    gloss_already_exists_dutch += already_exists_dutch
-                    gloss_already_exists_english += already_exists_english
                     if len(error_create):
                         # more than one error found
                         errors_found_string = '\n'.join(error_create)
@@ -722,7 +748,7 @@ def import_csv(request):
 
             # print('line after gloss does not exist, line ', str(nl))
             try:
-                (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss,my_datasets)
+                (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss,user_datasets_names)
                 changes += changes_found
                 # changes += compare_valuedict_to_gloss(value_dict,gloss)
 
@@ -782,8 +808,16 @@ def import_csv(request):
 
                 #Updating the keywords is a special procedure, because it has relations to other parts of the database
                 if fieldname == 'Keywords':
-
-                    update_keywords(gloss,None,new_value)
+                    # The following is necessary to process keywords for multiple languages
+                    keywords_dict = {}
+                    for keyword_string in new_value.split(", "):
+                        (keyword, language_code_2char) = keyword_string.split(":")
+                        if language_code_2char in keywords_dict:
+                            keywords_dict[language_code_2char] += ", " + keyword
+                        else:
+                            keywords_dict[language_code_2char] = keyword
+                    for language_code_2char, keywords in keywords_dict.items():
+                        update_keywords(gloss, "keywords_" + language_code_2char, keywords)
                     gloss.save()
                     continue
 
@@ -814,7 +848,9 @@ def import_csv(request):
                     # this has already been checked for existance and permission in the previous step
                     # get dataset identifier
                     if new_value == 'None':
-                        dataset_id = None
+                        # don't allow the user to erase the current dataset, this should have already been caught
+                        # dataset_id = None
+                        continue
                     else:
                         dataset_id = Dataset.objects.get(name=new_value)
                     setattr(gloss,'dataset',dataset_id)
@@ -925,19 +961,27 @@ def import_csv(request):
             for row in glosses_to_create.keys():
                 lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss']
                 dataset = glosses_to_create[row]['dataset']
-                annotation_id_gloss = glosses_to_create[row]['annotation_id_gloss']
-                annotation_id_gloss_en = glosses_to_create[row]['annotation_id_gloss_en']
 
                 if dataset == 'None':
-                    dataset_id = None
+                    # this is an error, this should have already been caught
+                    # dataset_id = None
+                    continue
                 else:
                     dataset_id = Dataset.objects.get(name=dataset)
                 new_gloss = Gloss()
                 new_gloss.idgloss = lemma_id_gloss
                 new_gloss.dataset = dataset_id
-                new_gloss.annotation_idgloss = annotation_id_gloss
-                new_gloss.annotation_idgloss_en = annotation_id_gloss_en
                 new_gloss.save()
+
+                for language in dataset_languages:
+                    annotation_id_gloss = glosses_to_create[row]['annotation_id_gloss_' + language.language_code_2char]
+                    if annotation_id_gloss:
+                        annotationidglosstranslation = AnnotationIdglossTranslation()
+                        annotationidglosstranslation.language = language
+                        annotationidglosstranslation.gloss = new_gloss
+                        annotationidglosstranslation.text = annotation_id_gloss
+                        annotationidglosstranslation.save()
+
                 # print('new gloss created: ', new_gloss.idgloss)
 
             stage = 2
@@ -955,9 +999,8 @@ def import_csv(request):
     return render(request,'dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,
                                                         'creation':creation,
                                                         'gloss_already_exists':gloss_already_exists,
-                                                        'gloss_already_exists_dutch':gloss_already_exists_dutch,
-                                                        'gloss_already_exists_english':gloss_already_exists_english,
-                                                        'error':error})
+                                                        'error':error,
+                                                        'dataset_languages':dataset_languages})
 
 def switch_to_language(request,language):
 
@@ -968,6 +1011,9 @@ def switch_to_language(request,language):
     return HttpResponse('OK')
 
 def recently_added_glosses(request):
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
     try:
         from signbank.settings.base import RECENTLY_ADDED_SIGNS_PERIOD
         import datetime as DT
@@ -975,10 +1021,13 @@ def recently_added_glosses(request):
         return render(request, 'dictionary/recently_added_glosses.html',
                       {'glosses': Gloss.objects.filter(
                           creationDate__range=(recently_added_signs_since_date, DT.datetime.now())).order_by(
-                          'creationDate').reverse()})
+                          'creationDate').reverse(),
+                       'dataset_languages': dataset_languages})
 
     except:
-        return render(request,'dictionary/recently_added_glosses.html', {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse()})
+        return render(request,'dictionary/recently_added_glosses.html',
+                      {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse(),
+                       'dataset_languages': dataset_languages})
 
 
 def proposed_new_signs(request):
@@ -1070,12 +1119,14 @@ def delete_image(request, pk):
         gloss = get_object_or_404(Gloss, pk=pk)
         image_path = gloss.get_image_path()
 
+        default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+
         os.remove(settings.WRITABLE_FOLDER+image_path)
 
         deleted_image = DeletedGlossOrMedia()
         deleted_image.item_type = 'image'
         deleted_image.idgloss = gloss.idgloss
-        deleted_image.annotation_idgloss = gloss.annotation_idgloss
+        deleted_image.annotation_idgloss = default_annotationidglosstranslation
         deleted_image.old_pk = gloss.pk
         deleted_image.filename = image_path
         deleted_image.save()
@@ -1185,15 +1236,15 @@ def update_cngt_counts(request,folder_index=None):
     glosses_not_in_signbank = []
     updated_glosses = []
 
-    for idgloss, frequency_info in counts.items():
+    for gloss_id, frequency_info in counts.items():
 
         #Collect the gloss needed
         try:
-            gloss = Gloss.objects.get(annotation_idgloss=idgloss)
-        except ObjectDoesNotExist:
+            gloss = Gloss.objects.get(id=gloss_id)
+        except (ObjectDoesNotExist, ValueError):
 
-            if idgloss != None:
-                glosses_not_in_signbank.append(idgloss)
+            if gloss_id != None:
+                glosses_not_in_signbank.append(gloss_id)
 
             continue
 
@@ -1251,7 +1302,7 @@ def update_cngt_counts(request,folder_index=None):
 
 def find_and_save_variants(request):
 
-    variant_pattern_glosses = Gloss.objects.filter(annotation_idgloss__regex=r"^(.*)\-([A-Z])$").order_by('annotation_idgloss')
+    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('idgloss')[:10]
 
     gloss_table_prefix = '<!DOCTYPE html>\n' \
                          '<html>\n' \
@@ -1314,10 +1365,19 @@ def find_and_save_variants(request):
 
         other_relation_objects = [x.target for x in other_relations_of_sign]
         variant_relation_objects = [x.target for x in variant_relations_of_sign]
-        this_sign_stem = gloss.has_stem()
-        length_this_sign_stem = len(this_sign_stem)
-        this_matches = r'^' + re.escape(this_sign_stem) + r'\-[A-Z]$'
-        candidate_variants = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=gloss).exclude(
+
+        # Build query
+        this_sign_stems = gloss.get_stems()
+        queries = []
+        for this_sign_stem in this_sign_stems:
+            this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
+            queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
+                             dataset=gloss.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
+        query = queries.pop()
+        for q in queries:
+            query |= q
+
+        candidate_variants = Gloss.objects.filter(query).distinct().exclude(idgloss=gloss).exclude(
             idgloss__in=other_relation_objects).exclude(idgloss__in=variant_relation_objects)
 
         if candidate_variants:

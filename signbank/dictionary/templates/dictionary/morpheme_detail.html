@@ -1,6 +1,7 @@
 {% extends 'baselayout.html' %}
 {% load i18n %}
 {% load stylesheet %}
+{% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 
 {% block extrahead %}
@@ -16,7 +17,7 @@
     {% if perms.dictionary.change_morpheme %}
     
     <script type='text/javascript'>
-    var url = '{{ URL }}'
+    var url = '{{ URL }}';
 
     var edit_mode_str = '{% trans "Edit" %}';
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
@@ -32,8 +33,10 @@
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
+    var handedness_weak_choices = {{morpheme.handedness_weak_choices_json|safe}};
     var languages = {{morpheme.signlanguage_choices|safe}};
     var dialects = {{morpheme.dialect_choices|safe}};
+    var dataset_choices = {{dataset_choices|safe}};
     var mrptype_choices = {{morpheme.mrptype_choices|safe}};
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 
@@ -124,6 +127,9 @@
 
     {% if morpheme.idgloss %}
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/morpheme/{{morpheme.idgloss}}.html">{% trans "Public View" %}</a>
+    {% endif %}
+
+    {% if perms.dictionary.change_gloss %}
     <button id='delete_morpheme_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
     {% endif %}
     
@@ -271,13 +277,32 @@
         <table class='table table-condensed'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value morpheme.idgloss %}</td></tr>
 
-            <tr><th>{% trans "Abstract meaning" %}</th><td class='edit edit_text' id='keywords'>{% for trn in morpheme.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+            <tr>
+                <th>
+                    {% trans "Annotation ID Gloss" %} ({{ lang }})
+                </th>
+                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translations.0.text|safe }}</td>
+
+            </tr>
+            {% endfor %}
+
+            {% for lang, translations in translations_per_language.items %}
+            <tr>
+                <th>
+                    {% trans "Abstract meaning" %} ({{ lang }})
+                </th>
+                <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' colspan="2">{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            </tr>
+            {% endfor %}
+
             <tr>
                 <th>{% trans "Morpheme type" %}</th>
-                <td class='edit edit_mrptype' id='mrpType'>{{ morpheme.get_mrpType_display }}</td>
+                <td class='edit edit_mrptype' id='mrpType'>{{ morpheme_type }}</td>
             </tr>
             <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage'>{% for lang in morpheme.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset'>{{ morpheme.dataset }}</td></tr>
         </table>
 			 
    {% if perms.dictionary.view_advanced_properties %}
@@ -292,7 +317,7 @@
         <div id='morphology' class='collapse'>
 
             <!-- Show a read-only list of glosses in which this gloss occurs as compound part(ERK, issue #177) -->
-            {% if morpheme.gloss_set.count > 0 %}
+            {% if appears_in %}
             <table class='table table-condensed'>
                 <tr>
                     <th style='width:2em'></th>
@@ -300,10 +325,10 @@
                     <th style='width:12em'>{% trans "Gloss" %}</th>
                 </tr>
 
-                {% for morphgloss in morpheme.gloss_set.all %}
+                {% for morphgloss,wordclass in appears_in %}
                 <tr>
                     <th style='width:2em'></th>
-                    <td style='width:12em' id='morphology-definition-wordclass_{{morphgloss.id}}'>{{morphgloss.get_wordClass_display}}</td>
+                    <td style='width:12em' id='morphology-definition-wordclass_{{morphgloss.id}}'>{{wordclass}}</td>
                     <td id='morphology-definition-morpheme_{{morphgloss.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphgloss.pk %}'>{{morphgloss}}</a></td>
                 </tr>
                 {% endfor %}

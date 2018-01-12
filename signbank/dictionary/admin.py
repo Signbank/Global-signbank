@@ -87,10 +87,7 @@ class SenseNumberListFilter(SimpleListFilter):
 
 class GlossAdmin(VersionAdmin):
 
-    idgloss_fields = ['idgloss', 'annotation_idgloss']
-
-    if SEPARATE_ENGLISH_IDGLOSS_FIELD:
-        idgloss_fields.append('annotation_idgloss_en')
+    idgloss_fields = ['idgloss']
 
     fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('dataset', 'signlanguage', 'dialect')}, ),
                  ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate','alternative_id'),
@@ -103,13 +100,10 @@ class GlossAdmin(VersionAdmin):
     save_on_top = True
     save_as = True
 
-    list_display = ['idgloss','annotation_idgloss','dataset']
-
-    if SEPARATE_ENGLISH_IDGLOSS_FIELD:
-        list_display += ['annotation_idgloss_en']
+    list_display = ['idgloss','dataset']
 
     list_display += ['morph', 'sense', 'sn']
-    search_fields = ['^idgloss', '=sn', '^annotation_idgloss']
+    search_fields = ['^idgloss', '=sn']
     list_filter = ['dataset', 'signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
     inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 

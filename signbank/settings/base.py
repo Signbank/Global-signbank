@@ -189,8 +189,6 @@ SIGN_NAVIGATION = False
 # which definition fields do we show and in what order?
 DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'deictic', 'modifier', 'question', 'augment', 'note']
 
-ADMIN_RESULT_FIELDS = ['annotation_idgloss', 'annotation_idgloss_en', 'handedness', 'domhndsh', 'subhndsh', 'locprim']
-
 HANDSHAPE_RESULT_FIELDS = ['machine_value', 'english_name', 'dutch_name', 'hsFingSel', 'hsFingConf', 'hsThumb', 'hsSpread']
 
 # location and URL for uploaded files
@@ -263,9 +261,6 @@ SIGN_NAVIGATION = False
 
 # which definition fields do we show and in what order?
 #DEFINITION_FIELDS = []
-
-
-#ADMIN_RESULT_FIELDS = ['idgloss', 'annotation_idgloss']
 
 LOGGING = {
     'version': 1,

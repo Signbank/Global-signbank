@@ -51,7 +51,7 @@ ECV_SETTINGS = {
         {
             'id': 'eng',
             'description': 'ASL Signbank lexicon',
-            'annotation_idgloss_fieldname': 'annotation_idgloss',
+            'annotation_idgloss_fieldname': 'annotationidglosstranslation_en',
             'attributes': {
                 'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138502-001',
                 'LANG_ID': 'eng',
@@ -82,7 +82,6 @@ TMP_DIR = "/tmp"
 
 API_FIELDS = [
     'idgloss',
-    'annotation_idgloss'
 ]
 
 SHOW_ENGLISH_ONLY = True

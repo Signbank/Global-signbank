@@ -2,6 +2,7 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 {% load i18n %}
+{% load annotation_idgloss_translation %}
 
 {% block extrajs %}
     <script type="text/javascript" src="{{URL}}/static/js/bootstrap-filestyle.min.js"> </script>
@@ -80,7 +81,7 @@
         <table class="table table-striped">
             <tr>
                 <th style="width:10em; text-align:left;">{% trans "Dataset" %}</th>
-                <th style="width:20em; text-align:left;">{% trans "Annotation ID Gloss: Dutch" %} ({% trans "Signbank ID" %})</th>
+                <th style="width:20em; text-align:left;">{% trans "Annotation ID Gloss" %} ({% trans "Signbank ID" %})</th>
                 <th style="width:20em; text-align:left;">{% trans "Field" %}</th>
                 <th style="width:20em; text-align:left;">{% trans "Old" %}</th>
                 <th style="width:40em; text-align:left;">{% trans "New" %}</th>
@@ -89,20 +90,20 @@
             <!--The following check is necessary to account for None and False values, which are not empty -->
                 {% if change.original_human_value == change.original_machine_value and change.new_human_value == change.new_machine_value %}
                     {% if change.original_human_value %}
-                    {% blocktrans with dataset=change.dataset pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
-            <tr><td>{{ dataset }}</td><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td>
+                    {% blocktrans with dataset=change.dataset pk=change.pk annotationidglosstranslation=change.annotationidglosstranslation human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+            <tr><td>{{ dataset }}</td><td>{{ annotationidglosstranslation }} ({{pk}})</td><td><em>{{ human_key }}</em></td>
                 <td>{{ original_human_value }}</td><td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                     {% else %}
-                    {% blocktrans with dataset=change.dataset pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+                    {% blocktrans with dataset=change.dataset pk=change.pk annotationidglosstranslation=change.annotationidglosstranslation human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
 
-            <tr><td>{{ dataset }}</td><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>&nbsp;</td><td>{{new_human_value}}</td></tr>
+            <tr><td>{{ dataset }}</td><td>{{ annotationidglosstranslation }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>&nbsp;</td><td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                     {% endif %}
                 {% else %}
-                    {% blocktrans with dataset=change.dataset pk=change.pk idgloss=change.idgloss human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+                    {% blocktrans with dataset=change.dataset pk=change.pk annotationidglosstranslation=change.annotationidglosstranslation human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
 
-            <tr><td>{{ dataset }}</td><td>{{ idgloss }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>{{ original_human_value }}</td>
+            <tr><td>{{ dataset }}</td><td>{{ annotationidglosstranslation }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>{{ original_human_value }}</td>
                                 <td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                 {% endif %}
@@ -113,64 +114,26 @@
 
             <input type="submit" value="{% blocktrans %}Make changes{% endblocktrans %}" />
 
-            {% elif creation or gloss_already_exists or gloss_already_exists_dutch or gloss_already_exists_english %}
+            {% elif creation or gloss_already_exists %}
                 {% if gloss_already_exists %}
-                {% trans "Already existing Annotation ID Gloss Dutch and Annotation ID Gloss English:" %}
+                {% trans "Already existing Annotation ID Glosses:" %}
                 <table class="table table-striped">
                     <tr>
                         <th>{% trans "Dataset" %}</th>
                         <th>{% trans "Lemma ID Gloss" %}</th>
-                        <th>{% trans "Annotation ID Gloss: Dutch" %}</th>
-                        <th>{% trans "Annotation ID Gloss: English" %}</th>
+                        {% for dataset_lang in dataset_languages %}
+                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+                         {% endfor %}
                     </tr>
                 {% for gloss in gloss_already_exists %}
                     <tr>
                     <td>{{ gloss.dataset }}</td>
                     <td>{{ gloss.lemma_id_gloss_value }}</td>
-                    <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
-                        {{ gloss.annotation_id_gloss_value }}</a></td>
-                    <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
-                        {{ gloss.annotation_id_gloss_en_value }}</a></td>
-                    </tr>
-                {% endfor %}
-                </table>
-                {% endif %}
-                {% if gloss_already_exists_dutch %}
-                {% trans "Already existing Annotation ID Gloss Dutch:" %}
-                <table class="table table-striped">
-                    <tr>
-                        <th>{% trans "Dataset" %}</th>
-                        <th>{% trans "Lemma ID Gloss" %}</th>
-                        <th>{% trans "Annotation ID Gloss: Dutch" %}</th>
-                        <th>{% trans "Annotation ID Gloss: English" %}</th>
-                    </tr>
-                {% for gloss in gloss_already_exists_dutch %}
-                    <tr>
-                        <td>{{ gloss.dataset }}</td>
-                        <td>{{ gloss.lemma_id_gloss_value }}</td>
-                        <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
-                            {{ gloss.annotation_id_gloss_value }}</a></td>
-                        <td>{{ gloss.annotation_id_gloss_en_value }}</td>
-                    </tr>
-                {% endfor %}
-                </table>
-                {% endif %}
-                {% if gloss_already_exists_english %}
-                {% trans "Already existing Annotation ID Gloss English:" %}
-                <table class="table table-striped">
-                    <tr>
-                        <th>{% trans "Dataset" %}</th>
-                        <th>{% trans "Lemma ID Gloss" %}</th>
-                        <th>{% trans "Annotation ID Gloss: Dutch" %}</th>
-                        <th>{% trans "Annotation ID Gloss: English" %}</th>
-                    </tr>
-                {% for gloss in gloss_already_exists_english %}
-                    <tr>
-                        <td>{{ gloss.dataset }}</td>
-                        <td>{{ gloss.lemma_id_gloss_value }}</td>
-                        <td>{{ gloss.annotation_id_gloss_value }}</td>
-                        <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
-                            {{ gloss.annotation_id_gloss_en_value }}</a></td>
+
+                    {% for dataset_lang in dataset_languages %}
+                     <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
+                        {{ gloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}</a></td>
+                     {% endfor %}
                     </tr>
                 {% endfor %}
                 </table>
@@ -181,20 +144,23 @@
                     <tr>
                         <th>{% trans "Dataset" %}</th>
                         <th>{% trans "Lemma ID Gloss" %}</th>
-                        <th>{% trans "Annotation ID Gloss: Dutch" %}</th>
-                        <th>{% trans "Annotation ID Gloss: English" %}</th>
+                        {% for dataset_lang in dataset_languages %}
+                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+                         {% endfor %}
                     </tr>
                 {% for newgloss in creation %}
                     <tr>
                         <td>{{ newgloss.dataset }}</td>
                         <td>{{ newgloss.lemma_id_gloss_value }}</td>
-                        <td>{{ newgloss.annotation_id_gloss_value }}</td>
-                        <td>{{ newgloss.annotation_id_gloss_en_value }}</td>
+                        {% for dataset_lang in dataset_languages %}
+                         <td class="bla">{{ newgloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}</td>
+                         {% endfor %}
                     </tr>
                 <input type="hidden" name="{{newgloss.gloss_pk}}.dataset"  value="{{ newgloss.dataset }}">
                 <input type="hidden" name="{{newgloss.gloss_pk}}.lemma_id_gloss"  value="{{ newgloss.lemma_id_gloss_value }}">
-                <input type="hidden" name="{{newgloss.gloss_pk}}.annotation_id_gloss"  value="{{ newgloss.annotation_id_gloss_value }}">
-                <input type="hidden" name="{{newgloss.gloss_pk}}.annotation_id_gloss_en"  value="{{ newgloss.annotation_id_gloss_en_value }}">
+                {% for dataset_lang in dataset_languages %}
+                 <input type="hidden" name="{{newgloss.gloss_pk}}.annotation_id_gloss_{{ dataset_lang.language_code_2char }}" value="{{ newgloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}"></input>
+                 {% endfor %}
 
                 <input type="hidden" name="update_or_create" value="create">
                 {% endfor %}

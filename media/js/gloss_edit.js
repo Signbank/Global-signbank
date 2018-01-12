@@ -55,7 +55,19 @@ var busy_editing = 0;
 	});
 
     glosstypeahead($('.glosstypeahead'));
+    $('.glosstypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk)
+        });
+    $('.glosstypeahead').bind("change", function() {
+          $(this).parent().next().val("")
+        });
     morphtypeahead($('.morphtypeahead'));
+    $('.morphtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk)
+        });
+    $('.morphtypeahead').bind("change", function() {
+          $(this).parent().next().val("")
+        });
 
 
     // setup requried for Ajax POST
@@ -361,7 +373,7 @@ function configure_edit() {
      });
      $('.edit_mrptype').editable(edit_post_url, {
          type      : 'select',
-         data      : mrptype_choices,
+         data      : choice_lists['morph_type'],
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_wordclass').editable(edit_post_url, {
@@ -480,7 +492,7 @@ function glosstypeahead(target) {
 
      $(target).typeahead(null, {
           name: 'glosstarget',
-          displayKey: 'pk',
+          displayKey: 'annotation_idgloss',
           source: gloss_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(gloss) {
@@ -521,7 +533,7 @@ function morphtypeahead(target) {
 
      $(target).typeahead(null, {
           name: 'morphtarget',
-          displayKey: 'pk',
+          displayKey: 'annotation_idgloss',
           source: morph_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(gloss) {

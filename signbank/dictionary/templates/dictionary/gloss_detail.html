@@ -1,6 +1,7 @@
 {% extends 'baselayout.html' %}
 {% load i18n %}
 {% load stylesheet %}
+{% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 
 {% block extrahead %}
@@ -40,7 +41,7 @@
     var handedness_weak_choices = {{gloss.handedness_weak_choices_json|safe}}
     var languages = {{gloss.signlanguage_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
-    var dataset_choices = {{ dataset_choices|safe }};
+    var dataset_choices = {{dataset_choices|safe}};
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
@@ -163,9 +164,7 @@
 
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
 
-    {% if gloss.annotation_idgloss %}
-    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.annotation_idgloss}}.html">{% trans "Public View" %}</a>
-    {% endif %}
+    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
 
         {% if perms.dictionary.change_gloss %}
             <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
@@ -327,39 +326,13 @@
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
                 <td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{ lemma_group_url }}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>
             </tr>
-            <tr><th>{% trans "Annotation ID Gloss (Dutch)" %}</th>
-                <td class='edit edit_text'  id='annotation_idgloss'>{% value gloss.annotation_idgloss %}</td>
-                <td>
-                    {% if gloss.morphemePart.all.count > 0 %}
 
-                        {% if gloss.morphemePart.all.count > 2 %}
-                        <span class="gloss_detail_morpheme">({{gloss.morphemePart.all.count}} morphemes)</span>
-                        {% else %}
-                        <!-- Number of morphemes is [1-2] -->
-
-                            {% for morphdef in gloss.morphemePart.all %}
-                            <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.pk %}'>
-                                {% value morphdef.annotation_idgloss %}</a>{% if not forloop.last %}, {% endif %}
-                            </span>
-                            {% endfor %}
-
-                        {% endif %}
-
-                    {% endif %}
-
-                    {% if gloss.parent_glosses.all.count > 0 %}
-                    {% for component in gloss.parent_glosses.all %}
-                    <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component.morpheme.pk %}'>
-                        {% value component.morpheme.annotation_idgloss %}</a>{% if not forloop.last %} + {% endif %}
-                    </span>
-                    {% endfor %}
-                    {% endif %}
-                </td>
-            </tr>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-            <tr><th>{% trans "Annotation ID Gloss (English)" %}</th>
-                <td class='edit edit_text'  id='annotation_idgloss_en'>{% value gloss.annotation_idgloss_en %}</td>
+            {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+            <tr>
+                <th>
+                    {% trans "Annotation ID Gloss" %} ({{ lang }})
+                </th>
+                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translations.0.text|safe }}</td>
                 <td>
                     {% if gloss.morphemePart.all.count > 0 %}
 
@@ -369,7 +342,7 @@
                             <!-- Number of morphemes is [1-2] -->
                             {% for morphdef in gloss.morphemePart.all %}
                             <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.pk %}'>
-                                {% value morphdef.annotation_idgloss_en %}</a>{% if not forloop.last %}, {% endif %}
+                                {% value morphdef.gloss_ptr|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %}, {% endif %}
                             </span>
                             {% endfor %}
                         {% endif %}
@@ -379,18 +352,18 @@
                     {% if gloss.parent_glosses.all.count > 0 %}
                     {% for component in gloss.parent_glosses.all %}
                     <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component.morpheme.pk %}'>
-                        {% value component.morpheme.annotation_idgloss_en %}</a>{% if not forloop.last %} + {% endif %}
+                        {% value component.morpheme|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %} + {% endif %}
                     </span>
                     {% endfor %}
                     {% endif %}
                 </td>
             </tr>
-            {% endif %}
+            {% endfor %}
 
             {% for lang, translations in translations_per_language.items %}
             <tr>
                 <th>
-                    {% trans "Translation equivalents in " %}{{ lang }}
+                    {% trans "Translation equivalents" %} ({{ lang }})
                 </th>
                 <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' colspan="2">{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             </tr>
@@ -440,7 +413,7 @@
                       <th>{% trans "Component sign" %}</th>
                   </tr>
 
-                   {% for morphdef, translated_role in morphdefs %}
+                   {% for morphdef, translated_role, sign_display in morphdefs %}
 
                    <tr>
                          <td style='width:2em;'>
@@ -473,7 +446,7 @@
                         </td>
 
                         <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{translated_role}}</td>
-                        <td id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{morphdef.morpheme}}</a></td>
+                        <td id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
                    {% endfor %}
 
             {% else %}
@@ -489,7 +462,10 @@
                    <tr>
                        <td style="width:2em;"></td>
                        <td style="width:12em;">{{morphologyform.role}}</td>
-                       <td><input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID gloss" %}' name='morpheme_id'></td>
+                       <td>
+                           <input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID gloss" %}' />
+                           <input type="hidden" name="morpheme_id" value=""/>
+                       </td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
                    </tr>
                </table>
@@ -507,7 +483,7 @@
                     <th style="width:22em;">{% trans "Morpheme gloss" %}</th>
                     <th colspan="2">{% trans "Meaning in this sign" %}</th>
                 </tr>
-                {% for morpheme in gloss.simultaneous_morphology.all %}
+                {% for morpheme, morph_display, morpheme_type in simultaneous_morphology %}
                 <tr>
                     <!-- Facility to delete this morpheme -->
                      <td>
@@ -538,7 +514,8 @@
                          </div>
 
                     </td>
-                    <td id='morpheme-definition_{{morpheme.pk}}'><a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morpheme.morpheme}}</a></td>
+                    <td id='morpheme-definition_{{morpheme.pk}}'>
+                        <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
                     <td class='edit edit_text' id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
                </tr>
                 {% endfor %}
@@ -552,7 +529,10 @@
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:22em;"><input class='form-control morphtypeahead' placeholder='{% trans "Morpheme gloss" %}' name='morph_id' value="{{morphemeform.morph_id.value|default:''}}"/></td>
+                       <td style="width:22em;">
+                           <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme gloss" %}' value="{{morphemeform.morph_id.value|default:''}}"/>
+                           <input type="hidden" name='morph_id' value=""/>
+                       </td>
                        <td><input class='form-control' placeholder='{% trans "Meaning in this sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
                    </tr>
@@ -573,7 +553,7 @@
                     <th style="width:22em;">{% trans "Blend gloss" %}</th>
                     <th colspan="2">{% trans "Role in this sign" %}</th>
                 </tr>
-                {% for blend in gloss.blend_morphology.all %}
+                {% for blend, blend_display in blend_morphology %}
                 <tr>
                     <!-- Facility to delete this blend -->
                      <td>
@@ -605,7 +585,7 @@
                          </div>
 
                     </td>
-                    <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend.glosses}}</a></td>
+                    <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend_display}}</a></td>
                     <td class='edit edit_text' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
                </tr>
                 {% endfor %}
@@ -619,7 +599,10 @@
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:22em;"><input class='form-control glosstypeahead' placeholder='{% trans "Blend gloss" %}' name='blend_id' value="{{blendform.blend_id.value|default:''}}"/></td>
+                       <td style="width:22em;">
+                           <input class='form-control glosstypeahead' placeholder='{% trans "Blend gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
+                           <input type="hidden" name='blend_id' value=""/>
+                       </td>
                        <td><input class='form-control' placeholder='{% trans "Role in this sign" %}' name='role' value="{{blendform.role.value|default:''}}"/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Blend" %}' type='submit'></td>
                    </tr>
@@ -771,8 +754,7 @@
     </div>
 
     <!-- Minimal Pairs -->
- {% with gloss.homonyms as homs %}
- {% if homs.1 %}
+ {% if homonyms_but_not_saved %}
   <div class="panel panel-default">
 
         <div class='panel-heading'>
@@ -785,14 +767,14 @@
                <tr>
                    <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
                </tr>
-                {% for gl in homs.1 %}
-                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td></tr>
+                {% for gl, homo_display in homonyms_but_not_saved %}
+                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ homo_display }}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
   </div>
  {% endif %}
- {% if homs.2 %}
+ {% if homonyms_different_phonology %}
  <div class="panel panel-default">
 
         <div class='panel-heading'>
@@ -805,14 +787,13 @@
                <tr>
                    <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
                </tr>
-                {% for gl in homs.2 %}
-                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td></tr>
+                {% for gl, homo_display in homonyms_different_phonology %}
+                <tr><td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ homo_display }}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
   </div>
 {% endif %}
-{% endwith %}
 <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
@@ -822,8 +803,7 @@
         <div id='minimalpairs' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 
-            {% with gloss.minimal_pairs_dict as mpd %}
-            {% if mpd %}
+            {% if minimalpairs %}
                <tr>
                    <th style="width:auto; padding:0px 0px;">{% trans "ID Gloss" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Field name" %}</th>
@@ -831,7 +811,7 @@
                    <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
                 </tr>
                 {% load field_choice %}
-                {% for gl, dict in mpd.items %}
+                {% for gl, dict, minpar_display in minimalpairs %}
                 <tr>
                 {% for k, d in dict.items %}
                     {% with d.0 as field_name %}
@@ -840,7 +820,7 @@
                     {% with d.3|stringformat:"s" as other_field_value %}
                     {% with request.LANGUAGE_CODE as language %}
                     {% with field_category|add:language as args %}
-                    <td style="width:auto; padding:0px 0px;"><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl.annotation_idgloss }}</a></td>
+                    <td style="width:auto; padding:0px 0px;"><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ minpar_display }}</a></td>
                     <td style="width:auto; padding:0px 0px;">{% trans d.0 %}</td>
                     <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and d.2 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
                         {% else %}{{ field_value|machine_field_translate:args }}{% endif %}</td>
@@ -856,7 +836,6 @@
                 </tr>
                 {% endfor %}
             {% endif %}
-            {% endwith %}
             </table>
         </div>
 </div>
@@ -916,11 +895,13 @@
         </div>
         <div id='relations' class='collapse'>
                <table class='table table-condensed'>
-                   {% for rel in gloss.relation_sources.all|dictsort:"target.annotation_idgloss" %}
+                   {% for rel, target_display in otherrelations %}
                     <tr id='row_{{rel.id}}'>
                         <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}'><span class='glyphicon glyphicon-trash relation_delete'></span></td>
                         <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
-                        <td class='edit edit_relation_target' id='relationtarget_{{rel.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{rel.target.annotation_idgloss}}</a></td>
+                        <td id='relationtarget_{{rel.id}}'>
+                            <a id='relation_target_hyperlink_{{rel.id}}'
+                               href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
                     </tr>
                    {% endfor %}
                </table>
@@ -932,7 +913,10 @@
                    <table class='table table-condensed'>
                        <tr>
                            <td>{{relationform.role}}</td>
-                           <td><input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID Gloss" %}' name='targetid'></td>
+                           <td>
+                               <input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID Gloss" %}'/>
+                               <input type="hidden" name="targetid" value=""/>
+                           </td>
                            <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
                        </tr>
                    </table>

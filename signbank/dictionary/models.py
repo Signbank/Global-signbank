@@ -7,6 +7,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
+from django.forms.utils import ValidationError
 import tagging
 import re
 
@@ -341,7 +342,7 @@ class Gloss(models.Model):
     class Meta:
         verbose_name_plural = "Glosses"
         # ordering: for Lemma View in the Gloss List View, we need to have glosses in the same Lemma Group sorted
-        ordering = ['idgloss','annotation_idgloss']
+        ordering = ['idgloss']
         permissions = (('update_video', "Can Update Video"),
                        ('search_gloss', 'Can Search/View Full Gloss Details'),
                        ('export_csv', 'Can export sign details as CSV'),
@@ -367,26 +368,6 @@ class Gloss(models.Model):
             
         return d
 
-    # not called anywhere
-    def admin_fields(self):
-        """Return a list of field values in settings.ADMIN_RESULT_FIELDS 
-        for use in the admin list view"""
-        
-        result = []
-        for field in settings.ADMIN_RESULT_FIELDS:
-            fname = self._meta.get_field(field).verbose_name
-
-            #First, try to give the human readable choice value back
-            try:
-                result.append((fname, getattr(self, 'get_'+field+'_display')()))
-
-            #If that doesn't work, give the raw value back
-            except AttributeError:
-                result.append((fname, getattr(self, field)))
-
-
-        return result
-
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
                                 help_text=_("Dataset a gloss is part of"), null=True)
     
@@ -394,21 +375,6 @@ class Gloss(models.Model):
     This is the unique identifying name of an entry of a sign form in the
 database. No two Sign Entry Names can be exactly the same, but a "Sign
 Entry Name" can be (and often is) the same as the Annotation Idgloss.""")    
-  
-    annotation_idgloss = models.CharField(_("Annotation ID Gloss: Dutch"), unique=True,max_length=30, help_text="""
-    This is the Dutch name of a sign used by annotators when glossing the corpus in
-an ELAN annotation file. The Annotation Idgloss may be the same for two or
-more entries (each with their own 'Sign Entry Name'). If two sign entries
-have the same 'Annotation Idgloss' that means they differ in form in only
-minor or insignificant ways that can be ignored.""") 
-    # the idgloss used in transcription, may be shared between many signs
-
-    annotation_idgloss_en = models.CharField(_("Annotation ID Gloss: English"), unique=True,blank=True, max_length=30, help_text="""
-    This is the English name of a sign used by annotators when glossing the corpus in
-an ELAN annotation file. The Annotation Idgloss may be the same for two or
-more entries (each with their own 'Sign Entry Name'). If two sign entries
-have the same 'Annotation Idgloss' that means they differ in form in only
-minor or insignificant ways that can be ignored.""") 
 
     # languages that this gloss is part of
     signlanguage = models.ManyToManyField(SignLanguage)
@@ -589,6 +555,14 @@ minor or insignificant ways that can be ignored.""")
                 else:
                     fields[field.verbose_name.title()] = field.value_to_string(self)
 
+        # Annotation Idgloss translations
+        if self.dataset:
+            for language in self.dataset.translation_languages.all():
+                annotationidglosstranslation = self.annotationidglosstranslation_set.filter(language=language)
+                if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
+                    fields[_("Annotation ID Gloss") + ": %s" % language.name] = annotationidglosstranslation[0].text
+
+
         # Get all the keywords associated with this sign
         allkwds = ", ".join([x.translation.text for x in self.translation_set.all()])
         fields[Translation.__name__ + "s"] = allkwds
@@ -658,9 +632,9 @@ minor or insignificant ways that can be ignored.""")
 
         if staff:
             # Make sure we only include the none-Morpheme glosses
-            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('annotation_idgloss')
+            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('idgloss')
         else:
-            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('annotation_idgloss')
+            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('idgloss')
 
         if all_glosses_ordered:
 
@@ -682,9 +656,9 @@ minor or insignificant ways that can be ignored.""")
         if self.sn == None:
             return None
         elif staff:
-            set = Gloss.objects.filter(sn__lt=self.sn).order_by('-annotation_idgloss')
+            set = Gloss.objects.filter(sn__lt=self.sn).order_by('-idgloss')
         else:
-            set = Gloss.objects.filter(sn__lt=self.sn, inWeb__exact=True).order_by('-annotation_idgloss')
+            set = Gloss.objects.filter(sn__lt=self.sn, inWeb__exact=True).order_by('-idgloss')
         if set:
             return set[0]
         else:
@@ -772,15 +746,21 @@ minor or insignificant ways that can be ignored.""")
 
     def pattern_variants(self):
 
-        this_sign_stem = self.has_stem()
-        length_this_sign_stem = len(this_sign_stem)
-        this_matches = r'^' + re.escape(this_sign_stem) + r'\-[A-Z]$'
-        other_relations_of_sign = self.other_relations()
-        #variant_relations_of_sign = self.variant_relations()
+        # Build query
+        this_sign_stems = self.get_stems()
+        queries = []
+        for this_sign_stem in this_sign_stems:
+            this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
+            queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
+                             dataset=self.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
+        query = queries.pop()
+        for q in queries:
+            query |= q
 
+        other_relations_of_sign = self.other_relations()
         other_relation_objects = [x.target for x in other_relations_of_sign]
 
-        pattern_variants = Gloss.objects.filter(annotation_idgloss__regex=this_matches).exclude(idgloss=self).exclude(
+        pattern_variants = Gloss.objects.filter(query).exclude(idgloss=self).exclude(
             idgloss__in=other_relation_objects)
 
         return pattern_variants
@@ -805,11 +785,11 @@ minor or insignificant ways that can be ignored.""")
 
         return homonyms
 
-    def has_stem(self):
+    def get_stems(self):
 
-        has_stem = self.annotation_idgloss[:-2]
+        stems = [(x.language, x.text[:-2]) for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-']
 
-        return has_stem
+        return stems
 
     def gloss_relations(self):
 
@@ -1000,7 +980,7 @@ minor or insignificant ways that can be ignored.""")
                       'altern': 'check', 'phonOth': 'text', 'mouthG': 'text',
                       'mouthing': 'text', 'phonetVar': 'text'}
 
-        minimal_pairs_fields = {}
+        minimal_pairs_fields = dict() #{}
 
         if (self.handedness is None or self.handedness == '0'):
             return minimal_pairs_fields
@@ -1014,7 +994,7 @@ minor or insignificant ways that can be ignored.""")
 
 
         for o in wmp:
-            different_fields = {}
+            different_fields = dict() #{}
             onep = o.non_empty_phonology()
             for f,n,v in onep:
                 fc = fieldname_to_category(f)
@@ -1360,6 +1340,14 @@ minor or insignificant ways that can be ignored.""")
 
         return json.dumps(d)
 
+    def get_annotationidglosstranslation_texts(self):
+        d = dict()
+        annotationidglosstranslations = self.annotationidglosstranslation_set.all()
+        for translation in annotationidglosstranslations:
+            d[translation.language.language_code_2char] = translation.text
+
+        return d
+
     def get_choice_lists(self):
         """Return JSON for the location choice list"""
  
@@ -1394,10 +1382,13 @@ except:
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
 def save_info_about_deleted_gloss(sender,instance,using,**kwarsg):
+    from signbank.tools import get_default_annotationidglosstranslation
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
+
     deleted_gloss = DeletedGlossOrMedia()
     deleted_gloss.item_type = 'gloss'
     deleted_gloss.idgloss = instance.idgloss
-    deleted_gloss.annotation_idgloss = instance.annotation_idgloss
+    deleted_gloss.annotation_idgloss = default_annotationidglosstranslation
     deleted_gloss.old_pk = instance.pk
     deleted_gloss.save()
 
@@ -1406,7 +1397,7 @@ class DeletedGlossOrMedia(models.Model):
 
     item_type = models.CharField(max_length=5,choices=(('gloss','gloss'),('image','image'),('video','video')))
     idgloss = models.CharField("ID Gloss", max_length=50)
-    annotation_idgloss = models.CharField("Annotation ID Gloss: Dutch", max_length=30)
+    annotation_idgloss = models.CharField("Annotation ID Gloss", max_length=30)
     old_pk = models.IntegerField()
 
     filename = models.CharField(max_length=100,blank=True) #For media only
@@ -1508,7 +1499,7 @@ class MorphologyDefinition(models.Model):
     morpheme = models.ForeignKey(Gloss,related_name="morphemes")
 
     def __str__(self):
-        return self.morpheme.idgloss + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
+        return self.morpheme.idgloss # + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
 
 class Morpheme(Gloss):
     """A morpheme definition uses all the fields of a gloss, but adds its own characteristics (#174)"""
@@ -1519,7 +1510,12 @@ class Morpheme(Gloss):
 
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
-        return "%s (%s)" % (self.idgloss, self.get_mrpType_display())
+        # return "%s (%s)" % (self.idgloss, self.get_mrpType_display())
+        # The display needs to be overrided to accomodate translations, the mrpType is done in adminviews
+        # The idgloss field is no longer correct
+        # We won't use this method in the interface but leave it for debugging purposes
+
+        return "%s" % (self.idgloss)
 
     def admin_next_morpheme(self):
         """next morpheme in the admin view, shortcut for next_dictionary_morpheme with staff=True"""
@@ -1531,20 +1527,20 @@ class Morpheme(Gloss):
         """Find the next morpheme in dictionary order"""
 
         if staff:
-            all_morphemes_ordered = Morpheme.objects.all().order_by('annotation_idgloss')
+            all_morphemes_ordered = Morpheme.objects.all().order_by('idgloss')
         else:
-            all_morphemes_ordered = Morpheme.objects.filter(inWeb__exact=True).order_by('annotation_idgloss')
+            all_morphemes_ordered = Morpheme.objects.filter(inWeb__exact=True).order_by('idgloss')
 
         if all_morphemes_ordered:
 
-            foundit = False;
+            foundit = False
 
             for morpheme in all_morphemes_ordered:
                 if morpheme == self:
                     foundit = True
                 elif foundit:
-                    return morpheme;
-                    break;
+                    return morpheme
+                    break
 
         else:
             return None
@@ -1554,10 +1550,10 @@ class Morpheme(Gloss):
         """Return JSON for mrptype choices"""
 
         # Get the list of choices for this field
-        li = self._meta.get_field("mrpType").choices;
+        li = self._meta.get_field("mrpType").choices
 
         # Sort the list
-        sorted_li = sorted(li, key=lambda x: x[1]);
+        sorted_li = sorted(li, key=lambda x: x[1])
 
         # Put it in another format
         reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
@@ -1571,7 +1567,7 @@ class SimultaneousMorphologyDefinition(models.Model):
     morpheme = models.ForeignKey(Morpheme,related_name='glosses_containing')
 
     def __str__(self):
-        return self.parent_gloss.idgloss + ' consists of ' + self.morpheme.idgloss
+        return self.parent_gloss.idgloss # + ' consists of ' + self.morpheme.idgloss
 
 class BlendMorphology(models.Model):
     parent_gloss = models.ForeignKey(Gloss,related_name='blend_morphology')
@@ -1579,7 +1575,7 @@ class BlendMorphology(models.Model):
     glosses = models.ForeignKey(Gloss,related_name='glosses_comprising')
 
     def __str__(self):
-        return self.parent_gloss.idgloss + ' is ' + self.role + ' blend of ' + self.glosses.idgloss
+        return self.parent_gloss.idgloss # + ' is ' + self.role + ' blend of ' + self.glosses.idgloss
 
 class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""
@@ -1658,3 +1654,39 @@ class Language(models.Model):
         return self.name
 
 
+class AnnotationIdglossTranslation(models.Model):
+    """An annotation ID Gloss"""
+    text = models.CharField(_("Annotation ID Gloss"), max_length=30, help_text="""
+        This is the name of a sign used by annotators when glossing the corpus in
+        an ELAN annotation file.""")
+    gloss = models.ForeignKey("Gloss")
+    language = models.ForeignKey("Language")
+
+    class Meta:
+        unique_together = (("gloss", "language"),)
+
+    def save(self, *args, **kwargs):
+        """
+        1. Before an item is saved the language is checked against the languages of the dataset the gloss is in.
+        2. The annotation idgloss translation text for a language must be unique within a dataset. 
+        Note that bulk updates will not use this method. Therefore, always iterate over a queryset when updating."""
+        dataset = self.gloss.dataset
+        if dataset:
+            # Before an item is saved the language is checked against the languages of the dataset the gloss is in.
+            dataset_languages = self.gloss.dataset.translation_languages.all()
+            if not self.language in dataset_languages:
+                msg = "Language %s is not in the set of language of the dataset gloss %s belongs to" \
+                      % (self.language.name, self.gloss.id)
+                raise ValidationError(msg)
+
+            # The annotation idgloss translation text for a language must be unique within a dataset.
+            glosses_with_same_text = dataset.gloss_set.filter(annotationidglosstranslation__text__exact=self.text,
+                                                              annotationidglosstranslation__language=self.language)
+            if not(
+                (len(glosses_with_same_text) == 1 and glosses_with_same_text[0] == self)
+                   or glosses_with_same_text is None or len(glosses_with_same_text) == 0):
+                msg = "The annotation idgloss translation text '%s' is not unique within dataset '%s' for gloss '%s'." \
+                      % (self.text, dataset.name, self.gloss.id)
+                raise ValidationError(msg)
+
+        super(AnnotationIdglossTranslation, self).save(*args, **kwargs)

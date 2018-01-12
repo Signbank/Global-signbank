@@ -1,5 +1,6 @@
 ﻿{% extends "baselayout.html" %}
 {% load i18n %}
+{% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 {% load tagging_tags %}
 {% load wrong_sign %}
@@ -26,6 +27,27 @@
         });
 
         $('[data-toggle="tooltip"]').tooltip();
+
+        /**
+         * In the 'add gloss' form, toggle the annotation idgloss fields depending on the chosen dataset
+         */
+         set_annotationidglosslanguages();
+
+         $('#id_dataset').change(function() {
+            set_annotationidglosslanguages();
+         });
+
+         function set_annotationidglosslanguages() {
+            var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+            var languages = languages_str.split(",");
+            $("[id*='add_gloss_dataset_']").each(function(){
+                $(this).hide();
+            });
+            for(var id in languages) {
+                $("[id*='add_gloss_dataset_header_" + languages[id] + "']").show();
+                $("[id*='add_gloss_dataset_value_" + languages[id] + "']").show();
+            }
+         }
     });
 
 
@@ -137,6 +159,7 @@ function do_toggle_groups(el) {
   document.getElementById('adminsearch').submit();
 }
 
+
    </script>
 {% endblock %}
 
@@ -160,10 +183,12 @@ function do_toggle_groups(el) {
                 <div>
                     <table class='table' id='searchfields'>
                         <tr>
+                            {% for dataset_lang in dataset_languages %}
+                            {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
                             <td>
                                 <div class='input-group'>
-                                <label class='input-group-addon' for='id_annotation_idgloss'>
-                                    {{searchform.search.label}}
+                                <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
+                                    {{search_field.label}}
                                     <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
                                           title="
                                           <table>
@@ -188,17 +213,11 @@ function do_toggle_groups(el) {
                                           </table>
                                           "></span>
                                 </label>
-                                <input name='search' class='form-control' {% if searchform.search.value %}value='{{searchform.search.value}}'{% endif %}>
+                                <input name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                                 </div>
                             </td>
-                            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-                            <td><div class='input-group'>
-
-                                <label class='input-group-addon' for='id_annotation_idgloss_en'>{{searchform.englishGloss.label}}</label>
-                                <input name='englishGloss' class='form-control' {% if searchform.englishGloss.value %}value='{{searchform.englishGloss.value}}'{% endif %}></div>
-                            </td>
-                            {% endif %}
-
+                            {% endwith %}
+                            {% endfor %}
                         </tr>
                         <tr>
 
@@ -519,9 +538,9 @@ function do_toggle_groups(el) {
         <input class='btn btn-default' type='submit' name='format' value='CSV'>
         {% endif %}
         <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
-        {% if perms.dictionary.export_ecv %}
-        <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
-        {% endif %}
+        <!--{% if perms.dictionary.export_ecv %}-->
+        <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
+        <!--{% endif %}-->
         <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
                value='{% trans "Reset" %}'>
     </div>
@@ -571,19 +590,26 @@ function do_toggle_groups(el) {
              {% csrf_token %}
              <table class='table'>
                  <tr>
+                     <th><label for='dataset'>{% trans "Dataset" %}</label></th>
                      <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
-                     <th><label for='id_annotation_idgloss'>{% trans "Annotation ID Gloss (Dutch)" %}</label></th>
-                     {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-                         <th><label for='id_annotation_idgloss_en'>{% trans "Annotation ID Gloss (English)" %}</label></th>
-                     {% endif %}
+                     {% for dataset_lang in dataset_languages %}
+                     <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
+                     {% endfor %}
                      <th></th>
                  </tr>
                  <tr>
+                     <td><select id="id_dataset" name="dataset" required="">
+                         <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+                         {% for dataset in selected_datasets %}
+                         <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                         {% endfor %}
+                     </select></td>
                      <td>{{add_gloss_form.idgloss}}</td>
-                     <td>{{add_gloss_form.annotation_idgloss}}</td>
-                     {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-                         <td>{{add_gloss_form.annotation_idgloss_en}}</td>
-                     {% endif %}
+                     {% for dataset_lang in dataset_languages %}
+                     <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
+                         <input id="glosscreate_{{ dataset_lang.language_code_2char }}" name="glosscreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
+                     </td>
+                     {% endfor %}
                      <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'></td>
                  </tr>
              </table>
@@ -612,11 +638,9 @@ function do_toggle_groups(el) {
       <tr>
           <th>{% trans "Dataset" %}</th>
           <th></th>
-           <th>{% trans "Annotation ID gloss: Dutch" %}</th>
-
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
+           {% for dataset_lang in dataset_languages %}
+          <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+          {% endfor %}
 
           <th>{% trans "Lemma ID gloss" %}</th>
 
@@ -631,9 +655,26 @@ function do_toggle_groups(el) {
       <tr>
           <th></th>
           <th></th>
-           {% with "annotation_idgloss annotation_idgloss_en idgloss translation handedness domhndsh subhndsh locprim" as head_fields %}
+          {% for dataset_lang in dataset_languages %}
+          {% with "annotationidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
+          {% with minfield="-"|add:field %}
+           <th>
+             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+             </a>
+             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+             </a>
+             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
+               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
+             {% endif %}
+           </th>
+           {% endwith %}
+           {% endwith %}
+          {% endfor %}
+
+           {% with "idgloss translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
-           {% if SEPARATE_ENGLISH_IDGLOSS_FIELD or field != annotation_idgloss_en %}
            {% with minfield="-"|add:field %}
            <th>
              <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
@@ -647,7 +688,6 @@ function do_toggle_groups(el) {
              {% endif %}
            </th>
            {% endwith %}
-           {% endif %}
            {% endfor %}
            {% endwith %}
            <th style="width:255px;"></th>
@@ -672,68 +712,40 @@ function do_toggle_groups(el) {
           <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
+      {% for dataset_lang in dataset_languages %}
+        {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
       <td>
-          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
-          {% else %}
-          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
-          {% endif %}
+          {% ifnotequal annotationidglosstranslation "" %}
+            {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
+            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            {% else %}
+            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            {% endif %}
 
-          {% if gloss.morphemePart.count > 0 %}
+            {% if gloss.morphemePart.count > 0 %}
               {% if gloss.morphemePart.count > 3 %}
                   <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
               {% else %}
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.morphemePart.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.gloss_ptr|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
-          {% endif %}
+            {% endif %}
 
-          {% if gloss.parent_glosses.count > 0 %}
+            {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
-          {% endif %}
-
+            {% endif %}
+          {% endifnotequal %}
       </td>
-
-      {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-      <td>
-          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
-          {% else %}
-            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
-          {% endif %}
-
-          {% if gloss.morphemePart.all.count > 0 %}
-              {% if gloss.morphemePart.count > 3 %}
-                    <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
-              {% else %}
-                    <!-- Number of morphemes is [1-3] -->
-                    <div class="morpheme_in_gloss">
-                    {% for morphdef in gloss.morphemePart.all %}
-                        <span>{{ morphdef.annotation_idgloss_en }}{% if not forloop.last %}, {% endif %}</span>
-                    {% endfor %}
-                    </div>
-              {% endif %}
-          {% endif %}
-
-          {% if gloss.parent_glosses.all.count > 0 %}
-            <div class="component_in_gloss">
-            {% for component in gloss.parent_glosses.all %}
-                <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">
-                    {{ component.morpheme.annotation_idgloss_en }}</a>{% if not forloop.last %} + {% endif %}</span>
-            {% endfor %}
-            </div>
-          {% endif %}
-
-      </td>
-      {% endif %}
+        {% endwith %}
+      {% endfor %}
 
       <td>
           {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
@@ -893,12 +905,10 @@ function do_toggle_groups(el) {
           <th>{% trans "Lemma ID gloss" %}</th>
           <th>{% trans "Dataset" %}</th>
           <th></th>
-           <th>{% trans "Annotation ID gloss: Dutch" %}</th>
 
-            {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-           <th>{% trans "Annotation ID gloss: English" %}</th>
-            {% endif %}
-
+           {% for dataset_lang in dataset_languages %}
+           <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+           {% endfor %}
 
            <th>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
@@ -932,68 +942,40 @@ function do_toggle_groups(el) {
           <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
+      {% for dataset_lang in dataset_languages %}
+        {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
       <td>
-          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
-          {% else %}
-          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss}}</a></div>
-          {% endif %}
+          {% ifnotequal annotationidglosstranslation "" %}
+            {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
+            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            {% else %}
+            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            {% endif %}
 
-          {% if gloss.morphemePart.count > 0 %}
+            {% if gloss.morphemePart.count > 0 %}
               {% if gloss.morphemePart.count > 3 %}
                   <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
               {% else %}
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.morphemePart.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.annotation_idgloss }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.gloss_ptr|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
-          {% endif %}
+            {% endif %}
 
-          {% if gloss.parent_glosses.count > 0 %}
+            {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
-          {% endif %}
-
+            {% endif %}
+          {% endifnotequal %}
       </td>
-
-      {% if SEPARATE_ENGLISH_IDGLOSS_FIELD %}
-      <td>
-          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
-          {% else %}
-            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{gloss.annotation_idgloss_en}}</a></div>
-          {% endif %}
-
-          {% if gloss.morphemePart.all.count > 0 %}
-              {% if gloss.morphemePart.count > 3 %}
-                    <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
-              {% else %}
-                    <!-- Number of morphemes is [1-3] -->
-                    <div class="morpheme_in_gloss">
-                    {% for morphdef in gloss.morphemePart.all %}
-                        <span>{{ morphdef.annotation_idgloss_en }}{% if not forloop.last %}, {% endif %}</span>
-                    {% endfor %}
-                    </div>
-              {% endif %}
-          {% endif %}
-
-          {% if gloss.parent_glosses.all.count > 0 %}
-            <div class="component_in_gloss">
-            {% for component in gloss.parent_glosses.all %}
-                <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme.annotation_idgloss_en }}</a>
-                    {% if not forloop.last %} + {% endif %}</span>
-            {% endfor %}
-            </div>
-          {% endif %}
-
-      </td>
-      {% endif %}
+        {% endwith %}
+      {% endfor %}
 
       <td>
       {% for translation in gloss.translation_set.all %}
