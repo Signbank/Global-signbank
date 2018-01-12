@@ -540,6 +540,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
 
     def get_fields_dict(self):
+        # this function might be obsolete
         fields = {}
         for field in Gloss._meta.fields:
             if field.name in settings.API_FIELDS:
@@ -563,7 +564,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         fields[Translation.__name__ + "s"] = allkwds
 
         # Get morphology
-        fields[Morpheme.__name__ + "s"] = ", ".join([x.__str__() for x in self.morphemePart.all()])
+        fields[Morpheme.__name__ + "s"] = ", ".join([x.__str__() for x in self.simultaneous_morphology.all()])
 
         #
         fields["Parent glosses"] = ", ".join([x.__str__() for x in self.parent_glosses.all()])

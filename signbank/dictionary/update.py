@@ -57,7 +57,7 @@ def add_gloss(request):
             gloss.excludeFromEcv = False
             gloss.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
         else:
             return render(request,'dictionary/add_gloss.html',{'add_gloss_form': form})
         
@@ -352,7 +352,6 @@ def update_keywords(gloss, field, value):
 
     # remove current keywords
     current_trans = gloss.translation_set.filter(language=language)
-    #current_kwds = [t.translation for t in current_trans]
     current_trans.delete()
     # add new keywords
     for i in range(len(keywords_list)):
@@ -366,8 +365,6 @@ def update_keywords(gloss, field, value):
 
 def update_annotation_idgloss(gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
-
-    print("update_annotation_idgloss")
 
     # Determine the language of the keywords
     language = Language.objects.get(id=get_default_language_id())
@@ -420,11 +417,8 @@ def update_dialect(gloss, field, values):
     # expecting possibly multiple values
 
     dialect_choices = json.loads(gloss.dialect_choices())
-
     numerical_values_converted_to_dialects = [ dialect_choices[int(value)] for value in values ]
-
     error_string_values = ', '.join(numerical_values_converted_to_dialects)
-
     new_dialects_to_save = []
 
     try:
@@ -499,7 +493,6 @@ def update_sequential_morphology(gloss, field, values):
             old_morpheme = MorphologyDefinition.objects.get(id=morpheme_def_id)
             print("DELETE: ", old_morpheme)
             old_morpheme.delete()
-        # gloss.morphemePart.clear()
         for value in values:
             morpheme = Gloss.objects.get(pk=value)
             morph_def = MorphologyDefinition()
@@ -507,12 +500,13 @@ def update_sequential_morphology(gloss, field, values):
             morph_def.role = role
             morph_def.morpheme = morpheme
             morph_def.save()
-            # gloss.morphemePart.add(morph_def)
             role = role + 1
     except:
         return HttpResponseBadRequest("Unknown Morpheme %s" % values, {'content-type': 'text/plain'})
 
-    newvalue = ", ".join([str(g.idgloss) for g in gloss.morphemePart.all()])
+    seq_morphemes = [morpheme.morpheme for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+
+    newvalue = ", ".join([str(g.idgloss) for g in seq_morphemes])
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -520,7 +514,6 @@ def update_simultaneous_morphology(gloss, field, values):
     # expecting possibly multiple values
 
     existing_sim_ids = [morpheme.id for morpheme in SimultaneousMorphologyDefinition.objects.filter(parent_gloss_id=gloss)]
-
     new_sim_tuples = []
 
     for value in values:
@@ -529,14 +522,12 @@ def update_simultaneous_morphology(gloss, field, values):
 
     # delete any existing simultaneous morphology objects rather than update
     # to allow (re-)insertion in the correct order
-
     for sim_id in existing_sim_ids:
         sim = SimultaneousMorphologyDefinition.objects.get(id=sim_id)
         print("DELETE: ", sim)
         sim.delete()
 
     # the existance of the morphemes has already been checked, but check again anyway
-
     for (morpheme_id, role) in new_sim_tuples:
 
         try:
@@ -551,6 +542,7 @@ def update_simultaneous_morphology(gloss, field, values):
             sim.morpheme_id = morpheme_gloss.id
             sim.role = role
             sim.save()
+
         except:
             print("morpheme not found")
             continue
@@ -589,7 +581,6 @@ def subst_foreignrelations(gloss, field, values):
     new_relations = [ t[2] for t in new_relation_tuples]
 
     # delete any existing relations with obsolete other language gloss
-
     for rel_id in existing_relation_ids:
         rel = RelationToForeignSign.objects.get(id=rel_id)
         if rel.other_lang_gloss not in new_relations:
@@ -598,7 +589,6 @@ def subst_foreignrelations(gloss, field, values):
 
     # all remaining existing relations are to be updated
     for (loan_word, other_lang, other_lang_gloss) in new_relation_tuples:
-
         if other_lang_gloss in existing_relation_other_glosses:
             # update existing relation
             rel = RelationToForeignSign.objects.get(gloss=gloss, other_lang_gloss=other_lang_gloss)
@@ -629,12 +619,8 @@ def subst_relations(gloss, field, values):
     # The format of argument values has been checked before calling this function
 
     existing_relations = [(relation.id, relation.role, relation.target.id) for relation in Relation.objects.filter(source=gloss)]
-
     existing_relation_ids = [ r[0] for r in existing_relations ]
-
     existing_relations_by_role = dict()
-
-    # for r in ['homonym','synonyn','antonym','hyponym','hypernym','seealso','variant']:
 
     for (rel_id, rel_role, rel_other_gloss) in existing_relations:
 
@@ -790,7 +776,6 @@ def morph_from_identifier(value):
     BUT: first check if a unique hit can be found by the string alone (if it is not empty)
     """
 
-
     match = re.match('(.*) \((\d+)\)', value)
     if match:
         print("MATCH: ", match)
@@ -824,7 +809,7 @@ def update_definition(request, gloss, field, value):
     
     if what == 'definitiondelete':
         defn.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     
     if what == 'definition':
         # update the definition
@@ -850,7 +835,6 @@ def update_definition(request, gloss, field, value):
         defn.save()
         newvalue = defn.get_role_display()
 
-
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 def update_other_media(request,gloss,field,value):
@@ -868,7 +852,7 @@ def update_other_media(request,gloss,field,value):
 
     if action_or_fieldname == 'other-media-delete':
         other_media.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'?editothermedia')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'/')
 
     elif action_or_fieldname == 'other-media-type':
         other_media.type = value
@@ -910,10 +894,7 @@ def add_relation(request):
                 reverse_relation = Relation(source=target, target=source, role=Relation.get_reverse_role(role))
                 reverse_relation.save()
 
-                
-                # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
-
 
             else:
                 print("target gloss not found")
@@ -977,7 +958,7 @@ def add_relationtoforeignsign(request):
             rel = RelationToForeignSign(gloss=gloss,loan=loan,other_lang=other_lang,other_lang_gloss=other_lang_gloss)
             rel.save()
                 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
         else:
             print(form)
@@ -1006,7 +987,7 @@ def add_definition(request, glossid):
             defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
             defn.save()
             
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
 def add_morphology_definition(request):
 
@@ -1026,7 +1007,7 @@ def add_morphology_definition(request):
             morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     raise Http404('Incorrect request')
 
@@ -1041,23 +1022,26 @@ def add_morpheme_definition(request, glossid):
 
         # check availability of morpheme before continuing
         if form.data['morph_id'] == "":
+            print('morph_id is empty')
             # The user has obviously not selected a morpheme
             # Desired action (Issue #199): nothing happens
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
         if form.is_valid():
 
             morph_id = form.cleaned_data['morph_id'] ## This is a morpheme ID now
-            morph = Morpheme.objects.get(id=morph_id)
+            # morph = Morpheme.objects.get(id=morph_id)
+            morph = morph_from_identifier(morph_id)
+            if morph == None:
+                print('morph_id is None')
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
-            if morph != None:
-                definition = SimultaneousMorphologyDefinition()
-                definition.parent_gloss = thisgloss
-                definition.morpheme = morph
-                definition.role = form.cleaned_data['description']
-                definition.save()
-
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+            definition = SimultaneousMorphologyDefinition()
+            definition.parent_gloss = thisgloss
+            definition.morpheme = morph
+            definition.role = form.cleaned_data['description']
+            definition.save()
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     raise Http404('Incorrect request')
 
@@ -1079,7 +1063,7 @@ def add_morphemeappearance(request):
             morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     raise Http404('Incorrect request')
 
@@ -1224,7 +1208,7 @@ def add_othermedia(request):
                 parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
                 OtherMedia(path=request.POST['gloss']+'/'+request.FILES['file'].name,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']})+'?editothermedia')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']}))
 
     raise Http404('Incorrect request')
 
@@ -1245,7 +1229,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
     if what == 'morphology_definition_delete':
         print("DELETE: ", morph_def)
         morph_def.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'morphology_definition_role':
         morph_def.role = value
         morph_def.save()
@@ -1300,10 +1284,9 @@ def add_morpheme(request):
             morpheme.creator.add(request.user)
             morpheme.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}) + '?edit')
+            return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}))
         else:
-            return render(request,'dictionary/add_morpheme.html',
-                                      {'add_morpheme_form': form})
+            return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form})
 
     return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
 
@@ -1372,30 +1355,10 @@ def update_morpheme(request, morphemeid):
 
             return update_signlanguage(morpheme, field, values)
 
-            # try:
-            #     morpheme.language.clear()
-            #     for value in values:
-            #         lang = SignLanguage.objects.get(name=value)
-            #         morpheme.language.add(lang)
-            #         morpheme.save()
-            #     newvalue = ", ".join([str(g) for g in morpheme.language.all()])
-            # except:
-            #     return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
-
         elif field == 'dialect':
             # expecting possibly multiple values
 
             return update_dialect(morpheme, field, values)
-
-            # try:
-            #     morpheme.dialect.clear()
-            #     for value in values:
-            #         lang = Dialect.objects.get(name=value)
-            #         morpheme.dialect.add(lang)
-            #         morpheme.save()
-            #     newvalue = ", ".join([str(g.name) for g in morpheme.dialect.all()])
-            # except:
-            #     return HttpResponseBadRequest("Unknown Dialect %s" % values, {'content-type': 'text/plain'})
 
         elif field == 'dataset':
 
@@ -1522,19 +1485,15 @@ def update_morpheme_definition(gloss, field, value):
     if what == 'morpheme_definition_delete':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         definition.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'morpheme_definition_meaning':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         original_value = getattr(definition, 'role')
         definition.__setattr__('role', value)
         definition.save()
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' +  str(value) + str('\t') + str(category_value), {'content-type': 'text/plain'})
-
     else:
-
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
-
-    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 
 def update_blend_definition(gloss, field, value):
@@ -1556,12 +1515,8 @@ def update_blend_definition(gloss, field, value):
         definition.__setattr__('role', value)
         definition.save()
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' +  str(value) + str('\t') + str(category_value), {'content-type': 'text/plain'})
-
     else:
-
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
-
-    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 
 @permission_required('dictionary.change_gloss')

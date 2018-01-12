@@ -177,7 +177,9 @@ class GlossSearchForm(forms.ModelForm):
 
     relation = forms.CharField(label=_(u'Search for gloss of related signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     relationToForeignSign = forms.CharField(label=_(u'Search for gloss of foreign signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    morpheme = forms.CharField(label=_(u'Search for gloss with this as morpheme'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    # morpheme = forms.CharField(label=_(u'Search for gloss with this as morpheme')) #,widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    morpheme = forms.CharField(label=_(u'Search for gloss with this as morpheme'))
+    # morph_id = forms.CharField(label=_(u'Morpheme'))
 
     oriChAbd = forms.ChoiceField(label=_(u'Abduction change'),choices=NULLBOOLEANCHOICES)
     oriChFlex = forms.ChoiceField(label=_(u'Flexion change'),choices=NULLBOOLEANCHOICES)
@@ -394,7 +396,7 @@ class GlossMorphemeForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
 
     host_gloss_id = forms.CharField(label=_(u'Host Gloss'))
-    description = forms.CharField(label=_(u'Meaning'))
+    description = forms.CharField(label=_(u'Meaning'), )
     morph_id = forms.CharField(label=_(u'Morpheme'))
 
 class GlossBlendForm(forms.Form):

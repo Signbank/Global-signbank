@@ -334,15 +334,15 @@
                 </th>
                 <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translations.0.text|safe }}</td>
                 <td>
-                    {% if gloss.morphemePart.all.count > 0 %}
+                    {% if gloss.simultaneous_morphology.all.count > 0 %}
 
-                        {% if gloss.morphemePart.all.count > 2 %}
-                        <span class="gloss_detail_morpheme">({{gloss.morphemePart.all.count}} morphemes)</span>
+                        {% if gloss.simultaneous_morphology.all.count > 2 %}
+                        <span class="gloss_detail_morpheme">({{gloss.simultaneous_morphology.all.count}} morphemes)</span>
                         {% else %}
                             <!-- Number of morphemes is [1-2] -->
-                            {% for morphdef in gloss.morphemePart.all %}
+                            {% for morphdef in gloss.simultaneous_morphology.all %}
                             <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.pk %}'>
-                                {% value morphdef.gloss_ptr|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %}, {% endif %}
+                                {% value morphdef.morpheme|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %}, {% endif %}
                             </span>
                             {% endfor %}
                         {% endif %}

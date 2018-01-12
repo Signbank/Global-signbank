@@ -455,7 +455,7 @@ class GlossListView(ListView):
 
                     # This was disabled with the move to Python 3... might not be needed anymore?
                     # if isinstance(value,unicode):
-                    #     value = str(value.encode('ascii','xmlcharrefreplace'));
+                    #     value = str(value.encode('ascii','xmlcharrefreplace'))
 
                 if not isinstance(value,str):
                     value = str(value)
@@ -570,12 +570,12 @@ class GlossListView(ListView):
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
 
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
-                    qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+                    qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
                 else:
                     qs = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets)
             else:
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
-                    qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('morphemePart').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+                    qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
                 else:
                     qs = Gloss.objects.all().filter(dataset__in=selected_datasets)
 
@@ -772,16 +772,17 @@ class GlossListView(ListView):
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
-        if 'id_morpheme' in get and get['id_morpheme'] != '':
+        if 'morpheme' in get and get['morpheme'] != '':
 
             # Filter all glosses that contain a morpheme with the indicated text in its gloss
             # Step 1: get all morphemes containing the indicated text
-            potential_morphemes = Morpheme.objects.filter(idgloss__exact=get['id_morpheme'])
+            potential_morphemes = Morpheme.objects.filter(idgloss__exact=get['morpheme'])
             if (potential_morphemes.count() > 0):
                 # At least one has been found: take the first one
                 selected_morpheme = potential_morphemes[0]
                 # Step 2: get all Glosses containing the above morphemes
-                potential_pks = [appears.pk for appears in Gloss.objects.filter(morphemePart=selected_morpheme)]
+                # potential_pks = [appears.pk for appears in Gloss.objects.filter(morphemePart=selected_morpheme)]
+                potential_pks = [appears.parent_gloss.pk for appears in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
                 qs = qs.filter(pk__in=potential_pks)
 
         if 'hasComponentOfType' in get and get['hasComponentOfType'] != '':
@@ -1315,7 +1316,7 @@ class GlossRelationsDetailView(DetailView):
                     context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
 
                 #Take the human value in the language we are using
-                machine_value = getattr(gl,field);
+                machine_value = getattr(gl,field)
                 human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                 #And add the kind of field
@@ -1579,7 +1580,7 @@ class MorphemeListView(ListView):
                       'namEnt', 'semField', 'valence',
                       'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO',
                       'tokNoSgnrA',
-                      'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew'];
+                      'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
 
         # SignLanguage and basic property filters
         vals = get.getlist('dialect', [])
@@ -1725,9 +1726,9 @@ class MorphemeListView(ListView):
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
 #        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
-#            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasMorphemeOfType']);
+#            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasMorphemeOfType'])
 #            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in
-#                                                                morphdefs_with_correct_role];
+#                                                                morphdefs_with_correct_role]
 #            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
@@ -1864,10 +1865,10 @@ class MorphemeListView(ListView):
 
                     # This was disabled with the move to Python 3... might not be needed anymore?
                     # if isinstance(value, unicode):
-                    #     value = str(value.encode('ascii', 'xmlcharrefreplace'));
+                    #     value = str(value.encode('ascii', 'xmlcharrefreplace'))
                     # elif not isinstance(value, str):
 
-                    value = str(value);
+                    value = str(value)
 
                     row.append(value)
 
@@ -1896,11 +1897,12 @@ class MorphemeListView(ListView):
             row.append(", ".join(relations))
 
             # Got all the glosses (=signs) this morpheme appears in
-            appearsin = [appears.idgloss for appears in Gloss.objects.filter(morphemePart=gloss)]
+            # appearsin = [appears.idgloss for appears in Gloss.objects.filter(morphemePart=gloss)]
+            appearsin = [appears.idgloss for appears in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
             row.append(", ".join(appearsin))
 
             # Make it safe for weird chars
-            safe_row = [];
+            safe_row = []
             for column in row:
                 try:
                     safe_row.append(column.encode('utf-8').decode())
@@ -2627,14 +2629,14 @@ class MorphemeDetailView(DetailView):
             context['glossposn'] = Morpheme.objects.filter(sn__lt=context['morpheme'].sn).count() + 1
 
         # Pass info about which fields we want to see
-        gl = context['morpheme'];
-        labels = gl.field_labels();
+        gl = context['morpheme']
+        labels = gl.field_labels()
 
         context['choice_lists'] = {}
 
         # Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['phonology', 'semantics', 'frequency']:
-            context[topic + '_fields'] = [];
+            context[topic + '_fields'] = []
 
             for field in FIELDS[topic]:
 
@@ -2647,7 +2649,7 @@ class MorphemeDetailView(DetailView):
                                                                                                     self.request.LANGUAGE_CODE)
 
                 # Take the human value in the language we are using
-                machine_value = getattr(gl, field);
+                machine_value = getattr(gl, field)
                 human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                 # And add the kind of field
