@@ -182,6 +182,11 @@ class GlossListView(ListView):
 
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages)
 
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
         if hasattr(settings, 'SHOW_MORPHEME_SEARCH'):
             context['SHOW_MORPHEME_SEARCH'] = settings.SHOW_MORPHEME_SEARCH
         else:

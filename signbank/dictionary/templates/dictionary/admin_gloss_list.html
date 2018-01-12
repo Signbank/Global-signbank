@@ -636,7 +636,7 @@ function do_toggle_groups(el) {
 <table class='table table-condensed'>
     <thead>
       <tr>
-          <th>{% trans "Dataset" %}</th>
+          {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
           <th></th>
            {% for dataset_lang in dataset_languages %}
           <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
@@ -707,7 +707,7 @@ function do_toggle_groups(el) {
                 <tr>
             {% endif %}
 
-        <td>{{ gloss.dataset.name }}</td>
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
           <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
