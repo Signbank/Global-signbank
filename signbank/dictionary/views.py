@@ -381,6 +381,10 @@ def import_media(request,video):
                                                  annotationidglosstranslation__text__exact=filename_without_extension)
                     if glosses:
                         gloss = glosses[0]
+                    else:
+                        errors.append(
+                            'Failed at ' + filename + '. Could not find ' + filename_without_extension + ' (it should be a gloss ID).')
+                        continue
                 except ObjectDoesNotExist:
                     errors.append('Failed at '+filename+'. Could not find '+filename_without_extension+' (it should be a gloss ID).')
                     continue
