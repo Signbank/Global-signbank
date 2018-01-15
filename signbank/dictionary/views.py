@@ -374,12 +374,17 @@ def import_media(request,video):
             for filename in os.listdir(lang3code_folder_path):
 
                 (filename_without_extension, extension) = os.path.splitext(filename)
+                extension = extension[1:]  # Remove the dot
 
                 try:
                     glosses = Gloss.objects.filter(dataset=dataset, annotationidglosstranslation__language=language,
                                                  annotationidglosstranslation__text__exact=filename_without_extension)
                     if glosses:
                         gloss = glosses[0]
+                    else:
+                        errors.append(
+                            'Failed at ' + filename + '. Could not find ' + filename_without_extension + ' (it should be a gloss ID).')
+                        continue
                 except ObjectDoesNotExist:
                     errors.append('Failed at '+filename+'. Could not find '+filename_without_extension+' (it should be a gloss ID).')
                     continue
