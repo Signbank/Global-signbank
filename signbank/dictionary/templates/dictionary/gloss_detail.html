@@ -334,15 +334,15 @@
                 </th>
                 <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translations.0.text|safe }}</td>
                 <td>
-                    {% if gloss.morphemePart.all.count > 0 %}
+                    {% if gloss.simultaneous_morphology.all.count > 0 %}
 
-                        {% if gloss.morphemePart.all.count > 2 %}
-                        <span class="gloss_detail_morpheme">({{gloss.morphemePart.all.count}} morphemes)</span>
+                        {% if gloss.simultaneous_morphology.all.count > 2 %}
+                        <span class="gloss_detail_morpheme">({{gloss.simultaneous_morphology.all.count}} morphemes)</span>
                         {% else %}
                             <!-- Number of morphemes is [1-2] -->
-                            {% for morphdef in gloss.morphemePart.all %}
+                            {% for morphdef in gloss.simultaneous_morphology.all %}
                             <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.pk %}'>
-                                {% value morphdef.gloss_ptr|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %}, {% endif %}
+                                {% value morphdef.morpheme|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %}, {% endif %}
                             </span>
                             {% endfor %}
                         {% endif %}
@@ -372,6 +372,9 @@
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
             {% endfor %}
+
+            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+
 
         </table>
 			 
@@ -862,24 +865,6 @@
         </div>
     </div>
 
-    <!-- Language & dialect -->
-    <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' href='#languagedialect'>{% trans "Language & Dialect" %}</a>
-            </div>
-        </div>
-        <div id='languagedialect' class='panel-collapse collapse'>
-            <table class="table table-condensed">
-            <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage' colspan="2">{% for lang in gloss.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset' colspan="2">{{ gloss.dataset }}</td></tr>
-
-            </table>
-        </div>
-    </div>
-
-
 
     <!-- Relations to other signs -->
     <div class="panel panel-default">
@@ -1043,6 +1028,8 @@
                         {% endfor %}
                     </td>
                 </tr>
+
+                <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset' colspan="2">{{ gloss.dataset }}</td></tr>
 
                 <tr><th>{% trans "In Web Dictionary" %}</th>
                     <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'>

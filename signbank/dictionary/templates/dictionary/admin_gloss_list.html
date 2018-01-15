@@ -300,12 +300,13 @@ function do_toggle_groups(el) {
                       <div id='morph_search' class='collapse'>
                       <table class='table table-condensed'>
                         <tr>
-
+                        {% csrf_token %}
                           <td>
                             <table class='table table-condensed'>
                                 <tr>
                                     <td><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
-                                    <td><input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' name='id_morpheme'></td>
+                                    <td><input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' type='hidden'
+                                               name='id_morpheme'/>{{searchform.morpheme}}</td>
                                 </tr>
                                 <tr><td><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td><td>{{searchform.hasComponentOfType}}</td></tr>
                                 <tr><td><label for='id_hasMorphemeOfType'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
@@ -722,14 +723,14 @@ function do_toggle_groups(el) {
             <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
-            {% if gloss.morphemePart.count > 0 %}
-              {% if gloss.morphemePart.count > 3 %}
-                  <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
+            {% if gloss.simultaneous_morphology.count > 0 %}
+              {% if gloss.simultaneous_morphology.count > 3 %}
+                  <span class="morpheme_in_gloss">({{gloss.simultaneous_morphology.all.count}} {% trans "morphemes" %})</span>
               {% else %}
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
-                  {% for morphdef in gloss.morphemePart.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.gloss_ptr|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  {% for morphdef in gloss.simultaneous_morphology.all %}
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}/">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
@@ -952,14 +953,14 @@ function do_toggle_groups(el) {
             <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
-            {% if gloss.morphemePart.count > 0 %}
-              {% if gloss.morphemePart.count > 3 %}
-                  <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
+            {% if gloss.simultaneous_morphology.count > 0 %}
+              {% if gloss.simultaneous_morphology.count > 3 %}
+                  <span class="morpheme_in_gloss">({{gloss.simultaneous_morphology.all.count}} {% trans "morphemes" %})</span>
               {% else %}
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
-                  {% for morphdef in gloss.morphemePart.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.gloss_ptr|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  {% for morphdef in gloss.simultaneous_morphology.all %}
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}/">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
@@ -968,7 +969,7 @@ function do_toggle_groups(el) {
             {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
             {% endif %}

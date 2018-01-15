@@ -538,9 +538,9 @@ def try_code(request):
     result = 'OK'
 
     # for gloss in Gloss.objects.all():
-    #     for morphemePart in gloss.morphemePart.all():
+    #     for simultaneous_morphology in gloss.simultaneous_morphology.all():
     #         definition = SimultaneousMorphologyDefinition()
-    #         definition.morpheme = morphemePart
+    #         definition.morpheme = simultaneous_morphology
     #         definition.parent_gloss = gloss
     #         definition.save()
 
