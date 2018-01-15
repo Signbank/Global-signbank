@@ -428,7 +428,7 @@ class GlossListView(ListView):
         with override(LANGUAGE_CODE):
             header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
-        for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology',
+        for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology'
                              'Relations to other signs','Relations to foreign signs', 'Tags']:
             header.append(extra_column)
 
@@ -495,6 +495,14 @@ class GlossListView(ListView):
                 sim_morphs.append(':'.join(m))
             simultaneous_morphemes = ', '.join(sim_morphs)
             row.append(simultaneous_morphemes)
+
+            # Blend Morphology
+            ble_morphemes = [(str(m.glosses.id), m.role) for m in gloss.blend_morphology.all()]
+            ble_morphs = []
+            for m in ble_morphemes:
+                ble_morphs.append(':'.join(m))
+            blend_morphemes = ', '.join(ble_morphs)
+            row.append(blend_morphemes)
 
             # get relations to other signs
             relations = [(relation.role, str(relation.target.id)) for relation in Relation.objects.filter(source=gloss)]
