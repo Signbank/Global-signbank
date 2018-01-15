@@ -9,14 +9,12 @@
 {% endblock %}
 
 {% block extrajs %}
-
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
 
     <script type='text/javascript'>
+    var url = '{{URL}}'
 
      $(document).ready(function(){
-
 
         $('.collapsetoggle').click(function() {
             if ($(this).text() == 'Show') {
@@ -161,6 +159,8 @@ function do_toggle_groups(el) {
 
 
    </script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
+
 {% endblock %}
 
 
@@ -305,8 +305,10 @@ function do_toggle_groups(el) {
                             <table class='table table-condensed'>
                                 <tr>
                                     <td><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
-                                    <td><input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' type='hidden'
-                                               name='id_morpheme'/>{{searchform.morpheme}}</td>
+                                    <td>
+                                        <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' value="{{searchform.morpheme.value|default:''}}"/>
+                                        <input type="hidden" name='morpheme' value=""/>
+                                    </td>
                                 </tr>
                                 <tr><td><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td><td>{{searchform.hasComponentOfType}}</td></tr>
                                 <tr><td><label for='id_hasMorphemeOfType'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>

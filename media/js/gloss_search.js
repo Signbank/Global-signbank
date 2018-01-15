@@ -31,8 +31,8 @@ $(document).ready(function() {
 var morph_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: '/dictionary/ajax/morph/%QUERY'
-    });
+      remote: url+'/dictionary/ajax/morph/%QUERY'
+});
 
 morph_bloodhound.initialize();
 
@@ -50,5 +50,3 @@ function morphtypeahead(target) {
           }
       });
 };
-
-morphtypeahead($('.morphtypeahead'));

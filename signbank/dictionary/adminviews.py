@@ -779,16 +779,17 @@ class GlossListView(ListView):
 
         if 'morpheme' in get and get['morpheme'] != '':
 
-            # Filter all glosses that contain a morpheme with the indicated text in its gloss
-            # Step 1: get all morphemes containing the indicated text
-            potential_morphemes = Morpheme.objects.filter(idgloss__exact=get['morpheme'])
-            if (potential_morphemes.count() > 0):
-                # At least one has been found: take the first one
-                selected_morpheme = potential_morphemes[0]
-                # Step 2: get all Glosses containing the above morphemes
-                # potential_pks = [appears.pk for appears in Gloss.objects.filter(morphemePart=selected_morpheme)]
+            # morpheme is an integer
+            input_morpheme = get['morpheme']
+            # Filter all glosses that contain this morpheme in their simultaneous morphology
+            try:
+                selected_morpheme = Morpheme.objects.get(pk=get['morpheme'])
                 potential_pks = [appears.parent_gloss.pk for appears in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
                 qs = qs.filter(pk__in=potential_pks)
+            except:
+                # This error should not occur, the input search form requires the selection of a morpheme from a list
+                # If the user attempts to input a string, it is ignored by the gloss list search form
+                print("Morpheme not found: ", str(input_morpheme))
 
         if 'hasComponentOfType' in get and get['hasComponentOfType'] != '':
 
@@ -799,12 +800,16 @@ class GlossListView(ListView):
 
         if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
 
+            morpheme_type = get['hasMorphemeOfType']
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = Morpheme.objects.filter(mrpType__exact=get['hasMorphemeOfType'])
+            target_morphemes = Morpheme.objects.filter(mrpType__exact=morpheme_type)
+            sim_morphemes = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__in=target_morphemes)
             # Get all glosses that have one of the morphemes in this set
-            glosses_with_correct_mrpType = Gloss.objects.filter(morphemePart__in=target_morphemes)
+            glosses_with_correct_mrpType = Gloss.objects.filter(simultaneous_morphology__in=sim_morphemes)
+
             # Turn this into a list with pks
             pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in glosses_with_correct_mrpType]
+
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
@@ -1902,7 +1907,6 @@ class MorphemeListView(ListView):
             row.append(", ".join(relations))
 
             # Got all the glosses (=signs) this morpheme appears in
-            # appearsin = [appears.idgloss for appears in Gloss.objects.filter(morphemePart=gloss)]
             appearsin = [appears.idgloss for appears in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
             row.append(", ".join(appearsin))
 
