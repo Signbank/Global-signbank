@@ -56,6 +56,7 @@ FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
+ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {
     'CV_ID': 'CNGT_RU-lexicon',
     'include_phonology_and_frequencies': True,
