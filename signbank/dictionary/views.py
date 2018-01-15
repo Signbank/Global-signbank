@@ -374,6 +374,7 @@ def import_media(request,video):
             for filename in os.listdir(lang3code_folder_path):
 
                 (filename_without_extension, extension) = os.path.splitext(filename)
+                extension = extension[1:]  # Remove the dot
 
                 try:
                     glosses = Gloss.objects.filter(dataset=dataset, annotationidglosstranslation__language=language,
