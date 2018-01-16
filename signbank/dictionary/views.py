@@ -653,7 +653,10 @@ def import_csv(request):
     import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
     user_datasets_names = [ dataset.name for dataset in user_datasets ]
-    dataset_languages = Language.objects.filter(dataset__in=user_datasets).distinct()
+    # dataset_languages = Language.objects.filter(dataset__in=user_datasets).distinct()
+
+    selected_datasets = get_selected_datasets_for_user(user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     uploadform = signbank.dictionary.forms.CSVUploadForm
     changes = []
@@ -743,7 +746,6 @@ def import_csv(request):
                 else:
                     (new_gloss, already_exists, error_create) \
                         = create_gloss_from_valuedict(value_dict,user_datasets_names,nl)
-                    print("New Gloss: ", new_gloss)
                     creation += new_gloss
                     gloss_already_exists += already_exists
                     if len(error_create):
@@ -967,7 +969,7 @@ def import_csv(request):
             for key, new_value in request.POST.items():
 
                 # obtain tuple values for each proposed gloss
-
+                # pk is the row number in the import file!
                 try:
                     pk, fieldname = key.split('.')
 
@@ -994,6 +996,11 @@ def import_csv(request):
                 new_gloss = Gloss()
                 new_gloss.idgloss = lemma_id_gloss
                 new_gloss.dataset = dataset_id
+                # Save the new gloss before updating it
+                new_gloss.save()
+                new_gloss.creationDate = datetime.now()
+                new_gloss.creator.add(request.user)
+                new_gloss.excludeFromEcv = False
                 new_gloss.save()
 
                 for language in dataset_languages:
@@ -1018,7 +1025,8 @@ def import_csv(request):
                                                         'creation':creation,
                                                         'gloss_already_exists':gloss_already_exists,
                                                         'error':error,
-                                                        'dataset_languages':dataset_languages})
+                                                        'dataset_languages':dataset_languages,
+                                                        'selected_datasets':selected_datasets})
 
 def switch_to_language(request,language):
 
@@ -1040,12 +1048,14 @@ def recently_added_glosses(request):
                       {'glosses': Gloss.objects.filter(
                           creationDate__range=(recently_added_signs_since_date, DT.datetime.now())).order_by(
                           'creationDate').reverse(),
-                       'dataset_languages': dataset_languages})
+                       'dataset_languages': dataset_languages,
+                        'selected_datasets':selected_datasets})
 
     except:
         return render(request,'dictionary/recently_added_glosses.html',
                       {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse(),
-                       'dataset_languages': dataset_languages})
+                       'dataset_languages': dataset_languages,
+                        'selected_datasets':selected_datasets})
 
 
 def proposed_new_signs(request):
