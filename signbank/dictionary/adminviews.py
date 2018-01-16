@@ -2404,7 +2404,7 @@ class DatasetListView(ListView):
 
         # set Dataset to NGT or other pre-specified Dataset, otherwise leave it empty
         try:
-            dataset_id = Dataset.objects.get(name=SIGNBANK_VERSION_CODE)
+            dataset_id = Dataset.objects.get(name=self.dataset_lang)
         except:
             dataset_id = ''
 
@@ -2433,8 +2433,9 @@ class DatasetListView(ListView):
                       {'EXT_REF_ID': 'signbank-ecv', 'TYPE': 'resource_url', 'VALUE': URL + "/dictionary/gloss/"})
 
         xmlstr = minidom.parseString(ET.tostring(top, 'utf-8')).toprettyxml(indent="   ")
+        ecv_file = os.path.join(ECV_FOLDER, self.dataset_lang.lower() + ".ecv")
         import codecs
-        with codecs.open(ECV_FILE, "w", "utf-8") as f:
+        with codecs.open(ecv_file, "w", "utf-8") as f:
             f.write(xmlstr)
 
             #        tree = ET.ElementTree(top)

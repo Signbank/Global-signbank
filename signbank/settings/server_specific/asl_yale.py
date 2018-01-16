@@ -42,6 +42,7 @@ FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconT
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
+ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {
     'CV_ID': 'ASL Signbank lexicon',
     'include_phonology_and_frequencies': False,
