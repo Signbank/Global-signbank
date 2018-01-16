@@ -1596,7 +1596,6 @@ def change_dataset_selection(request):
         user_profile.selected_datasets.clear()
         selected_datasets = []
         for attribute in request.POST:
-            print('Attribute: ' + attribute)
             if attribute[:len(dataset_prefix)] == dataset_prefix:
                 dataset_name = attribute[len(dataset_prefix):]
                 selected_datasets.append(dataset_name)

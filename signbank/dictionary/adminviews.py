@@ -1261,6 +1261,11 @@ class GlossDetailView(DetailView):
                 dataset_choices[dataset.name] = dataset.name
             context['dataset_choices'] = json.dumps(dataset_choices)
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
         return context
 
 class GlossRelationsDetailView(DetailView):
@@ -1480,6 +1485,11 @@ class GlossRelationsDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
         return context
 
 
@@ -1536,7 +1546,12 @@ class MorphemeListView(ListView):
                 context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
-        
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
         return context
 
 
@@ -2062,6 +2077,11 @@ class HandshapeDetailView(DetailView):
 
             self.request.session['search_results'] = items
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
         return context
 
 
@@ -2079,6 +2099,10 @@ class HomonymListView(ListView):
         else:
             context['language'] = Language.objects.get(id=get_default_language_id())
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
 
         return context
 
@@ -2126,7 +2150,6 @@ class HandshapeListView(ListView):
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
 
         context['handshape_fields_FS1'] = []
-
 
         context['choice_lists'] = {}
 
@@ -2328,6 +2351,17 @@ class DatasetListView(ListView):
     model = Dataset
     only_export_ecv = False
     dataset_lang = 'NGT'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DatasetListView, self).get_context_data(**kwargs)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        return context
 
     def get_template_names(self):
         if 'select' in self.kwargs:

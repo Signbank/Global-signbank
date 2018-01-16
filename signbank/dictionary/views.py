@@ -635,7 +635,7 @@ def add_new_morpheme(request):
     oContext['choice_lists'] = json.dumps(oContext['choice_lists'])
 
     # And add the kind of field
-    kind = 'list';
+    kind = 'list'
 
     oContext['morph_fields'].append(['(Make a choice)', field, "Morpheme type", kind])
 
@@ -654,8 +654,6 @@ def import_csv(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
     user_datasets_names = [ dataset.name for dataset in user_datasets ]
     dataset_languages = Language.objects.filter(dataset__in=user_datasets).distinct()
-
-    # print('datasets: ', my_datasets)
 
     uploadform = signbank.dictionary.forms.CSVUploadForm
     changes = []
@@ -677,15 +675,12 @@ def import_csv(request):
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
         creation = []
 
-        # print('import CSV: csv_lines: ', csv_lines)
-
         for nl, line in enumerate(csv_lines):
 
             #The first line contains the keys
             if nl == 0:
                 keys = line.strip().split(',')
                 num_keys = len(keys)
-                # print("number of keys: ", num_keys, ', keys: ', keys)
                 continue
             elif len(line) == 0:
                 continue
@@ -694,7 +689,6 @@ def import_csv(request):
             value_dict = {}
 
             for nv,value in enumerate(values):
-                # print('try import csv: line number: ', nv, ', value: ', value)
 
                 try:
                     if keys[nv] != '':
@@ -730,7 +724,6 @@ def import_csv(request):
                         return False
                 return True
 
-            # print("import CSV: value_dict: ", value_dict)
             try:
                 if 'Signbank ID' in value_dict:
                     pk = int(value_dict['Signbank ID'])
@@ -750,13 +743,12 @@ def import_csv(request):
                 else:
                     (new_gloss, already_exists, error_create) \
                         = create_gloss_from_valuedict(value_dict,user_datasets_names,nl)
-                    print(new_gloss)
+                    print("New Gloss: ", new_gloss)
                     creation += new_gloss
                     gloss_already_exists += already_exists
                     if len(error_create):
                         # more than one error found
                         errors_found_string = '\n'.join(error_create)
-                        # print("errors found string: ", errors_found_string)
 
                         if not error:
                             error = [errors_found_string]
@@ -787,7 +779,6 @@ def import_csv(request):
                 print('import_csv gloss does not exist, line ', str(nl), ' gloss id ', str(pk))
                 continue
 
-            # print('line after gloss does not exist, line ', str(nl))
             try:
                 (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss,user_datasets_names)
                 changes += changes_found
@@ -796,7 +787,6 @@ def import_csv(request):
                 if len(errors_found):
                     # more than one error found
                     errors_found_string = '\n'.join(errors_found)
-                    # print("errors found string: ", errors_found_string)
 
                     if not error:
                         error = [errors_found_string]
@@ -805,15 +795,12 @@ def import_csv(request):
 
             except MachineValueNotFoundError as e:
 
-                # print('exception changes: ', e)
-
                 s = str(e)
 
                 # allow for returning multiple error messages via the exception
                 if not error:
                     error = [e]
                 else:
-                    # print('else case')
                     error.append(e)
 
         stage = 1
@@ -842,7 +829,6 @@ def import_csv(request):
                 #In case there's no dot, this is not a value we set at the previous page
                 except ValueError:
                     # when the database token csrfmiddlewaretoken is passed, there is no dot
-                    # print("no dot in key error")
                     continue
 
                 gloss = Gloss.objects.get(pk=pk)
@@ -879,10 +865,7 @@ def import_csv(request):
 
                 if fieldname == 'SignLanguages':
 
-                    # print('update SignLanguages')
-
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Sign languages new list: ', new_human_value_list)
 
                     update_signlanguage(gloss,None,new_human_value_list)
                     gloss.save()
@@ -890,10 +873,7 @@ def import_csv(request):
 
                 if fieldname == 'Dialects':
 
-                    # print('update Dialects')
-
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Dialects new list: ', new_human_value_list)
 
                     update_dialect(gloss,None,new_human_value_list)
                     gloss.save()
@@ -916,7 +896,6 @@ def import_csv(request):
                 if fieldname == 'Sequential Morphology':
 
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Sequential Morphology new list: ', new_human_value_list)
 
                     update_sequential_morphology(gloss,None,new_human_value_list)
 
@@ -925,7 +904,6 @@ def import_csv(request):
                 if fieldname == 'Simultaneous Morphology':
 
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Sequential Simultaneous new list: ', new_human_value_list)
 
                     update_simultaneous_morphology(gloss,None,new_human_value_list)
 
@@ -933,10 +911,7 @@ def import_csv(request):
 
                 if fieldname == 'Relations to other signs':
 
-                    # print('update Relations to other signs')
-
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Relations to other signs new list: ', new_human_value_list)
 
                     subst_relations(gloss,None,new_human_value_list)
                     gloss.save()    # is this needed?
@@ -944,10 +919,7 @@ def import_csv(request):
 
                 if fieldname == 'Relations to foreign signs':
 
-                    # print('update Relations to foreign signs')
-
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Relations to foreign signs new list: ', new_human_value_list)
 
                     subst_foreignrelations(gloss,None,new_human_value_list)
                     gloss.save()    # is this needed?
@@ -956,7 +928,6 @@ def import_csv(request):
                 if fieldname == 'Tags':
 
                     new_human_value_list = [v.strip().replace(' ','_') for v in new_value.split(',')]
-                    # print('Tags list: ', new_human_value_list)
 
                     update_tags(gloss,None,new_human_value_list)
                     gloss.save()    # is this needed?
@@ -990,19 +961,15 @@ def import_csv(request):
             stage = 2
 
         elif csv_create:
-            # print('create glosses')
 
             glosses_to_create = dict()
 
             for key, new_value in request.POST.items():
 
-                # print('key, new value: ', key, ', ', new_value)
-
                 # obtain tuple values for each proposed gloss
 
                 try:
                     pk, fieldname = key.split('.')
-                    # print('field name: ', fieldname)
 
                     if pk not in glosses_to_create.keys():
                         glosses_to_create[pk] = dict()
@@ -1012,7 +979,6 @@ def import_csv(request):
                 except ValueError:
                     # when the database token csrfmiddlewaretoken is passed, there is no dot
                     continue
-            # print('dictionary: ', glosses_to_create)
 
             # these should be error free based on the django template import_csv.html
             for row in glosses_to_create.keys():
@@ -1039,8 +1005,6 @@ def import_csv(request):
                         annotationidglosstranslation.text = annotation_id_gloss
                         annotationidglosstranslation.save()
 
-                # print('new gloss created: ', new_gloss.idgloss)
-
             stage = 2
         else:
             stage = 0
@@ -1049,9 +1013,6 @@ def import_csv(request):
     else:
 
         stage = 0
-
-    # print('before return creation: ', creation)
-    # print('before return changes: ', changes)
 
     return render(request,'dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,
                                                         'creation':creation,
@@ -1387,7 +1348,6 @@ def find_and_save_variants(request):
 
         dict_key = int(gloss.id)
         gloss_pattern_table[dict_key] = '<td>' + str(gloss.idgloss) + '</td>'
-#        print(gloss.id, '\t', str(gloss.idgloss))
         other_relations_of_sign = gloss.other_relations()
 
         if other_relations_of_sign:
@@ -1401,9 +1361,6 @@ def find_and_save_variants(request):
 
         else:
             gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
-
-        #        if (len(other_relations_of_sign) > 0):
-        #            print('Other relations: ', other_relation_objects )
 
         variant_relations_of_sign = gloss.variant_relations()
 
@@ -1451,7 +1408,6 @@ def find_and_save_variants(request):
 
         for target in candidate_variants:
 
- #           print('UPDATE REL: source=', gloss, ', target=', target)
             rel = Relation(source=gloss, target=target, role='variant')
             rel.save()
 
@@ -1469,7 +1425,6 @@ def find_and_save_variants(request):
         else:
             gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
 
-#        print('Dictionary key: ', dict_key, ', ', gloss_pattern_table[dict_key])
         gloss_table_rows = gloss_table_rows + '<tr>' + gloss_pattern_table[dict_key] + '</tr>\n'
 
 
@@ -1689,7 +1644,6 @@ def show_unassigned_glosses(request):
         dataset_select_prefix = "sign-language__"
         for key, new_value in request.POST.items():
             if key.startswith(dataset_select_prefix) and new_value != "":
-                # print("Signlanguage: %s; dataset: %s" % (key, new_value))
                 try:
                     signlanguage_id = key[len(dataset_select_prefix):]
                     dataset_id = int(new_value)
@@ -1731,7 +1685,6 @@ def show_unassigned_glosses(request):
                 output_field=models.IntegerField()
             )
         )
-        # print(signlanguages.query)
 
         number_of_unassigned_glosses_without_signlanguage = Gloss.objects.filter(
             dataset=None,
