@@ -105,7 +105,6 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                         existing_glosses[language.language_code_2char] = glosses_with_same_text
 
         if existing_glosses:
-            print("Existing glosses : " + str(existing_glosses))
             existing_gloss_set = set()
             for language_code_2char,glosses in existing_glosses.items():
                 for gloss in glosses:
@@ -125,7 +124,7 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                         existing_gloss_set.add(gloss)
 
         else:
-            print('New gloss')
+            # for the new gloss, we don't know the id yet so save the row number in this field
             gloss_dict = {'gloss_pk': str(row_nr),
                                 'dataset': dataset_name,
                                 'lemma_id_gloss': 'Lemma ID Gloss',
