@@ -11,6 +11,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlquote
 from collections import OrderedDict
+from datetime import datetime, timedelta
 
 import os
 import shutil
@@ -29,6 +30,7 @@ import signbank.dictionary.forms
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import *
 from signbank.tools import save_media, compare_valuedict_to_gloss, MachineValueNotFoundError
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 
 import signbank.settings
 from signbank.settings.base import WRITABLE_FOLDER, URL
@@ -1041,17 +1043,20 @@ def recently_added_glosses(request):
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     try:
-        from signbank.settings.base import RECENTLY_ADDED_SIGNS_PERIOD
-        import datetime as DT
-        recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
+        # from signbank.settings.base import RECENTLY_ADDED_SIGNS_PERIOD
+        time_delta = timedelta(days=90)
+        # recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
+        recently_added_signs_since_date = datetime.now() - time_delta
+        print('recently added signs date: ', recently_added_signs_since_date)
         return render(request, 'dictionary/recently_added_glosses.html',
                       {'glosses': Gloss.objects.filter(
-                          creationDate__range=(recently_added_signs_since_date, DT.datetime.now())).order_by(
+                          creationDate__range=(recently_added_signs_since_date, datetime.now())).order_by(
                           'creationDate').reverse(),
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets})
 
     except:
+        print('recently added time period not found ')
         return render(request,'dictionary/recently_added_glosses.html',
                       {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
@@ -1059,11 +1064,15 @@ def recently_added_glosses(request):
 
 
 def proposed_new_signs(request):
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     proposed_or_new_signs = (Gloss.objects.filter(isNew=True) |
-                             TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed"))\
-                             .order_by('creationDate').reverse()
+                             TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed")).order_by('creationDate').reverse()
     return render(request, 'dictionary/recently_added_glosses.html',
-                  {'glosses': proposed_or_new_signs})
+                  {'glosses': proposed_or_new_signs,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets
+                   })
 
 
 def add_params_to_url(url,params):
