@@ -98,3 +98,6 @@ LANGUAGE_CODE_MAP = [
 ]
 
 SPEED_UP_RETRIEVING_ALL_SIGNS =	False
+
+import datetime
+RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=7)
