@@ -11,7 +11,6 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlquote
 from collections import OrderedDict
-from datetime import datetime, timedelta
 
 import os
 import shutil
@@ -1043,11 +1042,8 @@ def recently_added_glosses(request):
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     try:
-        # from signbank.settings.base import RECENTLY_ADDED_SIGNS_PERIOD
-        time_delta = timedelta(days=90)
-        # recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
-        recently_added_signs_since_date = datetime.now() - time_delta
-        print('recently added signs date: ', recently_added_signs_since_date)
+        from signbank.settings.base import RECENTLY_ADDED_SIGNS_PERIOD
+        recently_added_signs_since_date = datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
         return render(request, 'dictionary/recently_added_glosses.html',
                       {'glosses': Gloss.objects.filter(
                           creationDate__range=(recently_added_signs_since_date, datetime.now())).order_by(
@@ -1056,7 +1052,6 @@ def recently_added_glosses(request):
                         'selected_datasets':selected_datasets})
 
     except:
-        print('recently added time period not found ')
         return render(request,'dictionary/recently_added_glosses.html',
                       {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
