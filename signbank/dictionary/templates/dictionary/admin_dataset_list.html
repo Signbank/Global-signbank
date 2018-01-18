@@ -17,6 +17,7 @@
           <th style="width:80px;">{% trans "Access" %}</th>
           <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
           <th style="width:80px;">{% trans "Selected" %}</th>
+          <th style="width:180px;">{% trans "Languages" %}</th>
           <th>{% trans "Export dataset" %}</th>
       </tr>
     </thead>
@@ -43,6 +44,11 @@
                 {% else %}
                   {% trans "No" %}
                 {% endif %}
+            </td>
+            <td>
+                {% for dsl in dataset.translation_languages.all %}
+                    {{ dsl }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
             </td>
             <td>
                 {% if perms.dictionary.export_ecv %}
