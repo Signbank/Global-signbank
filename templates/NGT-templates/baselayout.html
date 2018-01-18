@@ -83,9 +83,10 @@
 
         //Use the form below to update the language when logging in (if needed)
         {% if user.is_authenticated and user.user_profile_user.last_used_language != WEBSITE_LANGUAGE %}
-
+            <!--console.log("This check stops the loop.");-->
+            {% if chosen_language %}
             $('#change_language_form').submit();
-
+            {% endif %}
         {% endif %}
 
     	$('#minimalistic_language_picker').minimalistic_language_picker(['en','nl','zh-hans'],'{{WEBSITE_LANGUAGE}}','{{ STATIC_URL }}images/languages/',function(chosen_language)

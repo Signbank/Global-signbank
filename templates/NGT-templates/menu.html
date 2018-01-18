@@ -1,5 +1,6 @@
 {% load i18n %}
-{% get_current_language as LANGUAGE %}
+<!-- This was commented out, WEBSITE_LANGUAGE is already defined in baselayout.html -->
+<!--{% get_current_language as LANGUAGE %}-->
 
 <div id="affix-bar">
 <nav id='navbar' class="navbar navbar-default" role="navigation">
@@ -25,9 +26,9 @@
         {% if item.children %} 
         <li class='dropdown'>
              <a href="{{ URL }}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
-             	{% if LANGUAGE == "nl" %}
+             	{% if WEBSITE_LANGUAGE == "nl" %}
                  {{item.title_dutch}}
-             	{% elif LANGUAGE == "cn" %}
+             	{% elif WEBSITE_LANGUAGE == "cn" %}
                  {{item.title_chinese}}
              	{% else %}
                  {{item.title}}
@@ -36,9 +37,9 @@
              <ul class="dropdown-menu">
              {% for subitem in item.children %}
                 <li {% if subitem.current %}class='active'{% endif %}><a href="{{ URL }}{{subitem.url}}">
-             	{% if LANGUAGE == "nl" %}
+             	{% if WEBSITE_LANGUAGE == "nl" %}
                  {{subitem.title_dutch}}
-             	{% elif LANGUAGE == "cn" %}
+             	{% elif WEBSITE_LANGUAGE == "cn" %}
                  {{subitem.title_chinese}}
              	{% else %}
                  {{subitem.title}}
@@ -49,9 +50,9 @@
         </li>
       {% else %}
         <li><a href="{{ URL }}{{item.url}}">
-            {% if LANGUAGE == "nl" %}
+            {% if WEBSITE_LANGUAGE == "nl" %}
                  {{item.title_dutch}}
-             	{% elif LANGUAGE == "cn" %}
+             	{% elif WEBSITE_LANGUAGE == "cn" %}
                  {{item.title_chinese}}
              	{% else %}
                  {{item.title}}
