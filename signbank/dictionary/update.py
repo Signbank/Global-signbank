@@ -1030,10 +1030,11 @@ def add_morpheme_definition(request, glossid):
         if form.is_valid():
 
             morph_id = form.cleaned_data['morph_id'] ## This is a morpheme ID now
-            # morph = Morpheme.objects.get(id=morph_id)
-            morph = morph_from_identifier(morph_id)
-            if morph == None:
-                print('morph_id is None')
+
+            try:
+                morph = Morpheme.objects.get(id=morph_id)
+            except:
+                print('morpheme with id ', morph_id, ' not found.')
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
             definition = SimultaneousMorphologyDefinition()
