@@ -1029,7 +1029,7 @@
                     </td>
                 </tr>
 
-                <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset' colspan="2">{{ gloss.dataset }}</td></tr>
+                {%if SHOW_DATASET_INTERFACE_OPTIONS %} <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset' colspan="2">{{ gloss.dataset }}</td></tr>{% endif %}
 
                 <tr><th>{% trans "In Web Dictionary" %}</th>
                     <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'>
