@@ -10,9 +10,9 @@
 
     <table class="table table-condensed">
         <tr>
-            {% for dataset_lang in dataset_languages %}
-            <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
-            {% endfor %}
+            <th>{% trans "Dataset" %}</th>
+            <th>{% trans "Lemma ID Gloss" %}</th>
+            <th>{% trans "Annotation ID Gloss" %}</th>
             <th style="width:180px;">{% trans "Creator" %}</th>
             <th>{% trans "Creation date" %}</th></tr>
 
@@ -28,8 +28,11 @@
         {% else %}
             <tr>
         {% endif %}
-          {% for dataset_lang in dataset_languages %}
-            {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
+        <td>{% value gloss.dataset %}</td>
+         <td id='idgloss'>
+             {% value gloss.idgloss %}
+         </td>
+            {% with gloss|get_annotation_idgloss_translation:1 as annotationidglosstranslation %}
           <td>
               {% ifnotequal annotationidglosstranslation "" %}
                 {% if gloss.is_morpheme %}
@@ -40,7 +43,6 @@
               {% endifnotequal %}
           </td>
             {% endwith %}
-          {% endfor %}
             <td>
                 {% for creator in gloss.creator.all %}
                     {% if forloop.last %}
