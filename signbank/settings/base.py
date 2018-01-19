@@ -50,6 +50,8 @@ STATICFILES_FINDERS = (
 SECRET_KEY = '^g=q21r_nnmbz49d!vs*2gvpll-y9b@&amp;t3k2r3c$*u&amp;2la5!%s'
 
 MIDDLEWARE_CLASSES = (
+#    'debug_toolbar.middleware.DebugToolbarMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -100,7 +102,7 @@ AUTHENTICATION_BACKENDS = (
 
 AUTH_PROFILE_MODULE = 'dictionary.UserProfile'
 
-INTERNAL_IPS = ('127.0.0.1',)
+INTERNAL_IPS = ('127.0.0.1','131.174.132.138')
 
 ROOT_URLCONF = 'signbank.urls'
 
@@ -129,6 +131,7 @@ INSTALLED_APPS = (
     #'django_mobile',
     'tagging',
     'guardian',
+    'debug_toolbar'
 )
 
 # A sample logging configuration. The only tangible logging
@@ -301,4 +304,4 @@ MAXIMUM_UPLOAD_SIZE = 5000000
 
 MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT = 40
 
-DATA_UPLOAD_MAX_NUMBER_FIELDS = None 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None
