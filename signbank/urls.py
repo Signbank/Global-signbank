@@ -32,6 +32,7 @@ if settings.SHOW_NUMBERSIGNS:
 else:
     numbersigns_view = TemplateView.as_view(template_name='numbersigns/underconstruction.html')
 
+import debug_toolbar
 
 urlpatterns = [
     url(r'^$', signbank.pages.views.page, name='root_page'),
@@ -94,7 +95,8 @@ urlpatterns = [
     url(r'^datasets/available', DatasetListView.as_view(), name='admin_dataset_view'),
     url(r'^datasets/select', DatasetListView.as_view(), {'select': True}, name='admin_dataset_select'),
     url(r'^datasets/change_selection', signbank.dictionary.update.change_dataset_selection, name='change_dataset_selection'),
-    url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses")
+    url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
+    url(r'^__debug__/', include(debug_toolbar.urls))
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
