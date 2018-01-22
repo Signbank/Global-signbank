@@ -11,6 +11,7 @@ from django.core.exceptions import PermissionDenied
 from django.utils.translation import override
 from django.forms.fields import TypedChoiceField, ChoiceField
 from django.shortcuts import *
+from django.contrib import messages
 
 import csv
 import operator
@@ -2438,7 +2439,7 @@ class DatasetListView(ListView):
                       {'EXT_REF_ID': 'signbank-ecv', 'TYPE': 'resource_url', 'VALUE': URL + "/dictionary/gloss/"})
 
         xmlstr = minidom.parseString(ET.tostring(top, 'utf-8')).toprettyxml(indent="   ")
-        ecv_file = os.path.join(ECV_FOLDER, self.dataset_lang.lower() + ".ecv")
+        ecv_file = os.path.join(ECV_FOLDER, self.dataset_lang.lower().replace(" ","_") + ".ecv")
         import codecs
         with codecs.open(ecv_file, "w", "utf-8") as f:
             f.write(xmlstr)
@@ -2446,7 +2447,9 @@ class DatasetListView(ListView):
             #        tree = ET.ElementTree(top)
             #        tree.write(open(ECV_FILE, 'w'), encoding ="utf-8",xml_declaration=True, method="xml")
 
-        return HttpResponse('OK')
+        messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_lang + ' successfully updated.'))
+        # return HttpResponse('ECV successfully updated.')
+        return HttpResponseRedirect(URL + '/datasets/available')
 
     def get_ecv_descripion_for_gloss(self, gloss, lang, include_phonology_and_frequencies=False):
         desc = ""
