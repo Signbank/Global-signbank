@@ -583,7 +583,7 @@ def add_new_sign(request):
     context['selected_datasets'] = selected_datasets
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
-    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages)
+    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user)
 
     return render(request,'dictionary/add_gloss.html',context)
 

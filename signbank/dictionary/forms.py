@@ -4,6 +4,7 @@ from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation
 from django.conf import settings
 from tagging.models import Tag
+import datetime as DT
 
 # category choices are tag values that we'll restrict search to
 CATEGORY_CHOICES = (('all', 'All Signs'),
@@ -28,6 +29,7 @@ class GlossCreateForm(forms.ModelForm):
 
     gloss_create_field_prefix = "glosscreate_"
     languages = None # Languages to use for annotation idgloss translations
+    user = None
 
     class Meta:
         model = Gloss
@@ -35,6 +37,7 @@ class GlossCreateForm(forms.ModelForm):
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
+        self.user = kwargs.pop('user')
         super(GlossCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in self.languages:
@@ -63,6 +66,9 @@ class GlossCreateForm(forms.ModelForm):
                     "In class %s: gloss with id %s has more than one annotation idgloss translation for language %s"
                     % (self.__class__.__name__, gloss.pk, language.name)
                 )
+        gloss.creator.add(self.user)
+        gloss.creationDate = DT.datetime.now()
+        gloss.save()
         return gloss
 
 

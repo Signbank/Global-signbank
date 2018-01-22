@@ -32,7 +32,7 @@ def add_gloss(request):
             selected_datasets = get_selected_datasets_for_user(request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        form = GlossCreateForm(request.POST, languages=dataset_languages)
+        form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user)
 
         for item, value in request.POST.items():
             print("%s %s" % (item, value))
