@@ -1030,7 +1030,7 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
                     shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
             shutil.rmtree(dir)
     except ImportError as i:
-        print(i.message)
+        print("Error resizing video: ", i)
     except IOError as io:
         print(io.message)
 

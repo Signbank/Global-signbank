@@ -158,7 +158,7 @@ class GlossVideoHistory(models.Model):
 
         # Basic feedback from one History item: gloss-action-date
         name = self.gloss.idgloss + ': ' + self.action + ', (' + str(self.datestamp) + ')'
-        return name.encode('ascii', errors='replace');
+        return name.encode('ascii', errors='replace')
 
     class Meta:
         ordering = ['datestamp']

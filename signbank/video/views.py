@@ -74,7 +74,7 @@ def addvideo(request):
                 resizer = VideoResizer([goal_location], FFMPEG_PROGRAM, 180, 0, 0)
                 resizer.run()
             except ImportError as i:
-                print(i.message)
+                print("Error resizing video: ",i)
 
             # Issue #214: generate still image
             from signbank.tools import generate_still_image
