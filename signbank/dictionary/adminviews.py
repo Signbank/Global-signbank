@@ -1527,7 +1527,7 @@ class MorphemeListView(ListView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
-        context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages)
+        context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
 
         # make sure that the morpheme-type options are available to the listview
         oChoiceLists = {}

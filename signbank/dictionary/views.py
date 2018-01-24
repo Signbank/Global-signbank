@@ -618,7 +618,7 @@ def add_new_morpheme(request):
     oContext['selected_datasets'] = selected_datasets
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     oContext['dataset_languages'] = dataset_languages
-    oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages)
+    oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user)
 
     field = 'mrpType'
     # Get and save the choice list for this field
