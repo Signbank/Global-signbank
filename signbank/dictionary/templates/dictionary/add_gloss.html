@@ -68,10 +68,10 @@
              {% for dataset_lang in dataset_languages %}
              <tr>
                  <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}">
-                     <label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
+                     <label for="id_annotation_idgloss_{{dataset_lang.language_code_2char}}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
                  </th>
                  <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
-                     <input id="glosscreate_{{ dataset_lang.language_code_2char }}" name="glosscreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
+                     <input id="glosscreate_{{ dataset_lang.language_code_2char }}" name="glosscreate_{{ dataset_lang.language_code_2char }}" required="" maxlength="30" type="text"/>
                  </td>
              </tr>
              {% endfor %}

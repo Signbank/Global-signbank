@@ -4,6 +4,7 @@ from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation
 from django.conf import settings
 from tagging.models import Tag
+import datetime as DT
 
 # category choices are tag values that we'll restrict search to
 CATEGORY_CHOICES = (('all', 'All Signs'),
@@ -28,6 +29,7 @@ class GlossCreateForm(forms.ModelForm):
 
     gloss_create_field_prefix = "glosscreate_"
     languages = None # Languages to use for annotation idgloss translations
+    user = None
 
     class Meta:
         model = Gloss
@@ -35,13 +37,14 @@ class GlossCreateForm(forms.ModelForm):
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
+        self.user = kwargs.pop('user')
         super(GlossCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in self.languages:
             glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
             self.fields[glosscreate_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
             if glosscreate_field_name in queryDict:
-                print("%s in %s" % (glosscreate_field_name, queryDict))
+                # print("%s in %s" % (glosscreate_field_name, queryDict))
                 self.fields[glosscreate_field_name].value = queryDict[glosscreate_field_name]
 
     def save(self, commit=True):
@@ -63,6 +66,9 @@ class GlossCreateForm(forms.ModelForm):
                     "In class %s: gloss with id %s has more than one annotation idgloss translation for language %s"
                     % (self.__class__.__name__, gloss.pk, language.name)
                 )
+        gloss.creator.add(self.user)
+        gloss.creationDate = DT.datetime.now()
+        gloss.save()
         return gloss
 
 
@@ -87,6 +93,7 @@ class MorphemeCreateForm(forms.ModelForm):
 
     morpheme_create_field_prefix = "morphemecreate_"
     languages = None  # Languages to use for annotation idgloss translations
+    user = None
 
     class Meta:
         model = Morpheme
@@ -94,13 +101,14 @@ class MorphemeCreateForm(forms.ModelForm):
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
+        self.user = kwargs.pop('user')
         super(MorphemeCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in self.languages:
             morphemecreate_field_name = self.morpheme_create_field_prefix + language.language_code_2char
             self.fields[morphemecreate_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
             if morphemecreate_field_name in queryDict:
-                print("%s in %s" % (morphemecreate_field_name, queryDict))
+                # print("%s in %s" % (morphemecreate_field_name, queryDict))
                 self.fields[morphemecreate_field_name].value = queryDict[morphemecreate_field_name]
 
     def save(self, commit=True):
@@ -122,6 +130,9 @@ class MorphemeCreateForm(forms.ModelForm):
                     "In class %s: gloss with id %s has more than one annotation idgloss translation for language %s"
                     % (self.__class__.__name__, morpheme.pk, language.name)
                 )
+        morpheme.creator.add(self.user)
+        morpheme.creationDate = DT.datetime.now()
+        morpheme.save()
         return morpheme
 
 class VideoUpdateForm(forms.Form):
