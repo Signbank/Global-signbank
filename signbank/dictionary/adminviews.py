@@ -2444,9 +2444,6 @@ class DatasetListView(ListView):
         with codecs.open(ecv_file, "w", "utf-8") as f:
             f.write(xmlstr)
 
-            #        tree = ET.ElementTree(top)
-            #        tree.write(open(ECV_FILE, 'w'), encoding ="utf-8",xml_declaration=True, method="xml")
-
         messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_lang + ' successfully updated.'))
         # return HttpResponse('ECV successfully updated.')
         return HttpResponseRedirect(URL + '/datasets/available')

@@ -172,7 +172,6 @@ def word(request, keyword, n):
                               {'translation': trans.translation.text.encode('utf-8'),
                                'viewname': 'words',
                                'definitions': trans.gloss.definitions(),
-                               'gloss': trans.gloss,
                                'allkwds': allkwds,
                                'n': n,
                                'total': total,
@@ -213,7 +212,6 @@ def gloss(request, glossid):
         raise Http404
 
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
-#        return render_to_response('dictionary/not_allowed.html')
         return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
 
     allkwds = gloss.translation_set.all()
@@ -654,7 +652,6 @@ def import_csv(request):
     import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
     user_datasets_names = [ dataset.name for dataset in user_datasets ]
-    # dataset_languages = Language.objects.filter(dataset__in=user_datasets).distinct()
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -990,7 +987,6 @@ def import_csv(request):
 
                 if dataset == 'None':
                     # this is an error, this should have already been caught
-                    # dataset_id = None
                     continue
                 else:
                     dataset_id = Dataset.objects.get(name=dataset)

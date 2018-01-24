@@ -44,7 +44,6 @@ class GlossCreateForm(forms.ModelForm):
             glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
             self.fields[glosscreate_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
             if glosscreate_field_name in queryDict:
-                # print("%s in %s" % (glosscreate_field_name, queryDict))
                 self.fields[glosscreate_field_name].value = queryDict[glosscreate_field_name]
 
     def save(self, commit=True):
@@ -108,7 +107,6 @@ class MorphemeCreateForm(forms.ModelForm):
             morphemecreate_field_name = self.morpheme_create_field_prefix + language.language_code_2char
             self.fields[morphemecreate_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
             if morphemecreate_field_name in queryDict:
-                # print("%s in %s" % (morphemecreate_field_name, queryDict))
                 self.fields[morphemecreate_field_name].value = queryDict[morphemecreate_field_name]
 
     def save(self, commit=True):
@@ -188,9 +186,7 @@ class GlossSearchForm(forms.ModelForm):
 
     relation = forms.CharField(label=_(u'Search for gloss of related signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     relationToForeignSign = forms.CharField(label=_(u'Search for gloss of foreign signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    # morpheme = forms.CharField(label=_(u'Search for gloss with this as morpheme')) #,widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     morpheme = forms.CharField(label=_(u'Search for gloss with this as morpheme'))
-    # morph_id = forms.CharField(label=_(u'Morpheme'))
 
     oriChAbd = forms.ChoiceField(label=_(u'Abduction change'),choices=NULLBOOLEANCHOICES)
     oriChFlex = forms.ChoiceField(label=_(u'Flexion change'),choices=NULLBOOLEANCHOICES)
@@ -199,9 +195,8 @@ class GlossSearchForm(forms.ModelForm):
 
     hasRelationToForeignSign = forms.ChoiceField(label=_(u'Related to foreign sign or not'),choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hasRelation = forms.ChoiceField(label=_(u'Type of relation'),choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    # A "component" is one part of a compound
+
     hasComponentOfType = forms.TypedChoiceField(label=_(u'Has compound component type'),choices=COMPONENT_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    # A "morpheme" is an item from the "Morpheme" list
     hasMorphemeOfType = forms.TypedChoiceField(label=_(u'Has morpheme type'),choices=MORPHEME_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
