@@ -1198,13 +1198,12 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     def count_videos(self):
         """Return a count of the number of videos we have 
         for this video - ie. the number of versions stored"""
-        
-        
+
         video_with_gloss = self.get_video_gloss()
-        
+
         return video_with_gloss.glossvideo_set.count()
-    
-    
+
+
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
 

@@ -177,10 +177,7 @@
      <!-- {{ gloss.get_video }} -->
 
         <div id="player">
-          <iframe id='videoiframe' scrolling="no" frameborder='0'
-		   src="{{protected_media_url}}{{morpheme.get_video}}">
-
-          </iframe>
+          <video id='videoiframe' src="{{protected_media_url}}{{morpheme.get_video}}" controls></video>
         </div>
         <div id="replay"></div>
 
@@ -216,7 +213,9 @@
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Video" %}</legend>
-            <p>{% blocktrans %} We have {{morpheme.count_videos}} videos for this morpheme. {% endblocktrans %}</p>
+            {% with morpheme.count_videos as morpheme_video_count %}
+            <p>{% blocktrans %} We have {{morpheme_video_count}} videos for this morpheme. {% endblocktrans %}</p>
+            {% endwith %}
             <form action="{{URL}}/video/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>

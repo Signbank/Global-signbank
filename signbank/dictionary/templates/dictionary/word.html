@@ -91,9 +91,7 @@
             <div id="videocontainer" style="width: 700px; height: 366px;">
                <div id="player" style="width: 700px;">
                 {% if gloss.has_video %}
-                  <iframe id='videoiframe' class="larger_iframe" scrolling="no" frameborder='0' style="width: 635px; height: 358px;"
-                          src="{{protected_media_url}}{{gloss.get_video}}">
-                  </iframe>
+                  <video id='videoiframe' style="width: 635px; height: 358px;" src="{{protected_media_url}}{{gloss.get_video}}" controls></video>
                 {% else %}
                   <img id="novideo" src='{{ STATIC_URL }}images/no-video-ngt.png'>
                 {% endif %}
