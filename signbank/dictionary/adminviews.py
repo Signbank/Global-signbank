@@ -2780,6 +2780,11 @@ class MorphemeDetailView(DetailView):
                 dataset_choices[dataset.name] = dataset.name
             context['dataset_choices'] = json.dumps(dataset_choices)
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
         return context
 
 def gloss_ajax_search_results(request):
