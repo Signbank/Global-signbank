@@ -1076,8 +1076,11 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         phonology_for_gloss = self.phonology_matrix()
 
         handedness_of_this_gloss = str(phonology_for_gloss['handedness'])
+        # Ignore homonyms when the Handedness of this gloss is X
+        handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
 
-        if (handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or handedness_of_this_gloss == None):
+        if (handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
+                    handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
 
             return ([], [], [])
 
