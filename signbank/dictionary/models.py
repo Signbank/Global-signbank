@@ -1084,6 +1084,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
             return ([], [], [])
 
+        if (self.domhndsh == None or self.domhndsh == '-'):
+            return ([], [], [])
+
+
         where_homonyms_filled = ''
         where_homonyms_empty = ''
         where_homonyms = ''
