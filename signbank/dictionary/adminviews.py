@@ -2065,7 +2065,7 @@ class HandshapeDetailView(DetailView):
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
         # if there are no current handshape search results in the current session, display all of them in the navigation bar
-        if self.request.session['search_type'] != 'handshape':
+        if self.request.session['search_type'] != 'handshape' or self.request.session['search_results'] == None:
 
             self.request.session['search_type'] = self.search_type
 
@@ -2310,9 +2310,6 @@ class HandshapeListView(ListView):
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
 
-        # Saving querysets results to sessions, these results can then be used elsewhere (like in gloss_detail)
-        # Flush the previous queryset (just in case)
-        # self.request.session['search_results'] = None
         # Handshape searching of signs relies on using the search_results in order to search signs that have the handshapes
         # The search_results is no longer set to None
 
@@ -2780,11 +2777,6 @@ class MorphemeDetailView(DetailView):
                 dataset_choices[dataset.name] = dataset.name
             context['dataset_choices'] = json.dumps(dataset_choices)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
-        context['selected_datasets'] = selected_datasets
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-        context['dataset_languages'] = dataset_languages
-
         return context
 
 def gloss_ajax_search_results(request):
@@ -2799,7 +2791,6 @@ def handshape_ajax_search_results(request):
     """Returns a JSON list of handshapes that match the previous search stored in sessions"""
 
     if request.session['search_type'] == 'handshape':
-
         return HttpResponse(json.dumps(request.session['search_results']))
     else:
         return HttpResponse(json.dumps(None))
