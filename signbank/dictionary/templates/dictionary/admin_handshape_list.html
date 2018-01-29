@@ -597,7 +597,7 @@ function do_adminsearch(el) {
     {% for handshape in object_list %}
     <tr>
 
-      <td>{%if handshape.get_image_path %}<div class="thumbnail_container"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{handshape.get_image_path}}"></div>{% endif %}</td>
+      <td>{%if handshape.get_image_path %}<div class="thumbnail_container"><img class="thumbnail" src="{{protected_media_url}}{{handshape.get_image_path}}"></div>{% endif %}</td>
 
         {% if language == 'nl' %}
         <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
@@ -704,8 +704,11 @@ function do_adminsearch(el) {
     {% for gloss in object_list %}
 
     <tr>
-      <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+      <td>{%if gloss.get_image_path != None %}
+          <div class="thumbnail_container">
+          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></a>
+          </div>
+          {% endif %}
       </td>
 
         {% for dataset_lang in dataset_languages %}
