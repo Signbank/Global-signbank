@@ -11,10 +11,10 @@
     <table class="table table-condensed">
         <tr>
             <th>{% trans "Dataset" %}</th>
-            <th>{% trans "Lemma ID Gloss" %}</th>
+            <th style="width:300px;">{% trans "Lemma ID Gloss" %}</th>
             <th>{% trans "Annotation ID Gloss" %}</th>
             <th style="width:180px;">{% trans "Creator" %}</th>
-            <th>{% trans "Creation date" %}</th></tr>
+            <th style="width:180px">{% trans "Creation date" %}</th></tr>
 
         {% for gloss in glosses %}
         <!-- Apply three-way coloring: (1) tag for wrong sign, (2) availability of video, and (3) gloss database value for 'isNew' -->
