@@ -31,16 +31,16 @@ html {
         color: white;
         font-family: 'Nunito', sans-serif;
         font-size: 40px;
-        padding: 22px;
-        padding-left: 33px;
+        padding: 19px;
+        padding-left: 3px;
         margin: 0px;
+        display: flex;
 }
 
 #second-title-part {
     color: lightgrey;
-    margin-left: 62px;
-    display: block;
-    line-height: 0.3;
+    margin-left: -92px;
+    line-height: 2.5;
 }
 
 #logoholder {
@@ -96,4 +96,12 @@ legend
 
 .modal-dialog {
   margin: 130px auto;
+}
+
+.global_sb_logo
+{
+    width: 80px;
+    margin: 15px;
+    margin-left: 19px;
+    float: left;
 }
