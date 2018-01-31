@@ -42,18 +42,13 @@
 function clearForm(myFormElement) {
 
   var elements = myFormElement.elements;
-  <!--alert('bla');-->
-  <!--console.log("inside ClearForm");-->
+
   myFormElement.reset();
-  <!--console.log("number of elements to traverse: " + elements.length);-->
 
   for(i=0; i<elements.length; i++) {
 
       field_type = elements[i].type.toLowerCase();
-      <!--console.log("field type: " + field_type);-->
       field_name = elements[i].name;
-      <!--console.log("field name: " + field_name);-->
-      <!--console.log("element " + i + " has name " + field_name + " and type " + field_type);-->
 
       if (field_name == 'paginate_by') {
         elements[i].selectedIndex = 3;
@@ -64,10 +59,8 @@ function clearForm(myFormElement) {
       }
       else if (field_name == 'sortOrder') {
         elements[i].value = "machine_value";
-        <!--console.log("name is sortOrder");-->
       }
       else {
-          <!--console.log("after testing sortOrder");-->
           switch(field_type) {
 
             case "text":

@@ -2064,6 +2064,12 @@ class HandshapeDetailView(DetailView):
 
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
+        # Check the type of the current search results
+
+        if self.request.session['search_results'] and len(self.request.session['search_results']) > 0:
+            if 'gloss' in self.request.session['search_results'][0].keys():
+                self.request.session['search_results'] = None
+
         # if there are no current handshape search results in the current session, display all of them in the navigation bar
         if self.request.session['search_type'] != 'handshape' or self.request.session['search_results'] == None:
 
