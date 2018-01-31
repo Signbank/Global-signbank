@@ -2152,7 +2152,11 @@ class HandshapeListView(ListView):
         #     context['glosscount'] = Gloss.objects.count()  # Count the glosses + morphemes
 
         context['handshapefieldchoicecount'] = FieldChoice.objects.filter(field__iexact='Handshape').count()
-        context['signscount'] = Gloss.objects.all().count()
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        context['signscount'] = Gloss.objects.filter(dataset__in=selected_datasets).count()
+
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
 
         context['handshape_fields_FS1'] = []
@@ -2336,14 +2340,16 @@ class HandshapeListView(ListView):
             # search for signs with found hadnshapes
             # find relevant machine values for handshapes
             selected_handshapes = [ h.machine_value for h in qs ]
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
 
             if len(selected_handshapes) == (Handshape.objects.all().count()):
 
-                qs = Gloss.objects.filter(Q(domhndsh__in=selected_handshapes) | Q(domhndsh__isnull=True) | Q(domhndsh__exact='0')
+                qs = Gloss.objects.filter(dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes)
+                                          | Q(domhndsh__isnull=True) | Q(domhndsh__exact='0')
                                           | Q(subhndsh__in=selected_handshapes) | Q(subhndsh__isnull=True) | Q(subhndsh__exact='0'))
 
             else:
-                qs = Gloss.objects.filter(Q(domhndsh__in=selected_handshapes) | Q(subhndsh__in=selected_handshapes))
+                qs = Gloss.objects.filter(dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes) | Q(subhndsh__in=selected_handshapes))
 
         self.request.session['search_type'] = self.search_type
 
