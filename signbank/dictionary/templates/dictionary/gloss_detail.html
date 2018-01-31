@@ -4,6 +4,8 @@
 {% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 
+{% load guardian_tags %}
+
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
     <style>
@@ -20,7 +22,7 @@
     
     
     {% if perms.dictionary.change_gloss %}
-    
+
     <script type='text/javascript'>
     var url = '{{ URL }}'
 
@@ -88,7 +90,10 @@
     });
 
     </script>
+    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+    {% if "change_dataset" in dataset_perms %}
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
+    {% endif %}
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
@@ -176,7 +181,10 @@
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
          <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit next gloss" %}</button>
+         {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+         {% if "change_dataset" in dataset_perms %}
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
+         {% endif %}
          
          <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
              <div class="modal-dialog modal-sm">
