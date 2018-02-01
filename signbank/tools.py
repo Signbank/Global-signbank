@@ -1076,3 +1076,21 @@ def get_default_annotationidglosstranslation(gloss):
     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
         default_annotationidglosstranslation = annotationidglosstranslations[0].text
     return default_annotationidglosstranslation
+
+def convert_language_code_to_2char(language_code):
+
+    # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
+    if '-' in language_code:
+        language_code_parts = language_code.split('-')
+    elif '_' in language_code:
+        language_code_parts = language_code.split('_')
+    else:
+        # only one part
+        language_code_parts = [language_code]
+    if len(language_code_parts) > 1:
+        new_language_code = language_code_parts[0]
+        new_language_code += '_' + language_code_parts[1].upper()
+    else:
+        new_language_code = language_code_parts[0]
+
+    return new_language_code
