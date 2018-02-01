@@ -300,7 +300,9 @@
                 <td class='edit edit_mrptype' id='mrpType'>{{ morpheme_type }}</td>
             </tr>
             <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage'>{% for lang in morpheme.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            {%if SHOW_DATASET_INTERFACE_OPTIONS %}
             <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            {% endif %}
             <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset'>{{ morpheme.dataset }}</td></tr>
         </table>
 			 

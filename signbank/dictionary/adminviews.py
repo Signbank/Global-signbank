@@ -1256,14 +1256,15 @@ class GlossDetailView(DetailView):
 
         context['otherrelations'] = otherrelations
 
-        context['dataset_choices'] = {}
-        user = self.request.user
-        if user.is_authenticated():
-            qs = get_objects_for_user(user, 'view_dataset', Dataset)
-            dataset_choices = {}
-            for dataset in qs:
-                dataset_choices[dataset.name] = dataset.name
-            context['dataset_choices'] = json.dumps(dataset_choices)
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['dataset_choices'] = {}
+            user = self.request.user
+            if user.is_authenticated():
+                qs = get_objects_for_user(user, 'view_dataset', Dataset)
+                dataset_choices = {}
+                for dataset in qs:
+                    dataset_choices[dataset.name] = dataset.name
+                context['dataset_choices'] = json.dumps(dataset_choices)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -2782,15 +2783,16 @@ class MorphemeDetailView(DetailView):
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
-        context['dataset_choices'] = {}
-        user = self.request.user
-        if user.is_authenticated():
-            import guardian
-            qs = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
-            dataset_choices = dict()
-            for dataset in qs:
-                dataset_choices[dataset.name] = dataset.name
-            context['dataset_choices'] = json.dumps(dataset_choices)
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['dataset_choices'] = {}
+            user = self.request.user
+            if user.is_authenticated():
+                import guardian
+                qs = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+                dataset_choices = dict()
+                for dataset in qs:
+                    dataset_choices[dataset.name] = dataset.name
+                context['dataset_choices'] = json.dumps(dataset_choices)
 
         return context
 
