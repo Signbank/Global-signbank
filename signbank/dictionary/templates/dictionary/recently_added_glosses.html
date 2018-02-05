@@ -10,7 +10,7 @@
 
     <table class="table table-condensed">
         <tr>
-            <th>{% trans "Dataset" %}</th>
+            {%if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
             <th style="width:300px;">{% trans "Lemma ID Gloss" %}</th>
             <th>{% trans "Annotation ID Gloss" %}</th>
             <th style="width:180px;">{% trans "Creator" %}</th>
@@ -28,7 +28,7 @@
         {% else %}
             <tr>
         {% endif %}
-        <td>{% value gloss.dataset %}</td>
+        {%if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{% value gloss.dataset %}</td>{% endif %}
          <td id='idgloss'>
              {% value gloss.idgloss %}
          </td>
