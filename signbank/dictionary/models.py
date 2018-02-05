@@ -1211,8 +1211,8 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
 
-        return '/home/wessel/signbank/signbank/video/testmedia/AANBELLEN-320kbits.mp4'
-         
+        # return '/home/wessel/signbank/signbank/video/testmedia/AANBELLEN-320kbits.mp4'
+
         video = self.get_video()
         if video != None:
             return video.get_absolute_url()
