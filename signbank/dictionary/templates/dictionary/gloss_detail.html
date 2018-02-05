@@ -21,7 +21,8 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
     
     
-    {% if perms.dictionary.change_gloss %}
+    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+    {% if "change_dataset" in dataset_perms %}
 
     <script type='text/javascript'>
     var url = '{{ URL }}'
@@ -90,10 +91,8 @@
     });
 
     </script>
-    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-    {% if "change_dataset" in dataset_perms %}
+
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
-    {% endif %}
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
@@ -176,8 +175,6 @@
             <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
         {% endif %}
 
-    {% if perms.dictionary.change_gloss %}
-
     <div class='pull-right'>
          {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
          {% if "change_dataset" in dataset_perms %}
@@ -212,7 +209,6 @@
         {% endif %}
 
     </div>
-    {% endif %}
 </div>
 
 <div id="definitionblock">
