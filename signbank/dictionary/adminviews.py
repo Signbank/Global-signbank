@@ -1215,7 +1215,6 @@ class GlossDetailView(DetailView):
 
         context['simultaneous_morphology'] = simultaneous_morphology
 
-
         blend_morphology = []
 
         if gl.blend_morphology:
