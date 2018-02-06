@@ -896,6 +896,7 @@ class GlossDetailView(DetailView):
 
     model = Gloss
     context_object_name = 'gloss'
+    datasetid = get_default_language_id()
 
     #Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
@@ -976,6 +977,10 @@ class GlossDetailView(DetailView):
         #Pass info about which fields we want to see
         gl = context['gloss']
         labels = gl.field_labels()
+
+        # set a session variable to be able to pass the gloss's id to the ajax_complete method
+        self.datasetid = gl.dataset
+        self.request.session['datasetid'] = str(self.datasetid)
 
         # set up weak drop weak prop fields
 
@@ -1510,6 +1515,11 @@ class GlossRelationsDetailView(DetailView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
         return context
 
 
@@ -1571,6 +1581,11 @@ class MorphemeListView(ListView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         return context
 
@@ -1970,6 +1985,7 @@ class HandshapeDetailView(DetailView):
     template_name = 'dictionary/handshape_detail.html'
     context_object_name = 'handshape'
     search_type = 'handshape'
+    datasetid = get_default_language_id()
 
     class Meta:
         verbose_name_plural = "Handshapes"
@@ -2108,6 +2124,11 @@ class HandshapeDetailView(DetailView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
         return context
 
 
@@ -2129,6 +2150,11 @@ class HomonymListView(ListView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         return context
 
@@ -2209,6 +2235,11 @@ class HandshapeListView(ListView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         return context
 
@@ -2384,11 +2415,16 @@ class DatasetListView(ListView):
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(DatasetListView, self).get_context_data(**kwargs)
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         return context
 
@@ -2579,8 +2615,9 @@ class DatasetListView(ListView):
             qs = qs.annotate(Count('gloss')).order_by('name')
 
             return qs
-
-        return None
+        else:
+            # User is not authenticated
+            return None
 
 
 def order_handshape_queryset_by_sort_order(get, qs):
@@ -2663,6 +2700,7 @@ def order_handshape_queryset_by_sort_order(get, qs):
 class MorphemeDetailView(DetailView):
     model = Morpheme
     context_object_name = 'morpheme'
+    datasetid = get_default_language_id()
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -2711,6 +2749,10 @@ class MorphemeDetailView(DetailView):
         # Pass info about which fields we want to see
         gl = context['morpheme']
         labels = gl.field_labels()
+
+        # set a session variable to be able to pass the gloss's id to the ajax_complete method
+        self.datasetid = gl.dataset
+        self.request.session['datasetid'] = str(self.datasetid)
 
         context['choice_lists'] = {}
 
@@ -2804,6 +2846,16 @@ class MorphemeDetailView(DetailView):
                     dataset_choices[dataset.name] = dataset.name
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
         return context
 
 def gloss_ajax_search_results(request):
@@ -2826,26 +2878,27 @@ def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
 
+    datasetid = request.session['datasetid']
+    dataset_id = Dataset.objects.get(name=datasetid)
 
     query = Q(idgloss__istartswith=prefix) | \
             Q(annotationidglosstranslation__text__istartswith=prefix) | \
             Q(sn__startswith=prefix)
-    # TODO: possibly reduce the possibilities of [Gloss.objects] to exclude Morphemes??
-    # Suggestion: qs = Gloss.none_morpheme_objects.filter(query) -- if that works
     qs = Gloss.objects.filter(query).distinct()
 
     result = []
     for g in qs:
-        default_annotationidglosstranslation = ""
-        annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=request.LANGUAGE_CODE)
-        if annotationidglosstranslation:
-            default_annotationidglosstranslation = annotationidglosstranslation.text
-        else:
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(
-                language__language_code_2char='en')
+        if g.dataset == dataset_id:
+            default_annotationidglosstranslation = ""
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=request.LANGUAGE_CODE)
             if annotationidglosstranslation:
                 default_annotationidglosstranslation = annotationidglosstranslation.text
-        result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn, 'pk': "%s" % (g.id)})
+            else:
+                annotationidglosstranslation = g.annotationidglosstranslation_set.get(
+                    language__language_code_2char='en')
+                if annotationidglosstranslation:
+                    default_annotationidglosstranslation = annotationidglosstranslation.text
+            result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn, 'pk': "%s" % (g.id)})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
@@ -2872,6 +2925,9 @@ def morph_ajax_complete(request, prefix):
     """Return a list of morphs matching the search term
     as a JSON structure suitable for typeahead."""
 
+    datasetid = request.session['datasetid']
+    dataset_id = Dataset.objects.get(name=datasetid)
+
     query = Q(idgloss__istartswith=prefix) | \
             Q(annotationidglosstranslation__text__istartswith=prefix) | \
             Q(sn__startswith=prefix)
@@ -2879,16 +2935,17 @@ def morph_ajax_complete(request, prefix):
 
     result = []
     for g in qs:
-        default_annotationidglosstranslation = ""
-        annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=request.LANGUAGE_CODE)
-        if annotationidglosstranslation:
-            default_annotationidglosstranslation = annotationidglosstranslation.text
-        else:
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(
-                language__language_code_2char='en')
+        if g.dataset == dataset_id:
+            default_annotationidglosstranslation = ""
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=request.LANGUAGE_CODE)
             if annotationidglosstranslation:
                 default_annotationidglosstranslation = annotationidglosstranslation.text
-        result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn,
-                       'pk': "%s" % (g.id)})
+            else:
+                annotationidglosstranslation = g.annotationidglosstranslation_set.get(
+                    language__language_code_2char='en')
+                if annotationidglosstranslation:
+                    default_annotationidglosstranslation = annotationidglosstranslation.text
+            result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn,
+                           'pk': "%s" % (g.id)})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
