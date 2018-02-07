@@ -944,7 +944,7 @@ class GlossDetailView(DetailView):
         context['morphologyform'] = GlossMorphologyForm()
         context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
             choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
-                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''))
+                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''), required=True)
 
         context['morphemeform'] = GlossMorphemeForm()
         context['blendform'] = GlossBlendForm()
@@ -1220,6 +1220,12 @@ class GlossDetailView(DetailView):
 
         context['simultaneous_morphology'] = simultaneous_morphology
 
+        # Obtain the number of morphemes in the dataset of this gloss
+        # The template will not show the facility to add simultaneous morphology if there are no morphemes to choose from
+        dataset_id_of_gloss = gl.dataset
+        count_morphemes_in_dataset = Morpheme.objects.filter(dataset=dataset_id_of_gloss).count()
+        context['count_morphemes_in_dataset'] = count_morphemes_in_dataset
+
         blend_morphology = []
 
         if gl.blend_morphology:
@@ -1335,7 +1341,7 @@ class GlossRelationsDetailView(DetailView):
         context['morphologyform'] = GlossMorphologyForm()
         context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
             choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
-                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''))
+                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''), required=True)
 
         context['morphemeform'] = GlossMorphemeForm()
         context['blendform'] = GlossBlendForm()
