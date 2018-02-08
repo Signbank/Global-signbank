@@ -75,7 +75,7 @@
     <table class="nav navbar-right">
         <tr class="align-middle">
         {% if user.is_authenticated %}
-        {% if selected_datasets %}
+        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         <td class='nav navbar-right'>{% trans "Datasets:" %}
             {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
             {% endfor %}

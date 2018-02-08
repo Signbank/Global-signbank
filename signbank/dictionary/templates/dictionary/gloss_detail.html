@@ -21,7 +21,8 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
     
     
-    {% if perms.dictionary.change_gloss %}
+    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+    {% if "change_dataset" in dataset_perms %}
 
     <script type='text/javascript'>
     var url = '{{ URL }}'
@@ -89,11 +90,61 @@
         }
     });
 
+    function validateAddRelationForm() {
+        var target_of_relation = document.forms["add_relation_form"]["targetid"].value;
+        var this_gloss = document.forms["add_relation_form"]["sourceid"].value;
+        if (target_of_relation == "") {
+            alert("Please choose a target gloss for Add Relation to Other Sign.");
+            return false;
+        }
+        if (target_of_relation == this_gloss) {
+            alert("Target gloss must be different from this gloss for Add Relation to Other Sign.");
+            return false;
+        }
+    }
+
+    function validateAddComponentForm() {
+        var component_gloss = document.forms["add_morphologydefinition_form"]["morpheme_id"].value;
+        var this_gloss = document.forms["add_morphologydefinition_form"]["parent_gloss_id"].value;
+        if (component_gloss == "") {
+            alert("Please choose a gloss for Add Component Morphology.");
+            return false;
+        }
+        if (component_gloss == this_gloss) {
+            alert("Component gloss must be different from this gloss for Add Component Morphology.");
+            return false;
+        }
+    }
+
+    function validateAddMorphemeForm() {
+        var morpheme_gloss = document.forms["add_morphemedefinition_form"]["morph_id"].value;
+        var this_gloss = document.forms["add_morphemedefinition_form"]["host_gloss_id"].value;
+        if (morpheme_gloss == "") {
+            alert("Please choose a gloss for Add Morpheme Morphology.");
+            return false;
+        }
+        if (morpheme_gloss == this_gloss) {
+            alert("Morpheme must be different from this gloss for Add Morpheme Morphology.");
+            return false;
+        }
+    }
+
+    function validateAddBlendForm() {
+        var target_of_blend = document.forms["add_blenddefinition_form"]["blend_id"].value;
+        var this_gloss = document.forms["add_blenddefinition_form"]["host_gloss_id"].value;
+        if (target_of_blend == "") {
+            alert("Please choose a gloss for Add Blend Morphology.");
+            return false;
+        }
+        if (target_of_blend == this_gloss) {
+            alert("Blend gloss must be different from this gloss for Add Blend Morphology.");
+            return false;
+        }
+    }
+
     </script>
-    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-    {% if "change_dataset" in dataset_perms %}
+
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
-    {% endif %}
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
@@ -176,8 +227,6 @@
             <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
         {% endif %}
 
-    {% if perms.dictionary.change_gloss %}
-
     <div class='pull-right'>
          {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
          {% if "change_dataset" in dataset_perms %}
@@ -212,7 +261,6 @@
         {% endif %}
 
     </div>
-    {% endif %}
 </div>
 
 <div id="definitionblock">
@@ -473,7 +521,7 @@
 
             {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
             {% if "change_dataset" in dataset_perms %}
-            <form id='add_morphologydefinition_form' method='post' action="{% url 'dictionary:add_morphologydefinition' %}">
+            <form name="add_morphologydefinition_form" id='add_morphologydefinition_form' onsubmit="return validateAddComponentForm()" method='post' action="{% url 'dictionary:add_morphologydefinition' %}">
                {% csrf_token %}
                <input type='hidden' name='parent_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
@@ -490,17 +538,30 @@
             </form>
             {% endif %}
 
-            <!-- Editable list of morphemes (see model "Morpheme") used in this Gloss (ERK, issue #177) -->
-
             <table class='table table-condensed'>
                 <tr>
                     <th colspan="4">{% trans "Simultaneous Morphology" %}</th>
                 </tr>
+                {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+                {% if count_morphemes_in_dataset < 1 %}
+                <tr>
+                    <td colspan="4"><i>({% trans "There are no morphemes in the dataset of this gloss." %})</i></td>
+                </tr>
+                {% else %}
                 <tr>
                     <th style="width:2em;"></th>
                     <th style="width:22em;">{% trans "Morpheme gloss" %}</th>
                     <th colspan="2">{% trans "Meaning in this sign" %}</th>
                 </tr>
+                {% endif %}
+                {% else %}
+                <tr>
+                    <th style="width:2em;"></th>
+                    <th style="width:22em;">{% trans "Morpheme gloss" %}</th>
+                    <th colspan="2">{% trans "Meaning in this sign" %}</th>
+                </tr>
+                {% endif %}
+
                 {% for morpheme, morph_display, morpheme_type in simultaneous_morphology %}
                 <tr>
                     <!-- Facility to delete this morpheme -->
@@ -547,7 +608,8 @@
             <!-- Facilitate adding and deleting morphemes that are used in this sign -->
             {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
             {% if "change_dataset" in dataset_perms %}
-            <form id='add_morphemedefinition_form' method='post' action="{% url 'dictionary:add_morphemedefinition' glossid=gloss.id %}">
+            {% if count_morphemes_in_dataset %}
+            <form name='add_morphemedefinition_form' id='add_morphemedefinition_form' onsubmit="return validateAddMorphemeForm()" method='post' action="{% url 'dictionary:add_morphemedefinition' glossid=gloss.id %}">
                {% csrf_token %}
                <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
@@ -565,8 +627,7 @@
                <div style='height: 10em'></div>
              </form>
             {% endif %}
-
-
+            {% endif %}
 
             <table class='table table-condensed'>
                 <tr>
@@ -623,7 +684,7 @@
             <!-- Facilitate adding and deleting blends that are used in this sign -->
             {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
             {% if "change_dataset" in dataset_perms %}
-            <form id='add_blenddefinition_form' method='post' action="{% url 'dictionary:add_blenddefinition' glossid=gloss.id %}">
+            <form name='add_blenddefinition_form' id='add_blenddefinition_form' onsubmit="return validateAddBlendForm()" method='post' action="{% url 'dictionary:add_blenddefinition' glossid=gloss.id %}">
                {% csrf_token %}
                <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
@@ -633,7 +694,7 @@
                            <input class='form-control glosstypeahead' placeholder='{% trans "Blend gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
                            <input type="hidden" name='blend_id' value=""/>
                        </td>
-                       <td><input class='form-control' placeholder='{% trans "Role in this sign" %}' name='role' value="{{blendform.role.value|default:''}}"/></td>
+                       <td><input class='form-control' placeholder='{% trans "Role in this sign" %}' name='role' value="{{blendform.role.value|default:''}}" required=""/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Blend" %}' type='submit'></td>
                    </tr>
                </table>
@@ -925,7 +986,7 @@
                
                {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
                {% if "change_dataset" in dataset_perms %}
-               <form id='add_relation_form' method='post' action='{% url "dictionary:add_relation" %}'>
+               <form name='add_relation_form' id='add_relation_form' onsubmit="return validateAddRelationForm()" method='post' action='{% url "dictionary:add_relation" %}'>
                    {% csrf_token %}
                    <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
                    <table class='table table-condensed'>

@@ -1045,13 +1045,15 @@ def recently_added_glosses(request):
                           creationDate__range=(recently_added_signs_since_date, datetime.now())).order_by(
                           'creationDate').reverse(),
                        'dataset_languages': dataset_languages,
-                        'selected_datasets':selected_datasets})
+                        'selected_datasets':selected_datasets,
+                        'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     except:
         return render(request,'dictionary/recently_added_glosses.html',
                       {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
-                        'selected_datasets':selected_datasets})
+                        'selected_datasets':selected_datasets,
+                        'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def proposed_new_signs(request):
@@ -1062,8 +1064,8 @@ def proposed_new_signs(request):
     return render(request, 'dictionary/recently_added_glosses.html',
                   {'glosses': proposed_or_new_signs,
                    'dataset_languages': dataset_languages,
-                   'selected_datasets': selected_datasets
-                   })
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def add_params_to_url(url,params):

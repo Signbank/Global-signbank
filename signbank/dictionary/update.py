@@ -11,6 +11,7 @@ from django.db.models.fields import NullBooleanField
 from tagging.models import TaggedItem, Tag
 import os, shutil, re
 from datetime import datetime
+from django.contrib import messages
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -491,7 +492,7 @@ def update_sequential_morphology(gloss, field, values):
     try:
         for morpheme_def_id in morphemes:
             old_morpheme = MorphologyDefinition.objects.get(id=morpheme_def_id)
-            print("DELETE: ", old_morpheme)
+            print("DELETE Sequential Morphology: ", old_morpheme)
             old_morpheme.delete()
         for value in values:
             morpheme = Gloss.objects.get(pk=value)
@@ -524,7 +525,7 @@ def update_simultaneous_morphology(gloss, field, values):
     # to allow (re-)insertion in the correct order
     for sim_id in existing_sim_ids:
         sim = SimultaneousMorphologyDefinition.objects.get(id=sim_id)
-        print("DELETE: ", sim)
+        print("DELETE Simultaneous Morphology: ", sim)
         sim.delete()
 
     # the existance of the morphemes has already been checked, but check again anyway
@@ -584,7 +585,7 @@ def subst_foreignrelations(gloss, field, values):
     for rel_id in existing_relation_ids:
         rel = RelationToForeignSign.objects.get(id=rel_id)
         if rel.other_lang_gloss not in new_relations:
-            print("DELETE: ", rel)
+            print("DELETE Relation to Foreign Sign: ", rel)
             rel.delete()
 
     # all remaining existing relations are to be updated
@@ -655,7 +656,7 @@ def subst_relations(gloss, field, values):
             print("DELETE reverse relation: target: ", rel.target, ", relation: ", reverse_relations[0])
             reverse_relations[0].delete()
 
-        print("DELETE: ", rel)
+        print("DELETE Relation: ", rel)
         rel.delete()
 
     # all remaining existing relations are to be updated
@@ -683,7 +684,7 @@ def subst_relations(gloss, field, values):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-## TODO the function below does not seem to be used
+## This function is called from the Gloss Detail View template when updating Relations to Other Signs
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
     
@@ -699,7 +700,7 @@ def update_relation(gloss, field, value):
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
     if what == 'relationdelete':
-        print("DELETE: ", rel)
+        print("DELETE relation: ", rel)
         rel.delete()
 
         # Also delete the reverse relation
@@ -747,7 +748,7 @@ def update_relationtoforeignsign(gloss, field, value):
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
     if what == 'relationforeign_delete':
-        print("DELETE: ", rel)
+        print("DELETE Relation to Foreign Sign: ", rel)
         rel.delete()
         # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
         return HttpResponse('', {'content-type': 'text/plain'})
@@ -852,7 +853,7 @@ def update_other_media(request,gloss,field,value):
 
     if action_or_fieldname == 'other-media-delete':
         other_media.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'/')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
 
     elif action_or_fieldname == 'other-media-type':
         other_media.type = value
@@ -1022,9 +1023,17 @@ def add_morpheme_definition(request, glossid):
 
         # check availability of morpheme before continuing
         if form.data['morph_id'] == "":
-            print('morph_id is empty')
-            # The user has obviously not selected a morpheme
-            # Desired action (Issue #199): nothing happens
+            # The user has not selected a morpheme
+            # Check if there are morphemes available for this dataset
+            if 'datasetid' in request.session.keys():
+                datasetid = request.session['datasetid']
+                dataset_id = Dataset.objects.get(name=datasetid)
+                count_morphemes_in_dataset = Morpheme.objects.filter(dataset=dataset_id).count()
+                if count_morphemes_in_dataset < 1:
+                    messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
+                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+
+            messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: No morpheme selected.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
         if form.is_valid():
@@ -1034,7 +1043,10 @@ def add_morpheme_definition(request, glossid):
             try:
                 morph = Morpheme.objects.get(id=morph_id)
             except:
-                print('morpheme with id ', morph_id, ' not found.')
+
+                # The user has tryed to type in a name themself rather than select from the list.
+                messages.add_message(request, messages.INFO, ('Simultaneuous morphology: no morpheme found with identifier ' + morph_id + '.'))
+
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
             definition = SimultaneousMorphologyDefinition()
@@ -1044,6 +1056,7 @@ def add_morpheme_definition(request, glossid):
             definition.save()
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
+    # If we get here the request method has apparently been changed to get instead of post, can this happen?
     raise Http404('Incorrect request')
 
 def add_morphemeappearance(request):
@@ -1081,7 +1094,7 @@ def add_blend_definition(request, glossid):
         if form.data['blend_id'] == "":
             # The user has obviously not selected a morpheme
             # Desired action (Issue #199): nothing happens
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'/')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
         if form.is_valid():
 
@@ -1095,7 +1108,7 @@ def add_blend_definition(request, glossid):
                 definition.role = form.cleaned_data['role']
                 definition.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'/')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     raise Http404('Incorrect request')
 
@@ -1228,7 +1241,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
         return HttpResponseBadRequest("Morphology Definition doesn't match gloss", {'content-type': 'text/plain'})
 
     if what == 'morphology_definition_delete':
-        print("DELETE: ", morph_def)
+        print("DELETE morphology definition: ", morph_def)
         morph_def.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'morphology_definition_role':
@@ -1509,7 +1522,7 @@ def update_blend_definition(gloss, field, value):
     if what == 'blend_definition_delete':
         definition = BlendMorphology.objects.get(id=blend_id)
         definition.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'/')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'blend_definition_role':
         definition = BlendMorphology.objects.get(id=blend_id)
         original_value = getattr(definition, 'role')
