@@ -978,7 +978,11 @@ class GlossDetailView(DetailView):
         labels = gl.field_labels()
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
-        self.request.session['datasetid'] = gl.dataset.id
+        if gl.dataset:
+            self.request.session['datasetid'] = gl.dataset.id
+        else:
+            self.request.session['datasetid'] = get_default_language_id()
+
 
         # set up weak drop weak prop fields
 
@@ -2755,8 +2759,10 @@ class MorphemeDetailView(DetailView):
         labels = gl.field_labels()
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
-        self.request.session['datasetid'] = gl.dataset.id
-
+        if gl.dataset:
+            self.request.session['datasetid'] = gl.dataset.id
+        else:
+            self.request.session['datasetid'] = get_default_language_id()
 
         context['choice_lists'] = {}
 
