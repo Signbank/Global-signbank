@@ -1608,8 +1608,10 @@ class MorphemeListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
         if len(get) > 0:
-            qs = Morpheme.objects.all()
+            qs = Morpheme.objects.all().filter(dataset__in=selected_datasets)
 
         #Don't show anything when we're not searching yet
         else:
