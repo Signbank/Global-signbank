@@ -896,7 +896,6 @@ class GlossDetailView(DetailView):
 
     model = Gloss
     context_object_name = 'gloss'
-    datasetid = get_default_language_id()
 
     #Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
@@ -979,8 +978,11 @@ class GlossDetailView(DetailView):
         labels = gl.field_labels()
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
-        self.datasetid = gl.dataset
-        self.request.session['datasetid'] = str(self.datasetid)
+        if gl.dataset:
+            self.request.session['datasetid'] = gl.dataset.id
+        else:
+            self.request.session['datasetid'] = get_default_language_id()
+
 
         # set up weak drop weak prop fields
 
@@ -1993,7 +1995,6 @@ class HandshapeDetailView(DetailView):
     template_name = 'dictionary/handshape_detail.html'
     context_object_name = 'handshape'
     search_type = 'handshape'
-    datasetid = get_default_language_id()
 
     class Meta:
         verbose_name_plural = "Handshapes"
@@ -2708,7 +2709,6 @@ def order_handshape_queryset_by_sort_order(get, qs):
 class MorphemeDetailView(DetailView):
     model = Morpheme
     context_object_name = 'morpheme'
-    datasetid = get_default_language_id()
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -2759,8 +2759,10 @@ class MorphemeDetailView(DetailView):
         labels = gl.field_labels()
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
-        self.datasetid = gl.dataset
-        self.request.session['datasetid'] = str(self.datasetid)
+        if gl.dataset:
+            self.request.session['datasetid'] = gl.dataset.id
+        else:
+            self.request.session['datasetid'] = get_default_language_id()
 
         context['choice_lists'] = {}
 
@@ -2887,7 +2889,7 @@ def gloss_ajax_complete(request, prefix):
     as a JSON structure suitable for typeahead."""
 
     datasetid = request.session['datasetid']
-    dataset_id = Dataset.objects.get(name=datasetid)
+    dataset_id = Dataset.objects.get(id=datasetid)
 
     query = Q(idgloss__istartswith=prefix) | \
             Q(annotationidglosstranslation__text__istartswith=prefix) | \
@@ -2934,7 +2936,7 @@ def morph_ajax_complete(request, prefix):
     as a JSON structure suitable for typeahead."""
 
     datasetid = request.session['datasetid']
-    dataset_id = Dataset.objects.get(name=datasetid)
+    dataset_id = Dataset.objects.get(id=datasetid)
 
     query = Q(idgloss__istartswith=prefix) | \
             Q(annotationidglosstranslation__text__istartswith=prefix) | \
