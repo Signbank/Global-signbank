@@ -72,21 +72,19 @@
        <button type="submit" class="btn btn-default">{% trans "Sign search" %}</button>
     </form>
 
-    <table class="nav navbar-right">
-        <tr class="align-middle">
+    <div class="nav navbar-right">
         {% if user.is_authenticated %}
-        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
-        <td class='nav navbar-right'>{% trans "Datasets:" %}
-            {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
-            {% endfor %}
-        </td>
+            {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
+            <p class='navbar-text'>{% trans "Datasets:" %}
+                {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
+                {% endfor %}
+             </p>
+            {% endif %}
+            <p class='navbar-text'><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></p>
+        {% else %}
+           <p class='navbar-text'><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></p>
         {% endif %}
-        <td class='nav navbar-right'><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></td>
-    {% else %}
-       <td class='nav navbar-right'><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></td>
-    {% endif %}
-        </tr>
-    </table>
+    </div>
 
   </div><!-- /.navbar-collapse -->
 
