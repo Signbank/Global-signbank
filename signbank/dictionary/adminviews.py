@@ -2764,6 +2764,7 @@ class MorphemeDetailView(DetailView):
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
+
         context['choice_lists'] = {}
 
         # Translate the machine values to human values in the correct language, and save the choice lists along the way

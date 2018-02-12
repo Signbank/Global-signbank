@@ -15,7 +15,8 @@
     <thead>
       <tr>
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
-          <th style="width:80px;">{% trans "Access" %}</th>
+          <th style="width:80px;">{% trans "View Dataset" %}</th>
+          <th style="width:80px;">{% trans "Change Dataset" %}</th>
           <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
           <th style="width:80px;">{% trans "Selected" %}</th>
           <th style="width:120px;">{% trans "Languages" %}</th>
@@ -31,6 +32,14 @@
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
                 {% if "view_dataset" in dataset_perms %}
+                {% trans "Yes" %}
+                {% else %}
+                {% trans "No" %}
+                {% endif %}
+            </td>
+            <td>
+                {% get_obj_perms request.user for dataset as "dataset_perms" %}
+                {% if "change_dataset" in dataset_perms %}
                 {% trans "Yes" %}
                 {% else %}
                 {% trans "No" %}
