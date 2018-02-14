@@ -25,9 +25,13 @@
             $("[id*='add_gloss_dataset_']").each(function(){
                 $(this).hide();
             });
+            $("[id*='glosscreate_']").each(function(){
+                $(this).prop('required', false);
+            });
             for(var id in languages) {
                 $("[id*='add_gloss_dataset_header_" + languages[id] + "']").show();
                 $("[id*='add_gloss_dataset_value_" + languages[id] + "']").show();
+                $("[id*='glosscreate_" + languages[id] + "']").prop('required', true);
             }
          }
     });
