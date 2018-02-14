@@ -1162,7 +1162,7 @@ class GlossDetailView(DetailView):
             else:
                 file_type = ''
 
-            context['other_media'].append([other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss])
+            context['other_media'].append([other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
 
             #Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
             context['choice_lists']['other-media-type_'+str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list,self.request.LANGUAGE_CODE)

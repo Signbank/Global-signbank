@@ -62,7 +62,7 @@ MIDDLEWARE_CLASSES = (
     'signbank.pages.middleware.PageFallbackMiddleware',
 #    'django_mobile.middleware.MobileDetectionMiddleware',
 #    'django_mobile.middleware.SetFlavourMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+#    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
 )
 
