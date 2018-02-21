@@ -61,7 +61,6 @@
                 {% endfor %}
             </td>
             <td>
-                {% if perms.dictionary.export_ecv %}
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
                 {% if "change_dataset" in dataset_perms %}
                 <form name='export_ecv_form' id='export_ecv_form' method='get'>
@@ -72,7 +71,6 @@
                         <button id='export_ecv' class='btn btn-primary' type='submit' name='export_ecv' value='ECV'>{% trans "ECV" %}</button>
                     </div>
                 </form>
-                {% endif %}
                 {% endif %}
             </td>
         </tr>
