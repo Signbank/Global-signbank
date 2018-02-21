@@ -30,7 +30,7 @@ from django.contrib.messages.middleware import MessageMiddleware
 class ImportExportTests(TestCase):
 
     # Three test case scenario's for exporting ECV via the DatasetListView with DEFAULT_DATASET
-    #       /datasets/available/?dataset_lang=DEFAULT_DATASET&export_ecv=ECV
+    #       /datasets/available/?dataset_name=DEFAULT_DATASET&export_ecv=ECV
     # 1. The user is logged in and has permission to change dataset
     # 2. The user is logged in but does not have permission to change dataset
     # 3. The user is not logged in
@@ -44,11 +44,11 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv with permission change_dataset')
 
-        dataset_lang = DEFAULT_DATASET
-        print('Test Dataset is: ', dataset_lang)
+        dataset_name = DEFAULT_DATASET
+        print('Test Dataset is: ', dataset_name)
 
         # Give the test user permission to change a dataset
-        test_dataset = Dataset.objects.get(name=dataset_lang)
+        test_dataset = Dataset.objects.get(name=dataset_name)
         assign_perm('change_dataset', self.user, test_dataset)
         print('User has permmission to change dataset.')
 
@@ -56,7 +56,7 @@ class ImportExportTests(TestCase):
 
         logged_in = client.login(username='test-user', password='test-user')
 
-        url = '/datasets/available?dataset_lang='+dataset_lang+'&export_ecv=ECV'
+        url = '/datasets/available?dataset_name='+dataset_name+'&export_ecv=ECV'
 
         response = client.get(url)
 
@@ -66,20 +66,20 @@ class ImportExportTests(TestCase):
         json_message = json_decoded_cookies[0]
         print('Message: ', json_message)
 
-        self.assertEqual(str(json_message), 'ECV ' + dataset_lang + ' successfully updated.')
+        self.assertEqual(str(json_message), 'ECV ' + dataset_name + ' successfully updated.')
 
     def test_DatasetListView_ECV_export_no_permission_change_dataset(self):
 
         print('Test DatasetListView export_ecv without permission')
 
-        dataset_lang = DEFAULT_DATASET
-        print('Test Dataset is: ', dataset_lang)
+        dataset_name = DEFAULT_DATASET
+        print('Test Dataset is: ', dataset_name)
 
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
 
-        url = '/datasets/available?dataset_lang='+dataset_lang+'&export_ecv=ECV'
+        url = '/datasets/available?dataset_name='+dataset_name+'&export_ecv=ECV'
 
         response = client.get(url)
 
@@ -95,12 +95,12 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv anonymous user not logged in')
 
-        dataset_lang = DEFAULT_DATASET
-        print('Test Dataset is: ', dataset_lang)
+        dataset_name = DEFAULT_DATASET
+        print('Test Dataset is: ', dataset_name)
 
         client = Client()
 
-        url = '/datasets/available?dataset_lang=' + dataset_lang + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_name=' + dataset_name + '&export_ecv=ECV'
 
         response = client.get(url)
 
