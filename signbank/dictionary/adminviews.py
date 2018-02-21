@@ -2451,6 +2451,30 @@ class DatasetListView(ListView):
             return super(ListView, self).render_to_response(context)
 
     def render_to_ecv_export_response(self, context):
+
+        # check that the user is logged in
+        if self.request.user.is_authenticated():
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        # if the dataset is specified in the url parameters, set the dataset_lang variable
+        get = self.request.GET
+        if 'dataset_lang' in get:
+            self.dataset_lang = get['dataset_lang']
+        dataset_object = Dataset.objects.get(name=self.dataset_lang)
+
+        # make sure the user can write to this dataset
+        import guardian
+        # from guardian.shortcuts import get_objects_for_user
+        user_change_datasets = guardian.shortcuts.get_objects_for_user(self.request.user, 'change_dataset', Dataset)
+        if user_change_datasets and dataset_object in user_change_datasets:
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
         description = 'DESCRIPTION'
         language = 'LANGUAGE'
         lang_ref = 'LANG_REF'
