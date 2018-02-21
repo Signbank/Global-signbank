@@ -501,13 +501,35 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    dataset = Dataset.objects.get(pk=2)
+    from os import listdir
+    from shutil import move
 
-    # for gloss in Gloss.objects.all():
-    #     gloss.dataset = dataset
-    #     gloss.save()
+    SOURCE_FOLDER = '/home/haskins/ASLSignbank_recompressed/'
+    GOAL_FOLDER = '/var/www/signbank/writable/'
 
-    return HttpResponse('ok')
+    videonames = listdir(SOURCE_FOLDER)
+
+    r = ''
+
+    for n,videoname in enumerate(videonames):
+
+        videoname = videoname.replace('.mp4','')
+        found_glosses = []
+
+        for annotation in AnnotationIdglossTranslation.objects.filter(text=videoname):
+
+            if videoname == annotation.text:
+                found_glosses.append(annotation.gloss)
+
+        if len(found_glosses) != 1:
+            r += 'Found '+str(len(found_glosses))+'glosses for '+videoname+'<br>'
+        else:
+            try:
+                move(SOURCE_FOLDER+videoname+'.mp4',GOAL_FOLDER+found_glosses[0].get_video_path())
+            except:
+                r += 'Moving failed for '+videoname+'<br>'
+
+    return HttpResponse(r)
 
 def import_authors(request):
 
