@@ -34,7 +34,7 @@ from signbank.settings.server_specific import *
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 from signbank.dictionary.forms import GlossSearchForm
 
-from signbank.tools import get_selected_datasets_for_user
+from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset
 
 
 def order_queryset_by_sort_order(get, qs):
@@ -129,6 +129,7 @@ class GlossListView(ListView):
     search_type = 'sign'
     view_type = 'gloss_list'
     show_all = False
+    dataset_name = DEFAULT_DATASET
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -252,148 +253,49 @@ class GlossListView(ListView):
         # Look for a 'format=json' GET argument
         if self.request.GET.get('format') == 'CSV':
             return self.render_to_csv_response(context)
-        elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv: # The only_export_ecv is used by cron job update_ecv
+        elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
             return self.render_to_ecv_export_response(context)
         else:
             return super(GlossListView, self).render_to_response(context)
 
     def render_to_ecv_export_response(self, context):
-        description  = 'DESCRIPTION'
-        language     = 'LANGUAGE'
-        lang_ref     = 'LANG_REF'
 
-        cv_entry_ml  = 'CV_ENTRY_ML'
-        cve_id       = 'CVE_ID'
-        cve_value    = 'CVE_VALUE'
+        # check that the user is logged in
+        if self.request.user.is_authenticated():
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            return HttpResponseRedirect(URL + '/signs/search/')
 
-        topattributes = {'xmlns:xsi':"http://www.w3.org/2001/XMLSchema-instance",
-                         'DATE':str(DT.date.today())+ 'T'+str(DT.datetime.now().time()),
-                         'AUTHOR':'',
-                         'VERSION':'0.2',
-                         'xsi:noNamespaceSchemaLocation':"http://www.mpi.nl/tools/elan/EAFv2.8.xsd"}
-        top = ET.Element('CV_RESOURCE', topattributes)
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(URL + '/signs/search/')
 
-        for lang in ECV_SETTINGS['languages']:
-            ET.SubElement(top, language, lang['attributes'])
-
-        cv_element = ET.SubElement(top, 'CONTROLLED_VOCABULARY', {'CV_ID':ECV_SETTINGS['CV_ID']})
-
-        # description f0r cv_element
-        for lang in ECV_SETTINGS['languages']:
-            myattributes = {lang_ref: lang['id']}
-            desc_element = ET.SubElement(cv_element, description, myattributes)
-            desc_element.text = lang['description']
-
-        # set Dataset to DEFAULT_DATASET, otherwise leave it empty
         try:
-            dataset_id = Dataset.objects.get(name=DEFAULT_DATASET)
+            dataset_object = Dataset.objects.get(name=self.dataset_name)
         except:
-            # if this is left empty, all glosses are fetched in the query regardless of the dataset
-            dataset_id = ''
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(URL + '/signs/search/')
 
-        if dataset_id:
-            query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(dataset=dataset_id)
+        # make sure the user can write to this dataset
+        import guardian
+        # from guardian.shortcuts import get_objects_for_user
+        user_change_datasets = guardian.shortcuts.get_objects_for_user(self.request.user, 'change_dataset', Dataset)
+        if user_change_datasets and dataset_object in user_change_datasets:
+            pass
         else:
-            query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False)
+            messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
+            return HttpResponseRedirect(URL + '/signs/search/')
 
-        # Make sure we iterate only over the none-Morpheme glosses
-        for gloss in query_dataset:
-            glossid = str(gloss.pk)
-            myattributes = {cve_id: glossid, 'EXT_REF':'signbank-ecv'}
-            cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
+        # if we get to here, the user is authenticated and has permission to export the dataset
+        ecv_file = write_ecv_file_for_dataset(self.dataset_name)
 
-            for lang in ECV_SETTINGS['languages']:
-                langId = lang['id']
-                if len(langId) == 3:
-                    langId = [c[2] for c in LANGUAGE_CODE_MAP if c[3] == langId][0]
-                desc = self.get_ecv_descripion_for_gloss(gloss, langId, ECV_SETTINGS['include_phonology_and_frequencies'])
-                cve_value_element = ET.SubElement(cve_entry_element, cve_value, {description:desc, lang_ref:lang['id']})
-                cve_value_element.text = self.get_value_for_ecv(gloss, lang['annotation_idgloss_fieldname'])
-
-        ET.SubElement(top, 'EXTERNAL_REF', {'EXT_REF_ID':'signbank-ecv', 'TYPE':'resource_url', 'VALUE':URL + "/dictionary/gloss/"})
-
-        xmlstr = minidom.parseString(ET.tostring(top,'utf-8')).toprettyxml(indent="   ")
-        import codecs
-        with codecs.open(ECV_FILE, "w", "utf-8") as f:
-            f.write(xmlstr)
-
-#        tree = ET.ElementTree(top)
-#        tree.write(open(ECV_FILE, 'w'), encoding ="utf-8",xml_declaration=True, method="xml")
-
-        return HttpResponse('OK')
-
-    def get_ecv_descripion_for_gloss(self, gloss, lang, include_phonology_and_frequencies=False):
-        desc = ""
-        if include_phonology_and_frequencies:
-            description_fields = ['handedness','domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir','movSh', 'tokNo',
-                          'tokNoSgnr']
-
-            for f in description_fields:
-                if f in FIELDS['phonology']:
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldname_to_category(f))
-                    machine_value = getattr(gloss,f)
-                    value = machine_value_to_translated_human_value(machine_value,choice_list,lang)
-                    if value is None:
-                        value = ' '
-                else:
-                    value = self.get_value_for_ecv(gloss,f)
-
-                if f == 'handedness':
-                    desc = value
-                elif f == 'domhndsh':
-                    desc = desc+ ', ('+ value
-                elif f == 'subhndsh':
-                    desc = desc+','+value
-                elif f == 'handCh':
-                    desc = desc+'; '+value+')'
-                elif f == 'tokNo':
-                    desc = desc+' ['+value
-                elif f == 'tokNoSgnr':
-                    desc = desc+'/'+value+']'
-                else:
-                    desc = desc+', '+value
-
-        if desc:
-            desc += ", "
-
-        trans = [t.translation.text for t in gloss.translation_set.all()]
-        desc += ", ".join(
-            # The next line was adapted from an older version of this code,
-            # that happened to do nothing. I left this for future usage.
-            #map(lambda t: str(t.encode('ascii','xmlcharrefreplace')) if isinstance(t, unicode) else t, trans)
-            trans
-        )
-
-        return desc
-
-    def get_value_for_ecv(self, gloss, fieldname):
-        value = None
-        annotationidglosstranslation_prefix = "annotationidglosstranslation_"
-        if fieldname.startswith(annotationidglosstranslation_prefix):
-            language_code_2char = fieldname[len(annotationidglosstranslation_prefix):]
-            annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code_2char)
-            if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
-                value = annotationidglosstranslations[0].text
-        else:
-            try:
-                value = getattr(gloss, 'get_'+fieldname+'_display')()
-
-            except AttributeError:
-                value = getattr(gloss,fieldname)
-
-        # This was disabled with the move to python 3... might not be needed anymore
-        # if isinstance(value,unicode):
-        #     value = str(value.encode('ascii','xmlcharrefreplace'))
-
-        if value is None:
-           value = " "
-        elif not isinstance(value,str):
-            value = str(value)
-
-        if value == '-':
-            value = ' '
-        return value
-
+        messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_name + ' successfully updated.'))
+        return HttpResponseRedirect(URL + '/signs/search/')
 
     # noinspection PyInterpreter,PyInterpreter
     def render_to_csv_response(self, context):
@@ -2464,7 +2366,15 @@ class DatasetListView(ListView):
         get = self.request.GET
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
-        dataset_object = Dataset.objects.get(name=self.dataset_name)
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        try:
+            dataset_object = Dataset.objects.get(name=self.dataset_name)
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
 
         # make sure the user can write to this dataset
         import guardian
@@ -2476,145 +2386,12 @@ class DatasetListView(ListView):
             messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
             return HttpResponseRedirect(URL + '/datasets/available')
 
-        description = 'DESCRIPTION'
-        language = 'LANGUAGE'
-        lang_ref = 'LANG_REF'
-
-        cv_entry_ml = 'CV_ENTRY_ML'
-        cve_id = 'CVE_ID'
-        cve_value = 'CVE_VALUE'
-
-        topattributes = {'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance",
-                         'DATE': str(DT.date.today()) + 'T' + str(DT.datetime.now().time()),
-                         'AUTHOR': '',
-                         'VERSION': '0.2',
-                         'xsi:noNamespaceSchemaLocation': "http://www.mpi.nl/tools/elan/EAFv2.8.xsd"}
-        top = ET.Element('CV_RESOURCE', topattributes)
-
-        for lang in ECV_SETTINGS['languages']:
-            ET.SubElement(top, language, lang['attributes'])
-
-        cv_element = ET.SubElement(top, 'CONTROLLED_VOCABULARY', {'CV_ID': ECV_SETTINGS['CV_ID']})
-
-        # description for cv_element
-        for lang in ECV_SETTINGS['languages']:
-            myattributes = {lang_ref: lang['id']}
-            desc_element = ET.SubElement(cv_element, description, myattributes)
-            desc_element.text = lang['description']
-
-        # set Dataset to NGT or other pre-specified Dataset, otherwise leave it empty
-        try:
-            dataset_id = Dataset.objects.get(name=self.dataset_name)
-        except:
-            dataset_id = ''
-
-        if dataset_id:
-            query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(dataset=dataset_id)
-        else:
-            query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False)
-
-        # Make sure we iterate only over the none-Morpheme glosses
-        for gloss in query_dataset:
-            glossid = str(gloss.pk)
-            myattributes = {cve_id: glossid, 'EXT_REF': 'signbank-ecv'}
-            cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
-
-            for lang in ECV_SETTINGS['languages']:
-                langId = lang['id']
-                if len(langId) == 3:
-                    langId = [c[2] for c in LANGUAGE_CODE_MAP if c[3] == langId][0]
-                desc = self.get_ecv_descripion_for_gloss(gloss, langId,
-                                                         ECV_SETTINGS['include_phonology_and_frequencies'])
-                cve_value_element = ET.SubElement(cve_entry_element, cve_value,
-                                                  {description: desc, lang_ref: lang['id']})
-                cve_value_element.text = self.get_value_for_ecv(gloss, lang['annotation_idgloss_fieldname'])
-
-        ET.SubElement(top, 'EXTERNAL_REF',
-                      {'EXT_REF_ID': 'signbank-ecv', 'TYPE': 'resource_url', 'VALUE': URL + "/dictionary/gloss/"})
-
-        xmlstr = minidom.parseString(ET.tostring(top, 'utf-8')).toprettyxml(indent="   ")
-        ecv_file = os.path.join(ECV_FOLDER, self.dataset_name.lower().replace(" ","_") + ".ecv")
-        import codecs
-        with codecs.open(ecv_file, "w", "utf-8") as f:
-            f.write(xmlstr)
+        # if we get to here, the user is authenticated and has permission to export the dataset
+        ecv_file = write_ecv_file_for_dataset(self.dataset_name)
 
         messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_name + ' successfully updated.'))
         # return HttpResponse('ECV successfully updated.')
         return HttpResponseRedirect(URL + '/datasets/available')
-
-    def get_ecv_descripion_for_gloss(self, gloss, lang, include_phonology_and_frequencies=False):
-        desc = ""
-        if include_phonology_and_frequencies:
-            description_fields = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir',
-                                  'movSh', 'tokNo',
-                                  'tokNoSgnr']
-
-            for f in description_fields:
-                if f in FIELDS['phonology']:
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldname_to_category(f))
-                    machine_value = getattr(gloss, f)
-                    value = machine_value_to_translated_human_value(machine_value, choice_list, lang)
-                    if value is None:
-                        value = ' '
-                else:
-                    value = self.get_value_for_ecv(gloss, f)
-
-                if f == 'handedness':
-                    desc = value
-                elif f == 'domhndsh':
-                    desc = desc + ', (' + value
-                elif f == 'subhndsh':
-                    desc = desc + ',' + value
-                elif f == 'handCh':
-                    desc = desc + '; ' + value + ')'
-                elif f == 'tokNo':
-                    desc = desc + ' [' + value
-                elif f == 'tokNoSgnr':
-                    desc = desc + '/' + value + ']'
-                else:
-                    desc = desc + ', ' + value
-
-        if desc:
-            desc += ", "
-
-        trans = [t.translation.text for t in gloss.translation_set.all()]
-        desc += ", ".join(
-            # The next line was adapted from an older version of this code,
-            # that happened to do nothing. I left this for future usage.
-            # map(lambda t: str(t.encode('ascii','xmlcharrefreplace')) if isinstance(t, unicode) else t, trans)
-            trans
-        )
-
-        return desc
-
-    def get_value_for_ecv(self, gloss, fieldname):
-        value = None
-        annotationidglosstranslation_prefix = "annotationidglosstranslation_"
-        if fieldname.startswith(annotationidglosstranslation_prefix):
-            language_code_2char = fieldname[len(annotationidglosstranslation_prefix):]
-            annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(
-                language__language_code_2char=language_code_2char)
-            if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
-                value = annotationidglosstranslations[0].text
-        else:
-            try:
-                value = getattr(gloss, 'get_' + fieldname + '_display')()
-
-            except AttributeError:
-                value = getattr(gloss, fieldname)
-
-        # This was disabled with the move to python 3... might not be needed anymore
-        # if isinstance(value,unicode):
-        #     value = str(value.encode('ascii','xmlcharrefreplace'))
-
-        if value is None:
-            value = " "
-        elif not isinstance(value, str):
-            value = str(value)
-
-        if value == '-':
-            value = ' '
-        return value
 
     def get_queryset(self):
         user = self.request.user
