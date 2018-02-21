@@ -65,7 +65,7 @@
                 {% if "change_dataset" in dataset_perms %}
                 <form name='export_ecv_form' id='export_ecv_form' method='get'>
                     <div class="hidden">
-                        <input name='dataset_lang' id='dataset_lang' class='form-control' value='{{dataset.name}}' >
+                        <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
                     </div>
                     <div class='btn-group'>
                         <button id='export_ecv' class='btn btn-primary' type='submit' name='export_ecv' value='ECV'>{% trans "ECV" %}</button>

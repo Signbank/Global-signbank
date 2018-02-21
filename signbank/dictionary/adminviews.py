@@ -2422,7 +2422,7 @@ class HandshapeListView(ListView):
 class DatasetListView(ListView):
     model = Dataset
     # set the default dataset, this should not be empty
-    dataset_lang = DEFAULT_DATASET
+    dataset_name = DEFAULT_DATASET
 
 
     def get_context_data(self, **kwargs):
@@ -2461,11 +2461,11 @@ class DatasetListView(ListView):
             messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
             return HttpResponseRedirect(URL + '/datasets/available')
 
-        # if the dataset is specified in the url parameters, set the dataset_lang variable
+        # if the dataset is specified in the url parameters, set the dataset_name variable
         get = self.request.GET
-        if 'dataset_lang' in get:
-            self.dataset_lang = get['dataset_lang']
-        dataset_object = Dataset.objects.get(name=self.dataset_lang)
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        dataset_object = Dataset.objects.get(name=self.dataset_name)
 
         # make sure the user can write to this dataset
         import guardian
@@ -2505,7 +2505,7 @@ class DatasetListView(ListView):
 
         # set Dataset to NGT or other pre-specified Dataset, otherwise leave it empty
         try:
-            dataset_id = Dataset.objects.get(name=self.dataset_lang)
+            dataset_id = Dataset.objects.get(name=self.dataset_name)
         except:
             dataset_id = ''
 
@@ -2534,12 +2534,12 @@ class DatasetListView(ListView):
                       {'EXT_REF_ID': 'signbank-ecv', 'TYPE': 'resource_url', 'VALUE': URL + "/dictionary/gloss/"})
 
         xmlstr = minidom.parseString(ET.tostring(top, 'utf-8')).toprettyxml(indent="   ")
-        ecv_file = os.path.join(ECV_FOLDER, self.dataset_lang.lower().replace(" ","_") + ".ecv")
+        ecv_file = os.path.join(ECV_FOLDER, self.dataset_name.lower().replace(" ","_") + ".ecv")
         import codecs
         with codecs.open(ecv_file, "w", "utf-8") as f:
             f.write(xmlstr)
 
-        messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_lang + ' successfully updated.'))
+        messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_name + ' successfully updated.'))
         # return HttpResponse('ECV successfully updated.')
         return HttpResponseRedirect(URL + '/datasets/available')
 
@@ -2624,11 +2624,11 @@ class DatasetListView(ListView):
         get = self.request.GET
 
         # Then check what kind of stuff we want
-        if 'dataset_lang' in get:
-            self.dataset_lang = get['dataset_lang']
-        # otherwise the default dataset_lang DEFAULT_DATASET is used
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        # otherwise the default dataset_name DEFAULT_DATASET is used
 
-        setattr(self.request, 'dataset_lang', self.dataset_lang)
+        setattr(self.request, 'dataset_name', self.dataset_name)
 
         if user.is_authenticated():
             from django.db.models import Prefetch
