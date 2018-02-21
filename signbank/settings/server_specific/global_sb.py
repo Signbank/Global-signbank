@@ -6,10 +6,16 @@ ROOT = '/scratch2/www/signbank/'
 BASE_DIR = ROOT+'repo/'
 WRITABLE_FOLDER = ROOT+'writable/'
 
+# Added test database, to run unit tests using this copy of the database, use -k argument to keep test database
+#      python bin/develop.py test -k
+
 DATABASES = {'default':
                 {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME': WRITABLE_FOLDER+'database/signbank.db',
+                    'TEST': {
+                        'NAME': WRITABLE_FOLDER+'database/test-signbank.db',
+                    }
                 }
             }
 
