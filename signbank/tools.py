@@ -1104,6 +1104,17 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import datetime as DT
 
+def write_ecv_files_for_all_datasets():
+
+    all_dataset_objects = Dataset.objects.all()
+
+    for ds in all_dataset_objects:
+        ecv_filename = write_ecv_file_for_dataset(ds.name)
+        print('Saved ECV for Dataset ', ds.name, ' to file: ', ecv_filename)
+
+    return True
+
+
 def write_ecv_file_for_dataset(dataset_name):
 
     description = 'DESCRIPTION'
