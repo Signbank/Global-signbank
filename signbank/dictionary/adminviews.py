@@ -252,7 +252,7 @@ class GlossListView(ListView):
         # Look for a 'format=json' GET argument
         if self.request.GET.get('format') == 'CSV':
             return self.render_to_csv_response(context)
-        elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
+        elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv: # The only_export_ecv is used by cron job update_ecv
             return self.render_to_ecv_export_response(context)
         else:
             return super(GlossListView, self).render_to_response(context)
@@ -284,10 +284,11 @@ class GlossListView(ListView):
             desc_element = ET.SubElement(cv_element, description, myattributes)
             desc_element.text = lang['description']
 
-        # set Dataset to NGT or other pre-specified Dataset, otherwise leave it empty
+        # set Dataset to DEFAULT_DATASET, otherwise leave it empty
         try:
-            dataset_id = Dataset.objects.get(name=SIGNBANK_VERSION_CODE)
+            dataset_id = Dataset.objects.get(name=DEFAULT_DATASET)
         except:
+            # if this is left empty, all glosses are fetched in the query regardless of the dataset
             dataset_id = ''
 
         if dataset_id:
@@ -1272,7 +1273,7 @@ class GlossDetailView(DetailView):
 
         context['otherrelations'] = otherrelations
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated():
@@ -2418,8 +2419,9 @@ class HandshapeListView(ListView):
 
 class DatasetListView(ListView):
     model = Dataset
-    only_export_ecv = False
-    dataset_lang = 'NGT'
+    # set the default dataset, this should not be empty
+    dataset_lang = DEFAULT_DATASET
+
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -2443,8 +2445,7 @@ class DatasetListView(ListView):
         return ['dictionary/admin_dataset_list.html']
 
     def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
-        if self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
+        if self.request.GET.get('export_ecv') == 'ECV':
             return self.render_to_ecv_export_response(context)
         else:
             return super(ListView, self).render_to_response(context)
@@ -2599,8 +2600,7 @@ class DatasetListView(ListView):
         # Then check what kind of stuff we want
         if 'dataset_lang' in get:
             self.dataset_lang = get['dataset_lang']
-        else:
-            self.dataset_lang = 'NGT'
+        # otherwise the default dataset_lang DEFAULT_DATASET is used
 
         setattr(self.request, 'dataset_lang', self.dataset_lang)
 
@@ -2846,7 +2846,7 @@ class MorphemeDetailView(DetailView):
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated():
