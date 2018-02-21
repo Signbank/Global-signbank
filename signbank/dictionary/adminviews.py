@@ -416,7 +416,10 @@ class GlossListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + language.name_en + ")" for language in dataset_languages]
+        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in dataset_languages]
+  
+
 
         writer = csv.writer(response)
 
