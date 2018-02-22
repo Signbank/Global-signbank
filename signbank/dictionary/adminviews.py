@@ -813,7 +813,7 @@ class GlossDetailView(DetailView):
             raise Http404()
 
         if request.user.is_authenticated():
-            if not request.user.has_perm('dictionary.search_gloss'):
+            if self.object.dataset not in get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False):
                 if self.object.inWeb:
                     return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'idgloss':self.object.idgloss}))
                 else:
@@ -1180,7 +1180,7 @@ class GlossDetailView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated():
-                qs = get_objects_for_user(user, 'view_dataset', Dataset)
+                qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = {}
                 for dataset in qs:
                     dataset_choices[dataset.name] = dataset.name
@@ -1213,7 +1213,7 @@ class GlossRelationsDetailView(DetailView):
             return render(request, 'no_object.html', status=404)
 
         if request.user.is_authenticated():
-            if not request.user.has_perm('dictionary.search_gloss'):
+            if self.object.dataset not in get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False):
                 if self.object.inWeb:
                     return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'idgloss':self.object.idgloss}))
                 else:
@@ -2369,9 +2369,8 @@ class DatasetListView(ListView):
             return HttpResponseRedirect(URL + '/datasets/available')
 
         # make sure the user can write to this dataset
-        import guardian
         # from guardian.shortcuts import get_objects_for_user
-        user_change_datasets = guardian.shortcuts.get_objects_for_user(self.request.user, 'change_dataset', Dataset)
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
         if user_change_datasets and dataset_object in user_change_datasets:
             pass
         else:
@@ -2525,6 +2524,33 @@ class MorphemeDetailView(DetailView):
     model = Morpheme
     context_object_name = 'morpheme'
 
+    # Overriding the get method get permissions right
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        # except Http404:
+        except:
+            # return custom template
+            # return render(request, 'dictionary/warning.html', status=404)
+            raise Http404()
+
+        if request.user.is_authenticated():
+            if self.object.dataset not in get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False):
+                if self.object.inWeb:
+                    return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'idgloss': self.object.idgloss}))
+                else:
+                    messages.add_message(request, messages.WARNING, 'You are not allowed to see this morpheme.')
+                    return HttpResponseRedirect(reverse('root_page'))
+        else:
+            if self.object.inWeb:
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'idgloss': self.object.idgloss}))
+            else:
+                return HttpResponseRedirect(reverse('registration:auth_login'))
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(MorphemeDetailView, self).get_context_data(**kwargs)
@@ -2665,8 +2691,7 @@ class MorphemeDetailView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated():
-                import guardian
-                qs = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+                qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = dict()
                 for dataset in qs:
                     dataset_choices[dataset.name] = dataset.name
