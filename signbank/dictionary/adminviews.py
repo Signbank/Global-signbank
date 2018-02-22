@@ -2508,7 +2508,7 @@ def order_handshape_by_angle(qs, language_code):
         ordered = sorted(qs_no_angle, key=lambda x: x.dutch_name)
         ordered += sorted(qs_angle, key=lambda x: x.dutch_name)
     elif language_code == 'zh-hans':
-        qs_no_angle = qs.filter(**{'chinese_name__regex':r'^[^>]+$'})
+        qs_no_angle = qs.filter(**{'chinese_name__regex':r'^[^>]*$'})
         qs_angle = qs.filter(**{'chinese_name__regex':r'^.+>.+$'})
         ordered = sorted(qs_no_angle, key=lambda x: x.chinese_name)
         ordered += sorted(qs_angle, key=lambda x: x.chinese_name)
