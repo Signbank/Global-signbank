@@ -128,6 +128,10 @@ legend
     padding-bottom: 3px;
 }
 
+.input-group-addon, .form-control {
+    height: 28px;
+}
+
 #signinfo {
     min-height: 30px;
     border-left-width: 0px;
