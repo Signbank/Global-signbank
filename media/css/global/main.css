@@ -16,7 +16,7 @@ html {
  #header {
 		background-image: url(../../images/NGT/black_02.gif); 
         padding:0;
-        background:#B82B22;
+        background:#BB2F2C;
         height:110px;
         clear:both;
         position:relative;
@@ -104,4 +104,32 @@ legend
     margin: 15px;
     margin-left: 19px;
     float: left;
+}
+
+.navbar-nav > li > a {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.navbar-form, .navbar-text {
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.btn {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.panel-heading, .input-group-addon, .form-control {
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+#signinfo {
+    min-height: 30px;
+    border-left-width: 0px;
+    border-right-width: 0px;
 }
