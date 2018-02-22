@@ -2086,7 +2086,6 @@ class HandshapeListView(ListView):
 
     model = Handshape
     template_name = 'dictionary/admin_handshape_list.html'
-    paginate_by = 50
     search_type = 'handshape'
 
     def get_context_data(self, **kwargs):
@@ -2136,13 +2135,6 @@ class HandshapeListView(ListView):
 
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
-        if 'paginate_by' in self.request.GET:
-            self.paginate_by = self.request.GET.get('paginate_by', self.paginate_by)
-        else:
-            self.paginage_by = 50
-
-        context['paginate_by'] = self.paginate_by
-
         context['handshapescount'] = Handshape.objects.count()
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -2157,12 +2149,6 @@ class HandshapeListView(ListView):
 
         return context
 
-    def get_paginate_by(self, queryset):
-        """
-        Paginate by specified value in querystring, or use default class property value.
-        """
-
-        return self.request.GET.get('paginate_by', self.paginate_by)
 
     def get_queryset(self):
 
