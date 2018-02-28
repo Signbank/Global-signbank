@@ -210,7 +210,7 @@ class FieldChoice(models.Model):
     def __str__(self):
 
         name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
-        return name.encode('ascii',errors='replace')
+        return name
 
     class Meta:
         ordering = ['field','machine_value']
