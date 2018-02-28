@@ -409,19 +409,6 @@ def import_media(request,video):
 
                     try:
                         print("Trying to resize video " + destination_folder+video_filename)
-
-                        if os.path.isfile(video_filepath_small):
-                            print("Making a backup of " + video_filepath_small)
-                            # Make a backup
-                            backup_id = 1
-                            made_backup = False
-                            while not made_backup:
-                                if not os.path.isfile(video_filepath_small + '_' + str(backup_id)):
-                                    os.rename(video_filepath_small, video_filepath_small + '_' + str(backup_id))
-                                    made_backup = True
-                                else:
-                                    backup_id += 1
-
                         from CNGT_scripts.python.resizeVideos import VideoResizer
                         from signbank.settings.server_specific import FFMPEG_PROGRAM
                         resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)

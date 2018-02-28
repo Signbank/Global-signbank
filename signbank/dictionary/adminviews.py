@@ -34,7 +34,7 @@ from signbank.settings.server_specific import *
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
 from signbank.dictionary.forms import GlossSearchForm
 
-from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset
+from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes
 
 
 def order_queryset_by_sort_order(get, qs):
@@ -2149,6 +2149,31 @@ class HandshapeListView(ListView):
 
         return context
 
+    def render_to_response(self, context):
+        # Look for a 'format=json' GET argument
+        if self.request.GET.get('format') == 'CSV':
+            return self.render_to_csv_response(context)
+        else:
+            return super(HandshapeListView, self).render_to_response(context)
+
+    def render_to_csv_response(self, context):
+
+        if not self.request.user.has_perm('dictionary.export_csv'):
+            raise PermissionDenied
+
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="dictionary-export-handshapes.csv"'
+
+        writer = csv.writer(response)
+
+        if self.search_type and self.search_type == 'handshape':
+
+            writer = write_csv_for_handshapes(self, writer)
+        else:
+            print('search type is sign')
+
+        return response
 
     def get_queryset(self):
 

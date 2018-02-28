@@ -1015,18 +1015,6 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
                     still_goal_location = destination + os.sep + filename
                     if not os.path.isdir(destination):
                         os.makedirs(destination, 0o770)
-                    elif os.path.isfile(still_goal_location):
-                        # Make a backup
-                        backup_id = 1
-                        made_backup = False
-
-                        while not made_backup:
-
-                            if not os.path.isfile(still_goal_location + '_' + str(backup_id)):
-                                os.rename(still_goal_location, still_goal_location + '_' + str(backup_id))
-                                made_backup = True
-                            else:
-                                backup_id += 1
                     shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
             shutil.rmtree(dir)
     except ImportError as i:
@@ -1254,3 +1242,49 @@ def get_value_for_ecv(gloss, fieldname):
     if value == '-':
         value = ' '
     return value
+
+def write_csv_for_handshapes(handshapelistview, csvwriter):
+#  called from the HandshapeListView when search_type is handshape
+
+    fieldnames = settings.HANDSHAPE_RESULT_FIELDS
+
+    fields = [Handshape._meta.get_field(fieldname) for fieldname in fieldnames]
+
+    with override(LANGUAGE_CODE):
+        header = ['Handshape ID'] + [ f.verbose_name.encode('ascii', 'ignore').decode() for f in fields ]
+
+    csvwriter.writerow(header)
+
+    # case search result is list of handshapes
+
+    handshape_list = handshapelistview.get_queryset()
+
+    for handshape in handshape_list:
+        row = [str(handshape.pk)]
+
+        for f in fields:
+
+            # Try the value of the choicelist
+            try:
+                value = getattr(handshape, 'get_' + f.name + '_display')()
+
+            # If it's not there, try the raw value
+            except AttributeError:
+                value = getattr(handshape, f.name)
+
+            if not isinstance(value, str):
+                value = str(value)
+
+            row.append(value)
+
+        # Make it safe for weird chars
+        safe_row = []
+        for column in row:
+            try:
+                safe_row.append(column.encode('utf-8').decode())
+            except AttributeError:
+                safe_row.append(None)
+
+        csvwriter.writerow(safe_row)
+
+    return csvwriter

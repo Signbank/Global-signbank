@@ -216,10 +216,10 @@ class FieldChoice(models.Model):
         ordering = ['field','machine_value']
 
 class Handshape(models.Model):
-    machine_value = models.IntegerField(primary_key=True)
-    english_name = models.CharField(max_length=50)
-    dutch_name = models.CharField(max_length=50)
-    chinese_name = models.CharField(max_length=50, blank=True)
+    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+    english_name = models.CharField(_("English name"), max_length=50)
+    dutch_name = models.CharField(_("Dutch name"), max_length=50)
+    chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
     hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"), max_length=5)
     hsFingSel = models.CharField(_("Finger selection"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
     hsFingSel2 = models.CharField(_("Finger selection 2"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
@@ -268,9 +268,10 @@ class Handshape(models.Model):
         if check_existance:
             try:
                 for filename in os.listdir(dir_path):
-
-                    if filename_without_extension in filename:
-                        return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+                    if not re.match(r'.*_\d+$', filename):
+                        existing_file_without_extension = os.path.splitext(filename)[0]
+                        if filename_without_extension is existing_file_without_extension:
+                            return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
             except OSError:
                 return None
         else:
@@ -1156,9 +1157,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         if check_existance:
             try:
                 for filename in os.listdir(dir_path):
-
-                    if filename_without_extension in filename:
-                        return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+                    if not re.match(r'.*_\d+$', filename):
+                        existing_file_without_extension = os.path.splitext(filename)[0]
+                        if filename_without_extension == existing_file_without_extension:
+                            return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
             except OSError:
                 return None
         else:
