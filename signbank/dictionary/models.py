@@ -268,9 +268,10 @@ class Handshape(models.Model):
         if check_existance:
             try:
                 for filename in os.listdir(dir_path):
-
-                    if filename_without_extension in filename:
-                        return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+                    if not re.match(r'.*_\d+$', filename):
+                        existing_file_without_extension = os.path.splitext(filename)[0]
+                        if filename_without_extension is existing_file_without_extension:
+                            return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
             except OSError:
                 return None
         else:
@@ -1156,9 +1157,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         if check_existance:
             try:
                 for filename in os.listdir(dir_path):
-
-                    if filename_without_extension in filename:
-                        return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+                    if not re.match(r'.*_\d+$', filename):
+                        existing_file_without_extension = os.path.splitext(filename)[0]
+                        if filename_without_extension == existing_file_without_extension:
+                            return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
             except OSError:
                 return None
         else:

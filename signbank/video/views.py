@@ -43,21 +43,7 @@ def addvideo(request):
             goal_folder = WRITABLE_FOLDER+GLOSS_VIDEO_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
             goal_filename = gloss.idgloss + '-' + str(gloss.pk) + '.mp4'
             goal_location = goal_folder + goal_filename
-            if os.path.isfile(goal_location):
-                backup_id = 1
-                made_backup = False
-
-                while not made_backup:
-
-                    if not os.path.isfile(goal_location+'_'+str(backup_id)):
-                        os.rename(goal_location,goal_location+'_'+str(backup_id))
-                        made_backup = True
-                        # Issue #162: log the upload history
-                        log_entry = GlossVideoHistory(action="rename", gloss=gloss, actor=request.user,
-                                                      uploadfile=vfile, goal_location=goal_location+'_'+str(backup_id))
-                        log_entry.save()
-                    else:
-                        backup_id += 1
+            os.remove(goal_location)
 
             video = GlossVideo(videofile=vfile, gloss=gloss)
             video.save()

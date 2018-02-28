@@ -1015,18 +1015,6 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
                     still_goal_location = destination + os.sep + filename
                     if not os.path.isdir(destination):
                         os.makedirs(destination, 0o770)
-                    elif os.path.isfile(still_goal_location):
-                        # Make a backup
-                        backup_id = 1
-                        made_backup = False
-
-                        while not made_backup:
-
-                            if not os.path.isfile(still_goal_location + '_' + str(backup_id)):
-                                os.rename(still_goal_location, still_goal_location + '_' + str(backup_id))
-                                made_backup = True
-                            else:
-                                backup_id += 1
                     shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
             shutil.rmtree(dir)
     except ImportError as i:
