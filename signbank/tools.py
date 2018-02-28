@@ -1242,3 +1242,49 @@ def get_value_for_ecv(gloss, fieldname):
     if value == '-':
         value = ' '
     return value
+
+def write_csv_for_handshapes(handshapelistview, csvwriter):
+#  called from the HandshapeListView when search_type is handshape
+
+    fieldnames = settings.HANDSHAPE_RESULT_FIELDS
+
+    fields = [Handshape._meta.get_field(fieldname) for fieldname in fieldnames]
+
+    with override(LANGUAGE_CODE):
+        header = ['Handshape ID'] + [ f.verbose_name.encode('ascii', 'ignore').decode() for f in fields ]
+
+    csvwriter.writerow(header)
+
+    # case search result is list of handshapes
+
+    handshape_list = handshapelistview.get_queryset()
+
+    for handshape in handshape_list:
+        row = [str(handshape.pk)]
+
+        for f in fields:
+
+            # Try the value of the choicelist
+            try:
+                value = getattr(handshape, 'get_' + f.name + '_display')()
+
+            # If it's not there, try the raw value
+            except AttributeError:
+                value = getattr(handshape, f.name)
+
+            if not isinstance(value, str):
+                value = str(value)
+
+            row.append(value)
+
+        # Make it safe for weird chars
+        safe_row = []
+        for column in row:
+            try:
+                safe_row.append(column.encode('utf-8').decode())
+            except AttributeError:
+                safe_row.append(None)
+
+        csvwriter.writerow(safe_row)
+
+    return csvwriter
