@@ -23,6 +23,11 @@ def get_morpheme_search_field_for_language(form, language):
 
 
 @register.filter
+def get_keyword_field_for_language(form, language):
+    return getattr(form, GlossSearchForm.keyword_search_field_prefix + language.language_code_2char)
+
+
+@register.filter
 def get_type(obj):
     return type(obj)
 
