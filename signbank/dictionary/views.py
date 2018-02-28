@@ -631,13 +631,9 @@ def add_new_morpheme(request):
 
 
 def import_csv(request):
-
-    if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
-        return HttpResponse('You are not allowed to see this page.')
-
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
     user_datasets_names = [ dataset.name for dataset in user_datasets ]
 
     selected_datasets = get_selected_datasets_for_user(user)
@@ -713,6 +709,16 @@ def import_csv(request):
                 return True
 
             try:
+                # Check whether the user may change the dataset of the current row
+                if 'Dataset' in value_dict and value_dict['Dataset'].strip() not in user_datasets_names:
+                    e3 = 'You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                    print(e3)
+                    if not error:
+                        error = [e3]
+                    else:
+                        error.append(e3)
+                    continue
+
                 if 'Signbank ID' in value_dict:
                     pk = int(value_dict['Signbank ID'])
                 # no column Signbank ID
@@ -727,7 +733,6 @@ def import_csv(request):
                     else:
                         error.append(e1).append(e2)
                     break
-
                 else:
                     (new_gloss, already_exists, error_create) \
                         = create_gloss_from_valuedict(value_dict,user_datasets_names,nl)
