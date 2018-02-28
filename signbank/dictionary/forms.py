@@ -220,6 +220,7 @@ class GlossSearchForm(forms.ModelForm):
     createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     gloss_search_field_prefix = "glosssearch_"
+    keyword_search_field_prefix = "keyword_"
 
     class Meta:
 
@@ -255,6 +256,12 @@ class GlossSearchForm(forms.ModelForm):
             setattr(self, glosssearch_field_name, forms.CharField(label=_("Gloss")+(" (%s)" % language.name)))
             if glosssearch_field_name in queryDict:
                 getattr(self, glosssearch_field_name).value = queryDict[glosssearch_field_name]
+
+            # do the same for Translations
+            keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
+            setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
+            if keyword_field_name in queryDict:
+                getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 
 
 class MorphemeSearchForm(forms.ModelForm):
