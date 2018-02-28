@@ -787,13 +787,13 @@ def import_csv(request):
 
             except MachineValueNotFoundError as e:
 
-                s = str(e)
+                e_string = str(e)
 
                 # allow for returning multiple error messages via the exception
                 if not error:
-                    error = [e]
+                    error = [e_string]
                 else:
-                    error.append(e)
+                    error.append(e_string)
 
         stage = 1
 
