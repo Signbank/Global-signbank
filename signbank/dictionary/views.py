@@ -22,7 +22,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
-    update_sequential_morphology, update_simultaneous_morphology, update_tags
+    update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
 
@@ -864,6 +864,14 @@ def import_csv(request):
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                     update_simultaneous_morphology(gloss,None,new_human_value_list)
+
+                    continue
+
+                if fieldname == 'Blend Morphology':
+
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                    update_blend_morphology(gloss,None,new_human_value_list)
 
                     continue
 
