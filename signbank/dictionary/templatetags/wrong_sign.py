@@ -1,7 +1,7 @@
 from django.template import Library
 
 register = Library()
-sWrongSignTag = "video:_wrong_sign"     # This is the Signbank-implementation (NGT, ASL) dependent part!
+sWrongSignTag = "video:_wrong_sign"     # This is the Signbank-implementation (Global, ASL) dependent part!
 
 @register.filter
 def wrong_sign(qs):
