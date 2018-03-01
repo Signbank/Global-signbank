@@ -641,7 +641,7 @@ def import_csv(request):
 
     uploadform = signbank.dictionary.forms.CSVUploadForm
     changes = []
-    error = False
+    error = []
     creation = []
     gloss_already_exists = []
     gloss_already_exists_dutch = []
@@ -681,11 +681,7 @@ def import_csv(request):
                         if value != '':
                             # empty column header
                             e = 'Extra data found in column without header, row ' + str(nl) + ', column ' + str(nv) + ': ' + value
-
-                            if not error:
-                                error = [e]
-                            else:
-                                error.append(e)
+                            error.append(e)
                         pass
                 except IndexError:
                     print('index error import csv: line number: ', nv, ', value: ', value)
@@ -712,11 +708,7 @@ def import_csv(request):
                 # Check whether the user may change the dataset of the current row
                 if 'Dataset' in value_dict and value_dict['Dataset'].strip() not in user_datasets_names:
                     e3 = 'You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
-                    print(e3)
-                    if not error:
-                        error = [e3]
-                    else:
-                        error.append(e3)
+                    error.append(e3)
                     continue
 
                 if 'Signbank ID' in value_dict:
@@ -727,11 +719,7 @@ def import_csv(request):
                     e1 = 'To create glosses, the following columns are required: ' \
                         + 'Dataset, Lemma ID Gloss, Annotation ID Gloss: Dutch, Annotation ID Gloss: English.'
                     e2 = 'To update glosses, column Signbank ID is required.'
-
-                    if not error:
-                        error = [e1, e2]
-                    else:
-                        error.append(e1).append(e2)
+                    error.append(e1).append(e2)
                     break
                 else:
                     (new_gloss, already_exists, error_create) \
@@ -741,19 +729,11 @@ def import_csv(request):
                     if len(error_create):
                         # more than one error found
                         errors_found_string = '\n'.join(error_create)
-
-                        if not error:
-                            error = [errors_found_string]
-                        else:
-                            error.append(errors_found_string)
+                        error.append(errors_found_string)
                     continue
             except ValueError:
                 e = 'Signbank ID must be numerical: '+ str(value_dict['Signbank ID'])
-
-                if not error:
-                    error = [e]
-                else:
-                    error.append(e)
+                error.append(e)
 
                 continue
 
@@ -762,11 +742,7 @@ def import_csv(request):
             except ObjectDoesNotExist as e:
 
                 e = 'Could not find gloss for ID '+str(pk)
-
-                if not error:
-                    error = [e]
-                else:
-                    error.append(e)
+                error.append(e)
 
                 print('import_csv gloss does not exist, line ', str(nl), ' gloss id ', str(pk))
                 continue
@@ -774,26 +750,16 @@ def import_csv(request):
             try:
                 (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss,user_datasets_names)
                 changes += changes_found
-                # changes += compare_valuedict_to_gloss(value_dict,gloss)
 
                 if len(errors_found):
                     # more than one error found
                     errors_found_string = '\n'.join(errors_found)
-
-                    if not error:
-                        error = [errors_found_string]
-                    else:
-                        error.append(errors_found_string)
+                    error.append(errors_found_string)
 
             except MachineValueNotFoundError as e:
 
                 e_string = str(e)
-
-                # allow for returning multiple error messages via the exception
-                if not error:
-                    error = [e_string]
-                else:
-                    error.append(e_string)
+                error.append(e_string)
 
         stage = 1
 
