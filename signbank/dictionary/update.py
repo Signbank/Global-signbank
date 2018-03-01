@@ -516,7 +516,6 @@ def update_simultaneous_morphology(gloss, field, values):
 
     existing_sim_ids = [morpheme.id for morpheme in SimultaneousMorphologyDefinition.objects.filter(parent_gloss_id=gloss)]
     new_sim_tuples = []
-
     for value in values:
         (morpheme_id, role) = value.split(':')
         new_sim_tuples.append((morpheme_id,role))
@@ -534,9 +533,6 @@ def update_simultaneous_morphology(gloss, field, values):
         try:
             morpheme_gloss = Gloss.objects.get(pk=morpheme_id)
 
-            if not morpheme_gloss:
-                raise ValueError
-
             # create new morphology
             sim = SimultaneousMorphologyDefinition()
             sim.parent_gloss_id = gloss.id
@@ -550,7 +546,6 @@ def update_simultaneous_morphology(gloss, field, values):
 
 
     # Refresh Simultaneous Morphology with newly inserted objects
-    # morphemes = [(m.morpheme.annotation_idgloss, m.role) for m in gloss.simultaneous_morphology.all()]
     morphemes = [(str(morpheme.morpheme.id), morpheme.role)
                  for morpheme in SimultaneousMorphologyDefinition.objects.filter(parent_gloss_id=gloss)]
     sim_morphs = []
@@ -559,6 +554,49 @@ def update_simultaneous_morphology(gloss, field, values):
     simultaneous_morphemes = ', '.join(sim_morphs)
 
     newvalue = simultaneous_morphemes
+
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+
+def update_blend_morphology(gloss, field, values):
+
+    existing_blends = [ ble_morph.id for ble_morph in BlendMorphology.objects.filter(parent_gloss=gloss) ]
+
+    new_blend_tuples = []
+    for value in values:
+        (gloss_id, role) = value.split(':')
+        new_blend_tuples.append((gloss_id,role))
+
+    try:
+
+        # delete any existing blend morphology objects
+        for existing_blend in existing_blends:
+            blend_object = BlendMorphology.objects.get(id=existing_blend)
+            print("DELETE Blend Morphology for gloss ", str(gloss.pk), ": ", blend_object.glosses.pk, " ", blend_object.role)
+            blend_object.delete()
+
+        for (gloss_id, role) in new_blend_tuples:
+
+            morpheme_gloss = Gloss.objects.get(pk=gloss_id)
+
+            # create new morphology
+            new_blend = BlendMorphology()
+            new_blend.parent_gloss = gloss
+            new_blend.glosses = morpheme_gloss
+            new_blend.role = role
+            new_blend.save()
+
+    except:
+        return HttpResponseBadRequest("Unknown Morpheme in Blend Morphology %s" % values, {'content-type': 'text/plain'})
+
+    # convert to display format
+    blend_morphemes = [ (str(ble_morph.glosses.pk), ble_morph.role) for ble_morph in BlendMorphology.objects.filter(parent_gloss=gloss) ]
+    ble_morphs = []
+    for m in blend_morphemes:
+        ble_morphs.append(':'.join(m))
+    blend_morphemes = ', '.join(ble_morphs)
+
+    newvalue = blend_morphemes
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 

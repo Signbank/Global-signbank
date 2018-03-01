@@ -320,18 +320,13 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 # sort tuples on other gloss to allow comparison with imported values
 
                 sorted_relations = sorted(relations, key=lambda tup: tup[1])
-                # print("sorted_relations: ", sorted_relations)
 
                 relations_with_categories = []
                 for rel_cat in sorted_relations:
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_string = ",".join(relations_with_categories)
 
-                # print('Relations current: ', current_relations_string)
-
                 (checked_new_human_value, errors) = check_existance_relations(gloss, relations_with_categories, new_human_value_list)
-
-                # print('Relations new: ', checked_new_human_value)
 
                 if len(errors):
                     errors_found += errors
@@ -360,11 +355,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_foreign_string = ",".join(relations_with_categories)
 
-                # print('Relations foreign current: ', current_relations_foreign_string)
-
                 (checked_new_human_value, errors) = check_existance_foreign_relations(gloss, relations_with_categories, new_human_value_list)
-
-                # print('Relations foreign new: ', checked_new_human_value)
 
                 if len(errors):
                     errors_found += errors
@@ -389,11 +380,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                              MorphologyDefinition.objects.filter(parent_gloss=gloss)]
                 morphemes_string = ", ".join(morphemes)
 
-                # print('Sequential Morphology import: ', morphemes_string)
-
                 (found, not_found, errors) = check_existance_sequential_morphology(gloss, new_human_value_list)
-
-                # print('Sequential Morphology new: ', new_human_value)
 
                 if len(errors):
                     errors_found += errors
@@ -420,11 +407,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                     sim_morphs.append(':'.join(m))
                 simultaneous_morphemes = ','.join(sim_morphs)
 
-                # print('Simultaneous Morphology import: ', simultaneous_morphemes)
-
                 (checked_new_human_value, errors) = check_existance_simultaneous_morphology(gloss, new_human_value_list)
-
-                # print('Simultaneous Morphology new: ', checked_new_human_value)
 
                 if len(errors):
                     errors_found += errors
@@ -437,6 +420,34 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                                         'human_key': human_key,
                                         'original_machine_value': simultaneous_morphemes,
                                         'original_human_value': simultaneous_morphemes,
+                                        'new_machine_value': checked_new_human_value,
+                                        'new_human_value': checked_new_human_value})
+                continue
+
+            elif human_key == 'Blend Morphology':
+                if new_human_value == 'None' or new_human_value == '':
+                    continue
+
+                morphemes = [(str(m.glosses.id), m.role) for m in gloss.blend_morphology.all()]
+
+                ble_morphs = []
+                for m in morphemes:
+                    ble_morphs.append(':'.join(m))
+                blend_morphemes = ','.join(ble_morphs)
+
+                (checked_new_human_value, errors) = check_existance_blend_morphology(gloss, new_human_value_list)
+
+                if len(errors):
+                    errors_found += errors
+
+                elif blend_morphemes != checked_new_human_value:
+                    differences.append({'pk': gloss.pk,
+                                        'dataset': current_dataset,
+                                        'annotationidglosstranslation':default_annotationidglosstranslation,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': blend_morphemes,
+                                        'original_human_value': blend_morphemes,
                                         'new_machine_value': checked_new_human_value,
                                         'new_human_value': checked_new_human_value})
                 continue
@@ -457,8 +468,6 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 tag_names_display = [ t.replace('_',' ') for t in tag_names_of_gloss ]
                 tag_names_display = ', '.join(tag_names_display)
-
-                # print('current tag names: ', tag_names)
 
                 new_human_value_list = [v.replace(' ', '_') for v in new_human_value_list]
 
@@ -485,8 +494,6 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 new_tag_names_display = ', '.join(new_tag_names_display)
 
                 sorted_new_tags = ", ".join(sorted_new_tags)
-
-                # print('Tags list: ', sorted_new_tags)
 
                 if tag_names != sorted_new_tags:
                     differences.append({'pk': gloss.pk,
@@ -541,8 +548,6 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                     new_machine_value = human_to_machine_values[new_human_value]
                 except KeyError:
-                    # print('new human value: ', new_human_value)
-
                     #If you can't find a corresponding human value, maybe it's empty
                     if new_human_value in ['',' ', None, 'None']:
                         # print('exception in new human value to machine value: ', new_human_value)
@@ -558,16 +563,12 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
             #Do something special for integers and booleans
             elif field.__class__.__name__ == 'IntegerField':
 
-                # print('import CSV IntegerField human value for ', human_key, ': ', new_human_value)
-
                 try:
                     new_machine_value = int(new_human_value)
                 except ValueError:
                     new_human_value = 'None'
                     new_machine_value = None
             elif field.__class__.__name__ == 'NullBooleanField':
-
-                # print('import CSV NullBooleanField human value for ', human_key, ': ', new_human_value)
 
                 new_human_value_lower = new_human_value.lower()
                 if new_human_value_lower == 'neutral' and (field.name == 'weakprop' or field.name == 'weakdrop'):
@@ -595,7 +596,6 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                         errors_found += [error_string]
             #If all the above does not apply, this is a None value or plain text
             else:
-                # print('Import CSV 148: not Integer, not Boolean: new human value: (', new_human_value, ')')
 
                 if new_human_value == 'None':
                     new_machine_value = None
@@ -715,10 +715,6 @@ def check_existance_sequential_morphology(gloss, values):
 
         try:
 
-            # get the id for the morpheme identifier
-            # morpheme_id = gloss_from_identifier(new_value)
-            # print('check_existance_sequential_morphology, new_value: ', new_value)
-            # this is a gloss, make sure it exists
             morpheme = Gloss.objects.get(pk=new_value)
 
             if new_value in found:
@@ -773,16 +769,11 @@ def check_existance_simultaneous_morphology(gloss, values):
         try:
 
             # get the id for the morpheme identifier
-            # morpheme_id = gloss_from_identifier(new_value)
-            # print('check_existance_simultaneous_morphology, new_value: ', morpheme)
             # this is a gloss, make sure it exists
             morpheme_gloss = Gloss.objects.get(pk=morpheme)
             morpheme_id = Morpheme.objects.filter(gloss_ptr_id=morpheme_gloss)
 
-            # print('check_existance_simultaneous_morphology, morpheme_id: ', morpheme_id, ' morpheme_gloss: ', morpheme_gloss)
-
             if not morpheme_id:
-                # print('check_existance_simultaneous_morphology: morpheme not found')
                 error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
                     gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
                 errors.append(error_string)
@@ -801,6 +792,62 @@ def check_existance_simultaneous_morphology(gloss, values):
             continue
 
     return (checked, errors)
+
+
+def check_existance_blend_morphology(gloss, values):
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+
+    errors = []
+    found = []
+    not_found = []
+    tuples_list = []
+    checked = ''
+
+    # check syntax
+    for new_value_tuple in values:
+        try:
+            (gloss_id, role) = new_value_tuple.split(':')
+            role = role.strip()
+            gloss_id = gloss_id.strip()
+            tuples_list.append((gloss_id,role))
+        except ValueError:
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
+                           + '), formatting error in Blend Morphology: ' + str(new_value_tuple) + '. Tuple gloss:role expected.'
+            errors.append(error_string)
+
+    for (gloss_id, role) in tuples_list:
+
+        try:
+
+            morpheme_gloss = Gloss.objects.get(pk=gloss_id)
+
+            if gloss_id in found:
+                error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                    gloss.pk) + '), new Blend Morphology value ' + str(gloss_id) + ' is duplicate.'
+                errors.append(error_string)
+            else:
+                found += [gloss_id]
+
+            if checked:
+                checked += ',' + ':'.join([gloss_id, role])
+            else:
+                checked = ':'.join([gloss_id, role])
+
+        except ObjectDoesNotExist:
+            if gloss_id in not_found:
+                # we've already seen this value
+                error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                    gloss.pk) + '), new Blend Morphology value ' + str(gloss_id) + ' is duplicate.'
+                errors.append(error_string)
+            else:
+                error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                    gloss.pk) + '), new Blend Morphology value ' + str(gloss_id) + ' not found.'
+                errors.append(error_string)
+                not_found += [gloss_id]
+            continue
+
+    return (checked, errors)
+
 
 RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant',
                          'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
