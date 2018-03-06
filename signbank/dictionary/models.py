@@ -1582,6 +1582,37 @@ class Dataset(models.Model):
     def __str__(self):
         return self.name
 
+    def get_users_who_can_view_dataset(self):
+
+        all_users = User.objects.all()
+
+        users_who_can_view_dataset = []
+
+        for user in all_users:
+            if not (user.is_staff or user.is_superuser):
+                import guardian
+                from guardian.shortcuts import get_objects_for_user
+                user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+                if self in user_view_datasets:
+                    users_who_can_view_dataset.append(user)
+
+        return users_who_can_view_dataset
+
+    def get_users_who_can_change_dataset(self):
+
+        all_users = User.objects.all()
+
+        users_who_can_change_dataset = []
+
+        for user in all_users:
+            if not (user.is_staff or user.is_superuser):
+                import guardian
+                from guardian.shortcuts import get_objects_for_user
+                user_change_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+                if self in user_change_datasets:
+                    users_who_can_change_dataset.append(user)
+
+        return users_who_can_change_dataset
 
 class UserProfile(models.Model):
     # This field is required.

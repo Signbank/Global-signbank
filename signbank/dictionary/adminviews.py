@@ -2373,7 +2373,7 @@ class DatasetListView(ListView):
         if self.request.GET.get('export_ecv') == 'ECV':
             return self.render_to_ecv_export_response(context)
         else:
-            return super(ListView, self).render_to_response(context)
+            return super(DatasetListView, self).render_to_response(context)
 
     def render_to_ecv_export_response(self, context):
 
@@ -2450,6 +2450,177 @@ class DatasetListView(ListView):
         else:
             # User is not authenticated
             return None
+
+class DatasetManagerView(ListView):
+    model = Dataset
+    template_name = 'dictionary/admin_dataset_manager.html'
+
+    # set the default dataset, this should not be empty
+    dataset_name = DEFAULT_DATASET
+
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DatasetManagerView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        return context
+
+    def render_to_response(self, context):
+        if 'add_view_perm' in self.request.GET or 'add_change_perm' in self.request.GET:
+            return self.render_to_add_user_response(context)
+        else:
+            return super(DatasetManagerView, self).render_to_response(context)
+
+    def render_to_add_user_response(self, context):
+
+        # check that the user is logged in
+        if self.request.user.is_authenticated():
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            return HttpResponseRedirect(URL + '/datasets/manager')
+
+        # check if the user can manage this dataset
+        from django.contrib.auth.models import Group, User
+
+        try:
+            group_manager = Group.objects.get(name='Dataset_Manager')
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+            return HttpResponseRedirect(URL + '/datasets/manager')
+
+        groups_of_user = self.request.user.groups.all()
+        if not group_manager in groups_of_user:
+            messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset Manager to modify dataset permissions.'))
+            return HttpResponseRedirect(URL + '/datasets/manager')
+
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(URL + '/datasets/manager')
+
+        try:
+            dataset_object = Dataset.objects.get(name=self.dataset_name)
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(URL + '/datasets/manager')
+
+        # make sure the user can write to this dataset
+        # from guardian.shortcuts import get_objects_for_user
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        if user_change_datasets and dataset_object in user_change_datasets:
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, ('No permission to modify dataset permissions.'))
+            return HttpResponseRedirect(URL + '/datasets/manager')
+
+        username = ''
+        if 'username' in get:
+            username = get['username']
+        if username == '':
+            messages.add_message(self.request, messages.ERROR, ('Username must be non-empty.'))
+            return HttpResponseRedirect(URL + '/datasets/manager')
+
+        try:
+            user_object = User.objects.get(username=username)
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No user with name '+username+' found.'))
+            return HttpResponseRedirect(URL + '/datasets/manager')
+
+        # user has permission to modify dataset permissions
+
+        from guardian.shortcuts import assign_perm
+        if 'add_view_perm' in self.request.GET:
+            if dataset_object in get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False):
+                if user_object.is_staff or user_object.is_superuser:
+                    messages.add_message(self.request, messages.INFO,
+                                     ('User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
+                                      ') already has view permission for this dataset as staff or superuser.'))
+                else:
+                    messages.add_message(self.request, messages.INFO,
+                                     ('User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
+                                      ') already has view permission for this dataset.'))
+                return HttpResponseRedirect(URL + '/datasets/manager')
+            try:
+                assign_perm('view_dataset', user_object, dataset_object)
+                messages.add_message(self.request, messages.INFO,
+                                 ('View permission for user ' + username + ' successfully updated.'))
+                return HttpResponseRedirect(URL + '/datasets/manager')
+
+            except:
+                messages.add_message(self.request, messages.ERROR, ('Error assigning view dataset permission to user '+username+'.'))
+                return HttpResponseRedirect(URL + '/datasets/manager')
+
+        if 'add_change_perm' in self.request.GET:
+            if dataset_object in get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False):
+                if user_object.is_staff or user_object.is_superuser:
+                    messages.add_message(self.request, messages.INFO,
+                                         (
+                                         'User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
+                                         ') already has change permission for this dataset as staff or superuser.'))
+                else:
+                    messages.add_message(self.request, messages.INFO,
+                                 ('User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
+                                  ') already has change permission for this dataset.'))
+                return HttpResponseRedirect(URL + '/datasets/manager')
+            try:
+                assign_perm('change_dataset', user_object, dataset_object)
+            except:
+                messages.add_message(self.request, messages.ERROR, ('Error assigning change dataset permission to user '+username+'.'))
+                return HttpResponseRedirect(URL + '/datasets/manager')
+
+        messages.add_message(self.request, messages.INFO, ('Change permission for user ' + username + ' successfully updated.'))
+        return HttpResponseRedirect(URL + '/datasets/manager')
+
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # get query terms from self.request
+        get = self.request.GET
+
+        # Then check what kind of stuff we want
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        # otherwise the default dataset_name DEFAULT_DATASET is used
+
+        setattr(self.request, 'dataset_name', self.dataset_name)
+
+        if user.is_authenticated():
+            from django.db.models import Prefetch
+            qs = Dataset.objects.all().prefetch_related(
+                Prefetch(
+                    "userprofile_set",
+                    queryset=UserProfile.objects.filter(user=user),
+                    to_attr="user"
+                )
+            )
+
+            checker = ObjectPermissionChecker(user)
+
+            checker.prefetch_perms(qs)
+
+            for dataset in qs:
+                checker.has_perm('change_dataset', dataset)
+
+            return qs
+        else:
+            # User is not authenticated
+            return None
+
 
 
 def order_handshape_queryset_by_sort_order(get, qs):
@@ -2828,5 +2999,21 @@ def morph_ajax_complete(request, prefix):
                     default_annotationidglosstranslation = annotationidglosstranslation.text
             result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn,
                            'pk': "%s" % (g.id)})
+
+    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+
+def user_ajax_complete(request, prefix):
+    """Return a list of users matching the search term
+    as a JSON structure suitable for typeahead."""
+
+    query = Q(username__istartswith=prefix) | \
+            Q(first_name__istartswith=prefix) | \
+            Q(last_name__startswith=prefix)
+
+    qs = User.objects.filter(query).distinct()
+
+    result = []
+    for u in qs:
+        result.append({'first_name': u.first_name, 'last_name': u.last_name, 'username': u.username})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
