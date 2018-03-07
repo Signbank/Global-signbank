@@ -1584,7 +1584,7 @@ class Dataset(models.Model):
 
     def get_users_who_can_view_dataset(self):
 
-        all_users = User.objects.all()
+        all_users = User.objects.all().order_by('first_name')
 
         users_who_can_view_dataset = []
 
@@ -1601,7 +1601,7 @@ class Dataset(models.Model):
 
     def get_users_who_can_change_dataset(self):
 
-        all_users = User.objects.all()
+        all_users = User.objects.all().order_by('first_name')
 
         users_who_can_change_dataset = []
 
