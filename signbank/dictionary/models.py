@@ -270,7 +270,7 @@ class Handshape(models.Model):
                 for filename in os.listdir(dir_path):
                     if not re.match(r'.*_\d+$', filename):
                         existing_file_without_extension = os.path.splitext(filename)[0]
-                        if filename_without_extension is existing_file_without_extension:
+                        if filename_without_extension == existing_file_without_extension:
                             return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
             except OSError:
                 return None
@@ -1589,12 +1589,12 @@ class Dataset(models.Model):
         users_who_can_view_dataset = []
 
         for user in all_users:
-            if not (user.is_staff or user.is_superuser):
-                import guardian
-                from guardian.shortcuts import get_objects_for_user
-                user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
-                if self in user_view_datasets:
-                    users_who_can_view_dataset.append(user)
+
+            import guardian
+            from guardian.shortcuts import get_objects_for_user
+            user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+            if self in user_view_datasets and not (user.is_staff or user.is_superuser):
+                users_who_can_view_dataset.append(user)
 
         return users_who_can_view_dataset
 
@@ -1605,12 +1605,11 @@ class Dataset(models.Model):
         users_who_can_change_dataset = []
 
         for user in all_users:
-            if not (user.is_staff or user.is_superuser):
-                import guardian
-                from guardian.shortcuts import get_objects_for_user
-                user_change_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
-                if self in user_change_datasets:
-                    users_who_can_change_dataset.append(user)
+            import guardian
+            from guardian.shortcuts import get_objects_for_user
+            user_change_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+            if self in user_change_datasets:
+                users_who_can_change_dataset.append(user)
 
         return users_who_can_change_dataset
 
