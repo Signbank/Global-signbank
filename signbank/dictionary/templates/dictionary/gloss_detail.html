@@ -735,7 +735,7 @@
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
                         {% for value,name,label,kind in etymology_fields_dom %}
-                            {% if label == 'letter' %}
+                            {% if name == 'domhndsh_letter' %}
                             <td class="edit edit_letter" id='{{name}}'
                                 value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                             {% else %}
@@ -751,7 +751,7 @@
                             <a id="strong_hand_link" style="color: inherit; display: visible;" href="{{ URL }}/dictionary/handshape/{{StrongHand}}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
-                            {% if label == 'letter' %}
+                            {% if name == 'domhndsh_letter' %}
                             <td class="edit edit_letter" id='{{name}}'
                                 value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                             {% else %}
@@ -770,7 +770,7 @@
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
                         {% for value,name,label,kind in etymology_fields_sub %}
-                            {% if label == 'letter' %}
+                            {% if name == 'subhndsh_letter' %}
                             <td class="edit edit_letter" id='{{name}}'
                                 value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                             {% else %}
@@ -786,7 +786,7 @@
                             <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{ URL }}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_sub %}
-                            {% if label == 'letter' %}
+                            {% if name == 'subhndsh_letter' %}
                             <td class="edit edit_letter" id='{{name}}'
                                 value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                             {% else %}
