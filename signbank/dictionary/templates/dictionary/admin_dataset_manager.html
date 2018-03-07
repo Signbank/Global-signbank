@@ -1,0 +1,144 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script type='text/javascript'>
+    var url = '{{URL}}';
+    </script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
+
+{% endblock %}
+
+{% block bootstrap3_title %}Signbank: Manage datasets{% endblock %}
+
+
+{% block content %}
+
+{% if object_list %}
+
+<table class='table'>
+    <thead>
+      <tr>
+          <th style="width:100px;">{% trans "Dataset Name" %}</th>
+          <th style="width:200px;">{% trans "Users View Dataset" %}</th>
+          <th style="width:200px;">{% trans "Users Change Dataset" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for dataset in object_list %}
+      {% get_obj_perms request.user for dataset as "dataset_perms" %}
+      {% if "change_dataset" in dataset_perms %}
+        <tr>
+            <td>
+                {{ dataset.name }}
+            </td>
+            <td>
+                <div data-toggle="collapse" data-target="#dataset_{{dataset.name|cut:' '}}_manage_view"><button>{% trans "Manage" %}</button></div>
+                <div id='dataset_{{dataset.name|cut:" "}}_manage_view' class='collapse'>
+                {% with dataset.get_users_who_can_view_dataset as view_users %}
+                {% if view_users|length > 0 %}
+                    {% with view_users|length as num_rows %}
+                    {% if num_rows > 4 %}
+                    <list name="users_can_view" style="height:220px; overflow:auto;display:block;">
+                    {% else %}
+                    {% widthratio num_rows 1 50 as row_height %}
+                    {% blocktrans %}
+                    <list name="users_can_view" style="height:{{row_height}}px; overflow:auto;display:block;">
+                    {% endblocktrans %}
+                    {% endif %}
+                {% for user_v in view_users %}
+                        <ul name="{{user_v.username}}">
+                            <span id="user_v_{{user_v.username}}"
+                                  placement="top">{{user_v.first_name}} {{user_v.last_name}} ({{user_v.username}})</span>
+                        </ul>
+                {% endfor %}
+                    </list>
+                    {% endwith %}
+                {% else %}
+                    <p>{% trans "No users found." %}</p>
+                {% endif %}
+                    <form name='dataset_{{dataset.name|cut:" "}}_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_view_perm_form' method='get'>
+                        <div class="hidden">
+                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                        </div>
+                        <table class='table table-condensed'>
+                        <tr>
+                            <td>
+                            {% csrf_token %}
+                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input type="hidden" name="username" id="username" value=""/>
+                            </td>
+                            <td>
+                            <input class='btn btn-primary' id='add_view_perm' name='add_view_perm' type='submit' value='{% trans "Add User" %}'>
+                            </td>
+                        </tr>
+                        </table>
+                    </form>
+                    {# spacing div to allow room for typeahead dropdown #}
+                    <div style='height: 1em'></div>
+                {% endwith %}
+                </div>
+            </td>
+            <td>
+                <div data-toggle="collapse" data-target="#dataset_{{dataset.name|cut:' '}}_manage_change"><button>{% trans "Manage" %}</button></div>
+                <div id='dataset_{{dataset.name|cut:" "}}_manage_change' class='collapse'>
+                {% with dataset.get_users_who_can_change_dataset as change_users %}
+                {% if change_users|length > 0 %}
+                    {% with change_users|length as num_rows %}
+                    {% if num_rows > 4 %}
+                    <list name="users_can_change" style="height:220px; overflow:auto;display:block;">
+                    {% else %}
+                    {% widthratio num_rows 1 50 as row_height %}
+                    {% blocktrans %}
+                    <list name="users_can_change" style="height:{{row_height}}px; overflow:auto;display:block;">
+                    {% endblocktrans %}
+                    {% endif %}
+                {% for user_c in change_users %}
+                        <ul name="{{user_c.username}}">
+                            <span id="user_c_{{user_c.username}}"
+                                  placement="top">{{user_c.first_name}} {{user_c.last_name}} ({{user_c.username}})</span>
+                        </ul>
+                {% endfor %}
+                    </list>
+                    {% endwith %}
+                {% else %}
+                    <p>{% trans "No users found." %}</p>
+                {% endif %}
+                    <form name='dataset_{{dataset.name|cut:" "}}_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_change_perm_form' method='get'>
+                        <div class="hidden">
+                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                        </div>
+                        <table class='table table-condensed'>
+                        <tr>
+                            <td>
+                            {% csrf_token %}
+                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input type="hidden" name="username" id="username" value=""/>
+                            </td>
+                            <td>
+                            <input class='btn btn-primary' id='add_change_perm' name='add_change_perm' type='submit' value='{% trans "Add User" %}'>
+                            </td>
+                        </tr>
+                        </table>
+                    </form>
+                    {# spacing div to allow room for typeahead dropdown #}
+                    <div style='height: 1em'></div>
+                {% endwith %}
+                </div>
+            </td>
+        </tr>
+    {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+{% trans "No datasets found." %}
+{% endif %}
+
+{% endblock content %}

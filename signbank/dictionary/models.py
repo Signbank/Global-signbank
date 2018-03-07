@@ -270,7 +270,7 @@ class Handshape(models.Model):
                 for filename in os.listdir(dir_path):
                     if not re.match(r'.*_\d+$', filename):
                         existing_file_without_extension = os.path.splitext(filename)[0]
-                        if filename_without_extension is existing_file_without_extension:
+                        if filename_without_extension == existing_file_without_extension:
                             return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
             except OSError:
                 return None
@@ -1582,6 +1582,39 @@ class Dataset(models.Model):
     def __str__(self):
         return self.name
 
+    def get_users_who_can_view_dataset(self):
+
+        all_users = User.objects.all().order_by('first_name')
+
+        users_who_can_view_dataset = []
+
+        for user in all_users:
+            if not (user.is_staff or user.is_superuser):
+                import guardian
+                from guardian.shortcuts import get_objects_for_user
+                user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+                # self is the dataset
+                if self in user_view_datasets:
+                    users_who_can_view_dataset.append(user)
+
+        return users_who_can_view_dataset
+
+    def get_users_who_can_change_dataset(self):
+
+        all_users = User.objects.all().order_by('first_name')
+
+        users_who_can_change_dataset = []
+
+        for user in all_users:
+            if not (user.is_staff or user.is_superuser):
+                import guardian
+                from guardian.shortcuts import get_objects_for_user
+                user_change_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+                # self is the dataset
+                if self in user_change_datasets:
+                    users_who_can_change_dataset.append(user)
+
+        return users_who_can_change_dataset
 
 class UserProfile(models.Model):
     # This field is required.
