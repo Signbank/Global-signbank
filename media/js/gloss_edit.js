@@ -461,7 +461,7 @@ function update_view_and_remember_original_value(change_summary)
             }
         }
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
-                        new_value == 'False' || new_value == 0 || new_value == False || new_value == None || new_value == '&nbsp;')
+                        new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
         {
             console.log("new value is empty, new value is: ", new_value);
             if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {

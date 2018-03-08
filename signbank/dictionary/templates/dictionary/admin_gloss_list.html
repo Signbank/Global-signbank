@@ -174,7 +174,30 @@ function do_toggle_groups(el) {
 {% if perms.dictionary.search_gloss %}
 <form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
 <div class="panel panel-default">
-    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}</div>
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
+                <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                  title="In many text fields, you can use patterns as follows:
+                  <table>
+                    <tr>
+                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                    </tr>
+                  </table>
+                  "></span></div>
 
     <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
         <div id='searchformwell' class='well search-results-collapsable'>
@@ -195,29 +218,6 @@ function do_toggle_groups(el) {
                                 <div class='input-group'>
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                                     {{search_field.label}}
-                                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
-                                          title="
-                                          <table>
-                                            <tr>
-                                                <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
-                                            </tr>
-                                          </table>
-                                          "></span>
                                 </label>
                                 <input name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                                 </div>
@@ -225,31 +225,7 @@ function do_toggle_groups(el) {
 
                             <td><div class='input-group'>
 
-                                <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}
-                                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
-                                          title="
-                                          <table>
-                                            <tr>
-                                                <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
-                                            </tr>
-                                          </table>
-                                          "></span>
-                                </label>
+                                <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
                                 <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
                             </td>
 
