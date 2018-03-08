@@ -167,7 +167,7 @@ def update_gloss(request, glossid):
 
             print('no permission for chosen dataset')
             newvalue = original_value
-            return HttpResponse(newvalue, {'content-type': 'text/plain'})
+            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
         elif field == "sn":
             # sign number must be unique, return error message if this SN is 
