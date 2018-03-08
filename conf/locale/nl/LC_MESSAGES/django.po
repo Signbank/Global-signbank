@@ -1,7 +1,7 @@
-# Dutch language file for NGT Signbank.
-# Copyright (C) 2015 Radboud University
-# This file is distributed under the same license as the NGT Signbank package.
-# Richard Bank <r.bank@let.ru.nl>, Onno Crasborn <o.crasborn@let.ru.nl>, Wessel Stoop <w.stoop@let.ru.nl>, 2015.
+# Dutch language file for Signbank.
+# Copyright (C) 2018 Radboud University
+# This file is distributed under the same license as the Global Signbank package.
+# Onno Crasborn <o.crasborn@let.ru.nl>, Wessel Stoop <w.stoop@let.ru.nl>, 2015.
 #
 msgid ""
 msgstr ""

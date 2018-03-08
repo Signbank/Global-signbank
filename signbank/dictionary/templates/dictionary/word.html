@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {# Translators: Page title #}
-{% block pagetitle %}{% blocktrans %}NGT: sign for {{ translation }}{% endblocktrans %} {% endblock %}
+{% block pagetitle %}{% blocktrans %}Sign for {{ translation }}{% endblocktrans %} {% endblock %}
 
 
 {% block jqueryready %}
@@ -42,7 +42,7 @@
            
                 {% endif %}
                 {# Translators: Sign x of n(signs) #}
-                <button class='btn navbar-btn'>{% blocktrans %}Sign {{glossposn}} of {{glosscount}} <span class='hidden-xs'>in the NGT Dictionary{% endblocktrans %}</span></button>
+                <button class='btn navbar-btn'>{% blocktrans %}Sign {{glossposn}} of {{glosscount}} <span class='hidden-xs'>in the dictionary{% endblocktrans %}</span></button>
             
                 {% if navigation.next %}
                 {# Translators: Navigation #}
