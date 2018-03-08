@@ -43,7 +43,8 @@ def addvideo(request):
             goal_folder = WRITABLE_FOLDER+GLOSS_VIDEO_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
             goal_filename = gloss.idgloss + '-' + str(gloss.pk) + '.mp4'
             goal_location = goal_folder + goal_filename
-            os.remove(goal_location)
+            if os.path.isfile(goal_location):
+                os.remove(goal_location)
 
             video = GlossVideo(videofile=vfile, gloss=gloss)
             video.save()
