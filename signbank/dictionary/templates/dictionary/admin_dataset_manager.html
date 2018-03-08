@@ -39,7 +39,7 @@
                 {{ dataset.name }}
             </td>
             <td>
-                <div data-toggle="collapse" data-target="#dataset_{{dataset.name|cut:' '}}_manage_view"><button>{% trans "Manage" %}</button></div>
+                <div data-toggle="collapse" href="#dataset_{{dataset.name|cut:' '}}_manage_view"><button>{% trans "Manage" %}</button></div>
                 <div id='dataset_{{dataset.name|cut:" "}}_manage_view' class='collapse'>
                 {% with dataset.get_users_who_can_view_dataset as view_users %}
                 {% if view_users|length > 0 %}
@@ -86,7 +86,7 @@
                 </div>
             </td>
             <td>
-                <div data-toggle="collapse" data-target="#dataset_{{dataset.name|cut:' '}}_manage_change"><button>{% trans "Manage" %}</button></div>
+                <div data-toggle="collapse" href="#dataset_{{dataset.name|cut:' '}}_manage_change"><button>{% trans "Manage" %}</button></div>
                 <div id='dataset_{{dataset.name|cut:" "}}_manage_change' class='collapse'>
                 {% with dataset.get_users_who_can_change_dataset as change_users %}
                 {% if change_users|length > 0 %}
@@ -110,7 +110,7 @@
                 {% else %}
                     <p>{% trans "No users found." %}</p>
                 {% endif %}
-                    <form name='dataset_{{dataset.name|cut:" "}}_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_change_perm_form' method='get'>
+                    <form name='dataset_{{dataset.name|cut:" "}}_change_perm_form' id='dataset_{{dataset.name|cut:" "}}_change_perm_form' method='get'>
                         <div class="hidden">
                             <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
                         </div>
