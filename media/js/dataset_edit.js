@@ -1,5 +1,19 @@
 
 $(document).ready(function() {
+
+    if (window.location.search.match('manage')) {
+
+        target_manage = '#' + window.location.search.split("?")[1];
+
+        if (window.location.search.match('manage_view')) {
+            $(target_manage).addClass('in');
+        }
+
+        if (window.location.search.match('manage_change')) {
+            $(target_manage).addClass('in');
+        }
+    }
+
     usertypeahead($('.usertypeahead'));
     $('.usertypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.username)

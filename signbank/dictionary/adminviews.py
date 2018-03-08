@@ -2534,8 +2534,11 @@ class DatasetManagerView(ListView):
 
         # user has permission to modify dataset permissions
 
+        manage_identifier = 'dataset_' + dataset_object.name.replace(' ','')
+
         from guardian.shortcuts import assign_perm
         if 'add_view_perm' in self.request.GET:
+            manage_identifier += '_manage_view'
             if dataset_object in get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False):
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.INFO,
@@ -2545,18 +2548,21 @@ class DatasetManagerView(ListView):
                     messages.add_message(self.request, messages.INFO,
                                      ('User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
                                       ') already has view permission for this dataset.'))
-                return HttpResponseRedirect(URL + '/datasets/manager')
+                return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
+
             try:
                 assign_perm('view_dataset', user_object, dataset_object)
                 messages.add_message(self.request, messages.INFO,
                                  ('View permission for user ' + username + ' successfully updated.'))
-                return HttpResponseRedirect(URL + '/datasets/manager')
+                return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
 
             except:
                 messages.add_message(self.request, messages.ERROR, ('Error assigning view dataset permission to user '+username+'.'))
-                return HttpResponseRedirect(URL + '/datasets/manager')
+                return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
 
         if 'add_change_perm' in self.request.GET:
+            manage_identifier += '_manage_change'
+
             if dataset_object in get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False):
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.INFO,
@@ -2567,16 +2573,16 @@ class DatasetManagerView(ListView):
                     messages.add_message(self.request, messages.INFO,
                                  ('User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
                                   ') already has change permission for this dataset.'))
-                return HttpResponseRedirect(URL + '/datasets/manager')
+                return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
+
             try:
                 assign_perm('change_dataset', user_object, dataset_object)
             except:
                 messages.add_message(self.request, messages.ERROR, ('Error assigning change dataset permission to user '+username+'.'))
-                return HttpResponseRedirect(URL + '/datasets/manager')
+                return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
         messages.add_message(self.request, messages.INFO, ('Change permission for user ' + username + ' successfully updated.'))
-        return HttpResponseRedirect(URL + '/datasets/manager')
-
+        return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
     def get_queryset(self):
         user = self.request.user
