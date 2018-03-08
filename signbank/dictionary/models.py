@@ -407,17 +407,17 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
     # Phonology fields
     handedness = models.CharField(_("Handedness"), blank=True,  null=True, choices=build_choice_list("Handedness"), max_length=5)
-    weakdrop = models.NullBooleanField(_("WD"), null=True, blank=True)
-    weakprop = models.NullBooleanField(_("WP"), null=True, blank=True)
+    weakdrop = models.NullBooleanField(_("Weak Drop"), null=True, blank=True)
+    weakprop = models.NullBooleanField(_("Weak Prop"), null=True, blank=True)
 
     domhndsh = models.CharField(_("Strong Hand"), blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
     subhndsh = models.CharField(_("Weak Hand"), null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
 
     # Support for handshape etymology
-    domhndsh_number = models.NullBooleanField(_("number"), null=True, blank=True)
-    domhndsh_letter = models.NullBooleanField(_("letter"), null=True, blank=True)
-    subhndsh_number = models.NullBooleanField(_("number"), null=True, blank=True)
-    subhndsh_letter = models.NullBooleanField(_("letter"), null=True, blank=True)
+    domhndsh_number = models.NullBooleanField(_("Strong hand number"), null=True, blank=True)
+    domhndsh_letter = models.NullBooleanField(_("Strong hand letter"), null=True, blank=True)
+    subhndsh_number = models.NullBooleanField(_("Weak hand number"), null=True, blank=True)
+    subhndsh_letter = models.NullBooleanField(_("Weak hand letter"), null=True, blank=True)
 
     final_domhndsh = models.CharField(_("Final Dominant Handshape"), blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
     final_subhndsh = models.CharField(_("Final Subordinate Handshape"), null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
