@@ -47,7 +47,7 @@ def get_default_language_id():
 
 
 class Translation(models.Model):
-    """A Dutch translation of NGT signs"""
+    """A spoken language translation of signs"""
 
     gloss = models.ForeignKey("Gloss")
     language = models.ForeignKey("Language", default=get_default_language_id)
