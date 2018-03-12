@@ -75,7 +75,24 @@
                             <input type="hidden" name="username" id="username" value=""/>
                             </td>
                             <td>
-                            <input class='btn btn-primary' id='add_view_perm' name='add_view_perm' type='submit' value='{% trans "Add User" %}'>
+                            <input class='btn btn-primary' id='add_view_perm' name='add_view_perm' type='submit' value='{% trans "Grant" %}'>
+                            </td>
+                        </tr>
+                        </table>
+                    </form>
+                    <form name='dataset_{{dataset.name|cut:" "}}_delete_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_delete_view_perm_form' method='get'>
+                        <div class="hidden">
+                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                        </div>
+                        <table class='table table-condensed'>
+                        <tr>
+                            <td>
+                            {% csrf_token %}
+                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input type="hidden" name="username" id="username" value=""/>
+                            </td>
+                            <td>
+                            <input class='btn btn-primary' id='delete_view_perm' name='delete_view_perm' type='submit' value='{% trans "Revoke" %}'>
                             </td>
                         </tr>
                         </table>
@@ -122,7 +139,24 @@
                             <input type="hidden" name="username" id="username" value=""/>
                             </td>
                             <td>
-                            <input class='btn btn-primary' id='add_change_perm' name='add_change_perm' type='submit' value='{% trans "Add User" %}'>
+                            <input class='btn btn-primary' id='add_change_perm' name='add_change_perm' type='submit' value='{% trans "Grant" %}'>
+                            </td>
+                        </tr>
+                        </table>
+                    </form>
+                    <form name='dataset_{{dataset.name|cut:" "}}_delete_change_perm_form' id='dataset_{{dataset.name|cut:" "}}_delete_change_perm_form' method='get'>
+                        <div class="hidden">
+                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                        </div>
+                        <table class='table table-condensed'>
+                        <tr>
+                            <td>
+                            {% csrf_token %}
+                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input type="hidden" name="username" id="username" value=""/>
+                            </td>
+                            <td>
+                            <input class='btn btn-primary' id='delete_change_perm' name='delete_change_perm' type='submit' value='{% trans "Revoke" %}'>
                             </td>
                         </tr>
                         </table>
