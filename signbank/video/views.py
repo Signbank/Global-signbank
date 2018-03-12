@@ -49,6 +49,9 @@ def addvideo(request):
             video = GlossVideo(videofile=vfile, gloss=gloss)
             video.save()
 
+            #Make sure the rights of the new file are okay
+            os.chmod(goal_location,0o660)
+
             # Issue #162: log the upload history
             log_entry = GlossVideoHistory(action="upload", gloss=gloss, actor=request.user,
                                           uploadfile=vfile, goal_location=goal_location)
