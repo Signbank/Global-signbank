@@ -78,11 +78,17 @@ html {
 
 #minimalistic_language_picker
 {
-    margin-top: -53px;
+    margin-top: 0px;
     float: right;
-    margin-right: 8px;
+    margin-right: 0px;
+    margin-bottom: 4px;
     position: relative;
-}
+    width: 30px;
+    height: 55px;
+	line-height: 11px;
+	padding: 6px;
+    float: right;
+	border-radius: 6px;}
 
 legend
 {

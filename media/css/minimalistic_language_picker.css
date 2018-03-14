@@ -15,10 +15,13 @@
 {
 	border: solid 1px grey;
 	padding: 6px;
+    float: right;
 	border-radius: 6px;
 	margin-right: 0px;
-	margin-top: -3px;
-	height: 11px;
+	margin-bottom: 4px;
+	margin-top: 0px;
+    position: relative;
+	height: 55px;
 	width: 30px;
 	background-color: white;
 	line-height: 11px;

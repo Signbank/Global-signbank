@@ -28,11 +28,13 @@ jQuery.fn.minimalistic_language_picker = function(languages,chosen_language,imag
 jQuery.fn.show_chosen_language = function()
 {
     $(this).removeClass('active_language_picker'); //Changes layout
-    $(this).css('height','15px'); //Needed because the flag will stay invisibly long
+    $(this).css('height','55px'); //Needed because the flag will stay invisibly long
 
     //The layout below is Signbank specific
-    $(this).css('margin-right',9);
-    $(this).css('margin-top',-53);
+    $(this).css('margin-right',10);
+    $(this).css('margin-top',0);
+    $(this).css('margin-bottom',4);
+
 
     var image_root = $(this).attr('image_root');
     var chosen_language = $(this).attr('chosen_language');
@@ -47,8 +49,9 @@ jQuery.fn.show_all_languages = function(callback)
     $(this).addClass('active_language_picker'); //Changes layout
 
     //The layout below is Signbank specific
-    $(this).css('margin-right',2);
-    $(this).css('margin-top',-60);
+    $(this).css('margin-right',10);
+    $(this).css('margin-top',-30);
+    $(this).css('margin-bottom',4);
 
     //Take data from the element
     var image_root = $(this).attr('image_root');
@@ -82,7 +85,7 @@ jQuery.fn.show_all_languages = function(callback)
         }
 
         //Add the flag, below the highest flag (will be animated down)
-        html_content += '<img class="flagbutton" id="flag_'+current_language_code+'"  language_code="'+current_language_code+'" style="top:-'+current_amount_of_pixels_down+'px;'+margin_bottom+'" start-top="-'+current_amount_of_pixels_down+'" src="'+image_root+current_language_code+'.png">';
+        html_content += '<img class="flagbutton" id="flag_'+current_language_code+'"  language_code="'+current_language_code+'" style="top:-'+current_amount_of_pixels_down+'px;'+margin_bottom+'" start-top="-'+current_amount_of_pixels_down+'px;" src="'+image_root+current_language_code+'.png">';
         nr_of_flags_processed += 1;
     }
 
