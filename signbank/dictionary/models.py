@@ -428,8 +428,8 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
     locsecond = models.IntegerField(_("Secondary Location"), choices=build_choice_list("Location"), null=True, blank=True)
     
-    initial_secondary_loc = models.CharField(_("Initial Subordinate Location"), choices=build_choice_list("Location"), max_length=20, null=True, blank=True)
-    final_secondary_loc = models.CharField(_("Final Subordinate Location"), choices=build_choice_list("Location"), max_length=20, null=True, blank=True)
+    initial_secondary_loc = models.CharField(_("Initial Subordinate Location"), choices=build_choice_list("MinorLocation"), max_length=20, null=True, blank=True)
+    final_secondary_loc = models.CharField(_("Final Subordinate Location"), choices=build_choice_list("MinorLocation"), max_length=20, null=True, blank=True)
     
     initial_palm_orientation = models.CharField(_("Initial Palm Orientation"), max_length=20, null=True, blank=True)
     final_palm_orientation = models.CharField(_("Final Palm Orientation"), max_length=20, null=True, blank=True)
