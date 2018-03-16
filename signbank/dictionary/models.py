@@ -1401,8 +1401,10 @@ def fieldname_to_category(fieldname):
 
     if fieldname in ['domhndsh','subhndsh','final_domdndsh','final_subhndsh']:
         field_category = 'Handshape'
-    elif fieldname in ['locprim','locPrimLH','final_loc','loc_second','initial_secondary_loc','final_secondary_loc']:
+    elif fieldname in ['locprim','locPrimLH','final_loc','loc_second']:
         field_category = 'Location'
+    elif fieldname in ['initial_secondary_loc','final_secondary_loc']:
+        field_category = 'MinorLocation'
     elif fieldname == 'handCh':
         field_category = 'handshapeChange'
     elif fieldname == 'oriCh':
