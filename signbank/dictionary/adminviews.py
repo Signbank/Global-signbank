@@ -2468,7 +2468,8 @@ class DatasetManagerView(ListView):
         return context
 
     def render_to_response(self, context):
-        if 'add_view_perm' in self.request.GET or 'add_change_perm' in self.request.GET:
+        if 'add_view_perm' in self.request.GET or 'add_change_perm' in self.request.GET \
+                    or 'delete_view_perm' in self.request.GET or 'delete_change_perm' in self.request.GET:
             return self.render_to_add_user_response(context)
         else:
             return super(DatasetManagerView, self).render_to_response(context)
@@ -2532,11 +2533,10 @@ class DatasetManagerView(ListView):
             messages.add_message(self.request, messages.ERROR, ('No user with name '+username+' found.'))
             return HttpResponseRedirect(URL + '/datasets/manager')
 
-        # user has permission to modify dataset permissions
-
+        # user has permission to modify dataset permissions for other users
         manage_identifier = 'dataset_' + dataset_object.name.replace(' ','')
 
-        from guardian.shortcuts import assign_perm
+        from guardian.shortcuts import assign_perm, remove_perm
         if 'add_view_perm' in self.request.GET:
             manage_identifier += '_manage_view'
             if dataset_object in get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False):
@@ -2553,16 +2553,13 @@ class DatasetManagerView(ListView):
             try:
                 assign_perm('view_dataset', user_object, dataset_object)
                 messages.add_message(self.request, messages.INFO,
-                                 ('View permission for user ' + username + ' successfully updated.'))
-                return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
-
+                                 ('View permission for user ' + username + ' successfully granted.'))
             except:
                 messages.add_message(self.request, messages.ERROR, ('Error assigning view dataset permission to user '+username+'.'))
-                return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
+            return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
 
         if 'add_change_perm' in self.request.GET:
             manage_identifier += '_manage_change'
-
             if dataset_object in get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False):
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.INFO,
@@ -2577,12 +2574,63 @@ class DatasetManagerView(ListView):
 
             try:
                 assign_perm('change_dataset', user_object, dataset_object)
+                messages.add_message(self.request, messages.INFO,
+                                     ('Change permission for user ' + username + ' successfully granted.'))
             except:
                 messages.add_message(self.request, messages.ERROR, ('Error assigning change dataset permission to user '+username+'.'))
+            return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
+
+        if 'delete_view_perm' in self.request.GET:
+            manage_identifier += '_manage_view'
+
+            if dataset_object in get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False):
+                if user_object.is_staff or user_object.is_superuser:
+                    messages.add_message(self.request, messages.ERROR,
+                                         (
+                                         'User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
+                                         ') has view permission for this dataset as staff or superuser. This cannot be modified here.'))
+                else:
+                    # can remove permission
+                    try:
+                        remove_perm('view_dataset', user_object, dataset_object)
+                        messages.add_message(self.request, messages.INFO,
+                                             ('View permission for user ' + username + ' successfully revoked.'))
+                    except:
+                        messages.add_message(self.request, messages.ERROR,
+                                             ('Error revoking view dataset permission for user ' + username + '.'))
+
+                return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
+            else:
+                messages.add_message(self.request, messages.ERROR, ('User '+username+' currently has no permission to view this dataset.'))
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
-        messages.add_message(self.request, messages.INFO, ('Change permission for user ' + username + ' successfully updated.'))
-        return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
+        if 'delete_change_perm' in self.request.GET:
+            manage_identifier += '_manage_change'
+
+            if dataset_object in get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False):
+                if user_object.is_staff or user_object.is_superuser:
+                    messages.add_message(self.request, messages.ERROR,
+                                         (
+                                         'User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
+                                         ') has change permission for this dataset as staff or superuser. This cannot be modified here.'))
+                else:
+                    # can remove permission
+                    try:
+                        remove_perm('change_dataset', user_object, dataset_object)
+                        messages.add_message(self.request, messages.INFO,
+                                             ('Change permission for user ' + username + ' successfully revoked.'))
+                    except:
+                        messages.add_message(self.request, messages.ERROR,
+                                             ('Error revoking change dataset permission for user ' + username + '.'))
+
+                return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
+            else:
+                messages.add_message(self.request, messages.ERROR, ('User '+username+' currently has no permission to change this dataset.'))
+                return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
+
+        # the code doesn't seem to get here. if somebody puts something else in the url (else case), there is no (hidden) csrf token.
+        messages.add_message(self.request, messages.ERROR, ('Unrecognised argument to dataset manager url.'))
+        return HttpResponseRedirect(URL + '/datasets/manager')
 
     def get_queryset(self):
         user = self.request.user
