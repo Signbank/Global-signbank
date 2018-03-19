@@ -1008,7 +1008,7 @@ def recently_added_glosses(request):
     try:
         from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
         recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
-        recent_glosses = Gloss.objects.filter(
+        recent_glosses = Gloss.objects.filter(dataset__in=selected_datasets).filter(
                           creationDate__range=[recently_added_signs_since_date, DT.datetime.now()]).order_by(
                           'creationDate').reverse()
         return render(request, 'dictionary/recently_added_glosses.html',
@@ -1019,7 +1019,7 @@ def recently_added_glosses(request):
 
     except:
         return render(request,'dictionary/recently_added_glosses.html',
-                      {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse(),
+                      {'glosses':Gloss.objects.filter(dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
