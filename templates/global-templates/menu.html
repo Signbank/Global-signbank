@@ -77,10 +77,10 @@
                     <div class='navbar-text'>
                         <div class='taglist'>
                         {% for ds in selected_datasets %}
-                            <div class='tag' style="background-color:#4285F4;">
+                            <div class='label' style="background-color:SlateBlue;">
                                {% load underscore_to_space %}
                                 <span>{{ds.name|underscore_to_space}}</span>
-                            </div>
+                            </div>&nbsp;
                         {% endfor %}
                         </div>
                     </div>
