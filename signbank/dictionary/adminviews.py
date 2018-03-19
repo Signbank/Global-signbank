@@ -1479,10 +1479,12 @@ class MorphemeListView(ListView):
             context['input_names_fields_and_labels'][topic] = []
 
             for fieldname in settings.FIELDS[topic]:
-                field = search_form[fieldname]
-                label = field.label
 
-                context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
+                if fieldname not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']:
+                    field = search_form[fieldname]
+                    label = field.label
+
+                    context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
