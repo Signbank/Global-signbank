@@ -11,8 +11,32 @@ from guardian.shortcuts import get_objects_for_user, assign_perm
 
 class BasicCRUDTests(TestCase):
 
-    def test_TryOut(self):
-        self.assertEqual(1,1)
+    def test_CRUD(self):
+
+        #Is the gloss there before?
+        found = 0
+        total_nr_of_glosses = 0
+        for gloss in Gloss.objects.filter(handedness=4):
+            if gloss.idgloss == 'thisisatemporarytestgloss':
+                found += 1
+            total_nr_of_glosses += 1
+
+        self.assertEqual(found,0)
+        self.assertGreater(total_nr_of_glosses,0) #Verify that the database is not empty
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.idgloss = 'thisisatemporarytestgloss'
+        new_gloss.handedness = 4
+        new_gloss.save()
+
+        #Is the gloss there now?
+        found = 0
+        for gloss in Gloss.objects.filter(handedness=4):
+            if gloss.idgloss == 'thisisatemporarytestgloss':
+                found += 1
+
+        self.assertEqual(found,1)
 
 class ImportExportTests(TestCase):
 

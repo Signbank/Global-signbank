@@ -131,7 +131,7 @@ INSTALLED_APPS = (
     #'django_mobile',
     'tagging',
     'guardian',
-    'debug_toolbar'
+    #'debug_toolbar'
 )
 
 # A sample logging configuration. The only tangible logging
