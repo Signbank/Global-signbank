@@ -68,7 +68,7 @@
     <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}signs/search">
             <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="40" size="14">
             <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" value="{{ query }}" maxlength="40" size="16">
-            <input class='form-control' type='submit' value='{% trans "Sign search" %}'>
+        <button class='form-control' type='submit' style="font-weight:bold;background-color:LightGrey"><img id='mag-glass' src='{{ STATIC_URL }}images/rightpointing_magnifying_glass.png' style="width:18px; height:auto; margin: 0px;"></button>
     </form>
 
             <div class="nav navbar-right" style="height: 55px;">
@@ -77,10 +77,10 @@
                     <div class='navbar-text'>
                         <div class='taglist'>
                         {% for ds in selected_datasets %}
-                            <div class='tag' style="background-color:#4285F4;">
+                            <div class='label' style="background-color:Gainsboro;color:DodgerBlue;border-style:solid;border-width:1px;border-color:DodgerBlue;">
                                {% load underscore_to_space %}
                                 <span>{{ds.name|underscore_to_space}}</span>
-                            </div>
+                            </div>&nbsp;
                         {% endfor %}
                         </div>
                     </div>

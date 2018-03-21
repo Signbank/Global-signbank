@@ -37,6 +37,8 @@ from django.utils.translation import override
 
 from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper
+import datetime as DT
+
 
 
 def login_required_config(f):
@@ -1004,19 +1006,20 @@ def recently_added_glosses(request):
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     try:
-        from signbank.settings.base import RECENTLY_ADDED_SIGNS_PERIOD
-        recently_added_signs_since_date = datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
+        from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+        recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
+        recent_glosses = Gloss.objects.filter(dataset__in=selected_datasets).filter(
+                          creationDate__range=[recently_added_signs_since_date, DT.datetime.now()]).order_by(
+                          'creationDate').reverse()
         return render(request, 'dictionary/recently_added_glosses.html',
-                      {'glosses': Gloss.objects.filter(
-                          creationDate__range=(recently_added_signs_since_date, datetime.now())).order_by(
-                          'creationDate').reverse(),
+                      {'glosses': recent_glosses,
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     except:
         return render(request,'dictionary/recently_added_glosses.html',
-                      {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse(),
+                      {'glosses':Gloss.objects.filter(dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
