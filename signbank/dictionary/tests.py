@@ -1,31 +1,18 @@
-import datetime
 from signbank.dictionary.models import *
 from signbank.dictionary.adminviews import *
 
-from django.contrib.auth.models import AnonymousUser, User, Group, Permission, UserManager, GroupManager, PermissionsMixin
-from django.test import TestCase, RequestFactory
-from django.contrib.messages.storage.fallback import FallbackStorage
-from django.test.client import encode_multipart, encode_file
-import unittest
+from django.contrib.auth.models import User
+from django.test import TestCase
 import json
 from django.test import Client
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse, SimpleCookie
-from django.contrib.messages.storage.base import BaseStorage, Message
-from django.contrib.messages.storage.cookie import Message, MessageDecoder, MessageEncoder
-from django.core.management import call_command
-from django.db import connection
-from django.db.models import Q
-from django.test.utils import setup_test_environment
-from django.contrib import messages
-from django.utils.safestring import SafeData, mark_safe
+from django.contrib.messages.storage.cookie import MessageDecoder
 
-import guardian
 from guardian.shortcuts import get_objects_for_user, assign_perm
-from guardian.models import UserObjectPermission, GroupObjectPermission
 
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.contrib.messages.middleware import MessageMiddleware
+class BasicCRUDTests(TestCase):
+
+    def test_TryOut(self):
+        self.assertEqual(1,1)
 
 class ImportExportTests(TestCase):
 
