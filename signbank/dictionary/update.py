@@ -83,13 +83,20 @@ def update_gloss(request, glossid):
         original_value = '' #will in most cases be set later, but can't be empty in case it is not set
         category_value = ''
         field_category = ''
+        lemma_gloss_group = False
+        lemma_group_string = gloss.idgloss
+        other_glosses_in_lemma_group = Gloss.objects.filter(idgloss__iexact=lemma_group_string).count()
+        if other_glosses_in_lemma_group > 1:
+            lemma_gloss_group = True
 
         if len(value) == 0:
+            # this seems a bit dangerous
             value = ' '
+            # print('value was set to space')
 
         elif value[0] == '_':
             value = value[1:]
-        
+
         values = request.POST.getlist('value[]')   # in case we need multiple values 
 
         # validate
@@ -150,7 +157,12 @@ def update_gloss(request, glossid):
 
         elif field == 'dataset':
             original_value = getattr(gloss,field)
-            ds = Dataset.objects.get(name=value)
+
+            # in case somebody tries an empty or non-existent dataset name
+            try:
+                ds = Dataset.objects.get(name=value)
+            except:
+                return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
             if ds.is_public:
                 newvalue = value
@@ -226,16 +238,25 @@ def update_gloss(request, glossid):
                 newvalue = _('No')
 
         elif field.startswith('annotation_idgloss'):
+
             return update_annotation_idgloss(gloss, field, value)
 
         else:
 
-            original_value = getattr(gloss,field)
 
             if not field in [f.name for f in Gloss._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
-            
-            # special cases 
+
+            whitespace = tuple(' \n\r\t')
+            if value.startswith(whitespace) or value.endswith(whitespace):
+                value = value.strip()
+            original_value = getattr(gloss,field)
+
+            if field == 'idgloss' and value == '':
+                # don't allow user to set Lemma ID Gloss to empty
+                return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+
+            # special cases
             # - Foreign Key fields (Language, Dialect)
             # - keywords
             # - videos
@@ -267,6 +288,7 @@ def update_gloss(request, glossid):
 
             # special value of 'notset' or -1 means remove the value
             if value == 'notset' or value == -1 or value == '':
+                # print('field ', field, ' is being set to None.')
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
@@ -306,6 +328,15 @@ def update_gloss(request, glossid):
                     except (IOError,TypeError):
                         pass
 
+                if field == 'idgloss':
+                    # new value has already been saved to gloss
+                    lemma_group_string = gloss.idgloss
+                    other_glosses_in_lemma_group = Gloss.objects.filter(idgloss__iexact=lemma_group_string).count()
+                    if other_glosses_in_lemma_group > 1:
+                        lemma_gloss_group = True
+                    else:
+                        lemma_gloss_group = False
+
                 #If the value is not a Boolean, return the new value
                 if not isinstance(value,bool):
 
@@ -328,7 +359,7 @@ def update_gloss(request, glossid):
 
         # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
         return HttpResponse(
-            str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value),
+            str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group),
             {'content-type': 'text/plain'})
 
 def update_keywords(gloss, field, value):
@@ -375,7 +406,18 @@ def update_annotation_idgloss(gloss, field, value):
     except:
         pass
 
+    # value might be empty string
+    whitespace = tuple(' \n\r\t')
+    if value.startswith(whitespace) or value.endswith(whitespace):
+        value = value.strip()
+
     annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
+    original_value = annotation_idgloss_translation.text
+
+    if value == '':
+        # don't allow user to set Annotation ID Gloss to empty
+        return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+
     annotation_idgloss_translation.text = value
     annotation_idgloss_translation.save()
 
@@ -1359,6 +1401,7 @@ def update_morpheme(request, morphemeid):
         value = request.POST.get('value', '')
         original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
         category_value = ''
+        lemma_gloss_group = False
 
         if len(value) == 0:
             value = ' '
@@ -1415,7 +1458,12 @@ def update_morpheme(request, morphemeid):
         elif field == 'dataset':
 
             original_value = getattr(morpheme,field)
-            ds = Dataset.objects.get(name=value)
+
+            # in case somebody tries an empty or non-existent dataset name
+            try:
+                ds = Dataset.objects.get(name=value)
+            except:
+                return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
             if ds.is_public:
                 newvalue = value
@@ -1432,7 +1480,7 @@ def update_morpheme(request, morphemeid):
 
             print('no permission for chosen dataset')
             newvalue = original_value
-            return HttpResponse(newvalue, {'content-type': 'text/plain'})
+            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
         elif field == "sn":
             # sign number must be unique, return error message if this SN is
@@ -1470,12 +1518,23 @@ def update_morpheme(request, morphemeid):
             else:
                 newvalue = 'No'
 
+        elif field.startswith('annotation_idgloss'):
+
+            return update_annotation_idgloss(morpheme, field, value)
+
         else:
-            original_value = getattr(morpheme, field)
 
             if not field in [f.name for f in Morpheme._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
+            whitespace = tuple(' \n\r\t')
+            if value.startswith(whitespace) or value.endswith(whitespace):
+                value = value.strip()
+            original_value = getattr(morpheme,field)
+
+            if field == 'idgloss' and value == '':
+                # don't allow user to set Lemma ID Gloss to empty
+                return HttpResponse(str(original_value), {'content-type': 'text/plain'})
             # special cases
             # - Foreign Key fields (Language, Dialect)
             # - keywords
@@ -1522,7 +1581,7 @@ def update_morpheme(request, morphemeid):
                     newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
                     category_value = 'phonology'
 
-        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value), {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):

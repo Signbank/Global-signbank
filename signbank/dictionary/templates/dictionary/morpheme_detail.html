@@ -28,6 +28,9 @@
     var original_strong_hand = ''
     var original_weak_hand = ''
     var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}';
+    var original_lemma_group_url = '{{lemma_group_url}}'
+    var lemma_group = '{{lemma_group}}'
+    console.log('lemma group on loading page: ' + lemma_group)
 
     var edit_post_url = '{% url 'dictionary:update_morpheme' morpheme.id %}';
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};

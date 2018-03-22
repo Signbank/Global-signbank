@@ -36,6 +36,9 @@
     var no_str = '{% trans "No" %}'
     var original_strong_hand = '{{StrongHand}}'
     var original_weak_hand = '{{WeakHand}}'
+    var original_lemma_group_url = '{{lemma_group_url}}'
+    var lemma_group = '{{lemma_group}}'
+    console.log('lemma group on loading page: ' + lemma_group)
 
     var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
     var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
@@ -343,7 +346,7 @@
             <tr {%if gloss.dialect.all|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
 
-                <td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{ lemma_group_url }}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>
+                <td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{lemma_group_url}}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>
             </tr>
 
             {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}

@@ -2942,6 +2942,11 @@ class MorphemeDetailView(DetailView):
 
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
+        # make lemma group empty for Morpheme (ask Onno about this)
+        # Morpheme Detail View shares the gloss_edit.js code with Gloss Detail View
+        context['lemma_group'] = False
+        context['lemma_group_url'] = ''
+
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         if gl.dataset:
