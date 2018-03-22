@@ -1,0 +1,51 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+
+
+    {% if perms.dictionary.change_dataset %}
+
+    <script type='text/javascript'>
+    var url = '{{ URL }}';
+
+    var edit_mode_str = '{% trans "Edit" %}';
+    var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
+
+    </script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
+
+
+    {% endif %}
+{% endblock %}
+
+
+{% block content %}
+
+    {% if perms.dictionary.change_morpheme %}
+
+    <table class='table table-condensed'>
+        <tr><th>{% trans "Dataset name" %}</th><td>{{dataset.name}}</td></tr>
+        <tr><th>{% trans "Acronym" %}</th><td></td></tr>
+
+        <tr><th>{% trans "Owner &amp; Contact person(s)" %}</th><td></td></tr>
+        <tr><th>{% trans "Description" %}</th><td>{{dataset.description}}</td></tr>
+        <tr><th>{% trans "Conditions of use by others" %}</th><td></td></tr>
+
+        <tr><th>{% trans "Sign language" %}</th><td>{{dataset.signlanguage.name}} ({{dataset.signlanguage.description}})</td></tr>
+        <tr><th>{% trans "Translation languages" %}</th>
+            <td>{% for tl in dataset.translation_languages.all %}{{tl.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+
+    </table>
+
+    {% endif %}
+
+{% endblock %}
+
