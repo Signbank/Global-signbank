@@ -18,7 +18,7 @@ import django.contrib.auth.views
 import django.contrib.admindocs.urls
 import django_summernote.urls
 
-from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, HomonymListView, DatasetManagerView
+from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, HomonymListView, DatasetManagerView, DatasetDetailView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -96,6 +96,7 @@ urlpatterns = [
     url(r'^datasets/change_selection', signbank.dictionary.update.change_dataset_selection, name='change_dataset_selection'),
     url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
     url(r'^datasets/manager', DatasetManagerView.as_view(), name='admin_dataset_manager'),
+    url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
     url(r'^__debug__/', include(debug_toolbar.urls))
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

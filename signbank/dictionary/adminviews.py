@@ -2669,6 +2669,43 @@ class DatasetManagerView(ListView):
             # User is not authenticated
             return None
 
+class DatasetDetailView(DetailView):
+    model = Dataset
+    context_object_name = 'dataset'
+    template_name = 'dictionary/dataset_detail.html'
+
+    # set the default dataset, this should not be empty
+    dataset_name = DEFAULT_DATASET
+
+    #Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+        # except Http404:
+        except:
+            # return custom template
+            # return render(request, 'dictionary/warning.html', status=404)
+            raise Http404()
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DatasetDetailView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        return context
 
 
 def order_handshape_queryset_by_sort_order(get, qs):
