@@ -123,6 +123,32 @@ class ImportExportTests(TestCase):
 
         self.assertEqual(str(json_message), 'Please login to use this functionality.')
 
+    def test_Export_csv(self):
+        client = Client()
+        logged_in = client.login(username=self.user.username, password='test-user')
+        print(str(logged_in))
+
+        dataset_name = DEFAULT_DATASET
+        print('Test Dataset is: ', dataset_name)
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User has permmission to change dataset.')
+
+        assign_perm('dictionary.export_csv', self.user)
+        print('User has permmission to export csv.')
+
+        response = client.get('/signs/search/', {"search_type": "sign", "glosssearch_nl": "wesseltest6", "format": "CSV"})
+
+        # print(str(response['Content-Type']))
+        # print(str(response.status_code))
+        # print(str(response.wsgi_request))
+        # print(str(response.content))
+
+        self.assertEqual(response['Content-Type'], "text/csv")
+        self.assertContains(response, b'Signbank ID,Lemma ID Gloss,Dataset')
+
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):
