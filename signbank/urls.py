@@ -97,6 +97,7 @@ urlpatterns = [
     url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
     url(r'^datasets/manager', DatasetManagerView.as_view(), name='admin_dataset_manager'),
     url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
+    url(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
     url(r'^__debug__/', include(debug_toolbar.urls))
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

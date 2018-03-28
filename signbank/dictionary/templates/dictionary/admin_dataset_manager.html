@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load stylesheet %}
 {% load bootstrap3 %}
+{% load has_group %}
 {% load guardian_tags %}
 
 {% block extrajs %}
@@ -10,6 +11,9 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
     <script type='text/javascript'>
     var url = '{{URL}}';
+    var csrf_token = '{{csrf_token}}';
+    var saving_str = '{% trans "Saving..." %}'
+    var edit_post_url = '';
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
 
@@ -34,9 +38,10 @@
       {% for dataset in object_list %}
       {% get_obj_perms request.user for dataset as "dataset_perms" %}
       {% if "change_dataset" in dataset_perms %}
+      {% if request.user|has_group:"Dataset_Manager" %}
         <tr>
             <td>
-                {{ dataset.name }}
+                <a href="{{URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
             </td>
             <td>
                 <div data-toggle="collapse" href="#dataset_{{dataset.name|cut:' '}}_manage_view"><button>{% trans "Manage" %}</button></div>
@@ -168,11 +173,12 @@
             </td>
         </tr>
     {% endif %}
+    {% endif %}
     {% endfor %}
     </tbody>
 </table>
 {% else %}
-{% trans "No datasets found." %}
+{% trans "No datasets found to manage." %}
 {% endif %}
 
 {% endblock content %}

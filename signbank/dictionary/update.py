@@ -438,6 +438,7 @@ def update_signlanguage(gloss, field, values):
     current_signlanguages = gloss.signlanguage.all()
     current_signlanguage_name = ''
     for lang in current_signlanguages:
+        # this looks strange, is this a convenience for a singleton set
         current_signlanguage_name = lang.name
 
     try:
@@ -1721,3 +1722,103 @@ def change_dataset_selection(request):
                     pass
 
     return HttpResponseRedirect(reverse('admin_dataset_select'))
+
+def update_dataset(request, datasetid):
+    """View to update a dataset model from the jeditable jquery form
+    We are sent one field and value at a time, return the new value
+    once we've updated it."""
+
+    if not request.user.has_perm('dictionary.change_dataset'):
+        return HttpResponseForbidden("Dataset Update Not Allowed")
+
+    if request.method == "POST":
+
+        dataset = get_object_or_404(Dataset, id=datasetid)
+        dataset.save() # This updates the lastUpdated field
+
+        field = request.POST.get('id', '')
+        value = request.POST.get('value', '')
+        original_value = ''
+
+        # print('update dataset, field is: ', field)
+
+        if field == 'description':
+
+            original_value = getattr(dataset,field)
+
+            # print('For dataset ', dataset, 'set description to: ', value)
+            setattr(dataset, field, value)
+            dataset.save()
+            return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+        elif field == 'copyright':
+                original_value = getattr(dataset, field)
+
+                # print('For dataset ', dataset, 'set copyright to: ', value)
+                setattr(dataset, field, value)
+                dataset.save()
+                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+        elif field == 'conditions_of_use':
+                original_value = getattr(dataset, field)
+
+                # print('For dataset ', dataset, 'set conditions_of_use to: ', value)
+                setattr(dataset, field, value)
+                dataset.save()
+                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+        elif field == 'acronym':
+                original_value = getattr(dataset, field)
+
+                # print('For dataset ', dataset, 'set acronym to: ', value)
+                setattr(dataset, field, value)
+                dataset.save()
+                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+        elif field == 'add_owner':
+            update_owner(dataset, field, value)
+        else:
+
+            if not field in [f.name for f in Dataset._meta.get_fields()]:
+                return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
+
+            # unknown if we need this code yet for the above fields
+            whitespace = tuple(' \n\r\t')
+            if value.startswith(whitespace) or value.endswith(whitespace):
+                value = value.strip()
+            original_value = getattr(dataset,field)
+
+        #This is because you cannot concat none to a string in py3
+        if original_value == None:
+            original_value = ''
+
+        # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
+        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+
+    else:
+        print('update dataset is not POST')
+
+def update_owner(dataset, field, values):
+    # expecting possibly multiple values
+
+    # The owners value is set to the current owners value
+    owners_value = ", ".join([str(o.username) for o in dataset.owners.all()])
+    current_owners = dataset.owners.all()
+    current_owners_name = ''
+    for co in current_owners:
+        current_owners_name = co.name
+
+    try:
+        # dataset.owners.clear()
+        for value in values:
+            user = User.objects.get(username=value)
+            # dataset.owners.add(user)
+            print('add owner ', value, ' to dataset')
+            if value != current_owners_name:
+                print('clear owners field')
+                # dataset.owners.clear()
+                # Has a side effect that the Dialects value is cleared, this will be passed back to the user interface
+                owners_value = ''
+        # dataset.save()
+        print('save dataset')
+        new_owners_value = ", ".join([str(o.username) for o in dataset.owners.all()])
+    except:
+        return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
+
+    return HttpResponse(str(new_owners_value) + '\t' + str(owners_value), {'content-type': 'text/plain'})

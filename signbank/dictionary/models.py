@@ -1575,6 +1575,12 @@ class Dataset(models.Model):
     translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
                                                                           "for translation equivalents.")
     description = models.TextField()
+    conditions_of_use = models.TextField(blank=True, help_text="Conditions of Use. Content license."
+                                                        "This is different than the software code license.")
+    copyright = models.TextField(blank=True, help_text="Copyright. Content license."
+                                                        "This is different than the software code license.")
+    acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
+    owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
     class Meta:
         permissions = (

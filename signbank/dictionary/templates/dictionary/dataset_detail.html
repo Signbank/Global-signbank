@@ -2,7 +2,10 @@
 {% load i18n %}
 {% load stylesheet %}
 {% load annotation_idgloss_translation %}
+{% load has_group %}
 {% load bootstrap3 %}
+
+{% load guardian_tags %}
 
 
 {% block extrajs %}
@@ -10,42 +13,83 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
-
-    {% if perms.dictionary.change_dataset %}
-
     <script type='text/javascript'>
     var url = '{{ URL }}';
 
     var edit_mode_str = '{% trans "Edit" %}';
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
+    var saving_str = '{% trans "Saving..." %}'
+    var csrf_token = '{{csrf_token}}';
+    var edit_post_url = '{{URL}}/datasets/change_details/{{dataset.id}}';
 
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
 
-
-    {% endif %}
 {% endblock %}
 
 
 {% block content %}
 
-    {% if perms.dictionary.change_morpheme %}
+    <div class='pull-right'>
+        {% get_obj_perms request.user for dataset as "dataset_perms" %}
+        {% if "change_dataset" in dataset_perms %}
+        {% if request.user|has_group:"Dataset_Manager" %}
+         <span id='edit_message' style="padding-right: 1.8em;"></span>
+         <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
+         {% endif %}
+         {% endif %}
+    </div>
 
     <table class='table table-condensed'>
         <tr><th>{% trans "Dataset name" %}</th><td>{{dataset.name}}</td></tr>
-        <tr><th>{% trans "Acronym" %}</th><td></td></tr>
+        <tr><th>{% trans "Acronym" %}</th><td class='edit edit_text' align="left" id='acronym' name='acronym'
+                value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td></tr>
 
-        <tr><th>{% trans "Owner &amp; Contact person(s)" %}</th><td></td></tr>
-        <tr><th>{% trans "Description" %}</th><td>{{dataset.description}}</td></tr>
-        <tr><th>{% trans "Conditions of use by others" %}</th><td></td></tr>
-
+        <tr><th>{% trans "Owner &amp; Contact person(s)" %}</th>
+            <td>
+                {% for owner in dataset.owners.all %}
+                    {% if forloop.last %}
+                        {{owner.first_name}} {{owner.last_name}} ({{owner.username}})
+                    {% else %}
+                        {{owner.first_name}} {{owner.last_name}} ({{owner.username}}),
+                    {% endif %}
+                {% endfor %}
+                {% get_obj_perms request.user for dataset as "dataset_perms" %}
+                {% if "change_dataset" in dataset_perms %}
+                {% if request.user|has_group:"Dataset_Manager" %}
+                    <form name='add_owner_form' id='add_owner_form' method='get'>
+                        <div class="hidden">
+                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                        </div>
+                        <table class='table table-condensed'>
+                        <tr>
+                            <td>
+                            {% csrf_token %}
+                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input type="hidden" name="username" id="username" value=""/>
+                            </td>
+                            <td>
+                            <input class='btn btn-primary' id='add_owner' name='add_owner' type='submit' value='{% trans "Add Owner" %}'>
+                            </td>
+                        </tr>
+                        </table>
+                    </form>
+                {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+        <tr><th>{% trans "Description" %}</th>
+            <td class='edit edit_area' align="left" id='description' name='description'
+                placeholder='{% trans "Description" %}' value="{{datasetform.description.value|default:''}}">{{dataset.description}}</td></tr>
         <tr><th>{% trans "Sign language" %}</th><td>{{dataset.signlanguage.name}} ({{dataset.signlanguage.description}})</td></tr>
         <tr><th>{% trans "Translation languages" %}</th>
             <td>{% for tl in dataset.translation_languages.all %}{{tl.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+        <tr><th>{% trans "Conditions of use by others" %}</th>
+            <td class='edit edit_area' id='conditions_of_use' name='conditions_of_use'
+                placeholder='{% trans "Conditions of use by others" %}' value="{{datasetform.conditions_of_use.value|default:''}}">{{dataset.conditions_of_use}}</td></tr>
+        <tr><th>{% trans "Copyright statement" %}</th>
+            <td class='edit edit_area' id='copyright' name='copyright'
+                placeholder='{% trans "Copyright statement" %}' value="{{datasetform.copyright.value|default:''}}">{{dataset.copyright}}</td></tr>
 
     </table>
-
-    {% endif %}
-
 {% endblock %}
-
