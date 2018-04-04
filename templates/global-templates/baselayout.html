@@ -21,7 +21,7 @@
           #affix-bar.affix {
             top:0px;
             position:fixed;
-            z-index: 9999999;
+            z-index: 10;
           }
       </style>
     {% block extrahead %}{% endblock %}
@@ -120,29 +120,6 @@
 
     </script>
 
-    <!-- The following script should be in the menu template,
-         but since Django is not able to use an extrajs block
-         from an include template, it is put here. -->
-    <script type='text/javascript'>
-        $('#affix-bar').affix({
-            offset: {
-                top: 110,
-            }
-        });
-        $('#affix-bar').on('affixed.bs.affix', function() {
-            $('#affix-bar').css({
-                'width': ($('#header').width()) + 'px',
-            });
-            $('#maincontent').css({
-                'padding-top': ($('#navbar').height() + parseInt($('#navbar').css('margin-bottom'))) + 'px',
-            });
-         });
-         $('#affix-bar').on('affixed-top.bs.affix', function() {
-            $('#maincontent').css({
-                'padding-top': '0px',
-            });
-         });
-    </script>
 
     <form id="change_language_form" method="post" action="{{ URL }}/i18n/setlang/">
         {% csrf_token %}
