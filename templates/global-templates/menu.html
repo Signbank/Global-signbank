@@ -5,19 +5,8 @@
 <div id="affix-bar">
 <nav id='navbar' class="navbar navbar-default" role="navigation">
 
-  <!-- Brand and toggle get grouped for better mobile display -->
-  <div class="navbar-header">
-    <button type="button" class="navbar-toggle hamburger_button" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-      <span class="sr-only">Toggle navigation</span>
-      <span class="icon-bar"></span>
-      <span class="icon-bar"></span>
-      <span class="icon-bar"></span>
-    </button>
-  </div>
-
-
   <!-- Collect the nav links, forms, and other content for toggling -->
-  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1" style="padding:0px;display:inline;">
 
     <ul class="nav navbar-nav">
     {# add in the top level menu items from pages #}
@@ -49,7 +38,7 @@
              </ul> 
         </li>
       {% else %}
-        <li><a href="{{ URL }}{{item.url}}">
+        <li><a style="padding-left: 0px;" href="{{ URL }}{{item.url}}">
             {% if WEBSITE_LANGUAGE == "nl" %}
                  {{item.title_dutch}}
              	{% elif WEBSITE_LANGUAGE == "cn" %}
@@ -63,35 +52,40 @@
 
     </ul>
 
-  </div>
-
     <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}signs/search">
             <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="40" size="14">
             <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" value="{{ query }}" maxlength="40" size="16">
         <button class='form-control' type='submit' style="font-weight:bold;background-color:LightGrey"><img id='mag-glass' src='{{ STATIC_URL }}images/rightpointing_magnifying_glass.png' style="width:18px; height:auto; margin: 0px;"></button>
     </form>
 
-            <div class="nav navbar-right" style="height: 55px;">
-                {% if user.is_authenticated %}
-                    {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
-                    <div class='navbar-text'>
-                        <div class='taglist'>
-                        {% for ds in selected_datasets %}
-                            <div class='label' style="background-color:Gainsboro;color:DodgerBlue;border-style:solid;border-width:1px;border-color:DodgerBlue;">
-                               {% load underscore_to_space %}
-                                <span>{{ds.name|underscore_to_space}}</span>
-                            </div>&nbsp;
-                        {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-                    <div class='navbar-text'><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
-                    <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
-                {% else %}
-                    <div class='navbar-text'><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></div>
-                    <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
-                {% endif %}
+      <div class="nav navbar-right" style="height: 55px;">
+        {% if user.is_authenticated %}
+            <div class='navbar-text'><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
+            <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
+        {% else %}
+            <div class='navbar-text'><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></div>
+            <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
+        {% endif %}
+      </div>
+
+  </div>
+
+    <div class="nav navbar-left" style="height: 25px;margin-top:-15px;">
+        {% if user.is_authenticated %}
+        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
+        <div class='navbar-text' style="margin: 0px;">
+            <div class='taglist'>
+            {% for ds in selected_datasets %}
+                <div class='label' style="background-color:Gainsboro;color:DodgerBlue;border-style:solid;border-width:1px;border-color:DodgerBlue;">
+                   {% load underscore_to_space %}
+                    <span>{{ds.name|underscore_to_space}}</span>
+                </div>&nbsp;
+            {% endfor %}
             </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
 
 </nav>
 
