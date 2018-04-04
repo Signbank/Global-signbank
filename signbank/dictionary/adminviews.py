@@ -2695,6 +2695,14 @@ class DatasetDetailView(DetailView):
         # Call the base implementation first to get a context
         context = super(DatasetDetailView, self).get_context_data(**kwargs)
 
+        datasetform = DatasetUpdateForm()
+        dataset = context['dataset']
+        # print('get context data, dataset: ', dataset, 'dataset description: ', dataset.description)
+        datasetform.fields['description'] = dataset.description
+        context['datasetform'] = datasetform
+        # print('get context data, dataset form: ', datasetform, 'dataset description: ', datasetform.fields['description'])
+
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -2706,6 +2714,72 @@ class DatasetDetailView(DetailView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         return context
+
+    def render_to_response(self, context):
+        if 'add_owner' in self.request.GET:
+            return self.render_to_add_owner_response(context)
+        else:
+            return super(DatasetDetailView, self).render_to_response(context)
+
+    def render_to_add_owner_response(self, context):
+
+        # check that the user is logged in
+        if self.request.user.is_authenticated():
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        # check if the user can manage this dataset
+        from django.contrib.auth.models import Group, User
+
+        try:
+            group_manager = Group.objects.get(name='Dataset_Manager')
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        groups_of_user = self.request.user.groups.all()
+        if not group_manager in groups_of_user:
+            messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset Manager to modify dataset permissions.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        try:
+            dataset_object = Dataset.objects.get(name=self.dataset_name)
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        username = ''
+        if 'username' in get:
+            username = get['username']
+        if username == '':
+            messages.add_message(self.request, messages.ERROR, ('Username must be non-empty.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        try:
+            user_object = User.objects.get(username=username)
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No user with name '+username+' found.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        # if we get to here, we have a dataset object and a user object to add as an owner of the dataset
+
+        dataset_object.owners.add(user_object)
+        dataset_object.save()
+
+        messages.add_message(self.request, messages.INFO,
+                     ('User ' + username + ' successfully made (co-)owner of this dataset.'))
+
+        return HttpResponseRedirect(URL + '/datasets/detail/' + str(dataset_object.id))
 
 
 def order_handshape_queryset_by_sort_order(get, qs):

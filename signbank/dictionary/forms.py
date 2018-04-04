@@ -1,7 +1,8 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation
+from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
+                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
@@ -451,6 +452,19 @@ class ImageUploadForGlossForm(forms.Form):
     imagefile = forms.FileField(label="Upload Image")
     gloss_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
+
+class DatasetUpdateForm(forms.ModelForm):
+
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Description'}))
+    copyright = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Copyright'}))
+    conditions_of_use = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Conditions of use'}))
+
+
+    class Meta:
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = Dataset
+        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'owners']
 
 
 FINGER_SELECTION_CHOICES = [('','---------')] + build_choice_list('FingerSelection')
