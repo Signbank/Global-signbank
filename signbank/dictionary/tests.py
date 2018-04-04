@@ -1,7 +1,6 @@
-from signbank.dictionary.models import *
 from signbank.dictionary.adminviews import *
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from django.test import TestCase
 import json
 from django.test import Client
@@ -10,6 +9,13 @@ from django.contrib.messages.storage.cookie import MessageDecoder
 from guardian.shortcuts import get_objects_for_user, assign_perm
 
 class BasicCRUDTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        self.user.save()
 
     def test_CRUD(self):
 
@@ -22,7 +28,7 @@ class BasicCRUDTests(TestCase):
             total_nr_of_glosses += 1
 
         self.assertEqual(found,0)
-        self.assertGreater(total_nr_of_glosses,0) #Verify that the database is not empty
+        #self.assertGreater(total_nr_of_glosses,0) #Verify that the database is not empty
 
         #Create the gloss
         new_gloss = Gloss()
@@ -36,7 +42,38 @@ class BasicCRUDTests(TestCase):
             if gloss.idgloss == 'thisisatemporarytestgloss':
                 found += 1
 
-        self.assertEqual(found,1)
+        self.assertEqual(found, 1)
+
+        #The handedness before was 4
+        self.assertEqual(new_gloss.handedness,4)
+
+        #If you run an update post request, you can change the gloss
+        client = Client()
+        client.login(username='test-user', password='test-user')
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'handedness','value':'_6'})
+
+        changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
+        self.assertEqual(changed_gloss.handedness, '6')
+
+        #We can even add and remove stuff to the keyword table
+        self.assertEqual(Keyword.objects.all().count(), 0)
+        self.assertEqual(Translation.objects.all().count(), 0)
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'keywords_nl','value':'a, b, c, d, e'})
+        self.assertEqual(Keyword.objects.all().count(), 5)
+        self.assertEqual(Translation.objects.all().count(), 5)
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'keywords_nl','value':'a, b, c'})
+        self.assertEqual(Keyword.objects.all().count(), 5)
+        self.assertEqual(Translation.objects.all().count(), 3)
+
+        #Throwing stuff away with the update functionality
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'handedness','value':'confirmed',
+                                                                   'field':'deletegloss'})
+        found = 0
+        for gloss in Gloss.objects.filter(handedness=4):
+            if gloss.idgloss == 'thisisatemporarytestgloss':
+                found += 1
+
+        self.assertEqual(found, 0)
 
 class ImportExportTests(TestCase):
 
