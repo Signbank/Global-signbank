@@ -19,9 +19,9 @@
     <link rel="icon" type="image/png" href="{{ STATIC_URL }}images/favicon.png">
       <style>
           #affix-bar.affix {
-            top:0px;
             position:fixed;
             z-index: 10;
+            background: white;
           }
       </style>
     {% block extrahead %}{% endblock %}
@@ -39,34 +39,25 @@
 
   <body>
 
-    <div id='wrap'>
-        <div class="container">
-            
-            <div id="leftcontentborder"></div>
-            <div id="rightcontentborder"></div>
-            <div id='header'>
-                <a href="{{ URL }}"><img class="global_sb_logo" src="{{ STATIC_URL }}images/global/GlobalSigbank_logo_white.svg"></a>
-                <h1>Global <br/><span id="second-title-part">signbank</span></h1>
-                <div id='logoholder' class='visible-lg visible-md visible-sm'></div>
-            </div>
+  {% include 'menu.html' %}
 
-            <div id='bslstripe'></div>
-        {% include 'menu.html' %}  
-    
+    <div id='wrap' class="container" style="box-sizing:content-box;margin-left:9px;">
+
         {% bootstrap_messages %}
 
         <div role='main' id="maincontent">
         {% block content %}(no content){% endblock %}
         </div>
         
-        </div>
     </div>
 
-    <div id="footer"> 
-       <div class='container'>
+    <footer class="footer">
+        <div class="container">
+        <div class='pull-right'>
               <a href="{% url 'general_feedback' %}">{% trans "Provide feedback on the site" %}</a>
-       </div>
-    </div>
+        </div>
+        </div>
+    </footer>
     
     <script src='{{ STATIC_URL}}js/jquery-1.11.0.min.js'></script>
     <script src='{{ STATIC_URL}}bootstrap/js/bootstrap.min.js'></script>
@@ -120,6 +111,29 @@
 
     </script>
 
+    <!-- The following script should be in the menu template,
+         but since Django is not able to use an extrajs block
+         from an include template, it is put here. -->
+    <script type='text/javascript'>
+        $('#affix-bar').affix({
+            offset: {
+                top: 220,
+            }
+        });
+        $('#affix-bar').on('affixed.bs.affix', function() {
+            $('#affix-bar').css({
+                'width': ($('#header').width()) + 'px',
+            });
+            $('#maincontent').css({
+                'padding-top': ($('#navbar').height() + $('#header').height()) + 'px',
+            });
+         });
+         $('#affix-bar').on('affixed-top.bs.affix', function() {
+            $('#maincontent').css({
+                'padding-top': '0px',
+            });
+         });
+    </script>
 
     <form id="change_language_form" method="post" action="{{ URL }}/i18n/setlang/">
         {% csrf_token %}
