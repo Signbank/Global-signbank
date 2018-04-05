@@ -1,5 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
+from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
                                         MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset
@@ -47,6 +48,7 @@ class GlossCreateForm(forms.ModelForm):
             if glosscreate_field_name in queryDict:
                 self.fields[glosscreate_field_name].value = queryDict[glosscreate_field_name]
 
+    @atomic  # This rolls back the gloss creation if creating annotationidglosstranslations fails
     def save(self, commit=True):
         gloss = super(GlossCreateForm, self).save(commit)
         for language in self.languages:

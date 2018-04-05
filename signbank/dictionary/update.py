@@ -22,12 +22,15 @@ from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 
 from django.utils.translation import ugettext_lazy as _
 
+from guardian.shortcuts import get_user_perms
+
 @permission_required('dictionary.add_gloss')
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
     
     if request.method == "POST":
         if 'dataset' in request.POST and request.POST['dataset'] is not None:
+            dataset = Dataset.objects.get(pk=request.POST['dataset'])
             selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
         else:
             selected_datasets = get_selected_datasets_for_user(request.user)
@@ -35,32 +38,40 @@ def add_gloss(request):
 
         form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user)
 
+        # Check for 'change_dataset' permission
+        if dataset and 'change_dataset' not in get_user_perms(request.user, dataset):
+            messages.add_message(request, messages.ERROR, _("Your are not authorized to change the selected dataset."))
+            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
+
         for item, value in request.POST.items():
-            print("%s %s" % (item, value))
-            annotation_idgloss_prefix = "annotation_idgloss_"
-            if item.startswith(annotation_idgloss_prefix):
-                language_code_2char = item[len(annotation_idgloss_prefix):]
-                print(language_code_2char)
+            if item.startswith(form.gloss_create_field_prefix):
+                language_code_2char = item[len(form.gloss_create_field_prefix):]
                 language = Language.objects.get(language_code_2char=language_code_2char)
-                print(language)
                 glosses_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
                     annotationidglosstranslation__language=language,
                     annotationidglosstranslation__text__exact=value.upper())
-                print(glosses_for_this_language_and_annotation_idgloss)
                 if len(glosses_for_this_language_and_annotation_idgloss) != 0:
                     return render(request, 'dictionary/warning.html', {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
         if form.is_valid():
-            
-            gloss = form.save()
-            gloss.creationDate = datetime.now()
-            gloss.creator.add(request.user)
-            gloss.excludeFromEcv = False
-            gloss.save()
+            try:
+                gloss = form.save()
+                gloss.creationDate = datetime.now()
+                gloss.creator.add(request.user)
+                gloss.excludeFromEcv = False
+                gloss.save()
+            except ValidationError as ve:
+                messages.add_message(request, messages.ERROR, ve.message)
+                return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
+                                                                     'dataset_languages': dataset_languages,
+                                                                     'selected_datasets': get_selected_datasets_for_user(request.user)})
+
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
         else:
-            return render(request,'dictionary/add_gloss.html',{'add_gloss_form': form})
+            return render(request,'dictionary/add_gloss.html',{'add_gloss_form': form,
+                                                               'dataset_languages': dataset_languages,
+                                                                'selected_datasets': get_selected_datasets_for_user(request.user)})
         
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
