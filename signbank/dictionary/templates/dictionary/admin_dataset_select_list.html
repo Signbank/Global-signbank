@@ -24,7 +24,7 @@
             {% if "view_dataset" in dataset_perms %}
             <tr>
                 <td>
-                    {{ dataset.name }}
+                    <a href="{{URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
                 </td>
                 <td><input type="checkbox" name="dataset_{{ dataset.name }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
             </tr>

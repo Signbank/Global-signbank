@@ -1,4 +1,5 @@
 from signbank.dictionary.adminviews import *
+from signbank.dictionary.forms import GlossCreateForm
 
 from django.contrib.auth.models import User, Permission
 from django.test import TestCase
@@ -6,7 +7,7 @@ import json
 from django.test import Client
 from django.contrib.messages.storage.cookie import MessageDecoder
 
-from guardian.shortcuts import get_objects_for_user, assign_perm
+from guardian.shortcuts import assign_perm
 
 class BasicCRUDTests(TestCase):
 
@@ -74,6 +75,47 @@ class BasicCRUDTests(TestCase):
                 found += 1
 
         self.assertEqual(found, 0)
+
+    def test_createGloss(self):
+        # Create Client and log in
+        client = Client()
+        logged_in = client.login(username='test-user', password='test-user')
+        assign_perm('dictionary.add_gloss', self.user)
+        self.user.save()
+
+        # Check whether the user is logged in
+        response = client.get('/')
+        self.assertContains(response, 'href="/logout.html">Logout')
+
+        # Get the test dataset
+        dataset_name = DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Construct the Create Gloss form data
+        create_gloss_form_data = {'dataset': test_dataset.id, 'idgloss': "idgloss_test", 'glosscreate_id': ''}
+        for language in test_dataset.translation_languages.all():
+            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
+                "annotationidglosstranslation_test_" + language.language_code_2char
+
+        # User does not have permission to change dataset. Creating a gloss should fail.
+        response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your are not authorized to change the selected dataset.")
+
+        # Give the test user permission to change a dataset
+        assign_perm('change_dataset', self.user, test_dataset)
+        response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
+
+        glosses = Gloss.objects.filter(dataset=test_dataset, idgloss="idgloss_test")
+        for language in test_dataset.translation_languages.all():
+            glosses = glosses.filter(annotationidglosstranslation__language=language,
+                                     annotationidglosstranslation__text__exact="annotationidglosstranslation_test_" + language.language_code_2char)
+
+        self.assertEqual(len(glosses), 1)
+
+        self.assertRedirects(response, reverse('dictionary:admin_gloss_view', kwargs={'pk': glosses[0].id}))
+
 
 class ImportExportTests(TestCase):
 

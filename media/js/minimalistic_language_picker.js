@@ -31,7 +31,7 @@ jQuery.fn.show_chosen_language = function()
     $(this).css('height','55px'); //Needed because the flag will stay invisibly long
 
     //The layout below is Signbank specific
-    $(this).css('margin-right',10);
+    $(this).css('margin-right',0);
     $(this).css('margin-top',0);
     $(this).css('margin-bottom',4);
 
@@ -49,7 +49,7 @@ jQuery.fn.show_all_languages = function(callback)
     $(this).addClass('active_language_picker'); //Changes layout
 
     //The layout below is Signbank specific
-    $(this).css('margin-right',10);
+    $(this).css('margin-right',0);
     $(this).css('margin-top',-30);
     $(this).css('margin-bottom',4);
 
