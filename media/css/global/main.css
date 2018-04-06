@@ -119,6 +119,7 @@ legend
 
 .navbar-nav > ul {
     margin-left: 15px;
+    float: left;
 }
 
 .navbar-form, .navbar-text {

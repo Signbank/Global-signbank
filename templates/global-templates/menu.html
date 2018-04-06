@@ -3,13 +3,9 @@
 <!--{% get_current_language as LANGUAGE %}-->
 
 
-<div id="leftcontentborder"></div>
-<div id="rightcontentborder"></div>
+<div id="affix-bar" data-spy="affix" style="box-sizing:content-box;">
 
-<div id="affix-bar" class="container" style="padding:0">
-<nav id='navbar' class="navbar navbar-fixed-top navbar-default" role="navigation">
-
-<div id='header'>
+<div id='header' data-offset-top="0">
     <a href="{{ URL }}"><img class="global_sb_logo" src="{{ STATIC_URL }}images/global/GlobalSigbank_logo_white.svg"></a>
     <h1>Global <br/><span id="second-title-part">signbank</span></h1>
     <div id='logoholder' class='visible-lg visible-md visible-sm'></div>
@@ -17,10 +13,13 @@
 
 <div id='bslstripe'></div>
 
-  <!-- Collect the nav links, forms, and other content for toggling -->
-  <div class="collapse nav navbar-left" id="menu-pull-downs" style="display:inline;">
+<nav id='navbar' class="navbar navbar-upper navbar-default" role="navigation">
 
-    <ul class="nav navbar-nav" style="margin-left:15px;box-sizing:content-box;">
+  <!-- Collect the nav links, forms, and other content for toggling -->
+  <div class="nav navbar-upper" id="menu-pull-downs" style="display:inline;padding-left:0px;box-sizing:content-box;">
+
+    <div class="nav navbar-left">
+    <ul class="nav navbar-left navbar-nav" style="margin-left:15px;box-sizing:content-box;">
     {# add in the top level menu items from pages #}
     {% for item in menu %}
 
@@ -63,14 +62,14 @@
     {% endfor %}
 
     </ul>
-
+    </div>
     <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}signs/search">
             <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="40" size="14">
             <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" value="{{ query }}" maxlength="40" size="16">
         <button class='form-control' type='submit' style="font-weight:bold;background-color:LightGrey"><img id='mag-glass' src='{{ STATIC_URL }}images/rightpointing_magnifying_glass.png' style="width:18px; height:auto; margin: 0px;"></button>
     </form>
 
-      <div class="nav navbar-right" style="height: 55px;">
+      <div class="nav navbar-right" style="height: 55px;box-sizing:content-box;display:inline;">
         {% if user.is_authenticated %}
             <div class='navbar-text'><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
             <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
@@ -82,7 +81,9 @@
 
   </div>
 
-    <div class="nav navbar-nav navbar-default" style="height: 25px;display:inline;">
+</nav>
+<nav id='navbar-datasets' class="navbar navbar-left navbar-lower" data-spy="affix" data-offset-top="165" style="width:100%;background:white;">
+    <div class="nav navbar-left" style="height:25px;margin-bottom:3px;box-sizing:content-box;">
         {% if user.is_authenticated %}
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         <div class='navbar-text' style="left-margin: 15px;">

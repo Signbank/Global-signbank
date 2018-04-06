@@ -9,9 +9,9 @@ body {
   min-height: calc(100% - 280px);
   height: auto;
   /* Negative indent footer by its height */
-  margin: 0 auto -60px;
+  margin: 0 auto -60px 0;
   /* Pad bottom by footer height */
-  padding: 220px 0 60px;
+  padding: auto 0 60px 0;
 }
 
 /* remove rounded corners on navbar */
@@ -19,7 +19,7 @@ body {
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
     border-radius: 0;
-    padding: 0 0 auto;
+    padding: 0 0 0 0;
 }
 
 #content {

@@ -20,7 +20,8 @@
       <style>
           #affix-bar.affix {
             position:fixed;
-            z-index: 10;
+            top: 0;
+            z-index: 9999 !important;
             background: white;
           }
       </style>
@@ -41,7 +42,7 @@
 
   {% include 'menu.html' %}
 
-    <div id='wrap' class="container" style="box-sizing:content-box;margin-left:9px;">
+    <div id='wrap' style="box-sizing:content-box;margin-left:9px;margin-right:9px;">
 
         {% bootstrap_messages %}
 
@@ -125,7 +126,7 @@
                 'width': ($('#header').width()) + 'px',
             });
             $('#maincontent').css({
-                'padding-top': ($('#navbar').height() + $('#header').height()) + 'px',
+                'padding-top': ($('#navbar').height() + $('#header').height() + $('#navbar-datasets').height()) + 'px',
             });
          });
          $('#affix-bar').on('affixed-top.bs.affix', function() {
