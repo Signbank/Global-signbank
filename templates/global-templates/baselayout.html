@@ -40,8 +40,9 @@
 
   <body>
 
+  <div class="nav-wrapper" style="width:100%;box-sizing:content-box;">
   {% include 'menu.html' %}
-
+  </div>
     <div id='wrap' style="box-sizing:content-box;margin-left:9px;margin-right:9px;">
 
         {% bootstrap_messages %}
@@ -118,9 +119,10 @@
     <script type='text/javascript'>
         $('#affix-bar').affix({
             offset: {
-                top: 220,
+                top: 0,
             }
         });
+        $('.#nav-wrapper').height($('#affix-bar').height());
         $('#affix-bar').on('affixed.bs.affix', function() {
             $('#affix-bar').css({
                 'width': ($('#header').width()) + 'px',
