@@ -116,6 +116,32 @@ class BasicCRUDTests(TestCase):
 
         self.assertRedirects(response, reverse('dictionary:admin_gloss_view', kwargs={'pk': glosses[0].id}))
 
+    def testSearchForGlosses(self):
+
+        #Create a client and log in
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
+        #Get a dataset
+        dataset_name = DEFAULT_DATASET
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.idgloss = 'thisisatemporarytestgloss'
+        new_gloss.handedness = 4
+        new_gloss.dataset = test_dataset
+        new_gloss.save()
+
+        #Search
+        response = client.get('/signs/search/?handedness=4')
+        print(response)
+        print(response.context.keys())
+        print(response.context['object_list'],response.context['glosscount'])
+        print(response.context['selected_datasets'])
 
 class ImportExportTests(TestCase):
 
