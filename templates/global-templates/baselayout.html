@@ -85,7 +85,7 @@
 
                 $.ajax('{{ URL }}/dictionary/switch_to_language/'+chosen_language,'html');
 
-                //The reload is on a timeout, because it happened to fast on Firefox
+                //The reload is on a timeout, because it happened too fast on Firefox
                 setTimeout(function()
                 {
                     $("#change_language_input_field").val(chosen_language);
@@ -101,6 +101,10 @@
             {% endif %}
 
     	});
+    	var navbarHeight = $('#affix-bar').height();
+    	console.log('height of affix-bar element: ' + navbarHeight);
+    	var maincontentWidth = $('#maincontent').width();
+    	console.log('width of maincontent element: ' + maincontentWidth);
     })
 
     </script>
@@ -116,7 +120,7 @@
         $('#nav-wrapper').height($('#affix-bar').height());
         $('#affix-bar').on('affixed.bs.affix', function() {
             $('#affix-bar').css({
-                'width': ($('#nav-wrapper').width()) + 'px',
+                'width': ($('#wrap').width()) + 'px',
             });
          });
          $('#affix-bar').on('affixed-top.bs.affix', function() {

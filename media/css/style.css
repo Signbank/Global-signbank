@@ -21,11 +21,13 @@ body {
     -moz-border-radius: 0;
     border-radius: 0;
     padding: 0 0 0 auto;
+    margin-right: 9px;
 }
 
 .nav-wrapper {
     height: 220px;
     width: 100%;
+    margin-right: 9px;
 }
 
 #content {
