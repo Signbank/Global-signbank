@@ -35,11 +35,11 @@
 
   {% include 'menu.html' %}
 
-    <div id='wrap' class="container-fluid" style="box-sizing:content-box;">
+    <div id='wrap' class="container-fluid" style="box-sizing:content-box;background:white;">
 
         {% bootstrap_messages %}
 
-        <div role='main' id="maincontent">
+        <div role='main' id="maincontent" style="background:white;">
         {% block content %}(no content){% endblock %}
         </div>
         
@@ -101,33 +101,17 @@
             {% endif %}
 
     	});
-    	var navbarHeight = $('#affix-bar').height();
-    	console.log('height of affix-bar element: ' + navbarHeight);
-    	var maincontentWidth = $('#maincontent').width();
-    	console.log('width of maincontent element: ' + maincontentWidth);
+    	navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    	console.log('initial height of signbank-bar element: ' + navbarHeight);
+        $('#wrap').css({'padding-top': navbarHeight});
     })
 
-    </script>
+    $(window).on('resize', function() {
+        navbarHeight3 = Math.round($('#signbank-bar').outerHeight());
+    	console.log('resized height of signbank-bar element: ' + navbarHeight3);
+    	$('#wrap').css({'padding-top': navbarHeight3 });
+    })
 
-
-    <script type='text/javascript'>
-        $('#affix-bar').affix({
-            offset: {
-                top: 0,
-            }
-        });
-        $('#affix-bar').height(Math.round($('#header').height() + $('#navbar').height() + $('#navbar-datasets').height()));
-        $('#nav-wrapper').height($('#affix-bar').height());
-        $('#affix-bar').on('affixed.bs.affix', function() {
-            $('#affix-bar').css({
-                'width': ($('#wrap').width()) + 'px',
-            });
-         });
-         $('#affix-bar').on('affixed-top.bs.affix', function() {
-            $('#maincontent').css({
-                'padding-top': '0px',
-            });
-         });
     </script>
 
     <form id="change_language_form" method="post" action="{{ URL }}/i18n/setlang/">
@@ -138,6 +122,4 @@
 
   </body>
 </html>
-    
 
-  

@@ -86,6 +86,8 @@
                 // Scrolling to the active button
                 $('#searchresults').scrollLeft(leftOffset);
             }
+            var signinfo = $('#signinfo');
+            signinfo.offset.top($('#signbank-bar').height() + scrollPanel.height());
         }
     });
 
@@ -108,6 +110,10 @@
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
+        $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
+        console.log('search results set offset');
+        $('#signinfo').css({'padding-top': Math.round($('#searchresults').outerHeight())});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').outerHeight() + $('#signinfo').outerHeight())});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
         });
@@ -116,15 +122,15 @@
         });
         $('#panel-expand-collapse-btn-group').affix({
             offset: {
-                top: $('#panel-expand-collapse-btn-group').offset().top - $('#affix-bar').height()
-                 + parseInt($('#affix-bar').css('margin-bottom'))
+                top: $('#panel-expand-collapse-btn-group').offset().top - $('#signbank-bar').height()
+                 + parseInt($('#signbank-bar').css('margin-bottom'))
                  + parseInt($('#panel-expand-collapse-btn-group').css('height')),
             }
         });
         $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
             $('#panel-expand-collapse-btn-group').css({
                 'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': ($('#affix-bar').height() - parseInt($('#navbar').css('margin-bottom')) + 3) + 'px',
+                'top': ($('#signbank-bar').height() - parseInt($('#navbar').css('margin-bottom')) + 3) + 'px',
             });
          });
         $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
@@ -142,9 +148,9 @@
 
 {% block content %}
 
-<div id="searchresults" style="overflow-y:hidden;">
+<div id="searchresults" class='navbar navbar-default' style="overflow-y:hidden;z-index:10;background-color:white;border:0;box-sizing:content-box;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background:white;margin-top:3px;">
     </div>
     {% endif %}
 </div>
@@ -154,7 +160,7 @@
 {% endif %}
 
 
-<div id="signinfo" class='navbar navbar-default navbar-collapse'>
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
    
     <div class='btn-group'>
         {% if SIGN_NAVIGATION %}
