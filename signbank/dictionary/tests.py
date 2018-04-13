@@ -154,6 +154,8 @@ class BasicCRUDTests(TestCase):
 
 class BasicQueryTests(TestCase):
 
+    # Search with a search string
+
     def setUp(self):
 
         # a new test user is created for use during the tests
@@ -174,18 +176,28 @@ class BasicQueryTests(TestCase):
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
         assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
 
         # #Create the gloss
-        # new_gloss = Gloss()
-        # new_gloss.idgloss = 'thisisatemporarytestgloss'
-        # new_gloss.handedness = 4
-        # new_gloss.dataset = test_dataset
-        # new_gloss.save()
+        new_gloss = Gloss()
+        new_gloss.idgloss = 'thisisatemporarytestgloss'
+        new_gloss.handedness = 4
+        new_gloss.dataset = test_dataset
+        new_gloss.save()
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss'
+            annotationIdgloss.save()
 
         #Search
         # response = client.get('/signs/search/?handedness=4')
-        response = client.get('/signs/search/?handedness=4', follow=True)
+        # response = client.get('/signs/search/?handedness=4', follow=True)
+        response = client.get('/signs/search/?handedness=4&glosssearch_nl=test', follow=True)
+
         print(response)
         print(response.context.keys())
         print(response.context['object_list'],response.context['glosscount'])
