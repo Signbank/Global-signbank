@@ -980,7 +980,12 @@ def reload_signbank(request=None):
         from django.shortcuts import render
         return render(request,'reload_signbank.html')
 
-def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
+def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, dataset=None):
+    dataset_gloss_ids = []
+    if dataset:
+        dataset_gloss_ids = dataset.gloss_set.values_list('pk', flat=True)
+        print(str(dataset_gloss_ids))
+        print(str(4611 in dataset_gloss_ids))
 
     full_root_path = signbank.settings.server_specific.WRITABLE_FOLDER+root_folder+'/'
     static_urls = {}
@@ -994,16 +999,22 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
 
                     try:
                         gloss_id = res.group(1)
+                        re_result = re.match(r'.*\-(\d+)', gloss_id)
+
+                        if dataset is None or int(re_result.group(1)) in dataset_gloss_ids:
+                            static_urls[gloss_id] = reverse('dictionary:protected_media',
+                                                            args=['']) + root_folder + '/' + quote(
+                                subfolder_name) + '/' + quote(filename)
                     except AttributeError:
                         continue
 
-                    static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+quote(subfolder_name)+'/'+quote(filename)
-
     return static_urls
 
-def get_gloss_data(since_timestamp=0):
-
-    glosses = Gloss.objects.all()
+def get_gloss_data(since_timestamp=0, dataset=None):
+    if dataset:
+        glosses = Gloss.objects.filter(dataset=dataset)
+    else:
+        glosses = Gloss.objects.all()
     gloss_data = {}
     for gloss in glosses:
         if int(format(gloss.lastUpdated, 'U')) > since_timestamp:
