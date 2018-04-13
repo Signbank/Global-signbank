@@ -122,12 +122,20 @@ class BasicCRUDTests(TestCase):
         client = Client()
         client.login(username='test-user', password='test-user')
 
-        #Get a dataset
-        dataset_name = DEFAULT_DATASET
-
         # Give the test user permission to change a dataset
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
+
         assign_perm('change_dataset', self.user, test_dataset)
+
+        r = client.post('/datasets/change_selection/',{'dataset_NGT':'true'})
+        print(r)
+
+        user_profile = UserProfile.objects.get(user=self.user)
+        user_profile.selected_datasets.add(test_dataset)
+        user_profile.save()
+
+        print(user_profile.selected_datasets.all())
 
         #Create the gloss
         new_gloss = Gloss()
@@ -137,11 +145,12 @@ class BasicCRUDTests(TestCase):
         new_gloss.save()
 
         #Search
-        response = client.get('/signs/search/?handedness=4')
+        response = client.get('/signs/search/',{'handedness':4})
         print(response)
         print(response.context.keys())
         print(response.context['object_list'],response.context['glosscount'])
         print(response.context['selected_datasets'])
+        #print(response.content)
 
 class ImportExportTests(TestCase):
 
