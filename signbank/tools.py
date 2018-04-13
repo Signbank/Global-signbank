@@ -4,7 +4,6 @@ import os
 import shutil
 from html.parser import HTMLParser
 from zipfile import ZipFile
-from datetime import datetime, date
 import json
 import re
 from urllib.parse import quote
@@ -12,6 +11,8 @@ from urllib.parse import quote
 from django.utils.translation import override
 
 from signbank.dictionary.models import *
+
+from datetime import datetime, date
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
