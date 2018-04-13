@@ -152,6 +152,45 @@ class BasicCRUDTests(TestCase):
         print(response.context['selected_datasets'])
         #print(response.content)
 
+class BasicQueryTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        self.user.save()
+
+    def testSearchForGlosses(self):
+
+        #Create a client and log in
+        # client = Client()
+        client = Client(enforce_csrf_checks=True)
+        client.login(username='test-user', password='test-user')
+
+        #Get a dataset
+        dataset_name = DEFAULT_DATASET
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        self.user.save()
+
+        # #Create the gloss
+        # new_gloss = Gloss()
+        # new_gloss.idgloss = 'thisisatemporarytestgloss'
+        # new_gloss.handedness = 4
+        # new_gloss.dataset = test_dataset
+        # new_gloss.save()
+
+        #Search
+        # response = client.get('/signs/search/?handedness=4')
+        response = client.get('/signs/search/?handedness=4', follow=True)
+        print(response)
+        print(response.context.keys())
+        print(response.context['object_list'],response.context['glosscount'])
+        print(response.context['selected_datasets'])
+
 class ImportExportTests(TestCase):
 
     # Three test case scenario's for exporting ECV via the DatasetListView with DEFAULT_DATASET
