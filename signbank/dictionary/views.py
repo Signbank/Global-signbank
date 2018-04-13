@@ -1643,8 +1643,8 @@ def show_unassigned_glosses(request):
                     for gloss in glosses_to_be_assigned:
                         gloss.dataset = dataset
                         gloss.save()
-                except ObjectDoesNotExist as e:
-                    print('Assigning glosses to a dataset resulted in an error: ' + o.message)
+                except ObjectDoesNotExist as objectDoesNotExist:
+                    print('Assigning glosses to a dataset resulted in an error: ' + objectDoesNotExist.message)
 
         return HttpResponseRedirect(reverse('show_unassigned_glosses'))
     else:

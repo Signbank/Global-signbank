@@ -4,7 +4,6 @@ import os
 import shutil
 from html.parser import HTMLParser
 from zipfile import ZipFile
-from datetime import datetime, date
 import json
 import re
 from urllib.parse import quote
@@ -1031,6 +1030,7 @@ def create_zip_with_json_files(data_per_file,output_path):
 def get_deleted_gloss_or_media_data(item_type,since_timestamp):
 
     result = []
+    from datetime import datetime, date
     deletion_date_range = [datetime.fromtimestamp(since_timestamp),date.today()]
 
     for deleted_gloss_or_media in DeletedGlossOrMedia.objects.filter(deletion_date__range=deletion_date_range,
