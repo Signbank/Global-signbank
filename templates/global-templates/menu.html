@@ -2,23 +2,29 @@
 <!-- This was commented out, WEBSITE_LANGUAGE is already defined in baselayout.html -->
 <!--{% get_current_language as LANGUAGE %}-->
 
+<style>
+  #affix-bar.affix {
+    position:fixed;
+    top: 0;
+    z-index: 9999 !important;
+    background: white;
+  }
+</style>
 
-<div id="affix-bar" data-spy="affix" style="box-sizing:content-box;">
+<div id="signbank-bar" class="navbar navbar-fixed-top" style="box-sizing:content-box;">
 
-<div id='header' data-offset-top="0">
-    <a href="{{ URL }}"><img class="global_sb_logo" src="{{ STATIC_URL }}images/global/GlobalSigbank_logo_white.svg"></a>
+<div id='header' class="navbar-header">
+    <a href="{{URL}}" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
     <h1>Global <br/><span id="second-title-part">signbank</span></h1>
     <div id='logoholder' class='visible-lg visible-md visible-sm'></div>
 </div>
 
-<div id='bslstripe'></div>
-
-<nav id='navbar' class="navbar navbar-upper navbar-default" role="navigation">
+<div id='navbar-menus' class="collapse navbar-collapse navbar-upper navbar-default" role="navigation" style="display:inline;">
 
   <!-- Collect the nav links, forms, and other content for toggling -->
   <div class="nav navbar-upper" id="menu-pull-downs" style="display:inline;padding-left:0px;box-sizing:content-box;">
 
-    <div class="nav navbar-left">
+    <nav class="nav navbar-left">
     <ul class="nav navbar-left navbar-nav" style="margin-left:15px;box-sizing:content-box;">
     {# add in the top level menu items from pages #}
     {% for item in menu %}
@@ -62,16 +68,17 @@
     {% endfor %}
 
     </ul>
-    </div>
+    </nav>
     <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}signs/search">
             <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="40" size="14">
             <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" value="{{ query }}" maxlength="40" size="16">
         <button class='form-control' type='submit' style="font-weight:bold;background-color:LightGrey"><img id='mag-glass' src='{{ STATIC_URL }}images/rightpointing_magnifying_glass.png' style="width:18px; height:auto; margin: 0px;"></button>
     </form>
 
-      <div class="nav navbar-right" style="height: 55px;box-sizing:content-box;display:inline;">
+      <div class="nav navbar-right" style="height: 55px;box-sizing:content-box;">
         {% if user.is_authenticated %}
-            <div class='navbar-text'><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
+            <div class='navbar-text'>
+                <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
             <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
         {% else %}
             <div class='navbar-text'><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></div>
@@ -81,25 +88,28 @@
 
   </div>
 
-</nav>
-<nav id='navbar-datasets' class="navbar navbar-left navbar-lower" data-spy="affix" data-offset-top="165" style="width:100%;background:white;">
-    <div class="nav navbar-left" style="height:25px;margin-bottom:3px;box-sizing:content-box;">
+</div>
+<div id='navbar-datasets' class="navbar-left navbar-lower" style="background:white;box-sizing:content-box;">
+    <div class="nav navbar-left" style="min-height:35px;margin-bottom:3px;box-sizing:content-box;">
         {% if user.is_authenticated %}
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         <div class='navbar-text' style="left-margin: 15px;">
             <div class='taglist'>
-            {% for ds in selected_datasets %}
+                {% load underscore_to_space %}
+                {% for ds in selected_datasets %}
                 <div class='label' style="background-color:Gainsboro;color:DodgerBlue;border-style:solid;border-width:1px;border-color:DodgerBlue;">
-                   {% load underscore_to_space %}
                     <span>{{ds.name|underscore_to_space}}</span>
-                </div>&nbsp;
-            {% endfor %}
+                </div>
+                {% if not forloop.last %}<span>&thinsp;</span>{% endif %}
+                {% endfor %}
             </div>
         </div>
         {% endif %}
         {% endif %}
     </div>
 
-</nav>
+</div>
+
+<div id='bslstripe'></div>
 
 </div>

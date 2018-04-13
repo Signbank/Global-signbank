@@ -21,6 +21,7 @@ html {
         clear:both;
         position:relative;
         margin: 0px;
+        width: 100%;
 }
 
 #header h1 {
@@ -112,6 +113,13 @@ legend
     float: left;
 }
 
+.navbar {
+    margin-bottom: 3px;
+    width: 100%;
+    position: fixed;
+    background-color: #ffffff;
+}
+
 .navbar-nav > li > a {
     padding-top: 5px;
     padding-bottom: 5px;
@@ -125,6 +133,10 @@ legend
 .navbar-form, .navbar-text {
     margin-top: 3px;
     margin-bottom: 3px;
+}
+
+.navbar-collapse {
+    max-height: 100% !important;
 }
 
 .btn {

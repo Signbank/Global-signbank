@@ -17,14 +17,7 @@
     <link rel="stylesheet" href="{{STATIC_URL}}css/minimalistic_language_picker.css">
 
     <link rel="icon" type="image/png" href="{{ STATIC_URL }}images/favicon.png">
-      <style>
-          #affix-bar.affix {
-            position:fixed;
-            top: 0;
-            z-index: 9999 !important;
-            background: white;
-          }
-      </style>
+
     {% block extrahead %}{% endblock %}
   </head>
 
@@ -42,11 +35,11 @@
 
   {% include 'menu.html' %}
 
-    <div id='wrap' style="box-sizing:content-box;margin-left:9px;margin-right:9px;">
+    <div id='wrap' class="container-fluid" style="box-sizing:content-box;background:white;">
 
         {% bootstrap_messages %}
 
-        <div role='main' id="maincontent">
+        <div role='main' id="maincontent" style="background:white;">
         {% block content %}(no content){% endblock %}
         </div>
         
@@ -92,7 +85,7 @@
 
                 $.ajax('{{ URL }}/dictionary/switch_to_language/'+chosen_language,'html');
 
-                //The reload is on a timeout, because it happened to fast on Firefox
+                //The reload is on a timeout, because it happened too fast on Firefox
                 setTimeout(function()
                 {
                     $("#change_language_input_field").val(chosen_language);
@@ -108,32 +101,17 @@
             {% endif %}
 
     	});
+    	navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    	console.log('initial height of signbank-bar element: ' + navbarHeight);
+        $('#wrap').css({'padding-top': navbarHeight});
     })
 
-    </script>
+    $(window).on('resize', function() {
+        navbarHeight3 = Math.round($('#signbank-bar').outerHeight());
+    	console.log('resized height of signbank-bar element: ' + navbarHeight3);
+    	$('#wrap').css({'padding-top': navbarHeight3 });
+    })
 
-    <!-- The following script should be in the menu template,
-         but since Django is not able to use an extrajs block
-         from an include template, it is put here. -->
-    <script type='text/javascript'>
-        $('#affix-bar').affix({
-            offset: {
-                top: 220,
-            }
-        });
-        $('#affix-bar').on('affixed.bs.affix', function() {
-            $('#affix-bar').css({
-                'width': ($('#header').width()) + 'px',
-            });
-            $('#maincontent').css({
-                'padding-top': ($('#navbar').height() + $('#header').height() + $('#navbar-datasets').height()) + 'px',
-            });
-         });
-         $('#affix-bar').on('affixed-top.bs.affix', function() {
-            $('#maincontent').css({
-                'padding-top': '0px',
-            });
-         });
     </script>
 
     <form id="change_language_form" method="post" action="{{ URL }}/i18n/setlang/">
@@ -144,6 +122,4 @@
 
   </body>
 </html>
-    
 
-  
