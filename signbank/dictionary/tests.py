@@ -122,35 +122,41 @@ class BasicCRUDTests(TestCase):
         client = Client()
         client.login(username='test-user', password='test-user')
 
-        # Give the test user permission to change a dataset
+        # Give the test user permission to search glosses
+        assign_perm('dictionary.search_gloss', self.user)
+
+        #Create the glosses
         dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
-        assign_perm('change_dataset', self.user, test_dataset)
-
-        r = client.post('/datasets/change_selection/',{'dataset_NGT':'true'})
-        print(r)
-
-        user_profile = UserProfile.objects.get(user=self.user)
-        user_profile.selected_datasets.add(test_dataset)
-        user_profile.save()
-
-        print(user_profile.selected_datasets.all())
-
-        #Create the gloss
         new_gloss = Gloss()
-        new_gloss.idgloss = 'thisisatemporarytestgloss'
+        new_gloss.idgloss = 'tempgloss1'
         new_gloss.handedness = 4
+        new_gloss.dataset = test_dataset
+        new_gloss.save()
+
+        new_gloss = Gloss()
+        new_gloss.idgloss = 'tempgloss2'
+        new_gloss.handedness = 4
+        new_gloss.dataset = test_dataset
+        new_gloss.save()
+
+        new_gloss = Gloss()
+        new_gloss.idgloss = 'tempgloss3'
+        new_gloss.handedness = 5
         new_gloss.dataset = test_dataset
         new_gloss.save()
 
         #Search
         response = client.get('/signs/search/',{'handedness':4})
-        print(response)
-        print(response.context.keys())
-        print(response.context['object_list'],response.context['glosscount'])
-        print(response.context['selected_datasets'])
-        #print(response.content)
+        self.assertEqual(len(response.context['object_list']), 0) #Nothing without dataset permission
+
+        assign_perm('view_dataset', self.user, test_dataset)
+        response = client.get('/signs/search/',{'handedness':4})
+        self.assertEqual(len(response.context['object_list']), 2)
+
+        response = client.get('/signs/search/',{'handedness':5})
+        self.assertEqual(len(response.context['object_list']), 1)
 
 class BasicQueryTests(TestCase):
 

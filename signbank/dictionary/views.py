@@ -1540,6 +1540,11 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = 0
 
+    dataset = None
+    if 'dataset_name' in request.GET:
+        dataset = Dataset.objects.get(name=request.GET['dataset_name'])
+
+
     video_folder_name = 'glossvideo'
     image_folder_name = 'glossimage'
 
@@ -1552,15 +1557,15 @@ def package(request):
     archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
 
-    video_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp)
-    image_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp)
+    video_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp, dataset)
+    image_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp, dataset)
     # Filter out all backup files
     video_urls = dict([(gloss_id, url) for (gloss_id, url) in video_urls.items() if not re.match('.*_\d+', url)])
     image_urls = dict([(gloss_id, url) for (gloss_id, url) in image_urls.items() if not re.match('.*_\d+', url)])
 
     collected_data = {'video_urls':video_urls,
                       'image_urls':image_urls,
-                      'glosses':signbank.tools.get_gloss_data(since_timestamp)}
+                      'glosses':signbank.tools.get_gloss_data(since_timestamp, dataset)}
 
     if since_timestamp != 0:
         collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss',since_timestamp)
