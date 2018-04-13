@@ -11,8 +11,6 @@ from urllib.parse import quote
 from django.utils.translation import override
 
 from signbank.dictionary.models import *
-
-from datetime import datetime, date
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -1032,6 +1030,7 @@ def create_zip_with_json_files(data_per_file,output_path):
 def get_deleted_gloss_or_media_data(item_type,since_timestamp):
 
     result = []
+    from datetime import datetime, date
     deletion_date_range = [datetime.fromtimestamp(since_timestamp),date.today()]
 
     for deleted_gloss_or_media in DeletedGlossOrMedia.objects.filter(deletion_date__range=deletion_date_range,
