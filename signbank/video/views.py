@@ -43,9 +43,24 @@ def addvideo(request):
             goal_folder = WRITABLE_FOLDER+GLOSS_VIDEO_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
             goal_filename = gloss.idgloss + '-' + str(gloss.pk) + '.mp4'
             goal_location = goal_folder + goal_filename
+            goal_filename_small = gloss.idgloss + '-' + str(gloss.pk) + '_small' + '.mp4'
+            goal_location_small = goal_folder + goal_filename_small
             if os.path.isfile(goal_location):
                 os.remove(goal_location)
+            if os.path.isfile(goal_location_small):
+                os.remove(goal_location_small)
 
+            # clean up the database entry for an old file, if necessary
+
+            video_links_count = GlossVideo.objects.filter(gloss=gloss).count()
+            video_links_objects = GlossVideo.objects.filter(gloss=gloss)
+
+            if video_links_count > 0:
+                # delete the old video object links stored in the database
+                for video_object in video_links_objects:
+                    video_object.delete()
+
+            # make a new GlossVideo object for the new file
             video = GlossVideo(videofile=vfile, gloss=gloss)
             video.save()
 
@@ -70,6 +85,7 @@ def addvideo(request):
             from signbank.tools import generate_still_image
             generate_still_image(gloss.idgloss[:2], goal_folder, goal_filename)
 
+            print('generated still image')
             # TODO: provide some feedback that it worked (if
             # immediate display of video isn't working)
             return redirect(redirect_url)

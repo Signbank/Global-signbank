@@ -34,7 +34,6 @@
     var original_weak_hand = '{{WeakHand}}'
     var original_lemma_group_url = '{{lemma_group_url}}'
     var lemma_group = '{{lemma_group}}'
-    console.log('lemma group on loading page: ' + lemma_group)
 
     var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
     var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
@@ -87,7 +86,7 @@
                 $('#searchresults').scrollLeft(leftOffset);
             }
             var signinfo = $('#signinfo');
-            signinfo.offset.top($('#signbank-bar').height() + scrollPanel.height());
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height())});
         }
     });
 
@@ -104,6 +103,16 @@
         }
     }
 
+    function reloadVideo() {
+        console.log('reload video');
+        var video_player = document.getElementById("videoplayer");
+        video_player_src = video_player.src;
+        console.log('url is ' + video_player_src);
+        video_player_src = "";
+        video_player.src = video_player_src;
+        video_player.type = "video/mp4";
+        video_player.load();
+    }
     </script>
 
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
@@ -111,7 +120,6 @@
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
         $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
-        console.log('search results set offset');
         $('#signinfo').css({'padding-top': Math.round($('#searchresults').outerHeight())});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').outerHeight() + $('#signinfo').outerHeight())});
         $('#expand-panels').on('click', function() {
@@ -235,7 +243,7 @@
      <!-- {{ gloss.get_video }} -->
 
         <div id="player">
-          <video id='videoiframe' src="{{protected_media_url}}{{gloss.get_video}}" controls></video>
+          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video}}" controls type="video/mp4"></video>
         </div>
         <div id="replay"></div>
 
@@ -250,7 +258,7 @@
 
     <div>
         {% if gloss.get_image_path %}
-            <img class="citation_form_image" src="{{protected_media_url}}{{gloss.get_image_path}}">
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_path}}" width="450px">
         {% endif %}
     </div>
 
@@ -273,7 +281,7 @@
             {% with gloss.count_videos as gloss_video_count %}
             <p>{% blocktrans %} We have {{gloss_video_count}} videos for this sign. {% endblocktrans %}</p>
             {% endwith %}
-            <form action="{{URL}}/video/upload/" method="post" enctype="multipart/form-data">
+            <form action="{{URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -282,7 +290,7 @@
               </tr>
               <tr>
                   <td><input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
-                      <input class='btn btn-primary' type='submit' value='Upload Video'/></td>
+                      <input class='btn btn-primary' type='submit' value='Upload Video' /></td>
               </tr>
             </table>
             </form>

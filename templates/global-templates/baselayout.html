@@ -102,13 +102,11 @@
 
     	});
     	navbarHeight = Math.round($('#signbank-bar').outerHeight());
-    	console.log('initial height of signbank-bar element: ' + navbarHeight);
         $('#wrap').css({'padding-top': navbarHeight});
     })
 
     $(window).on('resize', function() {
         navbarHeight3 = Math.round($('#signbank-bar').outerHeight());
-    	console.log('resized height of signbank-bar element: ' + navbarHeight3);
     	$('#wrap').css({'padding-top': navbarHeight3 });
     })
 

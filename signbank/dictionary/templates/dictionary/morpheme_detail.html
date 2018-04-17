@@ -82,6 +82,8 @@
                 // Scrolling to the active button
                 $('#searchresults').scrollLeft(leftOffset);
             }
+            var signinfo = $('#signinfo');
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height())});
         }
     });
 
@@ -180,7 +182,7 @@
      <!-- {{ gloss.get_video }} -->
 
         <div id="player">
-          <video id='videoiframe' src="{{protected_media_url}}{{morpheme.get_video}}" controls></video>
+          <video id='videoplayer' src="{{protected_media_url}}{{morpheme.get_video}}" controls type="video/mp4"></video>
         </div>
         <div id="replay"></div>
 
@@ -195,7 +197,7 @@
 
     <div>
         {% if morpheme.get_image_path %}
-            <img class="citation_form_image" src="{{protected_media_url}}{{morpheme.get_image_path}}">
+            <img id="imageframe" src="{{protected_media_url}}{{morpheme.get_image_path}}" width="450px">
         {% endif %}
     </div>
 

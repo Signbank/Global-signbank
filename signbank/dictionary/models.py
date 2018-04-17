@@ -1167,21 +1167,13 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
             return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename_without_extension
 
 
-    def get_video_gloss(self):
-        """Work out the gloss that might have the video for this sign, usually the sign number but
-        if we're a sense>1 then we look at the homophone with sense=1
-        Return the gloss instance."""
-        
-        if self.sense and self.sense > 1:
-            homophones = self.relation_sources.filter(role='homophone', target__sense__exact=1)
-            # should be only zero or one of these
-            if len(homophones) > 0:   
-                return homophones[0].target
-        return self
-
     def get_video_path(self):
 
         return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
+
+    def get_video_path_prefix(self):
+
+        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
@@ -1191,23 +1183,13 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         if os.path.isfile(settings.WRITABLE_FOLDER+'/'+video_path):
             return video_path
         else:
-            return None
+            return ''
 
-        video_with_gloss = self.get_video_gloss()
-        
-        try:
-            video = video_with_gloss.glossvideo_set.get(version__exact=0)
-            return video
-        except:
-            return None
         
     def count_videos(self):
-        """Return a count of the number of videos we have 
-        for this video - ie. the number of versions stored"""
+        """Return a count of the number of videos as indicated in the database"""
 
-        video_with_gloss = self.get_video_gloss()
-
-        return video_with_gloss.glossvideo_set.count()
+        return self.glossvideo_set.count()
 
 
     def get_video_url(self):
@@ -1215,12 +1197,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         # return '/home/wessel/signbank/signbank/video/testmedia/AANBELLEN-320kbits.mp4'
 
-        video = self.get_video()
-        if video != None:
-            return video.get_absolute_url()
-        else:
-            return ""
-        
+        video_url_or_empty_string = self.get_video()
+
+        return video_url_or_empty_string
+
     def has_video(self):
         """Test to see if the video for this sign is present"""
         
