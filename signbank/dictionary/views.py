@@ -746,7 +746,7 @@ def import_csv(request):
                 e = 'Could not find gloss for ID '+str(pk)
                 error.append(e)
 
-                print('import_csv gloss does not exist, line ', str(nl), ' gloss id ', str(pk))
+                # print('import_csv gloss does not exist, line ', str(nl), ' gloss id ', str(pk))
                 continue
 
             try:

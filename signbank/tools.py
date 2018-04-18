@@ -531,7 +531,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 continue
 
-            # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, ')')
+            # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, '), new_human_value: (', new_human_value, ')')
 
             #Try to translate the value to machine values if needed
             if len(field.choices) > 0:
@@ -545,7 +545,10 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                         new_human_value = new_human_value[1:]
                         # print('revised human value: ', new_human_value)
 
-                    new_machine_value = human_to_machine_values[new_human_value]
+                    if new_human_value in human_to_machine_values.keys():
+                        new_machine_value = human_to_machine_values[new_human_value]
+                    else:
+                        raise KeyError
                 except KeyError:
                     #If you can't find a corresponding human value, maybe it's empty
                     if new_human_value in ['',' ', None, 'None']:
@@ -555,6 +558,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                     #If not, stop trying
                     else:
+                        new_machine_value = None
                         # raise MachineValueNotFoundError('At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key)
                         error_string = 'For '+default_annotationidglosstranslation+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key
 
@@ -616,9 +620,9 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
             #Remove any weird char
             try:
-                new_machine_value = unescape(new_machine_value)
                 new_human_value = unescape(new_human_value)
-            except TypeError:
+            except:
+                print('unescape raised exception for new_human_value: ', new_human_value)
                 pass
 
             # test if blank value
