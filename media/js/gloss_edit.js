@@ -137,7 +137,6 @@ function disable_edit() {
     $('#domhndsh').css('color', 'blue');
     $('#subhndsh').css('color', 'blue');
     $('.editform').hide();
-    $('#delete_gloss_btn').hide();
     $('#delete_morpheme_btn').hide();
     $('.button-to-appear-in-edit-mode').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
@@ -200,7 +199,6 @@ function enable_edit() {
     $('#idgloss').children().remove();
     $('#idgloss').html(lemma_group_text);
     $('.editform').show();
-    $('#delete_gloss_btn').show().addClass('btn-danger');
     $('#delete_morpheme_btn').show().addClass('btn-danger');
     $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
@@ -260,10 +258,6 @@ function toggle_edit(redirect_to_next) {
     }
 }
 
-
-function delete_gloss() {
-    alert(delete_this_gloss_str);
-}
 
 $.editable.addInputType('positiveinteger', {
     element : function(settings, original) {
