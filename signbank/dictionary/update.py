@@ -54,11 +54,11 @@ def add_gloss(request):
                 language = Language.objects.get(language_code_2char=language_code_2char)
                 glosses_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
                     annotationidglosstranslation__language=language,
-                    annotationidglosstranslation__text__exact=value.upper())
-                for gl in glosses_for_this_language_and_annotation_idgloss:
-                    if gl.dataset == dataset:
-                        # ID Gloss already exists for this Dataset
-                        return render(request, 'dictionary/warning.html', {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
+                    annotationidglosstranslation__text__exact=value.upper(),
+                    dataset=dataset)
+                if len(glosses_for_this_language_and_annotation_idgloss) != 0:
+                    return render(request, 'dictionary/warning.html',
+                                  {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
         if form.is_valid():
             try:
