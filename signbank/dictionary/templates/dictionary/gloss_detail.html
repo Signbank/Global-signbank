@@ -120,7 +120,6 @@
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
         $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
-        $('#signinfo').css({'padding-top': Math.round($('#searchresults').outerHeight())});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').outerHeight() + $('#signinfo').outerHeight())});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
@@ -138,7 +137,7 @@
         $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
             $('#panel-expand-collapse-btn-group').css({
                 'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': ($('#signbank-bar').height() - parseInt($('#navbar').css('margin-bottom')) + 3) + 'px',
+                'top': ($('#signbank-bar').height() - $('#navbar').height() + parseInt($('#definitionblock').css('padding-top')) + 3) + 'px',
             });
          });
         $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
@@ -202,7 +201,7 @@
 
     {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
-    <div class='pull-right'>
+    <div class='pull-right' style="margin-right:15px;">
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
