@@ -137,7 +137,6 @@ function disable_edit() {
     $('#domhndsh').css('color', 'blue');
     $('#subhndsh').css('color', 'blue');
     $('.editform').hide();
-    $('#delete_morpheme_btn').hide();
     $('.button-to-appear-in-edit-mode').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
@@ -199,7 +198,6 @@ function enable_edit() {
     $('#idgloss').children().remove();
     $('#idgloss').html(lemma_group_text);
     $('.editform').show();
-    $('#delete_morpheme_btn').show().addClass('btn-danger');
     $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();

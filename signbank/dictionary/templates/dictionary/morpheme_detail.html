@@ -4,6 +4,8 @@
 {% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 
+{% load guardian_tags %}
+
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
 {% endblock %}
@@ -12,10 +14,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    
-    
-    {% if perms.dictionary.change_morpheme %}
-    
+
     <script type='text/javascript'>
     var url = '{{ URL }}';
 
@@ -90,16 +89,20 @@
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
     
-    
-    {% endif %}
+     <script type='text/javascript'>
+        $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').outerHeight() + $('#signinfo').outerHeight())});
+
+     </script>
+
 {% endblock %}
 
 
 {% block content %}
 
-<div id="searchresults" style="overflow-y:hidden;">
+<div id="searchresults" class='navbar navbar-default' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box;overflow-x:scroll;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background:white;margin-top:3px;">
     </div>
     {% endif %}
 </div>
@@ -109,14 +112,13 @@
 {% endif %}
 
 
-<div id="signinfo" class='navbar navbar-default navbar-collapse'>
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
    
     <div class='btn-group'>
         {% if SIGN_NAVIGATION %}
         
             {% if navigation.prev %}
-            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_morpheme_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %]
-            </a>
+            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_morpheme_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %}</a>
             {% endif %}
             
             <button class='btn navbar-btn'>{% blocktrans %}"Sign {{glossposn}} of {{glosscount}} in the dictionary" {% endblocktrans %}</button>
@@ -125,49 +127,26 @@
             <a class="btn navbar-btn btn-default"
                href="{% url 'dictionary:admin_morpheme_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
             {% endif %}
-         {% else %}
-           
-         {% endif %}
+        {% endif %}
     </div>
 
-    {% if morpheme.idgloss %}
-    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/morpheme/{{morpheme.idgloss}}.html">{% trans "Public View" %}</a>
-    {% endif %}
+    <div class='btn-group' style="background-color:white;border:0;padding-top:3px;">
 
-    {% if perms.dictionary.change_gloss %}
-    <button id='delete_morpheme_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
-    {% endif %}
-    
+    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/morpheme/{{morpheme.id}}.html">{% trans "Public View" %}</a>
+
+        {% if perms.dictionary.change_morpheme %}
+        <button id='delete_morpheme_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
+        {% endif %}
+
+    </div>
+
     {% if perms.dictionary.change_morpheme %}
-    
-    <div class='pull-right'>
-         <span id='edit_message'></span>&nbsp;
+    <div class='pull-right' style="margin-right:15px;margin-top:3px;">
+
+         <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
          <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit next morpheme" %}</button>
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
-         
-         <div class="modal fade" id="delete_morpheme_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDel" aria-hidden="true">
-             <div class="modal-dialog modal-sm">
-                <div class="modal-content">
-                    <div class='modal-header'>
-                        <h2 id='modalTitleDel'>{% trans "Delete This Morpheme" %}</h2>
-                    </div>
-                    <div class='modal-body'>
-                        <p>{% trans "This action will delete this morpheme and all associated records. It cannot be undone." %}</p>
-                     </div>
-                  <form action='{% url "dictionary:update_morpheme" morpheme.id %}' method='post'>
-                      {% csrf_token %}
-                      <input type='hidden' name='id' value='deletemorpheme'>
-                      <input type='hidden' name='value' value='confirmed'>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                      </div>
-                  </form>
-                      
-                </div>
-              </div>
-        </div>
          
     </div>
     {% endif %}
@@ -211,9 +190,7 @@
 
         </ul>
     </div>
-    
-    
-    
+
     {% if perms.dictionary.change_morpheme and perms.dictionary.update_video %}
     <div class='editform'>
         <fieldset>
@@ -305,12 +282,37 @@
                 <td class='edit edit_mrptype' id='mrpType'>{{ morpheme_type }}</td>
             </tr>
             <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage'>{% for lang in morpheme.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
-            {%if SHOW_DATASET_INTERFACE_OPTIONS %}
+            {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             {% endif %}
             <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset'>{{ morpheme.dataset }}</td></tr>
         </table>
-			 
+
+        {% if perms.dictionary.change_morpheme %}
+         <div class="modal fade" id="delete_morpheme_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDel" aria-hidden="true">
+             <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitleDel'>{% trans "Delete This Morpheme" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "This action will delete this morpheme and all associated records. It cannot be undone." %}</p>
+                     </div>
+                  <form action='{% url "dictionary:update_morpheme" morpheme.id %}' method='post'>
+                      {% csrf_token %}
+                      <input type='hidden' name='id' value='deletemorpheme'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+        </div>
+        {% endif %}
+
    {% if perms.dictionary.view_advanced_properties %}
 
    <!-- Morphology -->
