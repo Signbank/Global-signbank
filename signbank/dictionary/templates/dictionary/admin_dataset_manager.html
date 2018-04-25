@@ -27,6 +27,7 @@
 {% if object_list %}
 
 <table class='table'>
+    <caption style="text-align: left;font-weight: bold;">{% trans "Manage datasets" %}</caption>
     <thead>
       <tr>
           <th style="width:100px;">{% trans "Dataset Name" %}</th>
@@ -36,9 +37,9 @@
     </thead>
     <tbody>
       {% for dataset in object_list %}
+      {% if request.user|has_group:"Dataset_Manager" %}
       {% get_obj_perms request.user for dataset as "dataset_perms" %}
       {% if "change_dataset" in dataset_perms %}
-      {% if request.user|has_group:"Dataset_Manager" %}
         <tr>
             <td>
                 <a href="{{URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
@@ -172,13 +173,16 @@
                 </div>
             </td>
         </tr>
-    {% endif %}
-    {% endif %}
+      {% endif %}
+      {% endif %}
     {% endfor %}
     </tbody>
 </table>
 {% else %}
-{% trans "No datasets found to manage." %}
+<table class='table'>
+    <caption style="text-align: left;font-weight: bold;">{% trans "Manage datasets" %}</caption>
+</table>
+        {% trans "You must be in group Dataset Manager to use this functionality." %}
 {% endif %}
 
 {% endblock content %}

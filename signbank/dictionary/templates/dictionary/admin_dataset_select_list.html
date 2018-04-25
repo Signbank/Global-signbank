@@ -12,6 +12,7 @@
 <form name="selectdatasets" id="selectdatasets" method="post" action="{{URL}}/datasets/change_selection">
 {% csrf_token %}
 <table class='table table-condensed'>
+    <caption style="text-align: left;font-weight: bold;">{% trans "Select datasets" %}</caption>
     <thead>
       <tr>
           <th>{% trans "Dataset Name" %}</th>
