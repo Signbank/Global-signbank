@@ -93,8 +93,11 @@ def addvideo(request):
                 print("Error resizing video: ",i)
 
             # Issue #214: generate still image
-            from signbank.tools import generate_still_image
-            generate_still_image(gloss.idgloss[:2], goal_folder, goal_filename)
+            try:
+                from signbank.tools import generate_still_image
+                generate_still_image(gloss.idgloss[:2], goal_folder, goal_filename)
+            except:
+                print('Error generating still image')
 
             if os.path.isfile(goal_location_small):
                 os.chmod(goal_location_small,0o660)
