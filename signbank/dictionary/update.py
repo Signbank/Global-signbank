@@ -29,6 +29,7 @@ def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
     
     if request.method == "POST":
+        dataset = None
         if 'dataset' in request.POST and request.POST['dataset'] is not None:
             dataset = Dataset.objects.get(pk=request.POST['dataset'])
             selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
@@ -42,6 +43,10 @@ def add_gloss(request):
         if dataset and 'change_dataset' not in get_user_perms(request.user, dataset):
             messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
             return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
+        elif not dataset:
+            # Dataset is empty, this is an error
+            messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
+            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
 
         for item, value in request.POST.items():
             if item.startswith(form.gloss_create_field_prefix):
@@ -49,9 +54,11 @@ def add_gloss(request):
                 language = Language.objects.get(language_code_2char=language_code_2char)
                 glosses_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
                     annotationidglosstranslation__language=language,
-                    annotationidglosstranslation__text__exact=value.upper())
+                    annotationidglosstranslation__text__exact=value.upper(),
+                    dataset=dataset)
                 if len(glosses_for_this_language_and_annotation_idgloss) != 0:
-                    return render(request, 'dictionary/warning.html', {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
+                    return render(request, 'dictionary/warning.html',
+                                  {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
         if form.is_valid():
             try:

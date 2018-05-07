@@ -106,8 +106,10 @@
     })
 
     $(window).on('resize', function() {
-        navbarHeight3 = Math.round($('#signbank-bar').outerHeight());
-    	$('#wrap').css({'padding-top': navbarHeight3 });
+        navbarHeight3 = Math.round($('#signbank-bar').height());
+        $('#searchresults').css({'top': navbarHeight3 });
+        $('#signinfo').css({'top': navbarHeight3 + Math.round($('#searchresults').height())});
+        $('#wrap').css({'padding-top': navbarHeight3 });
     })
 
     </script>

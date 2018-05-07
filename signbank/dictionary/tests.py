@@ -1,5 +1,6 @@
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm
+from signbank.settings.base import WRITABLE_FOLDER
 
 from django.contrib.auth.models import User, Permission
 from django.test import TestCase
@@ -320,6 +321,53 @@ class ImportExportTests(TestCase):
         self.assertEqual(response['Content-Type'], "text/csv")
         self.assertContains(response, b'Signbank ID,Lemma ID Gloss,Dataset')
 
+class VideoTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+
+
+    def test_create_and_delete_video(self):
+
+        NAME = 'thisisatemporarytestgloss'
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.idgloss = NAME
+        new_gloss.handedness = 4
+        new_gloss.save()
+
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
+        video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
+
+        #We expect no video before
+        response = client.get(video_url)
+        self.assertEqual(response.status_code,302)
+
+        #Upload the video
+        videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
+        client.post('/video/upload/',{'gloss_id':new_gloss.pk, 'videofile': videofile,'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'})
+
+        #We expect a video now
+        response = client.get(video_url)
+        self.assertEqual(response.status_code,200)
+
+        #You can't see it if you log out
+        client.logout()
+        response = client.get(video_url)
+        self.assertEqual(response.status_code,401)
+
+        #Remove the video
+        client.login(username='test-user',password='test-user')
+        client.post('/video/delete/'+str(new_gloss.pk))
+
+        #We expect no video anymore
+        response = client.get(video_url)
+        self.assertEqual(response.status_code,302)
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):

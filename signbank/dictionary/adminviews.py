@@ -2648,6 +2648,19 @@ class DatasetManagerView(ListView):
         setattr(self.request, 'dataset_name', self.dataset_name)
 
         if user.is_authenticated():
+
+            # determine if user is a dataset manager
+            from django.contrib.auth.models import Group, User
+            try:
+                group_manager = Group.objects.get(name='Dataset_Manager')
+            except:
+                messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+                return HttpResponseRedirect(URL + '/datasets/available')
+
+            groups_of_user = self.request.user.groups.all()
+            if not group_manager in groups_of_user:
+                return None
+
             from django.db.models import Prefetch
             qs = Dataset.objects.all().prefetch_related(
                 Prefetch(

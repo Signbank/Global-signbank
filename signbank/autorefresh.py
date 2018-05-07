@@ -2,9 +2,9 @@
 #It monitors the current directory, and touches the wsgi file when it finds a change
 #It depends on the pyinotify package
 
-import settings.server_specific
+import signbank.settings.server_specific
 import pyinotify
-import urllib2
+import urllib
 
 wm = pyinotify.WatchManager()  # Watch Manager
 mask = pyinotify.IN_MODIFY  # watched events
@@ -14,14 +14,14 @@ class EventHandler(pyinotify.ProcessEvent):
         print('File modified '+str(filename))
 
         try:
-            urllib2.urlopen(settings.server_specific.URL+'reload_signbank/').read()
-        except urllib2.HTTPError:
+            urllib.urlopen(settings.server_specific.URL+'reload_signbank/').read()
+        except urllib.HTTPError:
             pass
 
 print('Starting to monitor')
 
 handler = EventHandler()
 notifier = pyinotify.Notifier(wm, handler)
-wdd = wm.add_watch(settings.server_specific.BASE_DIR+'signbank/', mask, rec=True)
+wdd = wm.add_watch(signbank.settings.server_specific.BASE_DIR+'signbank/', mask, rec=True)
 
 notifier.loop()

@@ -8,6 +8,8 @@ from signbank.video.forms import VideoUploadForm, VideoUploadForGlossForm
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
 import os
+import re
+import glob
 import shutil
 
 from signbank.dictionary.models import Gloss, DeletedGlossOrMedia
@@ -45,10 +47,18 @@ def addvideo(request):
             goal_location = goal_folder + goal_filename
             goal_filename_small = gloss.idgloss + '-' + str(gloss.pk) + '_small' + '.mp4'
             goal_location_small = goal_folder + goal_filename_small
+
             if os.path.isfile(goal_location):
                 os.remove(goal_location)
             if os.path.isfile(goal_location_small):
                 os.remove(goal_location_small)
+
+            # test for other video files for this gloss.pk with a different filename, such as version or old idgloss
+            file_listing = os.listdir(goal_folder)
+            for fname in file_listing:
+                if re.match('.*\-'+str(gloss.pk)+'\..*', fname):
+                    if os.path.isfile(goal_folder+fname):
+                        os.remove(goal_folder+fname)
 
             # clean up the database entry for an old file, if necessary
 
@@ -65,7 +75,8 @@ def addvideo(request):
             video.save()
 
             #Make sure the rights of the new file are okay
-            os.chmod(goal_location,0o660)
+            if os.path.isfile(goal_location):
+                os.chmod(goal_location,0o660)
 
             # Issue #162: log the upload history
             log_entry = GlossVideoHistory(action="upload", gloss=gloss, actor=request.user,
@@ -82,10 +93,15 @@ def addvideo(request):
                 print("Error resizing video: ",i)
 
             # Issue #214: generate still image
-            from signbank.tools import generate_still_image
-            generate_still_image(gloss.idgloss[:2], goal_folder, goal_filename)
+            try:
+                from signbank.tools import generate_still_image
+                generate_still_image(gloss.idgloss[:2], goal_folder, goal_filename)
+            except:
+                print('Error generating still image')
 
-            print('generated still image')
+            if os.path.isfile(goal_location_small):
+                os.chmod(goal_location_small,0o660)
+
             # TODO: provide some feedback that it worked (if
             # immediate display of video isn't working)
             return redirect(redirect_url)
