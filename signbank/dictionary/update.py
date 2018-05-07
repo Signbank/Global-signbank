@@ -40,7 +40,7 @@ def add_gloss(request):
 
         # Check for 'change_dataset' permission
         if dataset and 'change_dataset' not in get_user_perms(request.user, dataset):
-            messages.add_message(request, messages.ERROR, _("Your are not authorized to change the selected dataset."))
+            messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
             return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
 
         for item, value in request.POST.items():
