@@ -693,6 +693,7 @@ def import_csv(request):
                 """Checks if all columns for creating a gloss are there. Annotation ID Gloss needs to be
                 checked dynamically for each dataset language."""
                 if 'Lemma ID Gloss' not in value_dict or 'Dataset' not in value_dict:
+                    # columns are missing
                     return False
                 else:
                     dataset_name = value_dict['Dataset'].strip()
@@ -701,28 +702,41 @@ def import_csv(request):
                         for language in dataset.translation_languages.all():
                             column_name = "Annotation ID Gloss (%s)" % language.name_en
                             if column_name not in value_dict:
+                                # column is missing
                                 return False
                     else:
                         return False
                 return True
 
+            # The above function checks that the required columns are available, but we still need to check that
+            # values are present in the row for these columns
             try:
                 # Check whether the user may change the dataset of the current row
-                if 'Dataset' in value_dict and value_dict['Dataset'].strip() not in user_datasets_names:
-                    e3 = 'You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
-                    error.append(e3)
-                    continue
+                if 'Dataset' in value_dict:
+                    dataset_name = value_dict['Dataset'].strip()
+                    try:
+                        dataset = Dataset.objects.get(name=dataset_name)
+                    except:
+                        # An error message should be returned here, the dataset does not exist
+                        e_dataset_not_found = 'The dataset %s.' % value_dict['Dataset'].strip() + ' does not exist.'
+                        error.append(e_dataset_not_found)
+                        continue
+                    if dataset_name not in user_datasets_names:
+                        e3 = 'You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                        error.append(e3)
+                        continue
+                if not value_dict_has_required_columns(value_dict):
+                    # not enough columns for creating glosses, input file needs fixing
+                    e1 = 'To create glosses, the following columns are required: ' \
+                         + 'Dataset, Lemma ID Gloss, and Annotation ID Gloss for each translation language of the Dataset.'
+                    e2 = 'To update glosses, column Signbank ID is required.'
+                    error.append(e1).append(e2)
+                    break
 
                 if 'Signbank ID' in value_dict:
                     pk = int(value_dict['Signbank ID'])
                 # no column Signbank ID
-                elif not value_dict_has_required_columns(value_dict):
-                    # not enough columns for creating glosses, input file needs fixing
-                    e1 = 'To create glosses, the following columns are required: ' \
-                        + 'Dataset, Lemma ID Gloss, Annotation ID Gloss: Dutch, Annotation ID Gloss: English.'
-                    e2 = 'To update glosses, column Signbank ID is required.'
-                    error.append(e1).append(e2)
-                    break
+
                 else:
                     (new_gloss, already_exists, error_create) \
                         = create_gloss_from_valuedict(value_dict,user_datasets_names,nl)
@@ -963,7 +977,7 @@ def import_csv(request):
                 new_gloss.dataset = dataset_id
                 # Save the new gloss before updating it
                 new_gloss.save()
-                new_gloss.creationDate = datetime.now()
+                new_gloss.creationDate = DT.datetime.now()
                 new_gloss.creator.add(request.user)
                 new_gloss.excludeFromEcv = False
                 new_gloss.save()

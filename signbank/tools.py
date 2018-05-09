@@ -88,20 +88,18 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
 
         annotationidglosstranslations = {}
         existing_glosses = {}
-        dataset = Dataset.objects.get(name=dataset_name)
-        if dataset:
-            for language in dataset.translation_languages.all():
-                column_name = "Annotation ID Gloss (%s)" % language.name_en
-                if column_name in valuedict:
-                    annotationidglosstranslation_text = valuedict[column_name].strip()
-                    annotationidglosstranslations[language.language_code_2char] = annotationidglosstranslation_text
+        for language in dataset.translation_languages.all():
+            column_name = "Annotation ID Gloss (%s)" % language.name_en
+            if column_name in valuedict:
+                annotationidglosstranslation_text = valuedict[column_name].strip()
+                annotationidglosstranslations[language.language_code_2char] = annotationidglosstranslation_text
 
-                    # The annotation idgloss translation text for a language must be unique within a dataset.
-                    glosses_with_same_text = dataset.gloss_set.filter(
-                        annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
-                        annotationidglosstranslation__language=language)
-                    if len(glosses_with_same_text) > 0:
-                        existing_glosses[language.language_code_2char] = glosses_with_same_text
+                # The annotation idgloss translation text for a language must be unique within a dataset.
+                glosses_with_same_text = dataset.gloss_set.filter(
+                    annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
+                    annotationidglosstranslation__language=language)
+                if len(glosses_with_same_text) > 0:
+                    existing_glosses[language.language_code_2char] = glosses_with_same_text
 
         if existing_glosses:
             existing_gloss_set = set()
@@ -128,9 +126,13 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                                 'dataset': dataset_name,
                                 'lemma_id_gloss': 'Lemma ID Gloss',
                                 'lemma_id_gloss_value': lemma_id_gloss}
+            dataset = Dataset.objects.get(name=dataset_name)
+            trans_languages = [ l for l in dataset.translation_languages.all() ]
+            print('translation languages for dataset: ', trans_languages)
             annotationidglosstranslation_dict = {}
-            for language in dataset.translation_languages.all():
+            for language in trans_languages:
                 annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language.name_en]
+                print('tools create gloss, language: ', language, ' annotation ID gloss: ', annotationidglosstranslation_text)
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
             gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
             new_gloss.append(gloss_dict)
