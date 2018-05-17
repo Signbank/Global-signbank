@@ -75,7 +75,7 @@
         <button class='form-control' type='submit' style="font-weight:bold;background-color:LightGrey"><img id='mag-glass' src='{{ STATIC_URL }}images/rightpointing_magnifying_glass.png' style="width:18px; height:auto; margin: 0px;"></button>
     </form>
 
-      <div class="nav navbar-right" style="height: 55px;box-sizing:content-box;">
+      <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">
         {% if user.is_authenticated %}
             <div class='navbar-text'>
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
