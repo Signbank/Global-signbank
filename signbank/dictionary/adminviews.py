@@ -1,7 +1,7 @@
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.db.models import Q, F, ExpressionWrapper, IntegerField, Count
-from django.db.models import CharField, Value as V
+from django.db.models import CharField, TextField, Value as V
 from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField
@@ -565,17 +565,24 @@ class GlossListView(ListView):
             qs = qs.filter(signlanguage__in=vals)
 
         if 'useInstr' in get and get['useInstr'] != '':
-            qs = qs.filter(useInstr__icontains=get['useInstr'])
+            qs = qs.filter(useInstr__iregex=get['useInstr'])
 
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
 
             if fieldname in get:
-                key = fieldname+'__exact'
+
+                field_obj = Gloss._meta.get_field(fieldname)
+
+                if type(field_obj) in [CharField,TextField] and len(field_obj.choices) == 0:
+                    key = fieldname + '__iregex'
+                else:
+                    key = fieldname + '__exact'
+
                 val = get[fieldname]
 
-                if isinstance(Gloss._meta.get_field(fieldname),NullBooleanField):
+                if isinstance(field_obj,NullBooleanField):
                     val = {'0':'','1': None, '2': True, '3': False}[val]
 
                 if val != '':
@@ -1743,7 +1750,7 @@ class MorphemeListView(ListView):
             created_by_search_string = ' '.join(get['createdBy'].strip().split())  # remove redundant spaces
             qs = qs.annotate(
                 created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
-                .filter(created_by__icontains=created_by_search_string)
+                .filter(created_by__iregex=created_by_search_string)
 
         # Saving querysets results to sessions, these results can then be used elsewhere (like in gloss_detail)
         # Flush the previous queryset (just in case)
