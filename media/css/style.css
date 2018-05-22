@@ -297,7 +297,8 @@ body {
     height:24px;
     line-height:24px;
     position:relative;
-        
+    z-index: 0 !important;
+    opacity: .99;
     margin-left:20px;
     margin-top: 5px;
     margin-bottom: 5px;

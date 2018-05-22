@@ -155,7 +155,7 @@
 
 {% block content %}
 
-<div id="searchresults" class='navbar navbar-default' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box;">
+<div id="searchresults" class='navbar navbar-default' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
     <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background:white;margin-top:3px;">
     </div>
@@ -167,7 +167,7 @@
 {% endif %}
 
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0; z-index: 50;">
    
     <div class='btn-group'>
         {% if SIGN_NAVIGATION %}
@@ -327,7 +327,7 @@
 </div>
 
 
-    <div class='panel-group' id="definition">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;">
 
         {% include "dictionary/glosstags.html" %}
 
