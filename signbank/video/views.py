@@ -54,11 +54,12 @@ def addvideo(request):
                 os.remove(goal_location_small)
 
             # test for other video files for this gloss.pk with a different filename, such as version or old idgloss
-            file_listing = os.listdir(goal_folder)
-            for fname in file_listing:
-                if re.match('.*\-'+str(gloss.pk)+'\..*', fname):
-                    if os.path.isfile(goal_folder+fname):
-                        os.remove(goal_folder+fname)
+            if os.path.isfile(goal_folder):
+                file_listing = os.listdir(goal_folder)
+                for fname in file_listing:
+                    if re.match('.*\-'+str(gloss.pk)+'\..*', fname):
+                        if os.path.isfile(goal_folder+fname):
+                            os.remove(goal_folder+fname)
 
             # clean up the database entry for an old file, if necessary
 
