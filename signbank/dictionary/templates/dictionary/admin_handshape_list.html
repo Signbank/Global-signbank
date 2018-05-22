@@ -574,7 +574,12 @@ function do_adminsearch(el) {
     {% for handshape in object_list %}
     <tr>
 
-      <td>{%if handshape.get_image_path %}<div class="thumbnail_container"><img class="thumbnail" src="{{protected_media_url}}{{handshape.get_image_path}}"></div>{% endif %}</td>
+      <td>{%if handshape.get_image_path != None %}
+          <div class="thumbnail_container">
+              <img class="thumbnail" src="{{protected_media_url}}{{handshape.get_image_path}}">
+          </div>
+          {% endif %}
+      </td>
 
         {% if language == 'nl' %}
         <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
