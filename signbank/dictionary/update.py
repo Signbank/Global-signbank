@@ -1746,13 +1746,15 @@ def update_dataset(request, datasetid):
     We are sent one field and value at a time, return the new value
     once we've updated it."""
 
-    if not request.user.has_perm('dictionary.change_dataset'):
-        return HttpResponseForbidden("Dataset Update Not Allowed")
-
     if request.method == "POST":
 
         dataset = get_object_or_404(Dataset, id=datasetid)
         dataset.save() # This updates the lastUpdated field
+
+        import guardian
+        user_change_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        if not dataset in user_change_datasets:
+            return HttpResponseForbidden("Dataset Update Not Allowed")
 
         field = request.POST.get('id', '')
         value = request.POST.get('value', '')
