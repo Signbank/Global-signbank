@@ -272,7 +272,8 @@ def update_gloss(request, glossid):
 
             if field == 'idgloss' and value == '':
                 # don't allow user to set Lemma ID Gloss to empty
-                return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+                # return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+                value = str(original_value)
 
             # special cases
             # - Foreign Key fields (Language, Dialect)
