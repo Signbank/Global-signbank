@@ -19,17 +19,26 @@
     <a href="http://www.ru.nl/sign-lang" id='logoholder' class='visible-lg visible-md visible-sm'></a>
 </div>
 
-<div id='navbar-menus' class="collapse navbar-collapse navbar-upper navbar-default" role="navigation" style="display:inline;">
+<div id='navbar-menus' class="collapse navbar-collapse navbar-upper navbar-default" role="navigation" style="display:inline;box-sizing:content-box;padding:0;">
 
   <!-- Collect the nav links, forms, and other content for toggling -->
   <div class="nav navbar-upper" id="menu-pull-downs" style="display:inline;padding-left:0px;box-sizing:content-box;">
 
-    <nav class="nav navbar-left">
+    <nav class="nav navbar-upper">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#signbank-menus">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+    <div class="collapse navbar-collapse" id="signbank-menus">
     <ul class="nav navbar-left navbar-nav" style="margin-left:15px;box-sizing:content-box;">
     {# add in the top level menu items from pages #}
     {% for item in menu %}
 
-        {% if item.children %} 
+        {% if item.children %}
         <li class='dropdown'>
              <a href="{{ URL }}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
              	{% if WEBSITE_LANGUAGE == "nl" %}
@@ -51,8 +60,8 @@
                  {{subitem.title}}
              	{% endif %}
                 </a></li>
-             {% endfor %} 
-             </ul> 
+             {% endfor %}
+             </ul>
         </li>
       {% else %}
         <li><a style="padding-left: 0px;" href="{{ URL }}{{item.url}}">
@@ -68,7 +77,6 @@
     {% endfor %}
 
     </ul>
-    </nav>
     <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}signs/search">
             <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="40" size="14">
             <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" value="{{ query }}" maxlength="40" size="16">
@@ -85,6 +93,9 @@
             <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
         {% endif %}
       </div>
+    </div>
+    </div>
+  </nav>
 
   </div>
 
