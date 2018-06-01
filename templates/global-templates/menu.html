@@ -80,7 +80,7 @@
     <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}signs/search">
             <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="40" size="14">
             <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" value="{{ query }}" maxlength="40" size="16">
-        <button style="display: none;" class='form-control' type='submit' style="font-weight:bold;background-color:LightGrey"><img id='mag-glass' src='{{ STATIC_URL }}images/rightpointing_magnifying_glass.png' style="width:18px; height:auto; margin: 0px;"></button>
+          <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
     </form>
 
       <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">

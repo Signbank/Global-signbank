@@ -161,3 +161,17 @@ legend
     border-right-width: 0px;
     margin-top: 0px;
 }
+
+.invisible_button
+{
+    border: none;
+    background-color: rgba(0,0,0,0%);
+    box-shadow: none;
+    margin-left: -4px;
+    outline: none;
+}
+
+#mag-glass
+{
+    width:14px;
+}
