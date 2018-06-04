@@ -1594,7 +1594,14 @@ def package(request):
 
 
 def info(request):
-    return HttpResponse(json.dumps([ settings.LANGUAGE_NAME, settings.COUNTRY_NAME ]), content_type='application/json')
+    import guardian
+    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
+    user_datasets_names = [dataset.name for dataset in user_datasets]
+
+    # Put the default dataset in first position
+    user_datasets_names.insert(0, user_datasets_names.pop(user_datasets_names.index(DEFAULT_DATASET)))
+    
+    return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
 
 
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
