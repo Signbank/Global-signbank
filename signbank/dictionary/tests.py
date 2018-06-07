@@ -102,7 +102,7 @@ class BasicCRUDTests(TestCase):
         response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Your are not authorized to change the selected dataset.")
+        self.assertContains(response, "You are not authorized to change the selected dataset.")
 
         # Give the test user permission to change a dataset
         assign_perm('change_dataset', self.user, test_dataset)
