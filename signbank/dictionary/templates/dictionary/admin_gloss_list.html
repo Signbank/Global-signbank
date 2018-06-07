@@ -10,8 +10,9 @@
 
 {% block extrajs %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-
-    <script type='text/javascript'>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+<script type='text/javascript'>
     var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 
@@ -50,6 +51,138 @@
                 }
              }
          }
+
+         $('#id_handedness').attr('multiple','multiple');
+         $('#id_handedness').attr('class',"js-example-basic-multiple form-control");
+         $('#id_handedness').attr('name','handedness[]');
+         $('#id_handedness').css('width', '100%');
+         $('#id_handedness').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_handedness').val(null).trigger('change');
+
+         $('#id_domhndsh').attr('multiple','multiple');
+         $('#id_domhndsh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_domhndsh').attr('name','domhndsh[]');
+         $('#id_domhndsh').css('width', '100%');
+         $('#id_domhndsh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_domhndsh').val(null).trigger('change');
+
+         $('#id_subhndsh').attr('multiple','multiple');
+         $('#id_subhndsh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_subhndsh').attr('name','subhndsh[]');
+         $('#id_subhndsh').css('width', '100%');
+         $('#id_subhndsh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_subhndsh').val(null).trigger('change');
+
+         $('#id_handCh').attr('multiple','multiple');
+         $('#id_handCh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_handCh').attr('name','handCh[]');
+         $('#id_handCh').css('width', '100%');
+         $('#id_handCh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_handCh').val(null).trigger('change');
+
+         $('#id_relatArtic').attr('multiple','multiple');
+         $('#id_relatArtic').attr('class',"js-example-basic-multiple form-control");
+         $('#id_relatArtic').attr('name','relatArtic[]');
+         $('#id_relatArtic').css('width', '100%');
+         $('#id_relatArtic').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_relatArtic').val(null).trigger('change');
+
+         $('#id_locprim').attr('multiple','multiple');
+         $('#id_locprim').attr('class',"js-example-basic-multiple form-control");
+         $('#id_locprim').attr('name','locprim[]');
+         $('#id_locprim').css('width', '100%');
+         $('#id_locprim').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_locprim').val(null).trigger('change');
+
+         $('#id_relOriMov').attr('multiple','multiple');
+         $('#id_relOriMov').attr('class',"js-example-basic-multiple form-control");
+         $('#id_relOriMov').attr('name','relOriMov[]');
+         $('#id_relOriMov').css('width', '100%');
+         $('#id_relOriMov').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_relOriMov').val(null).trigger('change');
+
+         $('#id_relOriLoc').attr('multiple','multiple');
+         $('#id_relOriLoc').attr('class',"js-example-basic-multiple form-control");
+         $('#id_relOriLoc').attr('name','relOriLoc[]');
+         $('#id_relOriLoc').css('width', '100%');
+         $('#id_relOriLoc').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_relOriLoc').val(null).trigger('change');
+
+         $('#id_oriCh').attr('multiple','multiple');
+         $('#id_oriCh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_oriCh').attr('name','oriCh[]');
+         $('#id_oriCh').css('width', '100%');
+         $('#id_oriCh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_oriCh').val(null).trigger('change');
+
+         $('#id_contType').attr('multiple','multiple');
+         $('#id_contType').attr('class',"js-example-basic-multiple form-control");
+         $('#id_contType').attr('name','contType[]');
+         $('#id_contType').css('width', '100%');
+         $('#id_contType').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_contType').val(null).trigger('change');
+
+         $('#id_movSh').attr('multiple','multiple');
+         $('#id_movSh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_movSh').attr('name','movSh[]');
+         $('#id_movSh').css('width', '100%');
+         $('#id_movSh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_movSh').val(null).trigger('change');
+
+         $('#id_movDir').attr('multiple','multiple');
+         $('#id_movDir').attr('class',"js-example-basic-multiple form-control");
+         $('#id_movDir').attr('name','movDir[]');
+         $('#id_movDir').css('width', '100%');
+         $('#id_movDir').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_movDir').val(null).trigger('change');
     });
 
 
@@ -77,14 +210,14 @@ function clearForm(myFormElement) {
 
         case "radio":
         case "checkbox":
-            if (elements[i].checked) {
+          if (elements[i].checked) {
               elements[i].checked = false;
           }
           break;
 
         case "select-one":
         case "select-multiple":
-                    elements[i].selectedIndex = -1;
+          elements[i].selectedIndex = -1;
           break;
 
         default:
@@ -160,9 +293,8 @@ function do_toggle_groups(el) {
   }
   document.getElementById('adminsearch').submit();
 }
-
-
    </script>
+
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
 
 {% endblock %}
@@ -172,6 +304,10 @@ function do_toggle_groups(el) {
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
 {% if perms.dictionary.search_gloss %}
+
+{{ form.media.css }}
+{{ form.media.js }}
+
 <form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
@@ -261,6 +397,11 @@ function do_toggle_groups(el) {
                                 </td>
                               </tr>
 
+                                                    <span class="select2 select2-container select2-container--below">
+                                                        <span class="selection">
+                                                            <span class="select2-selection select2-selection--multiple" role="combobox" aria-haspopup="true" tabindex="-1"></span>
+                                                        </span>
+                                                    </span>
                         </table>
 
                         <table class='table'>
@@ -313,7 +454,7 @@ function do_toggle_groups(el) {
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
                                     <tr>
-                                        <td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td>
+                                        <td><label>{{label}}</label></td><td>{{field}}</td>
                                         {% if fieldname == 'handedness' %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
                                                 <td><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td>{{handednessfield}}</td>
@@ -328,7 +469,6 @@ function do_toggle_groups(el) {
                                             {% endfor %}
                                         {% endif %}
                                     </tr>
-
                                 {% endfor %}
 
                             </table>
