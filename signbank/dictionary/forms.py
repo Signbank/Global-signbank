@@ -272,6 +272,21 @@ class GlossSearchForm(forms.ModelForm):
                                                          FieldChoice.objects.filter(field__iexact='MovementDir')],
                                                 required=False, widget=Select2)
 
+    namEnt = forms.TypedMultipleChoiceField(label=_(u'Named Entity'),
+                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                         FieldChoice.objects.filter(field__iexact='NamedEntity')],
+                                                required=False, widget=Select2)
+
+    semField = forms.TypedMultipleChoiceField(label=_(u'Semantic Field'),
+                                            choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                     FieldChoice.objects.filter(field__iexact='SemField')],
+                                            required=False, widget=Select2)
+
+    wordClass = forms.TypedMultipleChoiceField(label=_(u'Word class'),
+                                            choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                     FieldChoice.objects.filter(field__iexact='WordClass')],
+                                            required=False, widget=Select2)
+
     isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     inWeb = forms.ChoiceField(label=_(u'Is in Web dictionary'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole = forms.ChoiceField(label=_(u'Note type'),choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -314,7 +329,10 @@ class GlossSearchForm(forms.ModelForm):
                    'mouthG',
                    'mouthing', 'phonetVar', 'domSF', 'domFlex', 'oriChAbd', 'oriChFlex',
 
-                   'iconImg','iconType','namEnt', 'semField', 'wordClass', 'wordClass2', 'derivHist', 'lexCatNotes', 'valence',
+                   'iconImg','iconType',
+                   # 'namEnt', 'semField',
+                   # 'wordClass',
+                   'wordClass2', 'derivHist', 'lexCatNotes', 'valence',
 
                    'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                    'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')

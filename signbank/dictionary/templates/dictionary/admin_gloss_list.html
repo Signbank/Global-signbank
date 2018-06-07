@@ -183,7 +183,42 @@
             width: 'resolve'
          });
          $('#id_movDir').val(null).trigger('change');
-    });
+
+
+         $('#id_namEnt').attr('multiple','multiple');
+         $('#id_namEnt').attr('class',"js-example-basic-multiple form-control");
+         $('#id_namEnt').attr('name','namEnt[]');
+         $('#id_namEnt').css('width', '100%');
+         $('#id_namEnt').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_namEnt').val(null).trigger('change');
+
+         $('#id_semField').attr('multiple','multiple');
+         $('#id_semField').attr('class',"js-example-basic-multiple form-control");
+         $('#id_semField').attr('name','semField[]');
+         $('#id_semField').css('width', '100%');
+         $('#id_semField').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_wordClass').val(null).trigger('change');
+
+         $('#id_wordClass').attr('multiple','multiple');
+         $('#id_wordClass').attr('class',"js-example-basic-multiple form-control");
+         $('#id_wordClass').attr('name','wordClass[]');
+         $('#id_wordClass').css('width', '100%');
+         $('#id_wordClass').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_wordClass').val(null).trigger('change');
+
+});
 
 
 

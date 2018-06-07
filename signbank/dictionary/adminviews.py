@@ -550,7 +550,7 @@ class GlossListView(ListView):
             qs = qs.filter(definition__published=val)
 
         fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
-                      'movSh', 'movDir', 'contType']
+                      'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
 
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
@@ -581,7 +581,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(handedness__in=vals)
 
             if fieldnamemulti == 'domhndsh':
@@ -589,7 +588,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(domhndsh__in=vals)
 
             if fieldnamemulti == 'subhndsh':
@@ -597,7 +595,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(subhndsh__in=vals)
 
             if fieldnamemulti == 'locprim':
@@ -605,7 +602,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(locprim__in=vals)
 
             if fieldnamemulti == 'relatArtic':
@@ -613,7 +609,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(relatArtic__in=vals)
 
             if fieldnamemulti == 'relOriMov':
@@ -621,7 +616,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(relOriMov__in=vals)
 
             if fieldnamemulti == 'relOriLoc':
@@ -629,7 +623,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(relOriLoc__in=vals)
 
             if fieldnamemulti == 'oriCh':
@@ -637,7 +630,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(oriCh__in=vals)
 
             if fieldnamemulti == 'handCh':
@@ -645,7 +637,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(handCh__in=vals)
 
             if fieldnamemulti == 'movSh':
@@ -653,7 +644,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(movSh__in=vals)
 
             if fieldnamemulti == 'movDir':
@@ -661,7 +651,6 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(movDir__in=vals)
 
             if fieldnamemulti == 'contType':
@@ -669,8 +658,28 @@ class GlossListView(ListView):
                 if '' in vals:
                     vals.remove('')
                 if vals != []:
-                    print('multiple input values list ', fieldnamemulti, ': ', vals)
                     qs = qs.filter(contType__in=vals)
+
+            if fieldnamemulti == 'namEnt':
+                vals = get.getlist('namEnt[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(namEnt__in=vals)
+
+            if fieldnamemulti == 'semField':
+                vals = get.getlist('semField[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(semField__in=vals)
+
+            if fieldnamemulti == 'wordClass':
+                vals = get.getlist('wordClass[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(wordClass__in=vals)
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
