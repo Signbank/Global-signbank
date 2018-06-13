@@ -6,6 +6,9 @@ DATABASES = {'default':
                 {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME': WRITABLE_FOLDER+'database/signbank.db',
+                    'TEST': {
+                        'NAME': WRITABLE_FOLDER+'database/test-signbank.db',
+                    }
                 }
             }
 
@@ -75,6 +78,7 @@ SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 
 SHOW_MORPHEME_SEARCH = False
 SHOW_DATASET_INTERFACE_OPTIONS = False
+DEFAULT_DATASET = 'ASL'
 
 EAF_FILES_LOCATION = ''
 METADATA_LOCATION = ''
