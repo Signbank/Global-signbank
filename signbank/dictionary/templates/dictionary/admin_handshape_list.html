@@ -42,32 +42,21 @@
 function clearForm(myFormElement) {
 
   var elements = myFormElement.elements;
-  <!--alert('bla');-->
-  <!--console.log("inside ClearForm");-->
+
   myFormElement.reset();
-  <!--console.log("number of elements to traverse: " + elements.length);-->
 
   for(i=0; i<elements.length; i++) {
 
       field_type = elements[i].type.toLowerCase();
-      <!--console.log("field type: " + field_type);-->
       field_name = elements[i].name;
-      <!--console.log("field name: " + field_name);-->
-      <!--console.log("element " + i + " has name " + field_name + " and type " + field_type);-->
 
-      if (field_name == 'paginate_by') {
-        elements[i].selectedIndex = 3;
-        elements[i].prop('selectedIndex',3).val('3').attr("selected", true);
-      }
-      else if (field_name == 'search_type') {
+      if (field_name == 'search_type') {
         elements[i].value = "handshape";
       }
       else if (field_name == 'sortOrder') {
         elements[i].value = "machine_value";
-        <!--console.log("name is sortOrder");-->
       }
       else {
-          <!--console.log("after testing sortOrder");-->
           switch(field_type) {
 
             case "text":
@@ -168,24 +157,20 @@ function do_adminsearch(el) {
 </div>
 <div id='searchformwell' class='well'>
 <form name='adminsearch' id='adminsearch'>
-<div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}</div>
-<div id='query-area' class='collapse {% if not request.GET.search and not request.GET.keyword and not request.GET.englishGloss and not show_all %} in {% endif %}'>
+<div class="panel panel-default">
+<div class="panel-heading" data-toggle="collapse" data-target="#queryarea">{% trans "Form your query" %}</div>
+<div id='queryarea' class='panel-collapse collapse'>
         <div class="hidden">
             <input name='sortOrder' class='form-control' value='machine_value' >
             <input name='search_type' class='form-control' value='handshape'>
         </div>
-
-        <div  class="panel panel-default">
-            <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Handshape" %}</div>
-
-            <div id='searchpanels' class='panel-collapse collapse'>
-                {% with request.LANGUAGE_CODE as language %}
+     {% with request.LANGUAGE_CODE as language %}
                 {% if language == 'nl' %}
                 <div id='handshape_name'>
                     {% csrf_token %}
                     <table class='table'>
                         <tr id='handshape_name_field'>
-                            <td><label for='id_dutch_name'></label>{% trans "Handshape name" %}</td>
+                            <td><label for='id_dutch_name'>{% trans "Handshape name" %}</label></td>
                             <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='dutch_name' type='text'
                                        value='{{searchform.dutch_name.value|default:'' }}'/></td>
                         </tr>
@@ -214,7 +199,7 @@ function do_adminsearch(el) {
                     </table>
                 </div>
                 {% endif %}
-                {% endwith %}
+    {% endwith %}
                 {# spacing div to allow room for typeahead dropdown #}
                 <div style='height: 4em'></div>
 
@@ -375,13 +360,10 @@ function do_adminsearch(el) {
                         <tr><td><label for='id_hsFingConf'>{{searchform.hsFingConf.label}}</label></td><td>{{searchform.hsFingConf}}</td></tr>
                         <tr><td><label for='id_hsFingConf2'>{{searchform.hsFingConf2.label}}</label></td><td>{{searchform.hsFingConf2}}</td></tr>
                         <tr><td><label for='id_hsNumSel'>{{searchform.hsNumSel.label}}</label></td><td>{{searchform.hsNumSel}}</td></tr>
-                        <!--<tr><td><label for='id_hsThumb'>{{searchform.hsThumb.label}}</label></td><td>{{searchform.hsThumb}}</td></tr>-->
                         <tr><td><label for='id_hsSpread'>{{searchform.hsSpread.label}}</label></td><td>{{searchform.hsSpread}}</td></tr>
                         <tr><td><label for='id_hsAperture'>{{searchform.hsAperture.label}}</label></td><td>{{searchform.hsAperture}}</td></tr>
                 </table>
             </div>
-          </div>
-</div>
 
 <div class='btn-group'>
     <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
@@ -404,17 +386,12 @@ function do_adminsearch(el) {
     <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
     <input type="submit" style="visibility: hidden;" />
 
+    {% if perms.dictionary.export_csv %}
+    <input class='btn btn-default' type='submit' name='format' value='CSV'>
+    {% endif %}
+
     <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
 </div>
-
-<div class='form-group' id='paginate_by'>
-    <label for='paginate_by'>{% trans "Results per page" %}</label>
-    <select class='form-control' name="paginate_by" type="paginate_by" value="{{paginate_by}}">
-        <option {% if paginate_by == 5 %}selected{% endif %} value="5">5</option>
-        <option {% if paginate_by == 10 %}selected{% endif %} value="10">10</option>
-        <option {% if paginate_by == 25 %}selected{% endif %} value="25">25</option>
-        <option {% if paginate_by == 50 %}selected{% endif %} value="50">50</option>
-    </select>
 </div>
 </form>
 </div>
@@ -423,7 +400,7 @@ function do_adminsearch(el) {
 
 {% if search_type == 'handshape' %}
 
-<p>{% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{handshapescount}}.</p>
+<p>{% trans "Number of matches:" %} {{ object_list|length }} {% trans "out of" %} {{handshapescount}}.</p>
 
 {% if object_list %}
 
@@ -597,7 +574,12 @@ function do_adminsearch(el) {
     {% for handshape in object_list %}
     <tr>
 
-      <td>{%if handshape.get_image_path %}<div class="thumbnail_container"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{handshape.get_image_path}}"></div>{% endif %}</td>
+      <td>{%if handshape.get_image_path != None %}
+          <div class="thumbnail_container">
+              <img class="thumbnail" src="{{protected_media_url}}{{handshape.get_image_path}}">
+          </div>
+          {% endif %}
+      </td>
 
         {% if language == 'nl' %}
         <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
@@ -679,7 +661,12 @@ function do_adminsearch(el) {
 
 {% elif search_type == 'sign_handshape' %}
 
-<p>{% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{signscount}}.</p>
+<p>{% trans "Number of matches:" %} {{ object_list|length }} {% trans "out of" %} {{signscount}}.
+        {% if selected_datasets %}
+        {% trans "Datasets:" %}
+        {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% endfor %}
+        {% endif %}</p>
 
 {% if object_list %}
 
@@ -704,8 +691,11 @@ function do_adminsearch(el) {
     {% for gloss in object_list %}
 
     <tr>
-      <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+      <td>{%if gloss.get_image_path != None %}
+          <div class="thumbnail_container">
+          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></a>
+          </div>
+          {% endif %}
       </td>
 
         {% for dataset_lang in dataset_languages %}
@@ -744,46 +734,5 @@ function do_adminsearch(el) {
 {% endif %}
 
 {% endif %}
-
-
-<div class="pagination">
-    <span class="step-links">
-
-        <ul class='pagination pagination-sm'>
-        {% if page_obj.has_previous %}
-            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&laquo;</a></li>
-        {% endif %}
-
-          {% if  page_obj.number > 10 %}
-            <li><a>...</a></li>
-          {% endif %}
-
-          {% for p in page_obj.paginator.page_range %}
-
-             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
-             <li {% ifequal p page_obj.number %}class='active'{% endifequal %}>
-             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
-             </li>
-             {% endif %}
-
-          {% endfor %}
-
-          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
-            <li><a>...</a></li>
-            <li>
-            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
-            </li>
-          {% endif %}
-
-        {% if page_obj.has_next %}
-            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&raquo;</a></li>
-
-
-      </ul>
-
-
-        {% endif %}
-    </span>
-</div>
 
 {% endblock %}

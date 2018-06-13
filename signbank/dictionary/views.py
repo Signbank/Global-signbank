@@ -22,13 +22,14 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
-    update_sequential_morphology, update_simultaneous_morphology, update_tags
+    update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
 
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import *
 from signbank.tools import save_media, compare_valuedict_to_gloss, MachineValueNotFoundError
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 
 import signbank.settings
 from signbank.settings.base import WRITABLE_FOLDER, URL
@@ -36,6 +37,8 @@ from django.utils.translation import override
 
 from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper
+import datetime as DT
+
 
 
 def login_required_config(f):
@@ -171,7 +174,6 @@ def word(request, keyword, n):
                               {'translation': trans.translation.text.encode('utf-8'),
                                'viewname': 'words',
                                'definitions': trans.gloss.definitions(),
-                               'gloss': trans.gloss,
                                'allkwds': allkwds,
                                'n': n,
                                'total': total,
@@ -212,7 +214,6 @@ def gloss(request, glossid):
         raise Http404
 
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
-#        return render_to_response('dictionary/not_allowed.html')
         return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
 
     allkwds = gloss.translation_set.all()
@@ -327,7 +328,19 @@ def missing_video_view(request):
                               {'glosses': glosses})
 
 def import_media(request,video):
-
+    """
+    Importing media is done as follows:
+    1. In the main folder for importing media all folders with names equal to dataset names are opened.
+    2. In each folder with a dataset name all folders with name equal to a three letter language code of the dataset
+    at hand are opened.
+    3 In the folders with a three letter language code as name all media file are imported.
+    
+    E.g. view the following folder structure:
+     <import folder>/ASL/eng/HOUSE.mp4
+     
+     where 'ASL' is the name of a dataset and 'eng' is the three letter language code of English which is one of the 
+     dataset languages of the dataset 'ASL'.
+    """
     out = '<p>Imported</p><ul>'
     overwritten_files = '<p>Of these files, these were overwritten</p><ul>'
     errors = []
@@ -339,73 +352,86 @@ def import_media(request,video):
         import_folder = settings.IMAGES_TO_IMPORT_FOLDER
         goal_directory = settings.GLOSS_IMAGE_DIRECTORY
 
+    print("Import folder: %s" % import_folder)
 
-    for filename in os.listdir(import_folder):
-
-        parts = filename.split('.')
-        idgloss = '.'.join(parts[:-1])
-        extension = parts[-1]
-
-        try:
-            gloss = Gloss.objects.get(id=idgloss)
-        except ObjectDoesNotExist:
-            errors.append('Failed at '+filename+'. Could not find '+idgloss+' (it should be a gloss ID).')
+    for dataset_folder_name in [name for name in os.listdir(import_folder) if os.path.isdir(os.path.join(import_folder, name))]:
+        # Check whether the folder name is equal to a dataset name
+        print("Dataset folder name: %s " % dataset_folder_name)
+        dataset = Dataset.objects.get(name=dataset_folder_name)
+        if not dataset:
             continue
 
-        default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
+        dataset_folder_path = os.path.join(import_folder, dataset_folder_name)
+        for lang3code_folder_name in [name for name in os.listdir(dataset_folder_path) if os.path.isdir(os.path.join(dataset_folder_path, name))]:
+            # Check whether the folder name is equal to a three letter code for language of the dataset at hand
+            print("Lang3code folder name: %s " % lang3code_folder_name)
+            languages = dataset.translation_languages.filter(language_code_3char=lang3code_folder_name)
+            if languages:
+                language = languages[0]
+            else:
+                continue
 
-        overwritten, was_allowed = save_media(import_folder,settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
+            lang3code_folder_path = os.path.join(dataset_folder_path, lang3code_folder_name) + "/"
+            for filename in os.listdir(lang3code_folder_path):
 
-        if not was_allowed:
-            errors.append('Failed to move media file for '+default_annotationidgloss+
-                          '. Either the source could not be read or the destination could not be written.')
-            continue
+                (filename_without_extension, extension) = os.path.splitext(filename)
+                extension = extension[1:]  # Remove the dot
 
-        out += '<li>'+filename+'</li>'
+                try:
+                    glosses = Gloss.objects.filter(dataset=dataset, annotationidglosstranslation__language=language,
+                                                 annotationidglosstranslation__text__exact=filename_without_extension)
+                    if glosses:
+                        gloss = glosses[0]
+                    else:
+                        errors.append(
+                            'Failed at ' + filename + '. Could not find ' + filename_without_extension + ' (it should be a gloss ID).')
+                        continue
+                except ObjectDoesNotExist:
+                    errors.append('Failed at '+filename+'. Could not find '+filename_without_extension+' (it should be a gloss ID).')
+                    continue
 
-        # If it is a video also extract a still image and generate a thumbnail version
-        if video:
-            annotation_id = default_annotationidgloss
-            destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
-            video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
-            video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
+                default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
 
-            try:
-                print("Trying to resize video " + destination_folder+video_filename)
+                overwritten, was_allowed = save_media(lang3code_folder_path,lang3code_folder_name,
+                                                      settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
-                if os.path.isfile(video_filepath_small):
-                    print("Making a backup of " + video_filepath_small)
-                    # Make a backup
-                    backup_id = 1
-                    made_backup = False
-                    while not made_backup:
-                        if not os.path.isfile(video_filepath_small + '_' + str(backup_id)):
-                            os.rename(video_filepath_small, video_filepath_small + '_' + str(backup_id))
-                            made_backup = True
-                        else:
-                            backup_id += 1
+                if not was_allowed:
+                    errors.append('Failed to move media file for '+default_annotationidgloss+
+                                  '. Either the source could not be read or the destination could not be written.')
+                    continue
 
-                from CNGT_scripts.python.resizeVideos import VideoResizer
-                from signbank.settings.server_specific import FFMPEG_PROGRAM
-                resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
-                resizer.run()
-            except ImportError as i:
-                print(i.message)
-            except IOError as io:
-                print(io.message)
+                out += '<li>'+filename+'</li>'
 
-            # Issue #255: generate still image
-            try:
-                print("Trying to generate still images for " + destination_folder+video_filename)
-                from signbank.tools import generate_still_image
-                generate_still_image(annotation_id[:2],
-                                     destination_folder,
-                                     video_filename)
-            except ImportError as i:
-                print(i.message)
+                # If it is a video also extract a still image and generate a thumbnail version
+                if video:
+                    annotation_id = default_annotationidgloss
+                    destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
+                    video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
+                    video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
 
-        if overwritten:
-            overwritten_files += '<li>'+filename+'</li>'
+                    try:
+                        print("Trying to resize video " + destination_folder+video_filename)
+                        from CNGT_scripts.python.resizeVideos import VideoResizer
+                        from signbank.settings.server_specific import FFMPEG_PROGRAM
+                        resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
+                        resizer.run()
+                    except ImportError as i:
+                        print(i.message)
+                    except IOError as io:
+                        print(io.message)
+
+                    # Issue #255: generate still image
+                    try:
+                        print("Trying to generate still images for " + destination_folder+video_filename)
+                        from signbank.tools import generate_still_image
+                        generate_still_image(annotation_id[:2],
+                                             destination_folder,
+                                             video_filename)
+                    except ImportError as i:
+                        print(i.message)
+
+                if overwritten:
+                    overwritten_files += '<li>'+filename+'</li>'
 
     overwritten_files += '</ul>'
     out += '</ul>'+overwritten_files
@@ -563,7 +589,7 @@ def add_new_sign(request):
     context['selected_datasets'] = selected_datasets
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
-    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages)
+    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user)
 
     return render(request,'dictionary/add_gloss.html',context)
 
@@ -598,7 +624,7 @@ def add_new_morpheme(request):
     oContext['selected_datasets'] = selected_datasets
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     oContext['dataset_languages'] = dataset_languages
-    oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages)
+    oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user)
 
     field = 'mrpType'
     # Get and save the choice list for this field
@@ -616,7 +642,7 @@ def add_new_morpheme(request):
     oContext['choice_lists'] = json.dumps(oContext['choice_lists'])
 
     # And add the kind of field
-    kind = 'list';
+    kind = 'list'
 
     oContext['morph_fields'].append(['(Make a choice)', field, "Morpheme type", kind])
 
@@ -626,21 +652,17 @@ def add_new_morpheme(request):
 
 
 def import_csv(request):
-
-    if not(request.user.is_staff) and len(request.user.groups.filter(name="Publisher")) == 0:
-        return HttpResponse('You are not allowed to see this page.')
-
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user,'view_dataset',Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
     user_datasets_names = [ dataset.name for dataset in user_datasets ]
-    dataset_languages = Language.objects.filter(dataset__in=user_datasets).distinct()
 
-    # print('datasets: ', my_datasets)
+    selected_datasets = get_selected_datasets_for_user(user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     uploadform = signbank.dictionary.forms.CSVUploadForm
     changes = []
-    error = False
+    error = []
     creation = []
     gloss_already_exists = []
     gloss_already_exists_dutch = []
@@ -658,15 +680,12 @@ def import_csv(request):
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
         creation = []
 
-        # print('import CSV: csv_lines: ', csv_lines)
-
         for nl, line in enumerate(csv_lines):
 
             #The first line contains the keys
             if nl == 0:
                 keys = line.strip().split(',')
                 num_keys = len(keys)
-                # print("number of keys: ", num_keys, ', keys: ', keys)
                 continue
             elif len(line) == 0:
                 continue
@@ -675,7 +694,6 @@ def import_csv(request):
             value_dict = {}
 
             for nv,value in enumerate(values):
-                # print('try import csv: line number: ', nv, ', value: ', value)
 
                 try:
                     if keys[nv] != '':
@@ -684,11 +702,7 @@ def import_csv(request):
                         if value != '':
                             # empty column header
                             e = 'Extra data found in column without header, row ' + str(nl) + ', column ' + str(nv) + ': ' + value
-
-                            if not error:
-                                error = [e]
-                            else:
-                                error.append(e)
+                            error.append(e)
                         pass
                 except IndexError:
                     print('index error import csv: line number: ', nv, ', value: ', value)
@@ -698,6 +712,7 @@ def import_csv(request):
                 """Checks if all columns for creating a gloss are there. Annotation ID Gloss needs to be
                 checked dynamically for each dataset language."""
                 if 'Lemma ID Gloss' not in value_dict or 'Dataset' not in value_dict:
+                    # columns are missing
                     return False
                 else:
                     dataset_name = value_dict['Dataset'].strip()
@@ -706,51 +721,54 @@ def import_csv(request):
                         for language in dataset.translation_languages.all():
                             column_name = "Annotation ID Gloss (%s)" % language.name_en
                             if column_name not in value_dict:
+                                # column is missing
                                 return False
                     else:
                         return False
                 return True
 
-            # print("import CSV: value_dict: ", value_dict)
+            # The above function checks that the required columns are available, but we still need to check that
+            # values are present in the row for these columns
             try:
+                # Check whether the user may change the dataset of the current row
+                if 'Dataset' in value_dict:
+                    dataset_name = value_dict['Dataset'].strip()
+                    try:
+                        dataset = Dataset.objects.get(name=dataset_name)
+                    except:
+                        # An error message should be returned here, the dataset does not exist
+                        e_dataset_not_found = 'The dataset %s.' % value_dict['Dataset'].strip() + ' does not exist.'
+                        error.append(e_dataset_not_found)
+                        continue
+                    if dataset_name not in user_datasets_names:
+                        e3 = 'You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                        error.append(e3)
+                        continue
+                if not value_dict_has_required_columns(value_dict):
+                    # not enough columns for creating glosses, input file needs fixing
+                    e1 = 'To create glosses, the following columns are required: ' \
+                         + 'Dataset, Lemma ID Gloss, and Annotation ID Gloss for each translation language of the Dataset.'
+                    e2 = 'To update glosses, column Signbank ID is required.'
+                    error.append(e1).append(e2)
+                    break
+
                 if 'Signbank ID' in value_dict:
                     pk = int(value_dict['Signbank ID'])
                 # no column Signbank ID
-                elif not value_dict_has_required_columns(value_dict):
-                    # not enough columns for creating glosses, input file needs fixing
-                    e1 = 'To create glosses, the following columns are required: ' \
-                        + 'Dataset, Lemma ID Gloss, Annotation ID Gloss: Dutch, Annotation ID Gloss: English.'
-                    e2 = 'To update glosses, column Signbank ID is required.'
-
-                    if not error:
-                        error = [e1, e2]
-                    else:
-                        error.append(e1).append(e2)
-                    break
 
                 else:
                     (new_gloss, already_exists, error_create) \
                         = create_gloss_from_valuedict(value_dict,user_datasets_names,nl)
-                    print(new_gloss)
                     creation += new_gloss
                     gloss_already_exists += already_exists
                     if len(error_create):
                         # more than one error found
                         errors_found_string = '\n'.join(error_create)
-                        # print("errors found string: ", errors_found_string)
-
-                        if not error:
-                            error = [errors_found_string]
-                        else:
-                            error.append(errors_found_string)
+                        error.append(errors_found_string)
                     continue
             except ValueError:
                 e = 'Signbank ID must be numerical: '+ str(value_dict['Signbank ID'])
-
-                if not error:
-                    error = [e]
-                else:
-                    error.append(e)
+                error.append(e)
 
                 continue
 
@@ -759,43 +777,24 @@ def import_csv(request):
             except ObjectDoesNotExist as e:
 
                 e = 'Could not find gloss for ID '+str(pk)
+                error.append(e)
 
-                if not error:
-                    error = [e]
-                else:
-                    error.append(e)
-
-                print('import_csv gloss does not exist, line ', str(nl), ' gloss id ', str(pk))
+                # print('import_csv gloss does not exist, line ', str(nl), ' gloss id ', str(pk))
                 continue
 
-            # print('line after gloss does not exist, line ', str(nl))
             try:
                 (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss,user_datasets_names)
                 changes += changes_found
-                # changes += compare_valuedict_to_gloss(value_dict,gloss)
 
                 if len(errors_found):
                     # more than one error found
                     errors_found_string = '\n'.join(errors_found)
-                    # print("errors found string: ", errors_found_string)
-
-                    if not error:
-                        error = [errors_found_string]
-                    else:
-                        error.append(errors_found_string)
+                    error.append(errors_found_string)
 
             except MachineValueNotFoundError as e:
 
-                # print('exception changes: ', e)
-
-                s = str(e)
-
-                # allow for returning multiple error messages via the exception
-                if not error:
-                    error = [e]
-                else:
-                    # print('else case')
-                    error.append(e)
+                e_string = str(e)
+                error.append(e_string)
 
         stage = 1
 
@@ -823,12 +822,26 @@ def import_csv(request):
                 #In case there's no dot, this is not a value we set at the previous page
                 except ValueError:
                     # when the database token csrfmiddlewaretoken is passed, there is no dot
-                    # print("no dot in key error")
                     continue
 
                 gloss = Gloss.objects.get(pk=pk)
 
-                #Updating the keywords is a special procedure, because it has relations to other parts of the database
+                # Updating the annotation idgloss is a special procedure, because it has relations to other parts of the
+                # database
+                annotation_idgloss_key_prefix = "Annotation ID Gloss ("
+                if fieldname.startswith(annotation_idgloss_key_prefix):
+                    language_name = fieldname[len(annotation_idgloss_key_prefix):-1]
+                    languages = Language.objects.filter(name_en=language_name)
+                    if languages:
+                        language = languages[0]
+                        annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
+                        if annotation_idglosses:
+                            annotation_idgloss = annotation_idglosses[0]
+                            annotation_idgloss.text = new_value
+                            annotation_idgloss.save()
+                    continue
+
+                # Updating the keywords is a special procedure, because it has relations to other parts of the database
                 if fieldname == 'Keywords':
                     # The following is necessary to process keywords for multiple languages
                     keywords_dict = {}
@@ -845,10 +858,7 @@ def import_csv(request):
 
                 if fieldname == 'SignLanguages':
 
-                    # print('update SignLanguages')
-
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Sign languages new list: ', new_human_value_list)
 
                     update_signlanguage(gloss,None,new_human_value_list)
                     gloss.save()
@@ -856,10 +866,7 @@ def import_csv(request):
 
                 if fieldname == 'Dialects':
 
-                    # print('update Dialects')
-
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Dialects new list: ', new_human_value_list)
 
                     update_dialect(gloss,None,new_human_value_list)
                     gloss.save()
@@ -882,7 +889,6 @@ def import_csv(request):
                 if fieldname == 'Sequential Morphology':
 
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Sequential Morphology new list: ', new_human_value_list)
 
                     update_sequential_morphology(gloss,None,new_human_value_list)
 
@@ -891,18 +897,22 @@ def import_csv(request):
                 if fieldname == 'Simultaneous Morphology':
 
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Sequential Simultaneous new list: ', new_human_value_list)
 
                     update_simultaneous_morphology(gloss,None,new_human_value_list)
 
                     continue
 
-                if fieldname == 'Relations to other signs':
-
-                    # print('update Relations to other signs')
+                if fieldname == 'Blend Morphology':
 
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Relations to other signs new list: ', new_human_value_list)
+
+                    update_blend_morphology(gloss,None,new_human_value_list)
+
+                    continue
+
+                if fieldname == 'Relations to other signs':
+
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                     subst_relations(gloss,None,new_human_value_list)
                     gloss.save()    # is this needed?
@@ -910,10 +920,7 @@ def import_csv(request):
 
                 if fieldname == 'Relations to foreign signs':
 
-                    # print('update Relations to foreign signs')
-
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
-                    # print('Relations to foreign signs new list: ', new_human_value_list)
 
                     subst_foreignrelations(gloss,None,new_human_value_list)
                     gloss.save()    # is this needed?
@@ -922,7 +929,6 @@ def import_csv(request):
                 if fieldname == 'Tags':
 
                     new_human_value_list = [v.strip().replace(' ','_') for v in new_value.split(',')]
-                    # print('Tags list: ', new_human_value_list)
 
                     update_tags(gloss,None,new_human_value_list)
                     gloss.save()    # is this needed?
@@ -951,23 +957,20 @@ def import_csv(request):
                     #Also update the video if needed
                     if fieldname == 'idgloss':
                         video_path_after = settings.WRITABLE_FOLDER+gloss.get_video_path()
-                        os.rename(video_path_before,video_path_after)
+                        if os.path.isfile(video_path_before):
+                            os.rename(video_path_before,video_path_after)
             stage = 2
 
         elif csv_create:
-            # print('create glosses')
 
             glosses_to_create = dict()
 
             for key, new_value in request.POST.items():
 
-                # print('key, new value: ', key, ', ', new_value)
-
                 # obtain tuple values for each proposed gloss
-
+                # pk is the row number in the import file!
                 try:
                     pk, fieldname = key.split('.')
-                    # print('field name: ', fieldname)
 
                     if pk not in glosses_to_create.keys():
                         glosses_to_create[pk] = dict()
@@ -977,7 +980,6 @@ def import_csv(request):
                 except ValueError:
                     # when the database token csrfmiddlewaretoken is passed, there is no dot
                     continue
-            # print('dictionary: ', glosses_to_create)
 
             # these should be error free based on the django template import_csv.html
             for row in glosses_to_create.keys():
@@ -986,13 +988,17 @@ def import_csv(request):
 
                 if dataset == 'None':
                     # this is an error, this should have already been caught
-                    # dataset_id = None
                     continue
                 else:
                     dataset_id = Dataset.objects.get(name=dataset)
                 new_gloss = Gloss()
                 new_gloss.idgloss = lemma_id_gloss
                 new_gloss.dataset = dataset_id
+                # Save the new gloss before updating it
+                new_gloss.save()
+                new_gloss.creationDate = DT.datetime.now()
+                new_gloss.creator.add(request.user)
+                new_gloss.excludeFromEcv = False
                 new_gloss.save()
 
                 for language in dataset_languages:
@@ -1004,8 +1010,6 @@ def import_csv(request):
                         annotationidglosstranslation.text = annotation_id_gloss
                         annotationidglosstranslation.save()
 
-                # print('new gloss created: ', new_gloss.idgloss)
-
             stage = 2
         else:
             stage = 0
@@ -1015,14 +1019,12 @@ def import_csv(request):
 
         stage = 0
 
-    # print('before return creation: ', creation)
-    # print('before return changes: ', changes)
-
     return render(request,'dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,
                                                         'creation':creation,
                                                         'gloss_already_exists':gloss_already_exists,
                                                         'error':error,
-                                                        'dataset_languages':dataset_languages})
+                                                        'dataset_languages':dataset_languages,
+                                                        'selected_datasets':selected_datasets})
 
 def switch_to_language(request,language):
 
@@ -1037,24 +1039,29 @@ def recently_added_glosses(request):
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     try:
-        from signbank.settings.base import RECENTLY_ADDED_SIGNS_PERIOD
-        import datetime as DT
+        from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
         recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
+        recent_glosses = Gloss.objects.filter(dataset__in=selected_datasets).filter(
+                          creationDate__range=[recently_added_signs_since_date, DT.datetime.now()]).order_by(
+                          'creationDate').reverse()
         return render(request, 'dictionary/recently_added_glosses.html',
-                      {'glosses': Gloss.objects.filter(
-                          creationDate__range=(recently_added_signs_since_date, DT.datetime.now())).order_by(
-                          'creationDate').reverse(),
-                       'dataset_languages': dataset_languages})
+                      {'glosses': recent_glosses,
+                       'dataset_languages': dataset_languages,
+                        'selected_datasets':selected_datasets,
+                        'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     except:
         return render(request,'dictionary/recently_added_glosses.html',
-                      {'glosses':Gloss.objects.filter(isNew=True).order_by('creationDate').reverse(),
-                       'dataset_languages': dataset_languages})
+                      {'glosses':Gloss.objects.filter(dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
+                       'dataset_languages': dataset_languages,
+                        'selected_datasets':selected_datasets,
+                        'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def proposed_new_signs(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+<<<<<<< HEAD
 
     proposed_or_new_signs = (Gloss.objects.filter(isNew=True) |
                              TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed"))\
@@ -1063,6 +1070,15 @@ def proposed_new_signs(request):
     return render(request, 'dictionary/recently_added_glosses.html',
                   {'glosses': proposed_or_new_signs,
                    'dataset_languages': dataset_languages})
+=======
+    proposed_or_new_signs = (Gloss.objects.filter(isNew=True) |
+                             TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed")).order_by('creationDate').reverse()
+    return render(request, 'dictionary/recently_added_glosses.html',
+                  {'glosses': proposed_or_new_signs,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+>>>>>>> master
 
 
 def add_params_to_url(url,params):
@@ -1357,7 +1373,6 @@ def find_and_save_variants(request):
 
         dict_key = int(gloss.id)
         gloss_pattern_table[dict_key] = '<td>' + str(gloss.idgloss) + '</td>'
-#        print(gloss.id, '\t', str(gloss.idgloss))
         other_relations_of_sign = gloss.other_relations()
 
         if other_relations_of_sign:
@@ -1371,9 +1386,6 @@ def find_and_save_variants(request):
 
         else:
             gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
-
-        #        if (len(other_relations_of_sign) > 0):
-        #            print('Other relations: ', other_relation_objects )
 
         variant_relations_of_sign = gloss.variant_relations()
 
@@ -1421,7 +1433,6 @@ def find_and_save_variants(request):
 
         for target in candidate_variants:
 
- #           print('UPDATE REL: source=', gloss, ', target=', target)
             rel = Relation(source=gloss, target=target, role='variant')
             rel.save()
 
@@ -1439,7 +1450,6 @@ def find_and_save_variants(request):
         else:
             gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
 
-#        print('Dictionary key: ', dict_key, ', ', gloss_pattern_table[dict_key])
         gloss_table_rows = gloss_table_rows + '<tr>' + gloss_pattern_table[dict_key] + '</tr>\n'
 
 
@@ -1574,6 +1584,11 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = 0
 
+    dataset = None
+    if 'dataset_name' in request.GET:
+        dataset = Dataset.objects.get(name=request.GET['dataset_name'])
+
+
     video_folder_name = 'glossvideo'
     image_folder_name = 'glossimage'
 
@@ -1586,15 +1601,15 @@ def package(request):
     archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
 
-    video_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp)
-    image_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp)
+    video_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp, dataset)
+    image_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp, dataset)
     # Filter out all backup files
     video_urls = dict([(gloss_id, url) for (gloss_id, url) in video_urls.items() if not re.match('.*_\d+', url)])
     image_urls = dict([(gloss_id, url) for (gloss_id, url) in image_urls.items() if not re.match('.*_\d+', url)])
 
     collected_data = {'video_urls':video_urls,
                       'image_urls':image_urls,
-                      'glosses':signbank.tools.get_gloss_data(since_timestamp)}
+                      'glosses':signbank.tools.get_gloss_data(since_timestamp, dataset)}
 
     if since_timestamp != 0:
         collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss',since_timestamp)
@@ -1609,7 +1624,19 @@ def package(request):
 
 
 def info(request):
-    return HttpResponse(json.dumps([ settings.LANGUAGE_NAME, settings.COUNTRY_NAME ]), content_type='application/json')
+    import guardian
+    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
+    user_datasets_names = [dataset.name for dataset in user_datasets]
+
+    # Put the default dataset in first position
+    if DEFAULT_DATASET in user_datasets_names:
+        user_datasets_names.insert(0, user_datasets_names.pop(user_datasets_names.index(DEFAULT_DATASET)))
+
+    if user_datasets_names:
+        return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
+    else:
+        return HttpResponse(json.dumps([settings.LANGUAGE_NAME, settings.COUNTRY_NAME]),
+                            content_type='application/json')
 
 
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
@@ -1659,7 +1686,6 @@ def show_unassigned_glosses(request):
         dataset_select_prefix = "sign-language__"
         for key, new_value in request.POST.items():
             if key.startswith(dataset_select_prefix) and new_value != "":
-                # print("Signlanguage: %s; dataset: %s" % (key, new_value))
                 try:
                     signlanguage_id = key[len(dataset_select_prefix):]
                     dataset_id = int(new_value)
@@ -1678,8 +1704,8 @@ def show_unassigned_glosses(request):
                     for gloss in glosses_to_be_assigned:
                         gloss.dataset = dataset
                         gloss.save()
-                except ObjectDoesNotExist as e:
-                    print('Assigning glosses to a dataset resulted in an error: ' + o.message)
+                except ObjectDoesNotExist as objectDoesNotExist:
+                    print('Assigning glosses to a dataset resulted in an error: ' + objectDoesNotExist.message)
 
         return HttpResponseRedirect(reverse('show_unassigned_glosses'))
     else:
@@ -1701,7 +1727,6 @@ def show_unassigned_glosses(request):
                 output_field=models.IntegerField()
             )
         )
-        # print(signlanguages.query)
 
         number_of_unassigned_glosses_without_signlanguage = Gloss.objects.filter(
             dataset=None,

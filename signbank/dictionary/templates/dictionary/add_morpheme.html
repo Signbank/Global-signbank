@@ -81,7 +81,7 @@
                      <label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
                  </th>
                  <td id="add_morpheme_dataset_value_{{ dataset_lang.language_code_2char }}">
-                     <input id="morphemecreate_{{ dataset_lang.language_code_2char }}" name="morphemecreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
+                     <input id="morphemecreate_{{ dataset_lang.language_code_2char }}" name="morphemecreate_{{ dataset_lang.language_code_2char }}" required="" maxlength="30" type="text"/>
                  </td>
              </tr>
              {% endfor %}

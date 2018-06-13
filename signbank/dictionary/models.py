@@ -47,7 +47,7 @@ def get_default_language_id():
 
 
 class Translation(models.Model):
-    """A Dutch translation of NGT signs"""
+    """A spoken language translation of signs"""
 
     gloss = models.ForeignKey("Gloss")
     language = models.ForeignKey("Language", default=get_default_language_id)
@@ -55,7 +55,6 @@ class Translation(models.Model):
     index = models.IntegerField("Index")
     
     def __str__(self):
-        #return unicode(self.gloss).encode('ascii','ignore')+"-"+unicode(self.translation).encode('ascii','ignore')
         return self.gloss.idgloss + '-' + self.translation.text
 
     def get_absolute_url(self):
@@ -63,7 +62,7 @@ class Translation(models.Model):
         
         alltrans = self.translation.translation_set.all()
         idx = 0
-        for tr in alltrans: 
+        for tr in alltrans:
             if tr == self:
                 return "/dictionary/words/"+str(self.translation)+"-"+str(idx+1)+".html"
             idx += 1
@@ -185,7 +184,7 @@ class RelationToForeignSign(models.Model):
     """Defines a relationship to another sign in another language (often a loan)"""
     
     def __str__(self):
-        return str(self.gloss)+"/"+self.other_lang+','+self.other_lang_gloss;
+        return str(self.gloss)+"/"+self.other_lang+','+self.other_lang_gloss
         
     gloss = models.ForeignKey("Gloss")
     loan = models.BooleanField("Loan Sign",default=False)
@@ -208,19 +207,19 @@ class FieldChoice(models.Model):
     chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(help_text="The actual numeric value stored in the database. Created automatically.")
 
-    def __unicode__(self):
+    def __str__(self):
 
         name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
-        return name.encode('ascii',errors='replace');
+        return name
 
     class Meta:
         ordering = ['field','machine_value']
 
 class Handshape(models.Model):
-    machine_value = models.IntegerField(primary_key=True)
-    english_name = models.CharField(max_length=50)
-    dutch_name = models.CharField(max_length=50)
-    chinese_name = models.CharField(max_length=50, blank=True)
+    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+    english_name = models.CharField(_("English name"), max_length=50)
+    dutch_name = models.CharField(_("Dutch name"), max_length=50)
+    chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
     hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"), max_length=5)
     hsFingSel = models.CharField(_("Finger selection"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
     hsFingSel2 = models.CharField(_("Finger selection 2"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
@@ -269,9 +268,10 @@ class Handshape(models.Model):
         if check_existance:
             try:
                 for filename in os.listdir(dir_path):
-
-                    if filename_without_extension in filename:
-                        return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+                    if not re.match(r'.*_\d+$', filename):
+                        existing_file_without_extension = os.path.splitext(filename)[0]
+                        if filename_without_extension == existing_file_without_extension:
+                            return settings.HANDSHAPE_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
             except OSError:
                 return None
         else:
@@ -404,21 +404,20 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     
     compound = models.CharField(_("Compound of"), max_length=100, blank=True) # This field type is a guess.
     comptf = models.NullBooleanField(_("Compound"), null=True, blank=True)
-    
 
     # Phonology fields
     handedness = models.CharField(_("Handedness"), blank=True,  null=True, choices=build_choice_list("Handedness"), max_length=5)
-    weakdrop = models.NullBooleanField(_("WD"), null=True, blank=True)
-    weakprop = models.NullBooleanField(_("WP"), null=True, blank=True)
+    weakdrop = models.NullBooleanField(_("Weak Drop"), null=True, blank=True)
+    weakprop = models.NullBooleanField(_("Weak Prop"), null=True, blank=True)
 
     domhndsh = models.CharField(_("Strong Hand"), blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
     subhndsh = models.CharField(_("Weak Hand"), null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
 
     # Support for handshape etymology
-    domhndsh_number = models.NullBooleanField(_("number"), null=True, blank=True)
-    domhndsh_letter = models.NullBooleanField(_("letter"), null=True, blank=True)
-    subhndsh_number = models.NullBooleanField(_("number"), null=True, blank=True)
-    subhndsh_letter = models.NullBooleanField(_("letter"), null=True, blank=True)
+    domhndsh_number = models.NullBooleanField(_("Strong hand number"), null=True, blank=True)
+    domhndsh_letter = models.NullBooleanField(_("Strong hand letter"), null=True, blank=True)
+    subhndsh_number = models.NullBooleanField(_("Weak hand number"), null=True, blank=True)
+    subhndsh_letter = models.NullBooleanField(_("Weak hand letter"), null=True, blank=True)
 
     final_domhndsh = models.CharField(_("Final Dominant Handshape"), blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
     final_subhndsh = models.CharField(_("Final Subordinate Handshape"), null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
@@ -442,7 +441,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     domFlex = models.CharField("Dominant hand - Flexion", choices=build_choice_list("DominantHandFlexion"), null=True, blank=True, max_length=5)
     oriChAbd = models.NullBooleanField(_("Abduction change"), null=True, blank=True)
     oriChFlex = models.NullBooleanField(_("Flexion change"), null=True, blank=True)
-
 
     inWeb = models.NullBooleanField(_("In the Web dictionary"), default=False)
     isNew = models.NullBooleanField(_("Is this a proposed new sign?"), null=True, default=False)
@@ -510,7 +508,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     namEnt = models.CharField(_("Named Entity"), choices=build_choice_list("NamedEntity"), null=True, blank=True, max_length=5)
     semField = models.CharField(_("Semantic Field"), choices=build_choice_list("SemField"), null=True, blank=True, max_length=5)
 
-    # Adaptation (ERK): supplement wordClass and wordClass2 with [, choices=build_choice_list('WordClass')]
     wordClass = models.CharField(_("Word class"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
     wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50, blank=True)
@@ -544,6 +541,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
 
     def get_fields_dict(self):
+        # this function might be obsolete
         fields = {}
         for field in Gloss._meta.fields:
             if field.name in settings.API_FIELDS:
@@ -562,13 +560,12 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                 if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
                     fields[_("Annotation ID Gloss") + ": %s" % language.name] = annotationidglosstranslation[0].text
 
-
         # Get all the keywords associated with this sign
         allkwds = ", ".join([x.translation.text for x in self.translation_set.all()])
         fields[Translation.__name__ + "s"] = allkwds
 
         # Get morphology
-        fields[Morpheme.__name__ + "s"] = ", ".join([x.__str__() for x in self.morphemePart.all()])
+        fields[Morpheme.__name__ + "s"] = ", ".join([x.__str__() for x in self.simultaneous_morphology.all()])
 
         #
         fields["Parent glosses"] = ", ".join([x.__str__() for x in self.parent_glosses.all()])
@@ -638,14 +635,14 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         if all_glosses_ordered:
 
-            foundit = False;
+            foundit = False
 
             for gloss in all_glosses_ordered:
                 if gloss == self:
                     foundit = True
                 elif foundit:
-                    return gloss;
-                    break;
+                    return gloss
+                    break
 
         else:
             return None
@@ -812,10 +809,8 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 		  'altern':'Alternating Movement','phonOth':'Phonology Other','mouthG':'Mouth Gesture',
           'mouthing':'Mouthing','phonetVar':'Phonetic Variation'}
 
-        for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim', #'locVirtObj',
+        for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir',]:
- #       'phonOth', 'mouthG',
- #         'mouthing', 'phonetVar',]:
 
             # Get and save the choice list for this field
             fieldchoice_category = fieldname_to_category(field)
@@ -840,10 +835,8 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
 
                 non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
-                # print('empty_non_empty_phonology: human value: ', str(human_value))
             else:
                 empty_phonology = empty_phonology + [(field,str(label))]
-
 
         return (empty_phonology, non_empty_phonology)
 
@@ -862,11 +855,8 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         non_empty_phonology = []
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', # 'locVirtObj',
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', ]:
- #                   'phonOth',
- #                     'mouthG',
- #                     'mouthing', 'phonetVar', ]:
 
             fieldchoice_category = fieldname_to_category(field)
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
@@ -888,7 +878,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
 
                 non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
-                # print('non_empty_phonology: human value: ', str(human_value))
 
         return non_empty_phonology
 
@@ -919,7 +908,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     # 19 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
     # 14
-
     def minimal_pairs_objects(self):
 
         paren = ')'
@@ -928,7 +916,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         where_minimal_pairs_filled = ''
         where_minimal_pairs_empty = ''
-        where_minimal_pairs = ''
         count_empty = 0
         count_filled = 0
 
@@ -980,21 +967,22 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                       'altern': 'check', 'phonOth': 'text', 'mouthG': 'text',
                       'mouthing': 'text', 'phonetVar': 'text'}
 
-        minimal_pairs_fields = dict() #{}
+        minimal_pairs_fields = dict()
 
+        # If handedness is not defined for this gloss, don't bother to look up minimal pairs
         if (self.handedness is None or self.handedness == '0'):
             return minimal_pairs_fields
 
-#        if (self.domhndsh is None or self.domhndsh == '0'):
-#            return minimal_pairs_fields
+        # Restrict minimal pairs search if gloss has empty phonology field for Strong Hand
+        if (self.domhndsh is None or self.domhndsh == '0'):
+            return minimal_pairs_fields
 
         wmp = self.minimal_pairs_objects()
 
         (ep, nep) = self.empty_non_empty_phonology()
 
-
         for o in wmp:
-            different_fields = dict() #{}
+            different_fields = dict()
             onep = o.non_empty_phonology()
             for f,n,v in onep:
                 fc = fieldname_to_category(f)
@@ -1018,7 +1006,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     # 19 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
     # 14
-
     def homonym_objects(self):
 
         paren = ')'
@@ -1067,13 +1054,9 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE id != %s AND ' + where_homonyms, [self.id])
 
-        # print('homonym objects for gloss ' + str(self.idgloss) + ': ', qs)
-        # qs = qs.exclude(pk=self.pk)
-
         for o in qs:
             homonym_objects_list.append(o)
 
-        # print('homonym list for gloss ' + str(self.idgloss) + ': ', homonym_objects_list)
         return homonym_objects_list
 
 
@@ -1094,10 +1077,17 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         phonology_for_gloss = self.phonology_matrix()
 
         handedness_of_this_gloss = str(phonology_for_gloss['handedness'])
+        # Ignore homonyms when the Handedness of this gloss is X
+        handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
 
-        if (handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or handedness_of_this_gloss == None):
+        if (handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
+                    handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
 
             return ([], [], [])
+
+        if (self.domhndsh == None or self.domhndsh == '-'):
+            return ([], [], [])
+
 
         where_homonyms_filled = ''
         where_homonyms_empty = ''
@@ -1105,7 +1095,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', # 'locVirtObj',
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
             value_of_this_field = str(phonology_for_gloss[field])
 
@@ -1127,13 +1117,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                 else:
                     where_homonyms_filled += '(' + field + '=1)'
                 count_filled = count_filled + 1
-            # locVirtObj is a text field, it needs to be quoted for sql comparison
-            # elif (field == 'locVirtObj'):
-            #     if (where_homonyms_filled.endswith(paren)):
-            #         where_homonyms_filled += " + (" + field + "='" + value_of_this_field + "')"
-            #     else:
-            #         where_homonyms_filled += "(" + field + "='" + value_of_this_field + "')"
-            #     count_filled = count_filled + 1
             else:
                 if (where_homonyms_filled.endswith(paren)):
                     where_homonyms_filled += ' + (' + field + '=' + value_of_this_field + ')'
@@ -1174,30 +1157,23 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         if check_existance:
             try:
                 for filename in os.listdir(dir_path):
-
-                    if filename_without_extension in filename:
-                        return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
+                    if not re.match(r'.*_\d+$', filename):
+                        existing_file_without_extension = os.path.splitext(filename)[0]
+                        if filename_without_extension == existing_file_without_extension:
+                            return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
             except OSError:
                 return None
         else:
             return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename_without_extension
 
 
-    def get_video_gloss(self):
-        """Work out the gloss that might have the video for this sign, usually the sign number but
-        if we're a sense>1 then we look at the homophone with sense=1
-        Return the gloss instance."""
-        
-        if self.sense > 1:
-            homophones = self.relation_sources.filter(role='homophone', target__sense__exact=1)
-            # should be only zero or one of these
-            if len(homophones) > 0:   
-                return homophones[0].target
-        return self
-
     def get_video_path(self):
 
         return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
+
+    def get_video_path_prefix(self):
+
+        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
@@ -1207,37 +1183,24 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         if os.path.isfile(settings.WRITABLE_FOLDER+'/'+video_path):
             return video_path
         else:
-            return None
+            return ''
 
-        video_with_gloss = self.get_video_gloss()
-        
-        try:
-            video = video_with_gloss.glossvideo_set.get(version__exact=0)
-            return video
-        except:
-            return None
         
     def count_videos(self):
-        """Return a count of the number of videos we have 
-        for this video - ie. the number of versions stored"""
-        
-        
-        video_with_gloss = self.get_video_gloss()
-        
-        return video_with_gloss.glossvideo_set.count()
-    
-    
+        """Return a count of the number of videos as indicated in the database"""
+
+        return self.glossvideo_set.count()
+
+
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
 
-        return '/home/wessel/signbank/signbank/video/testmedia/AANBELLEN-320kbits.mp4';
-         
-        video = self.get_video()
-        if video != None:
-            return video.get_absolute_url()
-        else:
-            return ""
-        
+        # return '/home/wessel/signbank/signbank/video/testmedia/AANBELLEN-320kbits.mp4'
+
+        video_url_or_empty_string = self.get_video()
+
+        return video_url_or_empty_string
+
     def has_video(self):
         """Test to see if the video for this sign is present"""
         
@@ -1321,8 +1284,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         
         d = dict()
         for l in Dialect.objects.all():
-            # d[l.name] = l.name
-            # d[l.name] = l.signlanguage.name + "/" + l.name
             dialect_name = l.signlanguage.name + "/" + l.name
             d[dialect_name] = dialect_name
 
@@ -1475,9 +1436,7 @@ class Relation(models.Model):
     source = models.ForeignKey(Gloss, related_name="relation_sources")
     target = models.ForeignKey(Gloss, related_name="relation_targets")
     role = models.CharField(max_length=20, choices=RELATION_ROLE_CHOICES)  
-                # antonym, synonym, cf (what's this? - see also), var[b-f]
-                               # (what's this - variant (XXXa is the stem, XXXb is a variant)
-                       
+
     class Admin:
         list_display = [ 'source', 'role','target']
         search_fields = ['source__idgloss', 'target__idgloss']        
@@ -1501,7 +1460,7 @@ class MorphologyDefinition(models.Model):
     morpheme = models.ForeignKey(Gloss,related_name="morphemes")
 
     def __str__(self):
-        return self.morpheme.idgloss # + ' is ' + self.get_role_display() + ' of ' + self.parent_gloss.idgloss
+        return self.morpheme.idgloss
 
 class Morpheme(Gloss):
     """A morpheme definition uses all the fields of a gloss, but adds its own characteristics (#174)"""
@@ -1569,7 +1528,7 @@ class SimultaneousMorphologyDefinition(models.Model):
     morpheme = models.ForeignKey(Morpheme,related_name='glosses_containing')
 
     def __str__(self):
-        return self.parent_gloss.idgloss # + ' consists of ' + self.morpheme.idgloss
+        return self.parent_gloss.idgloss
 
 class BlendMorphology(models.Model):
     parent_gloss = models.ForeignKey(Gloss,related_name='blend_morphology')
@@ -1577,7 +1536,7 @@ class BlendMorphology(models.Model):
     glosses = models.ForeignKey(Gloss,related_name='glosses_comprising')
 
     def __str__(self):
-        return self.parent_gloss.idgloss # + ' is ' + self.role + ' blend of ' + self.glosses.idgloss
+        return self.parent_gloss.idgloss
 
 class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""
@@ -1596,6 +1555,12 @@ class Dataset(models.Model):
     translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
                                                                           "for translation equivalents.")
     description = models.TextField()
+    conditions_of_use = models.TextField(blank=True, help_text="Conditions of Use. Content license."
+                                                        "This is different than the software code license.")
+    copyright = models.TextField(blank=True, help_text="Copyright. Content license."
+                                                        "This is different than the software code license.")
+    acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
+    owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
     class Meta:
         permissions = (
@@ -1605,7 +1570,39 @@ class Dataset(models.Model):
     def __str__(self):
         return self.name
 
-# This is the wrong location, but I can't think of a better one:
+    def get_users_who_can_view_dataset(self):
+
+        all_users = User.objects.all().order_by('first_name')
+
+        users_who_can_view_dataset = []
+
+        for user in all_users:
+            if not (user.is_staff or user.is_superuser):
+                import guardian
+                from guardian.shortcuts import get_objects_for_user
+                user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+                # self is the dataset
+                if self in user_view_datasets:
+                    users_who_can_view_dataset.append(user)
+
+        return users_who_can_view_dataset
+
+    def get_users_who_can_change_dataset(self):
+
+        all_users = User.objects.all().order_by('first_name')
+
+        users_who_can_change_dataset = []
+
+        for user in all_users:
+            if not (user.is_staff or user.is_superuser):
+                import guardian
+                from guardian.shortcuts import get_objects_for_user
+                user_change_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+                # self is the dataset
+                if self in user_change_datasets:
+                    users_who_can_change_dataset.append(user)
+
+        return users_who_can_change_dataset
 
 class UserProfile(models.Model):
     # This field is required.
@@ -1647,7 +1644,6 @@ class Language(models.Model):
     language_code_3char = models.CharField(max_length=3, unique=False, null=False, blank=False, help_text=_(
         """ISO 639-3 language code (3 characters long) of a written language."""))
     description = models.TextField(null=True, blank=True)
-
 
     class Meta:
         ordering = ['name']

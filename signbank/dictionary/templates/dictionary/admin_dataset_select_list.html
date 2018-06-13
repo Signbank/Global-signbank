@@ -12,9 +12,10 @@
 <form name="selectdatasets" id="selectdatasets" method="post" action="{{URL}}/datasets/change_selection">
 {% csrf_token %}
 <table class='table table-condensed'>
+    <caption style="text-align: left;font-weight: bold;">{% trans "Select datasets" %}</caption>
     <thead>
       <tr>
-          <th>{% trans "Name" %}</th>
+          <th>{% trans "Dataset Name" %}</th>
           <th>{% trans "Selected" %}</th>
       </tr>
     </thead>
@@ -24,7 +25,7 @@
             {% if "view_dataset" in dataset_perms %}
             <tr>
                 <td>
-                    {{ dataset.name }}
+                    <a href="{{URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
                 </td>
                 <td><input type="checkbox" name="dataset_{{ dataset.name }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
             </tr>

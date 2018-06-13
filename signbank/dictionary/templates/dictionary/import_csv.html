@@ -153,7 +153,11 @@
                         <td>{{ newgloss.dataset }}</td>
                         <td>{{ newgloss.lemma_id_gloss_value }}</td>
                         {% for dataset_lang in dataset_languages %}
-                         <td class="bla">{{ newgloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}</td>
+                            {% with newgloss.annotationidglosstranslations as newglossdict %}
+                            {% with dataset_lang.language_code_2char as lang_code %}
+                            <td class="bla">{{ newglossdict|keyvalue:lang_code }}</td>
+                            {% endwith %}
+                            {% endwith %}
                          {% endfor %}
                     </tr>
                 <input type="hidden" name="{{newgloss.gloss_pk}}.dataset"  value="{{ newgloss.dataset }}">

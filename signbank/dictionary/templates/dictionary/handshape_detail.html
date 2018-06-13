@@ -3,6 +3,8 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 
+{% load guardian_tags %}
+
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
     <style>
@@ -64,6 +66,8 @@
                 // Scrolling to the active button
                 $('#searchresults').scrollLeft(leftOffset);
             }
+            var signinfo = $('#signinfo');
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height())});
         }
     });
 
@@ -72,6 +76,8 @@
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
+        $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').outerHeight() + $('#signinfo').outerHeight())});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
         });
@@ -84,9 +90,9 @@
 
 {% block content %}
 
-<div id="searchresults" style="overflow-y:hidden;">
+<div id="searchresults" class='navbar navbar-default' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background:white;margin-top:3px;">
     </div>
     {% endif %}
 </div>
@@ -95,26 +101,29 @@
 <div class="alert alert-warning">{{ request.GET.warning }}</div>
 {% endif %}
 
-<div id="signinfo" class='navbar navbar-default navbar-collapse'>
-    <div id="definitionblock">
-    {% url 'dictionary:protected_media' '' as protected_media_url %}
-    </div>
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
 
-    <div>
+    <div class='btn-group'>
+
     <div id="listhandshapes">
     <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/handshapes/">{% trans "Handshapes List" %}</a>
     </div>
+    </div>
 
-    <div class='pull-right'>
+    {% if perms.dictionary.change_gloss %}
+    <div class='pull-right' style="margin-right:15px;margin-top:3px;">
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
 
     </div>
-    </div>
+    {% endif %}
+
 </div>
 
+<div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
     <!-- Image -->
-    <div id="leftblock">
+    <div id="leftblock" style="margin-right:10px">
         <div id="imagecontainer">
         {% if handshape.get_image_path %}
         <img class="citation_form_image" src="{{protected_media_url}}{{handshape.get_image_path}}">
@@ -230,5 +239,6 @@
             </table>
         </fieldset>
     </div>
+</div>
 
 {% endblock %}

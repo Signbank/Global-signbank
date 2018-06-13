@@ -9,14 +9,14 @@
 {% endblock %}
 
 {% block extrajs %}
-
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
-
-    <script type='text/javascript'>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+<script type='text/javascript'>
+    var url = '{{URL}}';
+    var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 
      $(document).ready(function(){
-
 
         $('.collapsetoggle').click(function() {
             if ($(this).text() == 'Show') {
@@ -28,27 +28,197 @@
 
         $('[data-toggle="tooltip"]').tooltip();
 
-        /**
-         * In the 'add gloss' form, toggle the annotation idgloss fields depending on the chosen dataset
-         */
-         set_annotationidglosslanguages();
+        if (show_dataset_interface_options) {
 
-         $('#id_dataset').change(function() {
-            set_annotationidglosslanguages();
-         });
+            /**
+             * In the 'add gloss' form, toggle the annotation idgloss fields depending on the chosen dataset
+             */
+             set_annotationidglosslanguages();
 
-         function set_annotationidglosslanguages() {
-            var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
-            var languages = languages_str.split(",");
-            $("[id*='add_gloss_dataset_']").each(function(){
-                $(this).hide();
-            });
-            for(var id in languages) {
-                $("[id*='add_gloss_dataset_header_" + languages[id] + "']").show();
-                $("[id*='add_gloss_dataset_value_" + languages[id] + "']").show();
-            }
+             $('#id_dataset').change(function() {
+                set_annotationidglosslanguages();
+             });
+
+             function set_annotationidglosslanguages() {
+                var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+                var languages = languages_str.split(",");
+                $("[id*='add_gloss_dataset_']").each(function(){
+                    $(this).hide();
+                });
+                for(var id in languages) {
+                    $("[id*='add_gloss_dataset_header_" + languages[id] + "']").show();
+                    $("[id*='add_gloss_dataset_value_" + languages[id] + "']").show();
+                }
+             }
          }
-    });
+
+         $('#id_handedness').attr('multiple','multiple');
+         $('#id_handedness').attr('class',"js-example-basic-multiple form-control");
+         $('#id_handedness').attr('name','handedness[]');
+         $('#id_handedness').css('width', '100%');
+         $('#id_handedness').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_handedness').val(null).trigger('change');
+
+         $('#id_domhndsh').attr('multiple','multiple');
+         $('#id_domhndsh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_domhndsh').attr('name','domhndsh[]');
+         $('#id_domhndsh').css('width', '100%');
+         $('#id_domhndsh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_domhndsh').val(null).trigger('change');
+
+         $('#id_subhndsh').attr('multiple','multiple');
+         $('#id_subhndsh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_subhndsh').attr('name','subhndsh[]');
+         $('#id_subhndsh').css('width', '100%');
+         $('#id_subhndsh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_subhndsh').val(null).trigger('change');
+
+         $('#id_handCh').attr('multiple','multiple');
+         $('#id_handCh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_handCh').attr('name','handCh[]');
+         $('#id_handCh').css('width', '100%');
+         $('#id_handCh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_handCh').val(null).trigger('change');
+
+         $('#id_relatArtic').attr('multiple','multiple');
+         $('#id_relatArtic').attr('class',"js-example-basic-multiple form-control");
+         $('#id_relatArtic').attr('name','relatArtic[]');
+         $('#id_relatArtic').css('width', '100%');
+         $('#id_relatArtic').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_relatArtic').val(null).trigger('change');
+
+         $('#id_locprim').attr('multiple','multiple');
+         $('#id_locprim').attr('class',"js-example-basic-multiple form-control");
+         $('#id_locprim').attr('name','locprim[]');
+         $('#id_locprim').css('width', '100%');
+         $('#id_locprim').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_locprim').val(null).trigger('change');
+
+         $('#id_relOriMov').attr('multiple','multiple');
+         $('#id_relOriMov').attr('class',"js-example-basic-multiple form-control");
+         $('#id_relOriMov').attr('name','relOriMov[]');
+         $('#id_relOriMov').css('width', '100%');
+         $('#id_relOriMov').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_relOriMov').val(null).trigger('change');
+
+         $('#id_relOriLoc').attr('multiple','multiple');
+         $('#id_relOriLoc').attr('class',"js-example-basic-multiple form-control");
+         $('#id_relOriLoc').attr('name','relOriLoc[]');
+         $('#id_relOriLoc').css('width', '100%');
+         $('#id_relOriLoc').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_relOriLoc').val(null).trigger('change');
+
+         $('#id_oriCh').attr('multiple','multiple');
+         $('#id_oriCh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_oriCh').attr('name','oriCh[]');
+         $('#id_oriCh').css('width', '100%');
+         $('#id_oriCh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_oriCh').val(null).trigger('change');
+
+         $('#id_contType').attr('multiple','multiple');
+         $('#id_contType').attr('class',"js-example-basic-multiple form-control");
+         $('#id_contType').attr('name','contType[]');
+         $('#id_contType').css('width', '100%');
+         $('#id_contType').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_contType').val(null).trigger('change');
+
+         $('#id_movSh').attr('multiple','multiple');
+         $('#id_movSh').attr('class',"js-example-basic-multiple form-control");
+         $('#id_movSh').attr('name','movSh[]');
+         $('#id_movSh').css('width', '100%');
+         $('#id_movSh').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_movSh').val(null).trigger('change');
+
+         $('#id_movDir').attr('multiple','multiple');
+         $('#id_movDir').attr('class',"js-example-basic-multiple form-control");
+         $('#id_movDir').attr('name','movDir[]');
+         $('#id_movDir').css('width', '100%');
+         $('#id_movDir').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_movDir').val(null).trigger('change');
+
+
+         $('#id_namEnt').attr('multiple','multiple');
+         $('#id_namEnt').attr('class',"js-example-basic-multiple form-control");
+         $('#id_namEnt').attr('name','namEnt[]');
+         $('#id_namEnt').css('width', '100%');
+         $('#id_namEnt').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_namEnt').val(null).trigger('change');
+
+         $('#id_semField').attr('multiple','multiple');
+         $('#id_semField').attr('class',"js-example-basic-multiple form-control");
+         $('#id_semField').attr('name','semField[]');
+         $('#id_semField').css('width', '100%');
+         $('#id_semField').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_wordClass').val(null).trigger('change');
+
+         $('#id_wordClass').attr('multiple','multiple');
+         $('#id_wordClass').attr('class',"js-example-basic-multiple form-control");
+         $('#id_wordClass').attr('name','wordClass[]');
+         $('#id_wordClass').css('width', '100%');
+         $('#id_wordClass').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_wordClass').val(null).trigger('change');
+
+});
 
 
 
@@ -75,14 +245,14 @@ function clearForm(myFormElement) {
 
         case "radio":
         case "checkbox":
-            if (elements[i].checked) {
+          if (elements[i].checked) {
               elements[i].checked = false;
           }
           break;
 
         case "select-one":
         case "select-multiple":
-                    elements[i].selectedIndex = -1;
+          elements[i].selectedIndex = -1;
           break;
 
         default:
@@ -158,9 +328,10 @@ function do_toggle_groups(el) {
   }
   document.getElementById('adminsearch').submit();
 }
-
-
    </script>
+
+    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
+
 {% endblock %}
 
 
@@ -168,9 +339,36 @@ function do_toggle_groups(el) {
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
 {% if perms.dictionary.search_gloss %}
+
+{{ form.media.css }}
+{{ form.media.js }}
+
 <form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
 <div class="panel panel-default">
-    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}</div>
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
+                <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                  title="In many text fields, you can use patterns as follows:
+                  <table>
+                    <tr>
+                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                    </tr>
+                  </table>
+                  "></span></div>
 
     <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
         <div id='searchformwell' class='well search-results-collapsable'>
@@ -182,80 +380,34 @@ function do_toggle_groups(el) {
                 </div>
                 <div>
                     <table class='table' id='searchfields'>
+                        {% for dataset_lang in dataset_languages %}
+                        {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
+                        {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
+
                         <tr>
-                            {% for dataset_lang in dataset_languages %}
-                            {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
                             <td>
                                 <div class='input-group'>
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                                     {{search_field.label}}
-                                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
-                                          title="
-                                          <table>
-                                            <tr>
-                                                <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
-                                            </tr>
-                                          </table>
-                                          "></span>
                                 </label>
                                 <input name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                                 </div>
                             </td>
-                            {% endwith %}
-                            {% endfor %}
-                        </tr>
-                        <tr>
-
-                            <td><div class='input-group'>
-                                <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
-                                <input name='keyword' class='form-control' {% if searchform.keyword.value %}value='{{searchform.keyword.value}}'{% endif %}></div>
-                            </td>
 
                             <td><div class='input-group'>
 
-                                <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}
-                                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
-                                          title="
-                                          <table>
-                                            <tr>
-                                                <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
-                                            </tr>
-                                          </table>
-                                          "></span>
-                                </label>
+                                <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
                                 <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
                             </td>
+
+                            <td><div class='input-group'>
+                                <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
+                                <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
+                            </td>
                         </tr>
+                        {% endwith %}
+                        {% endwith %}
+                        {% endfor %}
                     </table>
                 </div>
 
@@ -280,6 +432,11 @@ function do_toggle_groups(el) {
                                 </td>
                               </tr>
 
+                                                    <span class="select2 select2-container select2-container--below">
+                                                        <span class="selection">
+                                                            <span class="select2-selection select2-selection--multiple" role="combobox" aria-haspopup="true" tabindex="-1"></span>
+                                                        </span>
+                                                    </span>
                         </table>
 
                         <table class='table'>
@@ -300,12 +457,15 @@ function do_toggle_groups(el) {
                       <div id='morph_search' class='collapse'>
                       <table class='table table-condensed'>
                         <tr>
-
+                        {% csrf_token %}
                           <td>
                             <table class='table table-condensed'>
                                 <tr>
                                     <td><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
-                                    <td><input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' name='id_morpheme'></td>
+                                    <td>
+                                        <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' value="{{searchform.morpheme.value|default:''}}"/>
+                                        <input type="hidden" name='morpheme' value=""/>
+                                    </td>
                                 </tr>
                                 <tr><td><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td><td>{{searchform.hasComponentOfType}}</td></tr>
                                 <tr><td><label for='id_hasMorphemeOfType'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
@@ -329,7 +489,7 @@ function do_toggle_groups(el) {
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
                                     <tr>
-                                        <td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td>
+                                        <td><label>{{label}}</label></td><td>{{field}}</td>
                                         {% if fieldname == 'handedness' %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
                                                 <td><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td>{{handednessfield}}</td>
@@ -344,7 +504,6 @@ function do_toggle_groups(el) {
                                             {% endfor %}
                                         {% endif %}
                                     </tr>
-
                                 {% endfor %}
 
                             </table>
@@ -537,10 +696,12 @@ function do_toggle_groups(el) {
         {% if perms.dictionary.export_csv %}
         <input class='btn btn-default' type='submit' name='format' value='CSV'>
         {% endif %}
-        <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
-        <!--{% if perms.dictionary.export_ecv %}-->
-        <!--<input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>-->
-        <!--{% endif %}-->
+
+        {% if not SHOW_DATASET_INTERFACE_OPTIONS %}
+        {% if perms.dictionary.export_ecv %}
+        <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
+        {% endif %}
+        {% endif %}
         <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
                value='{% trans "Reset" %}'>
     </div>
@@ -570,7 +731,7 @@ function do_toggle_groups(el) {
             {% endif %}
         </a>
         {% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{glosscount}}.
-        {% if selected_datasets %}
+        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         {% trans "Datasets:" %}
         {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
         {% endfor %}
@@ -590,7 +751,7 @@ function do_toggle_groups(el) {
              {% csrf_token %}
              <table class='table'>
                  <tr>
-                     <th><label for='dataset'>{% trans "Dataset" %}</label></th>
+                     {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th><label for='dataset'>{% trans "Dataset" %}</label></th>{% endif %}
                      <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
                      {% for dataset_lang in dataset_languages %}
                      <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
@@ -598,12 +759,14 @@ function do_toggle_groups(el) {
                      <th></th>
                  </tr>
                  <tr>
+                     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
                      <td><select id="id_dataset" name="dataset" required="">
                          <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
                          {% for dataset in selected_datasets %}
                          <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
                          {% endfor %}
                      </select></td>
+                     {% endif %}
                      <td>{{add_gloss_form.idgloss}}</td>
                      {% for dataset_lang in dataset_languages %}
                      <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
@@ -636,7 +799,7 @@ function do_toggle_groups(el) {
 <table class='table table-condensed'>
     <thead>
       <tr>
-          <th>{% trans "Dataset" %}</th>
+          {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
           <th></th>
            {% for dataset_lang in dataset_languages %}
           <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
@@ -707,7 +870,7 @@ function do_toggle_groups(el) {
                 <tr>
             {% endif %}
 
-        <td>{{ gloss.dataset.name }}</td>
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
           <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
@@ -722,14 +885,14 @@ function do_toggle_groups(el) {
             <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
-            {% if gloss.morphemePart.count > 0 %}
-              {% if gloss.morphemePart.count > 3 %}
-                  <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
+            {% if gloss.simultaneous_morphology.count > 0 %}
+              {% if gloss.simultaneous_morphology.count > 3 %}
+                  <span class="morpheme_in_gloss">({{gloss.simultaneous_morphology.all.count}} {% trans "morphemes" %})</span>
               {% else %}
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
-                  {% for morphdef in gloss.morphemePart.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.gloss_ptr|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  {% for morphdef in gloss.simultaneous_morphology.all %}
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}/">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
@@ -903,7 +1066,7 @@ function do_toggle_groups(el) {
     <thead>
       <tr>
           <th>{% trans "Lemma ID gloss" %}</th>
-          <th>{% trans "Dataset" %}</th>
+          {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
           <th></th>
 
            {% for dataset_lang in dataset_languages %}
@@ -937,7 +1100,7 @@ function do_toggle_groups(el) {
       {% for gloss in lemma.list %}
         <tr>
         <td></td>
-        <td>{{ gloss.dataset.name }}</td>
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
           <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
@@ -952,14 +1115,14 @@ function do_toggle_groups(el) {
             <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
-            {% if gloss.morphemePart.count > 0 %}
-              {% if gloss.morphemePart.count > 3 %}
-                  <span class="morpheme_in_gloss">({{gloss.morphemePart.all.count}} {% trans "morphemes" %})</span>
+            {% if gloss.simultaneous_morphology.count > 0 %}
+              {% if gloss.simultaneous_morphology.count > 3 %}
+                  <span class="morpheme_in_gloss">({{gloss.simultaneous_morphology.all.count}} {% trans "morphemes" %})</span>
               {% else %}
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
-                  {% for morphdef in gloss.morphemePart.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.pk}}/">{{ morphdef.gloss_ptr|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  {% for morphdef in gloss.simultaneous_morphology.all %}
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}/">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
@@ -968,7 +1131,7 @@ function do_toggle_groups(el) {
             {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
             {% endif %}

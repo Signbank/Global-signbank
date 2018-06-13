@@ -42,6 +42,7 @@ FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconT
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
+ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {
     'CV_ID': 'ASL Signbank lexicon',
     'include_phonology_and_frequencies': False,
@@ -73,9 +74,10 @@ OTHER_MEDIA_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_other_media/'
 SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 
 SHOW_MORPHEME_SEARCH = False
+SHOW_DATASET_INTERFACE_OPTIONS = False
 
-CNGT_EAF_FILES_LOCATION = ''
-CNGT_METADATA_LOCATION = ''
+EAF_FILES_LOCATION = ''
+METADATA_LOCATION = ''
 
 FFMPEG_PROGRAM = "avconv"
 TMP_DIR = "/tmp"
@@ -96,6 +98,8 @@ LANGUAGE_CODE_MAP = [
 ]
 
 SPEED_UP_RETRIEVING_ALL_SIGNS =	False
+
 import datetime
 RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=7)
 DEFAULT_DATASET_PK = 2
+

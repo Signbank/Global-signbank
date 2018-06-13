@@ -4,7 +4,6 @@ import os
 import shutil
 from html.parser import HTMLParser
 from zipfile import ZipFile
-from datetime import datetime, date
 import json
 import re
 from urllib.parse import quote
@@ -19,7 +18,7 @@ from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
 
-def save_media(source_folder,goal_folder,gloss,extension):
+def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
         
     #Add a dot before the extension if needed
     if extension[0] != '.':
@@ -27,7 +26,9 @@ def save_media(source_folder,goal_folder,gloss,extension):
 
     #Figure out some names
     annotation_id = ""
-    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
+    language = Language.objects.get(language_code_3char=language_code_3char)
+    if not language:
+        raise ObjectDoesNotExist
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
         annotation_id = annotationidglosstranslations[0].text
@@ -87,23 +88,20 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
 
         annotationidglosstranslations = {}
         existing_glosses = {}
-        dataset = Dataset.objects.get(name=dataset_name)
-        if dataset:
-            for language in dataset.translation_languages.all():
-                column_name = "Annotation ID Gloss (%s)" % language.name_en
-                if column_name in valuedict:
-                    annotationidglosstranslation_text = valuedict[column_name].strip()
-                    annotationidglosstranslations[language.language_code_2char] = annotationidglosstranslation_text
+        for language in dataset.translation_languages.all():
+            column_name = "Annotation ID Gloss (%s)" % language.name_en
+            if column_name in valuedict:
+                annotationidglosstranslation_text = valuedict[column_name].strip()
+                annotationidglosstranslations[language.language_code_2char] = annotationidglosstranslation_text
 
-                    # The annotation idgloss translation text for a language must be unique within a dataset.
-                    glosses_with_same_text = dataset.gloss_set.filter(
-                        annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
-                        annotationidglosstranslation__language=language)
-                    if len(glosses_with_same_text) > 0:
-                        existing_glosses[language.language_code_2char] = glosses_with_same_text
+                # The annotation idgloss translation text for a language must be unique within a dataset.
+                glosses_with_same_text = dataset.gloss_set.filter(
+                    annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
+                    annotationidglosstranslation__language=language)
+                if len(glosses_with_same_text) > 0:
+                    existing_glosses[language.language_code_2char] = glosses_with_same_text
 
         if existing_glosses:
-            print("Existing glosses : " + str(existing_glosses))
             existing_gloss_set = set()
             for language_code_2char,glosses in existing_glosses.items():
                 for gloss in glosses:
@@ -123,14 +121,18 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                         existing_gloss_set.add(gloss)
 
         else:
-            print('New gloss')
+            # for the new gloss, we don't know the id yet so save the row number in this field
             gloss_dict = {'gloss_pk': str(row_nr),
                                 'dataset': dataset_name,
                                 'lemma_id_gloss': 'Lemma ID Gloss',
                                 'lemma_id_gloss_value': lemma_id_gloss}
+            dataset = Dataset.objects.get(name=dataset_name)
+            trans_languages = [ l for l in dataset.translation_languages.all() ]
+            print('translation languages for dataset: ', trans_languages)
             annotationidglosstranslation_dict = {}
-            for language in dataset.translation_languages.all():
+            for language in trans_languages:
                 annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language.name_en]
+                print('tools create gloss, language: ', language, ' annotation ID gloss: ', annotationidglosstranslation_text)
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
             gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
             new_gloss.append(gloss_dict)
@@ -185,6 +187,27 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
             #If these are not fields, but relations to other parts of the database, compare complex values
             if human_key == 'Signbank ID':
+                continue
+
+            annotation_idgloss_key_prefix = "Annotation ID Gloss ("
+            if human_key.startswith(annotation_idgloss_key_prefix):
+                language_name = human_key[len(annotation_idgloss_key_prefix):-1]
+                languages = Language.objects.filter(name_en=language_name)
+                if languages:
+                    language = languages[0]
+                    annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
+                    if annotation_idglosses:
+                        annotation_idgloss_string = annotation_idglosses[0].text
+                        if annotation_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
+                            differences.append({'pk': gloss.pk,
+                                                'dataset': current_dataset,
+                                                'annotationidglosstranslation': default_annotationidglosstranslation,
+                                                'machine_key': human_key,
+                                                'human_key': human_key,
+                                                'original_machine_value': annotation_idgloss_string,
+                                                'original_human_value': annotation_idgloss_string,
+                                                'new_machine_value': new_human_value,
+                                                'new_human_value': new_human_value})
                 continue
 
             elif human_key == 'Keywords':
@@ -298,18 +321,13 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 # sort tuples on other gloss to allow comparison with imported values
 
                 sorted_relations = sorted(relations, key=lambda tup: tup[1])
-                # print("sorted_relations: ", sorted_relations)
 
                 relations_with_categories = []
                 for rel_cat in sorted_relations:
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_string = ",".join(relations_with_categories)
 
-                # print('Relations current: ', current_relations_string)
-
                 (checked_new_human_value, errors) = check_existance_relations(gloss, relations_with_categories, new_human_value_list)
-
-                # print('Relations new: ', checked_new_human_value)
 
                 if len(errors):
                     errors_found += errors
@@ -338,11 +356,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_foreign_string = ",".join(relations_with_categories)
 
-                # print('Relations foreign current: ', current_relations_foreign_string)
-
                 (checked_new_human_value, errors) = check_existance_foreign_relations(gloss, relations_with_categories, new_human_value_list)
-
-                # print('Relations foreign new: ', checked_new_human_value)
 
                 if len(errors):
                     errors_found += errors
@@ -367,11 +381,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                              MorphologyDefinition.objects.filter(parent_gloss=gloss)]
                 morphemes_string = ", ".join(morphemes)
 
-                # print('Sequential Morphology import: ', morphemes_string)
-
                 (found, not_found, errors) = check_existance_sequential_morphology(gloss, new_human_value_list)
-
-                # print('Sequential Morphology new: ', new_human_value)
 
                 if len(errors):
                     errors_found += errors
@@ -398,11 +408,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                     sim_morphs.append(':'.join(m))
                 simultaneous_morphemes = ','.join(sim_morphs)
 
-                # print('Simultaneous Morphology import: ', simultaneous_morphemes)
-
                 (checked_new_human_value, errors) = check_existance_simultaneous_morphology(gloss, new_human_value_list)
-
-                # print('Simultaneous Morphology new: ', checked_new_human_value)
 
                 if len(errors):
                     errors_found += errors
@@ -415,6 +421,34 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                                         'human_key': human_key,
                                         'original_machine_value': simultaneous_morphemes,
                                         'original_human_value': simultaneous_morphemes,
+                                        'new_machine_value': checked_new_human_value,
+                                        'new_human_value': checked_new_human_value})
+                continue
+
+            elif human_key == 'Blend Morphology':
+                if new_human_value == 'None' or new_human_value == '':
+                    continue
+
+                morphemes = [(str(m.glosses.id), m.role) for m in gloss.blend_morphology.all()]
+
+                ble_morphs = []
+                for m in morphemes:
+                    ble_morphs.append(':'.join(m))
+                blend_morphemes = ','.join(ble_morphs)
+
+                (checked_new_human_value, errors) = check_existance_blend_morphology(gloss, new_human_value_list)
+
+                if len(errors):
+                    errors_found += errors
+
+                elif blend_morphemes != checked_new_human_value:
+                    differences.append({'pk': gloss.pk,
+                                        'dataset': current_dataset,
+                                        'annotationidglosstranslation':default_annotationidglosstranslation,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': blend_morphemes,
+                                        'original_human_value': blend_morphemes,
                                         'new_machine_value': checked_new_human_value,
                                         'new_human_value': checked_new_human_value})
                 continue
@@ -435,8 +469,6 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 tag_names_display = [ t.replace('_',' ') for t in tag_names_of_gloss ]
                 tag_names_display = ', '.join(tag_names_display)
-
-                # print('current tag names: ', tag_names)
 
                 new_human_value_list = [v.replace(' ', '_') for v in new_human_value_list]
 
@@ -463,8 +495,6 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 new_tag_names_display = ', '.join(new_tag_names_display)
 
                 sorted_new_tags = ", ".join(sorted_new_tags)
-
-                # print('Tags list: ', sorted_new_tags)
 
                 if tag_names != sorted_new_tags:
                     differences.append({'pk': gloss.pk,
@@ -503,7 +533,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                 continue
 
-            # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, ')')
+            # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, '), new_human_value: (', new_human_value, ')')
 
             #Try to translate the value to machine values if needed
             if len(field.choices) > 0:
@@ -517,10 +547,11 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                         new_human_value = new_human_value[1:]
                         # print('revised human value: ', new_human_value)
 
-                    new_machine_value = human_to_machine_values[new_human_value]
+                    if new_human_value in human_to_machine_values.keys():
+                        new_machine_value = human_to_machine_values[new_human_value]
+                    else:
+                        raise KeyError
                 except KeyError:
-                    # print('new human value: ', new_human_value)
-
                     #If you can't find a corresponding human value, maybe it's empty
                     if new_human_value in ['',' ', None, 'None']:
                         # print('exception in new human value to machine value: ', new_human_value)
@@ -529,6 +560,7 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
                     #If not, stop trying
                     else:
+                        new_machine_value = None
                         # raise MachineValueNotFoundError('At '+gloss.idgloss+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key)
                         error_string = 'For '+default_annotationidglosstranslation+' ('+str(gloss.pk)+'), could not find option '+str(new_human_value)+' for '+human_key
 
@@ -536,16 +568,12 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
             #Do something special for integers and booleans
             elif field.__class__.__name__ == 'IntegerField':
 
-                # print('import CSV IntegerField human value for ', human_key, ': ', new_human_value)
-
                 try:
                     new_machine_value = int(new_human_value)
                 except ValueError:
                     new_human_value = 'None'
                     new_machine_value = None
             elif field.__class__.__name__ == 'NullBooleanField':
-
-                # print('import CSV NullBooleanField human value for ', human_key, ': ', new_human_value)
 
                 new_human_value_lower = new_human_value.lower()
                 if new_human_value_lower == 'neutral' and (field.name == 'weakprop' or field.name == 'weakdrop'):
@@ -573,7 +601,6 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                         errors_found += [error_string]
             #If all the above does not apply, this is a None value or plain text
             else:
-                # print('Import CSV 148: not Integer, not Boolean: new human value: (', new_human_value, ')')
 
                 if new_human_value == 'None':
                     new_machine_value = None
@@ -595,9 +622,9 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
 
             #Remove any weird char
             try:
-                new_machine_value = unescape(new_machine_value)
                 new_human_value = unescape(new_human_value)
-            except TypeError:
+            except:
+                print('unescape raised exception for new_human_value: ', new_human_value)
                 pass
 
             # test if blank value
@@ -693,10 +720,6 @@ def check_existance_sequential_morphology(gloss, values):
 
         try:
 
-            # get the id for the morpheme identifier
-            # morpheme_id = gloss_from_identifier(new_value)
-            # print('check_existance_sequential_morphology, new_value: ', new_value)
-            # this is a gloss, make sure it exists
             morpheme = Gloss.objects.get(pk=new_value)
 
             if new_value in found:
@@ -751,16 +774,11 @@ def check_existance_simultaneous_morphology(gloss, values):
         try:
 
             # get the id for the morpheme identifier
-            # morpheme_id = gloss_from_identifier(new_value)
-            # print('check_existance_simultaneous_morphology, new_value: ', morpheme)
             # this is a gloss, make sure it exists
             morpheme_gloss = Gloss.objects.get(pk=morpheme)
             morpheme_id = Morpheme.objects.filter(gloss_ptr_id=morpheme_gloss)
 
-            # print('check_existance_simultaneous_morphology, morpheme_id: ', morpheme_id, ' morpheme_gloss: ', morpheme_gloss)
-
             if not morpheme_id:
-                # print('check_existance_simultaneous_morphology: morpheme not found')
                 error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
                     gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
                 errors.append(error_string)
@@ -779,6 +797,62 @@ def check_existance_simultaneous_morphology(gloss, values):
             continue
 
     return (checked, errors)
+
+
+def check_existance_blend_morphology(gloss, values):
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+
+    errors = []
+    found = []
+    not_found = []
+    tuples_list = []
+    checked = ''
+
+    # check syntax
+    for new_value_tuple in values:
+        try:
+            (gloss_id, role) = new_value_tuple.split(':')
+            role = role.strip()
+            gloss_id = gloss_id.strip()
+            tuples_list.append((gloss_id,role))
+        except ValueError:
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
+                           + '), formatting error in Blend Morphology: ' + str(new_value_tuple) + '. Tuple gloss:role expected.'
+            errors.append(error_string)
+
+    for (gloss_id, role) in tuples_list:
+
+        try:
+
+            morpheme_gloss = Gloss.objects.get(pk=gloss_id)
+
+            if gloss_id in found:
+                error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                    gloss.pk) + '), new Blend Morphology value ' + str(gloss_id) + ' is duplicate.'
+                errors.append(error_string)
+            else:
+                found += [gloss_id]
+
+            if checked:
+                checked += ',' + ':'.join([gloss_id, role])
+            else:
+                checked = ':'.join([gloss_id, role])
+
+        except ObjectDoesNotExist:
+            if gloss_id in not_found:
+                # we've already seen this value
+                error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                    gloss.pk) + '), new Blend Morphology value ' + str(gloss_id) + ' is duplicate.'
+                errors.append(error_string)
+            else:
+                error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                    gloss.pk) + '), new Blend Morphology value ' + str(gloss_id) + ' not found.'
+                errors.append(error_string)
+                not_found += [gloss_id]
+            continue
+
+    return (checked, errors)
+
 
 RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant',
                          'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
@@ -912,7 +986,12 @@ def reload_signbank(request=None):
         from django.shortcuts import render
         return render(request,'reload_signbank.html')
 
-def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
+def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, dataset=None):
+    dataset_gloss_ids = []
+    if dataset:
+        dataset_gloss_ids = dataset.gloss_set.values_list('pk', flat=True)
+        print(str(dataset_gloss_ids))
+        print(str(4611 in dataset_gloss_ids))
 
     full_root_path = signbank.settings.server_specific.WRITABLE_FOLDER+root_folder+'/'
     static_urls = {}
@@ -926,16 +1005,22 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0):
 
                     try:
                         gloss_id = res.group(1)
+                        re_result = re.match(r'.*\-(\d+)', gloss_id)
+
+                        if dataset is None or int(re_result.group(1)) in dataset_gloss_ids:
+                            static_urls[gloss_id] = reverse('dictionary:protected_media',
+                                                            args=['']) + root_folder + '/' + quote(
+                                subfolder_name) + '/' + quote(filename)
                     except AttributeError:
                         continue
 
-                    static_urls[gloss_id] = reverse('dictionary:protected_media', args=[''])+root_folder+'/'+quote(subfolder_name)+'/'+quote(filename)
-
     return static_urls
 
-def get_gloss_data(since_timestamp=0):
-
-    glosses = Gloss.objects.all()
+def get_gloss_data(since_timestamp=0, dataset=None):
+    if dataset:
+        glosses = Gloss.objects.filter(dataset=dataset)
+    else:
+        glosses = Gloss.objects.all()
     gloss_data = {}
     for gloss in glosses:
         if int(format(gloss.lastUpdated, 'U')) > since_timestamp:
@@ -962,6 +1047,7 @@ def create_zip_with_json_files(data_per_file,output_path):
 def get_deleted_gloss_or_media_data(item_type,since_timestamp):
 
     result = []
+    from datetime import datetime, date
     deletion_date_range = [datetime.fromtimestamp(since_timestamp),date.today()]
 
     for deleted_gloss_or_media in DeletedGlossOrMedia.objects.filter(deletion_date__range=deletion_date_range,
@@ -993,22 +1079,10 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
                     still_goal_location = destination + os.sep + filename
                     if not os.path.isdir(destination):
                         os.makedirs(destination, 0o770)
-                    elif os.path.isfile(still_goal_location):
-                        # Make a backup
-                        backup_id = 1
-                        made_backup = False
-
-                        while not made_backup:
-
-                            if not os.path.isfile(still_goal_location + '_' + str(backup_id)):
-                                os.rename(still_goal_location, still_goal_location + '_' + str(backup_id))
-                                made_backup = True
-                            else:
-                                backup_id += 1
                     shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
             shutil.rmtree(dir)
     except ImportError as i:
-        print(i.message)
+        print("Error resizing video: ", i)
     except IOError as io:
         print(io.message)
 
@@ -1016,10 +1090,11 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
 def get_selected_datasets_for_user(user):
     if user.is_authenticated:
         user_profile = UserProfile.objects.get(user=user)
+        viewable_datasets = get_objects_for_user(user, 'view_dataset', Dataset)
         selected_datasets = user_profile.selected_datasets.all()
         if not selected_datasets:
-            selected_datasets = get_objects_for_user(user, 'view_dataset', Dataset)
-        return selected_datasets
+            return viewable_datasets
+        return selected_datasets & viewable_datasets # intersection of the selected and viewable datasets
     else:
         return Dataset.objects.filter(is_public=True)
 
@@ -1054,3 +1129,244 @@ def get_default_annotationidglosstranslation(gloss):
     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
         default_annotationidglosstranslation = annotationidglosstranslations[0].text
     return default_annotationidglosstranslation
+
+def convert_language_code_to_2char(language_code):
+
+    # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
+    if '-' in language_code:
+        language_code_parts = language_code.split('-')
+    elif '_' in language_code:
+        language_code_parts = language_code.split('_')
+    else:
+        # only one part
+        language_code_parts = [language_code]
+    if len(language_code_parts) > 1:
+        new_language_code = language_code_parts[0]
+        new_language_code += '_' + language_code_parts[1].upper()
+    else:
+        new_language_code = language_code_parts[0]
+
+    return new_language_code
+
+from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
+from signbank.settings import server_specific
+from signbank.settings.server_specific import *
+import re
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+import datetime as DT
+
+def write_ecv_files_for_all_datasets():
+
+    all_dataset_objects = Dataset.objects.all()
+
+    for ds in all_dataset_objects:
+        ecv_filename = write_ecv_file_for_dataset(ds.name)
+        print('Saved ECV for Dataset ', ds.name, ' to file: ', ecv_filename)
+
+    return True
+
+
+def write_ecv_file_for_dataset(dataset_name):
+
+    description = 'DESCRIPTION'
+    language = 'LANGUAGE'
+    lang_ref = 'LANG_REF'
+
+    cv_entry_ml = 'CV_ENTRY_ML'
+    cve_id = 'CVE_ID'
+    cve_value = 'CVE_VALUE'
+
+    topattributes = {'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance",
+                     'DATE': str(DT.date.today()) + 'T' + str(DT.datetime.now().time()),
+                     'AUTHOR': '',
+                     'VERSION': '0.2',
+                     'xsi:noNamespaceSchemaLocation': "http://www.mpi.nl/tools/elan/EAFv2.8.xsd"}
+    top = ET.Element('CV_RESOURCE', topattributes)
+
+    for lang in ECV_SETTINGS['languages']:
+        ET.SubElement(top, language, lang['attributes'])
+
+    cv_element = ET.SubElement(top, 'CONTROLLED_VOCABULARY', {'CV_ID': ECV_SETTINGS['CV_ID']})
+
+    # description for cv_element
+    for lang in ECV_SETTINGS['languages']:
+        myattributes = {lang_ref: lang['id']}
+        desc_element = ET.SubElement(cv_element, description, myattributes)
+        desc_element.text = lang['description']
+
+    # set Dataset to NGT or other pre-specified Dataset, otherwise leave it empty
+    try:
+        dataset_id = Dataset.objects.get(name=dataset_name)
+    except:
+        dataset_id = ''
+
+    if dataset_id:
+        query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(dataset=dataset_id)
+    else:
+        query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False)
+
+    # Make sure we iterate only over the none-Morpheme glosses
+    for gloss in query_dataset:
+        glossid = str(gloss.pk)
+        myattributes = {cve_id: glossid, 'EXT_REF': 'signbank-ecv'}
+        cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
+
+        for lang in ECV_SETTINGS['languages']:
+            langId = lang['id']
+            if len(langId) == 3:
+                langId = [c[2] for c in LANGUAGE_CODE_MAP if c[3] == langId][0]
+            desc = get_ecv_descripion_for_gloss(gloss, langId,
+                                                     ECV_SETTINGS['include_phonology_and_frequencies'])
+            cve_value_element = ET.SubElement(cve_entry_element, cve_value,
+                                              {description: desc, lang_ref: lang['id']})
+            cve_value_element.text = get_value_for_ecv(gloss, lang['annotation_idgloss_fieldname'])
+
+    ET.SubElement(top, 'EXTERNAL_REF',
+                  {'EXT_REF_ID': 'signbank-ecv', 'TYPE': 'resource_url', 'VALUE': URL + "/dictionary/gloss/"})
+
+    xmlstr = minidom.parseString(ET.tostring(top, 'utf-8')).toprettyxml(indent="   ")
+    ecv_file = os.path.join(ECV_FOLDER, dataset_name.lower().replace(" ","_") + ".ecv")
+    import codecs
+    with codecs.open(ecv_file, "w", "utf-8") as f:
+        f.write(xmlstr)
+
+    return ecv_file
+
+def get_ecv_descripion_for_gloss(gloss, lang, include_phonology_and_frequencies=False):
+    desc = ""
+    if include_phonology_and_frequencies:
+        description_fields = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir',
+                              'movSh', 'tokNo',
+                              'tokNoSgnr']
+
+        for f in description_fields:
+            if f in FIELDS['phonology']:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldname_to_category(f))
+                machine_value = getattr(gloss, f)
+                value = machine_value_to_translated_human_value(machine_value, choice_list, lang)
+                if value is None:
+                    value = ' '
+            else:
+                value = get_value_for_ecv(gloss, f)
+
+            if f == 'handedness':
+                desc = value
+            elif f == 'domhndsh':
+                desc = desc + ', (' + value
+            elif f == 'subhndsh':
+                desc = desc + ',' + value
+            elif f == 'handCh':
+                desc = desc + '; ' + value + ')'
+            elif f == 'tokNo':
+                desc = desc + ' [' + value
+            elif f == 'tokNoSgnr':
+                desc = desc + '/' + value + ']'
+            else:
+                desc = desc + ', ' + value
+
+    if desc:
+        desc += ", "
+
+    trans = [t.translation.text for t in gloss.translation_set.all()]
+    desc += ", ".join(
+        # The next line was adapted from an older version of this code,
+        # that happened to do nothing. I left this for future usage.
+        # map(lambda t: str(t.encode('ascii','xmlcharrefreplace')) if isinstance(t, unicode) else t, trans)
+        trans
+    )
+
+    return desc
+
+def get_value_for_ecv(gloss, fieldname):
+    value = None
+    annotationidglosstranslation_prefix = "annotationidglosstranslation_"
+    if fieldname.startswith(annotationidglosstranslation_prefix):
+        language_code_2char = fieldname[len(annotationidglosstranslation_prefix):]
+        annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(
+            language__language_code_2char=language_code_2char)
+        if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
+            value = annotationidglosstranslations[0].text
+    else:
+        try:
+            value = getattr(gloss, 'get_' + fieldname + '_display')()
+
+        except AttributeError:
+            value = getattr(gloss, fieldname)
+
+    # This was disabled with the move to python 3... might not be needed anymore
+    # if isinstance(value,unicode):
+    #     value = str(value.encode('ascii','xmlcharrefreplace'))
+
+    if value is None:
+        value = " "
+    elif not isinstance(value, str):
+        value = str(value)
+
+    if value == '-':
+        value = ' '
+    return value
+
+def write_csv_for_handshapes(handshapelistview, csvwriter):
+#  called from the HandshapeListView when search_type is handshape
+
+    fieldnames = settings.HANDSHAPE_RESULT_FIELDS
+
+    fields = [Handshape._meta.get_field(fieldname) for fieldname in fieldnames]
+
+    with override(LANGUAGE_CODE):
+        header = ['Handshape ID'] + [ f.verbose_name.encode('ascii', 'ignore').decode() for f in fields ]
+
+    csvwriter.writerow(header)
+
+    # case search result is list of handshapes
+
+    handshape_list = handshapelistview.get_queryset()
+
+    for handshape in handshape_list:
+        row = [str(handshape.pk)]
+
+        for f in fields:
+
+            # Try the value of the choicelist
+            try:
+                value = getattr(handshape, 'get_' + f.name + '_display')()
+
+            # If it's not there, try the raw value
+            except AttributeError:
+                value = getattr(handshape, f.name)
+
+            if not isinstance(value, str):
+                value = str(value)
+
+            row.append(value)
+
+        # Make it safe for weird chars
+        safe_row = []
+        for column in row:
+            try:
+                safe_row.append(column.encode('utf-8').decode())
+            except AttributeError:
+                safe_row.append(None)
+
+        csvwriter.writerow(safe_row)
+
+    return csvwriter
+
+
+def get_users_who_can_view_dataset(dataset_name):
+
+    dataset = Dataset.objects.get(name=dataset_name)
+
+    all_users = User.objects.all()
+
+    users_who_can_view_dataset = []
+
+    for user in all_users:
+        import guardian
+        from guardian.shortcuts import get_objects_for_user
+        user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+        if dataset in user_view_datasets:
+            users_who_can_view_dataset.append(user.username)
+
+    return users_who_can_view_dataset

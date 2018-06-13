@@ -6,21 +6,27 @@ ROOT = '/scratch2/www/signbank/'
 BASE_DIR = ROOT+'repo/'
 WRITABLE_FOLDER = ROOT+'writable/'
 
+# Added test database, to run unit tests using this copy of the database, use -k argument to keep test database
+#      python bin/develop.py test -k
+
 DATABASES = {'default':
                 {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME': WRITABLE_FOLDER+'database/signbank.db',
+                    'TEST': {
+                        'NAME': WRITABLE_FOLDER+'database/test-signbank.db',
+                    }
                 }
             }
 
 ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 
 # what do we call this signbank?
-LANGUAGE_NAME = "NGT"
+LANGUAGE_NAME = "Global"
 COUNTRY_NAME = "Netherlands"
 
 #Influences which template and css folder are used
-SIGNBANK_VERSION_CODE = 'NGT'
+SIGNBANK_VERSION_CODE = 'global'
 URL = 'https://signbank.science.ru.nl/'
 ALLOWED_HOSTS = ['signbank.science.ru.nl']
 
@@ -34,7 +40,7 @@ LANGUAGE_CODE = "en"
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = True
 
-DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'nl'}
+DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en'}
 
 FIELDS = {}
 
@@ -42,7 +48,7 @@ FIELDS['main'] = ['useInstr','wordClass']
 
 FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
-          'mouthing', 'phonetVar',]
+          'mouthing', 'phonetVar','domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']
 
 FIELDS['semantics'] = ['iconImg','namEnt','semField','valence']
 
@@ -56,6 +62,7 @@ FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
+ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {
     'CV_ID': 'CNGT_RU-lexicon',
     'include_phonology_and_frequencies': True,
@@ -98,6 +105,8 @@ OTHER_MEDIA_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_other_media/'
 SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 
 SHOW_MORPHEME_SEARCH = True
+SHOW_DATASET_INTERFACE_OPTIONS = True
+DEFAULT_DATASET = 'NGT'
 
 CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'
 CNGT_METADATA_LOCATION = ROOT+'CNGT_MetadataEnglish_OtherResearchers.csv'
@@ -120,4 +129,5 @@ LANGUAGE_CODE_MAP = [
 
 SPEED_UP_RETRIEVING_ALL_SIGNS =	True
 
-
+import datetime
+RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=90)

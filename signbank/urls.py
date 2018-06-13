@@ -18,8 +18,7 @@ import django.contrib.auth.views
 import django.contrib.admindocs.urls
 import django_summernote.urls
 
-from signbank.dictionary.models import Gloss
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView, MorphemeListView, DatasetListView, HandshapeListView, HomonymListView
+from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, HomonymListView, DatasetManagerView, DatasetDetailView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -32,6 +31,7 @@ if settings.SHOW_NUMBERSIGNS:
 else:
     numbersigns_view = TemplateView.as_view(template_name='numbersigns/underconstruction.html')
 
+import debug_toolbar
 
 urlpatterns = [
     url(r'^$', signbank.pages.views.page, name='root_page'),
@@ -94,7 +94,11 @@ urlpatterns = [
     url(r'^datasets/available', DatasetListView.as_view(), name='admin_dataset_view'),
     url(r'^datasets/select', DatasetListView.as_view(), {'select': True}, name='admin_dataset_select'),
     url(r'^datasets/change_selection', signbank.dictionary.update.change_dataset_selection, name='change_dataset_selection'),
-    url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses")
+    url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
+    url(r'^datasets/manager', DatasetManagerView.as_view(), name='admin_dataset_manager'),
+    url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
+    url(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
+    url(r'^__debug__/', include(debug_toolbar.urls))
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

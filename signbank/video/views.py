@@ -8,6 +8,8 @@ from signbank.video.forms import VideoUploadForm, VideoUploadForGlossForm
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
 import os
+import re
+import glob
 import shutil
 
 from signbank.dictionary.models import Gloss, DeletedGlossOrMedia
@@ -43,24 +45,39 @@ def addvideo(request):
             goal_folder = WRITABLE_FOLDER+GLOSS_VIDEO_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
             goal_filename = gloss.idgloss + '-' + str(gloss.pk) + '.mp4'
             goal_location = goal_folder + goal_filename
+            goal_filename_small = gloss.idgloss + '-' + str(gloss.pk) + '_small' + '.mp4'
+            goal_location_small = goal_folder + goal_filename_small
+
             if os.path.isfile(goal_location):
-                backup_id = 1
-                made_backup = False
+                os.remove(goal_location)
+            if os.path.isfile(goal_location_small):
+                os.remove(goal_location_small)
 
-                while not made_backup:
+            # test for other video files for this gloss.pk with a different filename, such as version or old idgloss
+            if os.path.isfile(goal_folder):
+                file_listing = os.listdir(goal_folder)
+                for fname in file_listing:
+                    if re.match('.*\-'+str(gloss.pk)+'\..*', fname):
+                        if os.path.isfile(goal_folder+fname):
+                            os.remove(goal_folder+fname)
 
-                    if not os.path.isfile(goal_location+'_'+str(backup_id)):
-                        os.rename(goal_location,goal_location+'_'+str(backup_id))
-                        made_backup = True
-                        # Issue #162: log the upload history
-                        log_entry = GlossVideoHistory(action="rename", gloss=gloss, actor=request.user,
-                                                      uploadfile=vfile, goal_location=goal_location+'_'+str(backup_id))
-                        log_entry.save()
-                    else:
-                        backup_id += 1
+            # clean up the database entry for an old file, if necessary
 
+            video_links_count = GlossVideo.objects.filter(gloss=gloss).count()
+            video_links_objects = GlossVideo.objects.filter(gloss=gloss)
+
+            if video_links_count > 0:
+                # delete the old video object links stored in the database
+                for video_object in video_links_objects:
+                    video_object.delete()
+
+            # make a new GlossVideo object for the new file
             video = GlossVideo(videofile=vfile, gloss=gloss)
             video.save()
+
+            #Make sure the rights of the new file are okay
+            if os.path.isfile(goal_location):
+                os.chmod(goal_location,0o660)
 
             # Issue #162: log the upload history
             log_entry = GlossVideoHistory(action="upload", gloss=gloss, actor=request.user,
@@ -74,11 +91,17 @@ def addvideo(request):
                 resizer = VideoResizer([goal_location], FFMPEG_PROGRAM, 180, 0, 0)
                 resizer.run()
             except ImportError as i:
-                print(i.message)
+                print("Error resizing video: ",i)
 
             # Issue #214: generate still image
-            from signbank.tools import generate_still_image
-            generate_still_image(gloss.idgloss[:2], goal_folder, goal_filename)
+            try:
+                from signbank.tools import generate_still_image
+                generate_still_image(gloss.idgloss[:2], goal_folder, goal_filename)
+            except:
+                print('Error generating still image')
+
+            if os.path.isfile(goal_location_small):
+                os.chmod(goal_location_small,0o660)
 
             os.chmod(goal_location,644)
 

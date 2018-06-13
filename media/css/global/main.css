@@ -1,0 +1,181 @@
+/* variant style for black - main page style */
+
+
+html { 
+  background-image: url(../../images/global/black_02.gif); 
+} 
+
+#leftcontentborder {
+  background-image: url(../../images/global/black_03.gif);
+}
+
+#rightcontentborder {
+  background-image: url(../../images/global/black_05.gif);
+}
+
+ #header {
+		background-image: url(../../images/global/black_02.gif); 
+        padding:0;
+        background:#BB2F2C;
+        height:110px;
+        clear:both;
+        position:relative;
+        margin: 0px;
+        width: 100%;
+}
+
+#header h1 {
+        height: 110px;
+        width: 300px;
+        background-position: 20px 20px;
+        background-repeat: no-repeat;
+        color: white;
+        font-family: 'Nunito', sans-serif;
+        font-size: 40px;
+        padding: 19px;
+        padding-left: 3px;
+        margin: 0px;
+        display: flex;
+}
+
+#second-title-part {
+    color: lightgrey;
+    margin-left: -92px;
+    line-height: 2.5;
+}
+
+#logoholder {
+    background-image: url(../../images/global/ru-logo.png);
+    background-repeat: no-repeat;
+    background-position: 11px 10px;
+	width: 115px;
+    height: 110px;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+}
+
+/* superfish menu styling - background image is assumed 26px high */
+.sf-navbar  { 
+   background-image: url(../../images/global/black_08.gif);
+   background-position: top right;
+   background-repeat: no-repeat;
+}
+
+#pages #mainlinks td {
+  
+  background-image: url(../../images/global/black_02.gif);
+}
+
+#username_link
+{
+    margin-right: 17px;
+}
+
+.hamburger_button
+{
+    margin-right: 35px;
+}
+
+#minimalistic_language_picker
+{
+    margin-top: 0px;
+    float: right;
+    margin-right: 0px;
+    margin-bottom: 4px;
+    position: relative;
+    width: 30px;
+    height: 55px;
+	line-height: 11px;
+	padding: 6px;
+    float: right;
+	border-radius: 6px;}
+
+legend
+{
+    padding-top: 25px;
+}
+
+.citation_form_image
+{
+    width: 467px;
+}
+
+.modal-dialog {
+  margin: 130px auto;
+}
+
+.global_sb_logo
+{
+    width: 80px;
+    margin: 15px;
+    margin-left: 19px;
+    float: left;
+}
+
+.navbar {
+    margin-bottom: 3px;
+    width: 100%;
+    position: fixed;
+    background-color: #ffffff;
+}
+
+.navbar-nav > li > a {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.navbar-nav > ul {
+    margin-left: 15px;
+    float: left;
+}
+
+.navbar-form, .navbar-text {
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.navbar-collapse {
+    max-height: 100% !important;
+}
+
+.btn {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.panel-heading, .input-group-addon, .form-control {
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+.select2-container {
+    width: 300px;
+}
+
+.input-group-addon, .form-control {
+    height: 28px;
+}
+
+#signinfo {
+    min-height: 30px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    margin-top: 0px;
+}
+
+.invisible_button
+{
+    border: none;
+    background-color: rgba(0,0,0,0%);
+    box-shadow: none;
+    margin-left: -4px;
+    outline: none;
+}
+
+#mag-glass
+{
+    width:14px;
+}

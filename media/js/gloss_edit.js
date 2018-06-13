@@ -6,8 +6,6 @@
 //Keep track of the new values in order to generate hyperlinks for Handshapes
 var original_values_for_changes_made = new Array();
 var new_values_for_changes_made = new Array();
-//var original_strong_hand_link = '';
-//var original_weak_hand_link = '';
 var busy_editing = 0;
 
  $(document).ready(function() {
@@ -58,14 +56,14 @@ var busy_editing = 0;
     $('.glosstypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.pk)
         });
-    $('.glosstypeahead').bind("change", function() {
+    $('.glosstypeahead').on("input", function() {
           $(this).parent().next().val("")
         });
     morphtypeahead($('.morphtypeahead'));
     $('.morphtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.pk)
         });
-    $('.morphtypeahead').bind("change", function() {
+    $('.morphtypeahead').on("input", function() {
           $(this).parent().next().val("")
         });
 
@@ -97,10 +95,22 @@ function disable_edit() {
     if (busy_editing) {
         strong_hand = $('#domhndsh').text();
         weak_hand = $('#subhndsh').text();
-        console.log('new strong hand: ' + strong_hand);
-        console.log('new weak hand: ' + weak_hand);
+        new_lemma_group = $('#idgloss').text();
         strong_machine_value = new_values_for_changes_made['domhndsh'];
         weak_machine_value = new_values_for_changes_made['subhndsh'];
+        new_lemma_group_value = new_values_for_changes_made['idgloss'];
+        original_lemma_group_value = original_values_for_changes_made['idgloss'];
+        if (new_lemma_group_value == undefined) {
+            if (original_lemma_group_url) {
+                $('#idgloss').html('<a href="' + original_lemma_group_url + '">' + original_lemma_group_value + '</a>')
+            }
+        } else {
+            console.log('lemma group: ' + lemma_group)
+            if (lemma_group == 'True') {
+                new_lemma_group_url = url + 'signs/search/?search_type=sign&view_type=lemma_groups&lemmaGloss=%5E' + new_lemma_group + '%24'
+                $('#idgloss').html('<a href="' + new_lemma_group_url + '">' + new_lemma_group + '</a>')
+            }
+        }
         if (strong_machine_value == undefined) {
             if (original_strong_hand) {
                 strong_hand_href = url + 'dictionary/handshape/'+ original_strong_hand + '/';
@@ -127,8 +137,6 @@ function disable_edit() {
     $('#domhndsh').css('color', 'blue');
     $('#subhndsh').css('color', 'blue');
     $('.editform').hide();
-    $('#delete_gloss_btn').hide();
-    $('#delete_morpheme_btn').hide();
     $('.button-to-appear-in-edit-mode').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
@@ -179,15 +187,17 @@ function enable_edit() {
     $('#edit_message').css('color', 'black');
     strong_hand = $('#domhndsh').text();
     weak_hand = $('#subhndsh').text();
+    lemma_group_text = $('#idgloss').text();
+    console.log('original lemma group: ' + lemma_group_text);
     console.log("original strong hand: " + strong_hand);
     console.log("original weak hand: " + weak_hand);
     $('#domhndsh').children().remove();
     $('#domhndsh').html(strong_hand);
     $('#subhndsh').children().remove();
     $('#subhndsh').html(weak_hand);
+    $('#idgloss').children().remove();
+    $('#idgloss').html(lemma_group_text);
     $('.editform').show();
-    $('#delete_gloss_btn').show().addClass('btn-danger');
-    $('#delete_morpheme_btn').show().addClass('btn-danger');
     $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
@@ -246,10 +256,6 @@ function toggle_edit(redirect_to_next) {
     }
 }
 
-
-function delete_gloss() {
-    alert(delete_this_gloss_str);
-}
 
 $.editable.addInputType('positiveinteger', {
     element : function(settings, original) {
@@ -428,9 +434,16 @@ function update_view_and_remember_original_value(change_summary)
         new_value = split_values[1];
         machine_value = split_values[2];
         category_value = split_values[3];
+//        save the original value because the next line intentionally overwrites the variable in the template
+        original_lemma_group = lemma_group;
+        if (split_values_count > 3) {
+//        only the main update_gloss and update_morpheme functions return this extra information, their sub-functions do not
+            lemma_group = split_values[4];
+        }
         console.log("change summary: ", change_summary);
         console.log("machine value: ", machine_value);
         console.log("category value: ", category_value);
+        console.log("lemma group boolean: ", lemma_group);
 
         id = $(this).attr('id');
         $(this).html(new_value);
@@ -447,8 +460,6 @@ function update_view_and_remember_original_value(change_summary)
         if (original_values_for_changes_made[id] == undefined)
         {
             original_values_for_changes_made[id] = original_value;
-            console.log("undefined in array, original value: ", original_value);
-            console.log("undefined in array, new value: ", new_value);
             $(this).parent().removeClass('empty_row');
             if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
                 $(this).attr("value", new_value);
@@ -461,7 +472,7 @@ function update_view_and_remember_original_value(change_summary)
             }
         }
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
-                        new_value == 'False' || new_value == 0 || new_value == False || new_value == None || new_value == '&nbsp;')
+                        new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
         {
             console.log("new value is empty, new value is: ", new_value);
             if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
@@ -469,9 +480,16 @@ function update_view_and_remember_original_value(change_summary)
                 $(this).html("------");
             }
             else {
-                $(this).parent().addClass('empty_row');
-                $(this).parent().attr("value", new_value);
-                $(this).html("------");
+                if (id == 'idgloss') {
+//                the user tried to erase the Lemma ID Gloss field, reset it in the template to what it was
+                    console.log('attempt to delete field idgloss');
+                    $(this).html(original_value);
+                    lemma_group = original_lemma_group;
+                } else {
+                    $(this).parent().addClass('empty_row');
+                    $(this).parent().attr("value", new_value);
+                    $(this).html("------");
+                }
             }
         }
         if (category_value == 'phonology') {
