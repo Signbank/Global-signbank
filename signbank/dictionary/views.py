@@ -1061,16 +1061,6 @@ def recently_added_glosses(request):
 def proposed_new_signs(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-<<<<<<< HEAD
-
-    proposed_or_new_signs = (Gloss.objects.filter(isNew=True) |
-                             TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed"))\
-                             .order_by('creationDate').reverse()
-
-    return render(request, 'dictionary/recently_added_glosses.html',
-                  {'glosses': proposed_or_new_signs,
-                   'dataset_languages': dataset_languages})
-=======
     proposed_or_new_signs = (Gloss.objects.filter(isNew=True) |
                              TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed")).order_by('creationDate').reverse()
     return render(request, 'dictionary/recently_added_glosses.html',
@@ -1078,8 +1068,6 @@ def proposed_new_signs(request):
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
->>>>>>> master
-
 
 def add_params_to_url(url,params):
     url_parts = list(urlparse.urlparse(url))
