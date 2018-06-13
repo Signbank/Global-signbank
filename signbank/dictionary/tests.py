@@ -99,7 +99,6 @@ class BasicCRUDTests(TestCase):
                 "annotationidglosstranslation_test_" + language.language_code_2char
 
         # User does not have permission to change dataset. Creating a gloss should fail.
-        print('CREATE FORM DATA',create_gloss_form_data)
         response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
 
         self.assertEqual(response.status_code, 200)
