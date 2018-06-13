@@ -3,10 +3,13 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
-                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset
+                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset, FieldChoice
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
+
+from django_select2 import *
+from easy_select2.widgets import Select2, Select2Multiple
 
 # category choices are tag values that we'll restrict search to
 CATEGORY_CHOICES = (('all', 'All Signs'),
@@ -204,13 +207,85 @@ class GlossSearchForm(forms.ModelForm):
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
     altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)
+    handedness = forms.TypedMultipleChoiceField(label=_(u'Handedness'),
+                                                choices=[(str(choice.machine_value),choice.english_name) for choice in
+                                                         FieldChoice.objects.filter(field__iexact='Handedness')],
+                                                required=False, widget=Select2)
     weakprop = forms.ChoiceField(label=_(u'Weak prop'),choices=NEUTRALQUERYCHOICES)
     weakdrop = forms.ChoiceField(label=_(u'Weak drop'),choices=NEUTRALQUERYCHOICES)
 
+    domhndsh = forms.TypedMultipleChoiceField(label=_(u'Strong Hand'),
+                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                         FieldChoice.objects.filter(field__iexact='Handshape')],
+                                                required=False, widget=Select2)
     domhndsh_letter = forms.ChoiceField(label=_(u'letter'),choices=UNKNOWNBOOLEANCHOICES)
     domhndsh_number = forms.ChoiceField(label=_(u'number'),choices=UNKNOWNBOOLEANCHOICES)
+    subhndsh = forms.TypedMultipleChoiceField(label=_(u'Weak Hand'),
+                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                         FieldChoice.objects.filter(field__iexact='Handshape')],
+                                                required=False, widget=Select2)
     subhndsh_letter = forms.ChoiceField(label=_(u'letter'),choices=UNKNOWNBOOLEANCHOICES)
     subhndsh_number = forms.ChoiceField(label=_(u'number'),choices=UNKNOWNBOOLEANCHOICES)
+
+    locprim = forms.TypedMultipleChoiceField(label=_(u'Location'),
+                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                         FieldChoice.objects.filter(field__iexact='Location')],
+                                                required=False, widget=Select2)
+
+    relatArtic = forms.TypedMultipleChoiceField(label=_(u'Relation between Articulators'),
+                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                         FieldChoice.objects.filter(field__iexact='RelatArtic')],
+                                                required=False, widget=Select2)
+
+    relOriMov = forms.TypedMultipleChoiceField(label=_(u'Relative Orientation: Movement'),
+                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                         FieldChoice.objects.filter(field__iexact='RelOriMov')],
+                                                required=False, widget=Select2)
+
+    relOriLoc = forms.TypedMultipleChoiceField(label=_(u'Relative Orientation: Location'),
+                                              choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                       FieldChoice.objects.filter(field__iexact='RelOriLoc')],
+                                              required=False, widget=Select2)
+
+    handCh = forms.TypedMultipleChoiceField(label=_(u'Handshape Change'),
+                                              choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                       FieldChoice.objects.filter(field__iexact='HandshapeChange')],
+                                              required=False, widget=Select2)
+
+    oriCh = forms.TypedMultipleChoiceField(label=_(u'Orientation Change'),
+                                              choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                       FieldChoice.objects.filter(field__iexact='OriChange')],
+                                              required=False, widget=Select2)
+
+    contType = forms.TypedMultipleChoiceField(label=_(u'Contact Type'),
+                                              choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                       FieldChoice.objects.filter(field__iexact='ContactType')],
+                                              required=False, widget=Select2)
+
+    movSh = forms.TypedMultipleChoiceField(label=_(u'Movement Shape'),
+                                              choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                       FieldChoice.objects.filter(field__iexact='MovementShape')],
+                                              required=False, widget=Select2)
+
+    movDir = forms.TypedMultipleChoiceField(label=_(u'Movement Direction'),
+                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                         FieldChoice.objects.filter(field__iexact='MovementDir')],
+                                                required=False, widget=Select2)
+
+    namEnt = forms.TypedMultipleChoiceField(label=_(u'Named Entity'),
+                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                         FieldChoice.objects.filter(field__iexact='NamedEntity')],
+                                                required=False, widget=Select2)
+
+    semField = forms.TypedMultipleChoiceField(label=_(u'Semantic Field'),
+                                            choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                     FieldChoice.objects.filter(field__iexact='SemField')],
+                                            required=False, widget=Select2)
+
+    wordClass = forms.TypedMultipleChoiceField(label=_(u'Word class'),
+                                            choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                     FieldChoice.objects.filter(field__iexact='WordClass')],
+                                            required=False, widget=Select2)
 
     isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     inWeb = forms.ChoiceField(label=_(u'Is in Web dictionary'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -236,16 +311,28 @@ class GlossSearchForm(forms.ModelForm):
                    'initial_relative_orientation', 'final_relative_orientation',
                    'initial_palm_orientation', 'final_palm_orientation', 
                    'initial_secondary_loc', 'final_secondary_loc',
-                   'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'locsecond',
+                   # 'domhndsh', 'subhndsh', 'locprim',
+                   'locVirtObj', 'locsecond',
                    'final_domhndsh', 'final_subhndsh', 'final_loc',
 
                     'locPrimLH','locFocSite','locFocSiteLH','initArtOri','finArtOri','initArtOriLH','finArtOriLH',
 
-                   'handedness', 'useInstr','rmrks', 'relatArtic','absOriPalm','absOriFing',
-                   'relOriMov','relOriLoc','oriCh','handCh','repeat', 'altern', 'movSh','movDir','movMan','contType', 'mouthG',
+                   # 'handedness',
+                    'useInstr','rmrks',
+                    # 'relatArtic',
+                   'absOriPalm','absOriFing',
+                   # 'relOriMov','relOriLoc','oriCh','handCh',
+                   'repeat', 'altern',
+                   # 'movSh','movDir',
+                   'movMan',
+                   # 'contType',
+                   'mouthG',
                    'mouthing', 'phonetVar', 'domSF', 'domFlex', 'oriChAbd', 'oriChFlex',
 
-                   'iconImg','iconType','namEnt', 'semField', 'wordClass', 'wordClass2', 'derivHist', 'lexCatNotes', 'valence',
+                   'iconImg','iconType',
+                   # 'namEnt', 'semField',
+                   # 'wordClass',
+                   'wordClass2', 'derivHist', 'lexCatNotes', 'valence',
 
                    'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                    'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')

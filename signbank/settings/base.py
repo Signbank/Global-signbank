@@ -121,6 +121,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'bootstrap3',
     'django_summernote',
+    # 'django_select2',
+    # 'easy_select2',
     'signbank.dictionary',
     'signbank.feedback',
     #'signbank.registration',
