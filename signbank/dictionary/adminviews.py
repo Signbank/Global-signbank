@@ -1,12 +1,13 @@
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView, DeleteView
 from django.db.models import Q, F, ExpressionWrapper, IntegerField, Count
 from django.db.models import CharField, TextField, Value as V
 from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField
 from django.http import HttpResponse, HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse_lazy
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import override
 from django.forms.fields import TypedChoiceField, ChoiceField
@@ -3205,3 +3206,91 @@ def user_ajax_complete(request, prefix):
         result.append({'first_name': u.first_name, 'last_name': u.last_name, 'username': u.username})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+
+
+class LemmaListView(ListView):
+    model = LemmaIdgloss
+    template_name = 'dictionary/admin_lemma_list.html'
+
+    def get_queryset(self):
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        return LemmaIdgloss.objects.filter(dataset__in=selected_datasets)
+
+    def get_context_data(self, **kwargs):
+        context = super(LemmaListView, self).get_context_data(**kwargs)
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        return context
+
+
+class LemmaCreateView(CreateView):
+    model = LemmaIdgloss
+    template_name = 'dictionary/add_lemma.html'
+    fields = []
+
+    def get_context_data(self, **kwargs):
+        context = {}
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+        context['add_lemma_form'] = LemmaCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
+        context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+        return context
+
+    def post(self, request, *args, **kwargs):
+        print(request.POST)
+        dataset = None
+        if 'dataset' in request.POST and request.POST['dataset'] is not None:
+            dataset = Dataset.objects.get(pk=request.POST['dataset'])
+            selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+        else:
+            selected_datasets = get_selected_datasets_for_user(request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+        form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
+
+        for item, value in request.POST.items():
+            if item.startswith(form.lemma_create_field_prefix):
+                language_code_2char = item[len(form.lemma_create_field_prefix):]
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(
+                    lemmaidglosstranslation__language=language,
+                    lemmaidglosstranslation__text__exact=value.upper(),
+                    dataset=dataset)
+                if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
+                    return render(request, 'dictionary/warning.html',
+                                  {'warning': language.name + " " + 'lemma ID Gloss not unique.'})
+
+        if form.is_valid():
+            try:
+                lemma = form.save()
+                print("LEMMA " + str(lemma.pk))
+            except ValidationError as ve:
+                messages.add_message(request, messages.ERROR, ve.message)
+                return render(request, 'dictionary/add_lemma.html', {'add_lemma_form': LemmaCreateForm(request.POST, user=request.user),
+                                                                     'dataset_languages': dataset_languages,
+                                                                     'selected_datasets': get_selected_datasets_for_user(request.user)})
+
+            # return HttpResponseRedirect(reverse('dictionary:admin_lemma_list', kwargs={'pk': lemma.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+        else:
+            return render(request, 'dictionary/add_gloss.html', {'add_lemma_form': form,
+                                                             'dataset_languages': dataset_languages,
+                                                             'selected_datasets': get_selected_datasets_for_user(
+                                                                 request.user)})
+
+
+class LemmaDeleteView(DeleteView):
+    model = LemmaIdgloss
+    success_url = reverse_lazy('dictionary:admin_lemma_list')
+

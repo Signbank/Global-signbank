@@ -3,7 +3,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
-                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset
+                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, \
+                                        AnnotationIdglossTranslation, Dataset, LemmaIdgloss, LemmaIdglossTranslation, \
+                                        Language
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
@@ -552,3 +554,58 @@ class ImageUploadForHandshapeForm(forms.Form):
     imagefile = forms.FileField(label="Upload Image")
     handshape_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
+
+
+class LemmaCreateForm(forms.ModelForm):
+    """Form for creating a new lemma from scratch"""
+
+    lemma_create_field_prefix = "lemmacreate_"
+    languages = None # Languages to use for lemma idgloss translations
+    user = None
+
+    class Meta:
+        model = LemmaIdgloss
+        fields = ['dataset']
+
+    def __init__(self, queryDict, *args, **kwargs):
+        if 'languages' in kwargs:
+            self.languages = kwargs.pop('languages')
+        self.user = kwargs.pop('user')
+        super(LemmaCreateForm, self).__init__(queryDict, *args, **kwargs)
+
+        from signbank.tools import get_selected_datasets_for_user
+        if not self.languages:
+            selected_datasets = get_selected_datasets_for_user(self.user)
+            self.languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+        for language in self.languages:
+            lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
+            self.fields[lemmacreate_field_name] = forms.CharField(label=_("Lemma")+(" (%s)" % language.name))
+            if lemmacreate_field_name in queryDict:
+                self.fields[lemmacreate_field_name].value = queryDict[lemmacreate_field_name]
+
+    @atomic  # This rolls back the lemma creation if creating lemmaidglosstranslations fails
+    def save(self, commit=True):
+        print("PRE SAVE")
+        lemma = super(LemmaCreateForm, self).save(commit)
+        print("POST SAVE for LEMMA")
+        for language in self.languages:
+            lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
+            lemma_idgloss_text = self.fields[lemmacreate_field_name].value
+            existing_lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
+            if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
+                lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma, language=language,
+                                                                            text=lemma_idgloss_text)
+                lemmaidglosstranslation.save()
+            elif len(existing_lemmaidglosstranslations) == 1:
+                lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
+                lemmaidglosstranslation.text = lemma_idgloss_text
+                lemmaidglosstranslation.save()
+            else:
+                raise Exception(
+                    "In class %s: gloss with id %s has more than one lemma idgloss translation for language %s"
+                    % (self.__class__.__name__, lemma.pk, language.name)
+                )
+        print("POST SAVE for Translations")
+        return lemma
+

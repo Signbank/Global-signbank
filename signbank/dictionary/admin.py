@@ -228,6 +228,13 @@ class LanguageAdmin(TranslationAdmin):
     pass
 
 
+class LemmaIdglossAdmin(VersionAdmin):
+    pass
+
+class LemmaIdglossTranslationAdmin(VersionAdmin):
+    pass
+
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin) 
@@ -243,3 +250,6 @@ admin.site.register(Handshape, HandshapeAdmin)
 admin.site.register(UserProfile)
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(Dataset, DatasetAdmin)
+
+admin.site.register(LemmaIdgloss, LemmaIdglossAdmin)
+admin.site.register(LemmaIdglossTranslation, LemmaIdglossTranslationAdmin)

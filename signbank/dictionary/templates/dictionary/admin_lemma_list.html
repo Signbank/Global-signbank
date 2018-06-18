@@ -1,0 +1,102 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+
+{% block bootstrap3_title %}Signbank: Lemmas{% endblock %}
+
+{% load annotation_idgloss_translation %}
+
+{% block content %}
+
+{% if object_list %}
+
+<table class='table table-condensed'>
+    <caption style="text-align: left;font-weight: bold;"><h3>{% trans "Lemmas" %}</h3> <a class="btn btn-primary pull-right" href="{% url 'dictionary:create_lemma' %}">{% trans "New" %}</a></caption>
+    <thead>
+      <tr>
+          {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
+          {% for dataset_lang in dataset_languages %}
+          <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+          {% endfor %}
+          <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for lemma in object_list %}
+        <tr>
+            {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+            <td>
+                <a href="{{URL}}/datasets/detail/{{lemma.dataset.id}}" >{{ lemma.dataset.name }}</a>
+            </td>
+            {% endif %}
+            {% for dataset_lang in dataset_languages %}
+              {% with lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
+              <td>
+                  {% ifnotequal lemmaidglosstranslation "" %}
+                    {{lemmaidglosstranslation}}
+                  {% endifnotequal %}
+              </td>
+            {% endwith %}
+          {% endfor %}
+            <td>
+                <a class="delete-entry" href="" data-toggle="modal" data-target="#deleteModal" modal_url="{% url 'dictionary:delete_lemma' lemma.pk %}">
+                    <span class="glyphicon glyphicon-trash" data-toggle="tooltip" data-original-title="{% trans 'Delete' %}"></span>
+                </a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title"><span class="glyphicon glyphicon-warning-sign"></span> {% trans "Warning" %}</h4>
+      </div>
+      <div class="modal-body">
+        <p>{% trans "Are you sure you want to delete this entry?" %}</p>
+      </div>
+      <div class="modal-footer">
+        <!-- Since the confirmation is done in this modal, the deletion is done using a POST.
+        A GET would trigger a confirm page. -->
+        <form id="delete-form" method="POST" action="">
+           {% csrf_token %}
+        </form>
+        <a class="btn btn-danger" href="" id="delete-link"
+               onclick="document.getElementById('delete-form').submit(); return false;">{% trans "Yes" %}</a>
+        <button type="button" class="btn btn-success" data-dismiss="modal">{% trans "No" %}</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+{% else %}
+{% trans "No lemmas found." %}
+{% endif %}
+
+{% endblock content %}
+
+{% block extrajs %}
+<script>
+$(document).ready(function(){
+        $('.delete-entry').on('click', function() {
+            var url = $(this).attr('modal_url');
+            $('#delete-form').attr('action', url);
+            $('#delete-link').attr('href', url);
+        });
+
+        $('[data-toggle="tooltip"]').tooltip({
+            placement : 'bottom'
+        });
+});
+</script>
+{% endblock %}

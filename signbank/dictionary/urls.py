@@ -5,7 +5,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
 from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossRelationsDetailView, MorphemeDetailView, \
-    MorphemeListView, HandshapeDetailView, HandshapeListView, HomonymListView
+    MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView
 
 #These are needed for the urls below
 import signbank.dictionary.views
@@ -91,4 +91,9 @@ urlpatterns = [
     url(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     url(r'^morpheme/(?P<pk>\d+)', MorphemeDetailView.as_view(), name='admin_morpheme_view'),
     url(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
+
+    # Lemma Idgloss views
+    url(r'^lemma/$', permission_required('dictionary.change_lemmaidgloss')(LemmaListView.as_view()), name='admin_lemma_list'),
+    url(r'^lemma/add/$', permission_required('dictionary.add_lemmaidgloss')(LemmaCreateView.as_view()), name='create_lemma'),
+    url(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
 ]

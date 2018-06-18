@@ -1,0 +1,79 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+
+{% block extrajs %}
+
+    {% if perms.dictionary.add_lemmaidgloss %}
+
+    <script type="text/javascript">
+
+    $(document).ready(function(){
+        /**
+         * In the 'add lemma' form, toggle the lemma idgloss fields depending on the chosen dataset
+         */
+         set_lemmaidglosslanguages();
+
+         $('#id_dataset').change(function() {
+            set_lemmaidglosslanguages();
+         });
+
+         function set_lemmaidglosslanguages() {
+            var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+            var languages = languages_str.split(",");
+            $("[id*='add_lemma_dataset_']").each(function(){
+                $(this).hide();
+            });
+            $("[id*='{{ lemma_create_field_prefix }}']").each(function(){
+                $(this).prop('required', false);
+            });
+            for(var id in languages) {
+                $("[id*='add_lemma_dataset_header_" + languages[id] + "']").show();
+                $("[id*='add_lemma_dataset_value_" + languages[id] + "']").show();
+                $("[id*='{{ lemma_create_field_prefix }}" + languages[id] + "']").prop('required', true);
+            }
+         }
+    });
+
+    </script>
+
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+   {% if perms.dictionary.add_lemmaidgloss %}
+   <p>{% trans "Please provide some initial data" %}:</p>
+
+     <form action='{% url "dictionary:create_lemma" %}' method='post'>
+         {% csrf_token %}
+         <table class='table' style='width: 400px;'>
+             <tr>
+                 <th><label for='dataset'>Dataset</label></th>
+                 <td><select id="id_dataset" name="dataset" required="">
+                         <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+                         {% for dataset in selected_datasets %}
+                         <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                         {% endfor %}
+                     </select></td>
+             </tr>
+             {% for dataset_lang in dataset_languages %}
+             <tr>
+                 <th id="add_lemma_dataset_header_{{ dataset_lang.language_code_2char }}">
+                     <label for="id_lemma_idgloss_{{dataset_lang.language_code_2char}}">{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})</label>
+                 </th>
+                 <td id="add_lemma_dataset_value_{{ dataset_lang.language_code_2char }}">
+                     <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}" name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}" required="" maxlength="30" type="text"/>
+                 </td>
+             </tr>
+             {% endfor %}
+         </table>
+
+     <input class='btn btn-primary' type='submit' value='{% trans "Add New Lemma" %}'>
+     </form>
+    {% else %}
+        <p>(% trans "You are not allowed to add lemma's. %}</p>
+    {% endif %}
+
+{% endblock %}

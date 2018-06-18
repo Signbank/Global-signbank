@@ -537,6 +537,17 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     creator = models.ManyToManyField(User)
     alternative_id = models.CharField(max_length=50,null=True,blank=True)
 
+    @property
+    def dataset_tmp(self):  # TODO change to 'dataset'
+        return self.dataset  # old
+        # return self.lemma.dataset  # new
+
+    @property
+    def idgloss_tmp(self):  # TODO change to 'idgloss'
+        return self.idgloss  # old
+        # return self.lemma.lemmaidglosstranslation_set.get(
+        # language__language_code_2char=settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])  # new
+
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
 
@@ -1688,3 +1699,43 @@ class AnnotationIdglossTranslation(models.Model):
                 raise ValidationError(msg)
 
         super(AnnotationIdglossTranslation, self).save(*args, **kwargs)
+
+
+class LemmaIdgloss(models.Model):
+    dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
+                                help_text=_("Dataset a lemma is part of"), null=True)
+
+class LemmaIdglossTranslation(models.Model):
+    """A Lemma ID Gloss"""
+    text = models.CharField(_("Lemma ID Gloss translation"), max_length=30, help_text="""The lemma translation text.""")
+    lemma = models.ForeignKey("LemmaIdgloss")
+    language = models.ForeignKey("Language")
+
+    class Meta:
+        unique_together = (("lemma", "language"),)  # For each combination of lemma and language there is just one text.
+
+    def save(self, *args, **kwargs):
+        """
+        1. Before an item is saved the language is checked against the languages of the dataset the lemma is in.
+        2. The lemma idgloss translation text for a language must be unique within a dataset. 
+        Note that bulk updates will not use this method. Therefore, always iterate over a queryset when updating."""
+        dataset = self.lemma.dataset
+        if dataset:
+            # Before an item is saved the language is checked against the languages of the dataset the lemma is in.
+            dataset_languages = dataset.translation_languages.all()
+            if not self.language in dataset_languages:
+                msg = "Language %s is not in the set of language of the dataset gloss %s belongs to" \
+                      % (self.language.name, self.lemma.id)
+                raise ValidationError(msg)
+
+            # The lemma idgloss translation text for a language must be unique within a dataset.
+            lemmas_with_same_text = dataset.lemmaidgloss_set.filter(lemmaidglosstranslation__text__exact=self.text,
+                                                              lemmaidglosstranslation__language=self.language)
+            if not(
+                (len(lemmas_with_same_text) == 1 and lemmas_with_same_text[0] == self.lemma)
+                   or lemmas_with_same_text is None or len(lemmas_with_same_text) == 0):
+                msg = "The lemma idgloss translation text '%s' is not unique within dataset '%s' for lemma '%s'." \
+                      % (self.text, dataset.name, self.lemma.id)
+                raise ValidationError(msg)
+
+        super(LemmaIdglossTranslation, self).save(*args, **kwargs)
