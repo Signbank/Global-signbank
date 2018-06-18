@@ -202,10 +202,13 @@ class GlossListView(ListView):
             context['input_names_fields_and_labels'][topic] = []
 
             for fieldname in settings.FIELDS[topic]:
-                field = search_form[fieldname]
-                label = field.label
 
-                context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
+                # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand for purposes of nested dependencies in Search form
+                if fieldname not in ['weakprop', 'weakdrop', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                    field = search_form[fieldname]
+                    label = field.label
+
+                    context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
         context['input_names_fields_labels_handedness'] = []
         field = search_form['weakdrop']
@@ -547,6 +550,8 @@ class GlossListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
+        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
+                      'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
 
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
@@ -555,6 +560,7 @@ class GlossListView(ListView):
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'namEnt', 'semField', 'valence',
                       'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
                       'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
+
 
         # SignLanguage and basic property filters
         vals = get.getlist('dialect', [])
@@ -568,6 +574,113 @@ class GlossListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
+        # print('fieldname search: ', fieldname)
+        for fieldnamemulti in fieldnamesmultiselect:
+
+            if fieldnamemulti == 'handedness':
+                vals = get.getlist('handedness[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(handedness__in=vals)
+
+            if fieldnamemulti == 'domhndsh':
+                vals = get.getlist('domhndsh[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(domhndsh__in=vals)
+
+            if fieldnamemulti == 'subhndsh':
+                vals = get.getlist('subhndsh[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(subhndsh__in=vals)
+
+            if fieldnamemulti == 'locprim':
+                vals = get.getlist('locprim[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(locprim__in=vals)
+
+            if fieldnamemulti == 'relatArtic':
+                vals = get.getlist('relatArtic[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(relatArtic__in=vals)
+
+            if fieldnamemulti == 'relOriMov':
+                vals = get.getlist('relOriMov[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(relOriMov__in=vals)
+
+            if fieldnamemulti == 'relOriLoc':
+                vals = get.getlist('relOriLoc[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(relOriLoc__in=vals)
+
+            if fieldnamemulti == 'oriCh':
+                vals = get.getlist('oriCh[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(oriCh__in=vals)
+
+            if fieldnamemulti == 'handCh':
+                vals = get.getlist('handCh[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(handCh__in=vals)
+
+            if fieldnamemulti == 'movSh':
+                vals = get.getlist('movSh[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(movSh__in=vals)
+
+            if fieldnamemulti == 'movDir':
+                vals = get.getlist('movDir[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(movDir__in=vals)
+
+            if fieldnamemulti == 'contType':
+                vals = get.getlist('contType[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(contType__in=vals)
+
+            if fieldnamemulti == 'namEnt':
+                vals = get.getlist('namEnt[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(namEnt__in=vals)
+
+            if fieldnamemulti == 'semField':
+                vals = get.getlist('semField[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(semField__in=vals)
+
+            if fieldnamemulti == 'wordClass':
+                vals = get.getlist('wordClass[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(wordClass__in=vals)
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
@@ -3127,11 +3240,14 @@ def gloss_ajax_complete(request, prefix):
             Q(sn__startswith=prefix)
     qs = Gloss.objects.filter(query).distinct()
 
+    from signbank.tools import convert_language_code_to_2char
+    language_code = convert_language_code_to_2char(request.LANGUAGE_CODE)
+
     result = []
     for g in qs:
         if g.dataset == dataset_id:
             default_annotationidglosstranslation = ""
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=request.LANGUAGE_CODE)
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=language_code)
             if annotationidglosstranslation:
                 default_annotationidglosstranslation = annotationidglosstranslation.text
             else:

@@ -151,6 +151,10 @@ legend
     padding-bottom: 3px;
 }
 
+.select2-container {
+    width: 300px;
+}
+
 .input-group-addon, .form-control {
     height: 28px;
 }
