@@ -42,7 +42,11 @@
     var handedness_weak_choices = {{gloss.handedness_weak_choices_json|safe}}
     var languages = {{gloss.signlanguage_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
+    {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
+    {% else %}
+    var dataset_choices = {};
+    {% endif %}
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
