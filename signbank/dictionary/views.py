@@ -730,7 +730,8 @@ def import_csv(request):
                     e1 = 'To create glosses, the following columns are required: ' \
                          + 'Dataset, Lemma ID Gloss, and Annotation ID Gloss for each translation language of the Dataset.'
                     e2 = 'To update glosses, column Signbank ID is required.'
-                    error.append(e1).append(e2)
+                    error.append(e1)
+                    error.append(e2)
                     break
 
                 if 'Signbank ID' in value_dict:
