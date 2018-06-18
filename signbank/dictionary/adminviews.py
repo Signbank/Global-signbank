@@ -3239,11 +3239,14 @@ def gloss_ajax_complete(request, prefix):
             Q(sn__startswith=prefix)
     qs = Gloss.objects.filter(query).distinct()
 
+    from signbank.tools import convert_language_code_to_2char
+    language_code = convert_language_code_to_2char(request.LANGUAGE_CODE)
+
     result = []
     for g in qs:
         if g.dataset == dataset_id:
             default_annotationidglosstranslation = ""
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=request.LANGUAGE_CODE)
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=language_code)
             if annotationidglosstranslation:
                 default_annotationidglosstranslation = annotationidglosstranslation.text
             else:

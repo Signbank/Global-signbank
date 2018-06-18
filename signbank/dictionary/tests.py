@@ -93,7 +93,7 @@ class BasicCRUDTests(TestCase):
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Construct the Create Gloss form data
-        create_gloss_form_data = {'dataset': test_dataset.id, 'idgloss': "idgloss_test", 'glosscreate_id': ''}
+        create_gloss_form_data = {'dataset': test_dataset.id, 'idgloss': "idgloss_test"}
         for language in test_dataset.translation_languages.all():
             create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
                 "annotationidglosstranslation_test_" + language.language_code_2char
@@ -368,6 +368,51 @@ class VideoTests(TestCase):
         #We expect no video anymore
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
+
+class AjaxTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+
+
+    def test_GlossSuggestion(self):
+
+        NAME = 'thisisatemporarytestgloss'
+
+        #Create the dataset
+        dataset_name = DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        #Add a gloss to this dataset
+        new_gloss = Gloss()
+        new_gloss.idgloss = NAME
+        new_gloss.annotation_idgloss = NAME
+        new_gloss.dataset = test_dataset
+        new_gloss.save()
+
+        #Add a translation to be shown with ajax (in the language of the dataset)
+        annotationidglosstranslation = AnnotationIdglossTranslation()
+        annotationidglosstranslation.gloss = new_gloss
+        annotationidglosstranslation.language = test_dataset.translation_languages.get(id=1)
+        annotationidglosstranslation.save()
+
+        #Log in
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
+        #Add info of the dataset to the session (normally done in the detail view)
+        session = client.session
+        session['datasetid'] = test_dataset.pk
+        session.save()
+
+        #The actual test
+        response = client.get('/dictionary/ajax/gloss/we')
+        self.assertNotContains(response,NAME)
+
+        response = client.get('/dictionary/ajax/gloss/th')
+        self.assertContains(response,NAME)
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):
