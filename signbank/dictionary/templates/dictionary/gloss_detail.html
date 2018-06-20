@@ -43,6 +43,7 @@
     var languages = {{gloss.signlanguage_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
     var dataset_choices = {{dataset_choices|safe}};
+    var gloss_dataset_id = {{ gloss.dataset_id}}
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
@@ -102,6 +103,13 @@
             return false;
         }
     }
+
+    $("#lemma").next().hide();
+
+    $("#lemma").on('click', function() {
+        $(this).hide();
+        $(this).next().show();
+    });
 
     function reloadVideo() {
         console.log('reload video');
@@ -335,7 +343,33 @@
             <tr {%if gloss.dialect.all|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
 
-                <td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{lemma_group_url}}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>
+                <!--<td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{lemma_group_url}}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>-->
+                <td><span id="lemma">{{ gloss.lemma }}</span>
+                    <form name='set_lemma_form' id='set_lemma_form'
+                     onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
+                                                    "Please choose a lemma.",
+                                                    "Target lemma must be different from the current lemma of this gloss.")'
+                     method='post' action='{% url "dictionary:update_gloss" gloss.id %}'>
+                        {% csrf_token %}
+
+
+
+                        <!-- Input that holds the current lemma id; used by validateForm -->
+                        <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma_id}}'>
+
+                        <!-- Input of the type ahead -->
+                        <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+
+                        <!-- Input for gloss_update (2) / Input that holds the lemma id the user chose from the type ahead -->
+                        <input type='hidden' name='value' value='confirmed'>
+                        <!-- Input for gloss_update (1) -->
+                        <input type='hidden' name='id' value='lemmaidgloss'>
+
+                        <!-- Submit -->
+                        <input class='btn btn-primary' value='{% trans "Set lemma" %}' type='submit'>
+                    </form>
+                </td>
+
             </tr>
 
             {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}

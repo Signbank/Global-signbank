@@ -259,6 +259,21 @@ def update_gloss(request, glossid):
 
             return update_annotation_idgloss(gloss, field, value)
 
+        elif field.startswith('lemmaidgloss'):
+            # Set new lemmaidgloss for this gloss
+            # First check whether the gloss dataset is the same as the lemma dataset
+            try:
+                dataset = gloss.dataset
+                lemma = LemmaIdgloss.objects.get(pk=value)
+                if dataset == lemma.dataset:
+                    gloss.lemma = lemma
+                    gloss.save()
+                else:
+                    messages.add_message(messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
+            except ObjectDoesNotExist:
+                messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
         else:
 
 

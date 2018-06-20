@@ -1707,6 +1707,10 @@ class LemmaIdgloss(models.Model):
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
                                 help_text=_("Dataset a lemma is part of"), null=True)
 
+    def __str__(self):
+        return ", ".join(["%s: %s" % (translation.language, translation.text)
+                          for translation in self.lemmaidglosstranslation_set.all()])
+
 class LemmaIdglossTranslation(models.Model):
     """A Lemma ID Gloss"""
     text = models.CharField(_("Lemma ID Gloss translation"), max_length=30, help_text="""The lemma translation text.""")

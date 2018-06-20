@@ -66,6 +66,13 @@ var busy_editing = 0;
     $('.morphtypeahead').on("input", function() {
           $(this).parent().next().val("")
         });
+    lemmatypeahead($('.lemmatypeahead'));
+    $('.lemmatypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk)
+        });
+    $('.lemmatypeahead').on("input", function() {
+          $(this).parent().next().val("")
+        });
 
 
     // setup requried for Ajax POST
@@ -217,6 +224,8 @@ function enable_edit() {
     $('.morphology-definition-delete').show();
     $('.morpheme-definition-delete').show();
     $('.blend-definition-delete').show();
+
+    $('#lemma').css('color', $('.edit').css('color'));
 
     $('.empty_row').show();
 
@@ -570,6 +579,41 @@ $.editable.addInputType('morphtypeahead', {
       $(this).append(input);
 
       morphtypeahead(input);
+
+      return (input);
+   },
+});
+
+var lemma_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/%QUERY'
+    });
+
+lemma_bloodhound.initialize();
+
+function lemmatypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'lemmatarget',
+          displayKey: 'lemma',
+          source: lemma_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(lemma) {
+                  return("<p><strong>" + lemma.lemma + "</strong></p>");
+              }
+          }
+      });
+};
+
+
+$.editable.addInputType('lemmatypeahead', {
+
+   element: function(settings, original) {
+      var input = $('<input type="text" class="lemmatypeahead">');
+      $(this).append(input);
+
+      lemmatypeahead(input);
 
       return (input);
    },

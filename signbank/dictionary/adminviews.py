@@ -3324,6 +3324,16 @@ def user_ajax_complete(request, prefix):
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
 
+def lemma_ajax_complete(request, dataset_id, q):
+    """Return a list of users matching the search term
+    as a JSON structure suitable for typeahead."""
+
+    lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id, lemmaidglosstranslation__text__icontains=q)
+    lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in lemmas]
+
+    return HttpResponse(json.dumps(lemmas_dict), {'content-type': 'application/json'})
+
+
 class LemmaListView(ListView):
     model = LemmaIdgloss
     template_name = 'dictionary/admin_lemma_list.html'
