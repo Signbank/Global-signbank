@@ -374,7 +374,9 @@ class Gloss(models.Model):
     idgloss = models.CharField(_("Lemma ID Gloss"), max_length=50, help_text="""
     This is the unique identifying name of an entry of a sign form in the
 database. No two Sign Entry Names can be exactly the same, but a "Sign
-Entry Name" can be (and often is) the same as the Annotation Idgloss.""")    
+Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
+
+    lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
 
     # languages that this gloss is part of
     signlanguage = models.ManyToManyField(SignLanguage)
