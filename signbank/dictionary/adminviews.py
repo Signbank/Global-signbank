@@ -9,7 +9,7 @@ from django.db.models.fields import NullBooleanField
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse_lazy
 from django.core.exceptions import PermissionDenied
-from django.utils.translation import override
+from django.utils.translation import override, ugettext_lazy as _
 from django.forms.fields import TypedChoiceField, ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
@@ -3330,7 +3330,7 @@ class LemmaListView(ListView):
 
     def get_queryset(self):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        return LemmaIdgloss.objects.filter(dataset__in=selected_datasets)
+        return LemmaIdgloss.objects.filter(dataset__in=selected_datasets).annotate(num_gloss=Count('gloss'))
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
@@ -3409,4 +3409,12 @@ class LemmaCreateView(CreateView):
 class LemmaDeleteView(DeleteView):
     model = LemmaIdgloss
     success_url = reverse_lazy('dictionary:admin_lemma_list')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if self.object.gloss_set.all():
+            messages.add_message(request, messages.ERROR, _("There are glosses using this lemma."))
+        else:
+            self.object.delete()
+        return HttpResponseRedirect(self.get_success_url())
 

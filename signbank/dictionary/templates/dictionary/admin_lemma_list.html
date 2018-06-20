@@ -20,6 +20,7 @@
           {% for dataset_lang in dataset_languages %}
           <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
+          <th>{% trans "Number of glosses" %}</th>
           <th></th>
       </tr>
     </thead>
@@ -41,9 +42,14 @@
             {% endwith %}
           {% endfor %}
             <td>
+                {{ lemma.num_gloss }}
+            </td>
+            <td>
+                {% if not lemma.num_gloss %}
                 <a class="delete-entry" href="" data-toggle="modal" data-target="#deleteModal" modal_url="{% url 'dictionary:delete_lemma' lemma.pk %}">
                     <span class="glyphicon glyphicon-trash" data-toggle="tooltip" data-original-title="{% trans 'Delete' %}"></span>
                 </a>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}
