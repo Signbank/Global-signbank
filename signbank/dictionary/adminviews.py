@@ -8,7 +8,7 @@ from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse_lazy
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.utils.translation import override, ugettext_lazy as _
 from django.forms.fields import TypedChoiceField, ChoiceField
 from django.shortcuts import *
@@ -972,6 +972,8 @@ class GlossDetailView(DetailView):
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
+        context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
         context['handedness'] = (int(self.object.handedness) > 1) if self.object.handedness else 0  # minimal machine value is 2
         context['domhndsh'] = (int(self.object.domhndsh) > 2) if self.object.domhndsh else 0        # minimal machine value -s 3
@@ -3414,6 +3416,42 @@ class LemmaCreateView(CreateView):
                                                              'dataset_languages': dataset_languages,
                                                              'selected_datasets': get_selected_datasets_for_user(
                                                                  request.user)})
+
+
+def create_lemma_for_gloss(request, glossid):
+    try:
+        gloss = Gloss.objects.get(id=glossid)
+        dataset = gloss.dataset
+        dataset_languages = dataset.translation_languages.all()
+        form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
+        for item, value in request.POST.items():
+            if item.startswith(form.lemma_create_field_prefix):
+                language_code_2char = item[len(form.lemma_create_field_prefix):]
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(
+                    lemmaidglosstranslation__language=language,
+                    lemmaidglosstranslation__text__exact=value.upper(),
+                    dataset=dataset)
+                if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
+                    messages.add_message(request, messages.ERROR, _('Lemma ID Gloss not unique for %(language)s.') % {'language': language.name})
+                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+        if form.is_valid():
+            try:
+                lemma = form.save()
+                gloss.lemma = lemma
+                gloss.save()
+            except ValidationError as ve:
+                messages.add_message(request, messages.ERROR, ve.message)
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        else:
+            messages.add_message(request, messages.ERROR, _("The form contains errors."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, _("The specified gloss does not exist."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 class LemmaDeleteView(DeleteView):

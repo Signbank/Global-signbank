@@ -104,13 +104,6 @@
         }
     }
 
-    $("#lemma").next().hide();
-
-    $("#lemma").on('click', function() {
-        $(this).hide();
-        $(this).next().show();
-    });
-
     function reloadVideo() {
         console.log('reload video');
         var video_player = document.getElementById("videoplayer");
@@ -157,6 +150,31 @@
          $('#panel-expand-collapse-btn-toolbar').css({
             'height': $('#panel-expand-collapse-btn-group').css('height'),
          });
+    </script>
+
+    <!-- Toggle lemma forms -->
+    <script type='text/javascript'>
+        $("#lemma").next().hide();
+        $("#lemma").next().next().hide();
+
+        $("#lemma").on('click', function() {
+            $(this).hide();
+            $(this).next().next().hide();
+            $(this).next().show();
+        });
+
+        $(".lemma-form-dismiss").on('click', function() {
+            $("#lemma").next().hide();
+            $("#lemma").next().next().hide();
+            $("#lemma").show();
+        });
+
+        function showAddLemma() {
+            $("#lemma").hide();
+            $("#lemma").next().hide();
+            $("#lemma").next().next().show();
+            return false;
+        }
     </script>
 {% endblock %}
 
@@ -351,9 +369,6 @@
                                                     "Target lemma must be different from the current lemma of this gloss.")'
                      method='post' action='{% url "dictionary:update_gloss" gloss.id %}'>
                         {% csrf_token %}
-
-
-
                         <!-- Input that holds the current lemma id; used by validateForm -->
                         <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma_id}}'>
 
@@ -367,6 +382,22 @@
 
                         <!-- Submit -->
                         <input class='btn btn-primary' value='{% trans "Set lemma" %}' type='submit'>
+                        <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
+                        <a href="#" onclick="return showAddLemma()">{% trans "Create new" %}</a>
+                    </form>
+                    <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
+                        {% csrf_token %}
+                        <input type="hidden" name="dataset" value="{{ gloss.dataset_id }}"/>
+                        {% for dataset_lang in gloss.dataset.translation_languages.all %}
+                        {{ dataset_lang.name }}:
+                        <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                               name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                               required="" maxlength="30" type="text"/>
+
+                        {% endfor %}
+                        <!-- Submit -->
+                        <input class='btn btn-primary' value='{% trans "Add lemma" %}' type='submit'>
+                        <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
                     </form>
                 </td>
 
