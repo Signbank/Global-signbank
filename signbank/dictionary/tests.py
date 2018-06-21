@@ -159,6 +159,7 @@ class BasicCRUDTests(TestCase):
         response = client.get('/signs/search/',{'handedness':5})
         self.assertEqual(len(response.context['object_list']), 1)
 
+#Deprecated?
 class BasicQueryTests(TestCase):
 
     # Search with a search string
@@ -205,10 +206,10 @@ class BasicQueryTests(TestCase):
         # response = client.get('/signs/search/?handedness=4', follow=True)
         response = client.get('/signs/search/?handedness=4&glosssearch_nl=test', follow=True)
 
-        print(response)
-        print(response.context.keys())
-        print(response.context['object_list'],response.context['glosscount'])
-        print(response.context['selected_datasets'])
+        #print(response)
+        #print(response.context.keys())
+        #print(response.context['object_list'],response.context['glosscount'])
+        #print(response.context['selected_datasets'])
 
 class ImportExportTests(TestCase):
 
@@ -413,6 +414,61 @@ class AjaxTests(TestCase):
 
         response = client.get('/dictionary/ajax/gloss/th')
         self.assertContains(response,NAME)
+
+class FrontEndTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+
+        NAME = 'thisisatemporarytestgloss'
+
+        #Create the dataset
+        dataset_name = DEFAULT_DATASET
+        self.test_dataset = Dataset.objects.get(name=dataset_name)
+
+        #Add a gloss to this dataset
+        self.new_gloss = Gloss()
+        self.new_gloss.idgloss = NAME
+        self.new_gloss.annotation_idgloss = NAME
+        self.new_gloss.dataset = self.test_dataset
+        self.new_gloss.save()
+
+        #Log in
+        self.client = Client()
+        self.client.login(username='test-user', password='test-user')
+
+    def test_DetailViewRenders(self):
+
+        response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
+        self.assertEqual(response.status_code,200)
+
+        #Without permissions you get a 200 but no content
+        self.assertEqual(len(response.content),0)
+
+        #With permissions you also see something
+        assign_perm('view_dataset', self.user, self.test_dataset)
+        response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
+        self.assertNotEqual(len(response.content),0)
+
+    def test_JavaScriptIsValid(self):
+
+        assign_perm('view_dataset', self.user, self.test_dataset)
+        response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
+
+        invalid_patterns = ['= ;','= var']
+
+        everything_okay = True
+
+        for script in re.findall('(?si)<script type=.{1,2}text\/javascript.{1,2}>(.*)<\/script>', str(response.content)):
+            for invalid_pattern in invalid_patterns:
+                if invalid_pattern in script:
+                    everything_okay = False
+                    print('Found',invalid_pattern)
+                    break
+
+        self.assertTrue(everything_okay)
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):
