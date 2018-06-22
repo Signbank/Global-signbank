@@ -521,14 +521,16 @@ class GlossListView(ListView):
                 language = Language.objects.filter(language_code_2char=language_code_2char)
                 qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                                annotationidglosstranslation__language=language)
+            elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
+                language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
+                               lemma__lemmaidglosstranslation__language=language)
             elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
-        if 'lemmaGloss' in get and get['lemmaGloss'] != '':
-            val = get['lemmaGloss']
-            qs = qs.filter(idgloss__iregex=val)
 
         if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']

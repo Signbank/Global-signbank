@@ -381,10 +381,9 @@ function do_toggle_groups(el) {
                 <div>
                     <table class='table' id='searchfields'>
                         {% for dataset_lang in dataset_languages %}
-                        {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
-                        {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
 
                         <tr>
+                            {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
                             <td>
                                 <div class='input-group'>
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
@@ -393,20 +392,25 @@ function do_toggle_groups(el) {
                                 <input name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                                 </div>
                             </td>
+                            {% endwith %}
 
+                            {% with searchform|get_lemma_field_for_language:dataset_lang as lemma_field %}
                             <td><div class='input-group'>
 
-                                <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
-                                <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
+                                <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
+                                    {{lemma_field.label}}
+                                </label>
+                                <input name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
                             </td>
+                            {% endwith %}
 
+                            {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
                             <td><div class='input-group'>
                                 <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
                                 <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
                             </td>
+                            {% endwith %}
                         </tr>
-                        {% endwith %}
-                        {% endwith %}
                         {% endfor %}
                     </table>
                 </div>
@@ -912,9 +916,9 @@ function do_toggle_groups(el) {
 
       <td>
           {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div class="morpheme_gloss">{{gloss.idgloss}}</div>
+          <div class="morpheme_gloss">{{gloss.lemma}}</div>
           {% else %}
-          <div>{{gloss.idgloss}}</div>
+          <div>{{gloss.lemma}}</div>
           {% endif %}
       </td>
 

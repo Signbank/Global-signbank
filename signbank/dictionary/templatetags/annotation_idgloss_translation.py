@@ -36,6 +36,11 @@ def get_keyword_field_for_language(form, language):
 
 
 @register.filter
+def get_lemma_field_for_language(form, language):
+    return getattr(form, GlossSearchForm.lemma_search_field_prefix + language.language_code_2char)
+
+
+@register.filter
 def get_type(obj):
     return type(obj)
 
