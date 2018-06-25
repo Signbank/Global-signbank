@@ -2650,7 +2650,7 @@ class DatasetManagerView(ListView):
         if 'username' in get:
             username = get['username']
         if username == '':
-            messages.add_message(self.request, messages.ERROR, ('Username must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, ('Username must be non-empty. Please make a selection using the drop-down list.'))
             return HttpResponseRedirect(URL + '/datasets/manager')
 
         try:
@@ -2700,8 +2700,9 @@ class DatasetManagerView(ListView):
 
             try:
                 assign_perm('change_dataset', user_object, dataset_object)
+                assign_perm('view_dataset', user_object, dataset_object)
                 messages.add_message(self.request, messages.INFO,
-                                     ('Change permission for user ' + username + ' successfully granted.'))
+                                     ('Change (and view) permission for user ' + username + ' successfully granted.'))
             except:
                 messages.add_message(self.request, messages.ERROR, ('Error assigning change dataset permission to user '+username+'.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
@@ -2718,9 +2719,12 @@ class DatasetManagerView(ListView):
                 else:
                     # can remove permission
                     try:
+                        # also need to remove change_dataset perm in this case
+                        from guardian.shortcuts import remove_perm
                         remove_perm('view_dataset', user_object, dataset_object)
+                        remove_perm('change_dataset', user_object, dataset_object)
                         messages.add_message(self.request, messages.INFO,
-                                             ('View permission for user ' + username + ' successfully revoked.'))
+                                             ('View (and change) permission for user ' + username + ' successfully revoked.'))
                     except:
                         messages.add_message(self.request, messages.ERROR,
                                              ('Error revoking view dataset permission for user ' + username + '.'))
