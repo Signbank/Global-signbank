@@ -243,6 +243,7 @@ class GlossListView(ListView):
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
+        context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
 
 
