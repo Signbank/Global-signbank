@@ -81,7 +81,7 @@
         <table class="table table-striped">
             <tr>
                 <th style="width:10em; text-align:left;">{% trans "Dataset" %}</th>
-                <th style="width:20em; text-align:left;">{% trans "Annotation ID Gloss" %} ({% trans "Signbank ID" %})</th>
+                <th style="width:25em; text-align:left;">{% trans "Annotation ID Gloss" %} ({% trans "Signbank ID" %})</th>
                 <th style="width:20em; text-align:left;">{% trans "Field" %}</th>
                 <th style="width:20em; text-align:left;">{% trans "Old" %}</th>
                 <th style="width:40em; text-align:left;">{% trans "New" %}</th>
@@ -121,19 +121,25 @@
                     <tr>
                         <th>{% trans "Dataset" %}</th>
                         <th>{% trans "Lemma ID Gloss" %}</th>
-                        {% for dataset_lang in dataset_languages %}
-                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+                         {% with seen_datasets.0 as seen_dataset %}
+                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
                          {% endfor %}
+                         {% endwith %}
                     </tr>
                 {% for gloss in gloss_already_exists %}
                     <tr>
                     <td>{{ gloss.dataset }}</td>
                     <td>{{ gloss.lemma_id_gloss_value }}</td>
 
-                    {% for dataset_lang in dataset_languages %}
+                    {% with seen_datasets.0 as seen_dataset %}
+                    {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                    {% with dataset_trans_lang.language_code_2char as lang_code %}
                      <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
-                        {{ gloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}</a></td>
-                     {% endfor %}
+                        {{ gloss.annotationidglosstranslations|keyvalue:lang_code }}</a></td>
+                    {% endwith %}
+                    {% endfor %}
+                    {% endwith %}
                     </tr>
                 {% endfor %}
                 </table>
@@ -144,9 +150,11 @@
                     <tr>
                         <th>{% trans "Dataset" %}</th>
                         <th>{% trans "Lemma ID Gloss" %}</th>
-                        {% for dataset_lang in dataset_languages %}
-                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+                         {% with seen_datasets.0 as seen_dataset %}
+                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
                          {% endfor %}
+                         {% endwith %}
                     </tr>
                 {% for newgloss in creation %}
                     <tr>

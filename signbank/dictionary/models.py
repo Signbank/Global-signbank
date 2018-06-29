@@ -1074,8 +1074,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
 
     def homonyms(self):
-
-        phonology_for_gloss = self.phonology_matrix()
+        #  this function returns a 3-tuple of information about homonymns for this gloss
 
         homonyms_of_this_gloss = []
 
@@ -1090,8 +1089,12 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         phonology_for_gloss = self.phonology_matrix()
 
         handedness_of_this_gloss = str(phonology_for_gloss['handedness'])
-        # Ignore homonyms when the Handedness of this gloss is X
-        handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
+
+        # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
+        try:
+            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
+        except:
+            handedness_X = ''
 
         if (handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
                     handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
@@ -1588,14 +1591,12 @@ class Dataset(models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_view_dataset = []
-
+        import guardian
+        from guardian.shortcuts import get_objects_for_user, get_users_with_perms
+        users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False, with_group_users=False)
         for user in all_users:
-            if not (user.is_staff or user.is_superuser):
-                import guardian
-                from guardian.shortcuts import get_objects_for_user
-                user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
-                # self is the dataset
-                if self in user_view_datasets:
+            if user in users_who_can_access_me.keys():
+                if 'view_dataset' in users_who_can_access_me[user]:
                     users_who_can_view_dataset.append(user)
 
         return users_who_can_view_dataset
@@ -1605,14 +1606,12 @@ class Dataset(models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_change_dataset = []
-
+        import guardian
+        from guardian.shortcuts import get_objects_for_user, get_users_with_perms
+        users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False, with_group_users=False)
         for user in all_users:
-            if not (user.is_staff or user.is_superuser):
-                import guardian
-                from guardian.shortcuts import get_objects_for_user
-                user_change_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
-                # self is the dataset
-                if self in user_change_datasets:
+            if user in users_who_can_access_me.keys():
+                if 'change_dataset' in users_who_can_access_me[user]:
                     users_who_can_change_dataset.append(user)
 
         return users_who_can_change_dataset

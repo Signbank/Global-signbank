@@ -42,7 +42,11 @@
     var handedness_weak_choices = {{gloss.handedness_weak_choices_json|safe}}
     var languages = {{gloss.signlanguage_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
+    {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
+    {% else %}
+    var dataset_choices = {};
+    {% endif %}
     var gloss_dataset_id = {{ gloss.dataset_id}}
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
@@ -239,6 +243,33 @@
     {% endif %}
 
 </div>
+
+
+        {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+        {% if "change_dataset" in dataset_perms %}
+        <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDelete" aria-hidden="true">
+             <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitleDelete'>{% trans "Delete This Sign" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "This action will delete this sign and all associated records. It cannot be undone." %}</p>
+                     </div>
+                  <form action="{% url 'dictionary:update_gloss' gloss.id %}" method='post'>
+                      {% csrf_token %}
+                      <input type='hidden' name='id' value='deletegloss'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                      </div>
+                  </form>
+
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
 <div id="definitionblock">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
@@ -451,31 +482,6 @@
 
         </table>
 
-        {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-        {% if "change_dataset" in dataset_perms %}
-        <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitle" aria-hidden="true">
-             <div class="modal-dialog modal-sm">
-                <div class="modal-content">
-                    <div class='modal-header'>
-                        <h2 id='modalTitle'>{% trans "Delete This Sign" %}</h2>
-                    </div>
-                    <div class='modal-body'>
-                        <p>{% trans "This action will delete this sign and all associated records. It cannot be undone." %}</p>
-                     </div>
-                  <form action="{% url 'dictionary:update_gloss' gloss.id %}" method='post'>
-                      {% csrf_token %}
-                      <input type='hidden' name='id' value='deletegloss'>
-                      <input type='hidden' name='value' value='confirmed'>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                      </div>
-                  </form>
-
-                </div>
-            </div>
-        </div>
-        {% endif %}
 
    {% if perms.dictionary.view_advanced_properties %}
 
@@ -523,11 +529,11 @@
                          <td style='width:2em;'>
                             <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphdef.id}}'></span>
 
-                             <div class="modal fade" id="delete_morphology-definition_modal_{{morphdef.id}}" role="dialog" aria-labelledby="#modalTitle2" aria-hidden="true">
+                             <div class="modal fade" id="delete_morphology-definition_modal_{{morphdef.id}}" role="dialog" aria-labelledby="#modalTitleComp" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
                                     <div class="modal-content">
                                         <div class='modal-header'>
-                                            <h2 id='modalTitle2'>{% trans "Delete This Compound part" %}</h2>
+                                            <h2 id='modalTitleComp'>{% trans "Delete This Compound part" %}</h2>
                                         </div>
                                         <div class='modal-body'>
 

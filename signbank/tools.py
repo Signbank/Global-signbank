@@ -128,11 +128,11 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                                 'lemma_id_gloss_value': lemma_id_gloss}
             dataset = Dataset.objects.get(name=dataset_name)
             trans_languages = [ l for l in dataset.translation_languages.all() ]
-            print('translation languages for dataset: ', trans_languages)
+            # print('translation languages for dataset: ', trans_languages)
             annotationidglosstranslation_dict = {}
             for language in trans_languages:
                 annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language.name_en]
-                print('tools create gloss, language: ', language, ' annotation ID gloss: ', annotationidglosstranslation_text)
+                # print('tools create gloss, language: ', language, ' annotation ID gloss: ', annotationidglosstranslation_text)
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
             gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
             new_gloss.append(gloss_dict)
