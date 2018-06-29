@@ -33,9 +33,42 @@
                 $("[id*='add_gloss_dataset_value_" + languages[id] + "']").show();
                 $("[id*='glosscreate_" + languages[id] + "']").prop('required', true);
             }
+
+            // Toggle lemmaidglosstranslation fields
+            $("[id*='{{ lemma_create_field_prefix }}']").each(function(){
+                $(this).hide();
+            });
+            for(var id in languages) {
+                $("[id*='{{ lemma_create_field_prefix }}_header_" + languages[id] + "']").show();
+                $("[id*='{{ lemma_create_field_prefix }}" + languages[id] + "']").show();
+            }
          }
     });
 
+    </script>
+
+    <script type="text/javascript">
+        var url = '{{URL}}';
+    </script>
+
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+    <!-- Toggle lemma forms -->
+    <script type='text/javascript'>
+        $("#lemma_add").hide();
+
+        function toggleAddLemma() {
+            $("#lemma_select").toggle();
+            $("#lemma_add").toggle();
+
+            // Register whether the user is selecting a lemma idgloss or creating a new one
+            var select_or_new_lemma_value = $("#select_or_new_lemma").val();
+            $("#select_or_new_lemma").val(select_or_new_lemma_value === "select" ? "new" : "select");
+
+            return false;
+        }
     </script>
 
     {% endif %}
@@ -67,7 +100,28 @@
                      </select></td>
              </tr>
              <tr>
-                 <th><label for='id_idgloss'>{% trans "ID Gloss" %}</label></th><td>{{add_gloss_form.idgloss}}</td>
+                 <th><label for='id_idgloss'>{% trans "ID Gloss" %}</label></th>
+                 <td>
+                         <div id="lemma_select">
+                             <!-- Input of the type ahead -->
+                             <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+                             <!-- Input that holds the lemma id the user chose from the type ahead -->
+                             <input type='hidden' name='idgloss' value='confirmed' required="">
+                             <a href="#" onclick="return toggleAddLemma()">{% trans "Create new" %}</a>
+                         </div>
+                         <div id="lemma_add">
+                            {% for dataset_lang in dataset_languages %}
+                             <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</span>
+                            <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                   name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                   maxlength="30" type="text"/>
+
+                            {% endfor %}
+
+                             <a href="#" onclick="return toggleAddLemma()">{% trans "Select" %}</a>
+                         </div>
+                         <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
+                     </td>
              </tr>
              {% for dataset_lang in dataset_languages %}
              <tr>

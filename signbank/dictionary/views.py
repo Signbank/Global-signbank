@@ -571,6 +571,7 @@ def add_new_sign(request):
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
     context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user)
+    context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
     return render(request,'dictionary/add_gloss.html',context)
 
