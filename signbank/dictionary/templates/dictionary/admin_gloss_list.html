@@ -358,7 +358,7 @@ function do_toggle_groups(el) {
             // Register whether the user is selecting a lemma idgloss or creating a new one
             var select_or_new_lemma_value = $("#select_or_new_lemma").val();
             $("#select_or_new_lemma").val(select_or_new_lemma_value === "select" ? "new" : "select");
-            
+
             return false;
         }
     </script>
@@ -818,7 +818,7 @@ function do_toggle_groups(el) {
                              <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</span>
                             <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
                                    name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
-                                   required="" maxlength="30" type="text"/>
+                                   maxlength="30" type="text"/>
 
                             {% endfor %}
 

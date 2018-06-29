@@ -39,6 +39,14 @@ def add_gloss(request):
 
         form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user)
 
+        # Lemma handling
+        lemma_form = None
+        lemmaidgloss = None
+        if request.POST['select_or_new_lemma'] == 'new':
+            lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
+        else:
+            lemmaidgloss = request.POST['idgloss']
+
         # Check for 'change_dataset' permission
         if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) and ('change_dataset' not in get_group_perms(request.user, dataset)):
             messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
@@ -60,12 +68,15 @@ def add_gloss(request):
                     return render(request, 'dictionary/warning.html',
                                   {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
-        if form.is_valid():
+        if form.is_valid() and (not lemma_form or lemma_form.is_valid()):
             try:
                 gloss = form.save()
                 gloss.creationDate = datetime.now()
                 gloss.creator.add(request.user)
                 gloss.excludeFromEcv = False
+                if lemma_form:
+                    lemmaidgloss = lemma_form.save()
+                gloss.lemma_id = lemmaidgloss
                 gloss.save()
             except ValidationError as ve:
                 messages.add_message(request, messages.ERROR, ve.message)
