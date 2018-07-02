@@ -9,13 +9,17 @@
 {% endblock %}
 
 {% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script type='text/javascript'>
     var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
-    var languages = [];
+    lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
 
      $(document).ready(function(){
 
@@ -37,39 +41,9 @@
              set_annotationidglosslanguages();
 
              $('#id_dataset').change(function() {
+                console.log("Dataset changed");
                 set_annotationidglosslanguages();
              });
-
-             function set_annotationidglosslanguages() {
-                var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
-                languages = languages_str.split(",");
-
-                // Toggle annotationidglosstranslation fields
-                $("[id*='add_gloss_dataset_']").each(function(){
-                    $(this).hide();
-                });
-                $("[id*='glosscreate_']").each(function(){
-                    $(this).prop('required', false);
-                });
-                for(var id in languages) {
-                    $("[id*='add_gloss_dataset_header_" + languages[id] + "']").show();
-                    $("[id*='add_gloss_dataset_value_" + languages[id] + "']").show();
-                    $("[id*='glosscreate_" + languages[id] + "']").prop('required', true);
-                }
-
-                // Toggle lemmaidglosstranslation fields
-                $("[id*='{{ lemma_create_field_prefix }}']").each(function(){
-                    $(this).hide();
-                    $(this).prop('required', false);
-                });
-                for(var id in languages) {
-                    $("[id*='{{ lemma_create_field_prefix }}_header_" + languages[id] + "']").show();
-                    $("[id*='{{ lemma_create_field_prefix }}" + languages[id] + "']").show();
-                    if(select_or_new_lemma_value === "new") {
-                        $("[id*='{{ lemma_create_field_prefix }}" + languages[id] + "']").prop('required', true);
-                    }
-                }
-             }
          }
 
          $('#id_handedness').attr('multiple','multiple');
@@ -351,43 +325,6 @@ function do_toggle_groups(el) {
    </script>
 
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
-
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
-    <!-- Toggle lemma forms -->
-    <script type='text/javascript'>
-        // Initialize the select vs add lemma form part
-        $("#lemma_add").hide();
-        var select_or_new_lemma_value = $("#select_or_new_lemma").val();
-
-        // Toggle select/add lemma
-        function toggleAddLemma() {
-            $("#lemma_select").toggle();
-            $("#lemma_add").toggle();
-
-            // Register whether the user is selecting a lemma idgloss or creating a new one
-            select_or_new_lemma_value = $("#select_or_new_lemma").val();
-            select_or_new_lemma_value = select_or_new_lemma_value === "select" ? "new" : "select";
-            $("#select_or_new_lemma").val(select_or_new_lemma_value);
-
-            // Deal with required fields
-            if(select_or_new_lemma_value === "select") {
-                $("[id*='{{ lemma_create_field_prefix }}']").each(function(){
-                    $(this).prop('required', false);
-                });
-            } else {
-                console.log(select_or_new_lemma_value);
-                console.log(languages.join());
-                for(var id in languages) {
-                    $("[id*='{{ lemma_create_field_prefix }}" + languages[id] + "']").prop('required', true);
-                }
-            }
-
-            return false;
-        }
-    </script>
 
 {% endblock %}
 
