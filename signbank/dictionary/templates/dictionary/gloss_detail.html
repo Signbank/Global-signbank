@@ -155,31 +155,6 @@
             'height': $('#panel-expand-collapse-btn-group').css('height'),
          });
     </script>
-
-    <!-- Toggle lemma forms -->
-    <script type='text/javascript'>
-        $("#lemma").next().hide();
-        $("#lemma").next().next().hide();
-
-        $("#lemma").on('click', function() {
-            $(this).hide();
-            $(this).next().next().hide();
-            $(this).next().show();
-        });
-
-        $(".lemma-form-dismiss").on('click', function() {
-            $("#lemma").next().hide();
-            $("#lemma").next().next().hide();
-            $("#lemma").show();
-        });
-
-        function showAddLemma() {
-            $("#lemma").hide();
-            $("#lemma").next().hide();
-            $("#lemma").next().next().show();
-            return false;
-        }
-    </script>
 {% endblock %}
 
 

@@ -91,7 +91,7 @@ var busy_editing = 0;
     });
 
     ajaxifyTagForm();
-     
+
  });
 
 function disable_edit() {
@@ -164,6 +164,8 @@ function disable_edit() {
 
     $('.empty_row').hide();
 
+    hideLemmaForm($("#lemma"));
+
     //To prevent RSI
     $('.edit').each(function()
     {
@@ -184,6 +186,8 @@ function disable_edit() {
     });
 
     check_phonology_modified();
+
+    busy_editing = false;
 };
 
 function enable_edit() {
@@ -225,8 +229,6 @@ function enable_edit() {
     $('.morpheme-definition-delete').show();
     $('.blend-definition-delete').show();
 
-    $('#lemma').css('color', $('.edit').css('color'));
-
     $('.empty_row').show();
 
     //To prevent RSI
@@ -263,6 +265,8 @@ function toggle_edit(redirect_to_next) {
         $('#enable_edit').addClass('edit_enabled');
         $('#enable_edit').text(turn_off_edit_mode_str);
     }
+
+    $('#lemma').css('color', $('.edit').css('color'));
 }
 
 
@@ -805,4 +809,36 @@ function check_phonology_modified()
             }
         }
     }
+}
+
+// Lemma toggle stuff
+function showLemmaForm(lemma_element) {
+    lemma_element.hide();
+    lemma_element.next().next().hide();
+    lemma_element.next().show();
+    lemma_element.next().find(".lemmatypeahead.tt-input").focus();
+}
+
+function hideLemmaForm(lemma_element) {
+    lemma_element.next().hide();
+    lemma_element.next().next().hide();
+    lemma_element.show();
+}
+
+$("#lemma").on('click', function() {
+    console.log("busy_editing: " + busy_editing)
+    if(busy_editing) {
+        showLemmaForm($(this));
+    }
+});
+
+$(".lemma-form-dismiss").on('click', function() {
+    hideLemmaForm($("#lemma"));
+});
+
+function showAddLemma() {
+    $("#lemma").hide();
+    $("#lemma").next().hide();
+    $("#lemma").next().next().show();
+    return false;
 }
