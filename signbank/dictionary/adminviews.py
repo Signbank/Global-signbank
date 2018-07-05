@@ -1199,15 +1199,22 @@ class GlossDetailView(DetailView):
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
         try:
-            lemma_group = getattr(gl, 'idgloss')
-            other_glosses_in_lemma_group = Gloss.objects.filter(idgloss__iexact=lemma_group).count()
+            lemma_group_count = gl.lemma.gloss_set.count()
+            if lemma_group_count > 1:
+                context['lemma_group'] = True
+                lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
+                for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
+                    lang_code_2char = lemmaidglosstranslation.language.language_code_2char
+                    lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
+                from urllib.parse import urlencode
+                url_query = urlencode(lemma_group_url_params)
+                url_query = ("?" + url_query) if url_query else ''
+                context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
+            else:
+                context['lemma_group'] = False
+                context['lemma_group_url'] = ''
         except:
-            lemma_group = ''
-            other_glosses_in_lemma_group = 0
-        if other_glosses_in_lemma_group > 1:
-            context['lemma_group'] = True
-            context['lemma_group_url'] = settings.URL + 'signs/search/?search_type=sign&view_type=lemma_groups&lemmaGloss=%5E' + lemma_group + '%24'
-        else:
+            print("lemma_group_count: except")
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 

@@ -165,6 +165,7 @@ function disable_edit() {
     $('.empty_row').hide();
 
     hideLemmaForm($("#lemma"));
+    $("#lemma a").show();
 
     //To prevent RSI
     $('.edit').each(function()
@@ -240,6 +241,7 @@ function enable_edit() {
         }
     });
     busy_editing = 1;
+    $('#lemma a').hide();
 };
 
 function toggle_edit(redirect_to_next) {

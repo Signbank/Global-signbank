@@ -368,7 +368,11 @@
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
 
                 <!--<td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{lemma_group_url}}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>-->
-                <td><span id="lemma">{{ gloss.lemma }}</span>
+                <td><span id="lemma">{{ gloss.lemma }}
+                        {% if lemma_group %}
+                            <a href='{{lemma_group_url}}'><span class="glyphicon glyphicon-new-window"></span></a>
+                        {% endif %}
+                    </span>
                     <form name='set_lemma_form' id='set_lemma_form'
                      onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
                                                     "Please choose a lemma.",
