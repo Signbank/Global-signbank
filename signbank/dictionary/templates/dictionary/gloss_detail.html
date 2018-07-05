@@ -370,7 +370,7 @@
                 <!--<td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{lemma_group_url}}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>-->
                 <td><span id="lemma">{{ gloss.lemma }}
                         {% if lemma_group %}
-                            <a href='{{lemma_group_url}}'><span class="glyphicon glyphicon-new-window"></span></a>
+                            <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
                     </span>
                     <form name='set_lemma_form' id='set_lemma_form'
