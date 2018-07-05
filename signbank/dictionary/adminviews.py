@@ -1,6 +1,6 @@
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, DeleteView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.db.models import Q, F, ExpressionWrapper, IntegerField, Count
 from django.db.models import CharField, TextField, Value as V
 from django.db.models import OuterRef, Subquery
@@ -3468,6 +3468,55 @@ def create_lemma_for_gloss(request, glossid):
         messages.add_message(request, messages.ERROR, _("The specified gloss does not exist."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+class LemmaUpdateView(UpdateView):
+    model = LemmaIdgloss
+    success_url = reverse_lazy('dictionary:admin_lemma_list')
+    template_name = 'dictionary/update_lemma.html'
+    fields = []
+
+    def get_context_data(self, **kwargs):
+        context = super(LemmaUpdateView, self).get_context_data(**kwargs)
+        dataset = self.object.dataset
+        context['dataset'] = dataset
+        dataset_languages = Language.objects.filter(dataset=dataset).distinct()
+        context['dataset_languages'] = dataset_languages
+        context['change_lemma_form'] = LemmaUpdateForm(instance=self.object)
+        context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+        return context
+
+    def post(self, request, *args, **kwargs):
+        print(request.POST)
+        instance = self.get_object()
+        dataset = instance.dataset
+
+        form = LemmaUpdateForm(request.POST, instance=instance)
+
+        for item, value in request.POST.items():
+            if item.startswith(form.lemma_update_field_prefix):
+                language_code_2char = item[len(form.lemma_update_field_prefix):]
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(
+                    lemmaidglosstranslation__language=language,
+                    lemmaidglosstranslation__text__exact=value.upper(),
+                    dataset=dataset)
+                if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
+                    return render(request, 'dictionary/warning.html',
+                                  {'warning': language.name + " " + 'lemma ID Gloss not unique.'})
+
+        if form.is_valid():
+            try:
+                lemma = form.save()
+                print("LEMMA " + str(lemma.pk))
+            except ValidationError as ve:
+                messages.add_message(request, messages.ERROR, ve.message)
+                return render(request, 'dictionary/update_lemma.html', {'change_lemma_form': LemmaUpdateForm(instance=self.get_object())})
+
+            # return HttpResponseRedirect(reverse('dictionary:admin_lemma_list', kwargs={'pk': lemma.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+        else:
+            return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
 
 
 class LemmaDeleteView(DeleteView):

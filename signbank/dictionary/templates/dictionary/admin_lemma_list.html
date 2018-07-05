@@ -45,6 +45,9 @@
                 {{ lemma.num_gloss }}
             </td>
             <td>
+                <a class="change-entry" href="{% url 'dictionary:change_lemma' lemma.pk %}" >
+                    <span class="glyphicon glyphicon-pencil" data-toggle="tooltip" data-original-title="{% trans 'Update' %}"></span>
+                </a>
                 {% if not lemma.num_gloss %}
                 <a class="delete-entry" href="" data-toggle="modal" data-target="#deleteModal" modal_url="{% url 'dictionary:delete_lemma' lemma.pk %}">
                     <span class="glyphicon glyphicon-trash" data-toggle="tooltip" data-original-title="{% trans 'Delete' %}"></span>

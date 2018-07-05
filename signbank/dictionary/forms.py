@@ -675,7 +675,7 @@ class LemmaCreateForm(forms.ModelForm):
             lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
             self.fields[lemmacreate_field_name] = forms.CharField(label=_("Lemma")+(" (%s)" % language.name))
             if lemmacreate_field_name in queryDict:
-                self.fields[lemmacreate_field_name].value = queryDict[lemmacreate_field_name]
+                self.fields[lemmacreate_field_name].initial = queryDict[lemmacreate_field_name]
 
     @atomic  # This rolls back the lemma creation if creating lemmaidglosstranslations fails
     def save(self, commit=True):
@@ -701,4 +701,55 @@ class LemmaCreateForm(forms.ModelForm):
                 )
         print("POST SAVE for Translations")
         return lemma
+
+
+class LemmaUpdateForm(forms.ModelForm):
+    """Form for updating a lemma"""
+    lemma_update_field_prefix = "lemmaupdate_"
+
+    class Meta:
+        model = LemmaIdgloss
+        fields = []
+
+    def __init__(self, queryDict=None, *args, **kwargs):
+        super(LemmaUpdateForm, self).__init__(queryDict, *args, **kwargs)
+        print("Object: " + str(self.instance))
+        self.languages = self.instance.dataset.translation_languages.all()
+
+        for language in self.languages:
+            lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
+            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name))
+            if queryDict:
+                if lemmaupdate_field_name in queryDict:
+                    self.fields[lemmaupdate_field_name].initial = queryDict[lemmaupdate_field_name]
+            else:
+                try:
+                    self.fields[lemmaupdate_field_name].initial = \
+                        self.instance.lemmaidglosstranslation_set.get(language=language).text
+                except:
+                    pass
+
+    @atomic
+    def save(self, commit=True):
+        print("PRE SAVE for Translations")
+        for language in self.languages:
+            lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
+            lemma_idgloss_text = self.fields[lemmaupdate_field_name].initial
+            existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.filter(language=language)
+            if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
+                lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
+                                                                  text=lemma_idgloss_text)
+                lemmaidglosstranslation.save()
+            elif len(existing_lemmaidglosstranslations) == 1:
+                lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
+                lemmaidglosstranslation.text = lemma_idgloss_text
+                lemmaidglosstranslation.save()
+            else:
+                raise Exception(
+                    "In class %s: gloss with id %s has more than one lemma idgloss translation for language %s"
+                    % (self.__class__.__name__, self.instance.pk, language.name)
+                )
+        print("POST SAVE for Translations")
+        return self.instance
+
 
