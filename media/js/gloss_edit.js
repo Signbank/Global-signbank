@@ -816,14 +816,14 @@ function check_phonology_modified()
 // Lemma toggle stuff
 function showLemmaForm(lemma_element) {
     lemma_element.hide();
-    lemma_element.next().next().hide();
-    lemma_element.next().show();
-    lemma_element.next().find(".lemmatypeahead.tt-input").focus();
+    lemma_element.parent().find("[name='add_lemma_form']").hide();
+    lemma_element.parent().find("[name='set_lemma_form']").show();
+    lemma_element.parent().find("[name='add_lemma_form']").find(".lemmatypeahead.tt-input").focus();
 }
 
 function hideLemmaForm(lemma_element) {
-    lemma_element.next().hide();
-    lemma_element.next().next().hide();
+    lemma_element.parent().find("[name='set_lemma_form']").hide();
+    lemma_element.parent().find("[name='add_lemma_form']").hide();
     lemma_element.show();
 }
 
@@ -840,7 +840,7 @@ $(".lemma-form-dismiss").on('click', function() {
 
 function showAddLemma() {
     $("#lemma").hide();
-    $("#lemma").next().hide();
-    $("#lemma").next().next().show();
+    $("#lemma").parent().find("[name='set_lemma_form']").hide();
+    $("#lemma").parent().find("[name='add_lemma_form']").show();
     return false;
 }
