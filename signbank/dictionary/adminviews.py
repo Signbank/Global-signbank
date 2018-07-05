@@ -3353,10 +3353,12 @@ def lemma_ajax_complete(request, dataset_id, q):
 class LemmaListView(ListView):
     model = LemmaIdgloss
     template_name = 'dictionary/admin_lemma_list.html'
+    paginate_by = 10
 
-    def get_queryset(self):
+    def get_queryset(self, **kwargs):
+        queryset = super(LemmaListView, self).get_queryset(**kwargs)
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        return LemmaIdgloss.objects.filter(dataset__in=selected_datasets).annotate(num_gloss=Count('gloss'))
+        return queryset.filter(dataset__in=selected_datasets).annotate(num_gloss=Count('gloss'))
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
