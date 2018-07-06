@@ -1062,8 +1062,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
     def homonyms(self):
 
-        phonology_for_gloss = self.phonology_matrix()
-
+        #  this function returns a 3-tuple of information about homonymns for this gloss 
         homonyms_of_this_gloss = []
 
         gloss_homonym_relations = self.relation_sources.filter(role='homonym')
@@ -1078,7 +1077,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         handedness_of_this_gloss = str(phonology_for_gloss['handedness'])
         # Ignore homonyms when the Handedness of this gloss is X
-        handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
+        try:
+            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
+        except:
+            handedness_X = ''
 
         if (handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
                     handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
