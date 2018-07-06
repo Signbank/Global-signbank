@@ -1169,11 +1169,21 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
     def get_video_path(self):
 
-        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
+        foldername = self.idgloss[:2]
+
+        if len(foldername) == 1:
+            foldername += '-'
+
+        return 'glossvideo/'+foldername+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
 
     def get_video_path_prefix(self):
 
-        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)
+        foldername = self.idgloss[:2]
+
+        if len(foldername) == 1:
+            foldername += '-'
+
+        return 'glossvideo/'+foldername+'/'+self.idgloss+'-'+str(self.pk)
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
