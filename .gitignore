@@ -11,5 +11,6 @@ media/css/.DS_Store
 media/css/.DS_Store
 media/glossimage
 media/admin
+media/django_summernote
 
 signbank/settings/server_specific/__init__.py
