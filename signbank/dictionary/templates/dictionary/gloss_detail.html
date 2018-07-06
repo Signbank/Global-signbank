@@ -743,7 +743,7 @@
                         {% endfor %}
                     </tr>
                     {% endif %}
-                {% elif name == 'domhndsh' %}
+                {% elif name == 'domhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
                     <tr class="empty_row">
                         <th/><th/><th>letter</th><th>number</th>
                     </tr>
@@ -778,7 +778,7 @@
                         {% endfor %}
                     </tr>
                     {% endif %}
-                {% elif name == 'subhndsh' %}
+                {% elif name == 'subhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
                     <tr class="empty_row">
                         <th/><th/><th>letter</th><th>number</th>
                     </tr>

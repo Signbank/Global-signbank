@@ -1317,6 +1317,11 @@ class GlossDetailView(DetailView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        if hasattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY'):
+            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = settings.SHOW_LETTER_NUMBER_PHONOLOGY
+        else:
+            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
+
         return context
 
 class GlossRelationsDetailView(DetailView):
