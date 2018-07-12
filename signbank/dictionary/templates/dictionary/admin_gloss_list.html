@@ -9,6 +9,9 @@
 {% endblock %}
 
 {% block extrajs %}
+    <script type="text/javascript">
+        var url = '{{URL}}';
+    </script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
@@ -17,7 +20,6 @@
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script type='text/javascript'>
-    var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
     lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
 
