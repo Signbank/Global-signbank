@@ -316,19 +316,22 @@ class GlossListView(ListView):
 #        fields = [f.name for f in Gloss._meta.fields]
         #We want to manually set which fields to export here
 
-        fieldnames = ['idgloss', 'dataset']+FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
+        fieldnames = ['dataset']+FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
 
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in dataset_languages]
+        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                               for language in dataset_languages]
+        lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                          for language in dataset_languages]
 
         writer = csv.writer(response)
 
         with override(LANGUAGE_CODE):
-            header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
+            header = ['Signbank ID'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
         for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
                              'Relations to other signs','Relations to foreign signs', 'Tags']:
@@ -338,6 +341,13 @@ class GlossListView(ListView):
 
         for gloss in self.get_queryset():
             row = [str(gloss.pk)]
+
+            for language in dataset_languages:
+                lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
+                if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
+                    row.append(lemmaidglosstranslations[0].text)
+                else:
+                    row.append("")
 
             for language in dataset_languages:
                 annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
