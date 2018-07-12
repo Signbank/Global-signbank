@@ -13,7 +13,8 @@ TIME_ZONE = 'Europe/Amsterdam'
 
 LOCALE_PATHS = [BASE_DIR+'conf/locale']
 
-SITE_ID = 1
+# in the database, SITE_ID 1 is example.com
+SITE_ID = 2
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
@@ -69,7 +70,8 @@ MIDDLEWARE_CLASSES = (
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(PROJECT_DIR, 'templates/' + SIGNBANK_VERSION_CODE + '-templates')],
+        'DIRS': [os.path.join(PROJECT_DIR, 'templates/' + SIGNBANK_VERSION_CODE + '-templates'),
+                 os.path.join(PROJECT_DIR, 'signbank/registration/templates/')],
         'OPTIONS': {
             'context_processors': [
                 "django.template.context_processors.debug",
@@ -224,7 +226,7 @@ PRIMARY_CSS = "bootstrap_css/test-server.css"
 
 
 # do we allow people to register for the site
-ALLOW_REGISTRATION = False
+ALLOW_REGISTRATION = True
 
 ACCOUNT_ACTIVATION_DAYS = 7
 

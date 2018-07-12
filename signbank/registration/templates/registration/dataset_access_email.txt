@@ -1,0 +1,8 @@
+A new user {{new_user_username}} has signed up at {{site.name}}.
+
+The user {{new_user_username}} would like to gain access to Dataset {{dataset}}.
+
+https://{{site}}/datasets/manager/
+
+
+{{site.name}} Webmaster

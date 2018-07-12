@@ -179,3 +179,11 @@ legend
 {
     width:14px;
 }
+
+.error input, .error select {
+    color: darkred;
+}
+
+.help-block {
+    color: darkred;
+}

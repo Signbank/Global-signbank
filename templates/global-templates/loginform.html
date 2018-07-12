@@ -43,7 +43,7 @@
      <legend>{% trans "Register" %}</legend>
      
     <p>{% trans "Register for free to provide feedback on the Signbank." %}
-        <a class='btn btn-default' href="/accounts/register/">{% trans "Register" %}</a>
+        <a class='btn btn-default' href="{{ URL }}/accounts/register/">{% trans "Register" %}</a>
     </p>
     </fieldset>
 {% endif %}
@@ -55,7 +55,7 @@
       <form class='' id="passwordresetform" action="{{ URL }}/accounts/password/reset/" method="POST">
           {% csrf_token %}
             <div class='form-group col-xs-10'>
-                <input class="form-control" type="text" name="email" placeholder="{% trans "Email" %}">
+                <input class="form-control" type="text" name="email" placeholder='{% trans "Email" %}'>
             </div>
               
             <div class="form-group col-xs-10">

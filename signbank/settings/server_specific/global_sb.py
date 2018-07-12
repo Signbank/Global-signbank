@@ -131,3 +131,6 @@ SPEED_UP_RETRIEVING_ALL_SIGNS =	True
 
 import datetime
 RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=90)
+
+DEFAULT_FROM_EMAIL = 'o.crasborn@let.ru.nl'
+EMAIL_HOST = "smtp.ru.nl"
