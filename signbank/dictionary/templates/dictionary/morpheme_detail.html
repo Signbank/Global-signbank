@@ -182,12 +182,7 @@
 
     <div id="feedback">
         <ul>
-            {% ifequal viewname "words" %}
-            <li><a href="{% url 'root_page' %}feedback/sign/{{translation.translation}}-{{n}}.html?return=/dictionary/words/{{translation.translation}}-{{n}}.html">{% trans "Provide feedback about this morpheme" %}</a></li>
-            {% else %}
-            <li><a href="{% url 'root_page' %}feedback/morpheme/{{morpheme.idgloss}}.html?return=/dictionary/morpheme/{{morpheme.idgloss}}.html&lastmatch={{lastmatch}}">{% trans "Provide feedback about this morpheme" %}</a></li>
-            {% endifequal %}
-
+            <li><a href="{% url 'root_page' %}feedback/morpheme/{{morpheme.id}}?return={{URL}}/dictionary/morpheme/{{morpheme.id}}">{% trans "Provide feedback about this morpheme" %}</a></li>
         </ul>
     </div>
 

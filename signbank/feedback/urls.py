@@ -15,8 +15,9 @@ urlpatterns = [
 
     url(r'^sign/(?P<keyword>.+)-(?P<n>\d+).html$',  signbank.feedback.views.signfeedback),
 
-    url(r'^gloss/(?P<glossid>.+).html$',  signbank.feedback.views.glossfeedback),
-   
+    url(r'^gloss/(?P<glossid>\d+)/$',  signbank.feedback.views.glossfeedback),
+    url(r'^morpheme/(?P<glossid>\d+)/$', signbank.feedback.views.glossfeedback),
+
     url(r'^interpreter/(?P<glossid>\d+)', signbank.feedback.views.interpreterfeedback, name='intnote'),
     url(r'^interpreter.html', signbank.feedback.views.interpreterfeedback, name='intnotelist'),
 

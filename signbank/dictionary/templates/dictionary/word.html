@@ -1,5 +1,9 @@
 {% extends "baselayout.html" %}
 {% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
 
 {# Translators: Page title #}
 {% block pagetitle %}{% blocktrans %}Sign for {{ translation }}{% endblocktrans %} {% endblock %}
@@ -16,20 +20,20 @@
     }
 {% endblock %}
 
-
+{% block extrajs %}
+<script type='text/javascript'>
+    $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
+    $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
+</script>
+{% endblock %}
 
 
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
-<div id='publicsign'>
-    {% if feedbackmessage %}
-    <div id="feedbackmessage">
-        <p class='alert alert-info'>
-            {{ feedbackmessage }}
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button></p>
-    </div>
-    {% endif %}
+<div id="searchresults" class='navbar navbar-default' style="border:0;">
+
+</div>
 
     <div id="signinfo" class='navbar navbar-default navbar-collapse'>
     
@@ -55,8 +59,8 @@
         </div>
    
    
-        <div class='pull-right'>
             {% ifequal viewname "words" %}
+            <div class='pull-right'>
             {# Translators: Navbar text #}
             <span class='navbar-text'>{% blocktrans %}Matches for the word <em>{{ translation|safe }}{% endblocktrans %}</em></span>
             <div class='btn-group'>
@@ -73,9 +77,9 @@
                 {# Translators: Navigation  #}
                 <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/words/{{lastmatch}}.html">{% blocktrans %}Return to Matches{% endblocktrans %}</a>
                 {% endif %}
+            </div>
             {% endifequal %}
-        </div>
-    
+
     
         {% if perms.dictionary.search_gloss %}
         <div class='btn-group'>
@@ -87,16 +91,33 @@
     </div>
 
     <div id="definitionblock">
-        <div class='col-md-4'>
-            <div id="videocontainer" style="width: 700px; height: 366px;">
-               <div id="player" style="width: 700px;">
-                {% if gloss.has_video %}
-                  <video id='videoiframe' style="width: 635px; height: 358px;" src="{{protected_media_url}}{{gloss.get_video}}" controls></video>
-                {% else %}
-                  <img id="novideo" src='{{ STATIC_URL }}images/no-video-ngt.png'>
-                {% endif %}
+
+        <div id='annotation_idgloss_summary' class="col-md-6 col-md-6-pull">
+        <table class='table table-condensed'>
+            <tr class="empty_row"></tr>
+            {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+            <tr>
+                <th>
+                    {% trans "Annotation ID Gloss" %} ({{ lang }})
+                </th>
+                <td id='annotation_idgloss_{{ lang.language_code_2char }}'>{{ annotation_idgloss_translations.0.text|safe }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+        <div class='col-md-6'>
+            <div id="videocontainer">
+                {% if gloss.get_video %}
+               <div id="player">
+                  <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video}}" controls type="video/mp4"></video>
                </div>
                <div id="replay"></div>
+
+                {% else %}
+                   <div id='player'>
+                     <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
+                    </div>
+                {% endif %}
             </div>
         
         
@@ -151,7 +172,5 @@
         {% endif %}
     
     </div>
-
-</div>
 
 {% endblock %}

@@ -23,9 +23,9 @@ STATUS_CHOICES = ( ('unread', 'unread'),
                    ('read', 'read'),
                    ('deleted', 'deleted'),
                  )
-                 
-                 
-                 
+
+
+
 class InterpreterFeedback(models.Model):
     """Feedback on a sign from an interpreter"""                
 
@@ -44,7 +44,7 @@ class InterpreterFeedbackForm(forms.ModelForm):
     class Meta:
         model = InterpreterFeedback
         fields = ['comment']
-        widgets={'comment': forms.Textarea(attrs={'cols': 30, 'rows': 2})}
+        widgets={'comment': forms.Textarea(attrs={'rows':6, 'cols':80})}
     
 
 class GeneralFeedback(models.Model):
@@ -61,18 +61,11 @@ class GeneralFeedback(models.Model):
 class GeneralFeedbackForm(forms.Form):
     """Form for general feedback"""
     
-    comment = forms.CharField(widget=forms.Textarea(attrs={'cols':'64'}), required=False)
-    video = VideoUploadToFLVField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
+    comment = forms.CharField(widget=forms.Textarea(attrs={'rows':6, 'cols':80}), required=True)
+    video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
+    
 
-    
-    
-isAuslanChoices = ( (1, "yes"), 
-                    (2, "Perhaps"), 
-                    (3, "Don't know"),
-                    (4, "Don't think so"),
-                    (5, "No"),
-                    (0, "N/A")
-                    )
+signLanguageChoices = [ (0, '---------') ] + [ ( sl.id, sl.name ) for sl in SignLanguage.objects.all() ]
 
 if settings.LANGUAGE_NAME == "BSL":
     whereusedChoices = (('Belfast', 'Belfast'),
@@ -86,6 +79,38 @@ if settings.LANGUAGE_NAME == "BSL":
                         ('Other', 'Other (note in comments)'),
                         ("Don't Know", "Don't Know"),
                         ('N/A', 'N/A'),
+                        )
+elif settings.LANGUAGE_NAME == "Global":
+    whereusedChoices = (
+                            (0, (
+                                    ('n/a', 'N/A'),
+                                )
+                             ),
+                            (1, (
+                                        ('1', 'Groningen'),
+                                        ('2', 'Amsterdam'),
+                                        ('3', 'Voorburg'),
+                                        ('4', 'Rotterdam'),
+                                        ('5', 'Gestel'),
+                                        ('6', 'Unknown'),
+                                )
+                            ),
+                            (4, (
+                                        ('7', 'Beijing'),
+                                        ('8', 'Shanghai'),
+                                        ('9', 'Nanjing'),
+                                        ('10', 'Unknown'),
+                                )
+                             ),
+                            (7, (
+                                        ('11', 'Ambon'),
+                                        ('12', 'Makassar'),
+                                        ('13', 'Padang'),
+                                        ('14', 'Pontianak'),
+                                        ('15', 'Singaradja'),
+                                        ('16', 'Solo'),
+                                )
+                             ),
                         )
 else:
     whereusedChoices = (('auswide', 'Australia Wide'),
@@ -103,22 +128,18 @@ else:
                         ('n/a', "N/A")
                         )
 
-likedChoices =    ( (1, "yes"), 
-                    (2, "A little"), 
-                    (3, "Don't care"),
-                    (4, "Not much"),
-                    (5, "No"),
-                    (0, "N/A")
+likedChoices =    ( (1, "Morpheme"),
+                    (0, "Sign")
                     )
                                         
-useChoices =      ( (1, "yes"), 
+useChoices =      ( (1, "Yes"),
                     (2, "Sometimes"), 
                     (3, "Not Often"),
                     (4, "No"),
                     (0, "N/A") 
                     )
                          
-suggestedChoices =( (1, "yes"), 
+suggestedChoices =( (1, "Yes"),
                     (2, "Sometimes"), 
                     (3, "Don't Know"),
                     (4, "Perhaps"),
@@ -126,7 +147,7 @@ suggestedChoices =( (1, "yes"),
                     (0, "N/A")
                     )
                     
-correctChoices =  ( (1, "yes"), 
+correctChoices =  ( (1, "Yes"),
                     (2, "Mostly Correct"), 
                     (3, "Don't Know"),
                     (4, "Mostly Wrong"),
@@ -142,10 +163,10 @@ class SignFeedback(models.Model):
     
     translation = models.ForeignKey(Translation, editable=False)
     
-    comment = models.TextField("Please give us your comments about this sign. For example: do you think there are other keywords that belong with this sign? Please write your comments or new keyword/s below.", blank=True)
-    kwnotbelong = models.TextField("Is there a keyword or keyword/s that DO NOT belong with this sign? Please provide the list of keywords below", blank=True)
-     
-    isAuslan = models.IntegerField(t("Is this sign an $language Sign?"), choices=isAuslanChoices)
+    comment = models.TextField("Comment or new keywords.", blank=True)
+    kwnotbelong = models.TextField("List of keywords that DO NOT belong", blank=True)
+
+    isAuslan = models.IntegerField(t("Is this sign an $language Sign?"), choices=signLanguageChoices)
     whereused = models.CharField("Where is this sign used?", max_length=10, choices=whereusedChoices)
     like = models.IntegerField("Do you like this sign?", choices=likedChoices)
     use = models.IntegerField("Do you use this sign?", choices=useChoices)
@@ -162,12 +183,13 @@ class SignFeedback(models.Model):
 
 class SignFeedbackForm(forms.Form):
     """Form for input of sign feedback"""
-    
-    isAuslan = forms.ChoiceField(choices=isAuslanChoices, initial=0, widget=forms.RadioSelect)
-    #isAuslan = forms.IntegerField(initial=0, widget=forms.HiddenInput)
+
+    # isAuslan now stores Sign Language
+    isAuslan = forms.ChoiceField(choices=signLanguageChoices, initial=0)
+    # whereused now stores Dialect
     whereused = forms.ChoiceField(choices=whereusedChoices, initial="n/a")
     #whereused = forms.CharField(initial='n/a', widget=forms.HiddenInput)
-    like = forms.ChoiceField(choices=likedChoices,  initial=0, widget=forms.RadioSelect)
+    like = forms.ChoiceField(choices=likedChoices, widget=forms.RadioSelect)
     #like = forms.IntegerField(initial=0, widget=forms.HiddenInput)
     use = forms.ChoiceField(choices=useChoices, initial=0,  widget=forms.RadioSelect)
     #use = forms.IntegerField(initial=0, widget=forms.HiddenInput)
@@ -175,136 +197,23 @@ class SignFeedbackForm(forms.Form):
     #suggested = forms.IntegerField(initial=0, widget=forms.HiddenInput)
     correct = forms.ChoiceField(choices=correctChoices, initial=0, widget=forms.RadioSelect)
     #correct = forms.IntegerField(initial=0, widget=forms.HiddenInput)
-    kwnotbelong = forms.CharField(label="List keywords", required=False, widget=forms.Textarea) 
-    comment = forms.CharField(required=False, widget=forms.Textarea)
+    kwnotbelong = forms.CharField(label="List keywords", required=False, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
+    comment = forms.CharField(label="Comment or new keywords", required=True, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
 
  
-handformChoices = (
-                    (1, 'One handed'),
-                    (2, 'Two handed (same shape for each hand)'),
-                    (3, 'Two handed (diffent shapes for each hand)')
-                    )
-  
-handshapeChoices = ((0, 'None'),
-                     (291, 'Animal'),
-                     (292, 'Animal-flick'),
-                     (293, 'Bad'),
-                     (294, 'Ball'),
-                     (295, 'Cup'),
-                     (296, 'Cup-flush'),
-                     (297, 'Cup-thumb'),
-                     (298, 'Eight'),
-                     (299, 'Eight-hook'),
-                     (300, 'Fist-A'),
-                     (301, 'Fist-S'),
-                     (302, 'Flat'),
-                     (303, 'Flat-bent'),
-                     (304, 'Flat-B'),
-                     (305, 'Flat-flush'),
-                     (306, 'Flick'),
-                     (307, 'Flick-gay'),
-                     (308, 'Four'),
-                     (309, 'Five'),
-                     (310, 'Good'),
-                     (311, 'Good-6'),
-                     (312, 'Gun'),
-                     (313, 'Gun-hook'),
-                     (314, 'Hook'),
-                     (315, 'Kneel'),
-                     (316, 'Letter-C'),
-                     (317, 'Letter-M'),
-                     (318, 'Letter-N'),
-                     (319, 'Love'),
-                     (320, 'Middle'),
-                     (321, 'Mother'),
-                     (322, 'Nine'),
-                     (323, 'Point-1'),
-                     (324, 'Point-D'),
-                     (325, 'Point-flush'),
-                     (326, 'Okay-flat'),
-                     (327, 'Okay-F'),
-                     (328, 'Okay-O'),
-                     (329, 'Old-seven'),
-                     (330, 'Plane'),
-                     (331, 'Perth'),
-                     (332, 'Round-O'),
-                     (333, 'Round-flat'),
-                     (334, 'Round-E'),
-                     (335, 'Rude'),
-                     (336, 'Salt'),
-                     (337, 'Salt-flick'),
-                     (338, 'Small'),
-                     (339, 'Soon'),
-                     (340, 'Spoon'),
-                     (341, 'Spoon-hook'),
-                     (342, 'Spoon-thumb'),
-                     (343, 'Thick'),
-                     (344, 'Three'),
-                     (345, 'Three-hook'),
-                     (346, 'Two'),
-                     (347, 'Wish'),
-                     (348, 'Write'),
-                     (349, 'Write-flat')
-                     )
-                     
-locationChoices = ((0, 'None'),
-                    (257, 'Top of head'),
-                    (258, 'Forehead'),
-                    (259, 'Temple'),
-                    (260, 'Eyes'),
-                    (261, 'Nose'),
-                    (262, 'Whole of face'),
-                    (263, 'Cheekbone'),
-                    (264, 'Ear'),
-                    (265, 'Cheek'),
-                    (266, 'Mouth and lips'),
-                    (267, 'Chin'),
-                    (268, 'Neck'),
-                    (269, 'Shoulder'),
-                    (270, 'Chest'),
-                    (271, 'Stomach'),
-                    (272, 'Waist'),
-                    (273, 'Lower waist'),
-                    (274, 'Upper arm'),
-                    (275, 'Elbow')
-                    )
+handformChoices = build_choice_list("Handedness")
 
-handbodycontactChoices = ((0, 'None'),
-                           (240, 'Contact at start of movement'),
-                           (241, 'Contact at end of movement'),
-                           (242, 'Two contacts (tap)'),
-                           (243, 'Contact during (rub/stroke)')
-                           )
+handshapeChoices = build_choice_list("Handshape")
 
-directionChoices = ((0, 'None'),
-                     (472, 'Up'),
-                     (473, 'Down'),
-                     (474, 'Up and down'),
-                     (475, 'Left'),
-                     (476, 'Right'),
-                     (477, 'Side to side'),
-                     (478, 'Away'),
-                     (479, 'Towards'),
-                     (480, 'To and fro')
-                     )
-                     
-movementtypeChoices = ((0, 'None'),
-                        (481, 'Straight'),
-                        (482, 'Curved'),
-                        (483, 'Circle'),
-                        (484, 'Zig-zag')
-                        )
+locationChoices = build_choice_list("Location")
 
-smallmovementChoices = ((0, 'None'),
-                         (485, 'Straighten from bent'),
-                         (486, 'Bend fingers'),
-                         (487, 'Nod at wrist'),
-                         (488, 'Straighten fingers'),
-                         (489, 'Open handshape'),
-                         (490, 'Close handshape'),
-                         (491, 'Wriggle fingers'),
-                         (492, 'Crumble fingers')
-                         )
+handbodycontactChoices = build_choice_list("ContactType")
+
+directionChoices = build_choice_list("MovementDir")
+
+movementtypeChoices = build_choice_list("MovementShape")
+
+smallmovementChoices = build_choice_list("JointConfiguration")
 
 repetitionChoices = ((0, 'None'),
                       (493, 'Do the movement once'),
@@ -312,22 +221,9 @@ repetitionChoices = ((0, 'None'),
                       (495, 'Repeat the movement several times')
                       )
 
-relativelocationChoices = ((0, 'None'),
-                            (283, 'Forearm'),
-                            (284, 'Wrist'),
-                            (285, 'Pulse'),
-                            (286, 'Back of hand'),
-                            (287, 'Palm'),
-                            (288, 'Sides of hand'),
-                            (289, 'Fingertips')
-                            )
+relativelocationChoices = build_choice_list("Location")
 
-handinteractionChoices = ((0, 'None'),
-                       (468, 'Alternate hands (one moves, then the other moves)'),
-                       (469, 'Move the hands towards each other'),
-                       (470, 'Move the hands away from each other'),
-                       (471, 'The hands cross over each other')
-                       )
+handinteractionChoices = build_choice_list("RelatArtic")
 
                        
 class MissingSignFeedbackForm(forms.Form):   
@@ -354,12 +250,9 @@ class MissingSignFeedbackForm(forms.Form):
     repetition = forms.ChoiceField(choices=repetitionChoices, 
         label='Number of movements', required=False)
     
-    meaning = forms.CharField(label='Sign Meaning', 
-        widget=forms.Textarea(attrs={'cols':'55', 'rows':'8'}))
-    video = forms.FileField(required=False, 
-        widget=forms.FileInput(attrs={'size':'60'}))
-    comments = forms.CharField(label='Further Details', 
-        widget=forms.Textarea(attrs={'cols':'55', 'rows':'8'}), required=False)
+    meaning = forms.CharField(label='Sign Meaning', widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
+    video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
+    comments = forms.CharField(label='Further Details', widget=forms.Textarea(attrs={'rows':6, 'cols':80}), required=True)
     
 
 class MissingSignFeedback(models.Model):    

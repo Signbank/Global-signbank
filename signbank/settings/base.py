@@ -240,7 +240,7 @@ LOGIN_REDIRECT_URL = URL+'/signs/recently_added/'
 
 
 # location of ffmpeg, used to convert uploaded videos
-FFMPEG_PROGRAM = "/Applications/ffmpegX.app/Contents/Resources/ffmpeg"
+# FFMPEG_PROGRAM = "/Applications/ffmpegX.app/Contents/Resources/ffmpeg"
 FFMPEG_TIMEOUT = 60
 FFMPEG_OPTIONS = ["-vcodec", "h264", "-an"]
 

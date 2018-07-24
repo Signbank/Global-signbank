@@ -48,7 +48,7 @@
     <footer class="footer">
         <div class="container">
         <div class='pull-right'>
-              <a href="{% url 'general_feedback' %}">{% trans "Provide feedback on the site" %}</a>
+              <a href="{% url 'general_feedback' %}?return={{request.path}}/">{% trans "Provide feedback on the site" %}</a>
         </div>
         </div>
     </footer>

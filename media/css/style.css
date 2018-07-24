@@ -11,12 +11,16 @@ body {
   min-height: calc(100% - 220px);
   height: auto;
   /* Negative indent footer by its height */
-  margin: auto auto -60px auto;
+  margin: auto auto -45px auto;
   /* Pad bottom by footer height */
-  padding: auto 0 60px auto;
+  padding: auto 0 45px auto;
   position: auto;
   /* Pad bottom to put space between footer and this wraper */
-  margin-bottom: 25px;
+}
+
+.footer {
+  margin-top: 25px;
+  margin-right: 15px;
 }
 
 .nav-wrapper {

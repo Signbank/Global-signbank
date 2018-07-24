@@ -193,6 +193,7 @@ def word(request, keyword, n):
                                'feedback' : True,
                                'feedbackmessage': feedbackmessage,
                                'tagform': TagUpdateForm(),
+                               'annotation_idgloss': {},
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
@@ -252,6 +253,15 @@ def gloss(request, glossid):
         video_form = None
 
 
+    # Put annotation_idgloss per language in the context
+    annotation_idgloss = {}
+    if gloss.dataset:
+        for language in gloss.dataset.translation_languages.all():
+            annotation_idgloss[language] = gloss.annotationidglosstranslation_set.filter(language=language)
+    else:
+        language = Language.objects.get(id=get_default_language_id())
+        annotation_idgloss[language] = gloss.annotationidglosstranslation_set.filter(language=language)
+
 
     # get the last match keyword if there is one passed along as a form variable
     if 'lastmatch' in request.GET:
@@ -278,6 +288,7 @@ def gloss(request, glossid):
                                'videoform': video_form,
                                'tagform': TagUpdateForm(),
                                'feedbackmessage': feedbackmessage,
+                               'annotation_idgloss': annotation_idgloss,
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
