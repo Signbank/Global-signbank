@@ -6,7 +6,7 @@
  <div class='row'>
   <div id="loginforms" class="col-md-6 col-md-offset-3">
   
-  <form styleclass='form-horizontal' id="loginform" name="login" method="post" action="{{ URL }}/accounts/login/">
+  <form styleclass='form-horizontal' id="loginform" name="login" method="post" action="{{ URL }}/accounts/login/?next={{ next|urlencode }}">
     {% csrf_token %}
     <fieldset id='signin'>
     <legend>{% trans "Sign In" %}</legend>
@@ -32,6 +32,11 @@
     <input type="hidden" name="next" value="{{ next }}" >
 
   </form>
+
+{% if error_message %}
+<div class='alert alert-danger'>{{error_message}}</div>
+{% endif %}
+
 
 {% if allow_registration %}
   <fieldset id='register'>

@@ -5,55 +5,53 @@
 
 <html>
   <head>
-    <title>{% block bootstrap3_title %}ASL Signbank{% endblock %}</title>
+      <title>ASL Signbank</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+    <link href="https://fonts.googleapis.com/css?family=Nunito:700" rel="stylesheet">
+
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/style.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}{% primary_css %}">
 
     <link rel="stylesheet" href="{{STATIC_URL}}css/minimalistic_language_picker.css">
 
     <link rel="icon" type="image/png" href="{{ STATIC_URL }}images/favicon.png">
+
     {% block extrahead %}{% endblock %}
   </head>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112012037-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-112012037-1');
+  </script>
+
   <body>
 
-    <div id='wrap'>
-        <div class="container">
-            
-            <div id="leftcontentborder"></div>
-            <div id="rightcontentborder"></div>
-            <div id='header'><h1>ASL Signbank</h1>
-                <!--<div id='logoholder' class='visible-lg visible-md visible-sm'></div>-->
-            </div>
+  {% include 'menu.html' %}
 
-            <div id='bslstripe'></div>
-        {% include 'menu.html' %}  
-    
+    <div id='wrap' class="container-fluid" style="box-sizing:content-box;background:white;">
+
         {% bootstrap_messages %}
 
-        <div role='main'>
+        <div role='main' id="maincontent" style="background:white;">
         {% block content %}(no content){% endblock %}
         </div>
         
-        </div>
     </div>
 
-    <div id="footer"> 
-       <div class='container'>
-          <div id="copyright">
-              <!--
-              <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
-                  
-                  <img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />
-                  -->
-                  <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">{% trans "The ASL Signbank</span> is licensed under a " %}<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">{% trans "Creative Commons BY-NC-SA 4.0 International License" %}</a>.
-              
-              
+    <footer class="footer">
+        <div class="container">
+        <div class='pull-right'>
               <a href="{% url 'general_feedback' %}">{% trans "Provide feedback on the site" %}</a>
-          </div>
-       </div>
-    </div>
+        </div>
+        </div>
+    </footer>
     
     <script src='{{ STATIC_URL}}js/jquery-1.11.0.min.js'></script>
     <script src='{{ STATIC_URL}}bootstrap/js/bootstrap.min.js'></script>
@@ -67,13 +65,15 @@
     <script type="text/javascript">
     $(window).ready(function()
     {
+
     	{% get_current_language as WEBSITE_LANGUAGE %}
 
         //Use the form below to update the language when logging in (if needed)
         {% if user.is_authenticated and user.user_profile_user.last_used_language != WEBSITE_LANGUAGE %}
-
+            <!--console.log("This check stops the loop.");-->
+            {% if chosen_language %}
             $('#change_language_form').submit();
-
+            {% endif %}
         {% endif %}
 
     	$('#minimalistic_language_picker').minimalistic_language_picker(['en','nl','zh-hans'],'{{WEBSITE_LANGUAGE}}','{{ STATIC_URL }}images/languages/',function(chosen_language)
@@ -85,7 +85,7 @@
 
                 $.ajax('{{ URL }}/dictionary/switch_to_language/'+chosen_language,'html');
 
-                //The reload is on a timeout, because it happened to fast on Firefox
+                //The reload is on a timeout, because it happened too fast on Firefox
                 setTimeout(function()
                 {
                     $("#change_language_input_field").val(chosen_language);
@@ -101,9 +101,19 @@
             {% endif %}
 
     	});
+    	navbarHeight = Math.round($('#signbank-bar').outerHeight());
+        $('#wrap').css({'padding-top': navbarHeight});
+    })
+
+    $(window).on('resize', function() {
+        navbarHeight3 = Math.round($('#signbank-bar').height());
+        $('#searchresults').css({'top': navbarHeight3 });
+        $('#signinfo').css({'top': navbarHeight3 + Math.round($('#searchresults').height())});
+        $('#wrap').css({'padding-top': navbarHeight3 });
     })
 
     </script>
+
     <form id="change_language_form" method="post" action="{{ URL }}/i18n/setlang/">
         {% csrf_token %}
         <input id="change_language_input_field" type="hidden" name="language" value="{{ user.user_profile_user.last_used_language }}">
@@ -112,6 +122,4 @@
 
   </body>
 </html>
-    
 
-  
