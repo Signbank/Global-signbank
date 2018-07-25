@@ -85,7 +85,6 @@
         {% if user.is_authenticated %}
             <div class='navbar-text'>
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
-            <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
         {% else %}
             <div class='navbar-text'><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></div>            
         {% endif %}
