@@ -875,7 +875,7 @@ function do_toggle_groups(el) {
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       {% for dataset_lang in dataset_languages %}
@@ -883,9 +883,9 @@ function do_toggle_groups(el) {
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
             {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% else %}
-            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
             {% if gloss.simultaneous_morphology.count > 0 %}
@@ -895,7 +895,7 @@ function do_toggle_groups(el) {
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.simultaneous_morphology.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}/">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
@@ -904,7 +904,7 @@ function do_toggle_groups(el) {
             {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
             {% endif %}
@@ -1105,7 +1105,7 @@ function do_toggle_groups(el) {
         <td></td>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       {% for dataset_lang in dataset_languages %}
@@ -1113,9 +1113,9 @@ function do_toggle_groups(el) {
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
             {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% else %}
-            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
             {% if gloss.simultaneous_morphology.count > 0 %}
@@ -1125,7 +1125,7 @@ function do_toggle_groups(el) {
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.simultaneous_morphology.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}/">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
@@ -1134,7 +1134,7 @@ function do_toggle_groups(el) {
             {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
             {% endif %}
