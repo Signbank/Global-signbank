@@ -184,7 +184,7 @@ class GlossListView(ListView):
 
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and self.request.user.is_authenticated():
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
@@ -573,7 +573,6 @@ class GlossListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
-        # print('fieldname search: ', fieldname)
         for fieldnamemulti in fieldnamesmultiselect:
 
             if fieldnamemulti == 'handedness':
@@ -684,7 +683,7 @@ class GlossListView(ListView):
         ## phonology and semantics field filters
         for fieldname in fieldnames:
 
-            if fieldname in get:
+            if fieldname in get and get[fieldname] != '':
 
                 field_obj = Gloss._meta.get_field(fieldname)
 
@@ -2843,11 +2842,8 @@ class DatasetDetailView(DetailView):
 
         datasetform = DatasetUpdateForm()
         dataset = context['dataset']
-        # print('get context data, dataset: ', dataset, 'dataset description: ', dataset.description)
         datasetform.fields['description'] = dataset.description
         context['datasetform'] = datasetform
-        # print('get context data, dataset form: ', datasetform, 'dataset description: ', datasetform.fields['description'])
-
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets

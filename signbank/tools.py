@@ -1096,7 +1096,13 @@ def get_selected_datasets_for_user(user):
             return viewable_datasets
         return selected_datasets & viewable_datasets # intersection of the selected and viewable datasets
     else:
-        return Dataset.objects.filter(is_public=True)
+        # Make sure a non-empty set is returned, for anonymous users when no datasets are public
+        public_datasets = Dataset.objects.filter(is_public=True)
+        if public_datasets:
+            selected_datasets = public_datasets
+        else:
+            selected_datasets = [ Dataset.objects.get(name=DEFAULT_DATASET) ]
+        return selected_datasets
 
 
 def gloss_from_identifier(value):
