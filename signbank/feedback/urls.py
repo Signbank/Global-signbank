@@ -1,5 +1,6 @@
 from django.conf.urls import *
 from signbank.dictionary.models import *
+from django.contrib.auth.decorators import login_required, permission_required
 
 import signbank.feedback.views
 
@@ -10,7 +11,7 @@ urlpatterns = [
     url(r'^missingsign.html', signbank.feedback.views.missingsign),
     url(r'^generalfeedback.html', signbank.feedback.views.generalfeedback,name='general_feedback'),
 
-    url(r'^missing/$', signbank.feedback.views.missingsign),
+    url(r'^missing/$', login_required(signbank.feedback.views.missingsign)),
     url(r'^site/$', signbank.feedback.views.generalfeedback),
 
     url(r'^sign/(?P<keyword>.+)-(?P<n>\d+).html$',  signbank.feedback.views.signfeedback),

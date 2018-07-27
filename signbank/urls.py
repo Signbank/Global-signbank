@@ -91,11 +91,11 @@ urlpatterns = [
 
     url(r'reload_signbank/$',signbank.tools.reload_signbank),
 
-    url(r'^datasets/available', DatasetListView.as_view(), name='admin_dataset_view'),
-    url(r'^datasets/select', DatasetListView.as_view(), {'select': True}, name='admin_dataset_select'),
+    url(r'^datasets/available', login_required(DatasetListView.as_view()), name='admin_dataset_view'),
+    url(r'^datasets/select', login_required(DatasetListView.as_view()), {'select': True}, name='admin_dataset_select'),
     url(r'^datasets/change_selection', signbank.dictionary.update.change_dataset_selection, name='change_dataset_selection'),
     url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
-    url(r'^datasets/manager', DatasetManagerView.as_view(), name='admin_dataset_manager'),
+    url(r'^datasets/manager', login_required(DatasetManagerView.as_view()), name='admin_dataset_manager'),
     url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
     url(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
     url(r'^__debug__/', include(debug_toolbar.urls))
