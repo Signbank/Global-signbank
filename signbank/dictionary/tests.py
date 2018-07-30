@@ -287,14 +287,10 @@ class ImportExportTests(TestCase):
         url = '/datasets/available?dataset_name=' + dataset_name + '&export_ecv=ECV'
 
         response = client.get(url)
-
-        loaded_cookies = response.cookies.get('messages').value
-        decoded_cookies = decode_messages(loaded_cookies)
-        json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
-        json_message = json_decoded_cookies[0]
-        print('Message: ', json_message)
-
-        self.assertEqual(str(json_message), 'Please login to use this functionality.')
+        self.assertEqual(response.status_code, 302)
+        auth_login_url = reverse('registration:auth_login')
+        expected_url = settings.URL + auth_login_url
+        self.assertEqual(response['Location'][:len(expected_url)], expected_url)
 
     def test_Export_csv(self):
         client = Client()
