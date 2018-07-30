@@ -84,10 +84,9 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
 
             errors_found += [error_string]
 
-        lemma_id_gloss = valuedict['Lemma ID Gloss'].strip()
+        existing_glosses = {}
 
         annotationidglosstranslations = {}
-        existing_glosses = {}
         for language in dataset.translation_languages.all():
             column_name = "Annotation ID Gloss (%s)" % language.name_en
             if column_name in valuedict:
@@ -108,24 +107,27 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                     if gloss not in existing_gloss_set:
                         gloss_dict = {
                              'gloss_pk': gloss.pk,
-                             'dataset': gloss.dataset,
-                             'lemma_id_gloss': 'Lemma ID Gloss',
-                             'lemma_id_gloss_value': lemma_id_gloss
+                             'dataset': gloss.dataset
                         }
                         annotationidglosstranslation_dict = {}
                         for lang in gloss.dataset.translation_languages.all():
                             annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % lang.name_en]
                             annotationidglosstranslation_dict[lang.language_code_2char] = annotationidglosstranslation_text
                         gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
+
+                        lemmaidglosstranslation_dict = {}
+                        for lang in gloss.dataset.translation_languages.all():
+                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % lang.name_en]
+                            lemmaidglosstranslation_dict[lang.language_code_2char] = lemmaidglosstranslation_text
+                        gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
+
                         already_exists.append(gloss_dict)
                         existing_gloss_set.add(gloss)
 
         else:
             # for the new gloss, we don't know the id yet so save the row number in this field
             gloss_dict = {'gloss_pk': str(row_nr),
-                                'dataset': dataset_name,
-                                'lemma_id_gloss': 'Lemma ID Gloss',
-                                'lemma_id_gloss_value': lemma_id_gloss}
+                                'dataset': dataset_name}
             dataset = Dataset.objects.get(name=dataset_name)
             trans_languages = [ l for l in dataset.translation_languages.all() ]
             # print('translation languages for dataset: ', trans_languages)
@@ -135,6 +137,13 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                 # print('tools create gloss, language: ', language, ' annotation ID gloss: ', annotationidglosstranslation_text)
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
             gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
+
+            lemmaidglosstranslation_dict = {}
+            for language in trans_languages:
+                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language.name_en]
+                lemmaidglosstranslation_dict[language.language_code_2char] = lemmaidglosstranslation_text
+            gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
+
             new_gloss.append(gloss_dict)
 
         # print('create gloss field ', lemma_id_gloss, ' with annotation ', annotation_id_gloss, ' english: ', annotation_id_gloss_en)
@@ -206,6 +215,26 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                                                 'human_key': human_key,
                                                 'original_machine_value': annotation_idgloss_string,
                                                 'original_human_value': annotation_idgloss_string,
+                                                'new_machine_value': new_human_value,
+                                                'new_human_value': new_human_value})
+                continue
+
+            lemma_idgloss_key_prefix = "Lemma ID Gloss ("
+            if human_key.startswith(lemma_idgloss_key_prefix):
+                language_name = human_key[len(lemma_idgloss_key_prefix):-1]
+                languages = Language.objects.filter(name_en=language_name)
+                if languages:
+                    language = languages[0]
+                    lemma_idglosses = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
+                    if lemma_idglosses:
+                        lemma_idgloss_string = lemma_idglosses[0].text
+                        if lemma_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
+                            differences.append({'pk': gloss.pk,
+                                                'dataset': current_dataset,
+                                                'machine_key': human_key,
+                                                'human_key': human_key,
+                                                'original_machine_value': lemma_idgloss_string,
+                                                'original_human_value': lemma_idgloss_string,
                                                 'new_machine_value': new_human_value,
                                                 'new_human_value': new_human_value})
                 continue
