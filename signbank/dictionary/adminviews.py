@@ -128,6 +128,7 @@ class GlossListView(ListView):
     only_export_ecv = False #Used to call the 'export ecv' functionality of this view without the need for an extra GET parameter
     search_type = 'sign'
     view_type = 'gloss_list'
+    web_search = False
     show_all = False
     dataset_name = DEFAULT_DATASET
 
@@ -146,6 +147,13 @@ class GlossListView(ListView):
             # user is adjusting the view, leave the rest of the context alone
             self.view_type = self.request.GET['view_type']
             context['view_type'] = self.view_type
+
+        if 'inWeb' in self.request.GET:
+            # user is searching for signs / morphemes visible to anonymous uers
+            self.web_search = self.request.GET['inWeb'] == '2'
+        elif not self.request.user.is_authenticated():
+            self.web_search = True
+        context['web_search'] = self.web_search
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -176,8 +184,9 @@ class GlossListView(ListView):
         context['searchform'] = search_form
         context['search_type'] = self.search_type
         context['view_type'] = self.view_type
+        context['web_search'] = self.web_search
 
-        if self.search_type == 'sign':
+        if self.search_type == 'sign' or not self.request.user.is_authenticated():
             context['glosscount'] = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets).count()   # Only count the none-morpheme glosses
         else:
             context['glosscount'] = Gloss.objects.filter(dataset__in=selected_datasets).count()  # Count the glosses + morphemes
@@ -189,7 +198,7 @@ class GlossListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
-        if hasattr(settings, 'SHOW_MORPHEME_SEARCH'):
+        if hasattr(settings, 'SHOW_MORPHEME_SEARCH') and self.request.user.is_authenticated():
             context['SHOW_MORPHEME_SEARCH'] = settings.SHOW_MORPHEME_SEARCH
         else:
             context['SHOW_MORPHEME_SEARCH'] = False
@@ -475,11 +484,20 @@ class GlossListView(ListView):
 
         setattr(self.request, 'view_type', self.view_type)
 
+        if 'inWeb' in self.request.GET:
+            # user is searching for signs / morphemes visible to anonymous uers
+            self.web_search = self.request.GET['inWeb'] == '2'
+        elif not self.request.user.is_authenticated():
+            self.web_search = True
+
+        setattr(self.request, 'web_search', self.web_search)
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         #Get the initial selection
         if len(get) > 0 or show_all:
-            if self.search_type == 'sign':
+            # anonymous users can search signs, make sure no morphemes are in the results
+            if self.search_type == 'sign' or not self.request.user.is_authenticated():
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
 
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
@@ -533,10 +551,11 @@ class GlossListView(ListView):
             val = get['keyword']
             qs = qs.filter(translation__translation__text__iregex=val)
 
+        # NULLBOOLEANCHOICES = [(0, '---------'), (1, 'Unknown'), (2, 'True'), (3, 'False')]
 
         if 'inWeb' in get and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
-            val = get['inWeb'] == 'yes'
+            val = get['inWeb'] == '2'
             qs = qs.filter(inWeb__exact=val)
 
         if 'hasvideo' in get and get['hasvideo'] != 'unspecified':
@@ -907,6 +926,7 @@ class GlossListView(ListView):
         qs = order_queryset_by_sort_order(self.request.GET, qs)
 
         self.request.session['search_type'] = self.search_type
+        self.request.session['web_search'] = self.web_search
 
         # Return the resulting filtered and sorted queryset
         return qs
@@ -1311,7 +1331,7 @@ class GlossDetailView(DetailView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
@@ -1668,7 +1688,7 @@ class MorphemeListView(ListView):
 
         if 'inWeb' in get and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
-            val = get['inWeb'] == 'yes'
+            val = get['inWeb'] == '2'
             qs = qs.filter(inWeb__exact=val)
 
         if 'hasvideo' in get and get['hasvideo'] != 'unspecified':

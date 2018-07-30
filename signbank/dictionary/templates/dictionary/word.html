@@ -22,6 +22,9 @@
 
 {% block extrajs %}
 <script type='text/javascript'>
+    var url = '{{URL}}';
+    var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+
     $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
     $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
 </script>

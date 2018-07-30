@@ -488,4 +488,9 @@ body {
 .gloss_detail_component {
     /* No special matters */
     font-size: smaller;
+    color: black;
+}
+
+.gloss_detail_component:hover {
+  color: darkred;
 }
