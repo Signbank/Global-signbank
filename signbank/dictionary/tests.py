@@ -395,6 +395,20 @@ class ImportExportTests(TestCase):
         self.assertContains(response, "The following lemma idgloss translations refer to several lemma idglosses "
                                      "instead of 0 or 1: ")
 
+        # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
+        form_data = {'update_or_create': 'update'}
+        for index, language in enumerate(test_dataset.translation_languages.all()):
+            if index == 0:
+                test_translation_index = 1
+            else:
+                test_translation_index = 3
+            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language.name_en)
+            form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
+                                                    test_translation_index)
+
+        response = client.post(reverse_lazy('import_csv'), form_data)
+        self.assertContains(response, "The following lemma idgloss translations do only partially refer to a lemma "
+                                 "idgloss: ")
 
 
 class VideoTests(TestCase):

@@ -1068,47 +1068,50 @@ def import_csv(request):
 
             # Continue to process lemma idgloss translations
             for gloss, lemmaidglosstranslations in lemmaidglosstranslations_per_gloss.items():
-                lemma_for_gloss = None
-                # Check whether it is an existing one (correct, make a reference), ...
-                from functools import reduce
-                existing_lemmas = reduce((lambda x, y: x.union(y)),
-                                         [
-                                             LemmaIdgloss.objects.filter(
-                                                 Q(lemmaidglosstranslation__language__name_en=language,
-                                                   lemmaidglosstranslation__text=term),
-                                                 dataset=gloss.dataset)
-                                             for language, term in lemmaidglosstranslations.items()
-                                         ])
-                if len(existing_lemmas) == 1:
-                    if len(existing_lemmas[0].lemmaidglosstranslation_set.all()) == len(lemmaidglosstranslations):
-                        lemma_for_gloss = existing_lemmas[0]
-                else:
-                    # ... whether a part of the lemmaidglosstranslations exist (incorrect, give feedback), ...
-                    lemma_q_or = reduce((lambda x, y: x | y),
-                                        [Q(lemmaidglosstranslation__language__name_en=language,
-                                           lemmaidglosstranslation__text=term)
-                                         for language, term in lemmaidglosstranslations.items()])
-                    if LemmaIdgloss.objects.filter(lemma_q_or, dataset=gloss.dataset).count() > 0:
-                        lemmaidglosstranslations_str = ", ".join(["{} ({})".format(term, language)
-                                                                for language, term in lemmaidglosstranslations.items()])
-                        error.append("The following lemma idgloss translations refer to several lemma idglosses "
-                                     "instead of 0 or 1: {}".format(lemmaidglosstranslations_str))
-                        continue
-                    # or whether no lemmaidglosstranslations exist (correct, make a new Lemma)
-                    else:
-                        with atomic():
-                            lemma_for_gloss = LemmaIdgloss(dataset=gloss.dataset)
-                            lemma_for_gloss.save()
-                            for language_name, term in lemmaidglosstranslations.items():
-                                language = Language.objects.get(name_en=language_name)
-                                new_lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma_for_gloss,
-                                                                                      language=language, text=term)
-                                new_lemmaidglosstranslation.save()
+                existing_lemmas = []
+                for language, term in lemmaidglosstranslations.items():
+                    try:
+                        existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=gloss.dataset,
+                                                            language__name_en=language, text=term).lemma)
+                    except ObjectDoesNotExist as e:
+                        print("Error: {}".format(e))
+                existing_lemmas_set = set(existing_lemmas)
 
-                if lemma_for_gloss:
-                    gloss.lemma = lemma_for_gloss
+                # None of the new terms refer to an exiting lemma idgloss translation
+                if len(existing_lemmas) == 0:
+                    with atomic():
+                        lemma_for_gloss = LemmaIdgloss(dataset=gloss.dataset)
+                        lemma_for_gloss.save()
+                        for language_name, term in lemmaidglosstranslations.items():
+                            language = Language.objects.get(name_en=language_name)
+                            new_lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma_for_gloss,
+                                                                                  language=language, text=term)
+                            new_lemmaidglosstranslation.save()
+                        gloss.lemma = lemma_for_gloss
+                        gloss.save()
+
+                # Each of the new terms refer to an existing lemma idgloss translation, which, in turn refer
+                # to one lemma idgloss
+                elif len(existing_lemmas) == len(lemmaidglosstranslations) and len(existing_lemmas_set) == 1:
+                    gloss.lemma = existing_lemmas[0]
                     gloss.save()
 
+                # Each of the new terms refer to an existing lemma idgloss translation, but the translations
+                # do not refer to one lemma idgloss
+                elif len(existing_lemmas) == len(lemmaidglosstranslations) and len(existing_lemmas_set) > 1:
+                    lemmaidglosstranslations_str = ", ".join(["{} ({})".format(term, language)
+                                                            for language, term in lemmaidglosstranslations.items()])
+                    error.append("The following lemma idgloss translations refer to several lemma idglosses "
+                                 "instead of 0 or 1: {}".format(lemmaidglosstranslations_str))
+                    continue
+
+                # Not all, but more than zero terms refer to a lemma idgloss translation
+                else:
+                    lemmaidglosstranslations_str = ", ".join(["{} ({})".format(term, language)
+                                                              for language, term in lemmaidglosstranslations.items()])
+                    error.append("The following lemma idgloss translations do only partially refer to a lemma "
+                                 "idgloss: {}".format(lemmaidglosstranslations_str))
+                    continue
 
             stage = 2
 
