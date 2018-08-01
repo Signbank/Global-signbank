@@ -324,7 +324,7 @@ class ImportExportTests(TestCase):
         # self.assertContains(response, b',Lemma ID Gloss')  # For an empty database this wil not work
         self.assertContains(response, b',Dataset')
 
-    def test_Import_csv(self):
+    def test_Import_csv_update_gloss_for_lemma(self):
         """
         This method will test the last stage (#2) importing of a csv with changes to Lemma Idgloss Translations
         :return: 
@@ -409,6 +409,76 @@ class ImportExportTests(TestCase):
         response = client.post(reverse_lazy('import_csv'), form_data)
         self.assertContains(response, "The following lemma idgloss translations do only partially refer to a lemma "
                                  "idgloss: ")
+
+    def test_Import_csv_new_gloss_for_lemma(self):
+        """
+        This method will test the last stage (#2) importing of a csv with a new gloss with Lemma Idgloss Translations
+        :return: 
+        """
+        client = Client()
+        logged_in = client.login(username=self.user.username, password='test-user')
+        print(str(logged_in))
+
+        dataset_name = DEFAULT_DATASET
+        print('Test Dataset is: ', dataset_name)
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User has permmission to change dataset.')
+
+        gloss_id = 1
+        lemma_idgloss_translation_prefix = 'test_lemma_translation_'
+        annotation_idgloss_translation_prefix = 'test_annotation_translation_'
+
+        # Prepare form data for making A NEW LemmaIdgloss + LemmaIdglossTranslations
+        test_lemma_translation_index = 1
+        test_annotation_translation_index = 1
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): dataset_name}
+        for language in test_dataset.translation_languages.all():
+            form_name = '{}.lemma_id_gloss_{}'.format(gloss_id, language.language_code_2char)
+            form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
+                                                    test_lemma_translation_index)
+            form_name = '{}.annotation_id_gloss_{}'.format(gloss_id, language.language_code_2char)
+            form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
+                                                    test_annotation_translation_index)
+
+        response = client.post(reverse_lazy('import_csv'), form_data)
+        self.assertContains(response, 'Changes are live.')
+
+        # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
+        test_annotation_translation_index = 2
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): dataset_name}
+        for language in test_dataset.translation_languages.all():
+            form_name = '{}.lemma_id_gloss_{}'.format(gloss_id, language.language_code_2char)
+            form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
+                                                    test_lemma_translation_index)
+            form_name = '{}.annotation_id_gloss_{}'.format(gloss_id, language.language_code_2char)
+            form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
+                                                    test_annotation_translation_index)
+
+        response = client.post(reverse_lazy('import_csv'), form_data)
+        self.assertContains(response, 'Changes are live.')
+
+        # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
+        test_annotation_translation_index = 3
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): dataset_name}
+        for index, language in enumerate(test_dataset.translation_languages.all()):
+            if index == 0:
+                test_lemma_translation_index = 1
+            else:
+                test_lemma_translation_index = 2
+            form_name = '{}.lemma_id_gloss_{}'.format(gloss_id, language.language_code_2char)
+            form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
+                                                    test_lemma_translation_index)
+            form_name = '{}.annotation_id_gloss_{}'.format(gloss_id, language.language_code_2char)
+            form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
+                                                    test_annotation_translation_index)
+
+        response = client.post(reverse_lazy('import_csv'), form_data)
+        self.assertContains(response, "To create glosses in dataset {}, the combination of Lemma ID "
+                                      "Gloss translations should either refer to an existing Lemma ID Gloss or make "
+                                      "up a completely new Lemma ID gloss.".format(dataset_name))
 
 
 class VideoTests(TestCase):

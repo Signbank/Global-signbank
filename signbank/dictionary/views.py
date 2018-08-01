@@ -1139,7 +1139,7 @@ def import_csv(request):
                     dataset_id = Dataset.objects.get(name=dataset)
 
                 lemmaidglosstranslations = {}
-                for language in dataset_languages:
+                for language in dataset_id.translation_languages.all():
                     lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss_' + language.language_code_2char]
                     lemmaidglosstranslations[language] = lemma_id_gloss
                 # Check whether it is an existing one (correct, make a reference), ...
@@ -1168,6 +1168,7 @@ def import_csv(request):
                          ', the combination of Lemma ID Gloss translations should either refer ' \
                          'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
                     error.append(e1)
+                    lemma_for_gloss = None
 
                 new_gloss = Gloss()
                 new_gloss.lemma = lemma_for_gloss
