@@ -25,24 +25,28 @@
                 $(this).text('Show');
             }
         });
-        
-        set_annotationidglosslanguages();
 
-         $('#id_dataset').change(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+
+        if (show_dataset_interface_options) {
             set_annotationidglosslanguages();
-         });
 
-         function set_annotationidglosslanguages() {
-            var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
-            var languages = languages_str.split(",");
-            $("[id*='add_morpheme_dataset_']").each(function(){
-                $(this).hide();
+            $('#id_dataset').change(function() {
+                set_annotationidglosslanguages();
             });
-            for(var id in languages) {
-                $("[id*='add_morpheme_dataset_header_" + languages[id] + "']").show();
-                $("[id*='add_morpheme_dataset_value_" + languages[id] + "']").show();
+
+            function set_annotationidglosslanguages() {
+                var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+                var languages = languages_str.split(",");
+                $("[id*='add_morpheme_dataset_']").each(function(){
+                    $(this).hide();
+                });
+                for(var id in languages) {
+                    $("[id*='add_morpheme_dataset_header_" + languages[id] + "']").show();
+                    $("[id*='add_morpheme_dataset_value_" + languages[id] + "']").show();
+                }
             }
-         }
+        }
     });
 
     {% if perms.dictionary.change_gloss %}

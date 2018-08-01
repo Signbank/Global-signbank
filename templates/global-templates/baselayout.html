@@ -103,6 +103,7 @@
     	});
     	navbarHeight = Math.round($('#signbank-bar').outerHeight());
         $('#wrap').css({'padding-top': navbarHeight});
+        $('[data-toggle="tooltip-menubar"]').tooltip();
     })
 
     $(window).on('resize', function() {
