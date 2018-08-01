@@ -63,6 +63,27 @@
     {% block extrajs %}{% endblock %}
 
     <script type="text/javascript">
+        function focusFunction() {
+            var search_text = document.getElementById("tooltip-search").value;
+            if (!search_text) {
+                document.getElementById("tooltip-search").style.background = "lightgray";
+            }
+        }
+        function focusFunction2() {
+            var search_text = document.getElementById("tooltip-translation").value;
+            if (!search_text) {
+                document.getElementById("tooltip-translation").style.background = "lightgray";
+            }
+        }
+        function blurFunction() {
+            document.getElementById("tooltip-search").style.background = "white";
+        }
+        function blurFunction2() {
+            document.getElementById("tooltip-translation").style.background = "white";
+        }
+    </script>
+
+    <script type="text/javascript">
     $(window).ready(function()
     {
 

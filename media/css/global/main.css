@@ -187,3 +187,34 @@ legend
 .help-block {
     color: darkred;
 }
+
+.text-container {
+    display: inline-block;
+    position: relative;
+}
+
+.text-container input {
+    text-indent: 0px;
+}
+
+.hasTooltip {
+    position: relative;
+}
+
+.hasTooltip span {
+    display: none;
+}
+
+.hasTooltip:hover span {
+    display: block;
+    background-color: black;
+    border-radius: 5px;
+    color: white;
+    box-shadow: 1px 1px 3px gray;
+    position: absolute;
+    padding: 5px;
+    top: 3em;
+    left: 0px;
+    max-width: 360px;
+    font-size: 12px;
+}
