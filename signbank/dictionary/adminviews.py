@@ -951,12 +951,12 @@ class GlossDetailView(DetailView):
         if request.user.is_authenticated():
             if self.object.dataset not in get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False):
                 if self.object.inWeb:
-                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'idgloss':self.object.idgloss}))
+                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
                 else:
                     return HttpResponse('')
         else:
             if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'idgloss': self.object.idgloss}))
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
@@ -1360,12 +1360,12 @@ class GlossRelationsDetailView(DetailView):
         if request.user.is_authenticated():
             if self.object.dataset not in get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False):
                 if self.object.inWeb:
-                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'idgloss':self.object.idgloss}))
+                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
                 else:
                     return HttpResponse('')
         else:
             if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'idgloss': self.object.idgloss}))
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
@@ -3060,13 +3060,13 @@ class MorphemeDetailView(DetailView):
         if request.user.is_authenticated():
             if self.object.dataset not in get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False):
                 if self.object.inWeb:
-                    return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'idgloss': self.object.idgloss}))
+                    return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
                 else:
                     messages.add_message(request, messages.WARNING, 'You are not allowed to see this morpheme.')
                     return HttpResponseRedirect(reverse('root_page'))
         else:
             if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'idgloss': self.object.idgloss}))
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
