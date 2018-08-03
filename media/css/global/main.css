@@ -101,8 +101,14 @@ legend
     width: 467px;
 }
 
+.modal-backdrop {
+  z-index: 1040 !important;
+  position: relative;
+}
+
 .modal-dialog {
-  margin: 130px auto;
+  margin: 300px auto;
+  z-index: 1100 !important;
 }
 
 .global_sb_logo
@@ -186,4 +192,35 @@ legend
 
 .help-block {
     color: darkred;
+}
+
+.text-container {
+    display: inline-block;
+    position: relative;
+}
+
+.text-container input {
+    text-indent: 0px;
+}
+
+.hasTooltip {
+    position: relative;
+}
+
+.hasTooltip span {
+    display: none;
+}
+
+.hasTooltip:hover span {
+    display: block;
+    background-color: black;
+    border-radius: 5px;
+    color: white;
+    box-shadow: 1px 1px 3px gray;
+    position: absolute;
+    padding: 5px;
+    top: 3em;
+    left: 0px;
+    max-width: 360px;
+    font-size: 12px;
 }

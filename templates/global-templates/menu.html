@@ -78,11 +78,10 @@
 
     </ul>
     <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}signs/search">
-            <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="40" size="14">
-            <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" value="{{ query }}" maxlength="40" size="16">
-          <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
-            <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
-                  title="In many text fields, you can use patterns as follows:
+            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" id="tooltip-search"
+                                               onfocus="focusFunction()" onblur="blurFunction()"
+                                               value="{{ glossQuery }}" maxlength="60" size="36" />
+                <span>In many text fields, you can use patterns as follows:
                   <table>
                     <tr>
                         <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
@@ -103,7 +102,35 @@
                         <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
                     </tr>
                   </table>
-                  "></span>
+                </span>
+            </div>
+            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" id="tooltip-translation"
+                                               onfocus="focusFunction2()" onblur="blurFunction2()"
+                                               value="{{ query }}" maxlength="60" size="36" />
+                <span>In many text fields, you can use patterns as follows:
+                  <table>
+                    <tr>
+                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                    </tr>
+                  </table>
+                </span>
+            </div>
+          <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
     </form>
 
       <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">

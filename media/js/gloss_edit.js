@@ -640,6 +640,7 @@ function update_foreign_delete(change_summary)
     var search_id = 'foreign_' + deleted_relation_id;
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');
+    $('#relationsforeign').addClass('in');
 }
 
 function update_relation_delete(change_summary)
@@ -652,6 +653,7 @@ function update_relation_delete(change_summary)
     var search_id = 'row_' + deleted_relation_id;
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');
+  	$('#relations').addClass('in');
 }
 
 function getCookie(name) {
