@@ -938,14 +938,14 @@ function do_toggle_groups(el) {
                 <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
 
                 {% with gloss.domhndsh|translate_to_dutch:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
                         <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
                         <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
@@ -960,14 +960,14 @@ function do_toggle_groups(el) {
                 <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
 
                 {% with gloss.domhndsh|translate_to_chinese:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
                         <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
                         <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
@@ -984,14 +984,14 @@ function do_toggle_groups(el) {
                 <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
 
                 {% with gloss.domhndsh|translate_to_english:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
                         <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
                         <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
