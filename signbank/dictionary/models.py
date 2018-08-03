@@ -342,7 +342,7 @@ class Gloss(models.Model):
     class Meta:
         verbose_name_plural = "Glosses"
         # ordering: for Lemma View in the Gloss List View, we need to have glosses in the same Lemma Group sorted
-        ordering = ['idgloss']
+        ordering = ['lemma']
         permissions = (('update_video', "Can Update Video"),
                        ('search_gloss', 'Can Search/View Full Gloss Details'),
                        ('export_csv', 'Can export sign details as CSV'),
@@ -367,14 +367,6 @@ class Gloss(models.Model):
                 pass
             
         return d
-
-    dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
-                                help_text=_("Dataset a gloss is part of"), null=True)
-    
-    idgloss = models.CharField(_("Lemma ID Gloss"), max_length=50, help_text="""
-    This is the unique identifying name of an entry of a sign form in the
-database. No two Sign Entry Names can be exactly the same, but a "Sign
-Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
     lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
 
@@ -540,15 +532,24 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     alternative_id = models.CharField(max_length=50,null=True,blank=True)
 
     @property
-    def dataset_tmp(self):  # TODO change to 'dataset'
-        return self.dataset  # old
-        # return self.lemma.dataset  # new
+    def dataset(self):
+        # return self.dataset  # old
+        try:
+            return self.lemma.dataset  # new
+        except:
+            return None
 
     @property
-    def idgloss_tmp(self):  # TODO change to 'idgloss'
-        return self.idgloss  # old
-        # return self.lemma.lemmaidglosstranslation_set.get(
-        # language__language_code_2char=settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])  # new
+    def idgloss(self):
+        # return self.idgloss  # old
+        try:
+            return self.lemma.lemmaidglosstranslation_set.get(
+            language__language_code_2char=settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']).text  # new
+        except:
+            try:
+                return self.lemma.lemmaidglosstranslation_set.first().text
+            except:
+                return ""
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
@@ -642,9 +643,9 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         if staff:
             # Make sure we only include the none-Morpheme glosses
-            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('idgloss')
+            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('lemma')
         else:
-            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('idgloss')
+            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('lemma')
 
         if all_glosses_ordered:
 
@@ -666,9 +667,9 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         if self.sn == None:
             return None
         elif staff:
-            set = Gloss.objects.filter(sn__lt=self.sn).order_by('-idgloss')
+            set = Gloss.objects.filter(sn__lt=self.sn).order_by('-lemma')
         else:
-            set = Gloss.objects.filter(sn__lt=self.sn, inWeb__exact=True).order_by('-idgloss')
+            set = Gloss.objects.filter(sn__lt=self.sn, inWeb__exact=True).order_by('-lemma')
         if set:
             return set[0]
         else:
@@ -1504,9 +1505,9 @@ class Morpheme(Gloss):
         """Find the next morpheme in dictionary order"""
 
         if staff:
-            all_morphemes_ordered = Morpheme.objects.all().order_by('idgloss')
+            all_morphemes_ordered = Morpheme.objects.all().order_by('lemma')
         else:
-            all_morphemes_ordered = Morpheme.objects.filter(inWeb__exact=True).order_by('idgloss')
+            all_morphemes_ordered = Morpheme.objects.filter(inWeb__exact=True).order_by('lemma')
 
         if all_morphemes_ordered:
 
@@ -1675,23 +1676,33 @@ class AnnotationIdglossTranslation(models.Model):
     class Meta:
         unique_together = (("gloss", "language"),)
 
+    def __init__(self, *args, **kwargs):
+        if 'dataset' in kwargs:
+            self.dataset = kwargs.pop('dataset')
+        super(AnnotationIdglossTranslation, self).__init__(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         """
         1. Before an item is saved the language is checked against the languages of the dataset the gloss is in.
         2. The annotation idgloss translation text for a language must be unique within a dataset. 
         Note that bulk updates will not use this method. Therefore, always iterate over a queryset when updating."""
-        dataset = self.gloss.dataset
+        dataset = None
+        if hasattr(self, 'dataset'):
+            dataset = self.dataset
+        elif hasattr(self.gloss, 'lemma') and hasattr(self.gloss.lemma, 'dataset'):
+            dataset = self.gloss.lemma.dataset
         if dataset:
             # Before an item is saved the language is checked against the languages of the dataset the gloss is in.
-            dataset_languages = self.gloss.dataset.translation_languages.all()
+            dataset_languages = dataset.translation_languages.all()
             if not self.language in dataset_languages:
                 msg = "Language %s is not in the set of language of the dataset gloss %s belongs to" \
                       % (self.language.name, self.gloss.id)
                 raise ValidationError(msg)
 
             # The annotation idgloss translation text for a language must be unique within a dataset.
-            glosses_with_same_text = dataset.gloss_set.filter(annotationidglosstranslation__text__exact=self.text,
-                                                              annotationidglosstranslation__language=self.language)
+            glosses_with_same_text = Gloss.objects.filter(annotationidglosstranslation__text__exact=self.text,
+                                                          annotationidglosstranslation__language=self.language,
+                                                          lemma__dataset=dataset)
             if not(
                 (len(glosses_with_same_text) == 1 and glosses_with_same_text[0] == self)
                    or glosses_with_same_text is None or len(glosses_with_same_text) == 0):
@@ -1706,6 +1717,9 @@ class LemmaIdgloss(models.Model):
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
                                 help_text=_("Dataset a lemma is part of"), null=True)
 
+    class Meta:
+        ordering = ['dataset__name']
+
     def __str__(self):
         return ", ".join(["%s: %s" % (translation.language, translation.text)
                           for translation in self.lemmaidglosstranslation_set.all()])
@@ -1718,6 +1732,9 @@ class LemmaIdglossTranslation(models.Model):
 
     class Meta:
         unique_together = (("lemma", "language"),)  # For each combination of lemma and language there is just one text.
+
+    def __str__(self):
+        return self.text
 
     def save(self, *args, **kwargs):
         """

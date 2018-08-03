@@ -40,12 +40,18 @@ def add_gloss(request):
         form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user)
 
         # Lemma handling
-        lemma_form = None
         lemmaidgloss = None
+        lemma_form = None
         if request.POST['select_or_new_lemma'] == 'new':
             lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
         else:
-            lemmaidgloss = request.POST['idgloss']
+            try:
+                lemmaidgloss_id = request.POST['idgloss']
+                lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
+            except:
+                messages.add_message(request, messages.ERROR,
+                                     _("The given Lemma Idgloss ID is unknown."))
+                return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
 
         # Check for 'change_dataset' permission
         if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) and ('change_dataset' not in get_group_perms(request.user, dataset)):
@@ -63,21 +69,21 @@ def add_gloss(request):
                 glosses_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
                     annotationidglosstranslation__language=language,
                     annotationidglosstranslation__text__exact=value.upper(),
-                    dataset=dataset)
+                    lemma__dataset=dataset)
                 if len(glosses_for_this_language_and_annotation_idgloss) != 0:
                     return render(request, 'dictionary/warning.html',
                                   {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
-        if form.is_valid() and (not lemma_form or lemma_form.is_valid()):
+        if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
             try:
                 gloss = form.save()
                 gloss.creationDate = datetime.now()
-                gloss.creator.add(request.user)
                 gloss.excludeFromEcv = False
                 if lemma_form:
                     lemmaidgloss = lemma_form.save()
-                gloss.lemma_id = lemmaidgloss
+                gloss.lemma = lemmaidgloss
                 gloss.save()
+                gloss.creator.add(request.user)
             except ValidationError as ve:
                 messages.add_message(request, messages.ERROR, ve.message)
                 return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
@@ -114,7 +120,7 @@ def update_gloss(request, glossid):
         field_category = ''
         lemma_gloss_group = False
         lemma_group_string = gloss.idgloss
-        other_glosses_in_lemma_group = Gloss.objects.filter(idgloss__iexact=lemma_group_string).count()
+        other_glosses_in_lemma_group = Gloss.objects.filter(lemma__lemmaidglosstranslation__text__iexact=lemma_group_string).count()
         if other_glosses_in_lemma_group > 1:
             lemma_gloss_group = True
 
@@ -1154,7 +1160,7 @@ def add_morpheme_definition(request, glossid):
             if 'datasetid' in request.session.keys():
                 datasetid = request.session['datasetid']
                 dataset_id = Dataset.objects.get(name=datasetid)
-                count_morphemes_in_dataset = Morpheme.objects.filter(dataset=dataset_id).count()
+                count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id).count()
                 if count_morphemes_in_dataset < 1:
                     messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
                     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))

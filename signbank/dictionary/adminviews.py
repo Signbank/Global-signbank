@@ -42,7 +42,7 @@ def order_queryset_by_sort_order(get, qs):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
 
     This function is used both by GlossListView as well as by MorphemeListView.
-    The value of [sortOrder] is 'idgloss' by default.
+    The value of [sortOrder] is 'lemma__lemmaidglosstranslation__text' by default.
     [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_gloss_list.html
     Its value is changed by clicking the up/down buttons in the second row of the search result table
     """
@@ -82,7 +82,7 @@ def order_queryset_by_sort_order(get, qs):
         return qs
 
     # Set the default sort order
-    sOrder = 'idgloss'  # Default sort order if nothing is specified
+    sOrder = 'lemma__lemmaidglosstranslation__text'  # Default sort order if nothing is specified
     # See if the form contains any sort-order information
     if ('sortOrder' in get and get['sortOrder'] != ''):
         # Take the user-indicated sort order
@@ -107,12 +107,12 @@ def order_queryset_by_sort_order(get, qs):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
             bReversed = True
-
         qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'})
         qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'})
 
-        ordered = sorted(qs_letters, key=lambda x: getattr(x, sOrder))
-        ordered += sorted(qs_special, key=lambda x: getattr(x, sOrder))
+        sort_key = sOrder[:sOrder.find('__')]
+        ordered = list(qs_letters.order_by(sort_key))
+        ordered += list(qs_special.order_by(sort_key))
 
         if bReversed:
             ordered.reverse()
@@ -179,9 +179,9 @@ class GlossListView(ListView):
         context['view_type'] = self.view_type
 
         if self.search_type == 'sign':
-            context['glosscount'] = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets).count()   # Only count the none-morpheme glosses
+            context['glosscount'] = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets).count()   # Only count the none-morpheme glosses
         else:
-            context['glosscount'] = Gloss.objects.filter(dataset__in=selected_datasets).count()  # Count the glosses + morphemes
+            context['glosscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets).count()  # Count the glosses + morphemes
 
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
 
@@ -316,7 +316,7 @@ class GlossListView(ListView):
 #        fields = [f.name for f in Gloss._meta.fields]
         #We want to manually set which fields to export here
 
-        fieldnames = ['dataset']+FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
 
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
@@ -331,7 +331,7 @@ class GlossListView(ListView):
         writer = csv.writer(response)
 
         with override(LANGUAGE_CODE):
-            header = ['Signbank ID'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
+            header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
         for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
                              'Relations to other signs','Relations to foreign signs', 'Tags']:
@@ -340,7 +340,7 @@ class GlossListView(ListView):
         writer.writerow(header)
 
         for gloss in self.get_queryset():
-            row = [str(gloss.pk)]
+            row = [str(gloss.pk), gloss.lemma.dataset]
 
             for language in dataset_languages:
                 lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
@@ -495,14 +495,14 @@ class GlossListView(ListView):
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
 
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
-                    qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+                    qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
                 else:
-                    qs = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets)
+                    qs = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
             else:
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
-                    qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(dataset__in=selected_datasets)
+                    qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
                 else:
-                    qs = Gloss.objects.all().filter(dataset__in=selected_datasets)
+                    qs = Gloss.objects.all().filter(lemma__dataset__in=selected_datasets)
 
         #No filters or 'show_all' specified? show nothing
         else:
@@ -1273,7 +1273,7 @@ class GlossDetailView(DetailView):
         # Obtain the number of morphemes in the dataset of this gloss
         # The template will not show the facility to add simultaneous morphology if there are no morphemes to choose from
         dataset_id_of_gloss = gl.dataset
-        count_morphemes_in_dataset = Morpheme.objects.filter(dataset=dataset_id_of_gloss).count()
+        count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id_of_gloss).count()
         context['count_morphemes_in_dataset'] = count_morphemes_in_dataset
 
         blend_morphology = []
@@ -1663,7 +1663,7 @@ class MorphemeListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         if len(get) > 0:
-            qs = Morpheme.objects.all().filter(dataset__in=selected_datasets)
+            qs = Morpheme.objects.all().filter(lemma__dataset__in=selected_datasets)
 
         #Don't show anything when we're not searching yet
         else:
@@ -2260,7 +2260,7 @@ class HandshapeListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
-        context['signscount'] = Gloss.objects.filter(dataset__in=selected_datasets).count()
+        context['signscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets).count()
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
 
@@ -2471,12 +2471,12 @@ class HandshapeListView(ListView):
 
             if len(selected_handshapes) == (Handshape.objects.all().count()):
 
-                qs = Gloss.objects.filter(dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes)
+                qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes)
                                           | Q(domhndsh__isnull=True) | Q(domhndsh__exact='0')
                                           | Q(subhndsh__in=selected_handshapes) | Q(subhndsh__isnull=True) | Q(subhndsh__exact='0'))
 
             else:
-                qs = Gloss.objects.filter(dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes) | Q(subhndsh__in=selected_handshapes))
+                qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes) | Q(subhndsh__in=selected_handshapes))
 
         self.request.session['search_type'] = self.search_type
 
@@ -2585,7 +2585,7 @@ class DatasetListView(ListView):
             for dataset in qs:
                 checker.has_perm('view_dataset', dataset)
 
-            qs = qs.annotate(Count('gloss')).order_by('name')
+            qs = qs.annotate(Count('lemmaidgloss__gloss')).order_by('name')
 
             return qs
         else:
@@ -3261,7 +3261,7 @@ def gloss_ajax_complete(request, prefix):
     datasetid = request.session['datasetid']
     dataset_id = Dataset.objects.get(id=datasetid)
 
-    query = Q(idgloss__istartswith=prefix) | \
+    query = Q(lemma__lemmaidglosstranslation__text__istartswith=prefix) | \
             Q(annotationidglosstranslation__text__istartswith=prefix) | \
             Q(sn__startswith=prefix)
     qs = Gloss.objects.filter(query).distinct()

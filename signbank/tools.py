@@ -1231,7 +1231,7 @@ def write_ecv_file_for_dataset(dataset_name):
         dataset_id = ''
 
     if dataset_id:
-        query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(dataset=dataset_id)
+        query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(lemma__dataset=dataset_id)
     else:
         query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False)
 

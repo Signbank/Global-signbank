@@ -25,23 +25,37 @@ class BasicCRUDTests(TestCase):
         found = 0
         total_nr_of_glosses = 0
         for gloss in Gloss.objects.filter(handedness=4):
-            if gloss.idgloss == 'thisisatemporarytestgloss':
+            if gloss.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
                 found += 1
             total_nr_of_glosses += 1
 
         self.assertEqual(found,0)
         #self.assertGreater(total_nr_of_glosses,0) #Verify that the database is not empty
 
+        # Create the glosses
+        dataset_name = DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
         #Create the gloss
         new_gloss = Gloss()
-        new_gloss.idgloss = 'thisisatemporarytestgloss'
         new_gloss.handedness = 4
+        new_gloss.lemma = new_lemma
         new_gloss.save()
 
         #Is the gloss there now?
         found = 0
         for gloss in Gloss.objects.filter(handedness=4):
-            if gloss.idgloss == 'thisisatemporarytestgloss':
+            if gloss.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
                 found += 1
 
         self.assertEqual(found, 1)
@@ -93,10 +107,12 @@ class BasicCRUDTests(TestCase):
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Construct the Create Gloss form data
-        create_gloss_form_data = {'dataset': test_dataset.id, 'idgloss': "idgloss_test"}
+        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
         for language in test_dataset.translation_languages.all():
             create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
                 "annotationidglosstranslation_test_" + language.language_code_2char
+            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
+                "lemmaidglosstranslation_test_" + language.language_code_2char
 
         # User does not have permission to change dataset. Creating a gloss should fail.
         response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
@@ -108,10 +124,14 @@ class BasicCRUDTests(TestCase):
         assign_perm('change_dataset', self.user, test_dataset)
         response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
 
-        glosses = Gloss.objects.filter(dataset=test_dataset, idgloss="idgloss_test")
+        glosses = Gloss.objects.filter(lemma__dataset=test_dataset)
         for language in test_dataset.translation_languages.all():
             glosses = glosses.filter(annotationidglosstranslation__language=language,
-                                     annotationidglosstranslation__text__exact="annotationidglosstranslation_test_" + language.language_code_2char)
+                                     annotationidglosstranslation__text__exact="annotationidglosstranslation_test_"
+                                                                               + language.language_code_2char)
+            glosses = glosses.filter(lemma__lemmaidglosstranslation__language=language,
+                                     lemma__lemmaidglosstranslation__text__exact="lemmaidglosstranslation_test_"
+                                                                                 + language.language_code_2char)
 
         self.assertEqual(len(glosses), 1)
 
@@ -130,22 +150,29 @@ class BasicCRUDTests(TestCase):
         dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
         new_gloss = Gloss()
-        new_gloss.idgloss = 'tempgloss1'
         new_gloss.handedness = 4
-        new_gloss.dataset = test_dataset
+        new_gloss.lemma = new_lemma
         new_gloss.save()
 
         new_gloss = Gloss()
-        new_gloss.idgloss = 'tempgloss2'
         new_gloss.handedness = 4
-        new_gloss.dataset = test_dataset
+        new_gloss.lemma = new_lemma
         new_gloss.save()
 
         new_gloss = Gloss()
-        new_gloss.idgloss = 'tempgloss3'
         new_gloss.handedness = 5
-        new_gloss.dataset = test_dataset
+        new_gloss.lemma = new_lemma
         new_gloss.save()
 
         #Search
@@ -190,9 +217,7 @@ class BasicQueryTests(TestCase):
 
         # #Create the gloss
         new_gloss = Gloss()
-        new_gloss.idgloss = 'thisisatemporarytestgloss'
         new_gloss.handedness = 4
-        new_gloss.dataset = test_dataset
         new_gloss.save()
         for language in test_dataset.translation_languages.all():
             annotationIdgloss = AnnotationIdglossTranslation()
@@ -317,7 +342,7 @@ class ImportExportTests(TestCase):
         # print(str(response['Content-Type']))
         # print(str(response.status_code))
         # print(str(response.wsgi_request))
-        print(str(response.content))
+        # print("Export csv: {}".format(response.content))
 
         self.assertEqual(response['Content-Type'], "text/csv")
         self.assertContains(response, b'Signbank ID,')
@@ -355,7 +380,7 @@ class ImportExportTests(TestCase):
             lemma_translation.save()
 
         # Create test gloss
-        gloss = Gloss(lemma=lemma, dataset=test_dataset)
+        gloss = Gloss(lemma=lemma)
         gloss.save()
 
         # Prepare form data for making A NEW LemmaIdgloss + LemmaIdglossTranslations
@@ -491,12 +516,26 @@ class VideoTests(TestCase):
 
     def test_create_and_delete_video(self):
 
-        NAME = 'thisisatemporarytestgloss'
+        NAME = 'thisisatemporarytestlemmaidglosstranslation'
+
+        # Create the glosses
+        dataset_name = DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
 
         #Create the gloss
         new_gloss = Gloss()
-        new_gloss.idgloss = NAME
         new_gloss.handedness = 4
+        new_gloss.lemma = new_lemma
         new_gloss.save()
 
         client = Client()
@@ -514,6 +553,8 @@ class VideoTests(TestCase):
 
         #We expect a video now
         response = client.get(video_url)
+        print("Video url: {}".format(video_url))
+        print("Video upload response: {}".format(response))
         self.assertEqual(response.status_code,200)
 
         #You can't see it if you log out
@@ -545,15 +586,18 @@ class AjaxTests(TestCase):
         dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
+        #Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
         #Add a gloss to this dataset
         new_gloss = Gloss()
-        new_gloss.idgloss = NAME
         new_gloss.annotation_idgloss = NAME
-        new_gloss.dataset = test_dataset
+        new_gloss.lemma = new_lemma
         new_gloss.save()
 
         #Add a translation to be shown with ajax (in the language of the dataset)
-        annotationidglosstranslation = AnnotationIdglossTranslation()
+        annotationidglosstranslation = AnnotationIdglossTranslation(text=NAME)
         annotationidglosstranslation.gloss = new_gloss
         annotationidglosstranslation.language = test_dataset.translation_languages.get(id=1)
         annotationidglosstranslation.save()
@@ -572,6 +616,7 @@ class AjaxTests(TestCase):
         self.assertNotContains(response,NAME)
 
         response = client.get('/dictionary/ajax/gloss/th')
+        print(response.content)
         self.assertContains(response,NAME)
 
 class FrontEndTests(TestCase):
@@ -587,11 +632,13 @@ class FrontEndTests(TestCase):
         dataset_name = DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
 
+        #Create lemma
+        self.new_lemma = LemmaIdgloss(dataset=self.test_dataset)
+        self.new_lemma.save()
+
+
         #Add a gloss to this dataset
-        self.new_gloss = Gloss()
-        self.new_gloss.idgloss = NAME
-        self.new_gloss.annotation_idgloss = NAME
-        self.new_gloss.dataset = self.test_dataset
+        self.new_gloss = Gloss(lemma=self.new_lemma)
         self.new_gloss.save()
 
         #Log in
@@ -609,6 +656,7 @@ class FrontEndTests(TestCase):
         #With permissions you also see something
         assign_perm('view_dataset', self.user, self.test_dataset)
         response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
+        print(response.status_code)
         self.assertNotEqual(len(response.content),0)
 
     def test_JavaScriptIsValid(self):

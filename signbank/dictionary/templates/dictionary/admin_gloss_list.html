@@ -371,7 +371,7 @@ function do_toggle_groups(el) {
 
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
                 <div class="hidden">
-                    <input name='sortOrder' class='form-control' value='idgloss' >
+                    <input name='sortOrder' class='form-control' value='lemma__lemmaidglosstranslation__text' >
                     <input name='search_type' class='form-control' value='{{search_type}}'>
                 </div>
                 <div>
@@ -859,7 +859,7 @@ function do_toggle_groups(el) {
            {% endwith %}
           {% endfor %}
 
-           {% with "idgloss translation handedness domhndsh subhndsh locprim" as head_fields %}
+           {% with "lemma__lemmaidglosstranslation__text translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% with minfield="-"|add:field %}
            <th>

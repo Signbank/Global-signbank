@@ -1172,7 +1172,6 @@ def import_csv(request):
 
                 new_gloss = Gloss()
                 new_gloss.lemma = lemma_for_gloss
-                new_gloss.dataset = dataset_id
                 # Save the new gloss before updating it
                 new_gloss.save()
                 new_gloss.creationDate = DT.datetime.now()
@@ -1223,7 +1222,7 @@ def recently_added_glosses(request):
     try:
         from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
         recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
-        recent_glosses = Gloss.objects.filter(dataset__in=selected_datasets).filter(
+        recent_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
                           creationDate__range=[recently_added_signs_since_date, DT.datetime.now()]).order_by(
                           'creationDate').reverse()
         return render(request, 'dictionary/recently_added_glosses.html',
@@ -1234,7 +1233,7 @@ def recently_added_glosses(request):
 
     except:
         return render(request,'dictionary/recently_added_glosses.html',
-                      {'glosses':Gloss.objects.filter(dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
+                      {'glosses':Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
@@ -1516,7 +1515,7 @@ def update_cngt_counts(request,folder_index=None):
 
 def find_and_save_variants(request):
 
-    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('idgloss')[:10]
+    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')[:10]
 
     gloss_table_prefix = '<!DOCTYPE html>\n' \
                          '<html>\n' \
@@ -1818,7 +1817,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
         gloss_string = filename.split('/')[-1].split('-')[0]
 
         try:
-            if not Gloss.objects.get(idgloss=gloss_string).inWeb:
+            if not Gloss.objects.get(lemma__lemmaidglosstranslation__text=gloss_string).inWeb:
                 return HttpResponse(status=401)
         except Gloss.DoesNotExist:
             return HttpResponse(status=401)
