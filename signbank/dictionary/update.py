@@ -74,7 +74,7 @@ def add_gloss(request):
                                                                      'selected_datasets': get_selected_datasets_for_user(request.user)})
 
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
         else:
             return render(request,'dictionary/add_gloss.html',{'add_gloss_form': form,
                                                                'dataset_languages': dataset_languages,
@@ -910,7 +910,7 @@ def update_definition(request, gloss, field, value):
     
     if what == 'definitiondelete':
         defn.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editdef')
     
     if what == 'definition':
         # update the definition
@@ -953,7 +953,7 @@ def update_other_media(request,gloss,field,value):
 
     if action_or_fieldname == 'other-media-delete':
         other_media.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'?editothermedia')
 
     elif action_or_fieldname == 'other-media-type':
         other_media.type = value
@@ -1087,8 +1087,9 @@ def add_definition(request, glossid):
             # create definition, default to not published
             defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
             defn.save()
-            
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
+
 
 def add_morphology_definition(request):
 
@@ -1108,7 +1109,7 @@ def add_morphology_definition(request):
             morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     raise Http404('Incorrect request')
 
@@ -1131,7 +1132,7 @@ def add_morpheme_definition(request, glossid):
                 count_morphemes_in_dataset = Morpheme.objects.filter(dataset=dataset_id).count()
                 if count_morphemes_in_dataset < 1:
                     messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
-                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
             messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: No morpheme selected.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
@@ -1147,14 +1148,14 @@ def add_morpheme_definition(request, glossid):
                 # The user has tryed to type in a name themself rather than select from the list.
                 messages.add_message(request, messages.INFO, ('Simultaneuous morphology: no morpheme found with identifier ' + morph_id + '.'))
 
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
             definition = SimultaneousMorphologyDefinition()
             definition.parent_gloss = thisgloss
             definition.morpheme = morph
             definition.role = form.cleaned_data['description']
             definition.save()
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     # If we get here the request method has apparently been changed to get instead of post, can this happen?
     raise Http404('Incorrect request')
@@ -1177,7 +1178,7 @@ def add_morphemeappearance(request):
             morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     raise Http404('Incorrect request')
 
@@ -1194,7 +1195,7 @@ def add_blend_definition(request, glossid):
         if form.data['blend_id'] == "":
             # The user has obviously not selected a morpheme
             # Desired action (Issue #199): nothing happens
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
         if form.is_valid():
 
@@ -1208,7 +1209,7 @@ def add_blend_definition(request, glossid):
                 definition.role = form.cleaned_data['role']
                 definition.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     raise Http404('Incorrect request')
 
@@ -1322,7 +1323,7 @@ def add_othermedia(request):
                 parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
                 OtherMedia(path=request.POST['gloss']+'/'+request.FILES['file'].name,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 
     raise Http404('Incorrect request')
 
@@ -1343,7 +1344,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
     if what == 'morphology_definition_delete':
         print("DELETE morphology definition: ", morph_def)
         morph_def.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morphology_definition_role':
         morph_def.role = value
         morph_def.save()
@@ -1616,7 +1617,7 @@ def update_morpheme_definition(gloss, field, value):
     if what == 'morpheme_definition_delete':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         definition.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morpheme_definition_meaning':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         original_value = getattr(definition, 'role')
@@ -1639,7 +1640,7 @@ def update_blend_definition(gloss, field, value):
     if what == 'blend_definition_delete':
         definition = BlendMorphology.objects.get(id=blend_id)
         definition.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'blend_definition_role':
         definition = BlendMorphology.objects.get(id=blend_id)
         original_value = getattr(definition, 'role')
@@ -1760,8 +1761,6 @@ def update_dataset(request, datasetid):
         field = request.POST.get('id', '')
         value = request.POST.get('value', '')
         original_value = ''
-
-        # print('update dataset, field is: ', field)
 
         if field == 'description':
 
