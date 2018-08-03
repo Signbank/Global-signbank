@@ -1632,10 +1632,10 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     if not request.user.is_authenticated():
 
         # If we are not logged in, try to find if this maybe belongs to a gloss that is free to see for everbody?
-        gloss_string = filename.split('/')[-1].split('-')[0]
-
+        gloss_pk = int(filename.split('.')[-2].split('-')[-1])
+ 
         try:
-            if not Gloss.objects.get(idgloss=gloss_string).inWeb:
+            if not Gloss.objects.get(pk=gloss_pk).inWeb:
                 return HttpResponse(status=401)
         except Gloss.DoesNotExist:
             return HttpResponse(status=401)
