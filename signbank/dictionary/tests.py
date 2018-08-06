@@ -914,6 +914,15 @@ class ManageDatasetTests(TestCase):
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'The default language of')
 
+        # Try to add a language that is not in the translation language set of the test dataset
+        language = Language(name="nonexistingtestlanguage", language_code_2char="ts", language_code_3char='tst')
+        language.save()
+        form_data = {'dataset_name': self.test_dataset.name, 'default_language': language.id}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
+                                                            language.name, self.test_dataset.name))
+
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):

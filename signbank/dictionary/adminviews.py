@@ -2720,17 +2720,21 @@ class DatasetManagerView(ListView):
 
         try:
             language = Language.objects.get(id=self.request.GET['default_language'])
-            dataset_object.default_language = language
-            dataset_object.save()
-            messages.add_message(self.request, messages.INFO,
-                                 ('The default language of {} is set to {}.'
-                                  .format(dataset_object.name, language.name)))
-            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+            if language in dataset_object.translation_languages.all():
+                dataset_object.default_language = language
+                dataset_object.save()
+                messages.add_message(self.request, messages.INFO,
+                                     ('The default language of {} is set to {}.'
+                                      .format(dataset_object.name, language.name)))
+            else:
+                messages.add_message(self.request, messages.INFO,
+                                     ('{} is not in the set of languages of dataset {}.'
+                                      .format(language.name, dataset_object.name)))
         except:
             messages.add_message(self.request, messages.ERROR,
                                  ('Something went wrong setting the default language for '
                                   + dataset_object.name))
-            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+        return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     def render_to_add_user_response(self, context):
         dataset_object, response = self.get_dataset_from_request()
