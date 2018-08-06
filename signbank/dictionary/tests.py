@@ -521,15 +521,17 @@ class VideoTests(TestCase):
         # Create the glosses
         dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
+        default_language = test_dataset.translation_languages.first()
+        test_dataset.default_language = default_language
+        test_dataset.save()
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
         new_lemma.save()
 
         # Create a lemma idgloss translation
-        language = Language.objects.get(id=get_default_language_id())
         new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
-                                                              lemma=new_lemma, language=language)
+                                                              lemma=new_lemma, language=default_language)
         new_lemmaidglosstranslation.save()
 
         #Create the gloss

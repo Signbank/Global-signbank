@@ -541,13 +541,18 @@ class Gloss(models.Model):
     @property
     def idgloss(self):
         try:
+            return self.lemma.lemmaidglosstranslation_set.get(language=self.lemma.dataset.default_language).text
+        except:
+            pass
+        try:
             return self.lemma.lemmaidglosstranslation_set.get(
                 language__language_code_2char=settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']).text
         except:
-            try:
-                return self.lemma.lemmaidglosstranslation_set.first().text
-            except:
-                return ""
+            pass
+        try:
+            return self.lemma.lemmaidglosstranslation_set.first().text
+        except:
+            return ""
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
