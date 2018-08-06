@@ -16,6 +16,16 @@
     var edit_post_url = '';
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('.default-language-select').select2({
+              placeholder: 'Select an option'
+            });
+        });
+    </script>
 
 {% endblock %}
 
@@ -33,6 +43,7 @@
           <th style="width:100px;">{% trans "Dataset Name" %}</th>
           <th style="width:200px;">{% trans "Users who can View Dataset (Group permissions excluded)" %}</th>
           <th style="width:200px;">{% trans "Users who can Change Dataset (Group permissions excluded)" %}</th>
+          <th style="width:200px;">{% trans "Default language" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -171,6 +182,23 @@
                     <div style='height: 1em'></div>
                 {% endwith %}
                 </div>
+            </td>
+            <td>
+                <form method="get">
+                    {% csrf_token %}
+                    <div class="hidden">
+                        <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                    </div>
+                    <select name='default_language' class="default-language-select" style="width:200px;">
+                        <option value="">--------</option>
+                        {% for language in dataset.translation_languages.all %}
+                            <option value="{{ language.id }}"
+                                    {% if language == dataset.default_language %}selected{% endif %}>
+                                {{ language.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input class="btn btn-primary" type="submit" value="{% trans 'Set' %}"/>
+                </form>
             </td>
         </tr>
       {% endif %}

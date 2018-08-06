@@ -2,7 +2,7 @@ from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm
 from signbank.settings.base import WRITABLE_FOLDER
 
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import User, Permission, Group
 from django.test import TestCase
 import json
 from django.test import Client
@@ -676,6 +676,121 @@ class FrontEndTests(TestCase):
                     break
 
         self.assertTrue(everything_okay)
+
+
+class ManageDatasetTests(TestCase):
+    """
+    These tests test things a user can do on the Manage Datasets page
+    """
+
+    def setUp(self):
+        """
+        Set up a user, dataset, lemma, , gloss
+        :return: 
+        """
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+
+        LEMMA_PREFIX = 'thisisatemporarytestlemma'
+        ANNOTATION_PREFIX = 'thisisatemporarytestannotation'
+
+        # Create the dataset
+        dataset_name = DEFAULT_DATASET
+        self.test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create a lemma
+        self.new_lemma = LemmaIdgloss(dataset=self.test_dataset)
+        self.new_lemma.save()
+        
+        # Create lemma translations
+        for language in self.test_dataset.translation_languages.all():
+            language_code_2char = language.language_code_2char
+            lemmaidglosstranslation = LemmaIdglossTranslation(text=LEMMA_PREFIX+'_'+language_code_2char,
+                                                              language=language, lemma=self.new_lemma)
+            lemmaidglosstranslation.save()
+
+        # Add a gloss to this dataset
+        self.new_gloss = Gloss()
+        self.new_gloss.lemma = self.new_lemma
+        self.new_gloss.save()
+
+        # Create annotation translations
+        for language in self.test_dataset.translation_languages.all():
+            language_code_2char = language.language_code_2char
+            annotationidglosstranslation = AnnotationIdglossTranslation(text=ANNOTATION_PREFIX + '_' + language_code_2char,
+                                                              language=language, gloss=self.new_gloss)
+            annotationidglosstranslation.save()
+
+        # Create client
+        self.client = Client()
+        # self.client.login(username='test-user', password='test-user')
+
+    def test_User_is_not_logged_in(self):
+        """
+        Tests whether managing datasets is blocked when not logged in
+        :return: 
+        """
+
+        # TODO Grant view permission
+
+        # TODO Revoke view permission
+
+        # TODO Grant change permission
+
+        # TODO Revoke change permission
+
+    def test_User_is_not_dataset_manager(self):
+        """
+        Tests whether managing datasets is blocked if the user is not a dataset manager
+        :return: 
+        """
+
+        # TODO Grant view permission
+
+        # TODO Revoke view permission
+
+        # TODO Grant change permission
+
+        # TODO Revoke change permission
+
+    def test_User_is_dataset_manager(self):
+        """
+        Tests whether managing datasets is possible if the user is not a dataset manager
+        :return: 
+        """
+
+        # TODO Grant view permission
+
+        # TODO Revoke view permission
+
+        # TODO Grant change permission
+
+        # TODO Revoke change permission
+
+    def test_Set_default_language(self):
+        """
+        Tests
+        :return: 
+        """
+        logged_in = self.client.login(username='test-user', password='test-user')
+        self.assertTrue(logged_in)
+
+        language = self.test_dataset.translation_languages.first()
+        form_data = {'dataset_name': self.test_dataset.name, 'default_language': language.id}
+
+        # Not a member of the group dataset managers
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.')
+
+        # Make the user member of the group dataset managers
+        dataset_manager_group = Group.objects.get(name='Dataset_Manager')
+        dataset_manager_group.user_set.add(self.user)
+        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'The default language of')
+
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):

@@ -533,18 +533,16 @@ class Gloss(models.Model):
 
     @property
     def dataset(self):
-        # return self.dataset  # old
         try:
-            return self.lemma.dataset  # new
+            return self.lemma.dataset
         except:
             return None
 
     @property
     def idgloss(self):
-        # return self.idgloss  # old
         try:
             return self.lemma.lemmaidglosstranslation_set.get(
-            language__language_code_2char=settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']).text  # new
+                language__language_code_2char=settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']).text
         except:
             try:
                 return self.lemma.lemmaidglosstranslation_set.first().text
@@ -1571,6 +1569,9 @@ class Dataset(models.Model):
     signlanguage = models.ForeignKey("SignLanguage")
     translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
                                                                           "for translation equivalents.")
+    default_language = models.ForeignKey('Language', on_delete=models.DO_NOTHING,
+                                         related_name='datasets_with_default_language',
+                                         null=True)
     description = models.TextField()
     conditions_of_use = models.TextField(blank=True, help_text="Conditions of Use. Content license."
                                                         "This is different than the software code license.")

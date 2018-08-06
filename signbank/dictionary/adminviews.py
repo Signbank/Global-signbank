@@ -2620,17 +2620,22 @@ class DatasetManagerView(ListView):
         if 'add_view_perm' in self.request.GET or 'add_change_perm' in self.request.GET \
                     or 'delete_view_perm' in self.request.GET or 'delete_change_perm' in self.request.GET:
             return self.render_to_add_user_response(context)
+        elif 'default_language' in self.request.GET:
+            return self.render_to_set_default_language()
         else:
             return super(DatasetManagerView, self).render_to_response(context)
 
-    def render_to_add_user_response(self, context):
-
+    def check_user_permissions_for_managing_dataset(self, dataset_object):
+        """
+        Checks whether the logged in user has permission to manage the dataset object
+        :return: 
+        """
         # check that the user is logged in
         if self.request.user.is_authenticated():
             pass
         else:
             messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
-            return HttpResponseRedirect(URL + '/datasets/manager')
+            return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         # check if the user can manage this dataset
         from django.contrib.auth.models import Group, User
@@ -2639,48 +2644,107 @@ class DatasetManagerView(ListView):
             group_manager = Group.objects.get(name='Dataset_Manager')
         except:
             messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
-            return HttpResponseRedirect(URL + '/datasets/manager')
+            return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         groups_of_user = self.request.user.groups.all()
         if not group_manager in groups_of_user:
-            messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset Manager to modify dataset permissions.'))
-            return HttpResponseRedirect(URL + '/datasets/manager')
+            messages.add_message(self.request, messages.ERROR,
+                                 ('You must be in group Dataset Manager to modify dataset permissions.'))
+            return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
+        # make sure the user can write to this dataset
+        # from guardian.shortcuts import get_objects_for_user
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset,
+                                                    accept_global_perms=False)
+        if user_change_datasets and dataset_object in user_change_datasets:
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, ('No permission to modify dataset permissions.'))
+            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+        # Everything is alright
+        return None
+
+    def get_dataset_from_request(self):
+        """
+        Use the 'dataset_name' GET query string parameter to find a dataset object 
+        :return: tuple of a dataset object and HttpResponse in which either is None
+        """
         # if the dataset is specified in the url parameters, set the dataset_name variable
         get = self.request.GET
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
             messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(URL + '/datasets/manager')
+            return None, HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         try:
-            dataset_object = Dataset.objects.get(name=self.dataset_name)
+            return Dataset.objects.get(name=self.dataset_name), None
         except:
-            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
-            return HttpResponseRedirect(URL + '/datasets/manager')
+            messages.add_message(self.request, messages.ERROR,
+                                 ('No dataset with name ' + self.dataset_name + ' found.'))
+            return None, HttpResponseRedirect(reverse('admin_dataset_manager'))
 
-        # make sure the user can write to this dataset
-        # from guardian.shortcuts import get_objects_for_user
-        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
-        if user_change_datasets and dataset_object in user_change_datasets:
-            pass
-        else:
-            messages.add_message(self.request, messages.ERROR, ('No permission to modify dataset permissions.'))
-            return HttpResponseRedirect(URL + '/datasets/manager')
-
+    def get_user_from_request(self):
+        """
+        Use the 'username' GET query string parameter to find a user object 
+        :return: tuple of a dataset object and HttpResponse in which either is None
+        """
+        get = self.request.GET
         username = ''
         if 'username' in get:
             username = get['username']
         if username == '':
-            messages.add_message(self.request, messages.ERROR, ('Username must be non-empty. Please make a selection using the drop-down list.'))
-            return HttpResponseRedirect(URL + '/datasets/manager')
+            messages.add_message(self.request, messages.ERROR,
+                                 ('Username must be non-empty. Please make a selection using the drop-down list.'))
+            return None, HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         try:
-            user_object = User.objects.get(username=username)
+            return User.objects.get(username=username), None
         except:
-            messages.add_message(self.request, messages.ERROR, ('No user with name '+username+' found.'))
-            return HttpResponseRedirect(URL + '/datasets/manager')
+            messages.add_message(self.request, messages.ERROR, ('No user with name ' + username + ' found.'))
+            return None, HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+    def render_to_set_default_language(self):
+        """
+        Sets the default language for a dataset
+        :return: a HttpResponse object
+        """
+        dataset_object, response = self.get_dataset_from_request()
+        if response:
+            return response
+
+        response = self.check_user_permissions_for_managing_dataset(dataset_object)
+        if response:
+            return response
+
+        try:
+            language = Language.objects.get(id=self.request.GET['default_language'])
+            dataset_object.default_language = language
+            dataset_object.save()
+            messages.add_message(self.request, messages.INFO,
+                                 ('The default language of {} is set to {}.'
+                                  .format(dataset_object.name, language.name)))
+            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+        except:
+            messages.add_message(self.request, messages.ERROR,
+                                 ('Something went wrong setting the default language for '
+                                  + dataset_object.name))
+            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+    def render_to_add_user_response(self, context):
+        dataset_object, response = self.get_dataset_from_request()
+        if response:
+            return response
+        
+        response = self.check_user_permissions_for_managing_dataset(dataset_object)
+        if response:
+            return response
+
+        user_object, response = self.get_user_from_request()
+        if response:
+            return response
+        username = user_object.username
 
         # user has permission to modify dataset permissions for other users
         manage_identifier = 'dataset_' + dataset_object.name.replace(' ','')
@@ -2783,7 +2847,7 @@ class DatasetManagerView(ListView):
 
         # the code doesn't seem to get here. if somebody puts something else in the url (else case), there is no (hidden) csrf token.
         messages.add_message(self.request, messages.ERROR, ('Unrecognised argument to dataset manager url.'))
-        return HttpResponseRedirect(URL + '/datasets/manager')
+        return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     def get_queryset(self):
         user = self.request.user
