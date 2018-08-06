@@ -691,7 +691,8 @@ class ManageDatasetTests(TestCase):
         :return: 
         """
         # a new test user is created for use during the tests
-        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user_password = 'test-user'
+        self.user = User.objects.create_user('test-user', 'example@example.com', self.user_password)
 
         LEMMA_PREFIX = 'thisisatemporarytestlemma'
         ANNOTATION_PREFIX = 'thisisatemporarytestannotation'
@@ -725,7 +726,9 @@ class ManageDatasetTests(TestCase):
 
         # Create client
         self.client = Client()
-        # self.client.login(username='test-user', password='test-user')
+
+        # Create a user to Grant and Revoke view and change permissions
+        self.user2 = User.objects.create_user('test-user2', 'example@example.com', 'test-user2')
 
     def test_User_is_not_logged_in(self):
         """
@@ -733,13 +736,32 @@ class ManageDatasetTests(TestCase):
         :return: 
         """
 
-        # TODO Grant view permission
+        # Grant view permission
+        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'Please login to use this functionality.'.format(self.user2.username))
 
-        # TODO Revoke view permission
+        # Revoke view permission
+        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                     'delete_view_perm': 'Revoke'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'Please login to use this functionality.'.format(self.user2.username))
 
-        # TODO Grant change permission
+        # Grant change permission
+        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                     'add_change_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'Please login to use this functionality.'.format(self.user2.username))
 
-        # TODO Revoke change permission
+        # Revoke change permission
+        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                     'delete_change_perm': 'Revoke'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'Please login to use this functionality.'.format(self.user2.username))
 
     def test_User_is_not_dataset_manager(self):
         """
@@ -747,27 +769,126 @@ class ManageDatasetTests(TestCase):
         :return: 
         """
 
-        # TODO Grant view permission
+        logged_in = self.client.login(username=self.user.username, password=self.user_password)
+        self.assertTrue(logged_in)
 
-        # TODO Revoke view permission
+        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
 
-        # TODO Grant change permission
+        # Grant view permission
+        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
+                            .format(self.user2.username))
 
-        # TODO Revoke change permission
+        # Revoke view permission
+        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                     'delete_view_perm': 'Revoke'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
+                            .format(self.user2.username))
 
-    def test_User_is_dataset_manager(self):
+        # Grant change permission
+        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                     'add_change_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
+                            .format(self.user2.username))
+
+        # Revoke change permission
+        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                     'delete_change_perm': 'Revoke'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
+                            .format(self.user2.username))
+
+    def test_User_has_no_dataset_change_permission(self):
         """
-        Tests whether managing datasets is possible if the user is not a dataset manager
+        Tests whether managing datasets is possible if the user is a dataset manager but does not have 
+        permission to change the dataset
         :return: 
         """
 
-        # TODO Grant view permission
+        logged_in = self.client.login(username=self.user.username, password=self.user_password)
+        self.assertTrue(logged_in)
 
-        # TODO Revoke view permission
+        # Make the user member of the group dataset managers
+        dataset_manager_group = Group.objects.get(name='Dataset_Manager')
+        dataset_manager_group.user_set.add(self.user)
 
-        # TODO Grant change permission
+        # Grant view permission
+        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
 
-        # TODO Revoke change permission
+        # Revoke view permission
+        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                    'delete_view_perm': 'Revoke'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
+
+        # Grant change permission
+        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
+
+        # Revoke change permission
+        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                    'delete_change_perm': 'Revoke'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
+
+    def test_User_is_dataset_manager(self):
+        """
+        Tests whether managing datasets is possible if the user is a dataset manager and has permission
+        to change the dataset
+        :return: 
+        """
+
+        logged_in = self.client.login(username=self.user.username, password=self.user_password)
+        self.assertTrue(logged_in)
+
+        # Make the user member of the group dataset managers
+        dataset_manager_group = Group.objects.get(name='Dataset_Manager')
+        dataset_manager_group.user_set.add(self.user)
+        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+
+        # Grant view permission
+        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'View permission for user {} successfully granted.'.format(self.user2.username))
+
+        # Revoke view permission
+        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                    'delete_view_perm': 'Revoke'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'View (and change) permission for user {} successfully revoked.'
+                            .format(self.user2.username))
+
+        # Grant change permission
+        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'Change (and view) permission for user {} successfully granted.'
+                            .format(self.user2.username))
+
+        # Revoke change permission
+        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+                    'delete_change_perm': 'Revoke'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'Change permission for user {} successfully revoked.'
+                            .format(self.user2.username))
+
 
     def test_Set_default_language(self):
         """
