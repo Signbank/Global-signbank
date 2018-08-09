@@ -3,10 +3,12 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
-                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset, FieldChoice
+                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset, FieldChoice, \
+                                        Translation, Keyword, Language
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
+from signbank.settings.server_specific import DEFAULT_KEYWORDS_LANGUAGE
 
 from django_select2 import *
 from easy_select2.widgets import Select2, Select2Multiple
@@ -35,6 +37,7 @@ class GlossCreateForm(forms.ModelForm):
     gloss_create_field_prefix = "glosscreate_"
     languages = None # Languages to use for annotation idgloss translations
     user = None
+    last_used_dataset = None
 
     class Meta:
         model = Gloss
@@ -43,6 +46,8 @@ class GlossCreateForm(forms.ModelForm):
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
         self.user = kwargs.pop('user')
+        self.last_used_dataset = kwargs.pop('last_used_dataset')
+
         super(GlossCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in self.languages:
@@ -74,6 +79,15 @@ class GlossCreateForm(forms.ModelForm):
         gloss.creator.add(self.user)
         gloss.creationDate = DT.datetime.now()
         gloss.save()
+
+        default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+        # create empty keywords (Keyword '' has default language)
+        # when the newly created gloss is later edited in GlossDetailView, when the user enters new keywords,
+        # the old keywords are removed on (via clear), so setting the initial keywords to '' here is a placeholder
+        (kobj, created) = Keyword.objects.get_or_create(text='')
+        trans = Translation(gloss=gloss, translation=kobj, index=0, language=default_language)
+        trans.save()
+
         return gloss
 
 
@@ -99,6 +113,7 @@ class MorphemeCreateForm(forms.ModelForm):
     morpheme_create_field_prefix = "morphemecreate_"
     languages = None  # Languages to use for annotation idgloss translations
     user = None
+    last_used_dataset = None
 
     class Meta:
         model = Morpheme
@@ -107,6 +122,8 @@ class MorphemeCreateForm(forms.ModelForm):
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
         self.user = kwargs.pop('user')
+        self.last_used_dataset = kwargs.pop('last_used_dataset')
+
         super(MorphemeCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in self.languages:
@@ -115,6 +132,7 @@ class MorphemeCreateForm(forms.ModelForm):
             if morphemecreate_field_name in queryDict:
                 self.fields[morphemecreate_field_name].value = queryDict[morphemecreate_field_name]
 
+    @atomic  # This rolls back the gloss creation if creating annotationidglosstranslations fails
     def save(self, commit=True):
         morpheme = super(MorphemeCreateForm, self).save(commit)
         for language in self.languages:
@@ -137,6 +155,15 @@ class MorphemeCreateForm(forms.ModelForm):
         morpheme.creator.add(self.user)
         morpheme.creationDate = DT.datetime.now()
         morpheme.save()
+
+        default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+        # create empty keywords (Keyword '' has default language)
+        # when the newly created morpheme is later edited in MorphemeDetailView, when the user enters new keywords,
+        # the old keywords are removed (via clear), so setting the initial keywords to '' here is a placeholder
+        (kobj, created) = Keyword.objects.get_or_create(text='')
+        trans = Translation(gloss=morpheme, translation=kobj, index=0, language=default_language)
+        trans.save()
+
         return morpheme
 
 class VideoUpdateForm(forms.Form):

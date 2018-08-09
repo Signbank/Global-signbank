@@ -1,11 +1,13 @@
 {% extends 'baselayout.html' %}
-{% load stylesheet %}
-{% load bootstrap3 %}
 {% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+{% block bootstrap3_title %}Signbank: Add new sign{% endblock %}
 
 {% block extrajs %}
-
-    {% if perms.dictionary.change_gloss %}
 
     <script type="text/javascript">
 
@@ -38,31 +40,24 @@
 
     </script>
 
-    {% endif %}
 {% endblock %}
 
 {% block content %}
 
-<!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
-
    {% if perms.dictionary.add_gloss %}
    <p>{% trans "Please provide some initial data" %}:</p>
-
      <form action='{% url "dictionary:add_gloss" %}' method='post'>
          {% csrf_token %}
          <table class='table' style='width: 400px;'>
              <tr>
                  <th><label for='dataset'>Dataset</label></th>
                  <td><select id="id_dataset" name="dataset" required="">
-                         <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
-                         {% for dataset in selected_datasets %}
-                         <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                         <option value=""
+                                 dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+                         {% for s_dataset in selected_datasets %}
+                         <option value="{{ s_dataset.id }}"
+                                 {% if add_gloss_form.last_used_dataset and add_gloss_form.last_used_dataset == s_dataset.name %}selected{% endif %}
+                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.name }}</option>
                          {% endfor %}
                      </select></td>
              </tr>
@@ -84,8 +79,5 @@
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'>
      </form>
       {% endif %}
-
-</body>
-</html>
 
 {% endblock %}

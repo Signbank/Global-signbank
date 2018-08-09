@@ -66,7 +66,7 @@ urlpatterns = [
     url(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
     url(r'^morphemes/dictionary/$', signbank.dictionary.views.search_morpheme),
     url(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),
-    url(r'^morphemes/add/$', permission_required('dictionary.search_gloss')(add_new_morpheme)),
+    url(r'^morphemes/add/$', permission_required('dictionary.search_gloss')(signbank.dictionary.views.add_new_morpheme)),
     url(r'^feedback/overview/$', signbank.feedback.views.showfeedback),
 
     # A standard view for setting the language

@@ -490,12 +490,17 @@ function do_adminsearch(el) {
                          <th></th>
                      </tr>
                      <tr>
+                         {% if SHOW_DATASET_INTERFACE_OPTIONS %}
                          <td><select id="id_dataset" name="dataset" required="">
-                             <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
-                             {% for dataset in selected_datasets %}
-                             <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                             <option value="" {% if add_morpheme_form.last_used_dataset == None %}selected{% endif %}
+                                     dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+                             {% for s_dataset in selected_datasets %}
+                             <option value="{{ s_dataset.id }}"
+                                     {% if add_morpheme_form.last_used_dataset == s_dataset.name %}selected{% endif %}
+                                     dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.name }}</option>
                              {% endfor %}
                          </select></td>
+                         {% endif %}
                          <td>{{add_morpheme_form.idgloss}}</td>
                          {% for dataset_lang in dataset_languages %}
                          <td id="add_morpheme_dataset_value_{{ dataset_lang.language_code_2char }}">

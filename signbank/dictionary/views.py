@@ -575,13 +575,22 @@ def import_authors(request):
 
     return HttpResponse('OKS')
 
+# this method is called from the Signbank menu bar
 def add_new_sign(request):
     context = {}
+
     selected_datasets = get_selected_datasets_for_user(request.user)
     context['selected_datasets'] = selected_datasets
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
-    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user)
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+    if 'last_used_dataset' in request.session.keys():
+        context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
+    else:
+        context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=None)
 
     return render(request,'dictionary/add_gloss.html',context)
 
@@ -608,7 +617,6 @@ def add_new_morpheme(request):
     oContext = {}
 
     # Add essential information to the context
-    oContext['morph_fields'] = []
     oChoiceLists = {}
     oContext['choice_lists'] = oChoiceLists
 
@@ -616,27 +624,25 @@ def add_new_morpheme(request):
     oContext['selected_datasets'] = selected_datasets
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     oContext['dataset_languages'] = dataset_languages
-    oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user)
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        oContext['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        oContext['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+    if 'last_used_dataset' in request.session.keys():
+        oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
+    else:
+        oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=None)
 
-    field = 'mrpType'
     # Get and save the choice list for this field
-    field_category = fieldname_to_category(field)
+    field_category = fieldname_to_category('mrpType')
     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
 
     if len(choice_list) > 0:
         ordered_dict = choicelist_queryset_to_translated_dict(choice_list, request.LANGUAGE_CODE)
-        oChoiceLists[field] = ordered_dict
+        oChoiceLists['mrpType'] = ordered_dict
         oContext['choice_lists'] = oChoiceLists
-        oContext['mrp_list'] = json.dumps(ordered_dict)
-    else:
-        oContext['mrp_list'] = {}
 
     oContext['choice_lists'] = json.dumps(oContext['choice_lists'])
-
-    # And add the kind of field
-    kind = 'list'
-
-    oContext['morph_fields'].append(['(Make a choice)', field, "Morpheme type", kind])
 
     # Continue
     oBack = render(request,'dictionary/add_morpheme.html', oContext)

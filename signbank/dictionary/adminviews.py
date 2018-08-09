@@ -131,11 +131,11 @@ class GlossListView(ListView):
     web_search = False
     show_all = False
     dataset_name = DEFAULT_DATASET
+    last_used_dataset = None
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(GlossListView, self).get_context_data(**kwargs)
-        # Add in a QuerySet of all the books
 
         # Retrieve the search_type,so that we know whether the search should be restricted to Gloss or not
         if 'search_type' in self.request.GET:
@@ -148,6 +148,8 @@ class GlossListView(ListView):
             self.view_type = self.request.GET['view_type']
             context['view_type'] = self.view_type
 
+        if 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
         if 'inWeb' in self.request.GET:
             # user is searching for signs / morphemes visible to anonymous uers
             self.web_search = self.request.GET['inWeb'] == '2'
@@ -191,7 +193,7 @@ class GlossListView(ListView):
         else:
             context['glosscount'] = Gloss.objects.filter(dataset__in=selected_datasets).count()  # Count the glosses + morphemes
 
-        context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
+        context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and self.request.user.is_authenticated():
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -928,6 +930,9 @@ class GlossListView(ListView):
         self.request.session['search_type'] = self.search_type
         self.request.session['web_search'] = self.web_search
 
+        if not 'last_used_dataset' in self.request.session.keys():
+            self.request.session['last_used_dataset'] = self.last_used_dataset
+
         # Return the resulting filtered and sorted queryset
         return qs
 
@@ -936,6 +941,7 @@ class GlossDetailView(DetailView):
 
     model = Gloss
     context_object_name = 'gloss'
+    last_used_dataset = None
 
     #Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
@@ -1018,11 +1024,15 @@ class GlossDetailView(DetailView):
         labels = gl.field_labels()
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
+        # the last_used_dataset name is updated to that of this gloss
+        # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
         if gl.dataset:
             self.request.session['datasetid'] = gl.dataset.id
+            self.last_used_dataset = gl.dataset.name
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
+        self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # set up weak drop weak prop fields
 
@@ -1584,6 +1594,9 @@ class MorphemeListView(ListView):
     """The morpheme list view basically copies the gloss list view"""
 
     model = Morpheme
+    search_type = 'morpheme'
+    dataset_name = DEFAULT_DATASET
+    last_used_dataset = None
     template_name = 'dictionary/admin_morpheme_list.html'
     paginate_by = 500
 
@@ -1591,7 +1604,13 @@ class MorphemeListView(ListView):
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(MorphemeListView, self).get_context_data(**kwargs)
-        # Add in a QuerySet of all the books
+
+        # Retrieve the search_type,so that we know whether the search should be restricted to Gloss or not
+        if 'search_type' in self.request.GET:
+            self.search_type = self.request.GET['search_type']
+
+        if 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -1607,8 +1626,9 @@ class MorphemeListView(ListView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
+        context['search_type'] = self.search_type
 
-        context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
+        context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         # make sure that the morpheme-type options are available to the listview
         oChoiceLists = {}
@@ -1854,12 +1874,6 @@ class MorphemeListView(ListView):
             pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in target_morphemes]
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
-#        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
-#            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasMorphemeOfType'])
-#            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in
-#                                                                morphdefs_with_correct_role]
-#            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
-
         if 'definitionRole' in get and get['definitionRole'] != '':
 
             # Find all definitions with this role
@@ -1909,6 +1923,11 @@ class MorphemeListView(ListView):
 
         # Sort the queryset by the parameters given
         qs = order_queryset_by_sort_order(self.request.GET, qs)
+
+        self.request.session['search_type'] = self.search_type
+
+        if not 'last_used_dataset' in self.request.session.keys():
+            self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # Return the resulting filtered and sorted queryset
         return qs
@@ -3045,6 +3064,7 @@ def order_handshape_by_angle(qs, language_code):
 class MorphemeDetailView(DetailView):
     model = Morpheme
     context_object_name = 'morpheme'
+    last_used_dataset = None
 
     # Overriding the get method get permissions right
 
@@ -3122,11 +3142,15 @@ class MorphemeDetailView(DetailView):
         labels = gl.field_labels()
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
+        # the last_used_dataset name is updated to that of this gloss
+        # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
         if gl.dataset:
             self.request.session['datasetid'] = gl.dataset.id
+            self.last_used_dataset = gl.dataset.name
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
+        self.request.session['last_used_dataset'] = self.last_used_dataset
 
         context['choice_lists'] = {}
 
@@ -3239,7 +3263,8 @@ class MorphemeDetailView(DetailView):
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
 
-    if request.session['search_type'] == 'sign' or request.session['search_type'] == 'morpheme' or request.session['search_type'] == 'sign_or_morpheme':
+    if 'search_type' in request.session.keys() and \
+            (request.session['search_type'] == 'sign' or request.session['search_type'] == 'morpheme' or request.session['search_type'] == 'sign_or_morpheme'):
         return HttpResponse(json.dumps(request.session['search_results']))
     else:
         return HttpResponse(json.dumps(None))
@@ -3247,7 +3272,7 @@ def gloss_ajax_search_results(request):
 def handshape_ajax_search_results(request):
     """Returns a JSON list of handshapes that match the previous search stored in sessions"""
 
-    if request.session['search_type'] == 'handshape':
+    if 'search_type' in request.session.keys() and request.session['search_type'] == 'handshape':
         return HttpResponse(json.dumps(request.session['search_results']))
     else:
         return HttpResponse(json.dumps(None))
