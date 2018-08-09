@@ -97,8 +97,14 @@ legend
     width: 467px;
 }
 
+.modal-backdrop {
+  z-index: 1040 !important;
+  position: relative;
+}
+
 .modal-dialog {
   margin: 130px auto;
+  z-index: 1100 !important; 
 }
 
 .global_sb_logo
