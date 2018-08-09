@@ -72,7 +72,7 @@
   {% if feedback_form.correct.errors %}<ul class="errorlist">{{ feedback_form.correct.errors }}</ul>{% endif %}
       {{ feedback_form.correct }}  
     
-  <input type="hidden" name="translation_id" value="{{translation.id}}" />
+  <input type="hidden" name="translation_id" value='{% if translation %}{{translation.id}}{% endif %}' />
   <hr/>
 
   <p><input class='btn btn-primary' type="submit" value="Submit"></p>

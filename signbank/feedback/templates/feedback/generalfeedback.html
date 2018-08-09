@@ -1,7 +1,11 @@
-
 {% extends "baselayout.html" %}
-
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+{% block bootstrap3_title %}Signbank: General feedback{% endblock %}
 
 {% block extrajs %}
     <script type='text/javascript'>

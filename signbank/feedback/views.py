@@ -11,12 +11,16 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib import messages
 from django.utils.safestring import mark_safe
+from signbank.tools import get_selected_datasets_for_user
+from django.db.transaction import atomic
+
 
 import time
 
 def index(request):
     return render(request,'feedback/index.html',
-                              { 
+                              { 'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                                'language': settings.LANGUAGE_NAME,
                                'country': settings.COUNTRY_NAME,
                                'title':"Leave Feedback"})
@@ -65,7 +69,9 @@ def interpreterfeedback(request, glossid=None):
                                    {'notes': notes,
                                     'general': general,
                                     'missing': missing,
-                                    'signfb': signfb})
+                                    'signfb': signfb,
+                                    'selected_datasets': get_selected_datasets_for_user(request.user),
+                                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
         
@@ -75,7 +81,7 @@ def interpreterfeedback(request, glossid=None):
 def generalfeedback(request):
     feedback = GeneralFeedback()
     valid = False
-   
+
     if request.method == "POST":
         form = GeneralFeedbackForm(request.POST, request.FILES)
         if form.is_valid():           
@@ -100,6 +106,8 @@ def generalfeedback(request):
 
             # return HttpResponseRedirect("")
             return render(request, 'feedback/generalfeedback.html', {'language': settings.LANGUAGE_NAME,
+                                                                     'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                     'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                                                                     'country': settings.COUNTRY_NAME,
                                                                     'title':"General Feedback",
                                                                     'form': form,
@@ -108,9 +116,10 @@ def generalfeedback(request):
         form = GeneralFeedbackForm()
 
     return render(request,"feedback/generalfeedback.html",
-                              {
-                               'language': settings.LANGUAGE_NAME,
-                               'country': settings.COUNTRY_NAME,
+                              {'language': settings.LANGUAGE_NAME,
+                                'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                                'country': settings.COUNTRY_NAME,
                                'title':"General Feedback",
                                'form': form,
                                'valid': valid })
@@ -119,7 +128,7 @@ def generalfeedback(request):
 def missingsign(request):
 
     posted = False # was the feedback posted?
-    
+
     if request.method == "POST":
         
         fb = MissingSignFeedback()
@@ -161,9 +170,10 @@ def missingsign(request):
   
     
     return render(request,'feedback/missingsign.html',
-                               {
-                               'language': settings.LANGUAGE_NAME,
-                               'country': settings.COUNTRY_NAME,
+                               {'language': settings.LANGUAGE_NAME,
+                                'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                                'country': settings.COUNTRY_NAME,
                                 'title':"Report a Missing Sign",
                                 'posted': posted,
                                 'form': form})
@@ -172,7 +182,7 @@ def missingsign(request):
 @permission_required('feedback.delete_generalfeedback')
 def showfeedback(request):
     """View to list the feedback that's been left on the site"""
-    
+
     general = GeneralFeedback.objects.filter(status='unread')
     missing = MissingSignFeedback.objects.filter(status='unread')
     signfb = SignFeedback.objects.filter(status__in=('unread', 'read'))
@@ -180,7 +190,9 @@ def showfeedback(request):
     return render(request,"feedback/show.html",
                               {'general': general,    
                               'missing': missing,
-                              'signfb': signfb})
+                              'signfb': signfb,
+                               'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     
 
@@ -197,11 +209,11 @@ def glossfeedback(request, glossid):
         gloss = get_object_or_404(Gloss, id=glossid)
         allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
-        trans = Translation()
+        trans = None
     else:
         trans = allkwds[0]
     
-    return recordsignfeedback(request, trans, 1, len(allkwds))
+    return recordsignfeedback(request, trans, 1, len(allkwds), glossid)
 
 
 # Feedback on individual signs
@@ -217,8 +229,8 @@ def signfeedback(request, keyword, n):
     
     return recordsignfeedback(request, trans, n, total)
     
-    
-def recordsignfeedback(request, trans, n, total):
+# @atomic  # This rolls back saving feedback on failure
+def recordsignfeedback(request, trans, n, total, glossid=None):
     """Do the work of recording feedback for a sign or gloss"""
     
     # get the page to return to from the get request
@@ -229,6 +241,19 @@ def recordsignfeedback(request, trans, n, total):
 
     # return to the comment page to show message
     request_path = request.path
+    morpheme_toggle = 1 if 'morpheme' in request_path else 0
+
+    if glossid and not trans:
+        if morpheme_toggle:
+            sign_or_morpheme = get_object_or_404(Morpheme, id=glossid)
+        else:
+            sign_or_morpheme = get_object_or_404(Gloss, id=glossid)
+        default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+        # if there are no keywords for this gloss, create empty keywords (Keyword '' has default language)
+        # original feedback about signs assumes users are giving feedback about keywords
+        (kobj, created) = Keyword.objects.get_or_create(text='')
+        trans = Translation(gloss=sign_or_morpheme, translation=kobj, index=0, language=default_language)
+        trans.save()
 
     valid = False
     
@@ -238,7 +263,6 @@ def recordsignfeedback(request, trans, n, total):
         if feedback_form.is_valid():
             # get the clean (normalised) data from the feedback_form
             clean = feedback_form.cleaned_data
-            morpheme_toggle = 1 if 'morpheme' in request_path else 0
             # create a SignFeedback object to store the result in the db
             try:
                 sfb = SignFeedback(
@@ -261,12 +285,16 @@ def recordsignfeedback(request, trans, n, total):
                 else:
                     messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+sourcepage+'">Return to Sign</a>'))
 
-                # return HttpResponseRedirect("")
                 return render(request, 'feedback/signfeedback.html', { 'feedback_form': feedback_form,
-                                                                       'sourcepage': sourcepage})
+                                                                       'sourcepage': sourcepage,
+                                                                       'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
             except:
                 messages.add_message(request, messages.ERROR,'There was an error processing your feedback data.')
-
+                return render(request, 'feedback/signfeedback.html', { 'feedback_form': feedback_form,
+                                                                       'sourcepage': sourcepage,
+                                                                       'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
     feedback_form = SignFeedbackForm()
         
     return render(request,"feedback/signfeedback.html",
@@ -276,7 +304,9 @@ def recordsignfeedback(request, trans, n, total):
                                'feedback_form': feedback_form, 
                                'valid': valid,
                                'sourcepage': sourcepage,
-                               'language': settings.LANGUAGE_NAME})
+                               'language': settings.LANGUAGE_NAME,
+                               'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 #--------------------
 #  deleting feedback
