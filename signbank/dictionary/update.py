@@ -1015,7 +1015,7 @@ def add_relation(request):
                 reverse_relation = Relation(source=target, target=source, role=Relation.get_reverse_role(role))
                 reverse_relation.save()
 
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
 
             else:
                 print("target gloss not found")
@@ -1079,7 +1079,7 @@ def add_relationtoforeignsign(request):
             rel = RelationToForeignSign(gloss=gloss,loan=loan,other_lang=other_lang,other_lang_gloss=other_lang_gloss)
             rel.save()
                 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
 
         else:
             print(form)
@@ -1155,7 +1155,7 @@ def add_morpheme_definition(request, glossid):
                     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
             messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: No morpheme selected.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
         if form.is_valid():
 
