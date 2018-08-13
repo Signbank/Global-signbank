@@ -4,7 +4,7 @@ from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
                                         MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset, FieldChoice, \
-                                        Translation, Keyword, Language
+                                        Translation, Keyword, Language, SignLanguage
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
@@ -214,7 +214,7 @@ class GlossSearchForm(forms.ModelForm):
     keyword = forms.CharField(label=_(u'Translations'))
     hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=YESNOCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
-    
+
     defsearch = forms.CharField(label=_(u'Search Definition/Notes'))
 
     relation = forms.CharField(label=_(u'Search for gloss of related signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
@@ -333,7 +333,7 @@ class GlossSearchForm(forms.ModelForm):
 
         model = Gloss
         fields = ('idgloss', 'morph', 'sense',
-                   'sn', 'StemSN', 'comptf', 'compound', 'signlanguage', 'dialect',
+                   'sn', 'StemSN', 'comptf', 'compound', #'signlanguage', 'dialect',
                    'inWeb', 'isNew',
                    'initial_relative_orientation', 'final_relative_orientation',
                    'initial_palm_orientation', 'final_palm_orientation', 
@@ -366,6 +366,8 @@ class GlossSearchForm(forms.ModelForm):
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
+        sign_languages = kwargs.pop('sign_languages')
+        dialects = kwargs.pop('dialects')
         super(GlossSearchForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in languages:
@@ -380,6 +382,11 @@ class GlossSearchForm(forms.ModelForm):
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 
+        self.fields['signLanguage'] = forms.ModelMultipleChoiceField(label="Sign language", widget=Select2,
+                    queryset=SignLanguage.objects.filter(id__in=[signlanguage[0] for signlanguage in sign_languages]))
+
+        self.fields['dialects'] = forms.ModelMultipleChoiceField(label="Dialect", widget=Select2,
+                    queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
 class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form

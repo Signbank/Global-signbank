@@ -162,7 +162,19 @@ class GlossListView(ListView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
-        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages)
+        selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
+        sign_languages = []
+        for sl in selected_datasets_signlanguage:
+            sign_languages.append((str(sl.id), sl.name))
+
+        selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage)
+        dialects = []
+        for dl in selected_datasets_dialects:
+            dialect_name = dl.signlanguage.name + "/" + dl.name
+            dialects.append((str(dl.id),dialect_name))
+        print('dialects: ', dialects)
+
+        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages, dialects=dialects)
 
         #Translations for field choices dropdown menu
         fields_that_need_translated_options = ['hasComponentOfType','hasMorphemeOfType']
@@ -583,11 +595,17 @@ class GlossListView(ListView):
 
 
         # SignLanguage and basic property filters
-        vals = get.getlist('dialect', [])
+        # allows for multiselect
+        vals = get.getlist('dialect[]')
+        if '' in vals:
+            vals.remove('')
         if vals != []:
             qs = qs.filter(dialect__in=vals)
 
-        vals = get.getlist('signlanguage', [])
+        # allows for multiselect
+        vals = get.getlist('signlanguage[]')
+        if '' in vals:
+            vals.remove('')
         if vals != []:
             qs = qs.filter(signlanguage__in=vals)
 
@@ -3371,3 +3389,4 @@ def user_ajax_complete(request, prefix):
         result.append({'first_name': u.first_name, 'last_name': u.last_name, 'username': u.username})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+

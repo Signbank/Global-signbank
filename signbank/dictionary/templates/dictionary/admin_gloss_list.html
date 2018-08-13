@@ -16,6 +16,7 @@
 <script type='text/javascript'>
     var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+    var csrf_token = '{{csrf_token}}';
 
      $(document).ready(function(){
 
@@ -219,8 +220,32 @@
          });
          $('#id_wordClass').val(null).trigger('change');
 
-});
+         $('#id_signLanguage').attr('multiple','multiple');
+         $('#id_signLanguage').attr('class',"js-example-basic-multiple form-control");
+         $('#id_signLanguage').attr('name','signlanguage[]');
+         $('#id_signLanguage').css('width', '100%');
+         $('#id_signLanguage').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_signLanguage').val(null).trigger('change');
 
+         $('#id_signLanguage').change(function() {
+            set_signlanguages_dialects();
+         });
+
+         $('#id_dialects').attr('multiple','multiple');
+         $('#id_dialects').attr('class',"js-example-basic-multiple form-control");
+         $('#id_dialects').attr('name','dialect[]');
+         $('#id_dialects').css('width', '100%');
+         $('#id_dialects').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_dialects').val(null).trigger('change');
+});
 
 
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
@@ -420,26 +445,17 @@ function do_toggle_groups(el) {
 
                         <div id='searchpanels' class='collapse'>
                         <table class='table'>
-                              <tr>
-                                <td>
-                                    <div class='input-group'>
-                                        <label class='input-group-addon' for='id_signlanguage'>{{searchform.signlanguage.label}}</label>
-                                        {{searchform.signlanguage}}
-                                    </div>
+                            {% csrf_token %}
+                            <tr id='signlanguage_selection'>
+                                <td><label>{{searchform.signLanguage.label}}</label>
+                                        {{ searchform.signLanguage }}
                                 </td>
-                                <td>
-                                    <div class='input-group'>
-                                        <label class='input-group-addon' for='id_dialect'>{{searchform.dialect.label}}</label>
-                                        {{searchform.dialect}}
-                                    </div>
+                            </tr>
+                            <tr id='dialect_selection'>
+                                  <td><label>{{searchform.dialects.label}}</label>
+                                        {{ searchform.dialects }}
                                 </td>
-                              </tr>
-
-                                                    <span class="select2 select2-container select2-container--below">
-                                                        <span class="selection">
-                                                            <span class="select2-selection select2-selection--multiple" role="combobox" aria-haspopup="true" tabindex="-1"></span>
-                                                        </span>
-                                                    </span>
+                            </tr>
                         </table>
 
                         <table class='table'>
