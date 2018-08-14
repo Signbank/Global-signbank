@@ -587,7 +587,7 @@ class DatasetUpdateForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Dataset
-        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'owners']
+        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'owners', 'is_public']
 
 
 FINGER_SELECTION_CHOICES = [('','---------')] + build_choice_list('FingerSelection')
