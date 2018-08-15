@@ -12,6 +12,8 @@ from django.utils.translation import override
 from django.forms.fields import TypedChoiceField, ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
+from django.contrib.sites.models import Site
+from django.template.loader import render_to_string
 
 import csv
 import operator
@@ -2740,7 +2742,33 @@ class DatasetManagerView(ListView):
             try:
                 assign_perm('view_dataset', user_object, dataset_object)
                 messages.add_message(self.request, messages.INFO,
-                                 ('View permission for user ' + username + ' successfully granted.'))
+                                 ('View permission for user ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name + ') successfully granted.'))
+
+                if not user_object.is_active:
+                    user_object.is_active = True
+                    user_object.save()
+
+                # send email to user
+                from django.core.mail import send_mail
+                current_site = Site.objects.get_current()
+
+                subject = render_to_string('registration/dataset_access_granted_email_subject.txt',
+                                           context={'dataset': dataset_object.name,
+                                                    'site': current_site})
+                # Email subject *must not* contain newlines
+                subject = ''.join(subject.splitlines())
+
+                message = render_to_string('registration/dataset_access_granted_email.txt',
+                                           context={'dataset': dataset_object.name,
+                                                    'site': current_site})
+
+                # for debug purposes on local machine
+                # print('grant access subject: ', subject)
+                # print('message: ', message)
+                # print('user email: ', user_object.email)
+
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_object.email])
+
             except:
                 messages.add_message(self.request, messages.ERROR, ('Error assigning view dataset permission to user '+username+'.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
@@ -2762,6 +2790,10 @@ class DatasetManagerView(ListView):
             try:
                 assign_perm('change_dataset', user_object, dataset_object)
                 assign_perm('view_dataset', user_object, dataset_object)
+
+                # send email to new user
+                # probably don't want to assign change permission to new users
+
                 messages.add_message(self.request, messages.INFO,
                                      ('Change (and view) permission for user ' + username + ' successfully granted.'))
             except:
