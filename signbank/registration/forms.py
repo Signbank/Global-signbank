@@ -8,6 +8,7 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.conf import settings
+from signbank.settings.server_specific import *
 
 from signbank.registration.models import RegistrationProfile, UserProfile
 
@@ -60,7 +61,9 @@ class RegistrationForm(forms.Form):
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
 
-        dataset_choices = [ (ds.name, ds.name) for ds in Dataset.objects.all() ]
+        dataset_choices = [ (ds.name, ds.name) for ds in Dataset.objects.filter(is_public='1') ]
+        if not dataset_choices:
+            dataset_choices = [(ds.name, ds.name) for ds in Dataset.objects.filter(name=DEFAULT_DATASET)]
         dataset = forms.TypedMultipleChoiceField(label=_(u'Requested Datasets'),
                                                   choices=dataset_choices,
                                                   required=False, widget=Select2)

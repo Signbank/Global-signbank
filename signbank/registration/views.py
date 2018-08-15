@@ -135,6 +135,9 @@ def register(request, success_url=settings.URL + '/accounts/register/complete/',
                         message = render_to_string('registration/dataset_access_email.txt',
                                                    context={'dataset': dataset_name,
                                                             'new_user_username': new_user.username,
+                                                            'new_user_firstname': new_user.first_name,
+                                                            'new_user_lastname': new_user.last_name,
+                                                            'new_user_email': new_user.email,
                                                             'site': current_site})
 
                         # for debug purposes on local machine
