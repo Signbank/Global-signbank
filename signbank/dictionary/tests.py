@@ -115,7 +115,7 @@ class BasicCRUDTests(TestCase):
 
         self.assertEqual(len(glosses), 1)
 
-        self.assertRedirects(response, reverse('dictionary:admin_gloss_view', kwargs={'pk': glosses[0].id}))
+        self.assertRedirects(response, reverse('dictionary:admin_gloss_view', kwargs={'pk': glosses[0].id})+'?edit')
 
     def testSearchForGlosses(self):
 
@@ -425,33 +425,60 @@ class FrontEndTests(TestCase):
         self.test_dataset = Dataset.objects.get(name=dataset_name)
 
         #Add a gloss to this dataset
-        self.new_gloss = Gloss()
-        self.new_gloss.idgloss = NAME
-        self.new_gloss.annotation_idgloss = NAME
-        self.new_gloss.dataset = self.test_dataset
-        self.new_gloss.save()
+        self.hidden_gloss = Gloss()
+        self.hidden_gloss.idgloss = NAME+'hidden'
+        self.hidden_gloss.annotation_idgloss = NAME+'hidden'
+        self.hidden_gloss.dataset = self.test_dataset
+        self.hidden_gloss.save()
+
+        self.public_gloss = Gloss()
+        self.public_gloss.idgloss = NAME+'public'
+        self.public_gloss.annotation_idgloss = NAME+'public'
+        self.public_gloss.dataset = self.test_dataset
+        self.public_gloss.inWeb = True
+        self.public_gloss.save()
+
+    def test_DetailViewRenders(self):
+
+        #You can get information in the public view of the public gloss
+        response = self.client.get('/dictionary/gloss/'+str(self.public_gloss.pk)+'.html')
+        self.assertEqual(response.status_code,200)
+        self.assertTrue('Annotation ID Gloss' in str(response.content))
+
+        #But not of the hidden gloss
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk)+'.html')
+        self.assertEqual(response.status_code,200)
+        self.assertFalse('Annotation ID Gloss' in str(response.content))
+
+        #And we get a 302 for both detail views
+        response = self.client.get('/dictionary/gloss/'+str(self.public_gloss.pk))
+        self.assertEqual(response.status_code,302)
+
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
+        self.assertEqual(response.status_code,302)
 
         #Log in
         self.client = Client()
         self.client.login(username='test-user', password='test-user')
 
-    def test_DetailViewRenders(self):
-
-        response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
+        #We can now request a detail view
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertEqual(response.status_code,200)
-
-        #Without permissions you get a 200 but no content
-        self.assertEqual(len(response.content),0)
+        self.assertEqual(len(response.content),0) #Without permissions you get a 200 but no content
 
         #With permissions you also see something
         assign_perm('view_dataset', self.user, self.test_dataset)
-        response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertNotEqual(len(response.content),0)
 
     def test_JavaScriptIsValid(self):
 
+        #Log in
+        self.client = Client()
+        self.client.login(username='test-user', password='test-user')
+
         assign_perm('view_dataset', self.user, self.test_dataset)
-        response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
 
         invalid_patterns = ['= ;','= var']
 
