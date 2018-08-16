@@ -12,6 +12,8 @@ from django.utils.translation import override
 from django.forms.fields import TypedChoiceField, ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
+from django.contrib.sites.models import Site
+from django.template.loader import render_to_string
 
 import csv
 import operator
@@ -162,7 +164,19 @@ class GlossListView(ListView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
-        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages)
+        selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
+        sign_languages = []
+        for sl in selected_datasets_signlanguage:
+            sign_languages.append((str(sl.id), sl.name))
+
+        selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage)
+        dialects = []
+        for dl in selected_datasets_dialects:
+            dialect_name = dl.signlanguage.name + "/" + dl.name
+            dialects.append((str(dl.id),dialect_name))
+        print('dialects: ', dialects)
+
+        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages, dialects=dialects)
 
         #Translations for field choices dropdown menu
         fields_that_need_translated_options = ['hasComponentOfType','hasMorphemeOfType']
@@ -583,11 +597,17 @@ class GlossListView(ListView):
 
 
         # SignLanguage and basic property filters
-        vals = get.getlist('dialect', [])
+        # allows for multiselect
+        vals = get.getlist('dialect[]')
+        if '' in vals:
+            vals.remove('')
         if vals != []:
             qs = qs.filter(dialect__in=vals)
 
-        vals = get.getlist('signlanguage', [])
+        # allows for multiselect
+        vals = get.getlist('signlanguage[]')
+        if '' in vals:
+            vals.remove('')
         if vals != []:
             qs = qs.filter(signlanguage__in=vals)
 
@@ -2722,7 +2742,33 @@ class DatasetManagerView(ListView):
             try:
                 assign_perm('view_dataset', user_object, dataset_object)
                 messages.add_message(self.request, messages.INFO,
-                                 ('View permission for user ' + username + ' successfully granted.'))
+                                 ('View permission for user ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name + ') successfully granted.'))
+
+                if not user_object.is_active:
+                    user_object.is_active = True
+                    user_object.save()
+
+                # send email to user
+                from django.core.mail import send_mail
+                current_site = Site.objects.get_current()
+
+                subject = render_to_string('registration/dataset_access_granted_email_subject.txt',
+                                           context={'dataset': dataset_object.name,
+                                                    'site': current_site})
+                # Email subject *must not* contain newlines
+                subject = ''.join(subject.splitlines())
+
+                message = render_to_string('registration/dataset_access_granted_email.txt',
+                                           context={'dataset': dataset_object.name,
+                                                    'site': current_site})
+
+                # for debug purposes on local machine
+                # print('grant access subject: ', subject)
+                # print('message: ', message)
+                # print('user email: ', user_object.email)
+
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_object.email])
+
             except:
                 messages.add_message(self.request, messages.ERROR, ('Error assigning view dataset permission to user '+username+'.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
@@ -2744,6 +2790,10 @@ class DatasetManagerView(ListView):
             try:
                 assign_perm('change_dataset', user_object, dataset_object)
                 assign_perm('view_dataset', user_object, dataset_object)
+
+                # send email to new user
+                # probably don't want to assign change permission to new users
+
                 messages.add_message(self.request, messages.INFO,
                                      ('Change (and view) permission for user ' + username + ' successfully granted.'))
             except:
@@ -3371,3 +3421,4 @@ def user_ajax_complete(request, prefix):
         result.append({'first_name': u.first_name, 'last_name': u.last_name, 'username': u.username})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+

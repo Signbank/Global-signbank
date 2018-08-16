@@ -1015,7 +1015,7 @@ def add_relation(request):
                 reverse_relation = Relation(source=target, target=source, role=Relation.get_reverse_role(role))
                 reverse_relation.save()
 
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
 
             else:
                 print("target gloss not found")
@@ -1079,7 +1079,7 @@ def add_relationtoforeignsign(request):
             rel = RelationToForeignSign(gloss=gloss,loan=loan,other_lang=other_lang,other_lang_gloss=other_lang_gloss)
             rel.save()
                 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
 
         else:
             print(form)
@@ -1155,7 +1155,7 @@ def add_morpheme_definition(request, glossid):
                     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
             messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: No morpheme selected.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
         if form.is_valid():
 
@@ -1823,32 +1823,33 @@ def update_dataset(request, datasetid):
         if field == 'description':
 
             original_value = getattr(dataset,field)
-
-            # print('For dataset ', dataset, 'set description to: ', value)
             setattr(dataset, field, value)
             dataset.save()
             return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         elif field == 'copyright':
                 original_value = getattr(dataset, field)
-
-                # print('For dataset ', dataset, 'set copyright to: ', value)
                 setattr(dataset, field, value)
                 dataset.save()
                 return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         elif field == 'conditions_of_use':
                 original_value = getattr(dataset, field)
-
-                # print('For dataset ', dataset, 'set conditions_of_use to: ', value)
                 setattr(dataset, field, value)
                 dataset.save()
                 return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         elif field == 'acronym':
                 original_value = getattr(dataset, field)
-
-                # print('For dataset ', dataset, 'set acronym to: ', value)
                 setattr(dataset, field, value)
                 dataset.save()
                 return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+        elif field == 'is_public':
+                original_value = getattr(dataset, field)
+                dataset.is_public = value == 'True'
+                dataset.save()
+                if dataset.is_public:
+                    newvalue = True
+                else:
+                    newvalue = False
+                return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
         elif field == 'add_owner':
             update_owner(dataset, field, value)
         else:

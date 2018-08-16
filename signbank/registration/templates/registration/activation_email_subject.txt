@@ -1,1 +1,1 @@
-Registration for {{site.name}}
+Request for account at {{site.name}}

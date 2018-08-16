@@ -51,7 +51,9 @@ class RegistrationManager(models.Manager):
                 return False
             if not profile.activation_key_expired():
                 user = profile.user
-                user.is_active = True
+                # user will be set to active after dataset access has been granted
+                # check if this makes sense for ASL
+                # user.is_active = True
                 user.save()
 
                 # send emails for the requested datasets

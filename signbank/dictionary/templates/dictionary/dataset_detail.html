@@ -44,7 +44,11 @@
         <tr><th>{% trans "Dataset name" %}</th><td>{{dataset.name}}</td></tr>
         <tr><th>{% trans "Acronym" %}</th><td class='edit edit_text' align="left" id='acronym' name='acronym'
                 value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td></tr>
-
+        <tr><th>{% trans "Accessible by others" %}</th>
+            <td class="edit edit_check" id='is_public' type="hidden" value='{% if dataset.is_public %}True{% else %}False{% endif %}' name="is_public">
+                {% if dataset.is_public %}True{% else %}False{% endif %}
+            </td>
+        </tr>
         <tr><th>{% trans "Owner &amp; Contact person(s)" %}</th>
             <td>
                 {% for owner in dataset.owners.all %}

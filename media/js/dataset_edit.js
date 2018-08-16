@@ -150,7 +150,11 @@ function configure_edit() {
          type      : 'textarea',
 		 callback : update_view_and_remember_original_value
      });
-
+     $('.edit_check').editable(edit_post_url, {
+         type      : 'checkbox',
+         checkbox: { falseValue: 'False', trueValue: 'True'  },
+		 callback : update_view_and_remember_original_value
+     });
 }
 
 function update_view_and_remember_original_value(change_summary)
@@ -171,8 +175,7 @@ function update_view_and_remember_original_value(change_summary)
             $(this).parent().removeClass('empty_row');
             $(this).parent().attr("value", new_value);
         }
-        if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
-                        new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
+        if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' || new_value == 0 )
         {
             console.log("new value is empty, new value is: ", new_value);
             $(this).parent().attr("value", original_value);

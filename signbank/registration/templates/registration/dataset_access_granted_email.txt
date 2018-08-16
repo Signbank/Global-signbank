@@ -1,0 +1,4 @@
+You have been granted access to dataset {{dataset}} at {{site.name}}.
+
+
+{{site.name}} Webmaster
