@@ -895,7 +895,7 @@ class GlossListView(ListView):
 
         if 'definitionContains' in get and get['definitionContains'] != '':
 
-            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
+            definitions_with_this_text = Definition.objects.filter(text__iregex=get['definitionContains'])
 
             #Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
