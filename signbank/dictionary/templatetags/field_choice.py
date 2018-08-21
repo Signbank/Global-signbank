@@ -16,7 +16,18 @@ def get_field_choice(machine_value,field_category):
     else:
         return '-'
 
+
+
 register = Library()
+
+@register.filter
+def normalise_empty(machine_value):
+    if machine_value in [None,'None']:
+        return None
+    elif machine_value == '0' or machine_value == 0:
+        return None
+    else:
+        return machine_value
 
 @register.filter
 def translate_to_dutch(machine_value,field_category):

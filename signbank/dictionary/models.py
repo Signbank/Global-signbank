@@ -977,6 +977,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         if (self.domhndsh is None or self.domhndsh == '0'):
             return minimal_pairs_fields
 
+        # Restrict minimal pairs search if gloss has empty phonology field for Weak Hand
+        if (self.subhndsh is None or self.subhndsh == '0'):
+            return minimal_pairs_fields
+
         wmp = self.minimal_pairs_objects()
 
         (ep, nep) = self.empty_non_empty_phonology()
@@ -989,17 +993,23 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                 self_value_f = getattr(self,f)
                 other_value_f = getattr(o,f)
                 if self_value_f != other_value_f:
+                     # print('add field ', f, ' to different')
                      different_fields[f] = (n, fc,self_value_f,other_value_f,fieldKind[f])
             if (len(list(different_fields.keys())) == 0):
+                # print('different not found yet, nep: ', nep)
                 for sf,sn,sv in nep:
                     sfc = fieldname_to_category(sf)
                     self_value_sf = getattr(self, sf)
                     other_value_sf = getattr(o,sf)
+                    # print('other value field ', sf, ' is: ', other_value_sf)
                     if other_value_sf != self_value_sf:
-                        different_fields[sf] = (sn, sfc,self_value_sf,'0',fieldKind[sf])
+                        # the value of other_value_sf was '0' because it assumed it was empty since not in onep,
+                        # but if it is the field 'altern' or 'repeat' and it's false, then it is False, not '0'
+                        different_fields[sf] = (sn, sfc,self_value_sf,other_value_sf,fieldKind[sf])
 
             minimal_pairs_fields[o] = different_fields
 
+        # print('minimal pairs fields: ', minimal_pairs_fields)
         return minimal_pairs_fields
 
     # Homonyms
