@@ -25,7 +25,7 @@
                <td valign="top">
           {% for gloss in page.object_list %}
             <p>
-              <a href="{% url 'root_page' %}dictionary/gloss/{{ gloss.idgloss }}.html">{{ gloss.idgloss }}</a>
+              <a href="/dictionary/gloss/{{ gloss.idgloss }}.html">{{ gloss.idgloss }}</a>
               {% if not gloss.inWeb %}*{% endif %}  
             </p>
 

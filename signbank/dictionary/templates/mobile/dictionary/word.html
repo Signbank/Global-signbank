@@ -15,16 +15,16 @@
              
 	            <div id='matcheslinks' data-role="controlgroup" data-type="horizontal">
 		        {% if n > 1 %}
-		        <a data-role="button" data-icon="arrow-l" href="{% url 'root_page' %}dictionary/words/{{translation.translation}}-{{n|add:"-1"}}.html">&nbsp;</a>
+		        <a data-role="button" data-icon="arrow-l" href="/dictionary/words/{{translation.translation}}-{{n|add:"-1"}}.html">&nbsp;</a>
 		        {% endif %}
 				<a data-role='button'>Match {{n}} of {{matches|length}}</a>
 		        {% if n < matches|length %}
-		        <a data-role="button" data-icon="arrow-r" data-iconpos="right" href="{% url 'root_page' %}dictionary/words/{{translation.translation}}-{{n|add:"1"}}.html">&nbsp;</a>
+		        <a data-role="button" data-icon="arrow-r" data-iconpos="right" href="/dictionary/words/{{translation.translation}}-{{n|add:"1"}}.html">&nbsp;</a>
 		        {% endif %}		  
 		        </div>
 	        {% else %}
 	            <div id='matcheslinks' data-role="controlgroup" data-type="horizontal">	            
-	             <a  data-role='button' data-inline='true' href="{% url 'root_page' %}dictionary/words/{{lastmatch}}.html">Return to Matches</a>
+	             <a  data-role='button' data-inline='true' href="/dictionary/words/{{lastmatch}}.html">Return to Matches</a>
 	            </div>
 	        {% endifequal %}
 	        
@@ -56,12 +56,12 @@
 	        <div data-role="controlgroup" data-type="horizontal">
 	            {% if navigation.prev %}
 	              <a data-role="button" data-inline="true" data-icon="arrow-l" data-direction='reverse' 
-                     href="{% url 'root_page' %}dictionary/gloss/{{navigation.prev.idgloss}}.html?lastmatch={{lastmatch}}">&nbsp;</a>
+                     href="/dictionary/gloss/{{navigation.prev.idgloss}}.html?lastmatch={{lastmatch}}">&nbsp;</a>
 	            {% endif %}
 	            <a data-role='button' data-inline='true'>Sign <em>{{glossposn}}</em> of <em>{{glosscount}}</em></a>
 	            {% if navigation.next %}
 	             <a data-role="button" data-inline="true" data-icon="arrow-r" 
-                    href="{% url 'root_page' %}dictionary/gloss/{{navigation.next.idgloss}}.html?lastmatch={{lastmatch}}">&nbsp;</a>
+                    href="/dictionary/gloss/{{navigation.next.idgloss}}.html?lastmatch={{lastmatch}}">&nbsp;</a>
 	            {% endif %}
 	        </div>
 	    </div><!-- End #signs -->

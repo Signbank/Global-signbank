@@ -320,13 +320,13 @@ function do_adminsearch(el) {
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "morpheme":
-        $("#adminsearch").attr('action', '{{URL}}/morphemes/search/');
+        $("#adminsearch").attr('action', '/morphemes/search/');
         break;
     case "sign":
-        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        $("#adminsearch").attr('action', '/signs/search/');
         break;
     case "sign_or_morpheme":
-        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        $("#adminsearch").attr('action', '/signs/search/');
         break;
   }
   document.getElementById('adminsearch').submit();
@@ -371,7 +371,7 @@ function do_toggle_groups(el) {
 {{ form.media.css }}
 {{ form.media.js }}
 
-<form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
+<form name='adminsearch' id='adminsearch' method='get' action='/signs/search'>
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
@@ -893,7 +893,7 @@ function do_toggle_groups(el) {
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+          <a href="/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       {% for dataset_lang in dataset_languages %}
@@ -901,16 +901,16 @@ function do_toggle_groups(el) {
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
             {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
+            <div class="morpheme_gloss"><a href="/dictionary/morpheme/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% else %}
-            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
+            <div><a href="/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
             {% if gloss.simultaneous_morphology.count > 0 %}
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.simultaneous_morphology.all %}
                       {% if component.inWeb == 'True' or not user.is_anonymous %}
-                      <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                      <span><a class="morpheme_style" href="/dictionary/morpheme/{{morphdef.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                       {% endif %}
                   {% endfor %}
                   </div>
@@ -920,7 +920,7 @@ function do_toggle_groups(el) {
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
                   {% if component.inWeb == 'True' or not user.is_anonymous %}
-                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a  class="gloss_detail_component" href="/dictionary/gloss/{{component.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
                   {% endif %}
               {% endfor %}
               </div>
@@ -960,14 +960,14 @@ function do_toggle_groups(el) {
                     {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
                     {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -982,14 +982,14 @@ function do_toggle_groups(el) {
                     {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
                     {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -1006,14 +1006,14 @@ function do_toggle_groups(el) {
                     {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
                     {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -1122,7 +1122,7 @@ function do_toggle_groups(el) {
         <td></td>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+          <a href="/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       {% for dataset_lang in dataset_languages %}
@@ -1130,9 +1130,9 @@ function do_toggle_groups(el) {
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
             {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
+            <div class="morpheme_gloss"><a href="/dictionary/morpheme/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% else %}
-            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
+            <div><a href="/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
             {% if gloss.simultaneous_morphology.count > 0 %}
@@ -1142,7 +1142,7 @@ function do_toggle_groups(el) {
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.simultaneous_morphology.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  <span><a class="morpheme_style" href="/dictionary/morpheme/{{morphdef.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
@@ -1151,7 +1151,7 @@ function do_toggle_groups(el) {
             {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a class="gloss_detail_component" href="/dictionary/gloss/{{component.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
             {% endif %}
@@ -1182,14 +1182,14 @@ function do_toggle_groups(el) {
                     {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
                     {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -1204,14 +1204,14 @@ function do_toggle_groups(el) {
                     {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
                     {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -1228,14 +1228,14 @@ function do_toggle_groups(el) {
                     {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
                     {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 

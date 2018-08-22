@@ -23,25 +23,25 @@
 
         {% if item.children %} 
         <li class='dropdown'>
-             <a href="{{ URL }}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
+             <a href="{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
                  {{item.title}}
                  <b class="caret"></b></a>
              <ul class="dropdown-menu">
              {% for subitem in item.children %}
-                <li {% if subitem.current %}class='active'{% endif %}><a href="{{ URL }}{{subitem.url}}">
+                <li {% if subitem.current %}class='active'{% endif %}><a href="{{subitem.url}}">
                  {{subitem.title}}
                 </a></li>
              {% endfor %} 
              </ul> 
         </li>
       {% else %}
-        <li><a href="{{ URL }}{{item.url}}">{{item.title}}</a></li>
+        <li><a href="{{item.url}}">{{item.title}}</a></li>
       {% endif %}
     {% endfor %}
 
     </ul>
 
-    <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}/signs/search">
+    <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="/signs/search">
        <div class="form-group">
           <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="50">
        </div>
@@ -54,7 +54,7 @@
     {% if user.is_authenticated %}
       <li><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></li>
     {% else %}
-       <li><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></li>
+       <li><a href="/accounts/login/?next=/">{% trans "Login" %}</a></li>
     {% endif %} 
     </ul>
 

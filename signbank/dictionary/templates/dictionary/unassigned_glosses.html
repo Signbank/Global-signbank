@@ -9,7 +9,7 @@
 {% block content %}
 
 {% if signlanguages %}
-<form name="assignglosses" id="assignglosses" method="post" action="{{URL}}/datasets/unassigned_glosses">
+<form name="assignglosses" id="assignglosses" method="post" action="/datasets/unassigned_glosses">
 {% csrf_token %}
 <table class='table table-condensed'>
     <thead>

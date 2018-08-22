@@ -45,7 +45,7 @@
         
                 {% if navigation.prev %}
                 {# Translators: Navigation  #}
-                <a class='btn navbar-btn btn-default' href="{% url 'root_page' %}dictionary/gloss/{{navigation.prev.idgloss}}.html?lastmatch={{lastmatch}}">&laquo; <span class='hidden-xs'>{% blocktrans %}Previous Sign{% endblocktrans %}</span></a>
+                <a class='btn navbar-btn btn-default' href="/dictionary/gloss/{{navigation.prev.idgloss}}.html?lastmatch={{lastmatch}}">&laquo; <span class='hidden-xs'>{% blocktrans %}Previous Sign{% endblocktrans %}</span></a>
            
                 {% endif %}
                 {# Translators: Sign x of n(signs) #}
@@ -54,7 +54,7 @@
                 {% if navigation.next %}
                 {# Translators: Navigation #}
                 <a class="btn navbar-btn btn-default"
-                   href="{% url 'root_page' %}dictionary/gloss/{{navigation.next.idgloss}}.html?lastmatch={{lastmatch}}"><span class='hidden-xs'>{% blocktrans %}Next Sign{% endblocktrans %}</span> &raquo;</a>
+                   href="/dictionary/gloss/{{navigation.next.idgloss}}.html?lastmatch={{lastmatch}}"><span class='hidden-xs'>{% blocktrans %}Next Sign{% endblocktrans %}</span> &raquo;</a>
                 {% endif %}
              {% else %}
            
@@ -78,7 +78,7 @@
             {% else %}
                 {% if lastmatch %}
                 {# Translators: Navigation  #}
-                <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/words/{{lastmatch}}.html">{% blocktrans %}Return to Matches{% endblocktrans %}</a>
+                <a class='btn btn-default navbar-btn' href="/dictionary/words/{{lastmatch}}.html">{% blocktrans %}Return to Matches{% endblocktrans %}</a>
                 {% endif %}
             </div>
             {% endifequal %}

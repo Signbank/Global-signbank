@@ -9,7 +9,7 @@
     
     <p>
       {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
-        <a href="{% url 'root_page' %}dictionary/search?query={{letter}}">{{letter}}</a> | 
+        <a href="/dictionary/search?query={{letter}}">{{letter}}</a> |
       {% endfor %}
     </p>
     
@@ -75,7 +75,7 @@
                <td valign="top">
           {% for word in page.object_list %}
             <p>
-              <a href="{% url 'root_page' %}dictionary/words/{{ word.text }}-1.html">{{ word.text }}</a>
+              <a href="/dictionary/words/{{ word.text }}-1.html">{{ word.text }}</a>
               {% if not word.inWeb %}*{% endif %}  
             </p>
 

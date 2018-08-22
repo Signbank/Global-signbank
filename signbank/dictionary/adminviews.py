@@ -3133,7 +3133,7 @@ class MorphemeDetailView(DetailView):
                     return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
                 else:
                     messages.add_message(request, messages.WARNING, 'You are not allowed to see this morpheme.')
-                    return HttpResponseRedirect(reverse('root_page'))
+                    return HttpResponseRedirect('/')
         else:
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
