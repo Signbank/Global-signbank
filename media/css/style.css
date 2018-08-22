@@ -494,3 +494,11 @@ body {
 .gloss_detail_component:hover {
   color: darkred;
 }
+
+tr.rotated th {
+    -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+}

@@ -174,7 +174,6 @@ class GlossListView(ListView):
         for dl in selected_datasets_dialects:
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
-        print('dialects: ', dialects)
 
         search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages, dialects=dialects)
 
@@ -979,7 +978,8 @@ class GlossDetailView(DetailView):
                 if self.object.inWeb:
                     return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
                 else:
-                    return HttpResponse('')
+                    return render(request, 'dictionary/warning.html',
+                                  {'warning': 'The gloss you are trying to view ('+str(self.object.id)+') is not assigned to a dataset.'})
         else:
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
@@ -2267,6 +2267,90 @@ class HomonymListView(ListView):
                                            | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})))
 
         return glosses_with_phonology
+
+class MinimalPairsListView(ListView):
+    model = Gloss
+    template_name = 'dictionary/admin_minimalpairs_list.html'
+
+    def get_context_data(self, **kwargs):
+        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
+        from signbank.tools import convert_language_code_to_2char
+        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
+        language = Language.objects.get(id=get_default_language_id())
+        default_language_code = language.language_code_2char
+
+        context = super(MinimalPairsListView, self).get_context_data(**kwargs)
+
+        languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
+        if languages:
+            context['language'] = languages[0]
+        else:
+            context['language'] = Language.objects.get(id=get_default_language_id())
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        glosses_with_phonology = Gloss.objects.filter(dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
+                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})
+                                           | Q(**{'subhndsh__isnull': True}) | Q(**{'subhndsh': 0})))
+
+        minimalpairs = []
+
+        for focus_gloss in glosses_with_phonology:
+            minimal_pairs_focus_gloss = focus_gloss.minimal_pairs_objects()
+            minimal_pairs_focus_gloss_objects = [ mp for mp in minimal_pairs_focus_gloss if mp.dataset == focus_gloss.dataset ]
+            value_pair = (focus_gloss, minimal_pairs_focus_gloss_objects)
+            if minimal_pairs_focus_gloss:
+                if minimalpairs:
+                    minimalpairs = minimalpairs + [ value_pair ]
+                else:
+                    minimalpairs = [ value_pair ]
+
+        context['minimalpairs'] = minimalpairs
+
+        context['glosses_with_phonology'] = glosses_with_phonology
+
+        context['field_names'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh',
+                                  'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern' ]
+
+        context['field_labels'] = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
+                      'handCh': 'Handshape Change', 'relatArtic': 'Relation between Articulators',
+                      'locprim': 'Location',
+                      'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
+                      'oriCh': 'Orientation Change',
+                      'contType': 'Contact Type', 'movSh': 'Movement Shape', 'movDir': 'Movement Direction',
+                      'repeat': 'Repeated Movement',
+                      'altern': 'Alternating Movement' }
+
+        context['field_categories'] = {'handedness': 'Handedness', 'domhndsh': 'Handshape', 'subhndsh': 'Handshape',
+                      'handCh': 'handshapeChange', 'relatArtic': 'relatArtic',
+                      'locprim': 'Location',
+                      'relOriMov': 'relOriMov', 'relOriLoc': 'relOriLoc',
+                      'oriCh': 'oriChange',
+                      'contType': 'ContactType', 'movSh': 'MovementShape', 'movDir': 'MovementDir',
+                      'repeat': 'repeat',
+                      'altern': 'altern' }
+
+        return context
+
+    def get_queryset(self):
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        glosses_with_phonology = Gloss.objects.filter(dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
+                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})
+                                           | Q(**{'subhndsh__isnull': True}) | Q(**{'subhndsh': 0})))
+
+        return glosses_with_phonology
+
+
 
 class HandshapeListView(ListView):
 
