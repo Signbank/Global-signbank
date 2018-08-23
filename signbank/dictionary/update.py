@@ -84,7 +84,7 @@ def add_gloss(request):
 
 
             # context variables need to be set before GlossDetailView
-            if not 'search_results' in request.session.keys():
+            if not ('search_results' in request.session.keys()):
                 request.session['search_results'] = None
             request.session['last_used_dataset'] = dataset.name
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
@@ -1437,9 +1437,9 @@ def add_morpheme(request):
             morpheme.creator.add(request.user)
             morpheme.save()
 
-            if not 'search_results' in request.session.keys():
+            if not ('search_results' in request.session.keys()):
                 request.session['search_results'] = None
-            if not 'search_type' in request.session.keys():
+            if not ('search_type' in request.session.keys()):
                 request.session['search_type'] = None
             request.session['last_used_dataset'] = dataset.name
 
@@ -1792,13 +1792,17 @@ def change_dataset_selection(request):
                     dataset = Dataset.objects.get(name=dataset_name)
                     user_profile.selected_datasets.add(dataset)
                 except:
+                    print('exception to updating selected datasets')
                     pass
+            user_profile.save()
 
         # check whether the last used dataset is still in the selected datasets
         if 'last_used_dataset' in request.session.keys():
-            if not request.session['last_used_dataset'] in selected_datasets:
+            if not (request.session['last_used_dataset'] in selected_datasets):
                 request.session['last_used_dataset'] = None
-
+        else:
+            # set the last_used_dataset?
+            pass
     return HttpResponseRedirect(reverse('admin_dataset_select'))
 
 def update_dataset(request, datasetid):

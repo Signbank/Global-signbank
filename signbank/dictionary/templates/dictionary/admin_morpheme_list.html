@@ -11,9 +11,12 @@
 {% block extrajs %}
 
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
     <script type='text/javascript'>
-    
+    var url = '{{URL}}';
+    var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+    var csrf_token = '{{csrf_token}}';
     
     $(document).ready(function(){
         
@@ -47,6 +50,77 @@
                 }
             }
         }
+
+         $('#id_hasMorphemeOfType').attr('multiple','multiple');
+         $('#id_hasMorphemeOfType').attr('class',"js-example-basic-multiple form-control");
+         $('#id_hasMorphemeOfType').attr('name','hasMorphemeOfType[]');
+         $('#id_hasMorphemeOfType').css('width', '100%');
+         $('#id_hasMorphemeOfType').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_hasMorphemeOfType').val(null).trigger('change');
+
+         $('#id_namEnt').attr('multiple','multiple');
+         $('#id_namEnt').attr('class',"js-example-basic-multiple form-control");
+         $('#id_namEnt').attr('name','namEnt[]');
+         $('#id_namEnt').css('width', '100%');
+         $('#id_namEnt').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_namEnt').val(null).trigger('change');
+
+         $('#id_semField').attr('multiple','multiple');
+         $('#id_semField').attr('class',"js-example-basic-multiple form-control");
+         $('#id_semField').attr('name','semField[]');
+         $('#id_semField').css('width', '100%');
+         $('#id_semField').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_semField').val(null).trigger('change');
+
+         $('#id_wordClass').attr('multiple','multiple');
+         $('#id_wordClass').attr('class',"js-example-basic-multiple form-control");
+         $('#id_wordClass').attr('name','wordClass[]');
+         $('#id_wordClass').css('width', '100%');
+         $('#id_wordClass').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_wordClass').val(null).trigger('change');
+
+         $('#id_SIGNLANG').attr('multiple','multiple');
+         $('#id_SIGNLANG').attr('class',"js-example-basic-multiple form-control");
+         $('#id_SIGNLANG').attr('name','signlanguage[]');
+         $('#id_SIGNLANG').css('width', '100%');
+         $('#id_SIGNLANG').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_SIGNLANG').val(null).trigger('change');
+
+         $('#id_SIGNLANG').change(function() {
+            set_signlanguages_dialects();
+         });
+
+         $('#id_dialects').attr('multiple','multiple');
+         $('#id_dialects').attr('class',"js-example-basic-multiple form-control");
+         $('#id_dialects').attr('name','dialect[]');
+         $('#id_dialects').css('width', '100%');
+         $('#id_dialects').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_dialects').val(null).trigger('change');
+
     });
 
     {% if perms.dictionary.change_gloss %}
@@ -148,6 +222,54 @@ function do_adminsearch(el) {
 }
 
 
+function set_signlanguages_dialects() {
+    this_selection_elt = $('#signlanguage_selection');
+    var signlanguage_str = '';
+    this_selection_elt.find(".select2-selection__choice").each(function(){
+        if (signlanguage_str) {
+            signlanguage_str+=','+$(this).attr('title');
+        }
+        else {
+            signlanguage_str = $(this).attr('title');
+        }
+    });
+
+    optionValues = [];
+
+    if (signlanguage_str) {
+        var signlanguages = signlanguage_str.split(",");
+        this_selection_choices = $('#signlanguage_selection');
+
+        for(i = 0; i < signlanguages.length; i++) {
+            $('#id_SIGNLANG option').each(function(){
+                if ($(this).html() == signlanguages[i]) {
+                    optionValues.push($(this).html());
+                };
+            });
+        };
+    }
+
+    $('#id_dialects').val(null).trigger('change');
+
+    this_selection_dialect_elt = $('#dialect_selection');
+    $('#id_dialects option').each(function(){
+        $(this).attr('disabled','disabled');
+    });
+    $('#id_dialects option').each(function(){
+        var this_node_str = $(this).html();
+        for(k = 0; k < optionValues.length; k++) {
+            if (this_node_str.startsWith(optionValues[k])) {
+                $(this).removeAttr('disabled');
+            }
+        };
+    });
+    $('#id_dialects').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve'
+     });
+    $('#id_dialects').val(null).trigger('change');
+}
 
    </script>
 
@@ -203,9 +325,10 @@ function do_adminsearch(el) {
         </div>
         <div>
             <table class='table' id='searchfields'>
-                <tr>
                     {% for dataset_lang in dataset_languages %}
                     {% with searchform|get_morpheme_search_field_for_language:dataset_lang as search_field %}
+                    {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
+                <tr>
                     <td><div class='input-group'>
                         <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                                     {{search_field.label}}
@@ -213,48 +336,46 @@ function do_adminsearch(el) {
                         <input name='morphemesearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                         </div>
                     </td>
-                    {% endwith %}
-                    {% endfor %}
-                </tr>
-                <tr>
                     <td><div class='input-group'>
 
                         <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
                         <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
                     </td>
+
                     <td><div class='input-group'>
-                        <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
-                        <input name='keyword' class='form-control' {% if searchform.keyword.value %}value='{{searchform.keyword.value}}'{% endif %}></div>
+                        <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
+                        <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
                     </td>
                 </tr>
+                    {% endwith %}
+                    {% endwith %}
+                    {% endfor %}
             </table>
         </div>
 
-        <div class="panel-group">
-            <div  class="panel panel-default">
+            <div class="panel panel-default">
                 <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Language and Basic Properties" %}</div>
 
                 <div id='searchpanels' class='collapse'>
                 <table class='table'>
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_signlanguage'>{{searchform.signlanguage.label}}</label>
-                                {{searchform.signlanguage}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_dialect'>{{searchform.dialect.label}}</label>
-                                {{searchform.dialect}}
-                            </div>
+                    {% csrf_token %}
+                    <tr id='signlanguage_selection'>
+                        <td><label>{{searchform.SIGNLANG.label}}</label>
+                                {{searchform.SIGNLANG}}
                         </td>
                       </tr>
+                    <tr id='dialect_selection'>
+                        <td><label>{{searchform.dialects.label}}</label>
+                                {{searchform.dialects}}
+                        </td>
+                    </tr>
 
                 </table>
 
                 <table class='table'>
-                    <tr><td><label for='id_useInstr'>{{searchform.useInstr.label}}</label></td><td>{{searchform.useInstr}}</td></tr>
+                    {% for fieldname,field,label in input_names_fields_and_labels.main %}
+                    <tr><td><label for='id_{{fieldname}}'>{{label}}</label>{{field}}</td></tr>
+                    {% endfor %}
                 </table>
 
                 </div>
@@ -264,17 +385,13 @@ function do_adminsearch(el) {
               <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
 
               <div id='morph_search' class='collapse'>
-              <table class='table table-condensed'>
-                <tr>
-
-                  <td>
-                    <table class='table table-condensed'>
-                        <tr><td><label for='id_hasMorphemeOfType'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
+                    <table class='table'>
+                        <tr id='mrpType_selection'>
+                            <td><label>{{searchform.hasMorphemeOfType.label}}</label>
+                                {{searchform.hasMorphemeOfType}}
+                            </td>
+                        </tr>
                     </table>
-
-                  </td>
-                </tr>
-              </table>
               </div>
             </div>
 
@@ -312,7 +429,7 @@ function do_adminsearch(el) {
                     <table class='table table-condensed'>
                         {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
 
-                            <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+                            <tr><td><label for='id_{{fieldname}}'>{{label}}</label>{{field}}</td></tr>
 
                         {% endfor %}
 
@@ -443,8 +560,6 @@ function do_adminsearch(el) {
 
               </div>
             </div>
-        </div>
-
     </div>
 </div>
         <div class='btn-group'>
@@ -454,9 +569,9 @@ function do_adminsearch(el) {
                     <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="morpheme">{% trans "Search morpheme" %}</span>&nbsp;<span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-left">
-                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
+                    <!--<li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>-->
                     <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search morpheme" %}</a></li>
-                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
+                    <!--<li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>-->
                 </ul>
             </div>
 
