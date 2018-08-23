@@ -209,13 +209,13 @@ function do_adminsearch(el) {
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "morpheme":
-        $("#adminsearch").attr('action', '{{URL}}/morphemes/search/');
+        $("#adminsearch").attr('action', '/morphemes/search/');
         break;
     case "sign":
-        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        $("#adminsearch").attr('action', '/signs/search/');
         break;
     case "sign_or_morpheme":
-        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        $("#adminsearch").attr('action', '/signs/search/');
         break;
   }
   document.getElementById('adminsearch').submit();
@@ -735,7 +735,7 @@ function set_signlanguages_dialects() {
         {% with morpheme.gloss_ptr|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
-            <a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{ annotationidglosstranslation }}</a>
+            <a href="/dictionary/morpheme/{{morpheme.pk}}/">{{ annotationidglosstranslation }}</a>
           {% endifnotequal %}
       </td>
         {% endwith %}

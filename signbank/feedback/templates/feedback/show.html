@@ -91,7 +91,7 @@ $(window).ready(function(){
                     <div class='modal-body'>
                         <p>{% trans "This action will delete this comment. It cannot be undone." %}</p>
                      </div>
-                  <form action="{{URL}}/feedback/general/delete/{{fb.pk}}" method='post'>
+                  <form action="/feedback/general/delete/{{fb.pk}}" method='post'>
                       {% csrf_token %}
                       <input type='hidden' name='id' value='deletefeedbackgeneraln_{{fb.pk}}'>
                       <input type='hidden' name='value' value='confirmed'>
@@ -128,9 +128,9 @@ $(window).ready(function(){
     (to do after deciding what is needed to support feedback).
 -->
         {% if fb.like == 0 %}
-        <p><strong>Sign:</strong><a href="{% url 'root_page' %}dictionary/gloss/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></p>
+        <p><strong>Sign:</strong><a href="/dictionary/gloss/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></p>
         {% else %}
-        <p><strong>Morpheme:</strong> <a href="{% url 'root_page' %}dictionary/morpheme/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></p>
+        <p><strong>Morpheme:</strong> <a href="/dictionary/morpheme/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></p>
         {% endif %}
         <p><strong>Comment:</strong> {{fb.comment}}</p>
         {% if fb.kwnotbelong %}
@@ -151,7 +151,7 @@ $(window).ready(function(){
                     <div class='modal-body'>
                         <p>{% trans "This action will delete this comment. It cannot be undone." %}</p>
                      </div>
-                  <form action="{{URL}}/feedback/sign/delete/{{fb.pk}}" method='post'>
+                  <form action="/feedback/sign/delete/{{fb.pk}}" method='post'>
                       {% csrf_token %}
                       <input type='hidden' name='id' value='deletefeedbacksign_{{fb.pk}}'>
                       <input type='hidden' name='value' value='confirmed'>
@@ -215,7 +215,7 @@ $(window).ready(function(){
                     <div class='modal-body'>
                         <p>{% trans "This action will delete this comment. It cannot be undone." %}</p>
                      </div>
-                  <form action="{{URL}}/feedback/missingsign/delete/{{fb.pk}}" method='post'>
+                  <form action="/feedback/missingsign/delete/{{fb.pk}}" method='post'>
                       {% csrf_token %}
                       <input type='hidden' name='id' value='deletefeedbackmissingn_{{fb.pk}}'>
                       <input type='hidden' name='value' value='confirmed'>

@@ -21,7 +21,7 @@ USE_TZ = True
 
 
 MEDIA_ROOT = WRITABLE_FOLDER
-MEDIA_URL = URL+'/media/'
+MEDIA_URL = '/media/'
 MEDIA_MOBILE_URL = MEDIA_URL
 
 # Absolute path to the directory static files should be collected to.
@@ -32,7 +32,7 @@ STATIC_ROOT = ''
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = URL+'/static/'
+STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -235,8 +235,8 @@ ACCOUNT_ACTIVATION_DAYS = 7
 # show the number signs page or an under construction page?
 SHOW_NUMBERSIGNS = True
 
-LOGIN_URL = URL+'/accounts/login/'
-LOGIN_REDIRECT_URL = URL+'/signs/recently_added/'
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/signs/recently_added/'
 
 
 # location of ffmpeg, used to convert uploaded videos

@@ -124,10 +124,10 @@ function do_adminsearch(el) {
   switch(sSearchType) {
     case "sign_handshape":
         <!--console.log("request to search sign");-->
-        $("#adminsearch").attr('action', '{{URL}}/dictionary/handshapes/');
+        $("#adminsearch").attr('action', '/dictionary/handshapes/');
         break;
     case "handshape":
-        $("#adminsearch").attr('action', '{{URL}}/dictionary/handshapes/');
+        $("#adminsearch").attr('action', '/dictionary/handshapes/');
         break;
   }
   document.getElementById('adminsearch').submit();
@@ -582,11 +582,11 @@ function do_adminsearch(el) {
       </td>
 
         {% if language == 'nl' %}
-        <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
+        <td><a href="/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
         {% elif language == 'zh-hans' %}
-        <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.chinese_name}}</a></td>
+        <td><a href="/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.chinese_name}}</a></td>
         {% else %}
-        <td><a href="{{ URL }}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.english_name}}</a></td>
+        <td><a href="/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.english_name}}</a></td>
         {% endif %}
             {% with handshape.hsFingSel as field_value %}
             {% with "FingerSelection " as field_category %}
@@ -693,7 +693,7 @@ function do_adminsearch(el) {
     <tr>
       <td>{%if gloss.get_image_path != None %}
           <div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></a>
+          <a href="/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></a>
           </div>
           {% endif %}
       </td>
@@ -702,7 +702,7 @@ function do_adminsearch(el) {
         {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
-          <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+          <div><a href="/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
           {% endifnotequal %}
       </td>
         {% endwith %}

@@ -104,7 +104,7 @@
                 //When the user is logged in, we don't want to submit the form, but instead save
                 //the user preference and reload
 
-                $.ajax('{{ URL }}/dictionary/switch_to_language/'+chosen_language,'html');
+                $.ajax('/dictionary/switch_to_language/'+chosen_language,'html');
 
                 //The reload is on a timeout, because it happened too fast on Firefox
                 setTimeout(function()
@@ -136,7 +136,7 @@
 
     </script>
 
-    <form id="change_language_form" method="post" action="{{ URL }}/i18n/setlang/">
+    <form id="change_language_form" method="post" action="/i18n/setlang/">
         {% csrf_token %}
         <input id="change_language_input_field" type="hidden" name="language" value="{{ user.user_profile_user.last_used_language }}">
 

@@ -28,7 +28,7 @@
       {% for dataset in object_list %}
         <tr>
             <td>
-                <a href="{{URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
+                <a href="/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
             </td>
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
