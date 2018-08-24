@@ -9,10 +9,11 @@
 
 {% block content %}
 
+<h3>{% trans "Available datasets" %}</h3>
+
 {% if object_list %}
 
 <table class='table table-condensed'>
-    <caption style="text-align: left;font-weight: bold;">{% trans "View available datasets" %}</caption>
     <thead>
       <tr>
           <th style="width:300px;">{% trans "Dataset Name" %}</th>

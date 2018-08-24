@@ -23,11 +23,11 @@
 
 
 {% block content %}
+<h3>{% trans "Manage Datasets" %}</h3>
 
 {% if object_list %}
 
 <table class='table'>
-    <caption style="text-align: left;font-weight: bold;">{% trans "Manage Datasets" %}</caption>
     <thead>
       <tr>
           <th style="width:100px;">{% trans "Dataset Name" %}</th>
@@ -179,10 +179,7 @@
     </tbody>
 </table>
 {% else %}
-<table class='table'>
-    <caption style="text-align: left;font-weight: bold;">{% trans "Manage datasets" %}</caption>
-</table>
-        {% trans "You must be in group Dataset Manager to use this functionality." %}
+<p>{% trans "You must be in group Dataset Manager to use this functionality." %}</p>
 {% endif %}
 
 {% endblock content %}
