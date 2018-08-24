@@ -45,7 +45,7 @@
                 var a = document.createElement("a");
                 a.setAttribute("class", "btn btn-default");
                 a.style["float"] = "none";
-                a.href = "/dictionary/handshape/" + json_data[key].id + "/";
+                a.href = "{{PREFIX_URL}}/dictionary/handshape/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
                 var linktext = document.createTextNode(json_data[key].handshape);
                 a.appendChild(linktext);
@@ -106,7 +106,7 @@
     <div class='btn-group'>
 
     <div id="listhandshapes">
-    <a class='btn btn-default navbar-btn' href="/dictionary/handshapes/">{% trans "Handshapes List" %}</a>
+    <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/handshapes/">{% trans "Handshapes List" %}</a>
     </div>
     </div>
 
@@ -136,7 +136,7 @@
         <div class='editform'>
             <fieldset>
                 <legend>{% trans "Upload New Handshape Image" %}</legend>
-                <form action="/handshapeimage/upload/" method="post" enctype="multipart/form-data">
+                <form action="{{PREFIX_URL}}/handshapeimage/upload/" method="post" enctype="multipart/form-data">
                   {% csrf_token %}
                   <input type='hidden' name='redirect' value='{{request.path}}?edit'>
                 <table id="staffops">

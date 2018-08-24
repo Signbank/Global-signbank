@@ -43,7 +43,7 @@
       
   	    <p>{{fb.comment}}</p>
      
-         <p><form action="/feedback/general/delete/{{fb.id}}" method="post">
+         <p><form action="{{PREFIX_URL}}/feedback/general/delete/{{fb.id}}" method="post">
              {% csrf_token %}
              <input class='delete btn btn-default' type='submit' value='Delete Comment'>
              </form>
@@ -70,7 +70,7 @@
           </div>
           <div id="signcollapse{{fb.id}}" class="panel-collapse collapse">
     
-          <p><strong>Sign:</strong> <a href="/dictionary/gloss/{{fb.translation.gloss.idgloss}}.html">{{fb.translation.gloss.idgloss}}</a></p>
+          <p><strong>Sign:</strong> <a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.translation.gloss.idgloss}}.html">{{fb.translation.gloss.idgloss}}</a></p>
     
           <p><strong>Comment:</strong> {{fb.comment}}</p>
           <p><strong>Don't Belong:</strong> {{fb.kwnotbelong}}</p>
@@ -85,7 +85,7 @@
         
           </ul>
           -->      
-          <p><form action="/feedback/sign/delete/{{fb.id}}" method="post">
+          <p><form action="{{PREFIX_URL}}/feedback/sign/delete/{{fb.id}}" method="post">
              {% csrf_token %}
              <input class='delete btn btn-default' type='submit' value='Delete Comment'>
              </form>
@@ -139,7 +139,7 @@
             <dt>Comments</dt><dd>{{fb.comments}}</dd>
            </dl>
      
-           <p><form action="/feedback/missingsign/delete/{{fb.id}}" method="post">
+           <p><form action="{{PREFIX_URL}}/feedback/missingsign/delete/{{fb.id}}" method="post">
              {% csrf_token %}
              <input class='delete btn btn-default' type='submit' value='Delete Comment'>
              </form>

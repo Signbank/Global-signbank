@@ -18,7 +18,7 @@
                  <span class='tagcount'>
                      <a class='tagdelete editform'
                         id='{{tag.name}}'
-                        href='/dictionary/update/tag/{{gloss.id}}'
+                        href='{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}'
                         title='{% trans "delete this tag" %}'>x</a>
                  </span>
                  {% endif %}
@@ -32,7 +32,7 @@
       <div id="tagcontainer"></div>
       <div class='editform'>
           <form id='tagaddform' 
-                action="/dictionary/update/tag/{{gloss.id}}"
+                action="{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}"
                 method="post" enctype="multipart/form-data">
            {% csrf_token %}
            <table>

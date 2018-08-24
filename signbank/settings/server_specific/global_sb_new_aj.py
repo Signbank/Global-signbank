@@ -29,6 +29,7 @@ COUNTRY_NAME = "Netherlands"
 SIGNBANK_VERSION_CODE = 'global'
 URL = 'https://signbank.science.ru.nl/'
 ALLOWED_HOSTS = ['signbank.science.ru.nl','signbank.cls.ru.nl','new.signbank.science.ru.nl']
+PREFIX_URL = ''
 
 gettext = lambda s: s
 LANGUAGES = (

@@ -20,7 +20,7 @@
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
     var saving_str = '{% trans "Saving..." %}'
     var csrf_token = '{{csrf_token}}';
-    var edit_post_url = '/datasets/change_details/{{dataset.id}}';
+    var edit_post_url = '{{PREFIX_URL}}/datasets/change_details/{{dataset.id}}';
 
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>

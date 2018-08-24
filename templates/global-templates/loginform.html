@@ -6,7 +6,7 @@
  <div class='row'>
   <div id="loginforms" class="col-md-6 col-md-offset-3">
   
-  <form styleclass='form-horizontal' id="loginform" name="login" method="post" action="/accounts/login/?next={{ next|urlencode }}">
+  <form styleclass='form-horizontal' id="loginform" name="login" method="post" action="{{PREFIX_URL}}/accounts/login/?next={{ next|urlencode }}">
     {% csrf_token %}
     <fieldset id='signin'>
     <legend>{% trans "Sign In" %}</legend>
@@ -43,7 +43,7 @@
      <legend>{% trans "Register" %}</legend>
      
     <p>{% trans "Register for free to provide feedback on the Signbank." %}
-        <a class='btn btn-default' href="/accounts/register/">{% trans "Register" %}</a>
+        <a class='btn btn-default' href="{{PREFIX_URL}}/accounts/register/">{% trans "Register" %}</a>
     </p>
     </fieldset>
 {% endif %}
@@ -52,7 +52,7 @@
       <legend>{% trans "Lost Password" %}</legend>
       <p class="col-xs-10">{% trans "If you've lost or forgotten your password, enter your email address here and we'll reset it and send you a reminder." %}</p>
 
-      <form class='' id="passwordresetform" action="/accounts/password/reset/" method="POST">
+      <form class='' id="passwordresetform" action="{{PREFIX_URL}}/accounts/password/reset/" method="POST">
           {% csrf_token %}
             <div class='form-group col-xs-10'>
                 <input class="form-control" type="text" name="email" placeholder='{% trans "Email" %}'>

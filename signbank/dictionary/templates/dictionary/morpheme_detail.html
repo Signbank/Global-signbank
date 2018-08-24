@@ -60,7 +60,7 @@
                 var a = document.createElement("a");
                 a.setAttribute("class", "btn btn-default");
                 a.style["float"] = "none";
-                a.href = "/dictionary/morpheme/" + json_data[key].id + "/";
+                a.href = "{{PREFIX_URL}}/dictionary/morpheme/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
                 var linktext = document.createTextNode(json_data[key].gloss);
                 a.appendChild(linktext);
@@ -132,7 +132,7 @@
 
     <div class='btn-group' style="background-color:white;border:0;padding-top:3px;">
 
-    <a class='btn btn-default navbar-btn' href="/dictionary/morpheme/{{morpheme.id}}.html">{% trans "Public View" %}</a>
+    <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}.html">{% trans "Public View" %}</a>
 
         {% if perms.dictionary.change_morpheme %}
         <button id='delete_morpheme_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
@@ -182,7 +182,7 @@
 
     <div id="feedback">
         <ul>
-            <li><a href="/feedback/morpheme/{{morpheme.id}}?return=/dictionary/morpheme/{{morpheme.id}}">{% trans "Provide feedback about this morpheme" %}</a></li>
+            <li><a href="{{PREFIX_URL}}/feedback/morpheme/{{morpheme.id}}?return={{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}">{% trans "Provide feedback about this morpheme" %}</a></li>
         </ul>
     </div>
 
@@ -193,7 +193,7 @@
             {% with morpheme.count_videos as morpheme_video_count %}
             <p>{% blocktrans %} We have {{morpheme_video_count}} videos for this morpheme. {% endblocktrans %}</p>
             {% endwith %}
-            <form action="/video/upload/" method="post" enctype="multipart/form-data">
+            <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -212,7 +212,7 @@
         <fieldset>
          <legend>{% trans "Delete/Revert Video" %}</legend>
             <table>
-            <form action="/video/delete/{{morpheme.pk}}" method='post'>
+            <form action="{{PREFIX_URL}}/video/delete/{{morpheme.pk}}" method='post'>
             <tr><td><em>{% trans "This will delete the most recent upload and restore the most recent earlier version." %} </em></td></tr>
             <tr><td>{% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete/Revert this video'></td></tr>
             </form>
@@ -226,7 +226,7 @@
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Citation Form Image" %}</legend>
-            <form action="/image/upload/" method="post" enctype="multipart/form-data">
+            <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">

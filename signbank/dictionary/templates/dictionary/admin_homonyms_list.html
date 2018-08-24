@@ -28,7 +28,7 @@
         {% if homonyms_saved or homonym_objects_of_gloss %}
         <tr>
             <td>
-                <a href="/dictionary/gloss/{{ focus_gloss.id }}/">{{ focus_gloss|get_annotation_idgloss_translation:language }}</a>
+                <a href="{{PREFIX_URL}}/dictionary/gloss/{{ focus_gloss.id }}/">{{ focus_gloss|get_annotation_idgloss_translation:language }}</a>
             </td>
             <td>
                 {% for gl in homonyms_saved %}

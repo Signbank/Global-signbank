@@ -14,7 +14,7 @@
 <div id="signbank-bar" class="navbar navbar-fixed-top" style="box-sizing:content-box;">
 
 <div id='header' class="navbar-header">
-    <a href="/" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
+    <a href="{{PREFIX_URL}}/" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
     <h1>Global <br/><span id="second-title-part">signbank</span></h1>
     <a href="http://www.ru.nl/sign-lang" id='logoholder' class='visible-lg visible-md visible-sm'></a>
 </div>
@@ -40,7 +40,7 @@
 
         {% if item.children %}
         <li class='dropdown'>
-             <a href="{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
+             <a href="{{PREFIX_URL}}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
              	{% if WEBSITE_LANGUAGE == "nl" %}
                  {{item.title_dutch}}
              	{% elif WEBSITE_LANGUAGE == "cn" %}
@@ -51,7 +51,7 @@
                  <b class="caret"></b></a>
              <ul class="dropdown-menu">
              {% for subitem in item.children %}
-                <li {% if subitem.current %}class='active'{% endif %}><a href="{{subitem.url}}">
+                <li {% if subitem.current %}class='active'{% endif %}><a href="{{PREFIX_URL}}{{subitem.url}}">
              	{% if WEBSITE_LANGUAGE == "nl" %}
                  {{subitem.title_dutch}}
              	{% elif WEBSITE_LANGUAGE == "cn" %}
@@ -64,7 +64,7 @@
              </ul>
         </li>
       {% else %}
-        <li><a style="padding-left: 0px;" href="{{item.url}}">
+        <li><a style="padding-left: 0px;" href="{{PREFIX_URL}}{{item.url}}">
             {% if WEBSITE_LANGUAGE == "nl" %}
                  {{item.title_dutch}}
              	{% elif WEBSITE_LANGUAGE == "cn" %}
@@ -77,7 +77,7 @@
     {% endfor %}
 
     </ul>
-    <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="/signs/search">
+    <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search">
             <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" id="tooltip-search"
                                                onfocus="focusFunction()" onblur="blurFunction()"
                                                value="{{ glossQuery }}" maxlength="60" size="36" />
@@ -139,7 +139,7 @@
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
             <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
         {% else %}
-            <div class='navbar-text'><a href="/accounts/login/?next=/">{% trans "Login" %}</a></div>
+            <div class='navbar-text'><a href="{{PREFIX_URL}}/accounts/login/?next=/">{% trans "Login" %}</a></div>
             <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
         {% endif %}
       </div>
@@ -170,7 +170,6 @@
     </div>
 
 </div>
-
 <div id='bslstripe'></div>
 
 </div>

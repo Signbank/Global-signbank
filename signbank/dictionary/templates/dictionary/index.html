@@ -11,7 +11,7 @@
     
     <p>
     {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
-      <a href="/dictionary/search?query={{letter}}">{{letter}}</a> |
+      <a href="{{PREFIX_URL}}/dictionary/search?query={{letter}}">{{letter}}</a> |
    {% endfor %}
    </p>
    

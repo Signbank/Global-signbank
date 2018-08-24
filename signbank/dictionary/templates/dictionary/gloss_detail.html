@@ -68,7 +68,7 @@
                 var a = document.createElement("a");
                 a.setAttribute("class", "btn btn-default");
                 a.style["float"] = "none";
-                a.href = "/dictionary/gloss/" + json_data[key].id + "/";
+                a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
                 var linktext = document.createTextNode(json_data[key].gloss);
                 a.appendChild(linktext);
@@ -192,9 +192,9 @@
 
     <div class='btn-group'>
 
-    <a class='btn btn-default navbar-btn' href="/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+    <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
 
-    <a class='btn btn-default navbar-btn' href="/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+    <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
 
          {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
          {% if "change_dataset" in dataset_perms %}
@@ -275,7 +275,7 @@
 
     <div id="feedback">
         <ul>
-            <li><a href="/feedback/gloss/{{gloss.id}}?return=/dictionary/gloss/{{gloss.id}}/">{% trans "Provide feedback about this sign" %}</a></li>
+            <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}?return=/dictionary/gloss/{{gloss.id}}/">{% trans "Provide feedback about this sign" %}</a></li>
         </ul>
     </div>
 
@@ -287,7 +287,7 @@
             {% with gloss.count_videos as gloss_video_count %}
             <p>{% blocktrans %} We have {{gloss_video_count}} videos for this sign. {% endblocktrans %}</p>
             {% endwith %}
-            <form action="/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+            <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -310,7 +310,7 @@
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Citation Form Image" %}</legend>
-            <form action="/image/upload/" method="post" enctype="multipart/form-data">
+            <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -335,10 +335,10 @@
          <legend>{% trans "Delete Media" %}</legend>
             <table>
                 <tr><td>
-                <form class="formbutton" action="/video/delete/{{gloss.pk}}" method='post'>
+                <form class="formbutton" action="{{PREFIX_URL}}/video/delete/{{gloss.pk}}" method='post'>
                         {% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete video'>
                 </form>
-                <form class="formbutton" action="/image/delete/{{gloss.pk}}" method='post'>
+                <form class="formbutton" action="{{PREFIX_URL}}/image/delete/{{gloss.pk}}" method='post'>
                         {% csrf_token %}<input class='btn btn-danger' id='delete_image' type='submit' value='Delete image'>
                 </form>
                 </td></tr>
@@ -766,7 +766,7 @@
                     <tr value="{{value}}">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>
-                            <a id="strong_hand_link" style="color: inherit; display: visible;" href="/dictionary/handshape/{{StrongHand}}/">{{value}}</a>
+                            <a id="strong_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
@@ -801,7 +801,7 @@
                     <tr value="{{value}}">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>
-                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
+                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if name == 'subhndsh_letter' %}
