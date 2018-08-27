@@ -578,7 +578,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     def get_phonology_display(self):
         fields = []
         choice_list = []
-        for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
+        for field in ['handedness','domhndsh','subhndsh','handCh','absOriPalm','relatArtic','locprim','locVirtObj',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
           'mouthing', 'phonetVar',]:
 
@@ -803,13 +803,14 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         empty_phonology = []
 
         fieldLabel = {'handedness':'Handedness','domhndsh':'Strong Hand','subhndsh':'Weak Hand',
-		  'handCh':'Handshape Change','relatArtic':'Relation between Articulators','locprim':'Location','locVirtObj':'Virual Object',
+		  'handCh':'Handshape Change','absOriPalm':'Absolute Orientation: Palm','relatArtic':'Relation between Articulators',
+          'locprim':'Location','locVirtObj':'Virual Object',
           'relOriMov':'Relative Orientation: Movement','relOriLoc':'Relative Orientation: Location','oriCh':'Orientation Change',
 		  'contType':'Contact Type','movSh':'Movement Shape','movDir':'Movement Direction','repeat':'Repeated Movement',
 		  'altern':'Alternating Movement','phonOth':'Phonology Other','mouthG':'Mouth Gesture',
           'mouthing':'Mouthing','phonetVar':'Phonetic Variation'}
 
-        for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim',
+        for field in ['handedness','domhndsh','subhndsh','handCh','absOriPalm','relatArtic','locprim',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir',]:
 
             # Get and save the choice list for this field
@@ -844,7 +845,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     def non_empty_phonology(self):
 
         fieldLabel = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
-                      'handCh': 'Handshape Change', 'relatArtic': 'Relation between Articulators',
+                      'handCh': 'Handshape Change', 'absOriPalm': 'Absolute Orientation: Palm', 'relatArtic': 'Relation between Articulators',
                       'locprim': 'Location', 'locVirtObj': 'Virual Object',
                       'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
                       'oriCh': 'Orientation Change',
@@ -855,7 +856,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         non_empty_phonology = []
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'absOriPalm', 'relatArtic', 'locprim',
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', ]:
 
             fieldchoice_category = fieldname_to_category(field)
@@ -885,7 +886,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         phonology_dict = dict()
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj',
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'absOriPalm', 'relatArtic', 'locprim', 'locVirtObj',
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', 'phonOth',
                       'mouthG',
                       'mouthing', 'phonetVar', ]:
@@ -905,9 +906,9 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
 
     # Minimal Pairs
-    # 19 total phonology fields
+    # 20 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
-    # 14
+    # 15
     def minimal_pairs_objects(self):
 
         paren = ')'
@@ -919,7 +920,8 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'absOriPalm', 'relatArtic', 'locprim',
+                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
             value_of_this_field = str(phonology_for_gloss[field])
 
             if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
@@ -958,7 +960,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     def minimal_pairs_dict(self):
 
         fieldKind = {'handedness': 'list', 'domhndsh': 'list', 'subhndsh': 'list',
-                      'handCh': 'list', 'relatArtic': 'list',
+                      'handCh': 'list', 'absOriPalm': 'list', 'relatArtic': 'list',
                       'locprim': 'list', 'locVirtObj': 'text',
                       'relOriMov': 'list', 'relOriLoc': 'list',
                       'oriCh': 'list',
@@ -1013,9 +1015,9 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         return minimal_pairs_fields
 
     # Homonyms
-    # 19 total phonology fields
+    # 20 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
-    # 14
+    # 15
     def homonym_objects(self):
 
         paren = ')'
@@ -1030,7 +1032,8 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'absOriPalm', 'relatArtic',
+                      'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
             value_of_this_field = str(phonology_for_gloss[field])
 
             if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
@@ -1108,7 +1111,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'absOriPalm', 'relatArtic', 'locprim',
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
             value_of_this_field = str(phonology_for_gloss[field])
 
@@ -1137,7 +1140,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                     where_homonyms_filled += '(' + field + '=' + value_of_this_field + ')'
                 count_filled = count_filled + 1
 
-        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=14'
+        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=15'
 
         qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE ' + where_homonyms)
 
@@ -1341,7 +1344,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         #Start with your own choice lists
         for fieldname in ['handedness','locprim','domhndsh','subhndsh',
 							'relatArtic','absOriPalm','absOriFing','relOriMov',
-							'relOriLoc','handCh','repeat','altern','movSh',
+							'relOriLoc','handCh','absOriPalm','repeat','altern','movSh',
 							'movDir','movMan','contType','namEnt','oriCh','semField']:
 
             #Get the list of choices for this field
@@ -1411,6 +1414,8 @@ def fieldname_to_category(fieldname):
         field_category = 'MinorLocation'
     elif fieldname == 'handCh':
         field_category = 'handshapeChange'
+    elif fieldname == 'absOriPalm':
+        field_category = 'AbsOriPalm'
     elif fieldname == 'oriCh':
         field_category = 'oriChange'
     elif fieldname == 'movSh':

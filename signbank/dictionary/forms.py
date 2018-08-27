@@ -279,6 +279,11 @@ class GlossSearchForm(forms.ModelForm):
                                                        FieldChoice.objects.filter(field__iexact='HandshapeChange')],
                                               required=False, widget=Select2)
 
+    absOriPalm = forms.TypedMultipleChoiceField(label=_(u'Absolute Orientation: Palm'),
+                                              choices=[(str(choice.machine_value), choice.english_name) for choice in
+                                                       FieldChoice.objects.filter(field__iexact='AbsOriPalm')],
+                                              required=False, widget=Select2)
+
     oriCh = forms.TypedMultipleChoiceField(label=_(u'Orientation Change'),
                                               choices=[(str(choice.machine_value), choice.english_name) for choice in
                                                        FieldChoice.objects.filter(field__iexact='OriChange')],
@@ -347,7 +352,8 @@ class GlossSearchForm(forms.ModelForm):
                    # 'handedness',
                     'useInstr','rmrks',
                     # 'relatArtic',
-                   'absOriPalm','absOriFing',
+                   #'absOriPalm',
+                  'absOriFing',
                    # 'relOriMov','relOriLoc','oriCh','handCh',
                    'repeat', 'altern',
                    # 'movSh','movDir',
@@ -475,7 +481,8 @@ class MorphemeSearchForm(forms.ModelForm):
 
                   'locPrimLH', 'locFocSite', 'locFocSiteLH', 'initArtOri', 'finArtOri', 'initArtOriLH', 'finArtOriLH',
 
-                  'handedness', 'useInstr', 'rmrks', 'relatArtic', 'absOriPalm', 'absOriFing',
+                  'handedness', 'useInstr', 'rmrks', 'relatArtic', 'absOriPalm',
+                  'absOriFing',
                   'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern', 'movSh', 'movDir', 'movMan',
                   'contType', 'mouthG',
                   'mouthing', 'phonetVar',

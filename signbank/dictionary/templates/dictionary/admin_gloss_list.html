@@ -98,6 +98,17 @@
          });
          $('#id_handCh').val(null).trigger('change');
 
+         $('#id_absOriPalm').attr('multiple','multiple');
+         $('#id_absOriPalm').attr('class',"js-example-basic-multiple form-control");
+         $('#id_absOriPalm').attr('name','absOriPalm[]');
+         $('#id_absOriPalm').css('width', '100%');
+         $('#id_absOriPalm').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_absOriPalm').val(null).trigger('change');
+
          $('#id_relatArtic').attr('multiple','multiple');
          $('#id_relatArtic').attr('class',"js-example-basic-multiple form-control");
          $('#id_relatArtic').attr('name','relatArtic[]');

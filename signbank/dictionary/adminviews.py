@@ -583,11 +583,13 @@ class GlossListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
-                      'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
+        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
+                                 'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
+                                 'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
 
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
-                      'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
+                      'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',
+                      'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm', 'repeat', 'altern',
                       'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
                       'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence',
@@ -670,6 +672,13 @@ class GlossListView(ListView):
                     vals.remove('')
                 if vals != []:
                     qs = qs.filter(oriCh__in=vals)
+
+            if fieldnamemulti == 'absOriPalm':
+                vals = get.getlist('absOriPalm[]')
+                if '' in vals:
+                    vals.remove('')
+                if vals != []:
+                    qs = qs.filter(absOriPalm__in=vals)
 
             if fieldnamemulti == 'handCh':
                 vals = get.getlist('handCh[]')
@@ -1750,8 +1759,9 @@ class MorphemeListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
-                      'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass', 'hasMorphemeOfType']
+        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
+                                 'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
+                                 'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass', 'hasMorphemeOfType']
 
         # fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
         #               'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
@@ -1764,7 +1774,7 @@ class MorphemeListView(ListView):
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN',
                       'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic', 'relOriMov', 'relOriLoc', 'oriCh',
-                      'handCh', 'repeat', 'altern',
+                      'handCh', 'absOriPalm', 'repeat', 'altern',
                       'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'iconType',
                       'namEnt', 'semField', 'valence',
                       'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO',
@@ -2124,7 +2134,7 @@ class MorphemeListView(ListView):
                       'mrpType',
                       'useInstr', 'sense', 'StemSN', 'rmrks',
                       'handedness',
-                      'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc',
+                      'domhndsh', 'subhndsh', 'handCh', 'absOriPalm', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc',
                       'oriCh', 'contType',
                       'movSh', 'movDir', 'repeat', 'altern', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType',
@@ -2455,11 +2465,11 @@ class MinimalPairsListView(ListView):
 
         context['glosses_with_phonology'] = glosses_with_phonology
 
-        context['field_names'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh',
+        context['field_names'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'absOriPalm',
                                   'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern' ]
 
         context['field_labels'] = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
-                      'handCh': 'Handshape Change', 'relatArtic': 'Relation between Articulators',
+                      'handCh': 'Handshape Change', 'absOriPalm': 'Absolute Orientation: Palm', 'relatArtic': 'Relation between Articulators',
                       'locprim': 'Location',
                       'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
                       'oriCh': 'Orientation Change',
@@ -2468,7 +2478,7 @@ class MinimalPairsListView(ListView):
                       'altern': 'Alternating Movement' }
 
         context['field_categories'] = {'handedness': 'Handedness', 'domhndsh': 'Handshape', 'subhndsh': 'Handshape',
-                      'handCh': 'handshapeChange', 'relatArtic': 'relatArtic',
+                      'handCh': 'handshapeChange', 'absOriPalm': 'AbsOriPalm', 'relatArtic': 'relatArtic',
                       'locprim': 'Location',
                       'relOriMov': 'relOriMov', 'relOriLoc': 'relOriLoc',
                       'oriCh': 'oriChange',

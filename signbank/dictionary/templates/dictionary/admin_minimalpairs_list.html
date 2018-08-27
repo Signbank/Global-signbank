@@ -37,7 +37,9 @@
     {% with mpp.0 as focus_gloss %}
     {% for other_gloss in mpp.1 %}
         <tr>
-        <td>{{focus_gloss.dataset}}</td><td>{{focus_gloss}}</td><td>{{other_gloss}}</td>
+            <td>{{focus_gloss.dataset}}</td>
+            <td><a href='{% url "dictionary:admin_gloss_view" pk=focus_gloss.id %}'>{{focus_gloss}}</a></td>
+            <td><a href='{% url "dictionary:admin_gloss_view" pk=other_gloss.id %}'>{{other_gloss}}</a></td>
              {% load field_choice %}
              {% for field in field_names %}
              {% with focus_gloss|getattr:field|normalise_empty as focus_gloss_value %}
