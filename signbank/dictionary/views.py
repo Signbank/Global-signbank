@@ -580,7 +580,6 @@ def add_new_sign(request):
     context = {}
 
     selected_datasets = get_selected_datasets_for_user(request.user)
-    context['selected_datasets'] = selected_datasets
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -621,7 +620,6 @@ def add_new_morpheme(request):
     oContext['choice_lists'] = oChoiceLists
 
     selected_datasets = get_selected_datasets_for_user(request.user)
-    oContext['selected_datasets'] = selected_datasets
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     oContext['dataset_languages'] = dataset_languages
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
