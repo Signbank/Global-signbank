@@ -16,6 +16,7 @@
 <script type='text/javascript'>
     var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+    var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
     var csrf_token = '{{csrf_token}}';
 
      $(document).ready(function(){
@@ -30,7 +31,7 @@
 
         $('[data-toggle="tooltip"]').tooltip();
 
-        if (show_dataset_interface_options) {
+        if (show_dataset_interface_options && user_can_add_gloss) {
 
             /**
              * In the 'add gloss' form, toggle the annotation idgloss fields depending on the chosen dataset
