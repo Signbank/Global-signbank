@@ -3102,15 +3102,24 @@ class DatasetManagerView(ListView):
                                   ') already has change permission for this dataset.'))
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
+            if not dataset_object in get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False):
+                messages.add_message(self.request, messages.WARNING,
+                                     (
+                                     'User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
+                                     ') does not have view permission for this dataset. Please grant view permission first.'))
+
+                # open Manage View Dataset pane instead of Manage Change Dataset
+                manage_identifier = 'dataset_' + dataset_object.name.replace(' ', '')
+                manage_identifier += '_manage_view'
+                return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
             try:
                 assign_perm('change_dataset', user_object, dataset_object)
-                assign_perm('view_dataset', user_object, dataset_object)
 
                 # send email to new user
                 # probably don't want to assign change permission to new users
 
                 messages.add_message(self.request, messages.INFO,
-                                     ('Change (and view) permission for user ' + username + ' successfully granted.'))
+                                     ('Change permission for user ' + username + ' successfully granted.'))
             except:
                 messages.add_message(self.request, messages.ERROR, ('Error assigning change dataset permission to user '+username+'.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
