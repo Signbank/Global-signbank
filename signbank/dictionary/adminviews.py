@@ -3061,6 +3061,7 @@ class DatasetManagerView(ListView):
 
                 if not user_object.is_active:
                     user_object.is_active = True
+                    assign_perm('dictionary.search_gloss', user_object)
                     user_object.save()
 
                 # send email to user
