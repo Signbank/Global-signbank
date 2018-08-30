@@ -33,7 +33,7 @@ from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS
 from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes
@@ -982,8 +982,15 @@ class GlossDetailView(DetailView):
             # return render(request, 'dictionary/warning.html', status=404)
             raise Http404()
 
+        dataset_of_requested_gloss = self.object.dataset
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
         if request.user.is_authenticated():
-            if self.object.dataset not in get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False):
+            if dataset_of_requested_gloss not in selected_datasets:
+                return render(request, 'dictionary/warning.html',
+                              {'warning': 'The gloss you are trying to view (' + str(
+                                  self.object.id) + ') is not in your selected datasets.'})
+            if dataset_of_requested_gloss not in datasets_user_can_view:
                 if self.object.inWeb:
                     return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
                 else:
@@ -1063,6 +1070,10 @@ class GlossDetailView(DetailView):
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
         # set up weak drop weak prop fields
 
         context['handedness_fields'] = []
@@ -1117,6 +1128,86 @@ class GlossDetailView(DetailView):
                         kind = 'list'
 
                     context[topic+'_fields'].append([human_value,field,labels[field],kind])
+
+
+        # ADD FREQUENCY (COUNT) TO THE VALUES IN THE PULL-DOWN LISTS FOR PHONOLOGY AND SEMANTICS
+
+        # to determine the frequency count of null or empty values for a field, a raw query is used
+        # the raw query selected datasets parameter needs to have form (dataset_id,...,,dataset_id)
+        selected_datasets_as_tuple_list = ""
+        for ds in selected_datasets:
+            if selected_datasets_as_tuple_list:
+                selected_datasets_as_tuple_list = selected_datasets_as_tuple_list + ',' + str(ds.id)
+            else:
+                selected_datasets_as_tuple_list = str(ds.id)
+        selected_datasets_as_tuple_list = '(' + selected_datasets_as_tuple_list + ')'
+
+        context['frequency_lists_phonology_fields'] = {}
+        for field in FIELDS['phonology']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                fieldchoice_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                if len(choice_list) > 0:
+                    choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
+                    choice_list_frequencies = {}
+                    for choice_list_field, machine_value in choice_list_machine_values:
+                        if machine_value == 0:
+
+                            raw_query = "SELECT * FROM dictionary_gloss WHERE dataset_id in " + selected_datasets_as_tuple_list + " and (" + field + " IS NULL OR " + field + " = 0)"
+
+                            choice_list_frequencies[choice_list_field] = len(list(Gloss.objects.raw(raw_query)))
+                        else:
+                            variable_column = field
+                            search_filter = 'exact'
+                            filter = variable_column + '__' + search_filter
+                            choice_list_frequencies[choice_list_field] = Gloss.objects.filter(dataset__in=selected_datasets).filter(**{ filter: machine_value }).count()
+                    context['frequency_lists_phonology_fields'][field] = choice_list_frequencies
+
+        # concatenate the frequency count to each of the menu choices
+        for field in FIELDS['phonology']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                if field in context['choice_lists'].keys():
+                    if field in context['frequency_lists_phonology_fields'].keys():
+                        # revise entries in list with frequencies of choices
+                        old_choice_list = context['choice_lists'][field]
+                        new_choice_list = {}
+                        for f_choice, f_freq in context['frequency_lists_phonology_fields'][field].items():
+                            new_choice_list[f_choice] = old_choice_list[f_choice] +'      ['+str(f_freq)+']'
+                        context['choice_lists'][field] = new_choice_list
+
+
+        context['frequency_lists_semantics_fields'] = {}
+        for field in FIELDS['semantics']:
+            fieldchoice_category = fieldname_to_category(field)
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            if len(choice_list) > 0:
+                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
+                choice_list_frequencies = {}
+                for choice_list_field, machine_value in choice_list_machine_values:
+                    if machine_value == 0:
+
+                        raw_query = "SELECT * FROM dictionary_gloss WHERE dataset_id in " + selected_datasets_as_tuple_list + " and ("+field+ " IS NULL OR "+field+" = 0)"
+
+                        choice_list_frequencies[choice_list_field] = len(list(Gloss.objects.raw(raw_query)))
+                    else:
+                        variable_column = field
+                        search_filter = 'exact'
+                        filter = variable_column + '__' + search_filter
+                        choice_list_frequencies[choice_list_field] = Gloss.objects.filter(dataset__in=selected_datasets).filter(**{ filter: machine_value }).count()
+                context['frequency_lists_semantics_fields'][field] = choice_list_frequencies
+
+        # concatenate the frequency count to each of the menu choices
+        for field in FIELDS['semantics']:
+            if field in context['choice_lists'].keys():
+                if field in context['frequency_lists_semantics_fields'].keys():
+                    # revise entries in list with frequencies of choices
+                    old_choice_list = context['choice_lists'][field]
+                    new_choice_list = {}
+                    for f_choice, f_freq in context['frequency_lists_semantics_fields'][field].items():
+                        new_choice_list[f_choice] = old_choice_list[f_choice] +'      ['+str(f_freq)+']'
+                    context['choice_lists'][field] = new_choice_list
 
         #Add morphology to choice lists
         context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
@@ -1364,10 +1455,6 @@ class GlossDetailView(DetailView):
                 for dataset in qs:
                     dataset_choices[dataset.name] = dataset.name
                 context['dataset_choices'] = json.dumps(dataset_choices)
-
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-        context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
