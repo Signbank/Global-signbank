@@ -2869,8 +2869,86 @@ class DatasetListView(ListView):
     def render_to_response(self, context):
         if self.request.GET.get('export_ecv') == 'ECV':
             return self.render_to_ecv_export_response(context)
+        elif self.request.GET.get('request_view_access') == 'VIEW':
+            return self.render_to_request_response(context)
         else:
             return super(DatasetListView, self).render_to_response(context)
+
+    def render_to_request_response(self, context):
+
+        # check that the user is logged in
+        if self.request.user.is_authenticated():
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        try:
+            dataset_object = Dataset.objects.get(name=self.dataset_name)
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        # make sure the user can write to this dataset
+        # from guardian.shortcuts import get_objects_for_user
+        user_view_datasets = get_objects_for_user(self.request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        if user_view_datasets and not dataset_object in user_view_datasets:
+            # the user currently has no view permission for the requested dataset
+            pass
+        else:
+            # this should not happen from the html page. the check is made to catch a user adding a parameter to the url
+            messages.add_message(self.request, messages.INFO, ('You can already view this dataset.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        from django.contrib.auth.models import Group, User
+        group_manager = Group.objects.get(name='Dataset_Manager')
+
+        owners_of_dataset = dataset_object.owners.all()
+        dataset_manager_found = False
+        for owner in owners_of_dataset:
+
+            groups_of_user = owner.groups.all()
+            if not group_manager in groups_of_user:
+                # this owner can't manage users
+                continue
+
+            dataset_manager_found = True
+            # send email to the dataset manager
+            from django.core.mail import send_mail
+            current_site = Site.objects.get_current()
+
+            subject = render_to_string('registration/dataset_access_email_subject.txt',
+                                       context={'dataset': dataset_object.name,
+                                                'site': current_site})
+            # Email subject *must not* contain newlines
+            subject = ''.join(subject.splitlines())
+
+            message = render_to_string('registration/dataset_access_request_email.txt',
+                                       context={'user': self.request.user,
+                                                'dataset': dataset_object.name,
+                                                'site': current_site})
+
+            # for debug purposes on local machine
+            # print('grant access subject: ', subject)
+            # print('message: ', message)
+            # print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+            # print('user email: ', owner.email)
+
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+
+        if not dataset_manager_found:
+            messages.add_message(self.request, messages.ERROR, ('No dataset manager has been found for '+dataset_object.name+'. Your request could not be submitted.'))
+        else:
+            messages.add_message(self.request, messages.INFO, ('Your request for view access to dataset '+dataset_object.name+' has been submitted.'))
+        return HttpResponseRedirect(URL + '/datasets/available')
 
     def render_to_ecv_export_response(self, context):
 

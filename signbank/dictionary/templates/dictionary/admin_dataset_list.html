@@ -19,9 +19,10 @@
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
           <th style="width:80px;">{% trans "View Dataset" %}</th>
           <th style="width:80px;">{% trans "Change Dataset" %}</th>
+          <th style="width:200px;">{% trans "Request Access" %}</th>
           <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
           <th style="width:80px;">{% trans "Selected" %}</th>
-          <th style="width:120px;">{% trans "Languages" %}</th>
+          <th style="width:200px;">{% trans "Languages" %}</th>
           <th>{% trans "Export dataset" %}</th>
       </tr>
     </thead>
@@ -45,6 +46,21 @@
                 {% trans "Yes" %}
                 {% else %}
                 {% trans "No" %}
+                {% endif %}
+            </td>
+            <td>
+                {% if dataset.is_public %}
+                {% get_obj_perms request.user for dataset as "dataset_perms" %}
+                {% if not "view_dataset" in dataset_perms %}
+                <form name='request_view_dataset_form' id='request_view_dataset_form' method='get'>
+                    <div class="hidden">
+                        <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                    </div>
+                    <div class='btn-group'>
+                        <button id='request_view_access' class='btn btn-primary' type='submit' name='request_view_access' value='VIEW'>{% trans "Request View Access" %}</button>
+                    </div>
+                </form>
+                {% endif %}
                 {% endif %}
             </td>
             <td>
