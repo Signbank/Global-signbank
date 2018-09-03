@@ -617,117 +617,14 @@ class GlossListView(ListView):
 
         for fieldnamemulti in fieldnamesmultiselect:
 
-            if fieldnamemulti == 'handedness':
-                vals = get.getlist('handedness[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(handedness__in=vals)
+            fieldnamemultiVarname = fieldnamemulti + '[]'
+            fieldnameQuery = fieldnamemulti + '__in'
 
-            if fieldnamemulti == 'domhndsh':
-                vals = get.getlist('domhndsh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(domhndsh__in=vals)
-
-            if fieldnamemulti == 'subhndsh':
-                vals = get.getlist('subhndsh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(subhndsh__in=vals)
-
-            if fieldnamemulti == 'locprim':
-                vals = get.getlist('locprim[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(locprim__in=vals)
-
-            if fieldnamemulti == 'relatArtic':
-                vals = get.getlist('relatArtic[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(relatArtic__in=vals)
-
-            if fieldnamemulti == 'relOriMov':
-                vals = get.getlist('relOriMov[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(relOriMov__in=vals)
-
-            if fieldnamemulti == 'relOriLoc':
-                vals = get.getlist('relOriLoc[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(relOriLoc__in=vals)
-
-            if fieldnamemulti == 'oriCh':
-                vals = get.getlist('oriCh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(oriCh__in=vals)
-
-            if fieldnamemulti == 'absOriPalm':
-                vals = get.getlist('absOriPalm[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(absOriPalm__in=vals)
-
-            if fieldnamemulti == 'handCh':
-                vals = get.getlist('handCh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(handCh__in=vals)
-
-            if fieldnamemulti == 'movSh':
-                vals = get.getlist('movSh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(movSh__in=vals)
-
-            if fieldnamemulti == 'movDir':
-                vals = get.getlist('movDir[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(movDir__in=vals)
-
-            if fieldnamemulti == 'contType':
-                vals = get.getlist('contType[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(contType__in=vals)
-
-            if fieldnamemulti == 'namEnt':
-                vals = get.getlist('namEnt[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(namEnt__in=vals)
-
-            if fieldnamemulti == 'semField':
-                vals = get.getlist('semField[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(semField__in=vals)
-
-            if fieldnamemulti == 'wordClass':
-                vals = get.getlist('wordClass[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(wordClass__in=vals)
+            vals = get.getlist(fieldnamemultiVarname)
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
