@@ -587,10 +587,10 @@ class GlossListView(ListView):
                                  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
                                  'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
 
-        fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
-                      'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',
-                      'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm', 'repeat', 'altern',
-                      'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
+        fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks',
+                      'locVirtObj',
+                      'repeat', 'altern',
+                      'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
                       'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence',
                       'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
