@@ -175,7 +175,8 @@ class GlossListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages, dialects=dialects)
+        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
+                                      dialects=dialects, language_code=self.request.LANGUAGE_CODE)
 
         #Translations for field choices dropdown menu
         fields_that_need_translated_options = ['hasComponentOfType','hasMorphemeOfType']
@@ -230,7 +231,6 @@ class GlossListView(ListView):
                 if fieldname not in ['weakprop', 'weakdrop', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
                     field = search_form[fieldname]
                     label = field.label
-
                     context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
         context['input_names_fields_labels_handedness'] = []

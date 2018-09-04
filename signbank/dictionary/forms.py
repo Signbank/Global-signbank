@@ -10,6 +10,9 @@ from tagging.models import Tag
 import datetime as DT
 from signbank.settings.server_specific import DEFAULT_KEYWORDS_LANGUAGE
 
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
+from django.utils.translation import gettext
+
 from django_select2 import *
 from easy_select2.widgets import Select2, Select2Multiple
 
@@ -325,6 +328,7 @@ class GlossSearchForm(forms.ModelForm):
         languages = kwargs.pop('languages')
         sign_languages = kwargs.pop('sign_languages')
         dialects = kwargs.pop('dialects')
+        language_code = kwargs.pop('language_code')
         super(GlossSearchForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in languages:
@@ -339,20 +343,22 @@ class GlossSearchForm(forms.ModelForm):
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 
-        self.fields['signLanguage'] = forms.ModelMultipleChoiceField(label="Sign language", widget=Select2,
+        field_label_signlanguage = gettext("Sign language")
+        field_label_dialects = gettext("Dialect")
+        self.fields['signLanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage, widget=Select2,
                     queryset=SignLanguage.objects.filter(id__in=[signlanguage[0] for signlanguage in sign_languages]))
 
-        self.fields['dialects'] = forms.ModelMultipleChoiceField(label="Dialect", widget=Select2,
+        self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
+        field_language = language_code
         for fieldname in fieldnamesmultiselect:
-            field_label = fieldLabel[fieldname]
+            field_label = gettext(fieldLabel[fieldname])
             field_category = fieldCategory[fieldname]
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
-                                                        choices=[(str(choice.machine_value), choice.english_name) for
-                                                                 choice in
-                                                                 FieldChoice.objects.filter(
-                                                                     field__iexact=field_category)],
+                                                        choices=translated_choices,
                                                         required=False, widget=Select2)
 
 class MorphemeSearchForm(forms.ModelForm):
