@@ -1328,6 +1328,8 @@ def update_cngt_counts(request,folder_index=None):
 
         #Collect the gloss needed
         try:
+            if gloss_id.startswith("gloss"):
+                gloss_id = gloss_id[5:]
             gloss = Gloss.objects.get(id=gloss_id)
         except (ObjectDoesNotExist, ValueError):
 
