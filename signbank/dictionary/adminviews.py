@@ -219,6 +219,8 @@ class GlossListView(ListView):
         else:
             context['SHOW_MORPHEME_SEARCH'] = False
 
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = settings.MULTIPLE_SELECT_GLOSS_FIELDS
+
         context['input_names_fields_and_labels'] = {}
 
         for topic in ['main','phonology','semantics']:
@@ -583,9 +585,6 @@ class GlossListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                                 'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
-                                 'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
 
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks',
                       'locVirtObj',
@@ -615,7 +614,7 @@ class GlossListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
-        for fieldnamemulti in fieldnamesmultiselect:
+        for fieldnamemulti in settings.MULTIPLE_SELECT_GLOSS_FIELDS:
 
             fieldnamemultiVarname = fieldnamemulti + '[]'
             fieldnameQuery = fieldnamemulti + '__in'
@@ -1639,7 +1638,8 @@ class MorphemeListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages, dialects=dialects)
+        search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
+                                         dialects=dialects, language_code=self.request.LANGUAGE_CODE)
 
         context['searchform'] = search_form
         context['glosscount'] = Morpheme.objects.all().count()
@@ -1682,6 +1682,8 @@ class MorphemeListView(ListView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = settings.MULTIPLE_SELECT_MORPHEME_FIELDS
 
         return context
 
@@ -1743,24 +1745,14 @@ class MorphemeListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                                 'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
-                                 'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass', 'hasMorphemeOfType']
-
-        # fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
-        #               'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
-        #               'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
-        #               'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
-        #               'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence',
-        #               'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
-        #               'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
 
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN',
                       'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic', 'relOriMov', 'relOriLoc', 'oriCh',
                       'handCh', 'absOriPalm', 'repeat', 'altern',
                       'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'iconType',
-                      'namEnt', 'semField', 'valence',
+                      # 'namEnt', 'semField',
+                      'valence',
                       'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO',
                       'tokNoSgnrA',
                       'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
@@ -1784,119 +1776,16 @@ class MorphemeListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
-        for fieldnamemulti in fieldnamesmultiselect:
+        for fieldnamemulti in settings.MULTIPLE_SELECT_MORPHEME_FIELDS:
 
-            # if fieldnamemulti == 'handedness':
-            #     vals = get.getlist('handedness[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(handedness__in=vals)
-            #
-            # if fieldnamemulti == 'domhndsh':
-            #     vals = get.getlist('domhndsh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(domhndsh__in=vals)
-            #
-            # if fieldnamemulti == 'subhndsh':
-            #     vals = get.getlist('subhndsh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(subhndsh__in=vals)
-            #
-            # if fieldnamemulti == 'locprim':
-            #     vals = get.getlist('locprim[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(locprim__in=vals)
-            #
-            # if fieldnamemulti == 'relatArtic':
-            #     vals = get.getlist('relatArtic[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(relatArtic__in=vals)
-            #
-            # if fieldnamemulti == 'relOriMov':
-            #     vals = get.getlist('relOriMov[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(relOriMov__in=vals)
-            #
-            # if fieldnamemulti == 'relOriLoc':
-            #     vals = get.getlist('relOriLoc[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(relOriLoc__in=vals)
-            #
-            # if fieldnamemulti == 'oriCh':
-            #     vals = get.getlist('oriCh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(oriCh__in=vals)
-            #
-            # if fieldnamemulti == 'handCh':
-            #     vals = get.getlist('handCh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(handCh__in=vals)
-            #
-            # if fieldnamemulti == 'movSh':
-            #     vals = get.getlist('movSh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(movSh__in=vals)
-            #
-            # if fieldnamemulti == 'movDir':
-            #     vals = get.getlist('movDir[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(movDir__in=vals)
-            #
-            # if fieldnamemulti == 'contType':
-            #     vals = get.getlist('contType[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(contType__in=vals)
+            fieldnamemultiVarname = fieldnamemulti + '[]'
+            fieldnameQuery = fieldnamemulti + '__in'
 
-            if fieldnamemulti == 'hasMorphemeOfType':
-                vals = get.getlist('hasMorphemeOfType[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(mrpType__in=vals)
-
-            if fieldnamemulti == 'namEnt':
-                vals = get.getlist('namEnt[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(namEnt__in=vals)
-
-            if fieldnamemulti == 'semField':
-                vals = get.getlist('semField[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(semField__in=vals)
-
-            if fieldnamemulti == 'wordClass':
-                vals = get.getlist('wordClass[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(wordClass__in=vals)
+            vals = get.getlist(fieldnamemultiVarname)
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
@@ -2020,14 +1909,6 @@ class MorphemeListView(ListView):
                 morpheme__in=[morpheme.pk for morpheme in potential_morphemes])
             potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs]
             qs = qs.filter(pk__in=potential_pks)
-
-        # if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
-        #
-        #     # Get all Morphemes of the indicated mrpType
-        #     target_morphemes = Morpheme.objects.filter(mrpType__exact=get['hasMorphemeOfType'])
-        #     # Turn this into a list with pks
-        #     pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in target_morphemes]
-        #     qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
 

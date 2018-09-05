@@ -4,7 +4,7 @@ from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
                                         MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset, FieldChoice, \
-                                        Translation, Keyword, Language, SignLanguage
+                                        Translation, Keyword, Language, SignLanguage, fieldname_to_category
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
@@ -204,32 +204,6 @@ COMPONENT_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphologyType'
 MORPHEME_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphemeType')
 ATTRS_FOR_FORMS = {'class':'form-control'}
 
-fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                         'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
-                         'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
-
-fieldLabel = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
-              'handCh': 'Handshape Change', 'absOriPalm': 'Absolute Orientation: Palm',
-              'relatArtic': 'Relation between Articulators',
-              'locprim': 'Location', 'locVirtObj': 'Virual Object',
-              'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
-              'oriCh': 'Orientation Change',
-              'contType': 'Contact Type', 'movSh': 'Movement Shape', 'movDir': 'Movement Direction',
-              'repeat': 'Repeated Movement',
-              'altern': 'Alternating Movement', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture',
-              'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation',
-              'namEnt': 'Named Entity', 'semField': 'Semantic Field', 'wordClass': 'Word class'}
-
-fieldCategory = {'handedness': 'Handedness', 'domhndsh': 'Handshape', 'subhndsh': 'Handshape',
-                      'handCh': 'handshapeChange', 'absOriPalm': 'AbsOriPalm', 'relatArtic': 'relatArtic',
-                      'locprim': 'Location',
-                      'relOriMov': 'relOriMov', 'relOriLoc': 'relOriLoc',
-                      'oriCh': 'oriChange',
-                      'contType': 'ContactType', 'movSh': 'MovementShape', 'movDir': 'MovementDir',
-                      'repeat': 'repeat',
-                      'altern': 'altern',
-                      'namEnt': 'NamedEntity', 'semField': 'SemField', 'wordClass': 'WordClass'}
-
 class GlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False #otherwise the html required attribute will show up on every form
@@ -352,14 +326,15 @@ class GlossSearchForm(forms.ModelForm):
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
         field_language = language_code
-        for fieldname in fieldnamesmultiselect:
-            field_label = gettext(fieldLabel[fieldname])
-            field_category = fieldCategory[fieldname]
+        for fieldname in settings.MULTIPLE_SELECT_GLOSS_FIELDS:
+            field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+            field_category = fieldname_to_category(fieldname)
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
+
 
 class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
@@ -392,30 +367,10 @@ class MorphemeSearchForm(forms.ModelForm):
     hasRelation = forms.ChoiceField(label=_(u'Type of relation'), choices=RELATION_ROLE_CHOICES,
                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
-    hasMorphemeOfType = forms.TypedMultipleChoiceField(label=_(u'Has morpheme type'),
-                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
-                                                         FieldChoice.objects.filter(field__iexact='MorphemeType')],
-                                                required=False, widget=Select2)
-
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),
                                choices=NULLBOOLEANCHOICES)
     altern = forms.ChoiceField(label=_(u'Alternating Movement'),
                                choices=NULLBOOLEANCHOICES)
-
-    namEnt = forms.TypedMultipleChoiceField(label=_(u'Named Entity'),
-                                                choices=[(str(choice.machine_value), choice.english_name) for choice in
-                                                         FieldChoice.objects.filter(field__iexact='NamedEntity')],
-                                                required=False, widget=Select2)
-
-    semField = forms.TypedMultipleChoiceField(label=_(u'Semantic Field'),
-                                            choices=[(str(choice.machine_value), choice.english_name) for choice in
-                                                     FieldChoice.objects.filter(field__iexact='SemField')],
-                                            required=False, widget=Select2)
-
-    wordClass = forms.TypedMultipleChoiceField(label=_(u'Word class'),
-                                            choices=[(str(choice.machine_value), choice.english_name) for choice in
-                                                     FieldChoice.objects.filter(field__iexact='WordClass')],
-                                            required=False, widget=Select2)
 
     isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'), choices=NULLBOOLEANCHOICES,
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -437,7 +392,7 @@ class MorphemeSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Morpheme
-        fields = ('mrpType', 'idgloss', 'morph', 'sense',
+        fields = ('idgloss', 'morph', 'sense', # 'mrpType',
                   'sn', 'StemSN', 'comptf', 'compound',
                   # 'inWeb', 'isNew',
                   'initial_relative_orientation', 'final_relative_orientation',
@@ -466,6 +421,7 @@ class MorphemeSearchForm(forms.ModelForm):
         languages = kwargs.pop('languages')
         sign_languages = kwargs.pop('sign_languages')
         dialects = kwargs.pop('dialects')
+        language_code = kwargs.pop('language_code')
         super(MorphemeSearchForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in languages:
@@ -480,11 +436,23 @@ class MorphemeSearchForm(forms.ModelForm):
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 
-        self.fields['SIGNLANG'] = forms.ModelMultipleChoiceField(label="Sign language", widget=Select2,
+        field_label_signlanguage = gettext("Sign language")
+        field_label_dialects = gettext("Dialect")
+        self.fields['SIGNLANG'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage, widget=Select2,
                     queryset=SignLanguage.objects.filter(id__in=[signlanguage[0] for signlanguage in sign_languages]))
 
-        self.fields['dialects'] = forms.ModelMultipleChoiceField(label="Dialect", widget=Select2,
+        self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
+
+        field_language = language_code
+        for fieldname in settings.MULTIPLE_SELECT_MORPHEME_FIELDS:
+            field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+            field_category = fieldname_to_category(fieldname)
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
+            self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
+                                                        choices=translated_choices,
+                                                        required=False, widget=Select2)
 
 class DefinitionForm(forms.ModelForm):
     role = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),

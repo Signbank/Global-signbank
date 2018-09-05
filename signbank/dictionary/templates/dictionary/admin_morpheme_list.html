@@ -16,6 +16,8 @@
     <script type='text/javascript'>
     var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+    var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
+    var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
     var csrf_token = '{{csrf_token}}';
     
     $(document).ready(function(){
@@ -31,7 +33,7 @@
 
         $('[data-toggle="tooltip"]').tooltip();
 
-        if (show_dataset_interface_options) {
+        if (show_dataset_interface_options && user_can_add_morpheme) {
             set_annotationidglosslanguages();
 
             $('#id_dataset').change(function() {
@@ -51,54 +53,35 @@
             }
         }
 
-         $('#id_hasMorphemeOfType').attr('multiple','multiple');
-         $('#id_hasMorphemeOfType').attr('class',"js-example-basic-multiple form-control");
-         $('#id_hasMorphemeOfType').attr('name','hasMorphemeOfType[]');
-         $('#id_hasMorphemeOfType').css('width', '100%');
-         $('#id_hasMorphemeOfType').select2({
+        function makeMultipleSelect(fieldId,fieldVar) {
+            var target_pulldown = document.getElementById(fieldId);
+            target_pulldown.setAttribute('multiple','multiple');
+            target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+            target_pulldown.setAttribute('name',fieldVar);
+            target_pulldown.style.width = '100%';
+        }
+
+         for (var i = 0; i < multiple_select_fields.length; i++) {
+            var this_id = 'id_' + multiple_select_fields[i];
+            var this_var = multiple_select_fields[i] + '[]';
+            makeMultipleSelect(this_id, this_var);
+         }
+
+         $('.js-example-basic-multiple').select2({
             allowClear: true,
             dropdownAutoWidth: true,
             width: 'resolve'
          });
-         $('#id_hasMorphemeOfType').val(null).trigger('change');
+         $('.js-example-basic-multiple').val(null).trigger('change');
 
-         $('#id_namEnt').attr('multiple','multiple');
-         $('#id_namEnt').attr('class',"js-example-basic-multiple form-control");
-         $('#id_namEnt').attr('name','namEnt[]');
-         $('#id_namEnt').css('width', '100%');
-         $('#id_namEnt').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_namEnt').val(null).trigger('change');
+         <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
+         <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
 
-         $('#id_semField').attr('multiple','multiple');
-         $('#id_semField').attr('class',"js-example-basic-multiple form-control");
-         $('#id_semField').attr('name','semField[]');
-         $('#id_semField').css('width', '100%');
-         $('#id_semField').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_semField').val(null).trigger('change');
+         <!--Alert: the id for sign language is SIGNLANG, not the same as the model field!-->
+         <!--Django was messing up the template generation otherwise -->
+         <!--The value field is signlanguage[] matches the model)-->
 
-         $('#id_wordClass').attr('multiple','multiple');
-         $('#id_wordClass').attr('class',"js-example-basic-multiple form-control");
-         $('#id_wordClass').attr('name','wordClass[]');
-         $('#id_wordClass').css('width', '100%');
-         $('#id_wordClass').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_wordClass').val(null).trigger('change');
-
-         $('#id_SIGNLANG').attr('multiple','multiple');
-         $('#id_SIGNLANG').attr('class',"js-example-basic-multiple form-control");
-         $('#id_SIGNLANG').attr('name','signlanguage[]');
-         $('#id_SIGNLANG').css('width', '100%');
+         makeMultipleSelect('id_SIGNLANG', 'signlanguage[]');
          $('#id_SIGNLANG').select2({
             allowClear: true,
             dropdownAutoWidth: true,
@@ -110,10 +93,10 @@
             set_signlanguages_dialects();
          });
 
-         $('#id_dialects').attr('multiple','multiple');
-         $('#id_dialects').attr('class',"js-example-basic-multiple form-control");
-         $('#id_dialects').attr('name','dialect[]');
-         $('#id_dialects').css('width', '100%');
+         <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
+         <!--Django was messing up the template generation otherwise (without the s at the end)-->
+
+         makeMultipleSelect('id_dialects', 'dialect[]');
          $('#id_dialects').select2({
             allowClear: true,
             dropdownAutoWidth: true,
@@ -387,8 +370,8 @@ function set_signlanguages_dialects() {
               <div id='morph_search' class='collapse'>
                     <table class='table'>
                         <tr id='mrpType_selection'>
-                            <td><label>{{searchform.hasMorphemeOfType.label}}</label>
-                                {{searchform.hasMorphemeOfType}}
+                            <td><label>{{searchform.mrpType.label}}</label>
+                                {{searchform.mrpType}}
                             </td>
                         </tr>
                     </table>
