@@ -219,6 +219,8 @@ class GlossListView(ListView):
         else:
             context['SHOW_MORPHEME_SEARCH'] = False
 
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = settings.MULTIPLE_SELECT_GLOSS_FIELDS
+
         context['input_names_fields_and_labels'] = {}
 
         for topic in ['main','phonology','semantics']:
@@ -583,9 +585,6 @@ class GlossListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                                 'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
-                                 'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
 
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks',
                       'locVirtObj',
@@ -615,7 +614,7 @@ class GlossListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
-        for fieldnamemulti in fieldnamesmultiselect:
+        for fieldnamemulti in settings.MULTIPLE_SELECT_GLOSS_FIELDS:
 
             fieldnamemultiVarname = fieldnamemulti + '[]'
             fieldnameQuery = fieldnamemulti + '__in'
@@ -1684,6 +1683,8 @@ class MorphemeListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = settings.MULTIPLE_SELECT_MORPHEME_FIELDS
+
         return context
 
 
@@ -1744,19 +1745,6 @@ class MorphemeListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnamesmultiselect_morpheme = ['namEnt', 'semField', 'wordClass', 'mrpType']
-
-        # fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-        #                          'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
-        #                          'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass', 'hasMorphemeOfType']
-
-        # fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
-        #               'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
-        #               'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
-        #               'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
-        #               'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence',
-        #               'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
-        #               'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
 
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN',
                       'compound', 'rmrks', 'handedness',
@@ -1788,7 +1776,7 @@ class MorphemeListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
-        for fieldnamemulti in fieldnamesmultiselect_morpheme:
+        for fieldnamemulti in settings.MULTIPLE_SELECT_MORPHEME_FIELDS:
 
             fieldnamemultiVarname = fieldnamemulti + '[]'
             fieldnameQuery = fieldnamemulti + '__in'

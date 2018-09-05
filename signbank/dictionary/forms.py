@@ -4,7 +4,7 @@ from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
                                         MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset, FieldChoice, \
-                                        Translation, Keyword, Language, SignLanguage
+                                        Translation, Keyword, Language, SignLanguage, fieldname_to_category
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
@@ -204,32 +204,6 @@ COMPONENT_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphologyType'
 MORPHEME_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphemeType')
 ATTRS_FOR_FORMS = {'class':'form-control'}
 
-fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                         'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
-                         'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
-
-fieldLabel = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
-              'handCh': 'Handshape Change', 'absOriPalm': 'Absolute Orientation: Palm',
-              'relatArtic': 'Relation between Articulators',
-              'locprim': 'Location', 'locVirtObj': 'Virual Object',
-              'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
-              'oriCh': 'Orientation Change',
-              'contType': 'Contact Type', 'movSh': 'Movement Shape', 'movDir': 'Movement Direction',
-              'repeat': 'Repeated Movement',
-              'altern': 'Alternating Movement', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture',
-              'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation',
-              'namEnt': 'Named Entity', 'semField': 'Semantic Field', 'wordClass': 'Word class', 'mrpType': 'Has morpheme type'}
-
-fieldCategory = {'handedness': 'Handedness', 'domhndsh': 'Handshape', 'subhndsh': 'Handshape',
-                      'handCh': 'handshapeChange', 'absOriPalm': 'AbsOriPalm', 'relatArtic': 'relatArtic',
-                      'locprim': 'Location',
-                      'relOriMov': 'relOriMov', 'relOriLoc': 'relOriLoc',
-                      'oriCh': 'oriChange',
-                      'contType': 'ContactType', 'movSh': 'MovementShape', 'movDir': 'MovementDir',
-                      'repeat': 'repeat',
-                      'altern': 'altern',
-                      'namEnt': 'NamedEntity', 'semField': 'SemField', 'wordClass': 'WordClass', 'mrpType': 'MorphemeType'}
-
 class GlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False #otherwise the html required attribute will show up on every form
@@ -352,17 +326,15 @@ class GlossSearchForm(forms.ModelForm):
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
         field_language = language_code
-        for fieldname in fieldnamesmultiselect:
-            field_label = gettext(fieldLabel[fieldname])
-            field_category = fieldCategory[fieldname]
+        for fieldname in settings.MULTIPLE_SELECT_GLOSS_FIELDS:
+            field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+            field_category = fieldname_to_category(fieldname)
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
 
-
-fieldnamesmultiselect_morpheme = ['namEnt', 'semField', 'wordClass', 'mrpType']
 
 class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
@@ -473,9 +445,9 @@ class MorphemeSearchForm(forms.ModelForm):
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
         field_language = language_code
-        for fieldname in fieldnamesmultiselect_morpheme:
-            field_label = gettext(fieldLabel[fieldname])
-            field_category = fieldCategory[fieldname]
+        for fieldname in settings.MULTIPLE_SELECT_MORPHEME_FIELDS:
+            field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+            field_category = fieldname_to_category(fieldname)
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,

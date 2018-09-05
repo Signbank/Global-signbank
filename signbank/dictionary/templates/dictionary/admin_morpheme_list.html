@@ -17,6 +17,7 @@
     var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
     var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
+    var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
     var csrf_token = '{{csrf_token}}';
     
     $(document).ready(function(){
@@ -60,11 +61,9 @@
             target_pulldown.style.width = '100%';
         }
 
-        var multiple_select_ids = ['mrpType', 'namEnt', 'semField', 'wordClass']
-
-         for (var i = 0; i < multiple_select_ids.length; i++) {
-            var this_id = 'id_' + multiple_select_ids[i];
-            var this_var = multiple_select_ids[i] + '[]';
+         for (var i = 0; i < multiple_select_fields.length; i++) {
+            var this_id = 'id_' + multiple_select_fields[i];
+            var this_var = multiple_select_fields[i] + '[]';
             makeMultipleSelect(this_id, this_var);
          }
 
