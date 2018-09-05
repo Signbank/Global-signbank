@@ -1044,9 +1044,11 @@ class GlossDetailView(DetailView):
                              'subhndsh_letter']:
                 fieldchoice_category = fieldname_to_category(field)
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
                 if len(choice_list) > 0:
                     choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
                     choice_list_frequencies = {}
+                    choice_list_labels = {}
                     for choice_list_field, machine_value in choice_list_machine_values:
                         if machine_value == 0:
 
@@ -1068,10 +1070,9 @@ class GlossDetailView(DetailView):
                     if field in context['frequency_lists_phonology_fields'].keys():
                         # revise entries in list with frequencies of choices
                         old_choice_list = context['choice_lists'][field]
-                        new_choice_list = {}
                         for f_choice, f_freq in context['frequency_lists_phonology_fields'][field].items():
-                            new_choice_list[f_choice] = old_choice_list[f_choice] +'      ['+str(f_freq)+']'
-                        context['choice_lists'][field] = new_choice_list
+                            old_choice_list[f_choice] = old_choice_list[f_choice] + '      [' + str(f_freq) + ']'
+                        context['choice_lists'][field] = old_choice_list
 
 
         context['frequency_lists_semantics_fields'] = {}
@@ -1100,10 +1101,9 @@ class GlossDetailView(DetailView):
                 if field in context['frequency_lists_semantics_fields'].keys():
                     # revise entries in list with frequencies of choices
                     old_choice_list = context['choice_lists'][field]
-                    new_choice_list = {}
                     for f_choice, f_freq in context['frequency_lists_semantics_fields'][field].items():
-                        new_choice_list[f_choice] = old_choice_list[f_choice] +'      ['+str(f_freq)+']'
-                    context['choice_lists'][field] = new_choice_list
+                        old_choice_list[f_choice] = old_choice_list[f_choice] + '      [' + str(f_freq) + ']'
+                    context['choice_lists'][field] = old_choice_list
 
         #Add morphology to choice lists
         context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
