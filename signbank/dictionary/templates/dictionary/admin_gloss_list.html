@@ -17,6 +17,7 @@
     var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
     var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
+    var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
     var csrf_token = '{{csrf_token}}';
 
      $(document).ready(function(){
@@ -55,187 +56,36 @@
              }
          }
 
-         $('#id_handedness').attr('multiple','multiple');
-         $('#id_handedness').attr('class',"js-example-basic-multiple form-control");
-         $('#id_handedness').attr('name','handedness[]');
-         $('#id_handedness').css('width', '100%');
-         $('#id_handedness').select2({
+        function makeMultipleSelect(fieldId,fieldVar) {
+            var target_pulldown = document.getElementById(fieldId);
+            target_pulldown.setAttribute('multiple','multiple');
+            target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+            target_pulldown.setAttribute('name',fieldVar);
+            target_pulldown.style.width = '100%';
+        }
+
+         for (var i = 0; i < multiple_select_fields.length; i++) {
+            var this_id = 'id_' + multiple_select_fields[i];
+            var this_var = multiple_select_fields[i] + '[]';
+            makeMultipleSelect(this_id, this_var);
+         }
+
+         $('.js-example-basic-multiple').select2({
             allowClear: true,
             dropdownAutoWidth: true,
             width: 'resolve'
          });
-         $('#id_handedness').val(null).trigger('change');
-
-         $('#id_domhndsh').attr('multiple','multiple');
-         $('#id_domhndsh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_domhndsh').attr('name','domhndsh[]');
-         $('#id_domhndsh').css('width', '100%');
-         $('#id_domhndsh').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_domhndsh').val(null).trigger('change');
-
-         $('#id_subhndsh').attr('multiple','multiple');
-         $('#id_subhndsh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_subhndsh').attr('name','subhndsh[]');
-         $('#id_subhndsh').css('width', '100%');
-         $('#id_subhndsh').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_subhndsh').val(null).trigger('change');
-
-         $('#id_handCh').attr('multiple','multiple');
-         $('#id_handCh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_handCh').attr('name','handCh[]');
-         $('#id_handCh').css('width', '100%');
-         $('#id_handCh').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_handCh').val(null).trigger('change');
-
-         $('#id_absOriPalm').attr('multiple','multiple');
-         $('#id_absOriPalm').attr('class',"js-example-basic-multiple form-control");
-         $('#id_absOriPalm').attr('name','absOriPalm[]');
-         $('#id_absOriPalm').css('width', '100%');
-         $('#id_absOriPalm').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_absOriPalm').val(null).trigger('change');
-
-         $('#id_relatArtic').attr('multiple','multiple');
-         $('#id_relatArtic').attr('class',"js-example-basic-multiple form-control");
-         $('#id_relatArtic').attr('name','relatArtic[]');
-         $('#id_relatArtic').css('width', '100%');
-         $('#id_relatArtic').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_relatArtic').val(null).trigger('change');
-
-         $('#id_locprim').attr('multiple','multiple');
-         $('#id_locprim').attr('class',"js-example-basic-multiple form-control");
-         $('#id_locprim').attr('name','locprim[]');
-         $('#id_locprim').css('width', '100%');
-         $('#id_locprim').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_locprim').val(null).trigger('change');
-
-         $('#id_relOriMov').attr('multiple','multiple');
-         $('#id_relOriMov').attr('class',"js-example-basic-multiple form-control");
-         $('#id_relOriMov').attr('name','relOriMov[]');
-         $('#id_relOriMov').css('width', '100%');
-         $('#id_relOriMov').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_relOriMov').val(null).trigger('change');
-
-         $('#id_relOriLoc').attr('multiple','multiple');
-         $('#id_relOriLoc').attr('class',"js-example-basic-multiple form-control");
-         $('#id_relOriLoc').attr('name','relOriLoc[]');
-         $('#id_relOriLoc').css('width', '100%');
-         $('#id_relOriLoc').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_relOriLoc').val(null).trigger('change');
-
-         $('#id_oriCh').attr('multiple','multiple');
-         $('#id_oriCh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_oriCh').attr('name','oriCh[]');
-         $('#id_oriCh').css('width', '100%');
-         $('#id_oriCh').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_oriCh').val(null).trigger('change');
-
-         $('#id_contType').attr('multiple','multiple');
-         $('#id_contType').attr('class',"js-example-basic-multiple form-control");
-         $('#id_contType').attr('name','contType[]');
-         $('#id_contType').css('width', '100%');
-         $('#id_contType').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_contType').val(null).trigger('change');
-
-         $('#id_movSh').attr('multiple','multiple');
-         $('#id_movSh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_movSh').attr('name','movSh[]');
-         $('#id_movSh').css('width', '100%');
-         $('#id_movSh').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_movSh').val(null).trigger('change');
-
-         $('#id_movDir').attr('multiple','multiple');
-         $('#id_movDir').attr('class',"js-example-basic-multiple form-control");
-         $('#id_movDir').attr('name','movDir[]');
-         $('#id_movDir').css('width', '100%');
-         $('#id_movDir').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_movDir').val(null).trigger('change');
+         $('.js-example-basic-multiple').val(null).trigger('change');
 
 
-         $('#id_namEnt').attr('multiple','multiple');
-         $('#id_namEnt').attr('class',"js-example-basic-multiple form-control");
-         $('#id_namEnt').attr('name','namEnt[]');
-         $('#id_namEnt').css('width', '100%');
-         $('#id_namEnt').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_namEnt').val(null).trigger('change');
+         <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
+         <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
 
-         $('#id_semField').attr('multiple','multiple');
-         $('#id_semField').attr('class',"js-example-basic-multiple form-control");
-         $('#id_semField').attr('name','semField[]');
-         $('#id_semField').css('width', '100%');
-         $('#id_semField').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_semField').val(null).trigger('change');
+         <!--Alert: the id for sign language is signLanguage (with an uppercase L), not the same as the model field!-->
+         <!--Django was messing up the template generation otherwise (without the uppercase L)-->
+         <!--The value field is signlanguage[] (lowercase l to match the model)-->
 
-         $('#id_wordClass').attr('multiple','multiple');
-         $('#id_wordClass').attr('class',"js-example-basic-multiple form-control");
-         $('#id_wordClass').attr('name','wordClass[]');
-         $('#id_wordClass').css('width', '100%');
-         $('#id_wordClass').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_wordClass').val(null).trigger('change');
-
-         $('#id_signLanguage').attr('multiple','multiple');
-         $('#id_signLanguage').attr('class',"js-example-basic-multiple form-control");
-         $('#id_signLanguage').attr('name','signlanguage[]');
-         $('#id_signLanguage').css('width', '100%');
+         makeMultipleSelect('id_signLanguage', 'signlanguage[]');
          $('#id_signLanguage').select2({
             allowClear: true,
             dropdownAutoWidth: true,
@@ -247,10 +97,10 @@
             set_signlanguages_dialects();
          });
 
-         $('#id_dialects').attr('multiple','multiple');
-         $('#id_dialects').attr('class',"js-example-basic-multiple form-control");
-         $('#id_dialects').attr('name','dialect[]');
-         $('#id_dialects').css('width', '100%');
+         <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
+         <!--Django was messing up the template generation otherwise (without the s at the end)-->
+
+         makeMultipleSelect('id_dialects', 'dialect[]');
          $('#id_dialects').select2({
             allowClear: true,
             dropdownAutoWidth: true,

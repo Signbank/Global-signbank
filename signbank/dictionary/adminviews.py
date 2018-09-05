@@ -175,7 +175,8 @@ class GlossListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages, dialects=dialects)
+        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
+                                      dialects=dialects, language_code=self.request.LANGUAGE_CODE)
 
         #Translations for field choices dropdown menu
         fields_that_need_translated_options = ['hasComponentOfType','hasMorphemeOfType']
@@ -218,6 +219,8 @@ class GlossListView(ListView):
         else:
             context['SHOW_MORPHEME_SEARCH'] = False
 
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = settings.MULTIPLE_SELECT_GLOSS_FIELDS
+
         context['input_names_fields_and_labels'] = {}
 
         for topic in ['main','phonology','semantics']:
@@ -230,7 +233,6 @@ class GlossListView(ListView):
                 if fieldname not in ['weakprop', 'weakdrop', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
                     field = search_form[fieldname]
                     label = field.label
-
                     context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
         context['input_names_fields_labels_handedness'] = []
@@ -583,14 +585,11 @@ class GlossListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                                 'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
-                                 'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
 
-        fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
-                      'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',
-                      'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm', 'repeat', 'altern',
-                      'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
+        fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks',
+                      'locVirtObj',
+                      'repeat', 'altern',
+                      'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
                       'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence',
                       'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
@@ -615,119 +614,16 @@ class GlossListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
-        for fieldnamemulti in fieldnamesmultiselect:
+        for fieldnamemulti in settings.MULTIPLE_SELECT_GLOSS_FIELDS:
 
-            if fieldnamemulti == 'handedness':
-                vals = get.getlist('handedness[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(handedness__in=vals)
+            fieldnamemultiVarname = fieldnamemulti + '[]'
+            fieldnameQuery = fieldnamemulti + '__in'
 
-            if fieldnamemulti == 'domhndsh':
-                vals = get.getlist('domhndsh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(domhndsh__in=vals)
-
-            if fieldnamemulti == 'subhndsh':
-                vals = get.getlist('subhndsh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(subhndsh__in=vals)
-
-            if fieldnamemulti == 'locprim':
-                vals = get.getlist('locprim[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(locprim__in=vals)
-
-            if fieldnamemulti == 'relatArtic':
-                vals = get.getlist('relatArtic[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(relatArtic__in=vals)
-
-            if fieldnamemulti == 'relOriMov':
-                vals = get.getlist('relOriMov[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(relOriMov__in=vals)
-
-            if fieldnamemulti == 'relOriLoc':
-                vals = get.getlist('relOriLoc[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(relOriLoc__in=vals)
-
-            if fieldnamemulti == 'oriCh':
-                vals = get.getlist('oriCh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(oriCh__in=vals)
-
-            if fieldnamemulti == 'absOriPalm':
-                vals = get.getlist('absOriPalm[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(absOriPalm__in=vals)
-
-            if fieldnamemulti == 'handCh':
-                vals = get.getlist('handCh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(handCh__in=vals)
-
-            if fieldnamemulti == 'movSh':
-                vals = get.getlist('movSh[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(movSh__in=vals)
-
-            if fieldnamemulti == 'movDir':
-                vals = get.getlist('movDir[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(movDir__in=vals)
-
-            if fieldnamemulti == 'contType':
-                vals = get.getlist('contType[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(contType__in=vals)
-
-            if fieldnamemulti == 'namEnt':
-                vals = get.getlist('namEnt[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(namEnt__in=vals)
-
-            if fieldnamemulti == 'semField':
-                vals = get.getlist('semField[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(semField__in=vals)
-
-            if fieldnamemulti == 'wordClass':
-                vals = get.getlist('wordClass[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(wordClass__in=vals)
+            vals = get.getlist(fieldnamemultiVarname)
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
@@ -1148,9 +1044,11 @@ class GlossDetailView(DetailView):
                              'subhndsh_letter']:
                 fieldchoice_category = fieldname_to_category(field)
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
                 if len(choice_list) > 0:
                     choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
                     choice_list_frequencies = {}
+                    choice_list_labels = {}
                     for choice_list_field, machine_value in choice_list_machine_values:
                         if machine_value == 0:
 
@@ -1172,10 +1070,9 @@ class GlossDetailView(DetailView):
                     if field in context['frequency_lists_phonology_fields'].keys():
                         # revise entries in list with frequencies of choices
                         old_choice_list = context['choice_lists'][field]
-                        new_choice_list = {}
                         for f_choice, f_freq in context['frequency_lists_phonology_fields'][field].items():
-                            new_choice_list[f_choice] = old_choice_list[f_choice] +'      ['+str(f_freq)+']'
-                        context['choice_lists'][field] = new_choice_list
+                            old_choice_list[f_choice] = old_choice_list[f_choice] + '      [' + str(f_freq) + ']'
+                        context['choice_lists'][field] = old_choice_list
 
 
         context['frequency_lists_semantics_fields'] = {}
@@ -1204,10 +1101,9 @@ class GlossDetailView(DetailView):
                 if field in context['frequency_lists_semantics_fields'].keys():
                     # revise entries in list with frequencies of choices
                     old_choice_list = context['choice_lists'][field]
-                    new_choice_list = {}
                     for f_choice, f_freq in context['frequency_lists_semantics_fields'][field].items():
-                        new_choice_list[f_choice] = old_choice_list[f_choice] +'      ['+str(f_freq)+']'
-                    context['choice_lists'][field] = new_choice_list
+                        old_choice_list[f_choice] = old_choice_list[f_choice] + '      [' + str(f_freq) + ']'
+                    context['choice_lists'][field] = old_choice_list
 
         #Add morphology to choice lists
         context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
@@ -1742,7 +1638,8 @@ class MorphemeListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages, dialects=dialects)
+        search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
+                                         dialects=dialects, language_code=self.request.LANGUAGE_CODE)
 
         context['searchform'] = search_form
         context['glosscount'] = Morpheme.objects.all().count()
@@ -1785,6 +1682,8 @@ class MorphemeListView(ListView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = settings.MULTIPLE_SELECT_MORPHEME_FIELDS
 
         return context
 
@@ -1846,24 +1745,14 @@ class MorphemeListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnamesmultiselect = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                                 'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
-                                 'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass', 'hasMorphemeOfType']
-
-        # fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks', 'handedness',
-        #               'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic',  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern',
-        #               'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
-        #               'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
-        #               'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence',
-        #               'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
-        #               'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
 
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN',
                       'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic', 'relOriMov', 'relOriLoc', 'oriCh',
                       'handCh', 'absOriPalm', 'repeat', 'altern',
                       'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'iconType',
-                      'namEnt', 'semField', 'valence',
+                      # 'namEnt', 'semField',
+                      'valence',
                       'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO',
                       'tokNoSgnrA',
                       'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
@@ -1887,119 +1776,16 @@ class MorphemeListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
-        for fieldnamemulti in fieldnamesmultiselect:
+        for fieldnamemulti in settings.MULTIPLE_SELECT_MORPHEME_FIELDS:
 
-            # if fieldnamemulti == 'handedness':
-            #     vals = get.getlist('handedness[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(handedness__in=vals)
-            #
-            # if fieldnamemulti == 'domhndsh':
-            #     vals = get.getlist('domhndsh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(domhndsh__in=vals)
-            #
-            # if fieldnamemulti == 'subhndsh':
-            #     vals = get.getlist('subhndsh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(subhndsh__in=vals)
-            #
-            # if fieldnamemulti == 'locprim':
-            #     vals = get.getlist('locprim[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(locprim__in=vals)
-            #
-            # if fieldnamemulti == 'relatArtic':
-            #     vals = get.getlist('relatArtic[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(relatArtic__in=vals)
-            #
-            # if fieldnamemulti == 'relOriMov':
-            #     vals = get.getlist('relOriMov[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(relOriMov__in=vals)
-            #
-            # if fieldnamemulti == 'relOriLoc':
-            #     vals = get.getlist('relOriLoc[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(relOriLoc__in=vals)
-            #
-            # if fieldnamemulti == 'oriCh':
-            #     vals = get.getlist('oriCh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(oriCh__in=vals)
-            #
-            # if fieldnamemulti == 'handCh':
-            #     vals = get.getlist('handCh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(handCh__in=vals)
-            #
-            # if fieldnamemulti == 'movSh':
-            #     vals = get.getlist('movSh[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(movSh__in=vals)
-            #
-            # if fieldnamemulti == 'movDir':
-            #     vals = get.getlist('movDir[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(movDir__in=vals)
-            #
-            # if fieldnamemulti == 'contType':
-            #     vals = get.getlist('contType[]')
-            #     if '' in vals:
-            #         vals.remove('')
-            #     if vals != []:
-            #         qs = qs.filter(contType__in=vals)
+            fieldnamemultiVarname = fieldnamemulti + '[]'
+            fieldnameQuery = fieldnamemulti + '__in'
 
-            if fieldnamemulti == 'hasMorphemeOfType':
-                vals = get.getlist('hasMorphemeOfType[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(mrpType__in=vals)
-
-            if fieldnamemulti == 'namEnt':
-                vals = get.getlist('namEnt[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(namEnt__in=vals)
-
-            if fieldnamemulti == 'semField':
-                vals = get.getlist('semField[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(semField__in=vals)
-
-            if fieldnamemulti == 'wordClass':
-                vals = get.getlist('wordClass[]')
-                if '' in vals:
-                    vals.remove('')
-                if vals != []:
-                    qs = qs.filter(wordClass__in=vals)
+            vals = get.getlist(fieldnamemultiVarname)
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
@@ -2123,14 +1909,6 @@ class MorphemeListView(ListView):
                 morpheme__in=[morpheme.pk for morpheme in potential_morphemes])
             potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs]
             qs = qs.filter(pk__in=potential_pks)
-
-        # if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
-        #
-        #     # Get all Morphemes of the indicated mrpType
-        #     target_morphemes = Morpheme.objects.filter(mrpType__exact=get['hasMorphemeOfType'])
-        #     # Turn this into a list with pks
-        #     pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in target_morphemes]
-        #     qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
 
@@ -2869,8 +2647,86 @@ class DatasetListView(ListView):
     def render_to_response(self, context):
         if self.request.GET.get('export_ecv') == 'ECV':
             return self.render_to_ecv_export_response(context)
+        elif self.request.GET.get('request_view_access') == 'VIEW':
+            return self.render_to_request_response(context)
         else:
             return super(DatasetListView, self).render_to_response(context)
+
+    def render_to_request_response(self, context):
+
+        # check that the user is logged in
+        if self.request.user.is_authenticated():
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        try:
+            dataset_object = Dataset.objects.get(name=self.dataset_name)
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        # make sure the user can write to this dataset
+        # from guardian.shortcuts import get_objects_for_user
+        user_view_datasets = get_objects_for_user(self.request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        if user_view_datasets and not dataset_object in user_view_datasets:
+            # the user currently has no view permission for the requested dataset
+            pass
+        else:
+            # this should not happen from the html page. the check is made to catch a user adding a parameter to the url
+            messages.add_message(self.request, messages.INFO, ('You can already view this dataset.'))
+            return HttpResponseRedirect(URL + '/datasets/available')
+
+        from django.contrib.auth.models import Group, User
+        group_manager = Group.objects.get(name='Dataset_Manager')
+
+        owners_of_dataset = dataset_object.owners.all()
+        dataset_manager_found = False
+        for owner in owners_of_dataset:
+
+            groups_of_user = owner.groups.all()
+            if not group_manager in groups_of_user:
+                # this owner can't manage users
+                continue
+
+            dataset_manager_found = True
+            # send email to the dataset manager
+            from django.core.mail import send_mail
+            current_site = Site.objects.get_current()
+
+            subject = render_to_string('registration/dataset_access_email_subject.txt',
+                                       context={'dataset': dataset_object.name,
+                                                'site': current_site})
+            # Email subject *must not* contain newlines
+            subject = ''.join(subject.splitlines())
+
+            message = render_to_string('registration/dataset_access_request_email.txt',
+                                       context={'user': self.request.user,
+                                                'dataset': dataset_object.name,
+                                                'site': current_site})
+
+            # for debug purposes on local machine
+            # print('grant access subject: ', subject)
+            # print('message: ', message)
+            # print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+            # print('user email: ', owner.email)
+
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+
+        if not dataset_manager_found:
+            messages.add_message(self.request, messages.ERROR, ('No dataset manager has been found for '+dataset_object.name+'. Your request could not be submitted.'))
+        else:
+            messages.add_message(self.request, messages.INFO, ('Your request for view access to dataset '+dataset_object.name+' has been submitted.'))
+        return HttpResponseRedirect(URL + '/datasets/available')
 
     def render_to_ecv_export_response(self, context):
 

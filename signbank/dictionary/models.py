@@ -1496,7 +1496,7 @@ class Morpheme(Gloss):
 
     # Fields that are specific for morphemes, and not so much for 'sign-words' (=Gloss) as a whole
     # (1) optional morpheme-type field (not to be confused with MorphologyType from MorphologyDefinition)
-    mrpType = models.CharField(max_length=5,blank=True,  null=True, choices=build_choice_list('MorphemeType'))
+    mrpType = models.CharField(_("Has morpheme type"), max_length=5,blank=True,  null=True, choices=build_choice_list('MorphemeType'))
 
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
