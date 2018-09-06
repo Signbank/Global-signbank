@@ -60,3 +60,41 @@ def getattr (obj, args):
          return  obj.__dict__.get(attribute, default)
     except:
         return default
+
+
+@register.filter
+def get_iso_639_3_info(languages):
+    """
+    Adds ISO 639-3 info to a list of languages
+    :param languages: a list of Language objects or a language_code_3char string 
+    :return: 
+    """
+    from urllib import request
+    from xml.dom import minidom
+    url = 'http://catalog.clarin.eu/ds/ComponentRegistry/rest/registry/components/clarin.eu:cr1:c_1271859438110'
+    dom = minidom.parse(request.urlopen(url))
+    items = dom.getElementsByTagName('item')
+    if isinstance(languages, str):
+        # Assume is it a language_code_3char
+        from signbank.dictionary.models import Language
+        languages = [Language.objects.get(language_code_3char=languages)]
+
+    # Return a dict with format
+    # {"eng": ("http://cdb.iso.org/lg/CDB-00138502-001", "English (eng)"), "nld": (..., ...), ... }
+    return dict([(language.language_code_3char,
+                [(item.attributes['ConceptLink'].value, item.attributes['AppInfo'].value)
+                    for item in items if item.firstChild.nodeValue == language.language_code_3char][0])
+                 for language in languages])
+
+
+@register.filter
+def get_gloss_description(gloss, language_code_2char):
+    """
+    
+    :param gloss: 
+    :param language_code_2char: 
+    :return: 
+    """
+    from signbank.tools import get_ecv_descripion_for_gloss
+    from signbank.settings.base import ECV_SETTINGS
+    return get_ecv_descripion_for_gloss(gloss, language_code_2char, ECV_SETTINGS['include_phonology_and_frequencies'])
