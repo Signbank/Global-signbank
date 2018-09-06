@@ -2741,7 +2741,7 @@ class DatasetListView(ListView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
         get = self.request.GET
@@ -2749,13 +2749,13 @@ class DatasetListView(ListView):
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
             messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         try:
             dataset_object = Dataset.objects.get(name=self.dataset_name)
         except:
             messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         # make sure the user can write to this dataset
         # from guardian.shortcuts import get_objects_for_user
@@ -2764,14 +2764,14 @@ class DatasetListView(ListView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         # if we get to here, the user is authenticated and has permission to export the dataset
         ecv_file = write_ecv_file_for_dataset(self.dataset_name)
 
         messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_name + ' successfully updated.'))
         # return HttpResponse('ECV successfully updated.')
-        return HttpResponseRedirect(URL + '/datasets/available')
+        return HttpResponseRedirect(reverse('admin_dataset_view'))
 
     def get_queryset(self):
         user = self.request.user
