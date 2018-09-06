@@ -1065,7 +1065,8 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         where_homonyms = '(' + where_homonyms_filled +  ' + ' + where_homonyms_empty + ')=0'
 
-        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE id != %s AND ' + where_homonyms, [self.id])
+        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE id != %s AND dataset_id = %s AND ' + where_homonyms,
+                               [self.id, str(self.dataset.id)])
 
         for o in qs:
             homonym_objects_list.append(o)

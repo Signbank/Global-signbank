@@ -1,5 +1,6 @@
 from django.template import Library
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
+import json
 
 register = Library()
 
@@ -9,7 +10,7 @@ def get_annotation_idgloss_translation(gloss, language):
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
     if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:
         return annotationidglosstranslations[0].text
-    return ""
+    return gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')[0].text
 
 
 @register.filter

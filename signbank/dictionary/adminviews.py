@@ -2255,7 +2255,10 @@ class HomonymListView(ListView):
         # Call the base implementation first to get a context
         context = super(HomonymListView, self).get_context_data(**kwargs)
 
-        languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
+        if self.request.LANGUAGE_CODE == 'zh-hans':
+            languages = Language.objects.filter(language_code_2char='zh')
+        else:
+            languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
         if languages:
             context['language'] = languages[0]
         else:
@@ -2275,10 +2278,13 @@ class HomonymListView(ListView):
     def get_queryset(self):
 
         # Get all existing saved Homonyms
-        relation_homonyms = Relation.objects.filter(role='homonym')
+        # relation_homonyms = Relation.objects.filter(role='homonym')
 
-        glosses_with_phonology = Gloss.objects.exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
-                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})))
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        glosses_with_phonology = Gloss.objects.filter(dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
+                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})
+                                           | Q(**{'subhndsh__isnull': True}) | Q(**{'subhndsh': 0})))
 
         return glosses_with_phonology
 
