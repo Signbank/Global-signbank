@@ -962,7 +962,7 @@
                         {% else %}
                         <td></td>
                         {% endif %}
-                        <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
+                        <td id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                         <td id='relationtarget_{{rel.id}}'>
                             <a id='relation_target_hyperlink_{{rel.id}}'
                                href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
