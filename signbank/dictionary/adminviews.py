@@ -2369,7 +2369,98 @@ class MinimalPairsListView(ListView):
 
         return glosses_with_phonology
 
+class FrequencyListView(ListView):
+    # not sure what model should be used here, it applies to all the glosses in a dataset
+    model = Dataset
+    template_name = 'dictionary/admin_frequency_list.html'
 
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(FrequencyListView, self).get_context_data(**kwargs)
+
+        if self.request.LANGUAGE_CODE == 'zh-hans':
+            languages = Language.objects.filter(language_code_2char='zh')
+        else:
+            languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
+        if languages:
+            context['language'] = languages[0]
+        else:
+            context['language'] = Language.objects.get(id=get_default_language_id())
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        frequency_fields = []
+        for field in FIELDS['phonology']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                frequency_fields.append(field)
+        context['frequency_fields'] = frequency_fields
+
+        frequency_dict = dict()
+        for ds in selected_datasets:
+            frequency_dict_ds = ds.generate_frequency_dict()
+            frequency_dict[ds.name] = frequency_dict_ds
+
+        context['frequency_dict'] = frequency_dict
+
+        if self.request.LANGUAGE_CODE == 'zh-hans':
+            languages = Language.objects.filter(language_code_2char='zh')
+        else:
+            languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
+        if languages:
+            field_language = languages[0]
+        else:
+            field_language = Language.objects.get(id=get_default_language_id())
+
+        field_labels = dict()
+        field_labels_choices = dict()
+        for field in FIELDS['phonology']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                field_label = Gloss._meta.get_field(field).verbose_name
+                field_category = fieldname_to_category(field)
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+                translated_choices = choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='_',shortlist=False)
+                field_labels_choices[field] = dict(translated_choices)
+                field_labels[field] = field_label
+        context['field_labels'] = field_labels
+        context['field_labels_choices'] = field_labels_choices
+
+        return context
+
+    def get_queryset(self):
+
+        user = self.request.user
+
+        if user.is_authenticated():
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+            from django.db.models import Prefetch
+            qs = Dataset.objects.filter(id__in=selected_datasets).prefetch_related(
+                Prefetch(
+                    "userprofile_set",
+                    queryset=UserProfile.objects.filter(user=user),
+                    to_attr="user"
+                )
+            )
+
+            checker = ObjectPermissionChecker(user)
+
+            checker.prefetch_perms(qs)
+
+            for dataset in qs:
+                checker.has_perm('view_dataset', dataset)
+
+            return qs
+        else:
+            # User is not authenticated
+            return None
 
 class HandshapeListView(ListView):
 

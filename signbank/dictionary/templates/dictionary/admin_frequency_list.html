@@ -1,0 +1,48 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Frequency list{% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
+
+{% if object_list %}
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+          <th style="width:200px;">{% trans "Dataset" %}</th>
+          <th style="width:280px;">{% trans "Field name" %}</th>
+          <th style="width:120px;">{% trans "Choice" %}</th>
+          <th>{% trans "Frequency" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for key, value in frequency_dict.items %}
+        {% for key2, value2 in value.items %}
+        {% for key3, value3 in value2.items %}
+        {% with field_labels_choices|keyvalue:key2 as field_choices %}
+        <tr>
+            <td>{{ key }}</td>
+            <td>{{ field_labels|keyvalue:key2 }}</td>
+            <td>{{ field_choices|keyvalue:key3 }}</td>
+            <td>{{ value3 }}</td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+        {% endfor %}
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+{% trans "No frequency data available." %}
+{% endif %}
+
+</div>
+
+{% endblock content %}

@@ -17,7 +17,7 @@ from collections import OrderedDict
 from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 
 import signbank.settings
 
@@ -1629,6 +1629,44 @@ class Dataset(models.Model):
                     users_who_can_change_dataset.append(user)
 
         return users_who_can_change_dataset
+
+    def generate_frequency_dict(self):
+
+        choice_lists = dict()
+        for field in FIELDS['phonology']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                # Get and save the choice list for this field
+                fieldchoice_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+                if len(choice_list) > 0:
+                    choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, 'en')
+
+        frequency_lists_phonology_fields = dict()
+        for field in FIELDS['phonology']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                fieldchoice_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+                if len(choice_list) > 0:
+                    choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
+                    choice_list_frequencies = dict()
+                    for choice_list_field, machine_value in choice_list_machine_values:
+                        if machine_value == 0:
+
+                            raw_query = "SELECT * FROM dictionary_gloss WHERE dataset_id in (" + str(self.id) + ") and (" + field + " IS NULL OR " + field + " = 0)"
+
+                            choice_list_frequencies[choice_list_field] = len(list(Gloss.objects.raw(raw_query)))
+                        else:
+                            variable_column = field
+                            search_filter = 'exact'
+                            filter = variable_column + '__' + search_filter
+                            choice_list_frequencies[choice_list_field] = Gloss.objects.filter(dataset=self.id).filter(**{ filter: machine_value }).count()
+                    frequency_lists_phonology_fields[field] = choice_list_frequencies
+
+        return frequency_lists_phonology_fields
 
 class UserProfile(models.Model):
     # This field is required.
