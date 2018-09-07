@@ -1630,7 +1630,7 @@ class Dataset(models.Model):
 
         return users_who_can_change_dataset
 
-    def generate_frequency_dict(self):
+    def generate_frequency_dict(self,language):
 
         choice_lists = dict()
         for field in FIELDS['phonology']:
@@ -1641,7 +1641,7 @@ class Dataset(models.Model):
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
                 if len(choice_list) > 0:
-                    choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, 'en')
+                    choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, language)
 
         frequency_lists_phonology_fields = dict()
         for field in FIELDS['phonology']:

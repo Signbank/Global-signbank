@@ -2405,19 +2405,10 @@ class FrequencyListView(ListView):
 
         frequency_dict = dict()
         for ds in selected_datasets:
-            frequency_dict_ds = ds.generate_frequency_dict()
+            frequency_dict_ds = ds.generate_frequency_dict(self.request.LANGUAGE_CODE)
             frequency_dict[ds.name] = frequency_dict_ds
 
         context['frequency_dict'] = frequency_dict
-
-        if self.request.LANGUAGE_CODE == 'zh-hans':
-            languages = Language.objects.filter(language_code_2char='zh')
-        else:
-            languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
-        if languages:
-            field_language = languages[0]
-        else:
-            field_language = Language.objects.get(id=get_default_language_id())
 
         field_labels = dict()
         field_labels_choices = dict()
@@ -2427,7 +2418,7 @@ class FrequencyListView(ListView):
                 field_label = Gloss._meta.get_field(field).verbose_name
                 field_category = fieldname_to_category(field)
                 field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-                translated_choices = choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='_',shortlist=False)
+                translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
                 field_labels_choices[field] = dict(translated_choices)
                 field_labels[field] = field_label
         context['field_labels'] = field_labels
