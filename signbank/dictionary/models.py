@@ -1630,7 +1630,14 @@ class Dataset(models.Model):
 
         return users_who_can_change_dataset
 
-    def generate_frequency_dict(self,language):
+    def generate_frequency_dict(self,language_code):
+
+        codes_to_adjectives = dict(settings.LANGUAGES)
+
+        if language_code not in codes_to_adjectives.keys():
+            adjective = 'english'
+        else:
+            adjective = codes_to_adjectives[language_code].lower()
 
         choice_lists = dict()
         for field in FIELDS['phonology']:
@@ -1638,32 +1645,36 @@ class Dataset(models.Model):
                              'subhndsh_letter']:
                 # Get and save the choice list for this field
                 fieldchoice_category = fieldname_to_category(field)
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective+'_name')
 
                 if len(choice_list) > 0:
-                    choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, language)
-
+                    choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, language_code)
         frequency_lists_phonology_fields = dict()
         for field in FIELDS['phonology']:
             if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
                              'subhndsh_letter']:
                 fieldchoice_category = fieldname_to_category(field)
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective+'_name')
 
                 if len(choice_list) > 0:
-                    choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
+                    choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list,ordered=True)
+
+                    # get dictionary of translated field choices for this field in sorted order
+                    sorted_field_choices = choice_lists[field]
+
                     choice_list_frequencies = dict()
-                    for choice_list_field, machine_value in choice_list_machine_values:
+                    for choice in sorted_field_choices:
+                        machine_value = choice_list_machine_values[choice]
                         if machine_value == 0:
 
                             raw_query = "SELECT * FROM dictionary_gloss WHERE dataset_id in (" + str(self.id) + ") and (" + field + " IS NULL OR " + field + " = 0)"
 
-                            choice_list_frequencies[choice_list_field] = len(list(Gloss.objects.raw(raw_query)))
+                            choice_list_frequencies[choice] = len(list(Gloss.objects.raw(raw_query)))
                         else:
                             variable_column = field
                             search_filter = 'exact'
                             filter = variable_column + '__' + search_filter
-                            choice_list_frequencies[choice_list_field] = Gloss.objects.filter(dataset=self.id).filter(**{ filter: machine_value }).count()
+                            choice_list_frequencies[choice] = Gloss.objects.filter(dataset=self.id).filter(**{ filter: machine_value }).count()
                     frequency_lists_phonology_fields[field] = choice_list_frequencies
 
         return frequency_lists_phonology_fields
