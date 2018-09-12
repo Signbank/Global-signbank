@@ -37,7 +37,7 @@
                     {% with display_choice|length as length_choice %}
                     {% with length_choice|add:"60" as display_width %}
                     <td nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">
-                    <span>{{ field_choices|keyvalue:key3 }}</span>
+                    <span>{{ display_choice }}</span>
                     </td>
                     {% endwith %}
                     {% endwith %}

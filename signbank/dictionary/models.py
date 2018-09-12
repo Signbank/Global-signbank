@@ -1646,7 +1646,7 @@ class Dataset(models.Model):
                              'subhndsh_letter']:
                 field_label = Gloss._meta.get_field(field).verbose_name
                 field_labels[field] = field_label.encode('utf-8').decode()
-        field_labels = dict(sorted(field_labels.items(), key=lambda x: x[1]))
+        field_labels = OrderedDict(sorted(field_labels.items(), key=lambda x: x[1]))
         print('field labels dataset model method generate_frequency_dict: ', field_labels)
 
         choice_lists = dict()
@@ -1669,7 +1669,7 @@ class Dataset(models.Model):
                 # get dictionary of translated field choices for this field in sorted order
                 sorted_field_choices = choice_lists[field]
 
-                choice_list_frequencies = dict()
+                choice_list_frequencies = OrderedDict()
                 for choice in sorted_field_choices:
                     machine_value = choice_list_machine_values[choice]
                     if machine_value == 0:
@@ -1684,7 +1684,7 @@ class Dataset(models.Model):
                         choice_list_frequencies[choice] = Gloss.objects.filter(dataset=self.id).filter(**{ filter: machine_value }).count()
                 frequency_lists_phonology_fields[field] = choice_list_frequencies
 
-        return frequency_lists_phonology_fields
+        return OrderedDict(sorted(frequency_lists_phonology_fields.items(), key=lambda t: t[0]))
 
 class UserProfile(models.Model):
     # This field is required.
