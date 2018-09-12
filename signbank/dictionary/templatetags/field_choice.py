@@ -69,3 +69,8 @@ def machine_field_translate(field_value, args):
     else:
         translation_function = translate_to_english(field_value,field_category)
     return translation_function
+
+@register.filter
+def translated_frequency_list(dataset, language_code):
+
+    return dataset.generate_frequency_dict(language_code)

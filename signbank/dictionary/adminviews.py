@@ -2403,13 +2403,6 @@ class FrequencyListView(ListView):
                 frequency_fields.append(field)
         context['frequency_fields'] = frequency_fields
 
-        frequency_dict = dict()
-        for ds in selected_datasets:
-            frequency_dict_ds = ds.generate_frequency_dict(self.request.LANGUAGE_CODE)
-            frequency_dict[ds.name] = frequency_dict_ds
-
-        context['frequency_dict'] = frequency_dict
-
         field_labels = dict()
         field_labels_choices = dict()
         for field in FIELDS['phonology']:
