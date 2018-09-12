@@ -22,12 +22,10 @@
       </tr>
     </thead>
     <tbody>
-    {% for ds in object_list %}
-    {% load field_choice %}
-    {% with ds|translated_frequency_list:request.LANGUAGE_CODE as frequency_dict_ds %}
-        {% for key2, value2 in frequency_dict_ds.items %}
+    {% for key, value in frequency_dict.items %}
+        {% for key2, value2 in value.items %}
         <tr>
-        <td nowrap>{{ ds.name }}</td>
+        <td nowrap>{{ key }}</td>
         <td nowrap>{{ field_labels|keyvalue:key2 }}</td>
             <td>
             <div>
@@ -57,7 +55,6 @@
             </td>
         </tr>
         {% endfor %}
-    {% endwith %}
     {% endfor %}
     </tbody>
 </table>

@@ -1,5 +1,5 @@
 from django.template import Library
-from signbank.dictionary.models import FieldChoice
+from signbank.dictionary.models import FieldChoice, Dataset
 
 def get_field_choice(machine_value,field_category):
 
@@ -72,5 +72,5 @@ def machine_field_translate(field_value, args):
 
 @register.filter
 def translated_frequency_list(dataset, language_code):
-
-    return dataset.generate_frequency_dict(language_code)
+    generated_dict = dataset.generate_frequency_dict(language_code)
+    return generated_dict
