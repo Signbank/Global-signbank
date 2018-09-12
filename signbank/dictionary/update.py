@@ -1404,7 +1404,9 @@ def add_morpheme(request):
     """Create a new morpheme and redirect to the edit view"""
 
     if request.method == "POST":
+        print("request.POST: {}".format(request.POST))
         if 'dataset' in request.POST and request.POST['dataset'] is not None:
+            dataset = Dataset.objects.get(pk=request.POST['dataset'])
             selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
         else:
             selected_datasets = get_selected_datasets_for_user(request.user)
@@ -1412,27 +1414,61 @@ def add_morpheme(request):
 
         form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user)
 
+        # Lemma handling
+        lemmaidgloss = None
+        lemma_form = None
+        if request.POST['select_or_new_lemma'] == 'new':
+            lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
+        else:
+            try:
+                lemmaidgloss_id = request.POST['idgloss']
+                lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
+            except:
+                messages.add_message(request, messages.ERROR,
+                                     _("The given Lemma Idgloss ID is unknown."))
+                return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
+
+        # Check for 'change_dataset' permission
+        if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) and ('change_dataset' not in get_group_perms(request.user, dataset)):
+            messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
+            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
+        elif not dataset:
+            # Dataset is empty, this is an error
+            messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
+            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
+
+
         for item, value in request.POST.items():
-            annotation_idgloss_prefix = "annotation_idgloss_"
-            if item.startswith(annotation_idgloss_prefix):
-                language_code_2char = item[len(annotation_idgloss_prefix):]
+            if item.startswith(form.morpheme_create_field_prefix):
+                language_code_2char = item[len(form.morpheme_create_field_prefix):]
                 language = Language.objects.get(language_code_2char=language_code_2char)
                 morphemes_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
                     annotationidglosstranslation__language=language,
                     annotationidglosstranslation__text__exact=value.upper())
                 if len(morphemes_for_this_language_and_annotation_idgloss) != 0:
-                    return render(request, 'dictionary/warning.html', {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
+                    return render(request, 'dictionary/warning.html',
+                                  {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
 
-        if form.is_valid():
-
-            morpheme = form.save()
-            morpheme.creationDate = datetime.now()
-            morpheme.creator.add(request.user)
-            morpheme.save()
+        if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
+            try:
+                morpheme = form.save()
+                morpheme.creationDate = datetime.now()
+                morpheme.creator.add(request.user)
+                if lemma_form:
+                    lemmaidgloss = lemma_form.save()
+                morpheme.lemma = lemmaidgloss
+                morpheme.save()
+            except ValidationError as ve:
+                messages.add_message(request, messages.ERROR, ve.message)
+                return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
+                                                     'dataset_languages': dataset_languages,
+                                                     'selected_datasets': get_selected_datasets_for_user(request.user)})
 
             return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}))
         else:
-            return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form})
+            return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form,
+                                                               'dataset_languages': dataset_languages,
+                                                                'selected_datasets': get_selected_datasets_for_user(request.user)})
 
     return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
 

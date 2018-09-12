@@ -1645,6 +1645,7 @@ class MorphemeListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
 
 
