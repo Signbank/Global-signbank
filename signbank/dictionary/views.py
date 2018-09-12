@@ -628,6 +628,8 @@ def add_new_morpheme(request):
 
     oContext['morph_fields'].append(['(Make a choice)', field, "Morpheme type", kind])
 
+    oContext['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+
     # Continue
     oBack = render(request,'dictionary/add_morpheme.html', oContext)
     return oBack
