@@ -9,6 +9,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import override
+from django.utils.encoding import *
 from django.forms.fields import TypedChoiceField, ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
@@ -2378,8 +2379,10 @@ class FrequencyListView(ListView):
         # Call the base implementation first to get a context
         context = super(FrequencyListView, self).get_context_data(**kwargs)
 
+        language_code = self.request.LANGUAGE_CODE
         if self.request.LANGUAGE_CODE == 'zh-hans':
             languages = Language.objects.filter(language_code_2char='zh')
+            language_code = 'zh'
         else:
             languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
         if languages:
@@ -2390,6 +2393,12 @@ class FrequencyListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
+
+        codes_to_adjectives = dict(settings.LANGUAGES)
+        if language_code not in codes_to_adjectives.keys():
+            adjective = 'english'
+        else:
+            adjective = codes_to_adjectives[language_code].lower()
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -2402,18 +2411,25 @@ class FrequencyListView(ListView):
             frequency_dict[ds.name] = frequency_dict_ds
         context['frequency_dict'] = frequency_dict
 
+        # sort the phonology fields based on field label in the designated language
         field_labels = dict()
-        field_labels_choices = dict()
         for field in FIELDS['phonology']:
             if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
                              'subhndsh_letter']:
                 field_label = Gloss._meta.get_field(field).verbose_name
-                field_category = fieldname_to_category(field)
-                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-                translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
-                field_labels_choices[field] = dict(translated_choices)
-                field_labels[field] = field_label
+                field_labels[field] = field_label.encode('utf-8').decode()
+        field_labels = dict(sorted(field_labels.items(), key=lambda x: x[1]))
+        print('field labels frequency view context: ', field_labels)
         context['field_labels'] = field_labels
+
+        field_labels_choices = dict()
+        for field, label in field_labels.items():
+            field_category = fieldname_to_category(field)
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
+            print('frequency list view, translated choices: ', translated_choices)
+            field_labels_choices[field] = dict(translated_choices)
+
         context['field_labels_choices'] = field_labels_choices
 
         return context
