@@ -3305,6 +3305,7 @@ class MorphemeDetailView(DetailView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
 
 def gloss_ajax_search_results(request):
@@ -3516,36 +3517,40 @@ class LemmaCreateView(CreateView):
 def create_lemma_for_gloss(request, glossid):
     try:
         gloss = Gloss.objects.get(id=glossid)
-        dataset = gloss.dataset
-        dataset_languages = dataset.translation_languages.all()
-        form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
-        for item, value in request.POST.items():
-            if item.startswith(form.lemma_create_field_prefix):
-                language_code_2char = item[len(form.lemma_create_field_prefix):]
-                language = Language.objects.get(language_code_2char=language_code_2char)
-                lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(
-                    lemmaidglosstranslation__language=language,
-                    lemmaidglosstranslation__text__exact=value.upper(),
-                    dataset=dataset)
-                if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
-                    messages.add_message(request, messages.ERROR, _('Lemma ID Gloss not unique for %(language)s.') % {'language': language.name})
-                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-        if form.is_valid():
-            try:
-                lemma = form.save()
-                gloss.lemma = lemma
-                gloss.save()
-            except ValidationError as ve:
-                messages.add_message(request, messages.ERROR, ve.message)
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        else:
-            messages.add_message(request, messages.ERROR, _("The form contains errors."))
+    except ObjectDoesNotExist:
+        try:
+            gloss = Morpheme.objects.get(id=glossid).gloss
+        except ObjectDoesNotExist:
+            messages.add_message(request, messages.ERROR, _("The specified gloss does not exist."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    except ObjectDoesNotExist:
-        messages.add_message(request, messages.ERROR, _("The specified gloss does not exist."))
+    dataset = gloss.dataset
+    dataset_languages = dataset.translation_languages.all()
+    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
+    for item, value in request.POST.items():
+        if item.startswith(form.lemma_create_field_prefix):
+            language_code_2char = item[len(form.lemma_create_field_prefix):]
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(
+                lemmaidglosstranslation__language=language,
+                lemmaidglosstranslation__text__exact=value.upper(),
+                dataset=dataset)
+            if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
+                messages.add_message(request, messages.ERROR, _('Lemma ID Gloss not unique for %(language)s.') % {'language': language.name})
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    if form.is_valid():
+        try:
+            lemma = form.save()
+            gloss.lemma = lemma
+            gloss.save()
+        except ValidationError as ve:
+            messages.add_message(request, messages.ERROR, ve.message)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    else:
+        messages.add_message(request, messages.ERROR, _("The form contains errors."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 

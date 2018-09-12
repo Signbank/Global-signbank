@@ -1610,6 +1610,21 @@ def update_morpheme(request, morphemeid):
 
             return update_annotation_idgloss(morpheme, field, value)
 
+        elif field.startswith('lemmaidgloss'):
+            # Set new lemmaidgloss for this gloss
+            # First check whether the morpheme dataset is the same as the lemma dataset
+            try:
+                dataset = morpheme.dataset
+                lemma = LemmaIdgloss.objects.get(pk=value)
+                if dataset == lemma.dataset:
+                    morpheme.lemma = lemma
+                    morpheme.save()
+                else:
+                    messages.add_message(messages.ERROR, _("The dataset of the morpheme is not the same as that of the lemma."))
+            except ObjectDoesNotExist:
+                messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
         else:
 
             if not field in [f.name for f in Morpheme._meta.get_fields()]:
