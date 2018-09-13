@@ -16,14 +16,25 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
     except AttributeError:
         raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,'english_name')) for choice in queryset]
 
-    if shortlist:
-        sorted_choice_list = sorted(raw_choice_list,key = lambda x: x[1])
-    else:
-        sorted_choice_list = [(id_prefix+'0','-'),(id_prefix+'1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
-
     if ordered:
-        return OrderedDict(sorted_choice_list)
+
+        if shortlist:
+            sorted_choice_list = OrderedDict(sorted(raw_choice_list,key = lambda x: x[1]))
+        else:
+            sorted_choice_list = OrderedDict(sorted(raw_choice_list,key = lambda x: x[1]))
+            sorted_choice_list.update({id_prefix+'1':'N/A'})
+            sorted_choice_list.move_to_end(id_prefix+'1', last=False)
+            sorted_choice_list.update({id_prefix+'0':'-'})
+            sorted_choice_list.move_to_end(id_prefix+'0', last=False)
+
+        return sorted_choice_list
     else:
+
+        if shortlist:
+            sorted_choice_list = sorted(raw_choice_list, key=lambda x: x[1])
+        else:
+            sorted_choice_list = [(id_prefix + '0', '-'), (id_prefix + '1', 'N/A')] + sorted(raw_choice_list,
+                                                                                             key=lambda x: x[1])
         return sorted_choice_list
 
 

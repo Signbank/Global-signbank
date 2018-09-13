@@ -10,6 +10,7 @@ from django.utils.timezone import now
 from django.forms.utils import ValidationError
 import tagging
 import re
+import copy
 
 import sys, os
 import json
@@ -207,13 +208,13 @@ class FieldChoice(models.Model):
     chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(help_text="The actual numeric value stored in the database. Created automatically.")
 
-    def __str__(self):
-
-        name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
-        return name
+    # def __str__(self):
+    #
+    #     name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
+    #     return name
 
     class Meta:
-        ordering = ['field','machine_value']
+        ordering = ['machine_value'] #,'machine_value']
 
 class Handshape(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
@@ -1647,31 +1648,47 @@ class Dataset(models.Model):
                 field_label = Gloss._meta.get_field(field).verbose_name
                 field_labels[field] = field_label.encode('utf-8').decode()
         field_labels = OrderedDict(sorted(field_labels.items(), key=lambda x: x[1]))
-        print('field labels dataset model method generate_frequency_dict: ', field_labels)
 
         choice_lists = dict()
         for field, label in field_labels.items():
             # Get and save the choice list for this field
             fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective+'_name')
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.order_by(adjective+'_name')
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective+'_name')
 
             if len(choice_list) > 0:
-                choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, language_code)
-                print('generate_frequency_dict(dataset:', self.name, ', language:', language_code,',field:',field,'): ', choice_lists[field])
-        frequency_lists_phonology_fields = dict()
+                choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False)
+
+        frequency_lists_phonology_fields = OrderedDict()
         for field, label in field_labels.items():
+
+            # don't use handshape values in FieldChoice table
             fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective+'_name')
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.order_by(adjective+'_name')
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective+'_name')
 
             if len(choice_list) > 0:
+                # we now basically construct a duplicate of the choice_lists table, but with the machine values instead of the labels
+                # the machine value is stored as the value of the field in the Gloss objects
+                # we take the count of the machine value in the Gloss objects
+
                 choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list,ordered=True)
 
-                # get dictionary of translated field choices for this field in sorted order
-                sorted_field_choices = choice_lists[field]
+                # get dictionary of translated field choices for this field in sorted order (as per the language code)
+                sorted_field_choices = copy.deepcopy(choice_lists[field])
 
+                # because we're dealing with multiple languages and we want the fields to be sorted for the language
+                # we maintain the order of the fields established for the choice_lists table of field choice names
                 choice_list_frequencies = OrderedDict()
-                for choice in sorted_field_choices:
+                for choice, label in sorted_field_choices:
+
                     machine_value = choice_list_machine_values[choice]
+                    # empty values can be either 0 or else null
+                    # the raw query is constructed for this case separately from the case for actual values
                     if machine_value == 0:
 
                         raw_query = "SELECT * FROM dictionary_gloss WHERE dataset_id in (" + str(self.id) + ") and (" + field + " IS NULL OR " + field + " = 0)"
@@ -1682,9 +1699,11 @@ class Dataset(models.Model):
                         search_filter = 'exact'
                         filter = variable_column + '__' + search_filter
                         choice_list_frequencies[choice] = Gloss.objects.filter(dataset=self.id).filter(**{ filter: machine_value }).count()
-                frequency_lists_phonology_fields[field] = choice_list_frequencies
 
-        return OrderedDict(sorted(frequency_lists_phonology_fields.items(), key=lambda t: t[0]))
+                # the new frequencies for this field are added using the update method to insure the order is maintained
+                frequency_lists_phonology_fields.update({field: copy.deepcopy(choice_list_frequencies)})
+
+        return frequency_lists_phonology_fields
 
 class UserProfile(models.Model):
     # This field is required.

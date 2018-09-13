@@ -2405,6 +2405,8 @@ class FrequencyListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        # this code section will be moved to the template
+        # there were some problems getting the fields to be sorted
         frequency_dict = dict()
         for ds in selected_datasets:
             frequency_dict_ds = ds.generate_frequency_dict(self.request.LANGUAGE_CODE)
@@ -2412,6 +2414,7 @@ class FrequencyListView(ListView):
         context['frequency_dict'] = frequency_dict
 
         # sort the phonology fields based on field label in the designated language
+        # this is used for display in the template, by lookup
         field_labels = dict()
         for field in FIELDS['phonology']:
             if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
@@ -2419,15 +2422,15 @@ class FrequencyListView(ListView):
                 field_label = Gloss._meta.get_field(field).verbose_name
                 field_labels[field] = field_label.encode('utf-8').decode()
         field_labels = dict(sorted(field_labels.items(), key=lambda x: x[1]))
-        print('field labels frequency view context: ', field_labels)
         context['field_labels'] = field_labels
 
+        # sort the field choices based on the designated language
+        # this is used for display in the template, by lookup
         field_labels_choices = dict()
         for field, label in field_labels.items():
             field_category = fieldname_to_category(field)
             field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
-            print('frequency list view, translated choices: ', translated_choices)
             field_labels_choices[field] = dict(translated_choices)
 
         context['field_labels_choices'] = field_labels_choices
