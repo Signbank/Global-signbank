@@ -1461,6 +1461,20 @@ def fieldname_to_category(fieldname):
 
     return field_category
 
+def fieldname_to_kind(fieldname):
+    if fieldname in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'absOriPalm', 'relatArtic',
+                     'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir',
+                     'final_domdndsh', 'final_subhndsh']:
+        field_kind = 'list'
+    elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar']:
+        field_kind = 'text'
+    elif fieldname in ['repeat','altern']:
+        field_kind = 'check'
+    else:
+        print('unknown kind for fieldname: ', fieldname)
+        field_kind = fieldname
+    return field_kind
+
 class Relation(models.Model):
     """A relation between two glosses"""
      

@@ -7,12 +7,109 @@
 {% block extrahead %}
 {% endblock %}
 
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+<script type='text/javascript'>
+var field_ids = {{field_labels|safe}};
+var field_ds = {{dataset_ids|safe}};
+var multiple_select_fields = [ 'Phonology', ];
+var show_empty_frequency = true;
+
+$(document).ready(function() {
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        var target_pulldown = document.getElementById(fieldId);
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     $('.js-example-basic-multiple').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve'
+     });
+     $('.js-example-basic-multiple').val(null).trigger('change');
+
+     $('.js-example-basic-multiple').on('select2:select', function(e) {
+        var data = e.params.data;
+        var field_key = data.element.id;
+        for (i = 0; i < field_ds.length; i++) {
+            var elt_row_id = '#' + field_ds[i] + '_field_' + field_key;
+            $(elt_row_id).toggle();
+        }
+     });
+
+     $('.js-example-basic-multiple').on('select2:unselect', function(e) {
+        var data = e.params.data;
+        var field_key = data.element.id;
+        for (i = 0; i < field_ds.length; i++) {
+            var elt_row_id = '#' + field_ds[i] + '_field_' + field_key;
+            $(elt_row_id).toggle();
+        }
+     });
+});
+
+function toggle_empty_frequencies(e) {
+    var sToggle = $(e).attr('value');
+
+    switch(sToggle) {
+        case 'show_empty_frequencies':
+            show_empty_frequency = true;
+            $(e).val('hide_empty_frequencies');
+            console.log('hide_empty_frequencies');
+	        $(e).html("Hide empty frequencies");
+	        <!--$('#NGT_field_handedness__1_empty_frequency').css({'display':'visible'});-->
+	        $("tr[id$=empty_frequency]").css({'display':'visible'});
+            break;
+        case 'hide_empty_frequencies':
+            show_empty_frequency = false;
+            $(e).val('show_empty_frequencies');
+            console.log('show_empty_frequencies');
+	        $(e).html("Show empty frequencies");
+	        <!--$('#NGT_field_handedness__1_empty_frequency').css({'display':'none'});-->
+	        $("tr[id$=empty_frequency]").css({'display':'none'});
+            break;
+    }
+}
+
+</script>
+{% endblock %}
+
 {% block content %}
 
 <div id="definitionblock">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
 
 {% if object_list %}
+    <div id="visibility_buttons">
+         <table class='table table-condensed'>
+                <tr id='phonology_selection'>
+                    <td><label>Phonology</label></td>
+                </tr>
+                <tr>
+                    <td>
+                        <select id='id_Phonology'>
+                            {% for f_field, f_label in field_labels.items %}
+                            <option id="{{f_field}}">{{f_label}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+         </table>
+    </div>
+
+    <button id="toggle_frequencies" value='hide_empty_frequencies' onclick="toggle_empty_frequencies(this)"
+            class="btn btn-default">{% trans "Hide empty frequencies" %}</button>
 <table class='table table-condensed'>
     <thead>
       <tr>
@@ -22,39 +119,43 @@
       </tr>
     </thead>
     <tbody>
-    {% for key, value in frequency_dict.items %}
-        {% for key2, value2 in value.items %}
-        <tr>
-        <td nowrap>{{ key }}</td>
+    {% for ds in object_list %}
+    {% load field_choice %}
+    {% with ds|translated_frequency_list:request.LANGUAGE_CODE as frequency_dict_ds %}
+        {% for key2, value2 in frequency_dict_ds.items %}
+        <tr id="{{ds.id}}_field_{{key2}}" style="display:none">
+        <td nowrap>{{ ds.name }}</td>
         <td nowrap>{{ field_labels|keyvalue:key2 }}</td>
             <td>
             <div>
-                <table style="border:1px solid;" cellspacing=10>
-                <tr style="height:auto;">
+                <table style="border:1px solid;table-layout:fixed;">
                 {% with field_labels_choices|keyvalue:key2 as field_choices %}
                 {% for key3, value3 in value2.items %}
                     {% with field_choices|keyvalue:key3 as display_choice %}
                     {% with display_choice|length as length_choice %}
                     {% with length_choice|add:"60" as display_width %}
-                    <td nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">
-                    <span>{{ display_choice }}</span>
-                    </td>
+                    {% if value3 > 0 %}
+                    <tr style="height:auto;">
+                    <td nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{display_choice}}</td>
+                    <td style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{value3}}</td>
+                    </tr>
+                    {% else %}
+                    <tr id="{{ds.id}}_field_{{key2}}_{{key3}}_empty_frequency" style="height:auto;">
+                    <td nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{display_choice}}</td>
+                    <td style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{value3}}</td>
+                    </tr>
+                    {% endif %}
                     {% endwith %}
                     {% endwith %}
                     {% endwith %}
                 {% endfor %}
                 {% endwith %}
-                </tr>
-                <tr>
-                {% for key3, value3 in value2.items %}
-                    <td style="border:1px solid;padding:6px;text-align:left;">{{ value3 }}</td>
-                {% endfor %}
-                </tr>
                 </table>
             </div>
             </td>
         </tr>
         {% endfor %}
+    {% endwith %}
     {% endfor %}
     </tbody>
 </table>

@@ -2405,13 +2405,7 @@ class FrequencyListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
-        # this code section will be moved to the template
-        # there were some problems getting the fields to be sorted
-        frequency_dict = dict()
-        for ds in selected_datasets:
-            frequency_dict_ds = ds.generate_frequency_dict(self.request.LANGUAGE_CODE)
-            frequency_dict[ds.name] = frequency_dict_ds
-        context['frequency_dict'] = frequency_dict
+        context['dataset_ids'] = [ ds.id for ds in selected_datasets]
 
         # sort the phonology fields based on field label in the designated language
         # this is used for display in the template, by lookup
@@ -2419,8 +2413,10 @@ class FrequencyListView(ListView):
         for field in FIELDS['phonology']:
             if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
                              'subhndsh_letter']:
-                field_label = Gloss._meta.get_field(field).verbose_name
-                field_labels[field] = field_label.encode('utf-8').decode()
+                field_kind = fieldname_to_kind(field)
+                if field_kind == 'list':
+                    field_label = Gloss._meta.get_field(field).verbose_name
+                    field_labels[field] = field_label.encode('utf-8').decode()
         field_labels = dict(sorted(field_labels.items(), key=lambda x: x[1]))
         context['field_labels'] = field_labels
 
