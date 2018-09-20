@@ -502,3 +502,20 @@ tr.rotated th {
   -o-transform: rotate(-45deg);
   transform: rotate(-45deg);
 }
+
+.search_result
+{
+    padding-right: 30px;
+    color: hsla(0, 0%, 0%, 0.35);
+}
+
+.search_result:hover, .search_result:active, a.active
+{
+    color: hsla(0, 0%, 0%, 0.7);
+    text-decoration: none;
+}
+
+a.active
+{
+    font-weight: 800;
+}
