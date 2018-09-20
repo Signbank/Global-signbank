@@ -66,18 +66,126 @@ function toggle_empty_frequencies(e) {
         case 'show_empty_frequencies':
             show_empty_frequency = true;
             $(e).val('hide_empty_frequencies');
-            console.log('hide_empty_frequencies');
 	        $(e).html("Hide empty frequencies");
-	        <!--$('#NGT_field_handedness__1_empty_frequency').css({'display':'visible'});-->
 	        $("tr[id$=empty_frequency]").css({'display':'visible'});
             break;
         case 'hide_empty_frequencies':
             show_empty_frequency = false;
             $(e).val('show_empty_frequencies');
-            console.log('show_empty_frequencies');
 	        $(e).html("Show empty frequencies");
-	        <!--$('#NGT_field_handedness__1_empty_frequency').css({'display':'none'});-->
 	        $("tr[id$=empty_frequency]").css({'display':'none'});
+            break;
+    }
+}
+
+</script>
+<script type="text/javascript">
+function sort_numerical(columnClassName, tableId) {
+    var tbody = document.getElementById(tableId).getElementsByTagName(
+            "tbody")[0];
+    var rows = tbody.getElementsByTagName("tr");
+
+    var unsorted = true;
+
+    while (unsorted) {
+        unsorted = false
+
+        for (var r = 0; r < rows.length - 1; r++) {
+            var row = rows[r];
+            var nextRow = rows[r + 1];
+
+            var value = row.getElementsByClassName(columnClassName)[0].innerHTML;
+            var nextValue = nextRow.getElementsByClassName(columnClassName)[0].innerHTML;
+
+            if (!isNaN(value)) {
+                value = parseFloat(value);
+                nextValue = parseFloat(nextValue);
+            }
+            if (value < nextValue) {
+                tbody.insertBefore(nextRow, row);
+                unsorted = true;
+            }
+        }
+    }
+};
+
+function sort_alpha(columnClassName, tableId) {
+    var tbody = document.getElementById(tableId).getElementsByTagName("tbody")[0];
+    var rows = tbody.getElementsByTagName("tr");
+    var rowsParent = tbody;
+
+    var unsorted = true;
+
+    var firstRow = rows[0];
+    var first_field_choice = firstRow.getElementsByClassName(columnClassName)[0].getAttribute('value');
+    if (first_field_choice != '_0') {
+        for (var r = 1; r < rows.length; r++) {
+            var row = rows[r];
+            var field_choice = row.getElementsByClassName(columnClassName)[0].getAttribute('value');
+            if (field_choice == '_0') {
+                tbody.insertBefore(row, firstRow);
+                break;
+            }
+        }
+    }
+
+    var rows = tbody.getElementsByTagName("tr");
+    var secondRow = rows[1];
+    var second_field_choice = secondRow.getElementsByClassName(columnClassName)[0].getAttribute('value');
+    if (second_field_choice != '_1') {
+        for (var r = 2; r < rows.length; r++) {
+            var row = rows[r];
+            var field_choice = row.getElementsByClassName(columnClassName)[0].getAttribute('value');
+            if (field_choice == '_1') {
+                tbody.insertBefore(row, secondRow);
+                break;
+            }
+        }
+    }
+
+    var rows = tbody.getElementsByTagName("tr");
+
+    while (unsorted) {
+        unsorted = false
+
+        for (var r = 2; r < rows.length - 1; r++) {
+            var row = rows[r];
+            var nextRow = rows[r + 1];
+
+            var value = row.getElementsByClassName(columnClassName)[0].innerHTML;
+            var nextValue = nextRow.getElementsByClassName(columnClassName)[0].innerHTML;
+
+            if (value > nextValue) {
+               tbody.insertBefore(nextRow, row);
+               unsorted = true;
+            }
+        }
+    }
+};
+
+function sort_frequencies(e) {
+    var sToggle = $(e).attr('value');
+
+    switch(sToggle) {
+        case 'sort_by_frequency':
+            $(e).val('sort_by_label');
+	        $(e).html("Sort by label");
+            for (i = 0; i < field_ds.length; i++) {
+                for (key in field_ids) {
+                    var table_id = field_ds[i] + '_results_' + key;
+                    sort_numerical('field_choice_frequency',table_id);
+                }
+            }
+            break;
+        case 'sort_by_label':
+            $(e).val('sort_by_frequency');
+	        $(e).html("Sort by frequency");
+            for (i = 0; i < field_ds.length; i++) {
+                for (key in field_ids) {
+                    var table_id = field_ds[i] + '_results_' + key;
+                    sort_alpha('field_choice_label',table_id);
+                }
+            }
             break;
     }
 }
@@ -110,6 +218,8 @@ function toggle_empty_frequencies(e) {
 
     <button id="toggle_frequencies" value='hide_empty_frequencies' onclick="toggle_empty_frequencies(this)"
             class="btn btn-default">{% trans "Hide empty frequencies" %}</button>
+    <button id="sort_results" value='sort_by_frequency' onclick="sort_frequencies(this)"
+            class="btn btn-default">{% trans "Sort by frequency" %}</button>
 <table class='table table-condensed'>
     <thead>
       <tr>
@@ -128,28 +238,34 @@ function toggle_empty_frequencies(e) {
         <td nowrap>{{ field_labels|keyvalue:key2 }}</td>
             <td>
             <div>
-                <table style="border:1px solid;table-layout:fixed;">
-                {% with field_labels_choices|keyvalue:key2 as field_choices %}
-                {% for key3, value3 in value2.items %}
-                    {% with field_choices|keyvalue:key3 as display_choice %}
-                    {% with display_choice|length as length_choice %}
-                    {% with length_choice|add:"60" as display_width %}
-                    {% if value3 > 0 %}
-                    <tr style="height:auto;">
-                    <td nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{display_choice}}</td>
-                    <td style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{value3}}</td>
-                    </tr>
-                    {% else %}
-                    <tr id="{{ds.id}}_field_{{key2}}_{{key3}}_empty_frequency" style="height:auto;">
-                    <td nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{display_choice}}</td>
-                    <td style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{value3}}</td>
-                    </tr>
-                    {% endif %}
+                <table id="{{ds.id}}_results_{{key2}}" style="border:1px solid;table-layout:fixed;">
+                    <tbody>
+                    {% with field_labels_choices|keyvalue:key2 as field_choices %}
+                    {% for key3, value3 in value2.items %}
+                        {% with field_choices|keyvalue:key3 as display_choice %}
+                        {% with display_choice|length as length_choice %}
+                        {% with length_choice|add:"60" as display_width %}
+                        {% if value3 > 0 %}
+                        <tr style="height:auto;">
+                        <td class="field_choice_label" value="{{key3}}"
+                            nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{display_choice}}</td>
+                        <td class="field_choice_frequency" value="{{value3}}"
+                            style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{value3}}</td>
+                        </tr>
+                        {% else %}
+                        <tr id="{{ds.id}}_field_{{key2}}_{{key3}}_empty_frequency" style="height:auto;">
+                        <td class="field_choice_label" value="{{key3}}"
+                            nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{display_choice}}</td>
+                        <td class="field_choice_frequency" value="{{value3}}"
+                            style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{value3}}</td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                    {% endfor %}
                     {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                {% endfor %}
-                {% endwith %}
+                    </tbody>
                 </table>
             </div>
             </td>
