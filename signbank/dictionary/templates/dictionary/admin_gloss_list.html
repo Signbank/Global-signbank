@@ -755,7 +755,7 @@ function do_toggle_groups(el) {
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+          <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       {% for dataset_lang in dataset_languages %}
@@ -984,7 +984,7 @@ function do_toggle_groups(el) {
         <td></td>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+          <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       {% for dataset_lang in dataset_languages %}
