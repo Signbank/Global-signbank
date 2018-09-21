@@ -280,7 +280,6 @@ class GlossSearchForm(forms.ModelForm):
                    # 'handedness',
                     'useInstr','rmrks',
                     # 'relatArtic',
-                   #'absOriPalm',
                   'absOriFing',
                    # 'relOriMov','relOriLoc','oriCh','handCh',
                    'repeat', 'altern',
@@ -403,7 +402,7 @@ class MorphemeSearchForm(forms.ModelForm):
 
                   'locPrimLH', 'locFocSite', 'locFocSiteLH', 'initArtOri', 'finArtOri', 'initArtOriLH', 'finArtOriLH',
 
-                  'handedness', 'useInstr', 'rmrks', 'relatArtic', 'absOriPalm',
+                  'handedness', 'useInstr', 'rmrks', 'relatArtic',
                   'absOriFing',
                   'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern', 'movSh', 'movDir', 'movMan',
                   'contType', 'mouthG',

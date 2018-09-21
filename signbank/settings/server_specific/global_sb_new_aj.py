@@ -49,7 +49,7 @@ FIELDS['main'] = ['useInstr','wordClass']
 
 FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
-          'mouthing', 'phonetVar','domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop','absOriPalm']
+          'mouthing', 'phonetVar','domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop',]
 
 FIELDS['semantics'] = ['iconImg','namEnt','semField','valence']
 
@@ -64,7 +64,7 @@ FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
 
 # The multiple select fields should be pull-down lists in the templates
 MULTIPLE_SELECT_GLOSS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                             'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'absOriPalm',
+                             'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
                              'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
 MULTIPLE_SELECT_MORPHEME_FIELDS = ['namEnt', 'semField', 'wordClass', 'mrpType']
 
