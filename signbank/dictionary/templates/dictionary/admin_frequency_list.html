@@ -207,7 +207,7 @@ function sort_frequencies(e) {
                 <tr>
                     <td>
                         <select id='id_Phonology'>
-                            {% for f_field, f_label in field_labels.items %}
+                            {% for f_field, f_label in field_labels_list %}
                             <option id="{{f_field}}">{{f_label}}</option>
                             {% endfor %}
                         </select>
