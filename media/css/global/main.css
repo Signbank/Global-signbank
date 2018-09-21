@@ -29,7 +29,7 @@ html {
         width: 300px;
         background-position: 20px 20px;
         background-repeat: no-repeat;
-        color: white;
+        color: hsla(0,0%,100%,0.75);;
         font-family: 'Nunito', sans-serif;
         font-size: 40px;
         padding: 19px;
@@ -39,7 +39,7 @@ html {
 }
 
 #second-title-part {
-    color: lightgrey;
+    color: white;
     margin-left: -92px;
     line-height: 2.5;
 }
