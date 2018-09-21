@@ -1750,7 +1750,7 @@ class MorphemeListView(ListView):
         fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN',
                       'compound', 'rmrks', 'handedness',
                       'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic', 'relOriMov', 'relOriLoc', 'oriCh',
-                      'handCh', 'absOriPalm', 'repeat', 'altern',
+                      'handCh', 'repeat', 'altern',
                       'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'iconType',
                       # 'namEnt', 'semField',
                       'valence',
@@ -2000,7 +2000,7 @@ class MorphemeListView(ListView):
                       'mrpType',
                       'useInstr', 'sense', 'StemSN', 'rmrks',
                       'handedness',
-                      'domhndsh', 'subhndsh', 'handCh', 'absOriPalm', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc',
+                      'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc',
                       'oriCh', 'contType',
                       'movSh', 'movDir', 'repeat', 'altern', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType',
@@ -2337,11 +2337,11 @@ class MinimalPairsListView(ListView):
 
         context['glosses_with_phonology'] = glosses_with_phonology
 
-        context['field_names'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'absOriPalm',
+        context['field_names'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh',
                                   'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern' ]
 
         context['field_labels'] = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
-                      'handCh': 'Handshape Change', 'absOriPalm': 'Absolute Orientation: Palm', 'relatArtic': 'Relation between Articulators',
+                      'handCh': 'Handshape Change', 'relatArtic': 'Relation between Articulators',
                       'locprim': 'Location',
                       'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
                       'oriCh': 'Orientation Change',
@@ -2350,7 +2350,7 @@ class MinimalPairsListView(ListView):
                       'altern': 'Alternating Movement' }
 
         context['field_categories'] = {'handedness': 'Handedness', 'domhndsh': 'Handshape', 'subhndsh': 'Handshape',
-                      'handCh': 'handshapeChange', 'absOriPalm': 'AbsOriPalm', 'relatArtic': 'relatArtic',
+                      'handCh': 'handshapeChange', 'relatArtic': 'relatArtic',
                       'locprim': 'Location',
                       'relOriMov': 'relOriMov', 'relOriLoc': 'relOriLoc',
                       'oriCh': 'oriChange',
