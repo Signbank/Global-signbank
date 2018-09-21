@@ -193,18 +193,19 @@
          {% endif %}
     </div>
 
-    <div class='btn-group'>
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+        </li>
+    </ul>
 
-    <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
-
-    <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
-
-         {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-         {% if "change_dataset" in dataset_perms %}
-         <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
-
-        {% endif %}
-    </div>
+    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
 
     {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
@@ -350,6 +351,14 @@
     </div>
     {% endif %}
 
+     {% if "change_dataset" in dataset_perms %}
+    <div class="editform">
+        <fieldset>
+         <legend>{% trans "Delete Sign" %}</legend>
+         <button id='delete_gloss_btn' class='btn btn-danger' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
+        </fieldset>
+    </div>
+    {% endif %}
 
 
 
