@@ -214,7 +214,7 @@ class FieldChoice(models.Model):
     #     return name
 
     class Meta:
-        ordering = ['machine_value'] #,'machine_value']
+        ordering = ['machine_value']
 
 class Handshape(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
@@ -245,18 +245,6 @@ class Handshape(models.Model):
     ufM = models.NullBooleanField(_("Mu"), null=True, default=False)
     ufR = models.NullBooleanField(_("Ru"), null=True, default=False)
     ufP = models.NullBooleanField(_("Pu"), null=True, default=False)
-
-    def field_labels(self):
-        """Return the dictionary of field labels for use in a template"""
-
-        d = dict()
-        for f in self._meta.fields:
-            try:
-                d[f.name] = _(self._meta.get_field(f.name).verbose_name)
-            except:
-                pass
-
-        return d
 
     def get_image_path(self,check_existance=True):
         """Returns the path within the writable and static folder"""
@@ -356,18 +344,6 @@ class Gloss(models.Model):
 
     def __str__(self):
         return self.idgloss
-
-    def field_labels(self):
-        """Return the dictionary of field labels for use in a template"""
-        
-        d = dict()
-        for f in self._meta.fields:
-            try:
-                d[f.name] = _(self._meta.get_field(f.name).verbose_name)
-            except:
-                pass
-            
-        return d
 
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
                                 help_text=_("Dataset a gloss is part of"), null=True)
@@ -538,9 +514,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     creator = models.ManyToManyField(User)
     alternative_id = models.CharField(max_length=50,null=True,blank=True)
 
-    def get_fields(self):
-        return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
-
     def get_fields_dict(self):
         # this function might be obsolete
         fields = {}
@@ -578,21 +551,19 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     @property
     def get_phonology_display(self):
         fields = []
-        choice_list = []
-        for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
-          'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
-          'mouthing', 'phonetVar',]:
-
-            # Get and save the choice list for this field
-            fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-            field_value = getattr(self,field)
-            human_value = machine_value_to_translated_human_value(field_value, choice_list, LANGUAGE_CODE)
-            if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None) :
-                human_value = '   '
-            else:
-                human_value = str(human_value)
-            fields = fields + [(field,human_value)]
+        for field in FIELDS['phonology']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                # Get and save the choice list for this field
+                fieldchoice_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                field_value = getattr(self,field)
+                human_value = machine_value_to_translated_human_value(field_value, choice_list, LANGUAGE_CODE)
+                if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None) :
+                    human_value = '   '
+                else:
+                    human_value = str(human_value)
+                fields = fields + [(field,human_value)]
 
         return fields
 
@@ -803,13 +774,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         non_empty_phonology = []
         empty_phonology = []
 
-        fieldLabel = {'handedness':'Handedness','domhndsh':'Strong Hand','subhndsh':'Weak Hand',
-		  'handCh':'Handshape Change','relatArtic':'Relation between Articulators',
-          'locprim':'Location','locVirtObj':'Virual Object',
-          'relOriMov':'Relative Orientation: Movement','relOriLoc':'Relative Orientation: Location','oriCh':'Orientation Change',
-		  'contType':'Contact Type','movSh':'Movement Shape','movDir':'Movement Direction','repeat':'Repeated Movement',
-		  'altern':'Alternating Movement','phonOth':'Phonology Other','mouthG':'Mouth Gesture',
-          'mouthing':'Mouthing','phonetVar':'Phonetic Variation'}
+        fieldLabel = dict()
+        for field in FIELDS['phonology']:
+            field_label = Gloss._meta.get_field(field).verbose_name
+            fieldLabel[field] = field_label.encode('utf-8').decode()
 
         for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir',]:
@@ -845,15 +813,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
     def non_empty_phonology(self):
 
-        fieldLabel = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
-                      'handCh': 'Handshape Change', 'relatArtic': 'Relation between Articulators',
-                      'locprim': 'Location', 'locVirtObj': 'Virual Object',
-                      'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
-                      'oriCh': 'Orientation Change',
-                      'contType': 'Contact Type', 'movSh': 'Movement Shape', 'movDir': 'Movement Direction',
-                      'repeat': 'Repeated Movement',
-                      'altern': 'Alternating Movement', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture',
-                      'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'}
+        fieldLabel = dict()
+        for field in FIELDS['phonology']:
+            field_label = Gloss._meta.get_field(field).verbose_name
+            fieldLabel[field] = field_label.encode('utf-8').decode()
 
         non_empty_phonology = []
 
@@ -960,16 +923,6 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
     def minimal_pairs_dict(self):
 
-        fieldKind = {'handedness': 'list', 'domhndsh': 'list', 'subhndsh': 'list',
-                      'handCh': 'list', 'relatArtic': 'list',
-                      'locprim': 'list', 'locVirtObj': 'text',
-                      'relOriMov': 'list', 'relOriLoc': 'list',
-                      'oriCh': 'list',
-                      'contType': 'list', 'movSh': 'list', 'movDir': 'list',
-                      'repeat': 'check',
-                      'altern': 'check', 'phonOth': 'text', 'mouthG': 'text',
-                      'mouthing': 'text', 'phonetVar': 'text'}
-
         minimal_pairs_fields = dict()
 
         # If handedness is not defined for this gloss, don't bother to look up minimal pairs
@@ -997,7 +950,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                 other_value_f = getattr(o,f)
                 if self_value_f != other_value_f:
                      # print('add field ', f, ' to different')
-                     different_fields[f] = (n, fc,self_value_f,other_value_f,fieldKind[f])
+                     different_fields[f] = (n, fc,self_value_f,other_value_f,fieldname_to_kind(f))
             if (len(list(different_fields.keys())) == 0):
                 # print('different not found yet, nep: ', nep)
                 for sf,sn,sv in nep:
@@ -1008,7 +961,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                     if other_value_sf != self_value_sf:
                         # the value of other_value_sf was '0' because it assumed it was empty since not in onep,
                         # but if it is the field 'altern' or 'repeat' and it's false, then it is False, not '0'
-                        different_fields[sf] = (sn, sfc,self_value_sf,other_value_sf,fieldKind[sf])
+                        different_fields[sf] = (sn, sfc,self_value_sf,other_value_sf,fieldname_to_kind(sf))
 
             minimal_pairs_fields[o] = different_fields
 
@@ -1462,9 +1415,9 @@ def fieldname_to_category(fieldname):
 def fieldname_to_kind(fieldname):
     if fieldname in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic',
                      'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir',
-                     'final_domdndsh', 'final_subhndsh']:
+                     'final_domdndsh', 'final_subhndsh', 'namEnt', 'semField', 'valence']:
         field_kind = 'list'
-    elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar']:
+    elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg']:
         field_kind = 'text'
     elif fieldname in ['repeat','altern']:
         field_kind = 'check'
@@ -1472,6 +1425,7 @@ def fieldname_to_kind(fieldname):
         print('unknown kind for fieldname: ', fieldname)
         field_kind = fieldname
     return field_kind
+
 
 class Relation(models.Model):
     """A relation between two glosses"""
@@ -1654,9 +1608,9 @@ class Dataset(models.Model):
 
         # sort the phonology fields based on field label in the designated language
         field_labels = dict()
-        for field in FIELDS['phonology']:
+        for field in FIELDS['phonology'] + FIELDS['semantics']:
             if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter']:
+                             'subhndsh_letter', 'iconImg']:
                 field_label = Gloss._meta.get_field(field).verbose_name
                 field_labels[field] = field_label.encode('utf-8').decode()
         field_labels = OrderedDict(sorted(field_labels.items(), key=lambda x: x[1]))
@@ -1716,6 +1670,7 @@ class Dataset(models.Model):
                 frequency_lists_phonology_fields.update({field: copy.deepcopy(choice_list_frequencies)})
 
         return frequency_lists_phonology_fields
+
 
 class UserProfile(models.Model):
     # This field is required.

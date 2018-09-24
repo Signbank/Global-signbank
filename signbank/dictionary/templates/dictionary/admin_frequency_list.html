@@ -12,9 +12,9 @@
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script type='text/javascript'>
-var field_ids = {{field_labels|safe}};
+var field_ids = {{all_field_labels|safe}};
 var field_ds = {{dataset_ids|safe}};
-var multiple_select_fields = [ 'Phonology', ];
+var multiple_select_fields = [ 'Phonology', 'Semantics'];
 var show_empty_frequency = true;
 
 $(document).ready(function() {
@@ -202,13 +202,21 @@ function sort_frequencies(e) {
     <div id="visibility_buttons">
          <table class='table table-condensed'>
                 <tr id='phonology_selection'>
-                    <td><label>Phonology</label></td>
-                </tr>
-                <tr>
+                    <td style="width:200px;"><label>Phonology</label></td>
                     <td>
                         <select id='id_Phonology'>
                             {% for f_field, f_label in field_labels_list %}
                             <option id="{{f_field}}">{{f_label}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                <tr id='semantics_selection'>
+                    <td><label>Semantics</label></td>
+                    <td>
+                        <select id='id_Semantics'>
+                            {% for s_field, s_label in field_labels_semantics_list %}
+                            <option id="{{s_field}}">{{s_label}}</option>
                             {% endfor %}
                         </select>
                     </td>
@@ -235,12 +243,12 @@ function sort_frequencies(e) {
         {% for key2, value2 in frequency_dict_ds.items %}
         <tr id="{{ds.id}}_field_{{key2}}" style="display:none">
         <td nowrap>{{ ds.name }}</td>
-        <td nowrap>{{ field_labels|keyvalue:key2 }}</td>
+        <td nowrap>{{ all_field_labels|keyvalue:key2 }}</td>
             <td>
             <div>
                 <table id="{{ds.id}}_results_{{key2}}" style="border:1px solid;table-layout:fixed;">
                     <tbody>
-                    {% with field_labels_choices|keyvalue:key2 as field_choices %}
+                    {% with all_field_labels_choices|keyvalue:key2 as field_choices %}
                     {% for key3, value3 in value2.items %}
                         {% with field_choices|keyvalue:key3 as display_choice %}
                         {% with display_choice|length as length_choice %}

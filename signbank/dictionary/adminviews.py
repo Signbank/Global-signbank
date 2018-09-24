@@ -2442,6 +2442,37 @@ class FrequencyListView(ListView):
 
         context['field_labels_choices'] = field_labels_choices
 
+        # do the same for the semantics fields
+        # the code is here to keep phonology and semantics in separate dicts,
+        # but at the moment all results are displayed in one table in the template
+
+        field_labels_semantics = dict()
+        for field in FIELDS['semantics']:
+            field_kind = fieldname_to_kind(field)
+            if field_kind == 'list':
+                field_label = Gloss._meta.get_field(field).verbose_name
+                field_labels_semantics[field] = field_label.encode('utf-8').decode()
+
+        field_labels_semantics_list = [ (k, v) for (k, v) in sorted(field_labels_semantics.items(), key=lambda x: x[1])]
+        context['field_labels_semantics'] = field_labels_semantics
+        context['field_labels_semantics_list'] = field_labels_semantics_list
+
+        field_labels_semantics_choices = dict()
+        for field, label in field_labels_semantics.items():
+            field_category = fieldname_to_category(field)
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
+            field_labels_semantics_choices[field] = dict(translated_choices)
+
+        context['field_labels_semantics_choices'] = field_labels_semantics_choices
+
+        # for ease of implementation in the template, the results of the two kinds of frequencies
+        # (phonology fields, semantics fields) are displayed in the same table, the lookup tables are merged so only one loop is needed
+
+        context['all_field_labels_choices'] = { **field_labels_choices, **field_labels_semantics_choices }
+
+        context['all_field_labels'] = { **field_labels, **field_labels_semantics }
+
         return context
 
     def get_queryset(self):
