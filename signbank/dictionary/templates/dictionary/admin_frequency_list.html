@@ -191,6 +191,24 @@ function sort_frequencies(e) {
 }
 
 </script>
+<style>
+.table-bordered > thead > tr > th {
+    border: 1px solid black !important;
+}
+
+.table-bordered > tbody > tr > td {
+    border: 1px solid black !important;
+}
+
+table {
+    margin: 0px 0px 0px 0px important!;
+}
+
+.table-bordered {
+    margin-top: 20px;
+}
+
+</style>
 {% endblock %}
 
 {% block content %}
@@ -228,11 +246,11 @@ function sort_frequencies(e) {
             class="btn btn-default">{% trans "Hide empty frequencies" %}</button>
     <button id="sort_results" value='sort_by_frequency' onclick="sort_frequencies(this)"
             class="btn btn-default">{% trans "Sort by frequency" %}</button>
-<table class='table table-condensed'>
+<table class='table table-condensed table-bordered'>
     <thead>
       <tr>
-          <th>{% trans "Dataset" %}</th>
-          <th>{% trans "Field name" %}</th>
+          <th style="width:300px;">{% trans "Dataset" %}</th>
+          <th style="width:300px;">{% trans "Field name" %}</th>
           <th>{% trans "Frequencies" %}</th>
       </tr>
     </thead>
