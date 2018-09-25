@@ -1017,13 +1017,7 @@ class GlossDetailView(DetailView):
                     human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                     #And add the kind of field
-                    if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
-                        kind = 'text'
-                    elif field in ['repeat','altern','oriChAbd','oriChFlex']:
-                        kind = 'check'
-                    else:
-                        kind = 'list'
-
+                    kind = fieldname_to_kind(field)
                     context[topic+'_fields'].append([human_value,field,labels[field],kind])
 
 
@@ -1447,13 +1441,7 @@ class GlossRelationsDetailView(DetailView):
                 human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                 #And add the kind of field
-                if field in ['useInstr','phonOth','mouthG','mouthing','phonetVar','iconImg','locVirtObj']:
-                    kind = 'text'
-                elif field in ['repeat','altern','oriChAbd','oriChFlex']:
-                    kind = 'check'
-                else:
-                    kind = 'list'
-
+                kind = fieldname_to_kind(field)
                 context[topic+'_fields'].append([human_value,field,labels[field],kind])
 
         #Add morphology to choice lists
@@ -2185,12 +2173,7 @@ class HandshapeDetailView(DetailView):
             human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
             #And add the kind of field
-            if field in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP',
-                         'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
-                         'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
-                kind = 'check'
-            else:
-                kind = 'list'
+            kind = fieldname_to_kind(field)
 
             field_label = labels[field]
             if field_label in ['Finger selection', 'T', 'I', 'M', 'R', 'P']:
@@ -2337,26 +2320,29 @@ class MinimalPairsListView(ListView):
 
         context['glosses_with_phonology'] = glosses_with_phonology
 
-        context['field_names'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh',
-                                  'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern' ]
+        field_names = []
+        for field in FIELDS['phonology']:
+            # the following fields are not considered for minimal pairs
+            if field not in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                             'weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                field_names.append(field)
 
-        context['field_labels'] = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
-                      'handCh': 'Handshape Change', 'relatArtic': 'Relation between Articulators',
-                      'locprim': 'Location',
-                      'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
-                      'oriCh': 'Orientation Change',
-                      'contType': 'Contact Type', 'movSh': 'Movement Shape', 'movDir': 'Movement Direction',
-                      'repeat': 'Repeated Movement',
-                      'altern': 'Alternating Movement' }
+        context['field_names'] = field_names
 
-        context['field_categories'] = {'handedness': 'Handedness', 'domhndsh': 'Handshape', 'subhndsh': 'Handshape',
-                      'handCh': 'handshapeChange', 'relatArtic': 'relatArtic',
-                      'locprim': 'Location',
-                      'relOriMov': 'relOriMov', 'relOriLoc': 'relOriLoc',
-                      'oriCh': 'oriChange',
-                      'contType': 'ContactType', 'movSh': 'MovementShape', 'movDir': 'MovementDir',
-                      'repeat': 'repeat',
-                      'altern': 'altern' }
+        field_labels = dict()
+        for field in field_names:
+            field_label = Gloss._meta.get_field(field).verbose_name
+            field_labels[field] = field_label.encode('utf-8').decode()
+
+        context['field_labels'] = field_labels
+
+        field_categories = dict()
+        for field in field_names:
+            field_category = fieldname_to_category(field)
+            field_categories[field] = field_category
+
+        context['field_categories'] = field_categories
 
         return context
 
@@ -3540,12 +3526,7 @@ class MorphemeDetailView(DetailView):
                 human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
 
                 # And add the kind of field
-                if field in ['phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'locVirtObj']:
-                    kind = 'text'
-                elif field in ['repeat', 'altern']:
-                    kind = 'check'
-                else:
-                    kind = 'list'
+                kind = fieldname_to_kind(field)
 
                 context[topic + '_fields'].append([human_value, field, labels[field], kind])
 

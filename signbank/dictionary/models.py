@@ -246,6 +246,19 @@ class Handshape(models.Model):
     ufR = models.NullBooleanField(_("Ru"), null=True, default=False)
     ufP = models.NullBooleanField(_("Pu"), null=True, default=False)
 
+    def field_labels(self):
+        """Return the dictionary of field labels for use in a template"""
+
+        d = dict()
+        for f in self._meta.fields:
+            try:
+                d[f.name] = _(self._meta.get_field(f.name).verbose_name)
+            except:
+                pass
+
+
+        return d
+
     def get_image_path(self,check_existance=True):
         """Returns the path within the writable and static folder"""
 
@@ -344,6 +357,18 @@ class Gloss(models.Model):
 
     def __str__(self):
         return self.idgloss
+
+    def field_labels(self):
+        """Return the dictionary of field labels for use in a template"""
+
+        d = dict()
+        for f in self._meta.fields:
+            try:
+                d[f.name] = _(self._meta.get_field(f.name).verbose_name)
+            except:
+                pass
+
+        return d
 
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
                                 help_text=_("Dataset a gloss is part of"), null=True)
@@ -1412,14 +1437,20 @@ def fieldname_to_category(fieldname):
 
     return field_category
 
+# this can be used for phonology and handshape fields
 def fieldname_to_kind(fieldname):
     if fieldname in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic',
                      'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir',
-                     'final_domdndsh', 'final_subhndsh', 'namEnt', 'semField', 'valence']:
+                     'final_domdndsh', 'final_subhndsh', 'namEnt', 'semField', 'valence',
+                     'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
+                     'hsFingConf2', 'hsAperture',
+                     'hsSpread', 'hsFingUnsel']:
         field_kind = 'list'
     elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg']:
         field_kind = 'text'
-    elif fieldname in ['repeat','altern']:
+    elif fieldname in ['repeat','altern', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
+                         'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
+                         'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
         field_kind = 'check'
     else:
         print('unknown kind for fieldname: ', fieldname)
