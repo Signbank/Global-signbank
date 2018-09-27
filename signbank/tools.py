@@ -1018,7 +1018,7 @@ def reload_signbank(request=None):
 def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, dataset=None):
     dataset_gloss_ids = []
     if dataset:
-        dataset_gloss_ids = dataset.gloss_set.values_list('pk', flat=True)
+        dataset_gloss_ids = Gloss.objects.filter(lemma__dataset=dataset).values_list('pk', flat=True)
         print(str(dataset_gloss_ids))
         print(str(4611 in dataset_gloss_ids))
 
@@ -1047,7 +1047,7 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, d
 
 def get_gloss_data(since_timestamp=0, dataset=None):
     if dataset:
-        glosses = Gloss.objects.filter(dataset=dataset)
+        glosses = Gloss.objects.filter(lemma__dataset=dataset)
     else:
         glosses = Gloss.objects.all()
     gloss_data = {}

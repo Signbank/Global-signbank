@@ -566,9 +566,9 @@ class Gloss(models.Model):
                 if category != field.name:
                     if not category in fields:
                         fields[category] = {}
-                    fields[category][field.verbose_name.title()] = field.value_to_string(self)
+                    fields[category][field.verbose_name.title()] = str(getattr(self, field.name))
                 else:
-                    fields[field.verbose_name.title()] = field.value_to_string(self)
+                    fields[field.verbose_name.title()] = str(getattr(self, field.name))
 
         # Annotation Idgloss translations
         if self.dataset:
