@@ -809,7 +809,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
             # Get and save the choice list for this field
             fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.all()
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             # Take the human value in the language we are using
             machine_value = getattr(self,field)
@@ -849,7 +852,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', ]:
 
             fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.all()
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             machine_value = getattr(self, field)
             human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
@@ -881,7 +887,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                       'mouthing', 'phonetVar', ]:
 
             fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.all()
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             phonology_dict[field] = ''
 
@@ -958,15 +967,18 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         if (self.domhndsh is None or self.domhndsh == '0'):
             return minimal_pairs_fields
 
-        # Restrict minimal pairs search if gloss has empty phonology field for Weak Hand
-        if (self.subhndsh is None or self.subhndsh == '0'):
-            return minimal_pairs_fields
-
         wmp = self.minimal_pairs_objects()
 
         (ep, nep) = self.empty_non_empty_phonology()
 
+        # only consider minimal pairs if this gloss has more fields defined than handedness and strong hand
+        if (len(nep) <= 2):
+            return minimal_pairs_fields
+
         for o in wmp:
+            # ignore if dataset is different
+            if (self.dataset != o.dataset):
+                continue
             different_fields = dict()
             onep = o.non_empty_phonology()
             for f,n,v in onep:
@@ -1127,7 +1139,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         match_glosses = [g for g in qs]
 
         for other_gloss in match_glosses:
-            if other_gloss != self:
+            if other_gloss != self and other_gloss.dataset == self.dataset:
                     homonyms_of_this_gloss += [other_gloss]
 
         homonyms_not_saved = []
@@ -1444,16 +1456,15 @@ def fieldname_to_kind(fieldname):
                      'final_domdndsh', 'final_subhndsh', 'namEnt', 'semField', 'valence',
                      'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
                      'hsFingConf2', 'hsAperture',
-                     'hsSpread', 'hsFingUnsel']:
+                     'hsSpread', 'hsFingUnsel', 'wordClass']:
         field_kind = 'list'
-    elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg']:
+    elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'useInstr']:
         field_kind = 'text'
     elif fieldname in ['repeat','altern', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                          'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                          'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
         field_kind = 'check'
     else:
-        print('unknown kind for fieldname: ', fieldname)
         field_kind = fieldname
     return field_kind
 

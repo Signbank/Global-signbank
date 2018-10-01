@@ -2272,9 +2272,8 @@ class HomonymListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        glosses_with_phonology = Gloss.objects.filter(dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
-                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})
-                                           | Q(**{'subhndsh__isnull': True}) | Q(**{'subhndsh': 0})))
+        glosses_with_phonology = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
+                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})))
 
         return glosses_with_phonology
 
@@ -2306,13 +2305,18 @@ class MinimalPairsListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
-        glosses_with_phonology = Gloss.objects.filter(dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
-                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})
-                                           | Q(**{'subhndsh__isnull': True}) | Q(**{'subhndsh': 0})))
+        glosses_with_phonology = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
+                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})))
 
         minimalpairs = []
 
         for focus_gloss in glosses_with_phonology:
+            # check if more fields are defined than just handedness and domhndsh
+            (ep, nep) = focus_gloss.empty_non_empty_phonology()
+
+            if (len(nep) <= 2):
+                continue
+
             minimal_pairs_focus_gloss = focus_gloss.minimal_pairs_objects()
             minimal_pairs_focus_gloss_objects = [ mp for mp in minimal_pairs_focus_gloss if mp.dataset == focus_gloss.dataset ]
             value_pair = (focus_gloss, minimal_pairs_focus_gloss_objects)
@@ -2356,9 +2360,8 @@ class MinimalPairsListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        glosses_with_phonology = Gloss.objects.filter(dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
-                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})
-                                           | Q(**{'subhndsh__isnull': True}) | Q(**{'subhndsh': 0})))
+        glosses_with_phonology = Gloss.none_morpheme_objects().filter(dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
+                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})))
 
         return glosses_with_phonology
 
