@@ -778,7 +778,8 @@
                     <tr value="{{value}}">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>
-                            <a id="strong_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/">{{value}}</a>
+                            <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
+                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
