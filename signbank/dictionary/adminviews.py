@@ -933,7 +933,13 @@ class GlossDetailView(DetailView):
         context['handedness'] = (int(self.object.handedness) > 1) if self.object.handedness else 0  # minimal machine value is 2
         context['domhndsh'] = (int(self.object.domhndsh) > 2) if self.object.domhndsh else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
-        context['StrongHand'] = self.object.domhndsh
+
+        # check for existence of strong hand and weak hand shapes
+        try:
+            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh)
+        except Handshape.DoesNotExist:
+            strong_hand_obj = None
+        context['StrongHand'] = self.object.domhndsh if strong_hand_obj else 0
         context['WeakHand'] = self.object.subhndsh
 
         # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
