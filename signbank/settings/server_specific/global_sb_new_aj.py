@@ -68,6 +68,10 @@ MULTIPLE_SELECT_GLOSS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim',
                              'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
 MULTIPLE_SELECT_MORPHEME_FIELDS = ['namEnt', 'semField', 'wordClass', 'mrpType']
 
+MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
+MINIMAL_PAIRS_COUNT = len(MINIMAL_PAIRS_FIELDS)
+
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {

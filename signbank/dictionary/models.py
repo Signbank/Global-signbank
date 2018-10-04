@@ -881,29 +881,28 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         phonology_dict = dict()
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj',
-                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', 'phonOth',
-                      'mouthG',
-                      'mouthing', 'phonetVar', ]:
+        for field in FIELDS['phonology']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter', 'iconImg']:
+                fieldchoice_category = fieldname_to_category(field)
+                if fieldchoice_category == 'Handshape':
+                    choice_list = Handshape.objects.all()
+                else:
+                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-            fieldchoice_category = fieldname_to_category(field)
-            if fieldchoice_category == 'Handshape':
-                choice_list = Handshape.objects.all()
-            else:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                phonology_dict[field] = ''
 
-            phonology_dict[field] = ''
+                machine_value = getattr(self, field)
+                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
 
-            machine_value = getattr(self, field)
-            human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
-
-            if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                phonology_dict[field] = machine_value
+                if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
+                    phonology_dict[field] = machine_value
 
         return phonology_dict
 
 
     # Minimal Pairs
+    # these are now defined in settings
     # 19 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
     # 14
@@ -918,8 +917,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
-                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
+        for field in settings.MINIMAL_PAIRS_FIELDS:
             value_of_this_field = str(phonology_for_gloss[field])
 
             if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
@@ -1006,6 +1004,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         return minimal_pairs_fields
 
     # Homonyms
+    # these are now defined in settings
     # 19 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
     # 14
@@ -1023,8 +1022,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic',
-                      'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
+        for field in settings.MINIMAL_PAIRS_FIELDS:
             value_of_this_field = str(phonology_for_gloss[field])
 
             if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
@@ -1103,8 +1101,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
-                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
+        for field in settings.MINIMAL_PAIRS_FIELDS:
             value_of_this_field = str(phonology_for_gloss[field])
 
             if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
@@ -1132,7 +1129,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                     where_homonyms_filled += '(' + field + '=' + value_of_this_field + ')'
                 count_filled = count_filled + 1
 
-        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=14'
+        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=' + str(settings.MINIMAL_PAIRS_COUNT)
 
         qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE ' + where_homonyms)
 
