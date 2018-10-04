@@ -882,8 +882,10 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         phonology_dict = dict()
 
         for field in FIELDS['phonology']:
+            if field in ['phonOth', 'mouthG', 'mouthing', 'phonetVar']:
+                continue
             if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter', 'iconImg']:
+                             'subhndsh_letter']:
                 fieldchoice_category = fieldname_to_category(field)
                 if fieldchoice_category == 'Handshape':
                     choice_list = Handshape.objects.all()
@@ -897,6 +899,12 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
                 if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
                     phonology_dict[field] = machine_value
+            else:
+                machine_value = getattr(self,field)
+                if machine_value:
+                    phonology_dict[field] = True
+                else:
+                    phonology_dict[field] = False
 
         return phonology_dict
 
@@ -1007,14 +1015,29 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
     # these are now defined in settings
     # 19 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
-    # 14
+    # add fields: 'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop'
+    # 20
     def homonym_objects(self):
 
         paren = ')'
 
         phonology_for_gloss = self.phonology_matrix()
 
+        handedness_of_this_gloss = str(phonology_for_gloss['handedness'])
+
         homonym_objects_list = []
+
+        # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
+        try:
+            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
+        except:
+            handedness_X = ''
+
+        # there are lots of different values for undefined
+        if (handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
+                    handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
+
+            return homonym_objects_list
 
         where_homonyms_filled = ''
         where_homonyms_empty = ''
@@ -1022,10 +1045,9 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         count_empty = 0
         count_filled = 0
 
-        for field in settings.MINIMAL_PAIRS_FIELDS:
+        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
             value_of_this_field = str(phonology_for_gloss[field])
-
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
+            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None or value_of_this_field == 'False'):
                 if (where_homonyms_empty.endswith(paren)):
                     where_homonyms_empty += " + (" + field + " IS NOT NULL AND " \
                                                  + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
@@ -1033,12 +1055,13 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                     where_homonyms_empty += "(" + field + " IS NOT NULL AND " \
                                                  + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
                 count_empty = count_empty + 1
-            elif (value_of_this_field == 'False'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += ' + (' + field + '=1)'
-                else:
-                    where_homonyms_empty += '(' + field + '=1)'
-                count_empty = count_empty + 1
+            # elif (value_of_this_field == 'False'):
+            #     print('false value: ', field)
+            #     if (where_homonyms_empty.endswith(paren)):
+            #         where_homonyms_empty += ' + (' + field + '=1)'
+            #     else:
+            #         where_homonyms_empty += '(' + field + '=1)'
+            #     count_empty = count_empty + 1
             elif (value_of_this_field == 'True'):
                 if (where_homonyms_filled.endswith(paren)):
                     where_homonyms_filled += ' + (' + field + '=0)'
@@ -1086,12 +1109,13 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         except:
             handedness_X = ''
 
-        if (handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
+        # there are lots of different values for undefined
+        if (handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
                     handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
 
             return ([], [], [])
 
-        if (self.domhndsh == None or self.domhndsh == '-'):
+        if (self.domhndsh == None or self.domhndsh == '-' or self.domhndsh == '0'):
             return ([], [], [])
 
 
@@ -1101,21 +1125,21 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
         count_empty = 0
         count_filled = 0
 
-        for field in settings.MINIMAL_PAIRS_FIELDS:
+        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
             value_of_this_field = str(phonology_for_gloss[field])
 
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
+            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None or value_of_this_field == 'False'):
                 if (where_homonyms_empty.endswith(paren)):
                     where_homonyms_empty += " + (" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
                 else:
                     where_homonyms_empty += "(" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
                 count_empty = count_empty + 1
-            elif (value_of_this_field == 'False'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += ' + (' + field + " IS NULL OR " + field + '=0)'
-                else:
-                    where_homonyms_empty += '(' + field + " IS NULL OR " + field + '=0)'
-                count_empty = count_empty + 1
+            # elif (value_of_this_field == 'False'):
+            #     if (where_homonyms_empty.endswith(paren)):
+            #         where_homonyms_empty += ' + (' + field + " IS NULL OR " + field + '=0)'
+            #     else:
+            #         where_homonyms_empty += '(' + field + " IS NULL OR " + field + '=0)'
+            #     count_empty = count_empty + 1
             elif (value_of_this_field == 'True'):
                 if (where_homonyms_filled.endswith(paren)):
                     where_homonyms_filled += ' + (' + field + '=1)'
@@ -1129,7 +1153,7 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
                     where_homonyms_filled += '(' + field + '=' + value_of_this_field + ')'
                 count_filled = count_filled + 1
 
-        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=' + str(settings.MINIMAL_PAIRS_COUNT)
+        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=20' #+ str(settings.MINIMAL_PAIRS_COUNT)
 
         qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE ' + where_homonyms)
 
