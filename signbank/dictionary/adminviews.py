@@ -2464,9 +2464,9 @@ class FrequencyListView(ListView):
         # for ease of implementation in the template, the results of the two kinds of frequencies
         # (phonology fields, semantics fields) are displayed in the same table, the lookup tables are merged so only one loop is needed
 
-        context['all_field_labels_choices'] = { **field_labels_choices, **field_labels_semantics_choices }
+        context['all_field_labels_choices'] = dict(field_labels_choices, **field_labels_semantics_choices)
 
-        context['all_field_labels'] = { **field_labels, **field_labels_semantics }
+        context['all_field_labels'] = dict(field_labels, **field_labels_semantics)
 
         return context
 
