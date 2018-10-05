@@ -31,8 +31,9 @@
                 <a href="{{PREFIX_URL}}/dictionary/gloss/{{ focus_gloss.id }}/">{{ focus_gloss|get_annotation_idgloss_translation:language }}</a>
             </td>
             <td>
-                {% for gl in homonyms_saved %}
-                    <a style="padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl|get_annotation_idgloss_translation:language }}</a>
+                {% for gl, seen in homonyms_saved %}
+                    <a style="padding-left: 20px;{% if seen %}color:red;{% endif %}"
+                       href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl|get_annotation_idgloss_translation:language }}</a>
                 {% endfor %}
             </td>
             <td>

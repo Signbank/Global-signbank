@@ -14,7 +14,7 @@ import copy
 
 import sys, os
 import json
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
@@ -771,13 +771,25 @@ Entry Name" can be (and often is) the same as the Annotation Idgloss.""")
 
         return variant_relations
 
+    # this function is used by Homonyms List view
+    # a boolean is paired with saved homonym relation targets to tag duplicates
     def homonym_relations(self):
 
         homonym_relations = self.relation_sources.filter(role__in=['homonym'])
 
         homonyms = [x.target for x in homonym_relations]
 
-        return homonyms
+        tagged_homonym_objects = []
+        seen = []
+        for o in homonyms:
+            if o.id in seen:
+                tagged_homonym_objects.append((o, True))
+                seen.append(o.id)
+            else:
+                tagged_homonym_objects.append((o, False))
+                seen.append(o.id)
+
+        return tagged_homonym_objects
 
     def get_stems(self):
 
