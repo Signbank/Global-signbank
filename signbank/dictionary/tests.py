@@ -289,7 +289,7 @@ class ImportExportTests(TestCase):
         response = client.get(url)
         self.assertEqual(response.status_code, 302)
         auth_login_url = reverse('registration:auth_login')
-        expected_url = settings.URL + auth_login_url
+        expected_url = settings.PREFIX_URL + auth_login_url
         self.assertEqual(response['Location'][:len(expected_url)], expected_url)
 
     def test_Export_csv(self):
