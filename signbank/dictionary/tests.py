@@ -153,10 +153,10 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(len(response.context['object_list']), 0) #Nothing without dataset permission
 
         assign_perm('view_dataset', self.user, test_dataset)
-        response = client.get('/signs/search/',{'handedness':4})
+        response = client.get('/signs/search/',{'handedness[]':4})
         self.assertEqual(len(response.context['object_list']), 2)
 
-        response = client.get('/signs/search/',{'handedness':5})
+        response = client.get('/signs/search/',{'handedness[]':5})
         self.assertEqual(len(response.context['object_list']), 1)
 
 #Deprecated?
@@ -464,7 +464,9 @@ class FrontEndTests(TestCase):
         #We can now request a detail view
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertEqual(response.status_code,200)
-        self.assertEqual(len(response.content),0) #Without permissions you get a 200 but no content
+        self.assertContains(response,
+                            'The gloss you are trying to view ({}) is not in your selected datasets.'
+                            .format(self.hidden_gloss.pk))
 
         #With permissions you also see something
         assign_perm('view_dataset', self.user, self.test_dataset)
