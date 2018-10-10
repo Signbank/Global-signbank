@@ -24,7 +24,19 @@
 {% load field_choice %}
 
 
-<a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+<ul class='nav nav-tabs'>
+    <li class="nav-item">
+        <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+    </li>
+    <li class="nav-item">
+        <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+    </li>
+    <li class="nav-item">
+        <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+    </li>
+</ul>
+
+<br>
 
 {% if gloss.annotation_idgloss %}
 <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>

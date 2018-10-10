@@ -34,6 +34,8 @@
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
+<!-- Disabled to check if this is really needed
+
 <div id="searchresults" class='navbar navbar-default' style="border:0;">
 
 </div>
@@ -83,12 +85,22 @@
             </div>
             {% endifequal %}
 
-    
+-->
+
+
         {% if perms.dictionary.search_gloss %}
-        <div class='btn-group'>
-            {# Translators: Navigation detailed view  #}
-           <a id='editbutton' class='btn btn-default navbar-btn' href="{% url 'dictionary:admin_gloss_view' pk=gloss.id %}">{% blocktrans %}Detail View{% endblocktrans %}</a>
-        </div>
+        <ul class='nav nav-tabs'>
+            <li class="nav-item">
+                <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+            </li>
+            <li class="nav-item">
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+            </li>
+            <li class="nav-item">
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+            </li>
+        </ul>
+        <br>
         {% endif %}
     
     </div>
