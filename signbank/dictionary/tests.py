@@ -153,10 +153,10 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(len(response.context['object_list']), 0) #Nothing without dataset permission
 
         assign_perm('view_dataset', self.user, test_dataset)
-        response = client.get('/signs/search/',{'handedness':4})
+        response = client.get('/signs/search/',{'handedness[]':4})
         self.assertEqual(len(response.context['object_list']), 2)
 
-        response = client.get('/signs/search/',{'handedness':5})
+        response = client.get('/signs/search/',{'handedness[]':5})
         self.assertEqual(len(response.context['object_list']), 1)
 
 #Deprecated?
