@@ -1,15 +1,46 @@
 
 {% extends "baselayout.html" %}
+{% load i18n %}
 {% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Registration{% endblock %}
+
+{% block extrajs %}
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+<script type='text/javascript'>
+    var url = '{{URL}}';
+    var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+
+     $(document).ready(function(){
+
+         $('#id_dataset').attr('multiple','multiple');
+         $('#id_dataset').attr('class',"js-example-basic-multiple form-control");
+         $('#id_dataset').attr('name','dataset[]');
+         $('#id_dataset').css('width', '100%');
+         $('#id_dataset').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_dataset').val(null).trigger('change');
+
+});
+
+</script>
+
+{% endblock %}
 
 {% block content %}
+
 <form class='form-horizontal' method="post" action="">
-      
+
+    <div><h2>{% trans "Registration" %}</h2></div>
+
     {% csrf_token %}
     <div id='registrationform'  class="col-md-6 col-md-offset-3"> 
-    
+
         {% bootstrap_form form %}
-        
+
         {% buttons %}
         <button type="submit" class="btn btn-primary">
             {% bootstrap_icon "star" %} Submit

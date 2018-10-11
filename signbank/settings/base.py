@@ -13,25 +13,26 @@ TIME_ZONE = 'Europe/Amsterdam'
 
 LOCALE_PATHS = [BASE_DIR+'conf/locale']
 
-SITE_ID = 1
+# in the database, SITE_ID 1 is example.com
+SITE_ID = 2
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
 
 MEDIA_ROOT = WRITABLE_FOLDER
-MEDIA_URL = URL+'/media/'
+MEDIA_URL = PREFIX_URL+'/media/'
 MEDIA_MOBILE_URL = MEDIA_URL
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = ''
+STATIC_ROOT = PREFIX_URL
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = URL+'/static/'
+STATIC_URL = PREFIX_URL+'/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -69,7 +70,8 @@ MIDDLEWARE_CLASSES = (
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(PROJECT_DIR, 'templates/' + SIGNBANK_VERSION_CODE + '-templates')],
+        'DIRS': [os.path.join(PROJECT_DIR, 'templates/' + SIGNBANK_VERSION_CODE + '-templates'),
+                 os.path.join(PROJECT_DIR, 'signbank/registration/templates/')],
         'OPTIONS': {
             'context_processors': [
                 "django.template.context_processors.debug",
@@ -224,7 +226,7 @@ PRIMARY_CSS = "bootstrap_css/test-server.css"
 
 
 # do we allow people to register for the site
-ALLOW_REGISTRATION = False
+ALLOW_REGISTRATION = True
 
 ACCOUNT_ACTIVATION_DAYS = 7
 
@@ -233,12 +235,12 @@ ACCOUNT_ACTIVATION_DAYS = 7
 # show the number signs page or an under construction page?
 SHOW_NUMBERSIGNS = True
 
-LOGIN_URL = URL+'/accounts/login/'
-LOGIN_REDIRECT_URL = URL+'/signs/recently_added/'
+LOGIN_URL = PREFIX_URL+'/accounts/login/'
+LOGIN_REDIRECT_URL = PREFIX_URL+'/signs/recently_added/'
 
 
 # location of ffmpeg, used to convert uploaded videos
-FFMPEG_PROGRAM = "/Applications/ffmpegX.app/Contents/Resources/ffmpeg"
+# FFMPEG_PROGRAM = "/Applications/ffmpegX.app/Contents/Resources/ffmpeg"
 FFMPEG_TIMEOUT = 60
 FFMPEG_OPTIONS = ["-vcodec", "h264", "-an"]
 

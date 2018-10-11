@@ -21,7 +21,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ URL }}'
+    var url = '{{ URL }}{{ PREFIX_URL }}'
 
     var edit_mode_str = '{% trans "Edit" %}'
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
@@ -52,6 +52,9 @@
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
     var choice_lists = {{choice_lists|safe}};
+    console.log(choice_lists);
+    var frequency_lists_phonology_fields = {{frequency_lists_phonology_fields|safe}};
+    console.log(frequency_lists_phonology_fields);
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id = {{nextglossid}};
     var next_morpheme_id;
@@ -67,9 +70,9 @@
         for (var key in json_data) {
             if (json_data.hasOwnProperty(key)) {
                 var a = document.createElement("a");
-                a.setAttribute("class", "btn btn-default");
+                a.setAttribute("class", "search_result");
                 a.style["float"] = "none";
-                a.href = "{% url 'root_page' %}dictionary/gloss/" + json_data[key].id + "/";
+                a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
                 var linktext = document.createTextNode(json_data[key].gloss);
                 a.appendChild(linktext);
@@ -160,9 +163,9 @@
 
 {% block content %}
 
-<div id="searchresults" class='navbar navbar-default' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background:white;margin-top:3px;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;margin-top:3px;">
     </div>
     {% endif %}
 </div>
@@ -191,18 +194,19 @@
          {% endif %}
     </div>
 
-    <div class='btn-group'>
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+        </li>
+    </ul>
 
-    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
-
-    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
-
-         {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
-         {% if "change_dataset" in dataset_perms %}
-         <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
-
-        {% endif %}
-    </div>
+    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
 
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
@@ -270,18 +274,13 @@
 
     <div>
         {% if gloss.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_path}}" width="450px">
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_path}}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 
     <div id="feedback">
         <ul>
-            {% ifequal viewname "words" %}
-            <li><a href="{% url 'root_page' %}feedback/sign/{{translation.translation}}-{{n}}.html?return=/dictionary/words/{{translation.translation}}-{{n}}.html">{% trans "Provide feedback about this sign" %}</a></li>
-            {% else %}
-            <li><a href="{% url 'root_page' %}feedback/gloss/{{gloss.idgloss}}.html?return=/dictionary/gloss/{{gloss.idgloss}}.html&lastmatch={{lastmatch}}">{% trans "Provide feedback about this sign" %}</a></li>
-            {% endifequal %}
-
+            <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}?return=/dictionary/gloss/{{gloss.id}}/">{% trans "Provide feedback about this sign" %}</a></li>
         </ul>
     </div>
 
@@ -293,7 +292,7 @@
             {% with gloss.count_videos as gloss_video_count %}
             <p>{% blocktrans %} We have {{gloss_video_count}} videos for this sign. {% endblocktrans %}</p>
             {% endwith %}
-            <form action="{{URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+            <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -316,7 +315,7 @@
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Citation Form Image" %}</legend>
-            <form action="{{URL}}/image/upload/" method="post" enctype="multipart/form-data">
+            <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -341,10 +340,10 @@
          <legend>{% trans "Delete Media" %}</legend>
             <table>
                 <tr><td>
-                <form class="formbutton" action="{{URL}}/video/delete/{{gloss.pk}}" method='post'>
+                <form class="formbutton" action="{{PREFIX_URL}}/video/delete/{{gloss.pk}}" method='post'>
                         {% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete video'>
                 </form>
-                <form class="formbutton" action="{{URL}}/image/delete/{{gloss.pk}}" method='post'>
+                <form class="formbutton" action="{{PREFIX_URL}}/image/delete/{{gloss.pk}}" method='post'>
                         {% csrf_token %}<input class='btn btn-danger' id='delete_image' type='submit' value='Delete image'>
                 </form>
                 </td></tr>
@@ -353,6 +352,14 @@
     </div>
     {% endif %}
 
+     {% if "change_dataset" in dataset_perms %}
+    <div class="editform">
+        <fieldset>
+         <legend>{% trans "Delete Sign" %}</legend>
+         <button id='delete_gloss_btn' class='btn btn-danger' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
+        </fieldset>
+    </div>
+    {% endif %}
 
 
 
@@ -793,7 +800,7 @@
                         {% endfor %}
                     </tr>
                     {% endif %}
-                {% elif name == 'domhndsh' %}
+                {% elif name == 'domhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
                     <tr class="empty_row">
                         <th/><th/><th>letter</th><th>number</th>
                     </tr>
@@ -815,7 +822,8 @@
                     <tr value="{{value}}">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>
-                            <a id="strong_hand_link" style="color: inherit; display: visible;" href="{{ URL }}/dictionary/handshape/{{StrongHand}}/">{{value}}</a>
+                            <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
+                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
@@ -828,7 +836,7 @@
                         {% endfor %}
                     </tr>
                     {% endif %}
-                {% elif name == 'subhndsh' %}
+                {% elif name == 'subhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
                     <tr class="empty_row">
                         <th/><th/><th>letter</th><th>number</th>
                     </tr>
@@ -850,7 +858,7 @@
                     <tr value="{{value}}">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>
-                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{ URL }}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
+                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if name == 'subhndsh_letter' %}
@@ -1008,7 +1016,7 @@
                         {% else %}
                         <td></td>
                         {% endif %}
-                        <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
+                        <td id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                         <td id='relationtarget_{{rel.id}}'>
                             <a id='relation_target_hyperlink_{{rel.id}}'
                                href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>

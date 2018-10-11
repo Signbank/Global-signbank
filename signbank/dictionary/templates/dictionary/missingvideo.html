@@ -4,7 +4,7 @@
  
  <ul>
  {% for gloss in glosses %}
-   <li><a href="/dictionary/gloss/{{gloss.idgloss}}.html">{{gloss.idgloss}}</a>
+   <li><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.idgloss}}.html">{{gloss.idgloss}}</a>
       -- <a href="{{ STATIC_URL }}{{gloss.get_video_url}}">{{gloss.get_video_url}}</a></li>
  {% endfor %}
  </ul>

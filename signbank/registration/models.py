@@ -11,7 +11,7 @@ from django.conf import settings
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
@@ -30,7 +30,7 @@ class RegistrationManager(models.Manager):
     def activate_user(self, activation_key):
         """
         Validates an activation key and activates the corresponding
-        ``User`` if valid.
+        ``User`` if valid.accounts/activate/{{ activation_key }}
         
         If the key is valid and has not expired, returns the ``User``
         after activating.
@@ -51,13 +51,19 @@ class RegistrationManager(models.Manager):
                 return False
             if not profile.activation_key_expired():
                 user = profile.user
-                user.is_active = True
+                # user will be set to active after dataset access has been granted
+                # check if this makes sense for ASL
+                # user.is_active = True
                 user.save()
+
+                # send emails for the requested datasets
+                # we might not have the list of datasets anymore if this is a new session
+
                 return user
         return False
     
-    def create_inactive_user(self, username, password, email, 
-                             firstname="", lastname="",
+    def create_inactive_user(self, username, password, email,
+                             firstname="", lastname="", agree=True,
                              send_email=True, profile_callback=None):
         """
         Creates a new, inactive ``User``, generates a
@@ -82,18 +88,22 @@ class RegistrationManager(models.Manager):
         new_user.is_active = False
         new_user.first_name = firstname
         new_user.last_name = lastname
+        group_guest = Group.objects.get(name='Guest')
+        new_user.groups.add(group_guest)
         new_user.save()
         
-        
+
         registration_profile = self.create_profile(new_user)
-        
+
+        # print('activation key: ', registration_profile.activation_key)
+
         if profile_callback is not None:
             profile_callback(user=new_user)
         
         if send_email:
             from django.core.mail import send_mail
             current_site = Site.objects.get_current()
-            
+
             subject = render_to_string('registration/activation_email_subject.txt',
                                        context={ 'site': current_site })
             # Email subject *must not* contain newlines
@@ -103,7 +113,11 @@ class RegistrationManager(models.Manager):
                                        context={ 'activation_key': registration_profile.activation_key,
                                          'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
                                          'site': current_site })
-            
+
+            # for debug purposes on local machine
+            # print('register subject: ', subject)
+            # print('message: ', message)
+
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [new_user.email])
         return new_user
     
@@ -117,8 +131,9 @@ class RegistrationManager(models.Manager):
         username and a random salt.
         
         """
-        salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
-        activation_key = hashlib.sha1(salt+user.username).hexdigest()
+        salt = hashlib.sha1(str(random.random()).encode('utf-8')).hexdigest()[:5]
+        string_to_hash = str(salt) + str(user.username)
+        activation_key = hashlib.sha1(string_to_hash.encode('utf-8')).hexdigest()
         return self.create(user=user,
                            activation_key=activation_key)
         
@@ -191,13 +206,14 @@ class RegistrationProfile(models.Model):
     """
     user = models.ForeignKey(User, verbose_name=_('user'))
     activation_key = models.CharField(_('activation key'), max_length=40)
-    
+
     objects = RegistrationManager()
     
     class Meta:
         verbose_name = _('registration profile')
         verbose_name_plural = _('registration profiles')
-    
+        app_label = 'registration'
+
     class Admin:
         list_display = ('__str__', 'activation_key_expired')
         search_fields = ('user__username', 'user__first_name')
@@ -221,7 +237,9 @@ class RegistrationProfile(models.Model):
         return self.user.date_joined + expiration_date <= timezone.now() 
     activation_key_expired.boolean = True
     
-    
+
+# The rest of this file is from Auslan, it's not used by Signbank
+
 from django.contrib.auth import models as authmodels    
 
 import string
@@ -286,3 +304,5 @@ class UserProfile(models.Model):
     class Admin:
         list_display = ['user', 'deaf', 'auslan_user']
             
+    class Meta:
+        app_label = 'registration'

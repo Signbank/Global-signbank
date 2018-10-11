@@ -1,0 +1,310 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Frequency list{% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+<script type='text/javascript'>
+var field_ids = {{all_field_labels|safe}};
+var field_ds = {{dataset_ids|safe}};
+var multiple_select_fields = [ 'Phonology', 'Semantics'];
+var show_empty_frequency = true;
+
+$(document).ready(function() {
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        var target_pulldown = document.getElementById(fieldId);
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     $('.js-example-basic-multiple').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve'
+     });
+     $('.js-example-basic-multiple').val(null).trigger('change');
+
+     $('.js-example-basic-multiple').on('select2:select', function(e) {
+        var data = e.params.data;
+        var field_key = data.element.id;
+        for (i = 0; i < field_ds.length; i++) {
+            var elt_row_id = '#' + field_ds[i] + '_field_' + field_key;
+            $(elt_row_id).toggle();
+        }
+     });
+
+     $('.js-example-basic-multiple').on('select2:unselect', function(e) {
+        var data = e.params.data;
+        var field_key = data.element.id;
+        for (i = 0; i < field_ds.length; i++) {
+            var elt_row_id = '#' + field_ds[i] + '_field_' + field_key;
+            $(elt_row_id).toggle();
+        }
+     });
+});
+
+function toggle_empty_frequencies(e) {
+    var sToggle = $(e).attr('value');
+
+    switch(sToggle) {
+        case 'show_empty_frequencies':
+            show_empty_frequency = true;
+            $(e).val('hide_empty_frequencies');
+	        $(e).html("Hide empty frequencies");
+	        $("tr[id$=empty_frequency]").css({'display':'visible'});
+            break;
+        case 'hide_empty_frequencies':
+            show_empty_frequency = false;
+            $(e).val('show_empty_frequencies');
+	        $(e).html("Show empty frequencies");
+	        $("tr[id$=empty_frequency]").css({'display':'none'});
+            break;
+    }
+}
+
+</script>
+<script type="text/javascript">
+function sort_numerical(columnClassName, tableId) {
+    var tbody = document.getElementById(tableId).getElementsByTagName(
+            "tbody")[0];
+    var rows = tbody.getElementsByTagName("tr");
+
+    var unsorted = true;
+
+    while (unsorted) {
+        unsorted = false
+
+        for (var r = 0; r < rows.length - 1; r++) {
+            var row = rows[r];
+            var nextRow = rows[r + 1];
+
+            var value = row.getElementsByClassName(columnClassName)[0].innerHTML;
+            var nextValue = nextRow.getElementsByClassName(columnClassName)[0].innerHTML;
+
+            if (!isNaN(value)) {
+                value = parseFloat(value);
+                nextValue = parseFloat(nextValue);
+            }
+            if (value < nextValue) {
+                tbody.insertBefore(nextRow, row);
+                unsorted = true;
+            }
+        }
+    }
+};
+
+function sort_alpha(columnClassName, tableId) {
+    var tbody = document.getElementById(tableId).getElementsByTagName("tbody")[0];
+    var rows = tbody.getElementsByTagName("tr");
+    var rowsParent = tbody;
+
+    var unsorted = true;
+
+    var firstRow = rows[0];
+    var first_field_choice = firstRow.getElementsByClassName(columnClassName)[0].getAttribute('value');
+    if (first_field_choice != '_0') {
+        for (var r = 1; r < rows.length; r++) {
+            var row = rows[r];
+            var field_choice = row.getElementsByClassName(columnClassName)[0].getAttribute('value');
+            if (field_choice == '_0') {
+                tbody.insertBefore(row, firstRow);
+                break;
+            }
+        }
+    }
+
+    var rows = tbody.getElementsByTagName("tr");
+    var secondRow = rows[1];
+    var second_field_choice = secondRow.getElementsByClassName(columnClassName)[0].getAttribute('value');
+    if (second_field_choice != '_1') {
+        for (var r = 2; r < rows.length; r++) {
+            var row = rows[r];
+            var field_choice = row.getElementsByClassName(columnClassName)[0].getAttribute('value');
+            if (field_choice == '_1') {
+                tbody.insertBefore(row, secondRow);
+                break;
+            }
+        }
+    }
+
+    var rows = tbody.getElementsByTagName("tr");
+
+    while (unsorted) {
+        unsorted = false
+
+        for (var r = 2; r < rows.length - 1; r++) {
+            var row = rows[r];
+            var nextRow = rows[r + 1];
+
+            var value = row.getElementsByClassName(columnClassName)[0].innerHTML;
+            var nextValue = nextRow.getElementsByClassName(columnClassName)[0].innerHTML;
+
+            if (value > nextValue) {
+               tbody.insertBefore(nextRow, row);
+               unsorted = true;
+            }
+        }
+    }
+};
+
+function sort_frequencies(e) {
+    var sToggle = $(e).attr('value');
+
+    switch(sToggle) {
+        case 'sort_by_frequency':
+            $(e).val('sort_by_label');
+	        $(e).html("Sort by label");
+            for (i = 0; i < field_ds.length; i++) {
+                for (key in field_ids) {
+                    var table_id = field_ds[i] + '_results_' + key;
+                    sort_numerical('field_choice_frequency',table_id);
+                }
+            }
+            break;
+        case 'sort_by_label':
+            $(e).val('sort_by_frequency');
+	        $(e).html("Sort by frequency");
+            for (i = 0; i < field_ds.length; i++) {
+                for (key in field_ids) {
+                    var table_id = field_ds[i] + '_results_' + key;
+                    sort_alpha('field_choice_label',table_id);
+                }
+            }
+            break;
+    }
+}
+
+</script>
+<style>
+.table-bordered > thead > tr > th {
+    border: 1px solid black !important;
+}
+
+.table-bordered > tbody > tr > td {
+    border: 1px solid black !important;
+}
+
+table {
+    margin: 0px 0px 0px 0px important!;
+}
+
+.table-bordered {
+    margin-top: 20px;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
+
+{% if object_list %}
+    <div id="visibility_buttons">
+         <table class='table table-condensed'>
+                <tr id='phonology_selection'>
+                    <td style="width:200px;"><label>Phonology</label></td>
+                    <td>
+                        <select id='id_Phonology'>
+                            {% for f_field, f_label in field_labels_list %}
+                            <option id="{{f_field}}">{{f_label}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                <tr id='semantics_selection'>
+                    <td><label>Semantics</label></td>
+                    <td>
+                        <select id='id_Semantics'>
+                            {% for s_field, s_label in field_labels_semantics_list %}
+                            <option id="{{s_field}}">{{s_label}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+         </table>
+    </div>
+
+    <button id="toggle_frequencies" value='hide_empty_frequencies' onclick="toggle_empty_frequencies(this)"
+            class="btn btn-default">{% trans "Hide empty frequencies" %}</button>
+    <button id="sort_results" value='sort_by_frequency' onclick="sort_frequencies(this)"
+            class="btn btn-default">{% trans "Sort by frequency" %}</button>
+<table class='table table-condensed table-bordered'>
+    <thead>
+      <tr>
+          <th style="width:300px;">{% trans "Dataset" %}</th>
+          <th style="width:300px;">{% trans "Field name" %}</th>
+          <th>{% trans "Frequencies" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for ds in object_list %}
+    {% load field_choice %}
+    {% with ds|translated_frequency_list:request.LANGUAGE_CODE as frequency_dict_ds %}
+        {% for key2, value2 in frequency_dict_ds.items %}
+        <tr id="{{ds.id}}_field_{{key2}}" style="display:none">
+        <td nowrap>{{ ds.name }}</td>
+        <td nowrap>{{ all_field_labels|keyvalue:key2 }}</td>
+            <td>
+            <div>
+                <table id="{{ds.id}}_results_{{key2}}" style="border:1px solid;table-layout:fixed;">
+                    <tbody>
+                    {% with all_field_labels_choices|keyvalue:key2 as field_choices %}
+                    {% for key3, value3 in value2.items %}
+                        {% with field_choices|keyvalue:key3 as display_choice %}
+                        {% with display_choice|length as length_choice %}
+                        {% with length_choice|add:"60" as display_width %}
+                        {% if value3 > 0 %}
+                        <tr style="height:auto;">
+                        <td class="field_choice_label" value="{{key3}}"
+                            nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{display_choice}}</td>
+                        <td class="field_choice_frequency" value="{{value3}}"
+                            style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{value3}}</td>
+                        </tr>
+                        {% else %}
+                        <tr id="{{ds.id}}_field_{{key2}}_{{key3}}_empty_frequency" style="height:auto;">
+                        <td class="field_choice_label" value="{{key3}}"
+                            nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{display_choice}}</td>
+                        <td class="field_choice_frequency" value="{{value3}}"
+                            style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{value3}}</td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                    {% endfor %}
+                    {% endwith %}
+                    </tbody>
+                </table>
+            </div>
+            </td>
+        </tr>
+        {% endfor %}
+    {% endwith %}
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+{% trans "No frequency data available." %}
+{% endif %}
+
+</div>
+
+{% endblock content %}

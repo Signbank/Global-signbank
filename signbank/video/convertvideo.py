@@ -5,7 +5,7 @@ try:
     FFMPEG_PROGRAM = settings.FFMPEG_PROGRAM
     FFMPEG_OPTIONS = settings.FFMPEG_OPTIONS
 except:
-    FFMPEG_PROGRAM = "/Applications/ffmpegX.app/Contents/Resources/ffmpeg"
+    FFMPEG_PROGRAM = "/usr/bin/ffmpeg"
     #FFMPEG_OPTIONS = ["-vcodec", "libx264", "-an", "-vpre", "hq", "-crf", "22", "-threads", "0"]
     FFMPEG_OPTIONS = ["-vcodec", "h264", "-an"]
 
@@ -15,22 +15,24 @@ import re
     
 def parse_ffmpeg_output(text):
     """Get relevant info from the ffmpeg output"""
-    
+
+    ffmpeg_output_string = text
+    # print('argument to parse_ffmpeg_output: ', ffmpeg_output_string)
     state = None
     result = {'input': '', 'output': ''}
-    for line in text.split('\n'):
-        if line.startswith("Input"):
+    for line in ffmpeg_output_string.split(b'\n'):
+        if line.startswith(b"Input"):
             state = "INPUT"
-        elif line.startswith("Output"):
+        elif line.startswith(b"Output"):
             state = "OUTPUT"
-        elif line.startswith("Stream mapping:"):
+        elif line.startswith(b"Stream mapping:"):
             state = "OTHER"
         
         if state == "INPUT":
-            result['input'] += line + "\n"
+            result['input'] += line.decode('UTF-8') + "\n"
 
         if state == "OUTPUT":
-            result['output'] += line + "\n"
+            result['output'] += line.decode('UTF-8') + "\n"
             
     # check for video input format
     m = re.search("Video: ([^,]+),", result['input'])

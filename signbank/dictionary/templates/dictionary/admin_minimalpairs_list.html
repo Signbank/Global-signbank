@@ -1,0 +1,85 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Minimal Pairs list{% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
+
+{% if object_list %}
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+            <th>{% trans "Dataset" %}</th>
+            <th>{% trans "Focus Gloss" %}</th>
+            <th>{% trans "Minimal Pair Gloss" %}</th>
+            <th style="width:auto;">{% trans "Field name" %}</th>
+            <th>{% trans "Source Sign Value" %}</th>
+            <th>{% trans "Contrasting Sign Value" %}</th>
+      </tr>
+    <!--<tr class="rotated" style="height:130px;vertical-align:top-text;">-->
+        <!--<th/><th/>-->
+        <!--{% for field in field_names %}-->
+        <!--<th style="height:auto;">-->
+            <!--{{field_labels|keyvalue:field}}-->
+        <!--</th>-->
+        <!--{% endfor %}-->
+    <!--</tr>-->
+    </thead>
+    <tbody>
+    {% for mpp in minimalpairs %}
+    {% with mpp.0 as focus_gloss %}
+    {% for other_gloss in mpp.1 %}
+        <tr>
+            <td>{{focus_gloss.dataset}}</td>
+            <td><a href='{% url "dictionary:admin_gloss_view" pk=focus_gloss.id %}'>{{focus_gloss}}</a></td>
+            <td><a href='{% url "dictionary:admin_gloss_view" pk=other_gloss.id %}'>{{other_gloss}}</a></td>
+             {% load field_choice %}
+             {% for field in field_names %}
+             {% with focus_gloss|getattr:field|normalise_empty as focus_gloss_value %}
+             {% with other_gloss|getattr:field|normalise_empty as other_gloss_value %}
+             {% if focus_gloss_value != other_gloss_value %}
+            <td>{{field_labels|keyvalue:field}}</td>
+             {% with field_categories|keyvalue:field as field_name %}
+                {% if field_name == "repeat" or field_name == "altern" %}
+                    <td>{% if focus_gloss_value %}
+                        {% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                    <td>{% if other_gloss_value %}
+                        {% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                {% else %}
+                    {% with field_name|add:" " as field_name %}
+                    {% with request.LANGUAGE_CODE as this_language %}
+                    {% with field_name|add:this_language as args %}
+                    {% with focus_gloss_value|machine_field_translate:args as focus_gloss_display %}
+                    {% with other_gloss_value|machine_field_translate:args as other_gloss_display %}
+                    <td>{{focus_gloss_display}}</td><td>{{other_gloss_display}}</td>
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                {% endif %}
+             {% endwith %}
+             {% endif %}
+             {% endwith %}
+             {% endwith %}
+            {% endfor %}
+         </tr>
+    {% endfor %}
+    {% endwith %}
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+{% trans "No minimal pairs found." %}
+{% endif %}
+
+</div>
+
+{% endblock content %}

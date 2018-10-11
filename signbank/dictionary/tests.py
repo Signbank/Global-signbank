@@ -135,7 +135,7 @@ class BasicCRUDTests(TestCase):
 
         self.assertEqual(len(glosses), 1)
 
-        self.assertRedirects(response, reverse('dictionary:admin_gloss_view', kwargs={'pk': glosses[0].id}))
+        self.assertRedirects(response, reverse('dictionary:admin_gloss_view', kwargs={'pk': glosses[0].id})+'?edit')
 
     def testSearchForGlosses(self):
 
@@ -180,10 +180,10 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(len(response.context['object_list']), 0) #Nothing without dataset permission
 
         assign_perm('view_dataset', self.user, test_dataset)
-        response = client.get('/signs/search/',{'handedness':4})
+        response = client.get('/signs/search/',{'handedness[]':4})
         self.assertEqual(len(response.context['object_list']), 2)
 
-        response = client.get('/signs/search/',{'handedness':5})
+        response = client.get('/signs/search/',{'handedness[]':5})
         self.assertEqual(len(response.context['object_list']), 1)
 
 #Deprecated?
@@ -312,14 +312,10 @@ class ImportExportTests(TestCase):
         url = '/datasets/available?dataset_name=' + dataset_name + '&export_ecv=ECV'
 
         response = client.get(url)
-
-        loaded_cookies = response.cookies.get('messages').value
-        decoded_cookies = decode_messages(loaded_cookies)
-        json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
-        json_message = json_decoded_cookies[0]
-        print('Message: ', json_message)
-
-        self.assertEqual(str(json_message), 'Please login to use this functionality.')
+        self.assertEqual(response.status_code, 302)
+        auth_login_url = reverse('registration:auth_login')
+        expected_url = settings.PREFIX_URL + auth_login_url
+        self.assertEqual(response['Location'][:len(expected_url)], expected_url)
 
     def test_Export_csv(self):
         client = Client()
@@ -638,33 +634,72 @@ class FrontEndTests(TestCase):
         self.new_lemma = LemmaIdgloss(dataset=self.test_dataset)
         self.new_lemma.save()
 
+        language = Language.objects.get(id=get_default_language_id())
+        hidden_lemmaidglosstranslation = LemmaIdglossTranslation(text=NAME, lemma=self.new_lemma,
+                                                                 language=language)
+        hidden_lemmaidglosstranslation.save()
 
-        #Add a gloss to this dataset
-        self.new_gloss = Gloss(lemma=self.new_lemma)
-        self.new_gloss.save()
+        #Add a hidden gloss to this dataset
+
+        self.hidden_gloss = Gloss(lemma=self.new_lemma)
+        self.hidden_gloss.save()
+
+        hidden_annotationidglosstranslation = AnnotationIdglossTranslation(text=NAME + 'hidden', gloss=self.hidden_gloss,
+                                                                        language=language)
+        hidden_annotationidglosstranslation.save()
+
+        # Add a public gloss to this dataset
+        self.public_gloss = Gloss(lemma=self.new_lemma)
+        self.public_gloss.inWeb = True
+        self.public_gloss.save()
+
+        public_annotationidglosstranslation = AnnotationIdglossTranslation(text=NAME + 'public', gloss=self.public_gloss,
+                                                                        language=language)
+        public_annotationidglosstranslation.save()
+
+    def test_DetailViewRenders(self):
+
+        #You can get information in the public view of the public gloss
+        response = self.client.get('/dictionary/gloss/'+str(self.public_gloss.pk)+'.html')
+        self.assertEqual(response.status_code,200)
+        self.assertTrue('Annotation ID Gloss' in str(response.content))
+
+        #But not of the hidden gloss
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk)+'.html')
+        self.assertEqual(response.status_code,200)
+        self.assertFalse('Annotation ID Gloss' in str(response.content))
+
+        #And we get a 302 for both detail views
+        response = self.client.get('/dictionary/gloss/'+str(self.public_gloss.pk))
+        self.assertEqual(response.status_code,302)
+
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
+        self.assertEqual(response.status_code,302)
 
         #Log in
         self.client = Client()
         self.client.login(username='test-user', password='test-user')
 
-    def test_DetailViewRenders(self):
-
-        response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
+        #We can now request a detail view
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertEqual(response.status_code,200)
-
-        #Without permissions you get a 200 but no content
-        self.assertEqual(len(response.content),0)
+        self.assertContains(response,
+                            'The gloss you are trying to view ({}) is not in your selected datasets.'
+                            .format(self.hidden_gloss.pk))
 
         #With permissions you also see something
         assign_perm('view_dataset', self.user, self.test_dataset)
-        response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
-        print(response.status_code)
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertNotEqual(len(response.content),0)
 
     def test_JavaScriptIsValid(self):
 
+        #Log in
+        self.client = Client()
+        self.client.login(username='test-user', password='test-user')
+
         assign_perm('view_dataset', self.user, self.test_dataset)
-        response = self.client.get('/dictionary/gloss/'+str(self.new_gloss.pk))
+        response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
 
         invalid_patterns = ['= ;','= var']
 
@@ -690,6 +725,7 @@ class ManageDatasetTests(TestCase):
         Set up a user, dataset, lemma, , gloss
         :return: 
         """
+
         # a new test user is created for use during the tests
         self.user_password = 'test-user'
         self.user = User.objects.create_user('test-user', 'example@example.com', self.user_password)
@@ -736,32 +772,37 @@ class ManageDatasetTests(TestCase):
         :return: 
         """
 
+        # The next bit is to solve the problem that a redirect url to the login page contains PREFIX_URL
+        # while in tests a redirect url without PREFIX_URL is expected. See also issue #505
+        from django.conf import settings
+        settings.LOGIN_URL = settings.LOGIN_URL[len(settings.PREFIX_URL):]
+
         # Grant view permission
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'Please login to use this functionality.'.format(self.user2.username))
+        self.assertContains(response, 'Sign In'.format(self.user2.username))
 
         # Revoke view permission
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                      'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'Please login to use this functionality.'.format(self.user2.username))
+        self.assertContains(response, 'Sign In'.format(self.user2.username))
 
         # Grant change permission
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                      'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'Please login to use this functionality.'.format(self.user2.username))
+        self.assertContains(response, 'Sign In'.format(self.user2.username))
 
         # Revoke change permission
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                      'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'Please login to use this functionality.'.format(self.user2.username))
+        self.assertContains(response, 'Sign In'.format(self.user2.username))
 
     def test_User_is_not_dataset_manager(self):
         """
@@ -864,7 +905,8 @@ class ManageDatasetTests(TestCase):
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'View permission for user {} successfully granted.'.format(self.user2.username))
+        self.assertContains(response, 'View permission for user {} ({} {}) successfully granted.'
+                            .format(self.user2.username, self.user2.first_name, self.user2.last_name))
 
         # Revoke view permission
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
@@ -874,11 +916,22 @@ class ManageDatasetTests(TestCase):
         self.assertContains(response, 'View (and change) permission for user {} successfully revoked.'
                             .format(self.user2.username))
 
-        # Grant change permission
+        # Grant change permission without view permission
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'Change (and view) permission for user {} successfully granted.'
+        self.assertContains(response, 'User {} ({} {}) does not have view permission for this dataset. Please grant view permission first.'
+                            .format(self.user2.username, self.user2.first_name, self.user2.last_name))
+
+        # Grant change permission with view permission
+        # Grant view permission first
+        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # Grant change permission second
+        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
+        self.assertContains(response, 'Change permission for user {} successfully granted.'
                             .format(self.user2.username))
 
         # Revoke change permission

@@ -22,6 +22,8 @@ password_reset_view.success_url = reverse_lazy('registration:password_reset_done
 password_reset_confirm_view = auth_views.PasswordResetConfirmView
 password_reset_confirm_view.success_url = reverse_lazy('registration:password_reset_complete')
 
+app_name = 'signbank'
+
 urlpatterns = [
                        # Activation keys get matched by \w+ instead of the more specific
                        # [a-fA-F0-9]+ because a bad activation key should still get to the view;
@@ -64,7 +66,7 @@ urlpatterns = [
                            register,
                            name='registration_register',
                            kwargs = {
-                               'form_class': RegistrationFormAuslan, 
+                               'form_class': RegistrationForm,
                              },
                            ),
 

@@ -16,6 +16,8 @@ from django.contrib import messages
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 import signbank.settings
+from django.conf import settings
+
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
@@ -24,10 +26,11 @@ from django.utils.translation import ugettext_lazy as _
 
 from guardian.shortcuts import get_user_perms, get_group_perms
 
+# this method is called from the GlossListView (Add Gloss button on the page)
 @permission_required('dictionary.add_gloss')
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
-    
+
     if request.method == "POST":
         dataset = None
         if 'dataset' in request.POST and request.POST['dataset'] is not None:
@@ -37,7 +40,10 @@ def add_gloss(request):
             selected_datasets = get_selected_datasets_for_user(request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user)
+        if 'last_used_dataset' in request.session.keys():
+            form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
+        else:
+            form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=None)
 
         # Lemma handling
         lemmaidgloss = None
@@ -54,13 +60,17 @@ def add_gloss(request):
                 return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
 
         # Check for 'change_dataset' permission
-        if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) and ('change_dataset' not in get_group_perms(request.user, dataset)):
+        if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
+                and ('change_dataset' not in get_group_perms(request.user, dataset))\
+                and not request.user.is_staff:
             messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
             return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
         elif not dataset:
             # Dataset is empty, this is an error
             messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
             return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
+
+        # if we get to here a dataset has been chosen for the new gloss
 
         for item, value in request.POST.items():
             if item.startswith(form.gloss_create_field_prefix):
@@ -91,11 +101,16 @@ def add_gloss(request):
                                                                      'selected_datasets': get_selected_datasets_for_user(request.user)})
 
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+            # context variables need to be set before GlossDetailView
+            if not ('search_results' in request.session.keys()):
+                request.session['search_results'] = None
+            request.session['last_used_dataset'] = dataset.name
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
         else:
             return render(request,'dictionary/add_gloss.html',{'add_gloss_form': form,
                                                                'dataset_languages': dataset_languages,
-                                                                'selected_datasets': get_selected_datasets_for_user(request.user)})
+                                                               'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                               'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
         
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
@@ -203,6 +218,9 @@ def update_gloss(request, glossid):
                 newvalue = value
                 setattr(gloss, field, ds)
                 gloss.save()
+
+                request.session['last_used_dataset'] = ds.name
+
                 return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
             import guardian
@@ -210,6 +228,9 @@ def update_gloss(request, glossid):
                 newvalue = value
                 setattr(gloss, field, ds)
                 gloss.save()
+
+                request.session['last_used_dataset'] = ds.name
+
                 return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
             print('no permission for chosen dataset')
@@ -942,7 +963,7 @@ def update_definition(request, gloss, field, value):
     
     if what == 'definitiondelete':
         defn.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editdef')
     
     if what == 'definition':
         # update the definition
@@ -985,7 +1006,7 @@ def update_other_media(request,gloss,field,value):
 
     if action_or_fieldname == 'other-media-delete':
         other_media.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'?editothermedia')
 
     elif action_or_fieldname == 'other-media-type':
         other_media.type = value
@@ -1027,7 +1048,7 @@ def add_relation(request):
                 reverse_relation = Relation(source=target, target=source, role=Relation.get_reverse_role(role))
                 reverse_relation.save()
 
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
 
             else:
                 print("target gloss not found")
@@ -1091,7 +1112,7 @@ def add_relationtoforeignsign(request):
             rel = RelationToForeignSign(gloss=gloss,loan=loan,other_lang=other_lang,other_lang_gloss=other_lang_gloss)
             rel.save()
                 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
 
         else:
             print(form)
@@ -1119,8 +1140,9 @@ def add_definition(request, glossid):
             # create definition, default to not published
             defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
             defn.save()
-            
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
+
 
 def add_morphology_definition(request):
 
@@ -1140,7 +1162,7 @@ def add_morphology_definition(request):
             morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     raise Http404('Incorrect request')
 
@@ -1163,10 +1185,10 @@ def add_morpheme_definition(request, glossid):
                 count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id).count()
                 if count_morphemes_in_dataset < 1:
                     messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
-                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
             messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: No morpheme selected.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
         if form.is_valid():
 
@@ -1179,14 +1201,14 @@ def add_morpheme_definition(request, glossid):
                 # The user has tryed to type in a name themself rather than select from the list.
                 messages.add_message(request, messages.INFO, ('Simultaneuous morphology: no morpheme found with identifier ' + morph_id + '.'))
 
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
             definition = SimultaneousMorphologyDefinition()
             definition.parent_gloss = thisgloss
             definition.morpheme = morph
             definition.role = form.cleaned_data['description']
             definition.save()
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     # If we get here the request method has apparently been changed to get instead of post, can this happen?
     raise Http404('Incorrect request')
@@ -1209,7 +1231,7 @@ def add_morphemeappearance(request):
             morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     raise Http404('Incorrect request')
 
@@ -1226,7 +1248,7 @@ def add_blend_definition(request, glossid):
         if form.data['blend_id'] == "":
             # The user has obviously not selected a morpheme
             # Desired action (Issue #199): nothing happens
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
         if form.is_valid():
 
@@ -1240,7 +1262,7 @@ def add_blend_definition(request, glossid):
                 definition.role = form.cleaned_data['role']
                 definition.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
     raise Http404('Incorrect request')
 
@@ -1354,7 +1376,7 @@ def add_othermedia(request):
                 parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
                 OtherMedia(path=request.POST['gloss']+'/'+request.FILES['file'].name,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 
     raise Http404('Incorrect request')
 
@@ -1375,7 +1397,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
     if what == 'morphology_definition_delete':
         print("DELETE morphology definition: ", morph_def)
         morph_def.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morphology_definition_role':
         morph_def.role = value
         morph_def.save()
@@ -1404,7 +1426,7 @@ def add_morpheme(request):
     """Create a new morpheme and redirect to the edit view"""
 
     if request.method == "POST":
-        print("request.POST: {}".format(request.POST))
+        dataset = None
         if 'dataset' in request.POST and request.POST['dataset'] is not None:
             dataset = Dataset.objects.get(pk=request.POST['dataset'])
             selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
@@ -1412,7 +1434,23 @@ def add_morpheme(request):
             selected_datasets = get_selected_datasets_for_user(request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user)
+        if 'last_used_dataset' in request.session.keys():
+            form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
+        else:
+            form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=None)
+
+        # Check for 'change_dataset' permission
+        if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
+                and ('change_dataset' not in get_group_perms(request.user, dataset))\
+                and not request.user.is_staff:
+            messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
+            return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
+        elif not dataset:
+            # Dataset is empty, this is an error
+            messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
+            return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
+
+        # if we get to here a dataset has been chosen for the new gloss
 
         # Lemma handling
         lemmaidgloss = None
@@ -1464,11 +1502,18 @@ def add_morpheme(request):
                                                      'dataset_languages': dataset_languages,
                                                      'selected_datasets': get_selected_datasets_for_user(request.user)})
 
-            return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}))
+            if not ('search_results' in request.session.keys()):
+                request.session['search_results'] = None
+            if not ('search_type' in request.session.keys()):
+                request.session['search_type'] = None
+            request.session['last_used_dataset'] = dataset.name
+
+            return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id})+'?edit')
         else:
             return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form,
-                                                               'dataset_languages': dataset_languages,
-                                                                'selected_datasets': get_selected_datasets_for_user(request.user)})
+                                                                    'dataset_languages': dataset_languages,
+                                                                    'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
 
@@ -1557,6 +1602,9 @@ def update_morpheme(request, morphemeid):
                 newvalue = value
                 setattr(morpheme, field, ds)
                 morpheme.save()
+
+                request.session['last_used_dataset'] = ds.name
+
                 return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
             import guardian
@@ -1564,6 +1612,9 @@ def update_morpheme(request, morphemeid):
                 newvalue = value
                 setattr(morpheme, field, ds)
                 morpheme.save()
+
+                request.session['last_used_dataset'] = ds.name
+
                 return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
             print('no permission for chosen dataset')
@@ -1699,7 +1750,7 @@ def update_morpheme_definition(gloss, field, value):
     if what == 'morpheme_definition_delete':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         definition.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morpheme_definition_meaning':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         original_value = getattr(definition, 'role')
@@ -1722,7 +1773,7 @@ def update_blend_definition(gloss, field, value):
     if what == 'blend_definition_delete':
         definition = BlendMorphology.objects.get(id=blend_id)
         definition.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'blend_definition_role':
         definition = BlendMorphology.objects.get(id=blend_id)
         original_value = getattr(definition, 'role')
@@ -1821,8 +1872,17 @@ def change_dataset_selection(request):
                     dataset = Dataset.objects.get(name=dataset_name)
                     user_profile.selected_datasets.add(dataset)
                 except:
+                    print('exception to updating selected datasets')
                     pass
+            user_profile.save()
 
+        # check whether the last used dataset is still in the selected datasets
+        if 'last_used_dataset' in request.session.keys():
+            if not (request.session['last_used_dataset'] in selected_datasets):
+                request.session['last_used_dataset'] = None
+        else:
+            # set the last_used_dataset?
+            pass
     return HttpResponseRedirect(reverse('admin_dataset_select'))
 
 def update_dataset(request, datasetid):
@@ -1844,37 +1904,36 @@ def update_dataset(request, datasetid):
         value = request.POST.get('value', '')
         original_value = ''
 
-        # print('update dataset, field is: ', field)
-
         if field == 'description':
 
             original_value = getattr(dataset,field)
-
-            # print('For dataset ', dataset, 'set description to: ', value)
             setattr(dataset, field, value)
             dataset.save()
             return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         elif field == 'copyright':
                 original_value = getattr(dataset, field)
-
-                # print('For dataset ', dataset, 'set copyright to: ', value)
                 setattr(dataset, field, value)
                 dataset.save()
                 return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         elif field == 'conditions_of_use':
                 original_value = getattr(dataset, field)
-
-                # print('For dataset ', dataset, 'set conditions_of_use to: ', value)
                 setattr(dataset, field, value)
                 dataset.save()
                 return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         elif field == 'acronym':
                 original_value = getattr(dataset, field)
-
-                # print('For dataset ', dataset, 'set acronym to: ', value)
                 setattr(dataset, field, value)
                 dataset.save()
                 return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+        elif field == 'is_public':
+                original_value = getattr(dataset, field)
+                dataset.is_public = value == 'True'
+                dataset.save()
+                if dataset.is_public:
+                    newvalue = True
+                else:
+                    newvalue = False
+                return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
         elif field == 'add_owner':
             update_owner(dataset, field, value)
         else:

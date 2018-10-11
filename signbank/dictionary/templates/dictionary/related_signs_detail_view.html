@@ -24,10 +24,10 @@
 {% load field_choice %}
 
 
-<a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+<a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
 
 {% if gloss.annotation_idgloss %}
-<a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+<a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
 {% endif %}
 
 <div  class="panel panel-default">
@@ -55,8 +55,8 @@
       <tr>
           <td>{%if gloss.get_image_path != None %}
               <div class="thumbnail_container">
-              <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">
-                  <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}">
+              <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+                  <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}">
               </a>
               </div>
               {% endif %}
@@ -137,8 +137,8 @@
       <tr>
             <td>{%if rel.target.get_image_path != None %}
               <div class="thumbnail_container">
-              <a href="{{ URL }}/dictionary/gloss/{{rel.target.pk}}/">
-                  <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{rel.target.get_image_path}}">
+              <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
+                  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
               </a>
               </div>
               {% endif %}
@@ -192,8 +192,8 @@
       <tr>
              <td>{%if rel.target.get_image_path != None %}
               <div class="thumbnail_container">
-              <a href="{{ URL }}/dictionary/gloss/{{rel.target.pk}}/">
-                  <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{rel.target.get_image_path}}">
+              <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
+                  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
               </a>
               </div>
               {% endif %}
@@ -247,8 +247,8 @@
       <tr>
           <td>{%if rel.target.get_image_path != None %}
               <div class="thumbnail_container">
-              <a href="{{ URL }}/dictionary/gloss/{{rel.target.pk}}/">
-                  <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{rel.target.get_image_path}}">
+              <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
+                  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
               </a>
               </div>
               {% endif %}
@@ -302,8 +302,8 @@
       <tr>
           <td>{%if rel.target.get_image_path != None %}
               <div class="thumbnail_container">
-              <a href="{{ URL }}/dictionary/gloss/{{rel.target.pk}}/">
-                  <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{rel.target.get_image_path}}">
+              <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
+                  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
               </a>
               </div>
               {% endif %}
@@ -357,8 +357,8 @@
       <tr>
           <td>{%if rel.target.get_image_path != None %}
               <div class="thumbnail_container">
-              <a href="{{ URL }}/dictionary/gloss/{{rel.target.pk}}/">
-                  <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{rel.target.get_image_path}}">
+              <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
+                  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
               </a>
               </div>
               {% endif %}
@@ -412,8 +412,8 @@
       <tr>
           <td>{%if rel.target.get_image_path != None %}
               <div class="thumbnail_container">
-              <a href="{{ URL }}/dictionary/gloss/{{rel.target.pk}}/">
-                  <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{rel.target.get_image_path}}">
+              <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
+                  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
               </a>
               </div>
               {% endif %}
@@ -466,8 +466,8 @@
       <tr>
           <td>{%if gl.get_image_path != None %}
               <div class="thumbnail_container">
-              <a href="{{ URL }}/dictionary/gloss/{{gl.pk}}/">
-                  <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gl.get_image_path}}">
+              <a href="{{PREFIX_URL}}/dictionary/gloss/{{gl.pk}}/">
+                  <img class="thumbnail" src="{{protected_media_url}}{{gl.get_image_path}}">
               </a>
               </div>
               {% endif %}
@@ -516,8 +516,8 @@
 		<tr>
           <td>{%if gl.get_image_path != None %}
               <div class="thumbnail_container">
-              <a href="{{ URL }}/dictionary/gloss/{{gl.pk}}/">
-                  <img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gl.get_image_path}}">
+              <a href="{{PREFIX_URL}}/dictionary/gloss/{{gl.pk}}/">
+                  <img class="thumbnail" src="{{protected_media_url}}{{gl.get_image_path}}">
               </a>
               </div>
               {% endif %}

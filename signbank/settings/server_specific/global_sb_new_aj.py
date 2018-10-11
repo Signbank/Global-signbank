@@ -29,6 +29,7 @@ COUNTRY_NAME = "Netherlands"
 SIGNBANK_VERSION_CODE = 'global'
 URL = 'https://signbank.science.ru.nl/'
 ALLOWED_HOSTS = ['signbank.science.ru.nl','signbank.cls.ru.nl','new.signbank.science.ru.nl']
+PREFIX_URL = ''
 
 gettext = lambda s: s
 LANGUAGES = (
@@ -48,7 +49,7 @@ FIELDS['main'] = ['useInstr','wordClass']
 
 FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
-          'mouthing', 'phonetVar','domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']
+          'mouthing', 'phonetVar','domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop',]
 
 FIELDS['semantics'] = ['iconImg','namEnt','semField','valence']
 
@@ -60,6 +61,16 @@ FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
                        'hsSpread', 'hsFingUnsel', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                        'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
+
+# The multiple select fields should be pull-down lists in the templates
+MULTIPLE_SELECT_GLOSS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
+                             'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
+                             'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
+MULTIPLE_SELECT_MORPHEME_FIELDS = ['namEnt', 'semField', 'wordClass', 'mrpType']
+
+MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
+MINIMAL_PAIRS_COUNT = len(MINIMAL_PAIRS_FIELDS)
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 ECV_FOLDER = WRITABLE_FOLDER+'ecv'
@@ -106,6 +117,7 @@ SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 
 SHOW_MORPHEME_SEARCH = True
 SHOW_DATASET_INTERFACE_OPTIONS = True
+SHOW_LETTER_NUMBER_PHONOLOGY = True
 DEFAULT_DATASET = 'NGT'
 
 CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'

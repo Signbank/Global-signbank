@@ -10,14 +10,15 @@ from django.utils.timezone import now
 from django.forms.utils import ValidationError
 import tagging
 import re
+import copy
 
 import sys, os
 import json
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 
 import signbank.settings
 
@@ -207,13 +208,13 @@ class FieldChoice(models.Model):
     chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(help_text="The actual numeric value stored in the database. Created automatically.")
 
-    def __str__(self):
-
-        name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
-        return name
+    # def __str__(self):
+    #
+    #     name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
+    #     return name
 
     class Meta:
-        ordering = ['field','machine_value']
+        ordering = ['machine_value']
 
 class Handshape(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
@@ -254,6 +255,7 @@ class Handshape(models.Model):
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except:
                 pass
+
 
         return d
 
@@ -358,14 +360,14 @@ class Gloss(models.Model):
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
-        
+
         d = dict()
         for f in self._meta.fields:
             try:
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except:
                 pass
-            
+
         return d
 
     lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
@@ -594,21 +596,19 @@ class Gloss(models.Model):
     @property
     def get_phonology_display(self):
         fields = []
-        choice_list = []
-        for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
-          'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
-          'mouthing', 'phonetVar',]:
-
-            # Get and save the choice list for this field
-            fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-            field_value = getattr(self,field)
-            human_value = machine_value_to_translated_human_value(field_value, choice_list, LANGUAGE_CODE)
-            if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None) :
-                human_value = '   '
-            else:
-                human_value = str(human_value)
-            fields = fields + [(field,human_value)]
+        for field in FIELDS['phonology']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                # Get and save the choice list for this field
+                fieldchoice_category = fieldname_to_category(field)
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                field_value = getattr(self,field)
+                human_value = machine_value_to_translated_human_value(field_value, choice_list, LANGUAGE_CODE)
+                if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None) :
+                    human_value = '   '
+                else:
+                    human_value = str(human_value)
+                fields = fields + [(field,human_value)]
 
         return fields
 
@@ -791,13 +791,25 @@ class Gloss(models.Model):
 
         return variant_relations
 
+    # this function is used by Homonyms List view
+    # a boolean is paired with saved homonym relation targets to tag duplicates
     def homonym_relations(self):
 
         homonym_relations = self.relation_sources.filter(role__in=['homonym'])
 
         homonyms = [x.target for x in homonym_relations]
 
-        return homonyms
+        tagged_homonym_objects = []
+        seen = []
+        for o in homonyms:
+            if o.id in seen:
+                tagged_homonym_objects.append((o, True))
+                seen.append(o.id)
+            else:
+                tagged_homonym_objects.append((o, False))
+                seen.append(o.id)
+
+        return tagged_homonym_objects
 
     def get_stems(self):
 
@@ -819,19 +831,20 @@ class Gloss(models.Model):
         non_empty_phonology = []
         empty_phonology = []
 
-        fieldLabel = {'handedness':'Handedness','domhndsh':'Strong Hand','subhndsh':'Weak Hand',
-		  'handCh':'Handshape Change','relatArtic':'Relation between Articulators','locprim':'Location','locVirtObj':'Virual Object',
-          'relOriMov':'Relative Orientation: Movement','relOriLoc':'Relative Orientation: Location','oriCh':'Orientation Change',
-		  'contType':'Contact Type','movSh':'Movement Shape','movDir':'Movement Direction','repeat':'Repeated Movement',
-		  'altern':'Alternating Movement','phonOth':'Phonology Other','mouthG':'Mouth Gesture',
-          'mouthing':'Mouthing','phonetVar':'Phonetic Variation'}
+        fieldLabel = dict()
+        for field in FIELDS['phonology']:
+            field_label = Gloss._meta.get_field(field).verbose_name
+            fieldLabel[field] = field_label.encode('utf-8').decode()
 
         for field in ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim',
           'relOriMov','relOriLoc','oriCh','contType','movSh','movDir',]:
 
             # Get and save the choice list for this field
             fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.all()
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             # Take the human value in the language we are using
             machine_value = getattr(self,field)
@@ -860,15 +873,10 @@ class Gloss(models.Model):
 
     def non_empty_phonology(self):
 
-        fieldLabel = {'handedness': 'Handedness', 'domhndsh': 'Strong Hand', 'subhndsh': 'Weak Hand',
-                      'handCh': 'Handshape Change', 'relatArtic': 'Relation between Articulators',
-                      'locprim': 'Location', 'locVirtObj': 'Virual Object',
-                      'relOriMov': 'Relative Orientation: Movement', 'relOriLoc': 'Relative Orientation: Location',
-                      'oriCh': 'Orientation Change',
-                      'contType': 'Contact Type', 'movSh': 'Movement Shape', 'movDir': 'Movement Direction',
-                      'repeat': 'Repeated Movement',
-                      'altern': 'Alternating Movement', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture',
-                      'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'}
+        fieldLabel = dict()
+        for field in FIELDS['phonology']:
+            field_label = Gloss._meta.get_field(field).verbose_name
+            fieldLabel[field] = field_label.encode('utf-8').decode()
 
         non_empty_phonology = []
 
@@ -876,7 +884,10 @@ class Gloss(models.Model):
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', ]:
 
             fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.all()
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             machine_value = getattr(self, field)
             human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
@@ -902,26 +913,36 @@ class Gloss(models.Model):
 
         phonology_dict = dict()
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj',
-                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', 'phonOth',
-                      'mouthG',
-                      'mouthing', 'phonetVar', ]:
+        for field in FIELDS['phonology']:
+            if field in ['phonOth', 'mouthG', 'mouthing', 'phonetVar']:
+                continue
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']:
+                fieldchoice_category = fieldname_to_category(field)
+                if fieldchoice_category == 'Handshape':
+                    choice_list = Handshape.objects.all()
+                else:
+                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-            fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                phonology_dict[field] = ''
 
-            phonology_dict[field] = ''
+                machine_value = getattr(self, field)
+                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
 
-            machine_value = getattr(self, field)
-            human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
-
-            if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                phonology_dict[field] = machine_value
+                if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
+                    phonology_dict[field] = machine_value
+            else:
+                machine_value = getattr(self,field)
+                if machine_value:
+                    phonology_dict[field] = True
+                else:
+                    phonology_dict[field] = False
 
         return phonology_dict
 
 
     # Minimal Pairs
+    # these are now defined in settings
     # 19 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
     # 14
@@ -936,7 +957,7 @@ class Gloss(models.Model):
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
+        for field in settings.MINIMAL_PAIRS_FIELDS:
             value_of_this_field = str(phonology_for_gloss[field])
 
             if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
@@ -974,16 +995,6 @@ class Gloss(models.Model):
 
     def minimal_pairs_dict(self):
 
-        fieldKind = {'handedness': 'list', 'domhndsh': 'list', 'subhndsh': 'list',
-                      'handCh': 'list', 'relatArtic': 'list',
-                      'locprim': 'list', 'locVirtObj': 'text',
-                      'relOriMov': 'list', 'relOriLoc': 'list',
-                      'oriCh': 'list',
-                      'contType': 'list', 'movSh': 'list', 'movDir': 'list',
-                      'repeat': 'check',
-                      'altern': 'check', 'phonOth': 'text', 'mouthG': 'text',
-                      'mouthing': 'text', 'phonetVar': 'text'}
-
         minimal_pairs_fields = dict()
 
         # If handedness is not defined for this gloss, don't bother to look up minimal pairs
@@ -998,7 +1009,14 @@ class Gloss(models.Model):
 
         (ep, nep) = self.empty_non_empty_phonology()
 
+        # only consider minimal pairs if this gloss has more fields defined than handedness and strong hand
+        if (len(nep) <= 2):
+            return minimal_pairs_fields
+
         for o in wmp:
+            # ignore if dataset is different
+            if (self.dataset != o.dataset):
+                continue
             different_fields = dict()
             onep = o.non_empty_phonology()
             for f,n,v in onep:
@@ -1006,30 +1024,52 @@ class Gloss(models.Model):
                 self_value_f = getattr(self,f)
                 other_value_f = getattr(o,f)
                 if self_value_f != other_value_f:
-                     different_fields[f] = (n, fc,self_value_f,other_value_f,fieldKind[f])
+                     # print('add field ', f, ' to different')
+                     different_fields[f] = (n, fc,self_value_f,other_value_f,fieldname_to_kind(f))
             if (len(list(different_fields.keys())) == 0):
+                # print('different not found yet, nep: ', nep)
                 for sf,sn,sv in nep:
                     sfc = fieldname_to_category(sf)
                     self_value_sf = getattr(self, sf)
                     other_value_sf = getattr(o,sf)
+                    # print('other value field ', sf, ' is: ', other_value_sf)
                     if other_value_sf != self_value_sf:
-                        different_fields[sf] = (sn, sfc,self_value_sf,'0',fieldKind[sf])
+                        # the value of other_value_sf was '0' because it assumed it was empty since not in onep,
+                        # but if it is the field 'altern' or 'repeat' and it's false, then it is False, not '0'
+                        different_fields[sf] = (sn, sfc,self_value_sf,other_value_sf,fieldname_to_kind(sf))
 
             minimal_pairs_fields[o] = different_fields
 
+        # print('minimal pairs fields: ', minimal_pairs_fields)
         return minimal_pairs_fields
 
     # Homonyms
+    # these are now defined in settings
     # 19 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
-    # 14
+    # add fields: 'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop'
+    # 20
     def homonym_objects(self):
 
         paren = ')'
 
         phonology_for_gloss = self.phonology_matrix()
 
+        handedness_of_this_gloss = str(phonology_for_gloss['handedness'])
+
         homonym_objects_list = []
+
+        # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
+        try:
+            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
+        except:
+            handedness_X = ''
+
+        # there are lots of different values for undefined
+        if (handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
+                    handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
+
+            return homonym_objects_list
 
         where_homonyms_filled = ''
         where_homonyms_empty = ''
@@ -1037,10 +1077,9 @@ class Gloss(models.Model):
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
+        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
             value_of_this_field = str(phonology_for_gloss[field])
-
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
+            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None or value_of_this_field == 'False'):
                 if (where_homonyms_empty.endswith(paren)):
                     where_homonyms_empty += " + (" + field + " IS NOT NULL AND " \
                                                  + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
@@ -1048,12 +1087,13 @@ class Gloss(models.Model):
                     where_homonyms_empty += "(" + field + " IS NOT NULL AND " \
                                                  + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
                 count_empty = count_empty + 1
-            elif (value_of_this_field == 'False'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += ' + (' + field + '=1)'
-                else:
-                    where_homonyms_empty += '(' + field + '=1)'
-                count_empty = count_empty + 1
+            # elif (value_of_this_field == 'False'):
+            #     print('false value: ', field)
+            #     if (where_homonyms_empty.endswith(paren)):
+            #         where_homonyms_empty += ' + (' + field + '=1)'
+            #     else:
+            #         where_homonyms_empty += '(' + field + '=1)'
+            #     count_empty = count_empty + 1
             elif (value_of_this_field == 'True'):
                 if (where_homonyms_filled.endswith(paren)):
                     where_homonyms_filled += ' + (' + field + '=0)'
@@ -1069,7 +1109,8 @@ class Gloss(models.Model):
 
         where_homonyms = '(' + where_homonyms_filled +  ' + ' + where_homonyms_empty + ')=0'
 
-        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE id != %s AND ' + where_homonyms, [self.id])
+        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE id != %s AND dataset_id = %s AND ' + where_homonyms,
+                               [self.id, str(self.dataset.id)])
 
         for o in qs:
             homonym_objects_list.append(o)
@@ -1100,12 +1141,13 @@ class Gloss(models.Model):
         except:
             handedness_X = ''
 
-        if (handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
+        # there are lots of different values for undefined
+        if (handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
                     handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
 
             return ([], [], [])
 
-        if (self.domhndsh == None or self.domhndsh == '-'):
+        if (self.domhndsh == None or self.domhndsh == '-' or self.domhndsh == '0'):
             return ([], [], [])
 
 
@@ -1115,22 +1157,21 @@ class Gloss(models.Model):
         count_empty = 0
         count_filled = 0
 
-        for field in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
-                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern', ]:
+        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
             value_of_this_field = str(phonology_for_gloss[field])
 
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
+            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None or value_of_this_field == 'False'):
                 if (where_homonyms_empty.endswith(paren)):
                     where_homonyms_empty += " + (" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
                 else:
                     where_homonyms_empty += "(" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
                 count_empty = count_empty + 1
-            elif (value_of_this_field == 'False'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += ' + (' + field + " IS NULL OR " + field + '=0)'
-                else:
-                    where_homonyms_empty += '(' + field + " IS NULL OR " + field + '=0)'
-                count_empty = count_empty + 1
+            # elif (value_of_this_field == 'False'):
+            #     if (where_homonyms_empty.endswith(paren)):
+            #         where_homonyms_empty += ' + (' + field + " IS NULL OR " + field + '=0)'
+            #     else:
+            #         where_homonyms_empty += '(' + field + " IS NULL OR " + field + '=0)'
+            #     count_empty = count_empty + 1
             elif (value_of_this_field == 'True'):
                 if (where_homonyms_filled.endswith(paren)):
                     where_homonyms_filled += ' + (' + field + '=1)'
@@ -1144,14 +1185,14 @@ class Gloss(models.Model):
                     where_homonyms_filled += '(' + field + '=' + value_of_this_field + ')'
                 count_filled = count_filled + 1
 
-        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=14'
+        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=20' #+ str(settings.MINIMAL_PAIRS_COUNT)
 
         qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE ' + where_homonyms)
 
         match_glosses = [g for g in qs]
 
         for other_gloss in match_glosses:
-            if other_gloss != self:
+            if other_gloss != self and other_gloss.dataset == self.dataset:
                     homonyms_of_this_gloss += [other_gloss]
 
         homonyms_not_saved = []
@@ -1189,11 +1230,22 @@ class Gloss(models.Model):
 
     def get_video_path(self):
 
-        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
+        foldername = self.idgloss[:2]
+
+        if len(foldername) == 1:
+            foldername += '-'
+
+        return 'glossvideo/'+foldername+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
 
     def get_video_path_prefix(self):
 
-        return 'glossvideo/'+self.idgloss[:2]+'/'+self.idgloss+'-'+str(self.pk)
+        foldername = self.idgloss[:2]
+
+        if len(foldername) == 1:
+            foldername += '-'
+
+        return 'glossvideo/'+foldername+'/'+self.idgloss+'-'+str(self.pk)
+
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
@@ -1336,7 +1388,7 @@ class Gloss(models.Model):
 
         #Start with your own choice lists
         for fieldname in ['handedness','locprim','domhndsh','subhndsh',
-							'relatArtic','absOriPalm','absOriFing','relOriMov',
+							'relatArtic','absOriFing','relOriMov',
 							'relOriLoc','handCh','repeat','altern','movSh',
 							'movDir','movMan','contType','namEnt','oriCh','semField']:
 
@@ -1450,6 +1502,26 @@ def fieldname_to_category(fieldname):
 
     return field_category
 
+# this can be used for phonology and handshape fields
+def fieldname_to_kind(fieldname):
+    if fieldname in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic',
+                     'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir',
+                     'final_domdndsh', 'final_subhndsh', 'namEnt', 'semField', 'valence',
+                     'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
+                     'hsFingConf2', 'hsAperture',
+                     'hsSpread', 'hsFingUnsel', 'wordClass']:
+        field_kind = 'list'
+    elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'useInstr']:
+        field_kind = 'text'
+    elif fieldname in ['repeat','altern', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
+                         'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
+                         'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
+        field_kind = 'check'
+    else:
+        field_kind = fieldname
+    return field_kind
+
+
 class Relation(models.Model):
     """A relation between two glosses"""
      
@@ -1487,7 +1559,7 @@ class Morpheme(Gloss):
 
     # Fields that are specific for morphemes, and not so much for 'sign-words' (=Gloss) as a whole
     # (1) optional morpheme-type field (not to be confused with MorphologyType from MorphologyDefinition)
-    mrpType = models.CharField(max_length=5,blank=True,  null=True, choices=build_choice_list('MorphemeType'))
+    mrpType = models.CharField(_("Has morpheme type"), max_length=5,blank=True,  null=True, choices=build_choice_list('MorphemeType'))
 
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
@@ -1622,6 +1694,81 @@ class Dataset(models.Model):
                     users_who_can_change_dataset.append(user)
 
         return users_who_can_change_dataset
+
+    def generate_frequency_dict(self,language_code):
+
+        codes_to_adjectives = dict(settings.LANGUAGES)
+
+        if language_code not in codes_to_adjectives.keys():
+            adjective = 'english'
+        else:
+            adjective = codes_to_adjectives[language_code].lower()
+
+        # sort the phonology fields based on field label in the designated language
+        field_labels = dict()
+        for field in FIELDS['phonology'] + FIELDS['semantics']:
+            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter', 'iconImg']:
+                field_label = Gloss._meta.get_field(field).verbose_name
+                field_labels[field] = field_label.encode('utf-8').decode()
+        field_labels = OrderedDict(sorted(field_labels.items(), key=lambda x: x[1]))
+
+        choice_lists = dict()
+        for field, label in field_labels.items():
+            # Get and save the choice list for this field
+            fieldchoice_category = fieldname_to_category(field)
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.order_by(adjective+'_name')
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective+'_name')
+
+            if len(choice_list) > 0:
+                choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False)
+
+        frequency_lists_phonology_fields = OrderedDict()
+        for field, label in field_labels.items():
+
+            # don't use handshape values in FieldChoice table
+            fieldchoice_category = fieldname_to_category(field)
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.order_by(adjective+'_name')
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective+'_name')
+
+            if len(choice_list) > 0:
+                # we now basically construct a duplicate of the choice_lists table, but with the machine values instead of the labels
+                # the machine value is stored as the value of the field in the Gloss objects
+                # we take the count of the machine value in the Gloss objects
+
+                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list,ordered=True)
+
+                # get dictionary of translated field choices for this field in sorted order (as per the language code)
+                sorted_field_choices = copy.deepcopy(choice_lists[field])
+
+                # because we're dealing with multiple languages and we want the fields to be sorted for the language
+                # we maintain the order of the fields established for the choice_lists table of field choice names
+                choice_list_frequencies = OrderedDict()
+                for choice, label in sorted_field_choices:
+
+                    machine_value = choice_list_machine_values[choice]
+                    # empty values can be either 0 or else null
+                    # the raw query is constructed for this case separately from the case for actual values
+                    if machine_value == 0:
+
+                        raw_query = "SELECT * FROM dictionary_gloss WHERE dataset_id in (" + str(self.id) + ") and (" + field + " IS NULL OR " + field + " = 0)"
+
+                        choice_list_frequencies[choice] = len(list(Gloss.objects.raw(raw_query)))
+                    else:
+                        variable_column = field
+                        search_filter = 'exact'
+                        filter = variable_column + '__' + search_filter
+                        choice_list_frequencies[choice] = Gloss.objects.filter(dataset=self.id).filter(**{ filter: machine_value }).count()
+
+                # the new frequencies for this field are added using the update method to insure the order is maintained
+                frequency_lists_phonology_fields.update({field: copy.deepcopy(choice_list_frequencies)})
+
+        return frequency_lists_phonology_fields
+
 
 class UserProfile(models.Model):
     # This field is required.

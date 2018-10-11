@@ -33,11 +33,11 @@
 
 
 {% block content %}
+<h3>{% trans "Manage Datasets" %}</h3>
 
 {% if object_list %}
 
 <table class='table'>
-    <caption style="text-align: left;font-weight: bold;">{% trans "Manage Datasets" %}</caption>
     <thead>
       <tr>
           <th style="width:100px;">{% trans "Dataset Name" %}</th>
@@ -53,7 +53,7 @@
       {% if "change_dataset" in dataset_perms %}
         <tr>
             <td>
-                <a href="{{URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
+                <a href="{{PREFIX_URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
             </td>
             <td>
                 <div data-toggle="collapse" href="#dataset_{{dataset.name|cut:' '}}_manage_view"><button>{% trans "Manage" %}</button></div>
@@ -207,10 +207,7 @@
     </tbody>
 </table>
 {% else %}
-<table class='table'>
-    <caption style="text-align: left;font-weight: bold;">{% trans "Manage datasets" %}</caption>
-</table>
-        {% trans "You must be in group Dataset Manager to use this functionality." %}
+<p>{% trans "You must be in group Dataset Manager to use this functionality." %}</p>
 {% endif %}
 
 {% endblock content %}

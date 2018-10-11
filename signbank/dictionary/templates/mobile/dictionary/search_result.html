@@ -6,7 +6,7 @@
     {% ifequal query '' %}
 
     <div>
-    <form id="frmSearch" name="frmSearch" method="get" action="{% url 'root_page' %}dictionary/search/">
+    <form id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/dictionary/search/">
       <input type="search" name="query" value="" maxlength="50">
       <button type="submit" data-theme="a" data-icon="search" data-inline="true">Sign Search</button>
       <div data-role="fieldcontain">
@@ -21,14 +21,14 @@
     
     <h2>Browse Translations</h2>
     {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
-      <a data-role="button" data-inline="true" href="{% url 'root_page' %}dictionary/search?query={{letter}}" style="font-family: Consolas, Menlo, Monaco, 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace, serif;" >{{letter}}</a>
+      <a data-role="button" data-inline="true" href="{{PREFIX_URL}}/dictionary/search?query={{letter}}" style="font-family: Consolas, Menlo, Monaco, 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace, serif;" >{{letter}}</a>
    {% endfor %}
 
 <!--
     <h2>Browse Keywords</h2>
     <ul data-inset="true" data-role="listview">
     {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
-      <li><a href="{% url 'root_page' %}dictionary/search?query={{letter}}">{{letter}}</a></li>
+      <li><a href="{{PREFIX_URL}}/dictionary/search?query={{letter}}">{{letter}}</a></li>
    {% endfor %}
    </ul>
 -->
@@ -56,7 +56,7 @@
         <ul data-inset="true" data-role="listview">
           {% for word in page.object_list %}
             <li>
-              <a href="{% url 'root_page' %}dictionary/words/{{ word.text }}-1.html">{{ word.text }}{% if not word.inWeb %}*{% endif %}</a>
+              <a href="{{PREFIX_URL}}/dictionary/words/{{ word.text }}-1.html">{{ word.text }}{% if not word.inWeb %}*{% endif %}</a>
             </li>
           {% endfor %}
         </ul>

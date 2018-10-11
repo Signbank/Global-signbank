@@ -14,7 +14,7 @@
 <div id="signbank-bar" class="navbar navbar-fixed-top" style="box-sizing:content-box;">
 
 <div id='header' class="navbar-header">
-    <a href="{{URL}}" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
+    <a href="{{PREFIX_URL}}/" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
     <h1>Global <br/><span id="second-title-part">signbank</span></h1>
     <a href="http://www.ru.nl/sign-lang" id='logoholder' class='visible-lg visible-md visible-sm'></a>
 </div>
@@ -40,7 +40,7 @@
 
         {% if item.children %}
         <li class='dropdown'>
-             <a href="{{ URL }}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
+             <a href="{{PREFIX_URL}}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
              	{% if WEBSITE_LANGUAGE == "nl" %}
                  {{item.title_dutch}}
              	{% elif WEBSITE_LANGUAGE == "cn" %}
@@ -51,7 +51,7 @@
                  <b class="caret"></b></a>
              <ul class="dropdown-menu">
              {% for subitem in item.children %}
-                <li {% if subitem.current %}class='active'{% endif %}><a href="{{ URL }}{{subitem.url}}">
+                <li {% if subitem.current %}class='active'{% endif %}><a href="{{PREFIX_URL}}{{subitem.url}}">
              	{% if WEBSITE_LANGUAGE == "nl" %}
                  {{subitem.title_dutch}}
              	{% elif WEBSITE_LANGUAGE == "cn" %}
@@ -64,7 +64,7 @@
              </ul>
         </li>
       {% else %}
-        <li><a style="padding-left: 0px;" href="{{ URL }}{{item.url}}">
+        <li><a style="padding-left: 0px;" href="{{PREFIX_URL}}{{item.url}}">
             {% if WEBSITE_LANGUAGE == "nl" %}
                  {{item.title_dutch}}
              	{% elif WEBSITE_LANGUAGE == "cn" %}
@@ -77,12 +77,11 @@
     {% endfor %}
 
     </ul>
-    <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{ URL }}signs/search">
-            <input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="40" size="14">
-            <input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" value="{{ query }}" maxlength="40" size="16">
-          <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
-            <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
-                  title="In many text fields, you can use patterns as follows:
+    <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search">
+            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" id="tooltip-search"
+                                               onfocus="focusFunction()" onblur="blurFunction()"
+                                               value="{{ glossQuery }}" maxlength="60" size="36" />
+                <span>In many text fields, you can use patterns as follows:
                   <table>
                     <tr>
                         <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
@@ -103,7 +102,35 @@
                         <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
                     </tr>
                   </table>
-                  "></span>
+                </span>
+            </div>
+            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" id="tooltip-translation"
+                                               onfocus="focusFunction2()" onblur="blurFunction2()"
+                                               value="{{ query }}" maxlength="60" size="36" />
+                <span>In many text fields, you can use patterns as follows:
+                  <table>
+                    <tr>
+                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                    </tr>
+                  </table>
+                </span>
+            </div>
+          <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
     </form>
 
       <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">
@@ -112,7 +139,7 @@
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
             <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
         {% else %}
-            <div class='navbar-text'><a href="{{ URL }}/accounts/login/?next=/">{% trans "Login" %}</a></div>
+            <div class='navbar-text'><a href="{{PREFIX_URL}}/accounts/login/?next=/">{% trans "Login" %}</a></div>
             <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
         {% endif %}
       </div>
@@ -143,7 +170,6 @@
     </div>
 
 </div>
-
 <div id='bslstripe'></div>
 
 </div>

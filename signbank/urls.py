@@ -18,7 +18,8 @@ import django.contrib.auth.views
 import django.contrib.admindocs.urls
 import django_summernote.urls
 
-from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, HomonymListView, DatasetManagerView, DatasetDetailView
+from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
+                                            HomonymListView, MinimalPairsListView, DatasetManagerView, DatasetDetailView, FrequencyListView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -47,7 +48,7 @@ urlpatterns = [
 
     #(r'^register.html', 'signbank.views.index'),
     url(r'^logout.html', django.contrib.auth.views.logout,
-                       {'next_page': settings.URL}, "logout"),
+                       {'next_page': settings.PREFIX_URL+'/'}, "logout"),
 
     url(r'^spell/twohanded.html$', TemplateView.as_view(template_name='fingerspell/fingerspellingtwohanded.html')),
     url(r'^spell/practice.html$', TemplateView.as_view(template_name='fingerspell/fingerspellingpractice.html')),
@@ -60,13 +61,15 @@ urlpatterns = [
     url(r'^signs/show_all/$', GlossListView.as_view(),{'show_all':True}),
     url(r'^signs/add/$', signbank.dictionary.views.add_new_sign),
     url(r'^signs/import_csv/$', signbank.dictionary.views.import_csv, name='import_csv'),
-    url(r'^signs/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),
+    url(r'^analysis/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),
+    url(r'^analysis/minimalpairs/$', MinimalPairsListView.as_view(), name='admin_minimalpairs_list'),
+    url(r'^analysis/frequencies/$', FrequencyListView.as_view(), name='admin_frequency_list'),
     url(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
     url(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
     url(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
     url(r'^morphemes/dictionary/$', signbank.dictionary.views.search_morpheme),
     url(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),
-    url(r'^morphemes/add/$', permission_required('dictionary.search_gloss')(add_new_morpheme)),
+    url(r'^morphemes/add/$', permission_required('dictionary.search_gloss')(signbank.dictionary.views.add_new_morpheme)),
     url(r'^feedback/overview/$', signbank.feedback.views.showfeedback),
 
     # A standard view for setting the language
@@ -91,11 +94,11 @@ urlpatterns = [
 
     url(r'reload_signbank/$',signbank.tools.reload_signbank),
 
-    url(r'^datasets/available', DatasetListView.as_view(), name='admin_dataset_view'),
-    url(r'^datasets/select', DatasetListView.as_view(), {'select': True}, name='admin_dataset_select'),
+    url(r'^datasets/available', login_required(DatasetListView.as_view()), name='admin_dataset_view'),
+    url(r'^datasets/select', login_required(DatasetListView.as_view()), {'select': True}, name='admin_dataset_select'),
     url(r'^datasets/change_selection', signbank.dictionary.update.change_dataset_selection, name='change_dataset_selection'),
     url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
-    url(r'^datasets/manager', DatasetManagerView.as_view(), name='admin_dataset_manager'),
+    url(r'^datasets/manager', login_required(DatasetManagerView.as_view()), name='admin_dataset_manager'),
     url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
     url(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
     url(r'^__debug__/', include(debug_toolbar.urls))

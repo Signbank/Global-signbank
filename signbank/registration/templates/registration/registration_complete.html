@@ -1,13 +1,33 @@
 
 {% extends "baselayout.html" %}
+{% load i18n %}
+
+{% load bootstrap3 %}
 
 {% block content %}
+<h2>{% trans "Signbank registration" %}</h2>
+<p>{% trans "The following user registration request has been received:" %}</p>
+<table>
+    <tr><th style='width:12em;'>{% trans "Username:" %}</th><td> {{ request.session.username }} </td></tr>
+    <tr><th>{% trans "First name:" %}</th><td>{{ request.session.first_name }}</td></tr>
+    <tr><th>{% trans "Last name:" %}</th><td>{{ request.session.last_name }}</td></tr>
+    <tr><th>{% trans "E-mail:" %}</th><td>{{ request.session.email }}</td></tr>
+    <tr><th>{% trans "Requested datasets:" %}</th>
+        <td>
+        {% for d in request.session.requested_datasets %}
+                {{ d }} {% if not forloop.last %}, {% endif %}
+        {% endfor %}
+        </td>
+    </tr>
+    <tr><th>{% trans "Groups:" %}</th>
+        <td>
+        {% for g in request.session.groups %}
+                {{ g }} {% if not forloop.last %}, {% endif %}
+        {% endfor %}
+        </td>
+    </tr>
+</table>
+<br>
+<p>{% trans "An email has been sent to your nominated address. Please check your email for details of how to complete the registration process." %}</p>
 
-   <p>Thank you for your registration details. An email has 
-   been sent to your nominated address. Please check your
-   email for details of how to complete the registration
-   process.</p>
-   
 {% endblock %}							
-
-

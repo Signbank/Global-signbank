@@ -1,5 +1,5 @@
 from django.template import Library
-from signbank.dictionary.models import FieldChoice
+from signbank.dictionary.models import FieldChoice, Dataset
 
 def get_field_choice(machine_value,field_category):
 
@@ -16,7 +16,18 @@ def get_field_choice(machine_value,field_category):
     else:
         return '-'
 
+
+
 register = Library()
+
+@register.filter
+def normalise_empty(machine_value):
+    if machine_value in [None,'None']:
+        return None
+    elif machine_value == '0' or machine_value == 0:
+        return None
+    else:
+        return machine_value
 
 @register.filter
 def translate_to_dutch(machine_value,field_category):
@@ -58,3 +69,8 @@ def machine_field_translate(field_value, args):
     else:
         translation_function = translate_to_english(field_value,field_category)
     return translation_function
+
+@register.filter
+def translated_frequency_list(dataset, language_code):
+    generated_dict = dataset.generate_frequency_dict(language_code)
+    return generated_dict

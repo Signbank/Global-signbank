@@ -1,21 +1,13 @@
-{# Parameters #}
-{# username (string) #}
-{#   Either "" indicating that the user is not logged in, or the user name in <first name> <last name> form. #}
-{# title (string #}
-{#   The title of the page, appears in horizontal span above content. #}
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
 
-{% extends "standardlayout.html" %}
+{% block bootstrap3_title %}Signbank: Feedback overview{% endblock %}
 
-{% block sideuppercontent %}
-{% endblock %}
-
-{% block sidelowercontent %}
-{% endblock %}
-
-{% block pagecontent %}
-    <h1>General feedback summary</h1>
-    
-    <table>
+{% block content %}
+    <table class='table table-condensed'>
+    <caption style="text-align: left;font-weight: bold;">{% trans "General feedback summary" %}</caption>
       <tr><th>Date</th><th>User</th><th>Comment</th></tr>
 
       {% for feedback in feedbacklist %}
@@ -27,6 +19,5 @@
 
       {% end for %}      
     </table>
-
 
 {% endblock %}

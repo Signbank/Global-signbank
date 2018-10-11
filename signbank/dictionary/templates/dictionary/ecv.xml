@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+{% load annotation_idgloss_translation %}
+<CV_RESOURCE AUTHOR="" DATE="{{ date }}" VERSION="0.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/EAFv2.8.xsd">
+    {% with languages|get_iso_639_3_info as language_data %}
+    {% for language_code, data in language_data.items %}
+    <LANGUAGE LANG_DEF="{{ data.0 }}" LANG_ID="{{ language_code }}" LANG_LABEL="{{ data.1 }}"/>
+    {% endfor %}
+    {% endwith %}
+   <CONTROLLED_VOCABULARY CV_ID="{{ dataset.name }}-Signbank-lexicon">
+       {% for language in languages %}
+       <DESCRIPTION LANG_REF="{{ language.language_code_3char }}">{{ dataset.description }}</DESCRIPTION>
+       {% endfor %}
+       {% for gloss in glosses %}
+       <CV_ENTRY_ML CVE_ID="{{ gloss.id }}" EXT_REF="signbank-ecv">
+           {% for language in languages %}
+           {% with gloss|get_annotation_idgloss_translation:language as annotationidglosstranslation %}
+           <CVE_VALUE DESCRIPTION="{{ gloss|get_gloss_description:language.language_code_2char }}" LANG_REF="{{ language.language_code_3char }}">{{ annotationidglosstranslation}}</CVE_VALUE>
+           {% endwith %}
+           {% endfor %}
+       </CV_ENTRY_ML>
+       {% endfor %}
+   </CONTROLLED_VOCABULARY>
+   <EXTERNAL_REF EXT_REF_ID="signbank-ecv" TYPE="resource_url" VALUE="{{ resource_url }}"/>
+</CV_RESOURCE>
