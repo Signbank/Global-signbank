@@ -1,3 +1,5 @@
+
+
 {% load i18n %}
 <!-- This was commented out, WEBSITE_LANGUAGE is already defined in baselayout.html -->
 <!--{% get_current_language as LANGUAGE %}-->
@@ -158,8 +160,8 @@
             <div class='taglist'>
                 {% load underscore_to_space %}
                 {% for ds in selected_datasets %}
-                <div class='label' style="background-color:Gainsboro;color:DodgerBlue;border-style:solid;border-width:1px;border-color:DodgerBlue;">
-                    <span>{{ds.name|underscore_to_space}}</span>
+                <div class="ribbon">
+                    {{ds.name|underscore_to_space}}
                 </div>
                 {% if not forloop.last %}<span>&thinsp;</span>{% endif %}
                 {% endfor %}

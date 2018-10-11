@@ -565,3 +565,37 @@ tr.rotated th {
     border-color: #BB2F2C #dee2e6 #fff;
     border-top-width: 2px;
 }
+ .ribbon
+ {
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    min-width: 100px;
+    height: 20px;
+    color: #BB2F2C;
+    text-align: center;
+    text-decoration: none;
+    line-height: 20px;
+}
+
+.ribbon:before, .ribbon:after
+{
+    position: absolute;
+    content:'';
+    width: 100%;
+    left: 0px;
+    height: 10px;
+    border: 1px solid #BB2F2C;
+}
+.ribbon:before
+{
+    transform: perspective(3px) rotateX(3deg);
+    border-bottom: none;
+}
+
+.ribbon:after
+{
+    top: 10px;
+    transform: perspective(3px) rotateX(-3deg);
+    border-top: none;
+}
