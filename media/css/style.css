@@ -570,7 +570,7 @@ tr.rotated th {
     box-sizing: border-box;
     position: relative;
     display: inline-block;
-    min-width: 100px;
+    min-width: 125px;
     height: 20px;
     color: #BB2F2C;
     text-align: center;
