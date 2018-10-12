@@ -36,6 +36,7 @@ html {
         padding-left: 3px;
         margin: 0px;
         display: flex;
+        float:left
 }
 
 #second-title-part {

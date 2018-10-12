@@ -569,13 +569,14 @@ tr.rotated th {
  {
     box-sizing: border-box;
     position: relative;
-    display: inline-block;
     min-width: 125px;
     height: 20px;
-    color: #BB2F2C;
+    color: white;
     text-align: center;
     text-decoration: none;
     line-height: 20px;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 
 .ribbon:before, .ribbon:after
@@ -585,8 +586,9 @@ tr.rotated th {
     width: 100%;
     left: 0px;
     height: 10px;
-    border: 1px solid #BB2F2C;
+    border: 1px solid white;
 }
+
 .ribbon:before
 {
     transform: perspective(3px) rotateX(3deg);

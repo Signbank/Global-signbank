@@ -18,6 +18,22 @@
 <div id='header' class="navbar-header">
     <a href="{{PREFIX_URL}}/" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
     <h1>Global <br/><span id="second-title-part">signbank</span></h1>
+
+        {% if user.is_authenticated %}
+        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
+        <div class='navbar-text' style="left-margin: 15px;">
+            <div class='taglist'>
+                {% load underscore_to_space %}
+                {% for ds in selected_datasets %}
+                <div class="ribbon">
+                    {{ds.name|underscore_to_space}}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
     <a href="http://www.ru.nl/sign-lang" id='logoholder' class='visible-lg visible-md visible-sm'></a>
 </div>
 
@@ -152,23 +168,10 @@
   </div>
 
 </div>
+
 <div id='navbar-datasets' class="navbar-left navbar-lower" style="background:white;box-sizing:content-box;">
     <div class="nav navbar-left" style="min-height:35px;margin-bottom:3px;box-sizing:content-box;">
-        {% if user.is_authenticated %}
-        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
-        <div class='navbar-text' style="left-margin: 15px;">
-            <div class='taglist'>
-                {% load underscore_to_space %}
-                {% for ds in selected_datasets %}
-                <div class="ribbon">
-                    {{ds.name|underscore_to_space}}
-                </div>
-                {% if not forloop.last %}<span>&thinsp;</span>{% endif %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        {% endif %}
+        dataset bar
     </div>
 
 </div>
