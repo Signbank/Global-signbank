@@ -9,16 +9,22 @@
 {% endblock %}
 
 {% block extrajs %}
-
+    <script type="text/javascript">
+        var url = '{{URL}}{{ PREFIX_URL }}';
+    </script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
     <script type='text/javascript'>
-    var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
     var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
     var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
     var csrf_token = '{{csrf_token}}';
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
     
     $(document).ready(function(){
         
@@ -303,7 +309,7 @@ function set_signlanguages_dialects() {
 
         <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
         <div class="hidden">
-            <input name='sortOrder' class='form-control' value='idgloss' >
+            <input name='sortOrder' class='form-control' value='lemma__lemmaidglosstranslation__text' >
             <input name='search_type' class='form-control' value='morpheme'>
         </div>
         <div>
@@ -595,8 +601,8 @@ function set_signlanguages_dialects() {
                  {% csrf_token %}
                  <table class='table'>
                      <tr>
-                         <th><label for='dataset'>Dataset</label></th>
-                         <th><label for='id_idgloss'>ID Gloss</label></th>
+                         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th><label for='dataset'>{% trans "Dataset" %}</label></th>{% endif %}
+                         <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
                          {% for dataset_lang in dataset_languages %}
                          <th id="add_morpheme_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
                          {% endfor %}
@@ -614,8 +620,31 @@ function set_signlanguages_dialects() {
                                      dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.name }}</option>
                              {% endfor %}
                          </select></td>
+                         {% else %}
+                         <div style="display: hidden"><select id="id_dataset" name="dataset"></select></div>
+                         <script type='text/javascript'>gloss_dataset_id = {{ selected_datasets.0.id }}</script>
                          {% endif %}
-                         <td>{{add_morpheme_form.idgloss}}</td>
+                         <td>
+                             <div id="lemma_select">
+                                 <!-- Input of the type ahead -->
+                                 <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+                                 <!-- Input that holds the lemma id the user chose from the type ahead -->
+                                 <input type='hidden' name='idgloss' value='confirmed' required="">
+                                 <a href="#" onclick="return toggleAddLemma()">{% trans "Create new" %}</a>
+                             </div>
+                             <div id="lemma_add">
+                                {% for dataset_lang in dataset_languages %}
+                                 <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</span>
+                                <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                       name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                       maxlength="30" type="text"/>
+
+                                {% endfor %}
+
+                                 <a href="#" onclick="return toggleAddLemma()">{% trans "Select" %}</a>
+                             </div>
+                             <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
+                         </td>
                          {% for dataset_lang in dataset_languages %}
                          <td id="add_morpheme_dataset_value_{{ dataset_lang.language_code_2char }}">
                              <input id="morphemecreate_{{ dataset_lang.language_code_2char }}" name="morphemecreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>

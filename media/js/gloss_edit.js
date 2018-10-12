@@ -66,6 +66,13 @@ var busy_editing = 0;
     $('.morphtypeahead').on("input", function() {
           $(this).parent().next().val("")
         });
+    lemmatypeahead($('.lemmatypeahead'));
+    $('.lemmatypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk)
+        });
+    $('.lemmatypeahead').on("input", function() {
+          $(this).parent().next().val("")
+        });
 
 
     // setup requried for Ajax POST
@@ -84,7 +91,7 @@ var busy_editing = 0;
     });
 
     ajaxifyTagForm();
-     
+
  });
 
 function disable_edit() {
@@ -157,6 +164,9 @@ function disable_edit() {
 
     $('.empty_row').hide();
 
+    hideLemmaForm($("#lemma"));
+    $("#lemma a").show();
+
     //To prevent RSI
     $('.edit').each(function()
     {
@@ -177,6 +187,8 @@ function disable_edit() {
     });
 
     check_phonology_modified();
+
+    busy_editing = false;
 };
 
 function enable_edit() {
@@ -229,6 +241,7 @@ function enable_edit() {
         }
     });
     busy_editing = 1;
+    $('#lemma a').hide();
 };
 
 function toggle_edit(redirect_to_next) {
@@ -254,6 +267,8 @@ function toggle_edit(redirect_to_next) {
         $('#enable_edit').addClass('edit_enabled');
         $('#enable_edit').text(turn_off_edit_mode_str);
     }
+
+    $('#lemma').css('color', $('.edit').css('color'));
 }
 
 
@@ -575,6 +590,41 @@ $.editable.addInputType('morphtypeahead', {
    },
 });
 
+var lemma_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/%QUERY'
+    });
+
+lemma_bloodhound.initialize();
+
+function lemmatypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'lemmatarget',
+          displayKey: 'lemma',
+          source: lemma_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(lemma) {
+                  return("<p><strong>" + lemma.lemma + "</strong></p>");
+              }
+          }
+      });
+};
+
+
+$.editable.addInputType('lemmatypeahead', {
+
+   element: function(settings, original) {
+      var input = $('<input type="text" class="lemmatypeahead">');
+      $(this).append(input);
+
+      lemmatypeahead(input);
+
+      return (input);
+   },
+});
+
 /*
  * http://stackoverflow.com/questions/1597756/is-there-a-jquery-jeditable-multi-select-plugin
  */
@@ -763,4 +813,36 @@ function check_phonology_modified()
             }
         }
     }
+}
+
+// Lemma toggle stuff
+function showLemmaForm(lemma_element) {
+    lemma_element.hide();
+    lemma_element.parent().find("[name='add_lemma_form']").hide();
+    lemma_element.parent().find("[name='set_lemma_form']").show();
+    lemma_element.parent().find("[name='add_lemma_form']").find(".lemmatypeahead.tt-input").focus();
+}
+
+function hideLemmaForm(lemma_element) {
+    lemma_element.parent().find("[name='set_lemma_form']").hide();
+    lemma_element.parent().find("[name='add_lemma_form']").hide();
+    lemma_element.show();
+}
+
+$("#lemma").on('click', function() {
+    console.log("busy_editing: " + busy_editing)
+    if(busy_editing) {
+        showLemmaForm($(this));
+    }
+});
+
+$(".lemma-form-dismiss").on('click', function() {
+    hideLemmaForm($("#lemma"));
+});
+
+function showAddLemma() {
+    $("#lemma").hide();
+    $("#lemma").parent().find("[name='set_lemma_form']").hide();
+    $("#lemma").parent().find("[name='add_lemma_form']").show();
+    return false;
 }

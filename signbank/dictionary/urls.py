@@ -5,7 +5,8 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
 from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossRelationsDetailView, MorphemeDetailView, \
-    MorphemeListView, HandshapeDetailView, HandshapeListView, HomonymListView
+    MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, \
+    create_lemma_for_gloss, LemmaUpdateView
 
 #These are needed for the urls below
 import signbank.dictionary.views
@@ -60,6 +61,7 @@ urlpatterns = [
     url(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),
     url(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),
     url(r'^ajax/handshapesearchresults/$', signbank.dictionary.adminviews.handshape_ajax_search_results, name='handshape_ajax_search_results'),
+    url(r'^ajax/lemma/(?P<dataset_id>.*)/(?P<q>.*)$', signbank.dictionary.adminviews.lemma_ajax_complete, name='lemma_complete'),
 
     url(r'^missingvideo.html$', signbank.dictionary.views.missing_video_view),
 
@@ -91,4 +93,11 @@ urlpatterns = [
     url(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     url(r'^morpheme/(?P<pk>\d+)', MorphemeDetailView.as_view(), name='admin_morpheme_view'),
     url(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
+
+    # Lemma Idgloss views
+    url(r'^lemma/$', permission_required('dictionary.change_lemmaidgloss')(LemmaListView.as_view()), name='admin_lemma_list'),
+    url(r'^lemma/add/$', permission_required('dictionary.add_lemmaidgloss')(LemmaCreateView.as_view()), name='create_lemma'),
+    url(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
+    url(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
+    url(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
 ]

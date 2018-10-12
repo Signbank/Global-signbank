@@ -9,6 +9,15 @@
 
 
 {% block extrajs %}
+    <script type="text/javascript">
+        var url = '{{URL}}{{ PREFIX_URL }}';
+    </script>
+
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
 
  <script type="text/javascript">
 
@@ -40,6 +49,7 @@
     });
 
     var csrf_token = '{{csrf_token}}';
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
     var choice_lists = {{choice_lists|safe}};
     var mrp_data = choice_lists['mrpType'];
     $("#id_mrptype").html("");
@@ -74,7 +84,28 @@
                      </select></td>
              </tr>
              <tr>
-                 <th><label for='id_idgloss'>{% trans "ID Gloss" %}</label></th><td>{{add_morpheme_form.idgloss}}</td>
+                 <th><label for='id_idgloss'>{% trans "ID Gloss" %}</label></th>
+                 <td>
+                         <div id="lemma_select">
+                             <!-- Input of the type ahead -->
+                             <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+                             <!-- Input that holds the lemma id the user chose from the type ahead -->
+                             <input type='hidden' name='idgloss' value='confirmed' required="">
+                             <a href="#" onclick="return toggleAddLemma()">{% trans "Create new" %}</a>
+                         </div>
+                         <div id="lemma_add">
+                            {% for dataset_lang in dataset_languages %}
+                             <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</span>
+                            <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                   name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                   maxlength="30" type="text"/>
+
+                            {% endfor %}
+
+                             <a href="#" onclick="return toggleAddLemma()">{% trans "Select" %}</a>
+                         </div>
+                         <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
+                     </td>
              </tr>
              {% for dataset_lang in dataset_languages %}
              <tr>

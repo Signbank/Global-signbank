@@ -3,8 +3,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
-                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, AnnotationIdglossTranslation, Dataset, FieldChoice, \
-                                        Translation, Keyword, Language, SignLanguage, fieldname_to_category
+                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, \
+                                        AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
+                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, fieldname_to_category
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
@@ -44,7 +45,7 @@ class GlossCreateForm(forms.ModelForm):
 
     class Meta:
         model = Gloss
-        fields = ['idgloss', 'dataset']
+        fields = []
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
@@ -52,6 +53,10 @@ class GlossCreateForm(forms.ModelForm):
         self.last_used_dataset = kwargs.pop('last_used_dataset')
 
         super(GlossCreateForm, self).__init__(queryDict, *args, **kwargs)
+
+        if 'dataset' in queryDict:
+            self.fields['dataset'] = forms.ModelChoiceField(queryset=Dataset.objects.all())
+            self.fields['dataset'].initial = queryDict['dataset']
 
         for language in self.languages:
             glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
@@ -62,13 +67,15 @@ class GlossCreateForm(forms.ModelForm):
     @atomic  # This rolls back the gloss creation if creating annotationidglosstranslations fails
     def save(self, commit=True):
         gloss = super(GlossCreateForm, self).save(commit)
+        dataset = Dataset.objects.get(id=self['dataset'].value())
         for language in self.languages:
             glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
-            annotation_idgloss_text = self.fields[glosscreate_field_name].value
+            annotation_idgloss_text = self[glosscreate_field_name].value()
             existing_annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
             if existing_annotationidglosstranslations is None or len(existing_annotationidglosstranslations) == 0:
                 annotationidglosstranslation = AnnotationIdglossTranslation(gloss=gloss, language=language,
-                                                                            text=annotation_idgloss_text)
+                                                                            text=annotation_idgloss_text,
+                                                                            dataset=dataset)
                 annotationidglosstranslation.save()
             elif len(existing_annotationidglosstranslations) == 1:
                 annotationidglosstranslation = existing_annotationidglosstranslations[0]
@@ -120,7 +127,7 @@ class MorphemeCreateForm(forms.ModelForm):
 
     class Meta:
         model = Morpheme
-        fields = ['idgloss', 'dataset', 'mrpType']
+        fields = ['mrpType']
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
@@ -209,9 +216,8 @@ class GlossSearchForm(forms.ModelForm):
     use_required_attribute = False #otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Dutch Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"), initial="idgloss")       # Used in glosslistview to store user-selection
+    sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))
-    lemmaGloss = forms.CharField(label=_("Lemma Gloss"))
     tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
     nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
     keyword = forms.CharField(label=_(u'Translations'))
@@ -259,13 +265,14 @@ class GlossSearchForm(forms.ModelForm):
 
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
+    lemma_search_field_prefix = "lemma_"
 
     class Meta:
 
         ATTRS_FOR_FORMS = {'class':'form-control'}
 
         model = Gloss
-        fields = ('idgloss', 'morph', 'sense',
+        fields = ('morph', 'sense',
                    'sn', 'StemSN', 'comptf', 'compound',
                    'inWeb', 'isNew',
                    'initial_relative_orientation', 'final_relative_orientation',
@@ -316,6 +323,12 @@ class GlossSearchForm(forms.ModelForm):
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 
+            # and for LemmaIdgloss
+            lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
+            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
+            if lemma_field_name in queryDict:
+                getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
+
         field_label_signlanguage = gettext("Sign language")
         field_label_dialects = gettext("Dialect")
         self.fields['signLanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage, widget=Select2,
@@ -340,8 +353,7 @@ class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Dutch Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"),
-                                initial="idgloss")  # Used in morphemelistview to store user-selection
+    sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))
     lemmaGloss = forms.CharField(label=_("Lemma Gloss"))
     tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_', ' ')) for tag in Tag.objects.all()])
@@ -392,7 +404,7 @@ class MorphemeSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Morpheme
-        fields = ('idgloss', 'morph', 'sense', # 'mrpType',
+        fields = ('morph', 'sense', # 'mrpType',
                   'sn', 'StemSN', 'comptf', 'compound',
                   # 'inWeb', 'isNew',
                   'initial_relative_orientation', 'final_relative_orientation',
@@ -649,3 +661,106 @@ class ImageUploadForHandshapeForm(forms.Form):
     imagefile = forms.FileField(label="Upload Image")
     handshape_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
+
+
+class LemmaCreateForm(forms.ModelForm):
+    """Form for creating a new lemma from scratch"""
+
+    lemma_create_field_prefix = "lemmacreate_"
+    languages = None # Languages to use for lemma idgloss translations
+    user = None
+
+    class Meta:
+        model = LemmaIdgloss
+        fields = ['dataset']
+
+    def __init__(self, queryDict, *args, **kwargs):
+        if 'languages' in kwargs:
+            self.languages = kwargs.pop('languages')
+        self.user = kwargs.pop('user')
+        super(LemmaCreateForm, self).__init__(queryDict, *args, **kwargs)
+
+        from signbank.tools import get_selected_datasets_for_user
+        if not self.languages:
+            selected_datasets = get_selected_datasets_for_user(self.user)
+            self.languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+        for language in self.languages:
+            lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
+            self.fields[lemmacreate_field_name] = forms.CharField(label=_("Lemma")+(" (%s)" % language.name))
+            if lemmacreate_field_name in queryDict:
+                self.fields[lemmacreate_field_name].initial = queryDict[lemmacreate_field_name]
+
+    @atomic  # This rolls back the lemma creation if creating lemmaidglosstranslations fails
+    def save(self, commit=True):
+        lemma = super(LemmaCreateForm, self).save(commit)
+        for language in self.languages:
+            lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
+            lemma_idgloss_text = self[lemmacreate_field_name].value()
+            existing_lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
+            if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
+                lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma, language=language,
+                                                                            text=lemma_idgloss_text)
+                lemmaidglosstranslation.save()
+            elif len(existing_lemmaidglosstranslations) == 1:
+                lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
+                lemmaidglosstranslation.text = lemma_idgloss_text
+                lemmaidglosstranslation.save()
+            else:
+                raise Exception(
+                    "In class %s: gloss with id %s has more than one lemma idgloss translation for language %s"
+                    % (self.__class__.__name__, lemma.pk, language.name)
+                )
+        return lemma
+
+
+class LemmaUpdateForm(forms.ModelForm):
+    """Form for updating a lemma"""
+    lemma_update_field_prefix = "lemmaupdate_"
+
+    class Meta:
+        model = LemmaIdgloss
+        fields = []
+
+    def __init__(self, queryDict=None, *args, **kwargs):
+        super(LemmaUpdateForm, self).__init__(queryDict, *args, **kwargs)
+        print("Object: " + str(self.instance))
+        self.languages = self.instance.dataset.translation_languages.all()
+
+        for language in self.languages:
+            lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
+            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name))
+            if queryDict:
+                if lemmaupdate_field_name in queryDict:
+                    self.fields[lemmaupdate_field_name].initial = queryDict[lemmaupdate_field_name]
+            else:
+                try:
+                    self.fields[lemmaupdate_field_name].initial = \
+                        self.instance.lemmaidglosstranslation_set.get(language=language).text
+                except:
+                    pass
+
+    @atomic
+    def save(self, commit=True):
+        print("PRE SAVE for Translations")
+        for language in self.languages:
+            lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
+            lemma_idgloss_text = self.fields[lemmaupdate_field_name].initial
+            existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.filter(language=language)
+            if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
+                lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
+                                                                  text=lemma_idgloss_text)
+                lemmaidglosstranslation.save()
+            elif len(existing_lemmaidglosstranslations) == 1:
+                lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
+                lemmaidglosstranslation.text = lemma_idgloss_text
+                lemmaidglosstranslation.save()
+            else:
+                raise Exception(
+                    "In class %s: gloss with id %s has more than one lemma idgloss translation for language %s"
+                    % (self.__class__.__name__, self.instance.pk, language.name)
+                )
+        print("POST SAVE for Translations")
+        return self.instance
+
+

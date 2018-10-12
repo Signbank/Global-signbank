@@ -582,6 +582,7 @@ def add_new_sign(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
+    context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
@@ -641,6 +642,8 @@ def add_new_morpheme(request):
         oContext['choice_lists'] = oChoiceLists
 
     oContext['choice_lists'] = json.dumps(oContext['choice_lists'])
+
+    oContext['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
     # Continue
     oBack = render(request,'dictionary/add_morpheme.html', oContext)
@@ -764,23 +767,46 @@ def import_csv(request):
                 error.append(e1)
                 break
 
+            # The Lemma ID Gloss may already exist.
+            lemmaidglosstranslations = {}
+            for language in dataset.translation_languages.all():
+                column_name = "Lemma ID Gloss (%s)" % language.name_en
+                if column_name not in value_dict:
+                    e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + column_name + ' is required.'
+                    fatal_error = True
+                    error.append(e1)
+                else:
+                    lemma_idgloss_value = value_dict[column_name].strip()
+                    lemmaidglosstranslations[language] = lemma_idgloss_value
+
             # if we get to here, the dataset and required permissions are okay.
             if creating_glosses:
                 # check that the required columns are available, and check that
                 # values are present in the row for these column
-                # Checks if all columns for creating a gloss are there. Annotation ID Gloss needs to be
-                # checked dynamically for each dataset language.
+                # Checks if all columns for creating a gloss are there.
                 fatal_error = False
-                if 'Lemma ID Gloss' not in value_dict:
-                    e1 = 'To create glosses, the Lemma ID Gloss column is required.'
+
+                existing_lemmas = []
+                for language, term in lemmaidglosstranslations.items():
+                    try:
+                        existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset,
+                                                                                   language=language,
+                                                                                   text=term).lemma)
+                    except ObjectDoesNotExist as e:
+                        print("Error: {}".format(e))
+                existing_lemmas_set = set(existing_lemmas)
+
+                if len(existing_lemmas) == len(lemmaidglosstranslations) and len(existing_lemmas_set) == 1:
+                    existing_lemma = existing_lemmas[0]
+                elif len(existing_lemmas) != 0:
+                    e1 = 'To create glosses in dataset ' + dataset_name + \
+                         ', the combination of Lemma ID Gloss translations should either refer ' \
+                         'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
                     fatal_error = True
                     error.append(e1)
-                else:
-                    lemma_idgloss_value = value_dict['Lemma ID Gloss'].strip()
-                    # catch possible empty values for Lemma ID Gloss
-                    if lemma_idgloss_value == '' or lemma_idgloss_value == None or lemma_idgloss_value == 0 or lemma_idgloss_value == 'NULL':
-                        e_lemma_idgloss_empty = 'The Lemma ID Gloss is missing in row ' + str(nl + 1) + '.'
-                        error.append(e_lemma_idgloss_empty)
+
+
+                # Annotation ID Gloss needs to be checked dynamically for each dataset language.
                 for language in dataset.translation_languages.all():
                     column_name = "Annotation ID Gloss (%s)" % language.name_en
                     if column_name not in value_dict:
@@ -797,6 +823,7 @@ def import_csv(request):
                 if fatal_error:
                     break
 
+
             # before actually generating a table to show creation data, make sure there are no extra columns which will be ignored
             if creating_glosses:
                 # if we get to here, the required columns are present in the csv file
@@ -804,8 +831,8 @@ def import_csv(request):
                 # safe code: make sure non-empty, although this should be impossible
                 if seen_datasets:
                     number_of_translation_languages_for_dataset = len(translation_languages_dict[seen_datasets[0]])
-                # there should be columns for Dataset + Lemma ID Gloss + Annotation ID Gloss per dataset
-                number_of_required_columns = 2 + number_of_translation_languages_for_dataset
+                # there should be columns for Dataset + Lemma ID Gloss per dataset + Annotation ID Gloss per dataset
+                number_of_required_columns = 1 + 2*number_of_translation_languages_for_dataset
                 if len(value_dict) > number_of_required_columns:
                     # print an error message about extra columns
                     e_extra_columns = 'Extra columns found.'
@@ -834,6 +861,31 @@ def import_csv(request):
                 e = 'Could not find gloss for ID '+str(pk)
                 error.append(e)
                 continue
+
+            if gloss.dataset == dataset:  # Dataset is not changed
+                # If there are changes in the LemmaIdglossTranslation, the changes should refer to another LemmaIdgloss
+                current_lemmaidglosstranslations = \
+                    [(language, LemmaIdglossTranslation.objects.get(language=language, lemma=gloss.lemma).text)
+                     for language in gloss.lemma.dataset.translation_languages.all()]
+                if lemmaidglosstranslations \
+                        and current_lemmaidglosstranslations != lemmaidglosstranslations:
+                    existing_lemmas = []
+                    for language, term in lemmaidglosstranslations.items():
+                        try:
+                            existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset,
+                                                                                       language=language,
+                                                                                       text=term).lemma)
+                        except ObjectDoesNotExist as e:
+                            print("Error: {}".format(e))
+                    existing_lemmas_set = set(existing_lemmas)
+
+                    if len(existing_lemmas) != 0 and \
+                            not(len(existing_lemmas) == len(lemmaidglosstranslations)
+                                and len(existing_lemmas_set) == 1):
+                        e1 = 'When changing Lemma Idgloss Translations, they should either all refer to ' \
+                            'an existing Lemma Idgloss or make up a new one'
+                        error.append(e1)
+
 
             try:
                 (changes_found, errors_found) = compare_valuedict_to_gloss(value_dict,gloss,user_datasets_names)
@@ -867,6 +919,8 @@ def import_csv(request):
                 pass
 
         if csv_update:
+            lemmaidglosstranslations_per_gloss = {}
+
             for key, new_value in request.POST.items():
 
                 try:
@@ -878,6 +932,15 @@ def import_csv(request):
                     continue
 
                 gloss = Gloss.objects.get(pk=pk)
+                if gloss not in lemmaidglosstranslations_per_gloss:
+                    lemmaidglosstranslations_per_gloss[gloss] = {}
+
+                # Updating the lemma idgloss is a special procedure, not only because it has relations to other parts of
+                # the database, but also because it only can be evaluated after reviewing all lemma idgloss translations
+                lemma_idgloss_key_prefix = "Lemma ID Gloss ("
+                if fieldname.startswith(lemma_idgloss_key_prefix):
+                    language_name = fieldname[len(lemma_idgloss_key_prefix):-1]
+                    lemmaidglosstranslations_per_gloss[gloss][language_name] = new_value
 
                 # Updating the annotation idgloss is a special procedure, because it has relations to other parts of the
                 # database
@@ -990,7 +1053,7 @@ def import_csv(request):
                 with override(settings.LANGUAGE_CODE):
 
                     #Replace the value for bools
-                    if gloss._meta.get_field(fieldname).__class__.__name__ == 'NullBooleanField':
+                    if fieldname in gloss._meta.get_fields() and gloss._meta.get_field(fieldname).__class__.__name__ == 'NullBooleanField':
 
                         if new_value in ['true','True', 'TRUE']:
                             new_value = True
@@ -1012,6 +1075,54 @@ def import_csv(request):
                         video_path_after = settings.WRITABLE_FOLDER+gloss.get_video_path()
                         if os.path.isfile(video_path_before):
                             os.rename(video_path_before,video_path_after)
+
+            # Continue to process lemma idgloss translations
+            for gloss, lemmaidglosstranslations in lemmaidglosstranslations_per_gloss.items():
+                existing_lemmas = []
+                for language, term in lemmaidglosstranslations.items():
+                    try:
+                        existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=gloss.dataset,
+                                                            language__name_en=language, text=term).lemma)
+                    except ObjectDoesNotExist as e:
+                        print("Error: {}".format(e))
+                existing_lemmas_set = set(existing_lemmas)
+
+                # None of the new terms refer to an exiting lemma idgloss translation
+                if len(existing_lemmas) == 0:
+                    with atomic():
+                        lemma_for_gloss = LemmaIdgloss(dataset=gloss.dataset)
+                        lemma_for_gloss.save()
+                        for language_name, term in lemmaidglosstranslations.items():
+                            language = Language.objects.get(name_en=language_name)
+                            new_lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma_for_gloss,
+                                                                                  language=language, text=term)
+                            new_lemmaidglosstranslation.save()
+                        gloss.lemma = lemma_for_gloss
+                        gloss.save()
+
+                # Each of the new terms refer to an existing lemma idgloss translation, which, in turn refer
+                # to one lemma idgloss
+                elif len(existing_lemmas) == len(lemmaidglosstranslations) and len(existing_lemmas_set) == 1:
+                    gloss.lemma = existing_lemmas[0]
+                    gloss.save()
+
+                # Each of the new terms refer to an existing lemma idgloss translation, but the translations
+                # do not refer to one lemma idgloss
+                elif len(existing_lemmas) == len(lemmaidglosstranslations) and len(existing_lemmas_set) > 1:
+                    lemmaidglosstranslations_str = ", ".join(["{} ({})".format(term, language)
+                                                            for language, term in lemmaidglosstranslations.items()])
+                    error.append("The following lemma idgloss translations refer to several lemma idglosses "
+                                 "instead of 0 or 1: {}".format(lemmaidglosstranslations_str))
+                    continue
+
+                # Not all, but more than zero terms refer to a lemma idgloss translation
+                else:
+                    lemmaidglosstranslations_str = ", ".join(["{} ({})".format(term, language)
+                                                              for language, term in lemmaidglosstranslations.items()])
+                    error.append("The following lemma idgloss translations do only partially refer to a lemma "
+                                 "idgloss: {}".format(lemmaidglosstranslations_str))
+                    continue
+
             stage = 2
 
         elif csv_create:
@@ -1036,7 +1147,6 @@ def import_csv(request):
 
             # these should be error free based on the django template import_csv.html
             for row in glosses_to_create.keys():
-                lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss']
                 dataset = glosses_to_create[row]['dataset']
 
                 if dataset == 'None':
@@ -1044,9 +1154,41 @@ def import_csv(request):
                     continue
                 else:
                     dataset_id = Dataset.objects.get(name=dataset)
+
+                lemmaidglosstranslations = {}
+                for language in dataset_id.translation_languages.all():
+                    lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss_' + language.language_code_2char]
+                    lemmaidglosstranslations[language] = lemma_id_gloss
+                # Check whether it is an existing one (correct, make a reference), ...
+                existing_lemmas = []
+                for language, term in lemmaidglosstranslations.items():
+                    try:
+                        existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset_id,
+                                                                                   language=language,
+                                                                                   text=term).lemma)
+                    except ObjectDoesNotExist as e:
+                        print("Error: {}".format(e))
+                existing_lemmas_set = set(existing_lemmas)
+
+                if len(existing_lemmas) == len(lemmaidglosstranslations) and len(existing_lemmas_set) == 1:
+                    lemma_for_gloss = existing_lemmas[0]
+                elif len(existing_lemmas) == 0:
+                    with atomic():
+                        lemma_for_gloss = LemmaIdgloss(dataset=dataset_id)
+                        lemma_for_gloss.save()
+                        for language, term in lemmaidglosstranslations.items():
+                            new_lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma_for_gloss,
+                                                                                  language=language, text=term)
+                            new_lemmaidglosstranslation.save()
+                else:
+                    e1 = 'To create glosses in dataset ' + dataset_id.name + \
+                         ', the combination of Lemma ID Gloss translations should either refer ' \
+                         'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
+                    error.append(e1)
+                    lemma_for_gloss = None
+
                 new_gloss = Gloss()
-                new_gloss.idgloss = lemma_id_gloss
-                new_gloss.dataset = dataset_id
+                new_gloss.lemma = lemma_for_gloss
                 # Save the new gloss before updating it
                 new_gloss.save()
                 new_gloss.creationDate = DT.datetime.now()
@@ -1097,7 +1239,7 @@ def recently_added_glosses(request):
     try:
         from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
         recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
-        recent_glosses = Gloss.objects.filter(dataset__in=selected_datasets).filter(
+        recent_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
                           creationDate__range=[recently_added_signs_since_date, DT.datetime.now()]).order_by(
                           'creationDate').reverse()
         return render(request, 'dictionary/recently_added_glosses.html',
@@ -1108,7 +1250,7 @@ def recently_added_glosses(request):
 
     except:
         return render(request,'dictionary/recently_added_glosses.html',
-                      {'glosses':Gloss.objects.filter(dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
+                      {'glosses':Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
@@ -1392,7 +1534,7 @@ def update_cngt_counts(request,folder_index=None):
 
 def find_and_save_variants(request):
 
-    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('idgloss')[:10]
+    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')[:10]
 
     gloss_table_prefix = '<!DOCTYPE html>\n' \
                          '<html>\n' \

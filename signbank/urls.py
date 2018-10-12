@@ -57,10 +57,10 @@ urlpatterns = [
 
     #Hardcoding a number of special urls:
     url(r'^signs/dictionary/$', signbank.dictionary.views.search),
-    url(r'^signs/search/$', GlossListView.as_view()),
+    url(r'^signs/search/$', GlossListView.as_view(), name='signs_search'),
     url(r'^signs/show_all/$', GlossListView.as_view(),{'show_all':True}),
     url(r'^signs/add/$', signbank.dictionary.views.add_new_sign),
-    url(r'^signs/import_csv/$', signbank.dictionary.views.import_csv),
+    url(r'^signs/import_csv/$', signbank.dictionary.views.import_csv, name='import_csv'),
     url(r'^analysis/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),
     url(r'^analysis/minimalpairs/$', MinimalPairsListView.as_view(), name='admin_minimalpairs_list'),
     url(r'^analysis/frequencies/$', FrequencyListView.as_view(), name='admin_frequency_list'),

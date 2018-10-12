@@ -87,7 +87,7 @@ class SenseNumberListFilter(SimpleListFilter):
 
 class GlossAdmin(VersionAdmin):
 
-    idgloss_fields = ['idgloss']
+    idgloss_fields = ['lemma']
 
     fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('dataset', 'signlanguage', 'dialect')}, ),
                  ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate','alternative_id'),
@@ -100,11 +100,11 @@ class GlossAdmin(VersionAdmin):
     save_on_top = True
     save_as = True
 
-    list_display = ['idgloss','dataset']
+    list_display = ['lemma','dataset']
 
     list_display += ['morph', 'sense', 'sn']
-    search_fields = ['^idgloss', '=sn']
-    list_filter = ['dataset', 'signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
+    search_fields = ['^lemma', '=sn']
+    list_filter = ['lemma__dataset', 'signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
     inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 
     history_latest_first = True
@@ -228,6 +228,13 @@ class LanguageAdmin(TranslationAdmin):
     pass
 
 
+class LemmaIdglossAdmin(VersionAdmin):
+    pass
+
+class LemmaIdglossTranslationAdmin(VersionAdmin):
+    pass
+
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin) 
@@ -243,3 +250,6 @@ admin.site.register(Handshape, HandshapeAdmin)
 admin.site.register(UserProfile)
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(Dataset, DatasetAdmin)
+
+admin.site.register(LemmaIdgloss, LemmaIdglossAdmin)
+admin.site.register(LemmaIdglossTranslation, LemmaIdglossTranslationAdmin)

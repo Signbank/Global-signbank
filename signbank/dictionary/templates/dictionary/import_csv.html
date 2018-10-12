@@ -120,8 +120,10 @@
                 <table class="table table-striped">
                     <tr>
                         <th>{% trans "Dataset" %}</th>
-                        <th>{% trans "Lemma ID Gloss" %}</th>
                          {% with seen_datasets.0 as seen_dataset %}
+                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                         <th >{% trans "Lemma ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% endfor %}
                          {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
                          <th >{% trans "Annotation ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
                          {% endfor %}
@@ -130,9 +132,14 @@
                 {% for gloss in gloss_already_exists %}
                     <tr>
                     <td>{{ gloss.dataset }}</td>
-                    <td>{{ gloss.lemma_id_gloss_value }}</td>
 
                     {% with seen_datasets.0 as seen_dataset %}
+                    {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                    {% with dataset_trans_lang.language_code_2char as lang_code %}
+                     <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
+                        {{ gloss.lemma.lemmaidglosstranslations|keyvalue:lang_code }}</a></td>
+                    {% endwith %}
+                    {% endfor %}
                     {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
                     {% with dataset_trans_lang.language_code_2char as lang_code %}
                      <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
@@ -149,8 +156,10 @@
                 <table class="table table-striped">
                     <tr>
                         <th>{% trans "Dataset" %}</th>
-                        <th>{% trans "Lemma ID Gloss" %}</th>
                          {% with seen_datasets.0 as seen_dataset %}
+                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                         <th >{% trans "Lemma ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% endfor %}
                          {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
                          <th >{% trans "Annotation ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
                          {% endfor %}
@@ -159,19 +168,32 @@
                 {% for newgloss in creation %}
                     <tr>
                         <td>{{ newgloss.dataset }}</td>
-                        <td>{{ newgloss.lemma_id_gloss_value }}</td>
-                        {% for dataset_lang in dataset_languages %}
+                        {% with seen_datasets.0 as seen_dataset %}
+                        {% for dataset_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                            {% with newgloss.lemmaidglosstranslations as newglossdict %}
+                            {% with dataset_lang.language_code_2char as lang_code %}
+                            <td class="bla">{{ newglossdict|keyvalue:lang_code }}</td>
+                            {% endwith %}
+                            {% endwith %}
+                         {% endfor %}
+                        {% for dataset_lang in translation_languages_dict|keyvalue:seen_dataset %}
                             {% with newgloss.annotationidglosstranslations as newglossdict %}
                             {% with dataset_lang.language_code_2char as lang_code %}
                             <td class="bla">{{ newglossdict|keyvalue:lang_code }}</td>
                             {% endwith %}
                             {% endwith %}
                          {% endfor %}
+                         {% endwith %}
                     </tr>
                 <input type="hidden" name="{{newgloss.gloss_pk}}.dataset"  value="{{ newgloss.dataset }}">
                 <input type="hidden" name="{{newgloss.gloss_pk}}.lemma_id_gloss"  value="{{ newgloss.lemma_id_gloss_value }}">
                 {% for dataset_lang in dataset_languages %}
-                 <input type="hidden" name="{{newgloss.gloss_pk}}.annotation_id_gloss_{{ dataset_lang.language_code_2char }}" value="{{ newgloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}"></input>
+                 <input type="hidden" name="{{newgloss.gloss_pk}}.lemma_id_gloss_{{ dataset_lang.language_code_2char }}"
+                        value="{{ newgloss.lemmaidglosstranslations|keyvalue:dataset_lang.language_code_2char }}"></input>
+                 {% endfor %}
+                {% for dataset_lang in dataset_languages %}
+                 <input type="hidden" name="{{newgloss.gloss_pk}}.annotation_id_gloss_{{ dataset_lang.language_code_2char }}"
+                        value="{{ newgloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}"></input>
                  {% endfor %}
 
                 <input type="hidden" name="update_or_create" value="create">
@@ -188,6 +210,16 @@
 
 {% elif stage == 2 %}
     <p>{% blocktrans %}Changes are live.{% endblocktrans %} {{ info }}</p>
+
+    {% if error %}
+
+        <ul>
+        {% for e in error %}
+            <li>{{ e | linebreaks }}</li>
+        {% endfor %}
+        </ul>
+
+    {% endif %}
 
 {% endif %}
 
