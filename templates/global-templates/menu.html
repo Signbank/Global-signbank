@@ -19,10 +19,10 @@
     <a href="{{PREFIX_URL}}/" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
     <h1>Global <br/><span id="second-title-part">signbank</span></h1>
 
-        {% if user.is_authenticated %}
-        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
+    {% if user.is_authenticated %}
+    {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         <div class='navbar-text' style="left-margin: 15px;">
-            <div class='taglist'>
+            <div class='taglist ribbon_list'>
                 {% load underscore_to_space %}
                 {% for ds in selected_datasets %}
                 <div class="ribbon">
@@ -31,8 +31,8 @@
                 {% endfor %}
             </div>
         </div>
-        {% endif %}
-        {% endif %}
+     {% endif %}
+     {% endif %}
 
     <a href="http://www.ru.nl/sign-lang" id='logoholder' class='visible-lg visible-md visible-sm'></a>
 </div>
