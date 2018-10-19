@@ -1665,6 +1665,12 @@ class Dataset(models.Model):
     def __str__(self):
         return self.name
 
+    def count_glosses(self):
+
+        count_glosses = LemmaIdgloss.objects.filter(dataset_id=self.id).count()
+
+        return count_glosses
+
     def get_users_who_can_view_dataset(self):
 
         all_users = User.objects.all().order_by('first_name')
