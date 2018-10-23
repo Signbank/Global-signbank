@@ -343,7 +343,6 @@ class GlossSearchForm(forms.ModelForm):
             field_category = fieldname_to_category(fieldname)
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = [('0','---------')] + choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
-            print('gloss search field ', fieldname, ' choices: ', translated_choices)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)

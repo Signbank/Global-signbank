@@ -23,39 +23,39 @@
             <th>{% trans "Source Sign Value" %}</th>
             <th>{% trans "Contrasting Sign Value" %}</th>
       </tr>
-    <!--<tr class="rotated" style="height:130px;vertical-align:top-text;">-->
-        <!--<th/><th/>-->
-        <!--{% for field in field_names %}-->
-        <!--<th style="height:auto;">-->
-            <!--{{field_labels|keyvalue:field}}-->
-        <!--</th>-->
-        <!--{% endfor %}-->
-    <!--</tr>-->
     </thead>
     <tbody>
-    {% for mpp in minimalpairs %}
-    {% with mpp.0 as focus_gloss %}
-    {% for other_gloss in mpp.1 %}
+    {% for focus_gloss in object_list %}
+    {% with focus_gloss.minimal_pairs_dict as focus_gloss_minimal_pairs_dict %}
+    {% for other_gloss, dict in focus_gloss_minimal_pairs_dict.items %}
+    {% for field_name, d in dict.items %}
+        {% with d.0 as field_label %}
+        {% with d.1|add:" " as field_category %}
+        {% with d.2|stringformat:"s" as focus_gloss_value %}
+        {% with d.3|stringformat:"s" as other_gloss_value %}
+        {% with d.4 as field_kind %}
         <tr>
             <td>{{focus_gloss.dataset}}</td>
             <td><a href='{% url "dictionary:admin_gloss_view" pk=focus_gloss.id %}'>{{focus_gloss}}</a></td>
             <td><a href='{% url "dictionary:admin_gloss_view" pk=other_gloss.id %}'>{{other_gloss}}</a></td>
-             {% load field_choice %}
-             {% for field in field_names %}
-             {% with focus_gloss|getattr:field|normalise_empty as focus_gloss_value %}
-             {% with other_gloss|getattr:field|normalise_empty as other_gloss_value %}
-             {% if focus_gloss_value != other_gloss_value %}
-            <td>{{field_labels|keyvalue:field}}</td>
-             {% with field_categories|keyvalue:field as field_name %}
-                {% if field_name == "repeat" or field_name == "altern" %}
-                    <td>{% if focus_gloss_value %}
+            <td>{{field_labels|keyvalue:field_name}}</td>
+                {% if field_name == "weakdrop" or field_name == "weakprop" %}
+                    <td>{% if focus_gloss_value == "True" %}{% trans "Yes" %}
+                    {% elif focus_gloss_value == "False" %}{% trans "No" %}
+                    {% else %}{% trans "Neutral" %}{% endif %}</td>
+                    <td>{% if other_gloss_value == "True" %}{% trans "Yes" %}
+                    {% elif other_gloss_value == "False" %}{% trans "No" %}
+                    {% else %}{% trans "Neutral" %}{% endif %}</td>
+                {% elif field_kind == "check" %}
+                    <td>{% if focus_gloss_value == "True" %}
                         {% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                    <td>{% if other_gloss_value %}
+                    <td>{% if other_gloss_value == "True" %}
                         {% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 {% else %}
+                    {% load field_choice %}
                     {% with field_name|add:" " as field_name %}
                     {% with request.LANGUAGE_CODE as this_language %}
-                    {% with field_name|add:this_language as args %}
+                    {% with field_category|add:this_language as args %}
                     {% with focus_gloss_value|machine_field_translate:args as focus_gloss_display %}
                     {% with other_gloss_value|machine_field_translate:args as other_gloss_display %}
                     <td>{{focus_gloss_display}}</td><td>{{other_gloss_display}}</td>
@@ -65,12 +65,13 @@
                     {% endwith %}
                     {% endwith %}
                 {% endif %}
-             {% endwith %}
-             {% endif %}
-             {% endwith %}
-             {% endwith %}
-            {% endfor %}
-         </tr>
+        </tr>
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+    {% endfor %}
     {% endfor %}
     {% endwith %}
     {% endfor %}
@@ -83,3 +84,4 @@
 </div>
 
 {% endblock content %}
+
