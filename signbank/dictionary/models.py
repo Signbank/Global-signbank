@@ -1892,14 +1892,16 @@ class Dataset(models.Model):
                     # the raw query is constructed for this case separately from the case for actual values
                     if machine_value == 0:
 
-                        raw_query = "SELECT * FROM dictionary_gloss WHERE dataset_id in (" + str(self.id) + ") and (" + field + " IS NULL OR " + field + " = 0)"
+                        raw_query = 'SELECT * FROM dictionary_gloss ' + \
+                                    'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' + \
+                                    ' WHERE dictionary_lemmaidgloss.dataset_id in (' + str(self.id) + ') and (' + field + ' IS NULL OR ' + field + ' = 0)'
 
                         choice_list_frequencies[choice] = len(list(Gloss.objects.raw(raw_query)))
                     else:
                         variable_column = field
                         search_filter = 'exact'
                         filter = variable_column + '__' + search_filter
-                        choice_list_frequencies[choice] = Gloss.objects.filter(dataset=self.id).filter(**{ filter: machine_value }).count()
+                        choice_list_frequencies[choice] = Gloss.objects.filter(lemma__dataset=self.id).filter(**{ filter: machine_value }).count()
 
                 # the new frequencies for this field are added using the update method to insure the order is maintained
                 frequency_lists_phonology_fields.update({field: copy.deepcopy(choice_list_frequencies)})
