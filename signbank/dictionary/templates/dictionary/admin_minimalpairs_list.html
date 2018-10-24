@@ -25,9 +25,13 @@
       </tr>
     </thead>
     <tbody>
+    {% get_current_language as WEBSITE_LANGUAGE %}
     {% for focus_gloss in object_list %}
+    {% load annotation_idgloss_translation %}
+    {% with focus_gloss|display_language:WEBSITE_LANGUAGE as focus_gloss_translation %}
     {% with focus_gloss.minimal_pairs_dict as focus_gloss_minimal_pairs_dict %}
     {% for other_gloss, dict in focus_gloss_minimal_pairs_dict.items %}
+    {% with other_gloss|display_language:WEBSITE_LANGUAGE as other_gloss_translation %}
     {% for field_name, d in dict.items %}
         {% with d.0 as field_label %}
         {% with d.1|add:" " as field_category %}
@@ -36,8 +40,8 @@
         {% with d.4 as field_kind %}
         <tr>
             <td>{{focus_gloss.dataset}}</td>
-            <td><a href='{% url "dictionary:admin_gloss_view" pk=focus_gloss.id %}'>{{focus_gloss}}</a></td>
-            <td><a href='{% url "dictionary:admin_gloss_view" pk=other_gloss.id %}'>{{other_gloss}}</a></td>
+            <td><a href='{% url "dictionary:admin_gloss_view" pk=focus_gloss.id %}'>{{focus_gloss_translation}}</a></td>
+            <td><a href='{% url "dictionary:admin_gloss_view" pk=other_gloss.id %}'>{{other_gloss_translation}}</a></td>
             <td>{{field_labels|keyvalue:field_name}}</td>
                 {% if field_name == "weakdrop" or field_name == "weakprop" %}
                     <td>{% if focus_gloss_value == "True" %}{% trans "Yes" %}
@@ -72,7 +76,9 @@
         {% endwith %}
         {% endwith %}
     {% endfor %}
+    {% endwith %}
     {% endfor %}
+    {% endwith %}
     {% endwith %}
     {% endfor %}
     </tbody>
