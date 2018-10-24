@@ -206,8 +206,6 @@
         </li>
     </ul>
 
-    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     <div class='pull-right' style="margin-right:15px;margin-top:3px;">
@@ -776,7 +774,7 @@
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
-                            {% if label == 'WD' %}
+                            {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
                                 value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
                             {% else %}
@@ -790,7 +788,7 @@
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
-                            {% if label == 'WD' %}
+                            {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
                                 value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
                             {% else %}
@@ -953,9 +951,15 @@
                     {% with field_category|add:language as args %}
                     <td style="width:auto; padding:0px 0px;"><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ minpar_display }}</a></td>
                     <td style="width:auto; padding:0px 0px;">{% trans d.0 %}</td>
-                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and d.2 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
+                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and field_value == "True" %}{% trans "Yes" %}
+                        {% elif d.4 == "check" and field_value == "False" %}{% trans "No" %}
+                        {% elif d.4 == "check" and k == "weakprop" %}{% trans "Neutral" %}
+                        {% elif d.4 == "check" and k == "weakdrop" %}{% trans "Neutral" %}
                         {% else %}{{ field_value|machine_field_translate:args }}{% endif %}</td>
-                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and d.3 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
+                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and other_field_value == "True" %}{% trans "Yes" %}
+                        {% elif d.4 == "check" and other_field_value == "False" %}{% trans "No" %}
+                        {% elif d.4 == "check" and k == "weakprop" %}{% trans "Neutral" %}
+                        {% elif d.4 == "check" and k == "weakdrop" %}{% trans "Neutral" %}
                         {% else %}{{ other_field_value|machine_field_translate:args }}{% endif %}</td>
                     {% endwith %}
                     {% endwith %}

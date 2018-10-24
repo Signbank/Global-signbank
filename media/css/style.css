@@ -565,12 +565,23 @@ tr.rotated th {
     border-color: #BB2F2C #dee2e6 #fff;
     border-top-width: 2px;
 }
+
+.ribbon_list
+{
+    display: flex;
+    flex-direction: column;
+    height: 85px;
+    width: 440px;
+    flex-wrap: wrap;
+}
+
  .ribbon
  {
     box-sizing: border-box;
     position: relative;
     min-width: 125px;
     height: 20px;
+    width: 100px;
     color: white;
     text-align: center;
     text-decoration: none;

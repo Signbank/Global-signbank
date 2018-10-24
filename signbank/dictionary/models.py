@@ -868,6 +868,18 @@ class Gloss(models.Model):
             else:
                 empty_phonology = empty_phonology + [(field,str(label))]
 
+        for field in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']:
+            machine_value = getattr(self,field)
+            label = fieldLabel[field]
+            if machine_value is not None:
+                if machine_value:
+                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
+                else:
+                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('False'))]
+            else:
+                # value is Neutral
+                empty_phonology = empty_phonology + [(field, str(label))]
+
         return (empty_phonology, non_empty_phonology)
 
 
@@ -907,6 +919,16 @@ class Gloss(models.Model):
 
                 non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
 
+        for field in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']:
+            machine_value = getattr(self,field)
+            label = fieldLabel[field]
+            if machine_value is not None:
+
+                if machine_value:
+                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
+                else:
+                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('False'))]
+
         return non_empty_phonology
 
     def phonology_matrix(self):
@@ -933,10 +955,21 @@ class Gloss(models.Model):
                     phonology_dict[field] = machine_value
             else:
                 machine_value = getattr(self,field)
-                if machine_value:
-                    phonology_dict[field] = True
+                if machine_value is not None:
+
+                    if machine_value:
+                        # machine value is 1
+                        phonology_dict[field] = 'True'
+                    else:
+                        # machine value is 0
+                        phonology_dict[field] = 'False'
                 else:
-                    phonology_dict[field] = False
+                    # machine value is None, for weakdrop and weakprop, this is Neutral
+                    # value is Neutral
+                    if field in ['weakprop', 'weakdrop']:
+                        phonology_dict[field] = 'Neutral'
+                    else:
+                        phonology_dict[field] = 'False'
 
         return phonology_dict
 
@@ -948,50 +981,123 @@ class Gloss(models.Model):
     # 14
     def minimal_pairs_objects(self):
 
+        minimal_pairs_objects_list = []
+
+        if not self.lemma or not self.lemma.dataset:
+            # take care of glosses without a dataset
+            return minimal_pairs_objects_list
+
         paren = ')'
 
         phonology_for_gloss = self.phonology_matrix()
 
         where_minimal_pairs_filled = ''
         where_minimal_pairs_empty = ''
-        count_empty = 0
-        count_filled = 0
 
-        for field in settings.MINIMAL_PAIRS_FIELDS:
-            value_of_this_field = str(phonology_for_gloss[field])
+        try:
+            handedness_1 = str(FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='1').machine_value)
+        except:
+            handedness_1 = ''
 
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None):
+        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_number', 'domhndsh_letter']:
+            value_of_this_field = str(phonology_for_gloss.get(field))
+            if field == 'handedness':
+                same_handedness = '(' + field + '=' + value_of_this_field + ')'
+                summary = same_handedness
+
+                # handedness should always be the same
+                weakprop_value = phonology_for_gloss.get('weakprop')
+                weakdrop_value = phonology_for_gloss.get('weakdrop')
+
+                if weakprop_value == 'True':
+                #
+                    summary += ' + (weakprop IS NULL OR weakprop=0)'
+                elif weakprop_value == 'False':
+                #
+                    summary += ' + (weakprop IS NULL OR weakprop=1)'
+
+                elif weakprop_value == 'Neutral':
+                    summary += ' + (weakprop IS NOT NULL)'
+
+                else:
+                    pass
+
+                if weakdrop_value == 'True':
+                #
+                    summary += ' + (weakdrop IS NULL OR weakdrop=0)'
+                elif weakdrop_value == 'False':
+                #
+                    summary += ' + (weakdrop IS NULL OR weakdrop=1)'
+
+                elif weakdrop_value == 'Neutral':
+                    summary += ' + (weakdrop IS NOT NULL)'
+
+                else:
+                    pass
+
+                # field is not null
+                # the query needs to take into account matches of handedness and mismatches of weakdrop, weakprop
+                if (where_minimal_pairs_filled.endswith(paren)):
+
+                    where_minimal_pairs_filled += ' + (' + summary + ')'
+                else:
+                    where_minimal_pairs_filled += '(' + summary + ')'
+
+            elif (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == 'None'):
                 if (where_minimal_pairs_empty.endswith(paren)):
                     where_minimal_pairs_empty += " + (" + field + " IS NOT NULL AND " \
                                                  + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
                 else:
                     where_minimal_pairs_empty += "(" + field + " IS NOT NULL AND " \
                                                  + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
-                count_empty = count_empty + 1
+            elif (value_of_this_field == 'False' and field in ['domhndsh_number', 'domhndsh_letter']):
+                self_domhndsh = str(phonology_for_gloss.get('domhndsh'))
+
+                if (where_minimal_pairs_empty.endswith(paren)):
+                    where_minimal_pairs_empty += ' + (' + field + ' IS NOT NULL AND domhndsh = ' + self_domhndsh + ')'
+                else:
+                    where_minimal_pairs_empty += '(' + field + ' IS NOT NULL AND domhndsh = ' + self_domhndsh + ')'
             elif (value_of_this_field == 'False'):
+                # field is repeat or altern
                 if (where_minimal_pairs_empty.endswith(paren)):
                     where_minimal_pairs_empty += ' + (' + field + '=1)'
                 else:
                     where_minimal_pairs_empty += '(' + field + '=1)'
-                count_empty = count_empty + 1
+            elif (value_of_this_field == 'True' and field in ['domhndsh_number', 'domhndsh_letter']):
+                self_domhndsh = str(phonology_for_gloss.get('domhndsh'))
+
+                if (where_minimal_pairs_filled.endswith(paren)):
+                    where_minimal_pairs_filled += ' + (' + field + ' IS NULL AND domhndsh = ' + self_domhndsh + ')'
+                else:
+                    where_minimal_pairs_filled += '(' + field + ' IS NULL AND domhndsh = ' + self_domhndsh + ')'
             elif (value_of_this_field == 'True'):
                 if (where_minimal_pairs_filled.endswith(paren)):
                     where_minimal_pairs_filled += ' + (' + field + '=0)'
                 else:
                     where_minimal_pairs_filled += '(' + field + '=0)'
-                count_filled = count_filled + 1
             else:
                 if (where_minimal_pairs_filled.endswith(paren)):
                     where_minimal_pairs_filled += ' + (' + field + '!=' + value_of_this_field + ')'
                 else:
                     where_minimal_pairs_filled += '(' + field + '!=' + value_of_this_field + ')'
-                count_filled = count_filled + 1
 
-        where_minimal_pairs = '(' + where_minimal_pairs_filled +  ' + ' + where_minimal_pairs_empty + ')=1'
+        where_minimal_pairs = '(' + where_minimal_pairs_filled +  ' + ' + where_minimal_pairs_empty + ')=2'
 
-        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE ' + where_minimal_pairs)
+        # print('self (', self.id, ') dataset: ', self.dataset.id, ', where: ', where_minimal_pairs)
+        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss ' +
+                                'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' +
+                               # 'INNER JOIN dictionary_morpheme ' +
+                               #  'ON (dictionary_gloss.id = dictionary_morpheme.gloss_ptr_id) ' +
+                               #  'INNER JOIN dictionary_annotationidglosstranslation ' +
+                               #  'ON (dictionary_gloss.id = dictionary_annotationidglosstranslation.gloss_id) ' +
+                               # 'WHERE dictionary_morpheme.gloss_ptr_id IS NULL ' +
+                               #  'AND dictionary_annotationidglosstranslation.text NOT LIKE "#_" ' +
+                               'WHERE dictionary_gloss.id != %s AND dictionary_lemmaidgloss.dataset_id = %s AND ' + where_minimal_pairs, [self.id, str(self.lemma.dataset.id)])
+        # print('query: ', qs)
+        for o in qs:
+            minimal_pairs_objects_list.append(o)
 
-        return qs
+        return minimal_pairs_objects_list
 
     def minimal_pairs_dict(self):
 
@@ -1005,42 +1111,70 @@ class Gloss(models.Model):
         if (self.domhndsh is None or self.domhndsh == '0'):
             return minimal_pairs_fields
 
-        wmp = self.minimal_pairs_objects()
-
         (ep, nep) = self.empty_non_empty_phonology()
 
         # only consider minimal pairs if this gloss has more fields defined than handedness and strong hand
-        if (len(nep) <= 2):
+        if (len(nep) < 2):
             return minimal_pairs_fields
 
+        wmp = self.minimal_pairs_objects()
+
         for o in wmp:
-            # ignore if dataset is different
-            if (self.dataset != o.dataset):
+            # ignore if dataset is different or handedness is different
+            if (self.dataset != o.dataset or self.handedness != o.handedness):
                 continue
+            # print('wmp o: ', o)
             different_fields = dict()
             onep = o.non_empty_phonology()
+            self_domhndsh = getattr(self,'domhndsh')
+            other_domhndsh = getattr(o,'domhndsh')
             for f,n,v in onep:
                 fc = fieldname_to_category(f)
                 self_value_f = getattr(self,f)
                 other_value_f = getattr(o,f)
                 if self_value_f != other_value_f:
-                     # print('add field ', f, ' to different')
-                     different_fields[f] = (n, fc,self_value_f,other_value_f,fieldname_to_kind(f))
+                    if (f == 'domhndsh_letter' or f == 'domhndsh_number'):
+                        if self_domhndsh == other_domhndsh:
+                        # only keep track of contrasting number or letter field if handshape is the same
+                            different_fields[f] = (n, fc,self_value_f,other_value_f,fieldname_to_kind(f))
+                        else:
+                            pass
+                    else:
+                        different_fields[f] = (n, fc, self_value_f, other_value_f, fieldname_to_kind(f))
+
+            different_fields_keys = different_fields.keys()
+
+            # if 'domhndsh' in different_fields_keys:
+            #     if 'domhndsh_letter' in different_fields_keys or 'domhndsh_number' in different_fields_keys:
+            #     # skip the candidate if handshape and number or letter are both different
+            #         print('skip object ', str(o.id))
+            #         continue
+
             if (len(list(different_fields.keys())) == 0):
-                # print('different not found yet, nep: ', nep)
                 for sf,sn,sv in nep:
                     sfc = fieldname_to_category(sf)
                     self_value_sf = getattr(self, sf)
                     other_value_sf = getattr(o,sf)
-                    # print('other value field ', sf, ' is: ', other_value_sf)
                     if other_value_sf != self_value_sf:
                         # the value of other_value_sf was '0' because it assumed it was empty since not in onep,
                         # but if it is the field 'altern' or 'repeat' and it's false, then it is False, not '0'
-                        different_fields[sf] = (sn, sfc,self_value_sf,other_value_sf,fieldname_to_kind(sf))
+                        if (sf == 'domhndsh_letter' or sf == 'domhndsh_number'):
+                            if self_domhndsh == other_domhndsh:
+                                # only keep track of contrasting number or letter field if handshape is the same
+                                different_fields[sf] = (sn, sfc, self_value_sf, other_value_sf, fieldname_to_kind(sf))
+                            else:
+                                pass
+                        else:
+                            different_fields[sf] = (sn, sfc, self_value_sf, other_value_sf, fieldname_to_kind(sf))
 
-            minimal_pairs_fields[o] = different_fields
 
-        # print('minimal pairs fields: ', minimal_pairs_fields)
+            if (len(list(different_fields.keys())) != 1):
+                # print('more than one different keys for gloss ', str(o.id), ': ', different_fields)
+                # if too many differing fields were found, skip this gloss
+                continue
+            else:
+                minimal_pairs_fields[o] = different_fields
+
         return minimal_pairs_fields
 
     # Homonyms
@@ -1052,6 +1186,12 @@ class Gloss(models.Model):
     def homonym_objects(self):
 
         paren = ')'
+
+        homonym_objects_list = []
+
+        if not self.lemma or not self.lemma.dataset:
+            # take care of glosses without a dataset
+            return homonym_objects_list
 
         phonology_for_gloss = self.phonology_matrix()
 
@@ -1073,44 +1213,37 @@ class Gloss(models.Model):
 
         where_homonyms_filled = ''
         where_homonyms_empty = ''
-        where_homonyms = ''
-        count_empty = 0
-        count_filled = 0
 
         for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
-            value_of_this_field = str(phonology_for_gloss[field])
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None or value_of_this_field == 'False'):
+            value_of_this_field = str(phonology_for_gloss.get(field))
+            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == 'None' or value_of_this_field == 'False'):
                 if (where_homonyms_empty.endswith(paren)):
                     where_homonyms_empty += " + (" + field + " IS NOT NULL AND " \
                                                  + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
                 else:
                     where_homonyms_empty += "(" + field + " IS NOT NULL AND " \
                                                  + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
-                count_empty = count_empty + 1
-            # elif (value_of_this_field == 'False'):
-            #     print('false value: ', field)
-            #     if (where_homonyms_empty.endswith(paren)):
-            #         where_homonyms_empty += ' + (' + field + '=1)'
-            #     else:
-            #         where_homonyms_empty += '(' + field + '=1)'
-            #     count_empty = count_empty + 1
+            elif (value_of_this_field == 'Neutral'):
+                if (where_homonyms_empty.endswith(paren)):
+                    where_homonyms_empty += ' + (' + field + ' IS NOT NULL)'
+                else:
+                    where_homonyms_empty += '(' + field + ' IS NOT NULL)'
             elif (value_of_this_field == 'True'):
                 if (where_homonyms_filled.endswith(paren)):
                     where_homonyms_filled += ' + (' + field + '=0)'
                 else:
                     where_homonyms_filled += '(' + field + '=0)'
-                count_filled = count_filled + 1
             else:
                 if (where_homonyms_filled.endswith(paren)):
                     where_homonyms_filled += ' + (' + field + '!=' + value_of_this_field + ')'
                 else:
                     where_homonyms_filled += '(' + field + '!=' + value_of_this_field + ')'
-                count_filled = count_filled + 1
 
         where_homonyms = '(' + where_homonyms_filled +  ' + ' + where_homonyms_empty + ')=0'
 
-        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE id != %s AND dataset_id = %s AND ' + where_homonyms,
-                               [self.id, str(self.dataset.id)])
+        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss ' +
+                               'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' +
+                               'WHERE dictionary_gloss.id != %s AND dictionary_lemmaidgloss.dataset_id = %s AND ' + where_homonyms, [self.id, str(self.lemma.dataset.id)])
 
         for o in qs:
             homonym_objects_list.append(o)
@@ -1122,6 +1255,10 @@ class Gloss(models.Model):
         #  this function returns a 3-tuple of information about homonymns for this gloss
 
         homonyms_of_this_gloss = []
+
+        if not self.lemma or not self.lemma.dataset:
+            # take care of glosses without a dataset
+            return ([], [], [])
 
         gloss_homonym_relations = self.relation_sources.filter(role='homonym')
 
@@ -1153,42 +1290,35 @@ class Gloss(models.Model):
 
         where_homonyms_filled = ''
         where_homonyms_empty = ''
-        where_homonyms = ''
-        count_empty = 0
-        count_filled = 0
 
         for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
-            value_of_this_field = str(phonology_for_gloss[field])
-
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == None or value_of_this_field == 'False'):
+            value_of_this_field = str(phonology_for_gloss.get(field))
+            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == 'None' or value_of_this_field == 'False'):
                 if (where_homonyms_empty.endswith(paren)):
                     where_homonyms_empty += " + (" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
                 else:
                     where_homonyms_empty += "(" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
-                count_empty = count_empty + 1
-            # elif (value_of_this_field == 'False'):
-            #     if (where_homonyms_empty.endswith(paren)):
-            #         where_homonyms_empty += ' + (' + field + " IS NULL OR " + field + '=0)'
-            #     else:
-            #         where_homonyms_empty += '(' + field + " IS NULL OR " + field + '=0)'
-            #     count_empty = count_empty + 1
+            elif (value_of_this_field == 'Neutral'):
+                if (where_homonyms_empty.endswith(paren)):
+                    where_homonyms_empty += ' + (' + field + ' IS NULL)'
+                else:
+                    where_homonyms_empty += '(' + field + ' IS NULL)'
             elif (value_of_this_field == 'True'):
                 if (where_homonyms_filled.endswith(paren)):
                     where_homonyms_filled += ' + (' + field + '=1)'
                 else:
                     where_homonyms_filled += '(' + field + '=1)'
-                count_filled = count_filled + 1
             else:
                 if (where_homonyms_filled.endswith(paren)):
                     where_homonyms_filled += ' + (' + field + '=' + value_of_this_field + ')'
                 else:
                     where_homonyms_filled += '(' + field + '=' + value_of_this_field + ')'
-                count_filled = count_filled + 1
 
         where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=20' #+ str(settings.MINIMAL_PAIRS_COUNT)
 
-        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss WHERE ' + where_homonyms)
-
+        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss ' +
+                               'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' +
+                               'WHERE dictionary_gloss.id != %s AND dictionary_lemmaidgloss.dataset_id = %s AND ' + where_homonyms, [self.id, str(self.lemma.dataset.id)])
         match_glosses = [g for g in qs]
 
         for other_gloss in match_glosses:
@@ -1513,7 +1643,8 @@ def fieldname_to_kind(fieldname):
         field_kind = 'list'
     elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'useInstr']:
         field_kind = 'text'
-    elif fieldname in ['repeat','altern', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
+    elif fieldname in ['repeat','altern', 'weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter',
+                         'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                          'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                          'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
         field_kind = 'check'
@@ -1665,6 +1796,12 @@ class Dataset(models.Model):
     def __str__(self):
         return self.name
 
+    def count_glosses(self):
+
+        count_glosses = LemmaIdgloss.objects.filter(dataset_id=self.id).count()
+
+        return count_glosses
+
     def get_users_who_can_view_dataset(self):
 
         all_users = User.objects.all().order_by('first_name')
@@ -1755,14 +1892,16 @@ class Dataset(models.Model):
                     # the raw query is constructed for this case separately from the case for actual values
                     if machine_value == 0:
 
-                        raw_query = "SELECT * FROM dictionary_gloss WHERE dataset_id in (" + str(self.id) + ") and (" + field + " IS NULL OR " + field + " = 0)"
+                        raw_query = 'SELECT * FROM dictionary_gloss ' + \
+                                    'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' + \
+                                    ' WHERE dictionary_lemmaidgloss.dataset_id in (' + str(self.id) + ') and (' + field + ' IS NULL OR ' + field + ' = 0)'
 
                         choice_list_frequencies[choice] = len(list(Gloss.objects.raw(raw_query)))
                     else:
                         variable_column = field
                         search_filter = 'exact'
                         filter = variable_column + '__' + search_filter
-                        choice_list_frequencies[choice] = Gloss.objects.filter(dataset=self.id).filter(**{ filter: machine_value }).count()
+                        choice_list_frequencies[choice] = Gloss.objects.filter(lemma__dataset=self.id).filter(**{ filter: machine_value }).count()
 
                 # the new frequencies for this field are added using the update method to insure the order is maintained
                 frequency_lists_phonology_fields.update({field: copy.deepcopy(choice_list_frequencies)})

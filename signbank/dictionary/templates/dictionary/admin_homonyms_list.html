@@ -28,17 +28,17 @@
         {% if homonyms_saved or homonym_objects_of_gloss %}
         <tr>
             <td>
-                <a href="{{PREFIX_URL}}/dictionary/gloss/{{ focus_gloss.id }}/">{{ focus_gloss|get_annotation_idgloss_translation:language }}</a>
+                <a href="{{PREFIX_URL}}/dictionary/gloss/{{ focus_gloss.pk }}/">{{ focus_gloss|get_annotation_idgloss_translation:language }}</a>
             </td>
             <td>
                 {% for gl, seen in homonyms_saved %}
                     <a style="padding-left: 20px;{% if seen %}color:red;{% endif %}"
-                       href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl|get_annotation_idgloss_translation:language }}</a>
+                       href='{% url "dictionary:admin_gloss_view" pk=gl.pk %}'>{{ gl|get_annotation_idgloss_translation:language }}</a>
                 {% endfor %}
             </td>
             <td>
                 {% for gl in homonym_objects_of_gloss %}
-                    <a style="padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ gl|get_annotation_idgloss_translation:language }}</a>
+                    <a style="padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.pk %}'>{{ gl|get_annotation_idgloss_translation:language }}</a>
                 {% endfor %}
             </td>
         </tr>
