@@ -1,5 +1,6 @@
 from django.template import Library
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
+from signbank.tools import get_default_annotationidglosstranslation
 import json
 
 register = Library()
@@ -15,6 +16,27 @@ def get_annotation_idgloss_translation(gloss, language):
         return translations[0].text
     return ''
 
+@register.filter
+def get_default_annotation_idgloss_translation(gloss):
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+    return default_annotationidglosstranslation
+
+@register.filter
+def display_language(gloss,interface_language):
+    if interface_language == "nl":
+        filter = "nl"
+    elif interface_language == "zh-hans":
+        filter = "zh"
+    else:
+        filter = "en"
+    translations = gloss.annotationidglosstranslation_set.filter(language__language_code_2char=filter)
+    if translations:
+        return translations[0].text
+    else:
+        translations = gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
+    if translations:
+        return translations[0].text
+    return ''
 
 @register.filter
 def get_lemma_idgloss_translation(lemma, language):

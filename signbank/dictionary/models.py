@@ -1086,12 +1086,6 @@ class Gloss(models.Model):
         # print('self (', self.id, ') dataset: ', self.dataset.id, ', where: ', where_minimal_pairs)
         qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss ' +
                                 'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' +
-                               # 'INNER JOIN dictionary_morpheme ' +
-                               #  'ON (dictionary_gloss.id = dictionary_morpheme.gloss_ptr_id) ' +
-                               #  'INNER JOIN dictionary_annotationidglosstranslation ' +
-                               #  'ON (dictionary_gloss.id = dictionary_annotationidglosstranslation.gloss_id) ' +
-                               # 'WHERE dictionary_morpheme.gloss_ptr_id IS NULL ' +
-                               #  'AND dictionary_annotationidglosstranslation.text NOT LIKE "#_" ' +
                                'WHERE dictionary_gloss.id != %s AND dictionary_lemmaidgloss.dataset_id = %s AND ' + where_minimal_pairs, [self.id, str(self.lemma.dataset.id)])
         # print('query: ', qs)
         for o in qs:
