@@ -164,13 +164,14 @@ class GlossListView(ListView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
-        selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
+        selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
         sign_languages = []
         for sl in selected_datasets_signlanguage:
             if not ((str(sl.id),sl.name) in sign_languages):
                 sign_languages.append((str(sl.id), sl.name))
 
-        selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage).distinct()
+        selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage)\
+            .prefetch_related('signlanguage').distinct()
         dialects = []
         for dl in selected_datasets_dialects:
             dialect_name = dl.signlanguage.name + "/" + dl.name
