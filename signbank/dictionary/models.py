@@ -1891,12 +1891,9 @@ class Dataset(models.Model):
                     # empty values can be either 0 or else null
                     # the raw query is constructed for this case separately from the case for actual values
                     if machine_value == 0:
-
-                        raw_query = 'SELECT * FROM dictionary_gloss ' + \
-                                    'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' + \
-                                    ' WHERE dictionary_lemmaidgloss.dataset_id in (' + str(self.id) + ') and (' + field + ' IS NULL OR ' + field + ' = 0)'
-
-                        choice_list_frequencies[choice] = len(list(Gloss.objects.raw(raw_query)))
+                        choice_list_frequencies[choice] = Gloss.objects.filter(Q(lemma__dataset=self),
+                                                                   Q(**{field + '__isnull': True}) |
+                                                                   Q(**{field: 0})).count()
                     else:
                         variable_column = field
                         search_filter = 'exact'
