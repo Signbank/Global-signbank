@@ -1633,14 +1633,17 @@ def fieldname_to_kind(fieldname):
                      'final_domdndsh', 'final_subhndsh', 'namEnt', 'semField', 'valence',
                      'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
                      'hsFingConf2', 'hsAperture',
-                     'hsSpread', 'hsFingUnsel', 'wordClass']:
+                     'hsSpread', 'hsFingUnsel', 'wordClass','wordClass2',
+                     'locPrimLH','initial_secondary_loc','final_secondary_loc',
+                     'domSF','domFlex','derivHist','iconType']:
         field_kind = 'list'
-    elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'useInstr']:
+    elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'useInstr','lexCatNotes']:
         field_kind = 'text'
     elif fieldname in ['repeat','altern', 'weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter',
                          'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                          'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
-                         'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
+                         'ufT', 'ufI', 'ufM', 'ufR', 'ufP',
+                         'oriChAbd','oriChFlex']:
         field_kind = 'check'
     else:
         field_kind = fieldname
