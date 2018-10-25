@@ -91,9 +91,6 @@ def add_gloss(request):
                 gloss.creationDate = datetime.now()
                 gloss.excludeFromEcv = False
 
-                if DEFAULT_DATASET_PK:
-                    gloss.dataset = Dataset.objects.get(pk=DEFAULT_DATASET_PK)
-
                 if lemma_form:
                     lemmaidgloss = lemma_form.save()
                 gloss.lemma = lemmaidgloss
