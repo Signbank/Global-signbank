@@ -1907,7 +1907,6 @@ def update_dataset(request, datasetid):
         original_value = ''
 
         if field == 'description':
-
             original_value = getattr(dataset,field)
             setattr(dataset, field, value)
             dataset.save()
@@ -1938,6 +1937,26 @@ def update_dataset(request, datasetid):
                 return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
         elif field == 'add_owner':
             update_owner(dataset, field, value)
+        elif field == 'default_language':
+            original_value = getattr(dataset, field)
+            # variable original_value is used for feedback to the interface
+            if original_value:
+                original_value = original_value.name
+            else:
+                original_value = '-'
+            if value == '-':
+                # this option is not offered by the interface, value must be one of the translation languages (not empty '-')
+                # this code is here if we want to user to be able to "unset" the default language in the interface
+                setattr(dataset, field, None)
+                dataset.save()
+            else:
+                try:
+                    new_default_language = Language.objects.get(name=value)
+                    setattr(dataset, field, new_default_language)
+                    dataset.save()
+                except:
+                    value = original_value
+            return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         else:
 
             if not field in [f.name for f in Dataset._meta.get_fields()]:

@@ -155,6 +155,11 @@ function configure_edit() {
          checkbox: { falseValue: 'False', trueValue: 'True'  },
 		 callback : update_view_and_remember_original_value
      });
+     $('.edit_default_language').editable(edit_post_url, {
+         type      : 'select',
+         data      : language_choices,
+		 callback : update_view_and_remember_original_value
+     });
 }
 
 function update_view_and_remember_original_value(change_summary)

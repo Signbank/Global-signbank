@@ -21,7 +21,8 @@
     var saving_str = '{% trans "Saving..." %}'
     var csrf_token = '{{csrf_token}}';
     var edit_post_url = '{{PREFIX_URL}}/datasets/change_details/{{dataset.id}}';
-
+    var language_choices = '{{default_language_choice_list|safe}}';
+    console.log(language_choices);
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
 
@@ -88,6 +89,10 @@
         <tr><th>{% trans "Sign language" %}</th><td>{{dataset.signlanguage.name}} ({{dataset.signlanguage.description}})</td></tr>
         <tr><th>{% trans "Translation languages" %}</th>
             <td>{% for tl in dataset.translation_languages.all %}{{tl.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+        <tr><th>{% trans "Default language" %}</th>
+            {% csrf_token %}
+            <td class='edit edit_default_language' id='default_language'
+                value='{{datasetform.default_language.value}}'>{{dataset.default_language}}</td></tr>
         <tr><th>{% trans "Conditions of use by others" %}</th>
             <td class='edit edit_area' id='conditions_of_use' name='conditions_of_use'
                 placeholder='{% trans "Conditions of use by others" %}' value="{{datasetform.conditions_of_use.value|default:''}}">{{dataset.conditions_of_use}}</td></tr>
