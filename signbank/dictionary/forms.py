@@ -569,13 +569,16 @@ class DatasetUpdateForm(forms.ModelForm):
     copyright = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Copyright'}))
     conditions_of_use = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Conditions of use'}))
 
-
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Dataset
-        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'owners', 'is_public']
+        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'owners', 'is_public', 'default_language']
 
+    def __init__(self, *args, **kwargs):
+        languages = kwargs.pop('languages')
+        super(DatasetUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['default_language'] = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), choices=languages)
 
 FINGER_SELECTION_CHOICES = [('','---------')] + build_choice_list('FingerSelection')
 FINGER_CONFIGURATION_CHOICES = [('','---------')] + build_choice_list('JointConfiguration')

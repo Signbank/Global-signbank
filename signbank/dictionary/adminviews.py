@@ -3309,9 +3309,16 @@ class DatasetDetailView(DetailView):
         # Call the base implementation first to get a context
         context = super(DatasetDetailView, self).get_context_data(**kwargs)
 
-        datasetform = DatasetUpdateForm()
         dataset = context['dataset']
-        datasetform.fields['description'] = dataset.description
+
+        context['default_language_choice_list'] = {}
+        translation_languages = dataset.translation_languages.all()
+        default_language_choice_dict = dict()
+        for language in translation_languages:
+            default_language_choice_dict[language.name] = language.name
+        context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
+
+        datasetform = DatasetUpdateForm(languages=context['default_language_choice_list'])
         context['datasetform'] = datasetform
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
