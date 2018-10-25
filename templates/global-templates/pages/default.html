@@ -6,7 +6,7 @@
 {# show the edit button if the user has permission to change pages #}
 {% if perms.pages.change_page %}
 <div id="editbutton">
-    <a class='btn btn-default' href="{{URL}}/publisher/pages/page/{{page.id}}/">{% trans "Edit Page" %}</a>
+    <a class='btn btn-default' href="{{PREFIX_URL}}/publisher/pages/page/{{page.id}}/">{% trans "Edit Page" %}</a>
 </div>
 {% endif %}
 

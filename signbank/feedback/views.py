@@ -2,19 +2,25 @@
 import os
 from signbank.feedback.models import *
 from django import forms
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect, render_to_response
 from django.template import Context, RequestContext, loader
 from django.conf import settings 
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
+from django.contrib import messages
+from django.utils.safestring import mark_safe
+from signbank.tools import get_selected_datasets_for_user
+from django.db.transaction import atomic
+
 
 import time
 
 def index(request):
     return render(request,'feedback/index.html',
-                              { 
+                              { 'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                                'language': settings.LANGUAGE_NAME,
                                'country': settings.COUNTRY_NAME,
                                'title':"Leave Feedback"})
@@ -63,7 +69,9 @@ def interpreterfeedback(request, glossid=None):
                                    {'notes': notes,
                                     'general': general,
                                     'missing': missing,
-                                    'signfb': signfb})
+                                    'signfb': signfb,
+                                    'selected_datasets': get_selected_datasets_for_user(request.user),
+                                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
         
@@ -73,7 +81,7 @@ def interpreterfeedback(request, glossid=None):
 def generalfeedback(request):
     feedback = GeneralFeedback()
     valid = False
-   
+
     if request.method == "POST":
         form = GeneralFeedbackForm(request.POST, request.FILES)
         if form.is_valid():           
@@ -87,13 +95,31 @@ def generalfeedback(request):
                 
             feedback.save()
             valid = True
+            request_path = request.path
+            if 'return' in request.GET:
+                sourcepage = request.GET['return']
+            else:
+                sourcepage = ""
+
+            messages.add_message(request, messages.INFO, mark_safe(
+                    'Thank you. Your feedback has been saved. <a href="' + sourcepage + '">Return to Previous Page</a>'))
+
+            # return HttpResponseRedirect("")
+            return render(request, 'feedback/generalfeedback.html', {'language': settings.LANGUAGE_NAME,
+                                                                     'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                     'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                                                                    'country': settings.COUNTRY_NAME,
+                                                                    'title':"General Feedback",
+                                                                    'form': form,
+                                                                    'valid': valid })
     else:
         form = GeneralFeedbackForm()
 
     return render(request,"feedback/generalfeedback.html",
-                              {
-                               'language': settings.LANGUAGE_NAME,
-                               'country': settings.COUNTRY_NAME,
+                              {'language': settings.LANGUAGE_NAME,
+                                'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                                'country': settings.COUNTRY_NAME,
                                'title':"General Feedback",
                                'form': form,
                                'valid': valid })
@@ -102,7 +128,7 @@ def generalfeedback(request):
 def missingsign(request):
 
     posted = False # was the feedback posted?
-    
+
     if request.method == "POST":
         
         fb = MissingSignFeedback()
@@ -118,19 +144,19 @@ def missingsign(request):
             if 'video' in form.cleaned_data and form.cleaned_data['video'] != None:
                 fb.video = form.cleaned_data['video']
 
-            else:
-                # get sign details from the form 
-                fb.handform = form.cleaned_data['handform'] 
-                fb.handshape = form.cleaned_data['handshape']
-                fb.althandshape = form.cleaned_data['althandshape']
-                fb.location = form.cleaned_data['location']
-                fb.relativelocation = form.cleaned_data['relativelocation']
-                fb.handbodycontact = form.cleaned_data['handbodycontact']
-                fb.handinteraction = form.cleaned_data['handinteraction']
-                fb.direction = form.cleaned_data['direction']
-                fb.movementtype = form.cleaned_data['movementtype']
-                fb.smallmovement = form.cleaned_data['smallmovement']
-                fb.repetition = form.cleaned_data['repetition']
+            # else:
+            #     # get sign details from the form
+            #     fb.handform = form.cleaned_data['handform']
+            #     fb.handshape = form.cleaned_data['handshape']
+            #     fb.althandshape = form.cleaned_data['althandshape']
+            #     fb.location = form.cleaned_data['location']
+            #     fb.relativelocation = form.cleaned_data['relativelocation']
+            #     fb.handbodycontact = form.cleaned_data['handbodycontact']
+            #     fb.handinteraction = form.cleaned_data['handinteraction']
+            #     fb.direction = form.cleaned_data['direction']
+            #     fb.movementtype = form.cleaned_data['movementtype']
+            #     fb.smallmovement = form.cleaned_data['smallmovement']
+            #     fb.repetition = form.cleaned_data['repetition']
             
             # these last two are required either way (video or not)
             fb.meaning = form.cleaned_data['meaning']
@@ -138,27 +164,25 @@ def missingsign(request):
     
             fb.save()
             posted = True
+
     else:
         form = MissingSignFeedbackForm()        
   
     
     return render(request,'feedback/missingsign.html',
-                               {
-                               'language': settings.LANGUAGE_NAME,
-                               'country': settings.COUNTRY_NAME,
+                               {'language': settings.LANGUAGE_NAME,
+                                'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                                'country': settings.COUNTRY_NAME,
                                 'title':"Report a Missing Sign",
                                 'posted': posted,
                                 'form': form})
 
-                              
-#-----------
-# views to show feedback to Trevor et al
-#-----------
 
 @permission_required('feedback.delete_generalfeedback')
 def showfeedback(request):
     """View to list the feedback that's been left on the site"""
-    
+
     general = GeneralFeedback.objects.filter(status='unread')
     missing = MissingSignFeedback.objects.filter(status='unread')
     signfb = SignFeedback.objects.filter(status__in=('unread', 'read'))
@@ -166,27 +190,31 @@ def showfeedback(request):
     return render(request,"feedback/show.html",
                               {'general': general,    
                               'missing': missing,
-                              'signfb': signfb})
+                              'signfb': signfb,
+                               'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     
 
 @login_required
 def glossfeedback(request, glossid):
-    
-    gloss = get_object_or_404(Gloss, idgloss=glossid)
-    
-    # construct a translation so we can record feedback against it
-    # really should have recorded feedback for a gloss, not a sign
-    allkwds = gloss.translation_set.all()
+
+    request_path = request.path
+
+    allkwds = []
+    if 'morpheme' in request_path:
+        morpheme = get_object_or_404(Morpheme, id=glossid)
+        allkwds = morpheme.translation_set.all()
+    else:
+        gloss = get_object_or_404(Gloss, id=glossid)
+        allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
-        
-        trans = Translation()
+        trans = None
     else:
         trans = allkwds[0]
     
-    return recordsignfeedback(request, trans, 1, len(allkwds))
-    
-    
+    return recordsignfeedback(request, trans, 1, len(allkwds), glossid)
+
 
 # Feedback on individual signs
 @login_required
@@ -201,8 +229,8 @@ def signfeedback(request, keyword, n):
     
     return recordsignfeedback(request, trans, n, total)
     
-    
-def recordsignfeedback(request, trans, n, total):
+# @atomic  # This rolls back saving feedback on failure
+def recordsignfeedback(request, trans, n, total, glossid=None):
     """Do the work of recording feedback for a sign or gloss"""
     
     # get the page to return to from the get request
@@ -210,12 +238,23 @@ def recordsignfeedback(request, trans, n, total):
         sourcepage = request.GET['return']
     else:
         sourcepage = ""
-    
-    if 'lastmatch' in request.GET:
-        lastmatch = request.GET['lastmatch']
-    else:
-        lastmatch = None
-    
+
+    # return to the comment page to show message
+    request_path = request.path
+    morpheme_toggle = 1 if 'morpheme' in request_path else 0
+
+    if glossid and not trans:
+        if morpheme_toggle:
+            sign_or_morpheme = get_object_or_404(Morpheme, id=glossid)
+        else:
+            sign_or_morpheme = get_object_or_404(Gloss, id=glossid)
+        default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+        # if there are no keywords for this gloss, create empty keywords (Keyword '' has default language)
+        # original feedback about signs assumes users are giving feedback about keywords
+        (kobj, created) = Keyword.objects.get_or_create(text='')
+        trans = Translation(gloss=sign_or_morpheme, translation=kobj, index=0, language=default_language)
+        trans.save()
+
     valid = False
     
     if request.method == "POST":
@@ -225,27 +264,38 @@ def recordsignfeedback(request, trans, n, total):
             # get the clean (normalised) data from the feedback_form
             clean = feedback_form.cleaned_data
             # create a SignFeedback object to store the result in the db
-            sfb = SignFeedback(
-                isAuslan=clean['isAuslan'],
-                whereused=clean['whereused'],
-                like=clean['like'],
-                use=clean['use'],
-                suggested=clean['suggested'],
-                correct=clean['correct'],
-                kwnotbelong=clean['kwnotbelong'],
-                comment=clean['comment'],
-                user=request.user,
-                translation_id = request.POST["translation_id"]
-                )
-            sfb.save()
-            valid = True
-            # redirect to the original page
-            if lastmatch:
-                return HttpResponseRedirect(sourcepage+"?lastmatch="+lastmatch+"&feedbackmessage=Thank you. Your feedback has been saved.")
-            else:
-                return HttpResponseRedirect(sourcepage+"?feedbackmessage=Thank you. Your feedback has been saved.")                    
-    else:
-        feedback_form = SignFeedbackForm()
+            try:
+                sfb = SignFeedback(
+                    isAuslan=clean['isAuslan'],
+                    whereused=clean['whereused'],
+                    like=morpheme_toggle, #['like'],
+                    use=clean['use'],
+                    suggested=clean['suggested'],
+                    correct=clean['correct'],
+                    kwnotbelong=clean['kwnotbelong'],
+                    comment=clean['comment'],
+                    user=request.user,
+                    translation_id = request.POST["translation_id"]
+                    )
+                sfb.save()
+                valid = True
+                # redirect to the original page
+                if 'morpheme' in request_path:
+                    messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+sourcepage+'">Return to Morpheme</a>'))
+                else:
+                    messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+sourcepage+'">Return to Sign</a>'))
+
+                return render(request, 'feedback/signfeedback.html', { 'feedback_form': feedback_form,
+                                                                       'sourcepage': sourcepage,
+                                                                       'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+            except:
+                messages.add_message(request, messages.ERROR,'There was an error processing your feedback data.')
+                return render(request, 'feedback/signfeedback.html', { 'feedback_form': feedback_form,
+                                                                       'sourcepage': sourcepage,
+                                                                       'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    feedback_form = SignFeedbackForm()
         
     return render(request,"feedback/signfeedback.html",
                               {'translation': trans,
@@ -254,26 +304,39 @@ def recordsignfeedback(request, trans, n, total):
                                'feedback_form': feedback_form, 
                                'valid': valid,
                                'sourcepage': sourcepage,
-                               'lastmatch': lastmatch,
-                               'language': settings.LANGUAGE_NAME})
+                               'language': settings.LANGUAGE_NAME,
+                               'selected_datasets': get_selected_datasets_for_user(request.user),
+                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 #--------------------
 #  deleting feedback
 #--------------------
-@permission_required('feedback.delete_generalfeedback')
+
+import django
+# @permission_required('feedback.delete_generalfeedback')
 def delete(request, kind, id):
     """Mark a feedback item as deleted, kind 'signfeedback', 'generalfeedback' or 'missingsign'"""
-    
+
+    # print('delete feedback kind: ', kind)
     if kind == 'sign':
-        kind = SignFeedback
+        KindModel = django.apps.apps.get_model('feedback', 'SignFeedback')
     elif kind == 'general':
-        kind = GeneralFeedback
+        KindModel = django.apps.apps.get_model('feedback', 'GeneralFeedback')
     elif kind == 'missingsign':
-        kind = MissingSignFeedback
+        KindModel = django.apps.apps.get_model('feedback', 'MissingSignFeedback')
     else:
         raise Http404
-    
-    item = get_object_or_404(kind, id=id)
+
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+
+    print('feedback delete id: ', field)
+    (what, fbid) = field.split('_')
+
+    if value == 'confirmed':
+        print('confirmed')
+    item = get_object_or_404(KindModel, pk=fbid)
+    print('feedback id: ', id, ', delete kind: ', kind, ', KindModel: ', KindModel, ', what: ', what)
     # mark as deleted
     item.status = 'deleted'
     item.save()

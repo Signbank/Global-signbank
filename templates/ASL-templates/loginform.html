@@ -6,7 +6,7 @@
  <div class='row'>
   <div id="loginforms" class="col-md-6 col-md-offset-3">
   
-  <form styleclass='form-horizontal' id="loginform" name="login" method="post" action="{{ URL }}/accounts/login/?next={{ next|urlencode }}">
+  <form styleclass='form-horizontal' id="loginform" name="login" method="post" action="/accounts/login/">
     {% csrf_token %}
     <fieldset id='signin'>
     <legend>{% trans "Sign In" %}</legend>
@@ -52,7 +52,7 @@
       <legend>{% trans "Lost Password" %}</legend>
       <p class="col-xs-10">{% trans "If you've lost or forgotten your password, enter your email address here and we'll reset it and send you a reminder." %}</p>
 
-      <form class='' id="passwordresetform" action="{{ URL }}/accounts/password/reset/" method="POST">
+      <form class='' id="passwordresetform" action="/accounts/password/reset/" method="POST">
           {% csrf_token %}
             <div class='form-group col-xs-10'>
                 <input class="form-control" type="text" name="email" placeholder="{% trans "Email" %}">

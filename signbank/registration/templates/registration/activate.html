@@ -15,14 +15,12 @@
 {#   Word (or word fragment) which was searched for #}
 
 {% extends "baselayout.html" %}
+{% load i18n %}
 
 {% block content %}
 
-  <p>Activation was successful. You may now <a href="/accounts/login?next=/">login</a>
-  using your email address and password.</p>
-  
-<p>Your Email Address:   {{ account.email }} </p>
+<p>Registration was successful. You will receive further notification once dataset access has been granted.</p>
 
-{% endblock %}							
+<p>Your Username:  {{ account.username }}</p>
 
-
+{% endblock %}

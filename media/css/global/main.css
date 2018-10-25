@@ -29,17 +29,18 @@ html {
         width: 300px;
         background-position: 20px 20px;
         background-repeat: no-repeat;
-        color: white;
+        color: hsla(0,0%,100%,0.75);;
         font-family: 'Nunito', sans-serif;
         font-size: 40px;
         padding: 19px;
         padding-left: 3px;
         margin: 0px;
         display: flex;
+        float:left
 }
 
 #second-title-part {
-    color: lightgrey;
+    color: white;
     margin-left: -92px;
     line-height: 2.5;
 }
@@ -107,8 +108,8 @@ legend
 }
 
 .modal-dialog {
-  margin: 130px auto;
-  z-index: 1100 !important; 
+  margin: 300px auto;
+  z-index: 1100 !important;
 }
 
 .global_sb_logo
@@ -184,4 +185,43 @@ legend
 #mag-glass
 {
     width:14px;
+}
+
+.error input, .error select {
+    color: darkred;
+}
+
+.help-block {
+    color: darkred;
+}
+
+.text-container {
+    display: inline-block;
+    position: relative;
+}
+
+.text-container input {
+    text-indent: 0px;
+}
+
+.hasTooltip {
+    position: relative;
+}
+
+.hasTooltip span {
+    display: none;
+}
+
+.hasTooltip:hover span {
+    display: block;
+    background-color: black;
+    border-radius: 5px;
+    color: white;
+    box-shadow: 1px 1px 3px gray;
+    position: absolute;
+    padding: 5px;
+    top: 3em;
+    left: 0px;
+    max-width: 360px;
+    font-size: 12px;
 }

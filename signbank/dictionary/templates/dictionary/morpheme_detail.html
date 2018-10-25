@@ -16,7 +16,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ URL }}';
+    var url = '{{ URL }}{{ PREFIX_URL }}';
 
     var edit_mode_str = '{% trans "Edit" %}';
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
@@ -38,7 +38,12 @@
     var handedness_weak_choices = {{morpheme.handedness_weak_choices_json|safe}};
     var languages = {{morpheme.signlanguage_choices|safe}};
     var dialects = {{morpheme.dialect_choices|safe}};
+    {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
+    {% else %}
+    var dataset_choices = {};
+    {% endif %}
+    var gloss_dataset_id = {{ morpheme.lemma.dataset_id}}
     var mrptype_choices = {{morpheme.mrptype_choices|safe}};
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 
@@ -60,7 +65,7 @@
                 var a = document.createElement("a");
                 a.setAttribute("class", "btn btn-default");
                 a.style["float"] = "none";
-                a.href = "{% url 'root_page' %}dictionary/morpheme/" + json_data[key].id + "/";
+                a.href = "{{PREFIX_URL}}/dictionary/morpheme/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
                 var linktext = document.createTextNode(json_data[key].gloss);
                 a.appendChild(linktext);
@@ -132,7 +137,7 @@
 
     <div class='btn-group' style="background-color:white;border:0;padding-top:3px;">
 
-    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/morpheme/{{morpheme.id}}.html">{% trans "Public View" %}</a>
+    <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}.html">{% trans "Public View" %}</a>
 
         {% if perms.dictionary.change_morpheme %}
         <button id='delete_morpheme_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
@@ -176,18 +181,13 @@
 
     <div>
         {% if morpheme.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{morpheme.get_image_path}}" width="450px">
+            <img id="imageframe" src="{{protected_media_url}}{{morpheme.get_image_path}}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 
     <div id="feedback">
         <ul>
-            {% ifequal viewname "words" %}
-            <li><a href="{% url 'root_page' %}feedback/sign/{{translation.translation}}-{{n}}.html?return=/dictionary/words/{{translation.translation}}-{{n}}.html">{% trans "Provide feedback about this morpheme" %}</a></li>
-            {% else %}
-            <li><a href="{% url 'root_page' %}feedback/morpheme/{{morpheme.idgloss}}.html?return=/dictionary/morpheme/{{morpheme.idgloss}}.html&lastmatch={{lastmatch}}">{% trans "Provide feedback about this morpheme" %}</a></li>
-            {% endifequal %}
-
+            <li><a href="{{PREFIX_URL}}/feedback/morpheme/{{morpheme.id}}?return={{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}">{% trans "Provide feedback about this morpheme" %}</a></li>
         </ul>
     </div>
 
@@ -198,7 +198,7 @@
             {% with morpheme.count_videos as morpheme_video_count %}
             <p>{% blocktrans %} We have {{morpheme_video_count}} videos for this morpheme. {% endblocktrans %}</p>
             {% endwith %}
-            <form action="{{URL}}/video/upload/" method="post" enctype="multipart/form-data">
+            <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -217,7 +217,7 @@
         <fieldset>
          <legend>{% trans "Delete/Revert Video" %}</legend>
             <table>
-            <form action="{{URL}}/video/delete/{{morpheme.pk}}" method='post'>
+            <form action="{{PREFIX_URL}}/video/delete/{{morpheme.pk}}" method='post'>
             <tr><td><em>{% trans "This will delete the most recent upload and restore the most recent earlier version." %} </em></td></tr>
             <tr><td>{% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete/Revert this video'></td></tr>
             </form>
@@ -231,7 +231,7 @@
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Citation Form Image" %}</legend>
-            <form action="{{URL}}/image/upload/" method="post" enctype="multipart/form-data">
+            <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -256,7 +256,50 @@
     <div class='panel-group' id="definition">
 
         <table class='table table-condensed'>
-            <tr><th>{% trans "Lemma ID Gloss" %}</th><td class='edit edit_text' id='idgloss'>{% value morpheme.idgloss %}</td></tr>
+            <tr><th>{% trans "Lemma ID Gloss" %}</th>
+                <td><span id="lemma">{{ morpheme.lemma }}
+                        {% if lemma_group %}
+                            <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
+                        {% endif %}
+                    </span>
+                    <form name='set_lemma_form' id='set_lemma_form'
+                     onsubmit='return validateForm("set_lemma_form","value","morpheme_lemma_id",
+                                                    "Please choose a lemma.",
+                                                    "Target lemma must be different from the current lemma of this morpheme.")'
+                     method='post' action='{% url "dictionary:update_morpheme" morpheme.id %}'>
+                        {% csrf_token %}
+                        <!-- Input that holds the current lemma id; used by validateForm -->
+                        <input type='hidden' name='morpheme_lemma_id' value='{{morpheme.lemma_id}}'>
+
+                        <!-- Input of the type ahead -->
+                        <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+
+                        <!-- Input for morpheme_update (2) / Input that holds the lemma id the user chose from the type ahead -->
+                        <input type='hidden' name='value' value='confirmed'>
+                        <!-- Input for morpheme_update (1) -->
+                        <input type='hidden' name='id' value='lemmaidgloss'>
+
+                        <!-- Submit -->
+                        <input class='btn btn-primary' value='{% trans "Set lemma" %}' type='submit'>
+                        <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
+                        <a href="#" onclick="return showAddLemma()">{% trans "Create new" %}</a>
+                    </form>
+                    <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' morpheme.id %}" >
+                        {% csrf_token %}
+                        <input type="hidden" name="dataset" value="{{ morpheme.lemma.dataset_id }}"/>
+                        {% for dataset_lang in morpheme.lemma.dataset.translation_languages.all %}
+                        {{ dataset_lang.name }}:
+                        <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                               name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                               required="" maxlength="30" type="text"/>
+
+                        {% endfor %}
+                        <!-- Submit -->
+                        <input class='btn btn-primary' value='{% trans "Add lemma" %}' type='submit'>
+                        <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
+                    </form>
+                </td>
+            </tr>
 
             {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
             <tr>

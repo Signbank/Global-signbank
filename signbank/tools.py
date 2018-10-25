@@ -84,10 +84,9 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
 
             errors_found += [error_string]
 
-        lemma_id_gloss = valuedict['Lemma ID Gloss'].strip()
+        existing_glosses = {}
 
         annotationidglosstranslations = {}
-        existing_glosses = {}
         for language in dataset.translation_languages.all():
             column_name = "Annotation ID Gloss (%s)" % language.name_en
             if column_name in valuedict:
@@ -108,33 +107,43 @@ def create_gloss_from_valuedict(valuedict,datasets,row_nr):
                     if gloss not in existing_gloss_set:
                         gloss_dict = {
                              'gloss_pk': gloss.pk,
-                             'dataset': gloss.dataset,
-                             'lemma_id_gloss': 'Lemma ID Gloss',
-                             'lemma_id_gloss_value': lemma_id_gloss
+                             'dataset': gloss.dataset
                         }
                         annotationidglosstranslation_dict = {}
                         for lang in gloss.dataset.translation_languages.all():
                             annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % lang.name_en]
                             annotationidglosstranslation_dict[lang.language_code_2char] = annotationidglosstranslation_text
                         gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
+
+                        lemmaidglosstranslation_dict = {}
+                        for lang in gloss.dataset.translation_languages.all():
+                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % lang.name_en]
+                            lemmaidglosstranslation_dict[lang.language_code_2char] = lemmaidglosstranslation_text
+                        gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
+
                         already_exists.append(gloss_dict)
                         existing_gloss_set.add(gloss)
 
         else:
             # for the new gloss, we don't know the id yet so save the row number in this field
             gloss_dict = {'gloss_pk': str(row_nr),
-                                'dataset': dataset_name,
-                                'lemma_id_gloss': 'Lemma ID Gloss',
-                                'lemma_id_gloss_value': lemma_id_gloss}
+                                'dataset': dataset_name}
             dataset = Dataset.objects.get(name=dataset_name)
             trans_languages = [ l for l in dataset.translation_languages.all() ]
-            print('translation languages for dataset: ', trans_languages)
+            # print('translation languages for dataset: ', trans_languages)
             annotationidglosstranslation_dict = {}
             for language in trans_languages:
                 annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language.name_en]
-                print('tools create gloss, language: ', language, ' annotation ID gloss: ', annotationidglosstranslation_text)
+                # print('tools create gloss, language: ', language, ' annotation ID gloss: ', annotationidglosstranslation_text)
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
             gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
+
+            lemmaidglosstranslation_dict = {}
+            for language in trans_languages:
+                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language.name_en]
+                lemmaidglosstranslation_dict[language.language_code_2char] = lemmaidglosstranslation_text
+            gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
+
             new_gloss.append(gloss_dict)
 
         # print('create gloss field ', lemma_id_gloss, ' with annotation ', annotation_id_gloss, ' english: ', annotation_id_gloss_en)
@@ -206,6 +215,26 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                                                 'human_key': human_key,
                                                 'original_machine_value': annotation_idgloss_string,
                                                 'original_human_value': annotation_idgloss_string,
+                                                'new_machine_value': new_human_value,
+                                                'new_human_value': new_human_value})
+                continue
+
+            lemma_idgloss_key_prefix = "Lemma ID Gloss ("
+            if human_key.startswith(lemma_idgloss_key_prefix):
+                language_name = human_key[len(lemma_idgloss_key_prefix):-1]
+                languages = Language.objects.filter(name_en=language_name)
+                if languages:
+                    language = languages[0]
+                    lemma_idglosses = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
+                    if lemma_idglosses:
+                        lemma_idgloss_string = lemma_idglosses[0].text
+                        if lemma_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
+                            differences.append({'pk': gloss.pk,
+                                                'dataset': current_dataset,
+                                                'machine_key': human_key,
+                                                'human_key': human_key,
+                                                'original_machine_value': lemma_idgloss_string,
+                                                'original_human_value': lemma_idgloss_string,
                                                 'new_machine_value': new_human_value,
                                                 'new_human_value': new_human_value})
                 continue
@@ -989,7 +1018,7 @@ def reload_signbank(request=None):
 def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, dataset=None):
     dataset_gloss_ids = []
     if dataset:
-        dataset_gloss_ids = dataset.gloss_set.values_list('pk', flat=True)
+        dataset_gloss_ids = Gloss.objects.filter(lemma__dataset=dataset).values_list('pk', flat=True)
         print(str(dataset_gloss_ids))
         print(str(4611 in dataset_gloss_ids))
 
@@ -1018,7 +1047,7 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, d
 
 def get_gloss_data(since_timestamp=0, dataset=None):
     if dataset:
-        glosses = Gloss.objects.filter(dataset=dataset)
+        glosses = Gloss.objects.filter(lemma__dataset=dataset)
     else:
         glosses = Gloss.objects.all()
     gloss_data = {}
@@ -1096,7 +1125,13 @@ def get_selected_datasets_for_user(user):
             return viewable_datasets
         return selected_datasets & viewable_datasets # intersection of the selected and viewable datasets
     else:
-        return Dataset.objects.filter(is_public=True)
+        # Make sure a non-empty set is returned, for anonymous users when no datasets are public
+        public_datasets = Dataset.objects.filter(is_public=True)
+        if public_datasets:
+            selected_datasets = public_datasets
+        else:
+            selected_datasets = [ Dataset.objects.get(name=DEFAULT_DATASET) ]
+        return selected_datasets
 
 
 def gloss_from_identifier(value):
@@ -1168,64 +1203,20 @@ def write_ecv_files_for_all_datasets():
 
 
 def write_ecv_file_for_dataset(dataset_name):
+    dataset_id = Dataset.objects.get(name=dataset_name)
 
-    description = 'DESCRIPTION'
-    language = 'LANGUAGE'
-    lang_ref = 'LANG_REF'
+    query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(lemma__dataset=dataset_id)
 
-    cv_entry_ml = 'CV_ENTRY_ML'
-    cve_id = 'CVE_ID'
-    cve_value = 'CVE_VALUE'
-
-    topattributes = {'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance",
-                     'DATE': str(DT.date.today()) + 'T' + str(DT.datetime.now().time()),
-                     'AUTHOR': '',
-                     'VERSION': '0.2',
-                     'xsi:noNamespaceSchemaLocation': "http://www.mpi.nl/tools/elan/EAFv2.8.xsd"}
-    top = ET.Element('CV_RESOURCE', topattributes)
-
-    for lang in ECV_SETTINGS['languages']:
-        ET.SubElement(top, language, lang['attributes'])
-
-    cv_element = ET.SubElement(top, 'CONTROLLED_VOCABULARY', {'CV_ID': ECV_SETTINGS['CV_ID']})
-
-    # description for cv_element
-    for lang in ECV_SETTINGS['languages']:
-        myattributes = {lang_ref: lang['id']}
-        desc_element = ET.SubElement(cv_element, description, myattributes)
-        desc_element.text = lang['description']
-
-    # set Dataset to NGT or other pre-specified Dataset, otherwise leave it empty
-    try:
-        dataset_id = Dataset.objects.get(name=dataset_name)
-    except:
-        dataset_id = ''
-
-    if dataset_id:
-        query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(dataset=dataset_id)
-    else:
-        query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False)
-
-    # Make sure we iterate only over the none-Morpheme glosses
-    for gloss in query_dataset:
-        glossid = str(gloss.pk)
-        myattributes = {cve_id: glossid, 'EXT_REF': 'signbank-ecv'}
-        cve_entry_element = ET.SubElement(cv_element, cv_entry_ml, myattributes)
-
-        for lang in ECV_SETTINGS['languages']:
-            langId = lang['id']
-            if len(langId) == 3:
-                langId = [c[2] for c in LANGUAGE_CODE_MAP if c[3] == langId][0]
-            desc = get_ecv_descripion_for_gloss(gloss, langId,
-                                                     ECV_SETTINGS['include_phonology_and_frequencies'])
-            cve_value_element = ET.SubElement(cve_entry_element, cve_value,
-                                              {description: desc, lang_ref: lang['id']})
-            cve_value_element.text = get_value_for_ecv(gloss, lang['annotation_idgloss_fieldname'])
-
-    ET.SubElement(top, 'EXTERNAL_REF',
-                  {'EXT_REF_ID': 'signbank-ecv', 'TYPE': 'resource_url', 'VALUE': URL + "/dictionary/gloss/"})
-
-    xmlstr = minidom.parseString(ET.tostring(top, 'utf-8')).toprettyxml(indent="   ")
+    context = {
+        'date': str(DT.date.today()) + 'T' + str(DT.datetime.now().time()),
+        'glosses': query_dataset,
+        'dataset': dataset_id,
+        'languages': dataset_id.translation_languages.all(),
+        'resource_url': URL + PREFIX_URL + '/dictionary/gloss/'
+    }
+    from django.template.loader import get_template
+    ecv_template = get_template('dictionary/ecv.xml')
+    xmlstr = ecv_template.render(context)
     ecv_file = os.path.join(ECV_FOLDER, dataset_name.lower().replace(" ","_") + ".ecv")
     import codecs
     with codecs.open(ecv_file, "w", "utf-8") as f:

@@ -9,11 +9,22 @@
 {% endblock %}
 
 {% block extrajs %}
-
+    <script type="text/javascript">
+        var url = '{{URL}}{{ PREFIX_URL }}';
+    </script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-
+    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
     <script type='text/javascript'>
-    
+    var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+    var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
+    var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
+    var csrf_token = '{{csrf_token}}';
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
     
     $(document).ready(function(){
         
@@ -25,24 +36,80 @@
                 $(this).text('Show');
             }
         });
-        
-        set_annotationidglosslanguages();
 
-         $('#id_dataset').change(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+
+        if (show_dataset_interface_options && user_can_add_morpheme) {
             set_annotationidglosslanguages();
+
+            $('#id_dataset').change(function() {
+                set_annotationidglosslanguages();
+            });
+
+            function set_annotationidglosslanguages() {
+                var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+                var languages = languages_str.split(",");
+                $("[id*='add_morpheme_dataset_']").each(function(){
+                    $(this).hide();
+                });
+                for(var id in languages) {
+                    $("[id*='add_morpheme_dataset_header_" + languages[id] + "']").show();
+                    $("[id*='add_morpheme_dataset_value_" + languages[id] + "']").show();
+                }
+            }
+        }
+
+        function makeMultipleSelect(fieldId,fieldVar) {
+            var target_pulldown = document.getElementById(fieldId);
+            target_pulldown.setAttribute('multiple','multiple');
+            target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+            target_pulldown.setAttribute('name',fieldVar);
+            target_pulldown.style.width = '100%';
+        }
+
+         for (var i = 0; i < multiple_select_fields.length; i++) {
+            var this_id = 'id_' + multiple_select_fields[i];
+            var this_var = multiple_select_fields[i] + '[]';
+            makeMultipleSelect(this_id, this_var);
+         }
+
+         $('.js-example-basic-multiple').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('.js-example-basic-multiple').val(null).trigger('change');
+
+         <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
+         <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
+
+         <!--Alert: the id for sign language is SIGNLANG, not the same as the model field!-->
+         <!--Django was messing up the template generation otherwise -->
+         <!--The value field is signlanguage[] matches the model)-->
+
+         makeMultipleSelect('id_SIGNLANG', 'signlanguage[]');
+         $('#id_SIGNLANG').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_SIGNLANG').val(null).trigger('change');
+
+         $('#id_SIGNLANG').change(function() {
+            set_signlanguages_dialects();
          });
 
-         function set_annotationidglosslanguages() {
-            var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
-            var languages = languages_str.split(",");
-            $("[id*='add_morpheme_dataset_']").each(function(){
-                $(this).hide();
-            });
-            for(var id in languages) {
-                $("[id*='add_morpheme_dataset_header_" + languages[id] + "']").show();
-                $("[id*='add_morpheme_dataset_value_" + languages[id] + "']").show();
-            }
-         }
+         <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
+         <!--Django was messing up the template generation otherwise (without the s at the end)-->
+
+         makeMultipleSelect('id_dialects', 'dialect[]');
+         $('#id_dialects').select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve'
+         });
+         $('#id_dialects').val(null).trigger('change');
+
     });
 
     {% if perms.dictionary.change_gloss %}
@@ -131,111 +198,173 @@ function do_adminsearch(el) {
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "morpheme":
-        $("#adminsearch").attr('action', '{{URL}}/morphemes/search/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/morphemes/search/');
         break;
     case "sign":
-        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
         break;
     case "sign_or_morpheme":
-        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
         break;
   }
   document.getElementById('adminsearch').submit();
 }
 
 
+function set_signlanguages_dialects() {
+    this_selection_elt = $('#signlanguage_selection');
+    var signlanguage_str = '';
+    this_selection_elt.find(".select2-selection__choice").each(function(){
+        if (signlanguage_str) {
+            signlanguage_str+=','+$(this).attr('title');
+        }
+        else {
+            signlanguage_str = $(this).attr('title');
+        }
+    });
+
+    optionValues = [];
+
+    if (signlanguage_str) {
+        var signlanguages = signlanguage_str.split(",");
+        this_selection_choices = $('#signlanguage_selection');
+
+        for(i = 0; i < signlanguages.length; i++) {
+            $('#id_SIGNLANG option').each(function(){
+                if ($(this).html() == signlanguages[i]) {
+                    optionValues.push($(this).html());
+                };
+            });
+        };
+    }
+
+    $('#id_dialects').val(null).trigger('change');
+
+    this_selection_dialect_elt = $('#dialect_selection');
+    $('#id_dialects option').each(function(){
+        $(this).attr('disabled','disabled');
+    });
+    $('#id_dialects option').each(function(){
+        var this_node_str = $(this).html();
+        for(k = 0; k < optionValues.length; k++) {
+            if (this_node_str.startsWith(optionValues[k])) {
+                $(this).removeAttr('disabled');
+            }
+        };
+    });
+    $('#id_dialects').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve'
+     });
+    $('#id_dialects').val(null).trigger('change');
+}
 
    </script>
+
+<script type='text/javascript'>
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
+</script>
+
 {% endblock %}
 
 
 {% block content %}
+{% url 'dictionary:protected_media' '' as protected_media_url %}
 
+{{ form.media.css }}
+{{ form.media.js }}
 
-<div id='searchformwell' class='well'>
-    <form name='adminsearch' id='adminsearch'>
+<form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/morphemes/search'>
+
+<div class="panel panel-default">
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
+                <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                  title="In many text fields, you can use patterns as follows:
+                  <table>
+                    <tr>
+                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                    </tr>
+                  </table>
+                  "></span></div>
+
+    <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+        <div id='searchformwell' class='well search-results-collapsable'>
+
         <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
         <div class="hidden">
-            <input name='sortOrder' class='form-control' value='idgloss' >
-            <input name='search_type' class='form-control' value='sign'>
+            <input name='sortOrder' class='form-control' value='lemma__lemmaidglosstranslation__text' >
+            <input name='search_type' class='form-control' value='morpheme'>
         </div>
         <div>
             <table class='table' id='searchfields'>
-                <tr>
                     {% for dataset_lang in dataset_languages %}
                     {% with searchform|get_morpheme_search_field_for_language:dataset_lang as search_field %}
+                    {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
+                <tr>
                     <td><div class='input-group'>
                         <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                                     {{search_field.label}}
-                                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
-                                          title="
-                                          <table>
-                                            <tr>
-                                                <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
-                                            </tr>
-                                          </table>
-                                          "></span>
-                                </label>
-                                <input name='morphemesearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
-                                </div>
+                        </label>
+                        <input name='morphemesearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                        </div>
                     </td>
-                    {% endwith %}
-                    {% endfor %}
-                </tr>
-                <tr>
                     <td><div class='input-group'>
 
                         <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
                         <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
                     </td>
+
                     <td><div class='input-group'>
-                        <label class='input-group-addon' for='id_keyword'>{{searchform.keyword.label}}</label>
-                        <input name='keyword' class='form-control' {% if searchform.keyword.value %}value='{{searchform.keyword.value}}'{% endif %}></div>
+                        <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
+                        <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
                     </td>
                 </tr>
+                    {% endwith %}
+                    {% endwith %}
+                    {% endfor %}
             </table>
         </div>
 
-        <div class="panel-group">
-            <div  class="panel panel-default">
+            <div class="panel panel-default">
                 <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Language and Basic Properties" %}</div>
 
                 <div id='searchpanels' class='collapse'>
                 <table class='table'>
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_signlanguage'>{{searchform.signlanguage.label}}</label>
-                                {{searchform.signlanguage}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_dialect'>{{searchform.dialect.label}}</label>
-                                {{searchform.dialect}}
-                            </div>
+                    {% csrf_token %}
+                    <tr id='signlanguage_selection'>
+                        <td><label>{{searchform.SIGNLANG.label}}</label>
+                                {{searchform.SIGNLANG}}
                         </td>
                       </tr>
+                    <tr id='dialect_selection'>
+                        <td><label>{{searchform.dialects.label}}</label>
+                                {{searchform.dialects}}
+                        </td>
+                    </tr>
 
                 </table>
 
                 <table class='table'>
-                    <tr><td><label for='id_useInstr'>{{searchform.useInstr.label}}</label></td><td>{{searchform.useInstr}}</td></tr>
+                    {% for fieldname,field,label in input_names_fields_and_labels.main %}
+                    <tr><td><label for='id_{{fieldname}}'>{{label}}</label>{{field}}</td></tr>
+                    {% endfor %}
                 </table>
 
                 </div>
@@ -245,17 +374,13 @@ function do_adminsearch(el) {
               <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
 
               <div id='morph_search' class='collapse'>
-              <table class='table table-condensed'>
-                <tr>
-
-                  <td>
-                    <table class='table table-condensed'>
-                        <tr><td><label for='id_hasMorphemeOfType'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
+                    <table class='table'>
+                        <tr id='mrpType_selection'>
+                            <td><label>{{searchform.mrpType.label}}</label>
+                                {{searchform.mrpType}}
+                            </td>
+                        </tr>
                     </table>
-
-                  </td>
-                </tr>
-              </table>
               </div>
             </div>
 
@@ -293,7 +418,7 @@ function do_adminsearch(el) {
                     <table class='table table-condensed'>
                         {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
 
-                            <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+                            <tr><td><label for='id_{{fieldname}}'>{{label}}</label>{{field}}</td></tr>
 
                         {% endfor %}
 
@@ -424,8 +549,8 @@ function do_adminsearch(el) {
 
               </div>
             </div>
-        </div>
-
+    </div>
+</div>
         <div class='btn-group'>
             <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
             <div class="btn-group">
@@ -433,9 +558,9 @@ function do_adminsearch(el) {
                     <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="morpheme">{% trans "Search morpheme" %}</span>&nbsp;<span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-left">
-                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
+                    <!--<li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>-->
                     <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search morpheme" %}</a></li>
-                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
+                    <!--<li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>-->
                 </ul>
             </div>
 
@@ -463,10 +588,9 @@ function do_adminsearch(el) {
         </select>
         </div>
 
-
     </form>
 
-</div>
+<div></div>
 
    {% if perms.dictionary.add_morpheme %}
    <div  class="panel panel-default">
@@ -477,8 +601,8 @@ function do_adminsearch(el) {
                  {% csrf_token %}
                  <table class='table'>
                      <tr>
-                         <th><label for='dataset'>Dataset</label></th>
-                         <th><label for='id_idgloss'>ID Gloss</label></th>
+                         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th><label for='dataset'>{% trans "Dataset" %}</label></th>{% endif %}
+                         <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
                          {% for dataset_lang in dataset_languages %}
                          <th id="add_morpheme_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
                          {% endfor %}
@@ -486,13 +610,41 @@ function do_adminsearch(el) {
                          <th></th>
                      </tr>
                      <tr>
+                         {% if SHOW_DATASET_INTERFACE_OPTIONS %}
                          <td><select id="id_dataset" name="dataset" required="">
-                             <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
-                             {% for dataset in selected_datasets %}
-                             <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                             <option value="" {% if add_morpheme_form.last_used_dataset == None %}selected{% endif %}
+                                     dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+                             {% for s_dataset in selected_datasets %}
+                             <option value="{{ s_dataset.id }}"
+                                     {% if add_morpheme_form.last_used_dataset == s_dataset.name %}selected{% endif %}
+                                     dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.name }}</option>
                              {% endfor %}
                          </select></td>
-                         <td>{{add_morpheme_form.idgloss}}</td>
+                         {% else %}
+                         <div style="display: hidden"><select id="id_dataset" name="dataset"></select></div>
+                         <script type='text/javascript'>gloss_dataset_id = {{ selected_datasets.0.id }}</script>
+                         {% endif %}
+                         <td>
+                             <div id="lemma_select">
+                                 <!-- Input of the type ahead -->
+                                 <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+                                 <!-- Input that holds the lemma id the user chose from the type ahead -->
+                                 <input type='hidden' name='idgloss' value='confirmed' required="">
+                                 <a href="#" onclick="return toggleAddLemma()">{% trans "Create new" %}</a>
+                             </div>
+                             <div id="lemma_add">
+                                {% for dataset_lang in dataset_languages %}
+                                 <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</span>
+                                <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                       name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                       maxlength="30" type="text"/>
+
+                                {% endfor %}
+
+                                 <a href="#" onclick="return toggleAddLemma()">{% trans "Select" %}</a>
+                             </div>
+                             <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
+                         </td>
                          {% for dataset_lang in dataset_languages %}
                          <td id="add_morpheme_dataset_value_{{ dataset_lang.language_code_2char }}">
                              <input id="morphemecreate_{{ dataset_lang.language_code_2char }}" name="morphemecreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
@@ -595,7 +747,7 @@ function do_adminsearch(el) {
         {% with morpheme.gloss_ptr|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
-            <a href="{{ URL }}/dictionary/morpheme/{{morpheme.pk}}/">{{ annotationidglosstranslation }}</a>
+            <a href="{{PREFIX_URL}}/dictionary/morpheme/{{morpheme.pk}}/">{{ annotationidglosstranslation }}</a>
           {% endifnotequal %}
       </td>
         {% endwith %}

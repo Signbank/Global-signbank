@@ -48,7 +48,7 @@
     <footer class="footer">
         <div class="container">
         <div class='pull-right'>
-              <a href="{% url 'general_feedback' %}">{% trans "Provide feedback on the site" %}</a>
+              <a href="{% url 'general_feedback' %}?return={{request.path}}/">{% trans "Provide feedback on the site" %}</a>
         </div>
         </div>
     </footer>
@@ -61,6 +61,27 @@
     <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.dataTables.min.js"></script>
 
     {% block extrajs %}{% endblock %}
+
+    <script type="text/javascript">
+        function focusFunction() {
+            var search_text = document.getElementById("tooltip-search").value;
+            if (!search_text) {
+                document.getElementById("tooltip-search").style.background = "lightgray";
+            }
+        }
+        function focusFunction2() {
+            var search_text = document.getElementById("tooltip-translation").value;
+            if (!search_text) {
+                document.getElementById("tooltip-translation").style.background = "lightgray";
+            }
+        }
+        function blurFunction() {
+            document.getElementById("tooltip-search").style.background = "white";
+        }
+        function blurFunction2() {
+            document.getElementById("tooltip-translation").style.background = "white";
+        }
+    </script>
 
     <script type="text/javascript">
     $(window).ready(function()
@@ -83,7 +104,7 @@
                 //When the user is logged in, we don't want to submit the form, but instead save
                 //the user preference and reload
 
-                $.ajax('{{ URL }}/dictionary/switch_to_language/'+chosen_language,'html');
+                $.ajax('{{PREFIX_URL}}/dictionary/switch_to_language/'+chosen_language,'html');
 
                 //The reload is on a timeout, because it happened too fast on Firefox
                 setTimeout(function()
@@ -103,6 +124,7 @@
     	});
     	navbarHeight = Math.round($('#signbank-bar').outerHeight());
         $('#wrap').css({'padding-top': navbarHeight});
+        $('[data-toggle="tooltip-menubar"]').tooltip();
     })
 
     $(window).on('resize', function() {
@@ -114,7 +136,7 @@
 
     </script>
 
-    <form id="change_language_form" method="post" action="{{ URL }}/i18n/setlang/">
+    <form id="change_language_form" method="post" action="{{PREFIX_URL}}/i18n/setlang/">
         {% csrf_token %}
         <input id="change_language_input_field" type="hidden" name="language" value="{{ user.user_profile_user.last_used_language }}">
 

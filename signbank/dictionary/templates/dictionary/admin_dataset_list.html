@@ -9,18 +9,20 @@
 
 {% block content %}
 
+<h3>{% trans "Available datasets" %}</h3>
+
 {% if object_list %}
 
 <table class='table table-condensed'>
-    <caption style="text-align: left;font-weight: bold;">{% trans "View available datasets" %}</caption>
     <thead>
       <tr>
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
           <th style="width:80px;">{% trans "View Dataset" %}</th>
           <th style="width:80px;">{% trans "Change Dataset" %}</th>
+          <th style="width:200px;">{% trans "Request Access" %}</th>
           <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
           <th style="width:80px;">{% trans "Selected" %}</th>
-          <th style="width:120px;">{% trans "Languages" %}</th>
+          <th style="width:200px;">{% trans "Languages" %}</th>
           <th>{% trans "Export dataset" %}</th>
       </tr>
     </thead>
@@ -28,7 +30,7 @@
       {% for dataset in object_list %}
         <tr>
             <td>
-                <a href="{{URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
+                <a href="{{PREFIX_URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
             </td>
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
@@ -47,7 +49,21 @@
                 {% endif %}
             </td>
             <td>
-                {{ dataset.gloss__count }}
+                {% if dataset.is_public %}
+                {% get_obj_perms request.user for dataset as "dataset_perms" %}
+                {% if not "view_dataset" in dataset_perms %}
+                <form name='request_view_dataset_form' id='request_view_dataset_form' method='get'>
+                    <div class="hidden">
+                        <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                    </div>
+                    <div class='btn-group'>
+                        <button id='request_view_access' class='btn btn-primary' type='submit' name='request_view_access' value='VIEW'>{% trans "Request View Access" %}</button>
+                    </div>
+                </form>
+                {% endif %}
+                {% endif %}
+            </td>
+            <td>{{dataset.count_glosses}}
             </td>
             <td>
                 {% if dataset.user.0.user %}

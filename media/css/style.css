@@ -11,12 +11,16 @@ body {
   min-height: calc(100% - 220px);
   height: auto;
   /* Negative indent footer by its height */
-  margin: auto auto -60px auto;
+  margin: auto auto -45px auto;
   /* Pad bottom by footer height */
-  padding: auto 0 60px auto;
+  padding: auto 0 45px auto;
   position: auto;
   /* Pad bottom to put space between footer and this wraper */
-  margin-bottom: 25px;
+}
+
+.footer {
+  margin-top: 25px;
+  margin-right: 15px;
 }
 
 .nav-wrapper {
@@ -434,6 +438,8 @@ body {
   height:115px;
   margin: auto;
   padding: 0px;
+  max-width: 115px;
+  object-fit: cover;
 }
 
 .cropped_thumbnail
@@ -484,4 +490,125 @@ body {
 .gloss_detail_component {
     /* No special matters */
     font-size: smaller;
+    color: black;
+}
+
+.gloss_detail_component:hover {
+  color: darkred;
+}
+
+tr.rotated th {
+    -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+}
+
+#searchresults
+{
+    min-height: 30px;
+}
+
+.search_result
+{
+    margin-right: 30px;
+    color: hsla(0, 0%, 0%, 0.35);
+}
+
+.search_result:hover, search_result:active, a.active
+{
+    color: hsla(0, 0%, 0%, 0.7);
+    text-decoration: none;
+}
+
+#searchresults a.active
+{
+    font-weight: 800;
+}
+
+//Tabs taken from a new version of bootstrap
+.nav-tabs
+{
+    border-bottom: 1px solid #dee2e6;
+}
+
+.nav-tabs .nav-item
+{
+    margin-bottom: -1px;
+}
+
+.nav-tabs .nav-link
+{
+    border: 1px solid transparent;
+        border-top-color: transparent;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem;
+}
+
+.nav-tabs .nav-link:hover, .nav-tabs .nav-link:focus
+{
+  border-top-left-radius: .25rem;
+  border-top-right-radius: .25rem;
+  border-color: #e9ecef #e9ecef #dee2e6;
+  border-bottom-color: transparent;
+  background-color: white;
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active
+{
+    color: #495057;
+    background-color: #fff;
+    border-color: #BB2F2C #dee2e6 #fff;
+    border-top-width: 2px;
+}
+
+.ribbon_list
+{
+    display: flex;
+    flex-direction: column;
+    height: 85px;
+    width: 440px;
+    flex-wrap: wrap;
+}
+
+ .ribbon
+ {
+    box-sizing: border-box;
+    position: relative;
+    min-width: 125px;
+    height: 20px;
+    width: 100px;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    line-height: 20px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.ribbon:before, .ribbon:after
+{
+    position: absolute;
+    content:'';
+    width: 100%;
+    left: 0px;
+    height: 10px;
+    border: 1px solid white;
+}
+
+.ribbon:before
+{
+    transform: perspective(3px) rotateX(3deg);
+    border-bottom: none;
+}
+
+.ribbon:after
+{
+    top: 10px;
+    transform: perspective(3px) rotateX(-3deg);
+    border-top: none;
 }

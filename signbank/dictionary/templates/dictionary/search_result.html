@@ -9,7 +9,7 @@
     
     <p>
       {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
-        <a href="{% url 'root_page' %}dictionary/search?query={{letter}}">{{letter}}</a> | 
+        <a href="{{PREFIX_URL}}/dictionary/search?query={{letter}}">{{letter}}</a> |
       {% endfor %}
     </p>
     
@@ -44,7 +44,7 @@
             obscene or offensive in Dutch or {{language}}, or both. (Schools and parents have repeatedly 
 
             requested that these type of words/signs be only visible to registered users.) If you
-            <a href="/accounts/login/">login or register 
+            <a href="{{PREFIX_URL}}/accounts/login/">login or register
 
             with {{language}} Signbank</a>,  you will then be able to find these
 
@@ -75,7 +75,7 @@
                <td valign="top">
           {% for word in page.object_list %}
             <p>
-              <a href="{% url 'root_page' %}dictionary/words/{{ word.text }}-1.html">{{ word.text }}</a>
+              <a href="{{PREFIX_URL}}/dictionary/words/{{ word.text }}-1.html">{{ word.text }}</a>
               {% if not word.inWeb %}*{% endif %}  
             </p>
 

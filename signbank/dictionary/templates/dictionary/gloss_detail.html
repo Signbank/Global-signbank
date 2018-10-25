@@ -21,7 +21,8 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ URL }}'
+    var url = '{{ URL }}{{ PREFIX_URL }}'
+
     var edit_mode_str = '{% trans "Edit" %}'
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
     var delete_this_gloss_str = '{% trans "Delete this gloss" %}'
@@ -45,9 +46,14 @@
     {% else %}
     var dataset_choices = {};
     {% endif %}
+
+    var gloss_dataset_id = {{ gloss.lemma.dataset_id}}
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
     var choice_lists = {{choice_lists|safe}};
+    console.log(choice_lists);
+    var frequency_lists_phonology_fields = {{frequency_lists_phonology_fields|safe}};
+    console.log(frequency_lists_phonology_fields);
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id = {{nextglossid}};
     var next_morpheme_id;
@@ -62,9 +68,9 @@
         for (var key in json_data) {
             if (json_data.hasOwnProperty(key)) {
                 var a = document.createElement("a");
-                a.setAttribute("class", "btn btn-default");
+                a.setAttribute("class", "search_result");
                 a.style["float"] = "none";
-                a.href = "{% url 'root_page' %}dictionary/gloss/" + json_data[key].id + "/";
+                a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
                 var linktext = document.createTextNode(json_data[key].gloss);
                 a.appendChild(linktext);
@@ -153,7 +159,7 @@
 
 {% block content %}
 
-<div id="searchresults" class='navbar navbar-default' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
     <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;margin-top:3px;">
     </div>
@@ -184,20 +190,19 @@
          {% endif %}
     </div>
 
-    <div class='btn-group'>
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+        </li>
+    </ul>
 
-    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
-
-    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
-
-         {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-         {% if "change_dataset" in dataset_perms %}
-         <button id='delete_gloss_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
-
-        {% endif %}
-    </div>
-
-    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+    {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     <div class='pull-right' style="margin-right:15px;margin-top:3px;">
 
@@ -212,8 +217,7 @@
 
 </div>
 
-
-        {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+        {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
         {% if "change_dataset" in dataset_perms %}
         <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDelete" aria-hidden="true">
              <div class="modal-dialog modal-sm">
@@ -263,22 +267,17 @@
 
     <div>
         {% if gloss.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_path}}" width="450px">
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_path}}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 
     <div id="feedback">
         <ul>
-            {% ifequal viewname "words" %}
-            <li><a href="{% url 'root_page' %}feedback/sign/{{translation.translation}}-{{n}}.html?return=/dictionary/words/{{translation.translation}}-{{n}}.html">{% trans "Provide feedback about this sign" %}</a></li>
-            {% else %}
-            <li><a href="{% url 'root_page' %}feedback/gloss/{{gloss.idgloss}}.html?return=/dictionary/gloss/{{gloss.idgloss}}.html&lastmatch={{lastmatch}}">{% trans "Provide feedback about this sign" %}</a></li>
-            {% endifequal %}
-
+            <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}?return=/dictionary/gloss/{{gloss.id}}/">{% trans "Provide feedback about this sign" %}</a></li>
         </ul>
     </div>
 
-    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+    {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     <div class='editform'>
         <fieldset>
@@ -286,7 +285,7 @@
             {% with gloss.count_videos as gloss_video_count %}
             <p>{% blocktrans %} We have {{gloss_video_count}} videos for this sign. {% endblocktrans %}</p>
             {% endwith %}
-            <form action="{{URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+            <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -304,12 +303,12 @@
     </div>
     {% endif %}
 
-    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+    {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Citation Form Image" %}</legend>
-            <form action="{{URL}}/image/upload/" method="post" enctype="multipart/form-data">
+            <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
             <table id="staffops">
@@ -327,17 +326,17 @@
 
     {% endif %}
 
-    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+    {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     <div class="editform">
         <fieldset>
          <legend>{% trans "Delete Media" %}</legend>
             <table>
                 <tr><td>
-                <form class="formbutton" action="{{URL}}/video/delete/{{gloss.pk}}" method='post'>
+                <form class="formbutton" action="{{PREFIX_URL}}/video/delete/{{gloss.pk}}" method='post'>
                         {% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete video'>
                 </form>
-                <form class="formbutton" action="{{URL}}/image/delete/{{gloss.pk}}" method='post'>
+                <form class="formbutton" action="{{PREFIX_URL}}/image/delete/{{gloss.pk}}" method='post'>
                         {% csrf_token %}<input class='btn btn-danger' id='delete_image' type='submit' value='Delete image'>
                 </form>
                 </td></tr>
@@ -346,6 +345,14 @@
     </div>
     {% endif %}
 
+     {% if "change_dataset" in dataset_perms %}
+    <div class="editform">
+        <fieldset>
+         <legend>{% trans "Delete Sign" %}</legend>
+         <button id='delete_gloss_btn' class='btn btn-danger' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
+        </fieldset>
+    </div>
+    {% endif %}
 
 
 
@@ -360,7 +367,50 @@
             <tr {%if gloss.dialect.all|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
 
-                <td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{lemma_group_url}}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>
+                <!--<td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{lemma_group_url}}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>-->
+                <td><span id="lemma">{{ gloss.lemma }}
+                        {% if lemma_group %}
+                            <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
+                        {% endif %}
+                    </span>
+                    <form name='set_lemma_form' id='set_lemma_form'
+                     onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
+                                                    "Please choose a lemma.",
+                                                    "Target lemma must be different from the current lemma of this gloss.")'
+                     method='post' action='{% url "dictionary:update_gloss" gloss.id %}'>
+                        {% csrf_token %}
+                        <!-- Input that holds the current lemma id; used by validateForm -->
+                        <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma_id}}'>
+
+                        <!-- Input of the type ahead -->
+                        <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+
+                        <!-- Input for gloss_update (2) / Input that holds the lemma id the user chose from the type ahead -->
+                        <input type='hidden' name='value' value='confirmed'>
+                        <!-- Input for gloss_update (1) -->
+                        <input type='hidden' name='id' value='lemmaidgloss'>
+
+                        <!-- Submit -->
+                        <input class='btn btn-primary' value='{% trans "Set lemma" %}' type='submit'>
+                        <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
+                        <a href="#" onclick="return showAddLemma()">{% trans "Create new" %}</a>
+                    </form>
+                    <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
+                        {% csrf_token %}
+                        <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset_id }}"/>
+                        {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                        {{ dataset_lang.name }}:
+                        <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                               name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                               required="" maxlength="30" type="text"/>
+
+                        {% endfor %}
+                        <!-- Submit -->
+                        <input class='btn btn-primary' value='{% trans "Add lemma" %}' type='submit'>
+                        <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
+                    </form>
+                </td>
+
             </tr>
 
             {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
@@ -453,7 +503,7 @@
                    {% for morphdef, translated_role, sign_display in morphdefs %}
 
                    <tr>
-                       {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                       {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                        {% if "change_dataset" in dataset_perms %}
                          <td style='width:2em;'>
                             <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphdef.id}}'></span>
@@ -495,7 +545,7 @@
             {% endif %}
            </table>
 
-            {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+            {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
             {% if "change_dataset" in dataset_perms %}
             <form name="add_morphologydefinition_form" id='add_morphologydefinition_form'
                   onsubmit='return validateForm("add_morphologydefinition_form","morpheme_id","parent_gloss_id",
@@ -545,7 +595,7 @@
                 {% for morpheme, morph_display, morpheme_type in simultaneous_morphology %}
                 <tr>
                     <!-- Facility to delete this morpheme -->
-                    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                    {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                     {% if "change_dataset" in dataset_perms %}
                      <td>
                         <span class='glyphicon glyphicon-trash morpheme-definition-delete' data-toggle='modal' data-target='#delete_morpheme-definition_modal_{{morpheme.pk}}'></span>
@@ -586,7 +636,7 @@
             </table>
 
             <!-- Facilitate adding and deleting morphemes that are used in this sign -->
-            {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+            {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
             {% if "change_dataset" in dataset_perms %}
             {% if count_morphemes_in_dataset %}
             <form name='add_morphemedefinition_form' id='add_morphemedefinition_form'
@@ -625,7 +675,7 @@
                 {% for blend, blend_display in blend_morphology %}
                 <tr>
                     <!-- Facility to delete this blend -->
-                    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                    {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                     {% if "change_dataset" in dataset_perms %}
                      <td>
                         <span class='glyphicon glyphicon-trash blend-definition-delete' data-toggle='modal' data-target='#delete_blend-definition_modal_{{blend.pk}}'></span>
@@ -666,7 +716,7 @@
             </table>
 
             <!-- Facilitate adding and deleting blends that are used in this sign -->
-            {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+            {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
             {% if "change_dataset" in dataset_perms %}
             <form name='add_blenddefinition_form' id='add_blenddefinition_form'
                   onsubmit='return validateForm("add_blenddefinition_form","blend_id","host_gloss_id",
@@ -719,7 +769,7 @@
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
-                            {% if label == 'WD' %}
+                            {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
                                 value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
                             {% else %}
@@ -733,7 +783,7 @@
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
-                            {% if label == 'WD' %}
+                            {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
                                 value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
                             {% else %}
@@ -765,7 +815,8 @@
                     <tr value="{{value}}">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>
-                            <a id="strong_hand_link" style="color: inherit; display: visible;" href="{{ URL }}/dictionary/handshape/{{StrongHand}}/">{{value}}</a>
+                            <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
+                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
@@ -800,7 +851,7 @@
                     <tr value="{{value}}">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>
-                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{ URL }}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
+                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if name == 'subhndsh_letter' %}
@@ -895,9 +946,15 @@
                     {% with field_category|add:language as args %}
                     <td style="width:auto; padding:0px 0px;"><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ minpar_display }}</a></td>
                     <td style="width:auto; padding:0px 0px;">{% trans d.0 %}</td>
-                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and d.2 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
+                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and field_value == "True" %}{% trans "Yes" %}
+                        {% elif d.4 == "check" and field_value == "False" %}{% trans "No" %}
+                        {% elif d.4 == "check" and k == "weakprop" %}{% trans "Neutral" %}
+                        {% elif d.4 == "check" and k == "weakdrop" %}{% trans "Neutral" %}
                         {% else %}{{ field_value|machine_field_translate:args }}{% endif %}</td>
-                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and d.3 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
+                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and other_field_value == "True" %}{% trans "Yes" %}
+                        {% elif d.4 == "check" and other_field_value == "False" %}{% trans "No" %}
+                        {% elif d.4 == "check" and k == "weakprop" %}{% trans "Neutral" %}
+                        {% elif d.4 == "check" and k == "weakdrop" %}{% trans "Neutral" %}
                         {% else %}{{ other_field_value|machine_field_translate:args }}{% endif %}</td>
                     {% endwith %}
                     {% endwith %}
@@ -952,13 +1009,13 @@
                <table class='table table-condensed'>
                    {% for rel, target_display in otherrelations %}
                     <tr id='row_{{rel.id}}'>
-                        {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                        {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                         {% if "change_dataset" in dataset_perms %}
                         <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}'><span class='glyphicon glyphicon-trash relation_delete'></span></td>
                         {% else %}
                         <td></td>
                         {% endif %}
-                        <td class='edit edit_relation_role' id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
+                        <td id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                         <td id='relationtarget_{{rel.id}}'>
                             <a id='relation_target_hyperlink_{{rel.id}}'
                                href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
@@ -966,7 +1023,7 @@
                    {% endfor %}
                </table>
                
-               {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+               {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                {% if "change_dataset" in dataset_perms %}
                <form name='add_relation_form' id='add_relation_form'
                      onsubmit='return validateForm("add_relation_form","targetid","sourceid",
@@ -1016,7 +1073,7 @@
 		            </tr>
                    {% for rel in gloss.relationtoforeignsign_set.all %}
                     <tr id='foreign_{{rel.id}}'>
-                        {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                        {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                         {% if "change_dataset" in dataset_perms %}
                         <td class='edit edit_foreign_delete' id='relationforeign-delete_{{rel.id}}'><span class='glyphicon glyphicon-trash relationtoforeignsign_delete'></span></td>
                         {% else %}
@@ -1029,7 +1086,7 @@
                    {% endfor %}
                </table>
 
-               {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+               {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                {% if "change_dataset" in dataset_perms %}
                <form id='add_relationtoforeignsign_form' method='post' action='{% url "dictionary:add_relationtoforeignsign" %}'>
                    {% csrf_token %}
@@ -1115,7 +1172,7 @@
                     </td>
                 </tr>
 
-                {%if SHOW_DATASET_INTERFACE_OPTIONS %} <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset' colspan="2">{{ gloss.dataset }}</td></tr>{% endif %}
+                {%if SHOW_DATASET_INTERFACE_OPTIONS %} <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset' colspan="2">{{ gloss.lemma.dataset }}</td></tr>{% endif %}
 
                 <tr><th>{% trans "In Web Dictionary" %}</th>
                     <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'>
@@ -1174,7 +1231,7 @@
               <tr>
                 <td>
 
-                   {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                   {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                    {% if "change_dataset" in dataset_perms %}
                     {% if not def.published and perms.dictionary.can_delete_unpublished or def.published and perms.dictionary.can_delete_published %}
                     <span class='glyphicon glyphicon-trash definition_delete' data-toggle='modal' data-target='#delete_definition_modal_{{def.id}}'></span>
@@ -1223,7 +1280,7 @@
             </table>
 
 
-           {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+           {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
            {% if "change_dataset" in dataset_perms %}
             <form id='add_definition' action='{% url "dictionary:add_definition" gloss.id %}' method="POST">
                 <fieldset>
@@ -1279,7 +1336,7 @@
 
                {% for pk,path,file_type,type,alternative_gloss,file_name in other_media %}
                <tr>
-                   {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                   {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                    {% if "change_dataset" in dataset_perms %}
                      <td>
                         <span class='glyphicon glyphicon-trash other-video-delete' data-toggle='modal' data-target='#delete_other_media_{{pk}}'></span>
@@ -1321,7 +1378,7 @@
 
            </table>
 
-           {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+           {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
            {% if "change_dataset" in dataset_perms %}
             <form id='add_other_media' action='{% url "dictionary:add_othermedia" %}' method="POST" enctype="multipart/form-data">
 

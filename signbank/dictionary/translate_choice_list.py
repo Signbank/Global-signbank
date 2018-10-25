@@ -2,7 +2,7 @@ from collections import OrderedDict
 import signbank.settings.base as settings
 
 
-def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_'):
+def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_',shortlist=False):
 
     codes_to_adjectives = dict(settings.LANGUAGES)
 
@@ -16,11 +16,25 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
     except AttributeError:
         raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,'english_name')) for choice in queryset]
 
-    sorted_choice_list = [(id_prefix+'0','-'),(id_prefix+'1','N/A')]+sorted(raw_choice_list,key = lambda x: x[1])
-
     if ordered:
-        return OrderedDict(sorted_choice_list)
+
+        if shortlist:
+            sorted_choice_list = OrderedDict(sorted(raw_choice_list,key = lambda x: x[1]))
+        else:
+            sorted_choice_list = OrderedDict(sorted(raw_choice_list,key = lambda x: x[1]))
+            sorted_choice_list.update({id_prefix+'1':'N/A'})
+            sorted_choice_list.move_to_end(id_prefix+'1', last=False)
+            sorted_choice_list.update({id_prefix+'0':'-'})
+            sorted_choice_list.move_to_end(id_prefix+'0', last=False)
+
+        return sorted_choice_list
     else:
+
+        if shortlist:
+            sorted_choice_list = sorted(raw_choice_list, key=lambda x: x[1])
+        else:
+            sorted_choice_list = [(id_prefix + '0', '-'), (id_prefix + '1', 'N/A')] + sorted(raw_choice_list,
+                                                                                             key=lambda x: x[1])
         return sorted_choice_list
 
 
@@ -51,3 +65,15 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
             human_value = machine_value
 
     return human_value
+
+def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=False):
+
+    raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,'machine_value')) for choice in queryset]
+
+    sorted_choice_list = [(id_prefix+'0',0),(id_prefix+'1',1)]+sorted(raw_choice_list,key = lambda x: x[1])
+
+    if ordered:
+        return OrderedDict(sorted_choice_list)
+    else:
+        return sorted_choice_list
+

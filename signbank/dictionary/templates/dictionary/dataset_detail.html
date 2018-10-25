@@ -20,7 +20,7 @@
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
     var saving_str = '{% trans "Saving..." %}'
     var csrf_token = '{{csrf_token}}';
-    var edit_post_url = '{{URL}}/datasets/change_details/{{dataset.id}}';
+    var edit_post_url = '{{PREFIX_URL}}/datasets/change_details/{{dataset.id}}';
 
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
@@ -44,7 +44,11 @@
         <tr><th>{% trans "Dataset name" %}</th><td>{{dataset.name}}</td></tr>
         <tr><th>{% trans "Acronym" %}</th><td class='edit edit_text' align="left" id='acronym' name='acronym'
                 value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td></tr>
-
+        <tr><th>{% trans "Accessible by others" %}</th>
+            <td class="edit edit_check" id='is_public' type="hidden" value='{% if dataset.is_public %}True{% else %}False{% endif %}' name="is_public">
+                {% if dataset.is_public %}True{% else %}False{% endif %}
+            </td>
+        </tr>
         <tr><th>{% trans "Owner &amp; Contact person(s)" %}</th>
             <td>
                 {% for owner in dataset.owners.all %}

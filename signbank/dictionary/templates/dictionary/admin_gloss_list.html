@@ -1,5 +1,6 @@
 ﻿{% extends "baselayout.html" %}
 {% load i18n %}
+{% load stylesheet %}
 {% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 {% load tagging_tags %}
@@ -9,12 +10,22 @@
 {% endblock %}
 
 {% block extrajs %}
+    <script type="text/javascript">
+        var url = '{{URL}}{{PREFIX_URL}}';
+    </script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script type='text/javascript'>
-    var url = '{{URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+    var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
+    var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+    var csrf_token = '{{csrf_token}}';
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
 
      $(document).ready(function(){
 
@@ -28,7 +39,7 @@
 
         $('[data-toggle="tooltip"]').tooltip();
 
-        if (show_dataset_interface_options) {
+        if (show_dataset_interface_options && user_can_add_gloss) {
 
             /**
              * In the 'add gloss' form, toggle the annotation idgloss fields depending on the chosen dataset
@@ -36,190 +47,63 @@
              set_annotationidglosslanguages();
 
              $('#id_dataset').change(function() {
+                console.log("Dataset changed");
                 set_annotationidglosslanguages();
              });
-
-             function set_annotationidglosslanguages() {
-                var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
-                var languages = languages_str.split(",");
-                $("[id*='add_gloss_dataset_']").each(function(){
-                    $(this).hide();
-                });
-                for(var id in languages) {
-                    $("[id*='add_gloss_dataset_header_" + languages[id] + "']").show();
-                    $("[id*='add_gloss_dataset_value_" + languages[id] + "']").show();
-                }
-             }
          }
 
-         $('#id_handedness').attr('multiple','multiple');
-         $('#id_handedness').attr('class',"js-example-basic-multiple form-control");
-         $('#id_handedness').attr('name','handedness[]');
-         $('#id_handedness').css('width', '100%');
-         $('#id_handedness').select2({
+        function makeMultipleSelect(fieldId,fieldVar) {
+            var target_pulldown = document.getElementById(fieldId);
+            target_pulldown.setAttribute('multiple','multiple');
+            target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+            target_pulldown.setAttribute('name',fieldVar);
+            target_pulldown.style.width = '100%';
+        }
+
+         for (var i = 0; i < multiple_select_fields.length; i++) {
+            var this_id = 'id_' + multiple_select_fields[i];
+            var this_var = multiple_select_fields[i] + '[]';
+            makeMultipleSelect(this_id, this_var);
+         }
+
+         $('.js-example-basic-multiple').select2({
             allowClear: true,
             dropdownAutoWidth: true,
             width: 'resolve'
          });
-         $('#id_handedness').val(null).trigger('change');
+         $('.js-example-basic-multiple').val(null).trigger('change');
 
-         $('#id_domhndsh').attr('multiple','multiple');
-         $('#id_domhndsh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_domhndsh').attr('name','domhndsh[]');
-         $('#id_domhndsh').css('width', '100%');
-         $('#id_domhndsh').select2({
+
+         <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
+         <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
+
+         <!--Alert: the id for sign language is signLanguage (with an uppercase L), not the same as the model field!-->
+         <!--Django was messing up the template generation otherwise (without the uppercase L)-->
+         <!--The value field is signlanguage[] (lowercase l to match the model)-->
+
+         makeMultipleSelect('id_signLanguage', 'signlanguage[]');
+         $('#id_signLanguage').select2({
             allowClear: true,
             dropdownAutoWidth: true,
             width: 'resolve'
          });
-         $('#id_domhndsh').val(null).trigger('change');
+         $('#id_signLanguage').val(null).trigger('change');
 
-         $('#id_subhndsh').attr('multiple','multiple');
-         $('#id_subhndsh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_subhndsh').attr('name','subhndsh[]');
-         $('#id_subhndsh').css('width', '100%');
-         $('#id_subhndsh').select2({
+         $('#id_signLanguage').change(function() {
+            set_signlanguages_dialects();
+         });
+
+         <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
+         <!--Django was messing up the template generation otherwise (without the s at the end)-->
+
+         makeMultipleSelect('id_dialects', 'dialect[]');
+         $('#id_dialects').select2({
             allowClear: true,
             dropdownAutoWidth: true,
             width: 'resolve'
          });
-         $('#id_subhndsh').val(null).trigger('change');
-
-         $('#id_handCh').attr('multiple','multiple');
-         $('#id_handCh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_handCh').attr('name','handCh[]');
-         $('#id_handCh').css('width', '100%');
-         $('#id_handCh').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_handCh').val(null).trigger('change');
-
-         $('#id_relatArtic').attr('multiple','multiple');
-         $('#id_relatArtic').attr('class',"js-example-basic-multiple form-control");
-         $('#id_relatArtic').attr('name','relatArtic[]');
-         $('#id_relatArtic').css('width', '100%');
-         $('#id_relatArtic').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_relatArtic').val(null).trigger('change');
-
-         $('#id_locprim').attr('multiple','multiple');
-         $('#id_locprim').attr('class',"js-example-basic-multiple form-control");
-         $('#id_locprim').attr('name','locprim[]');
-         $('#id_locprim').css('width', '100%');
-         $('#id_locprim').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_locprim').val(null).trigger('change');
-
-         $('#id_relOriMov').attr('multiple','multiple');
-         $('#id_relOriMov').attr('class',"js-example-basic-multiple form-control");
-         $('#id_relOriMov').attr('name','relOriMov[]');
-         $('#id_relOriMov').css('width', '100%');
-         $('#id_relOriMov').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_relOriMov').val(null).trigger('change');
-
-         $('#id_relOriLoc').attr('multiple','multiple');
-         $('#id_relOriLoc').attr('class',"js-example-basic-multiple form-control");
-         $('#id_relOriLoc').attr('name','relOriLoc[]');
-         $('#id_relOriLoc').css('width', '100%');
-         $('#id_relOriLoc').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_relOriLoc').val(null).trigger('change');
-
-         $('#id_oriCh').attr('multiple','multiple');
-         $('#id_oriCh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_oriCh').attr('name','oriCh[]');
-         $('#id_oriCh').css('width', '100%');
-         $('#id_oriCh').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_oriCh').val(null).trigger('change');
-
-         $('#id_contType').attr('multiple','multiple');
-         $('#id_contType').attr('class',"js-example-basic-multiple form-control");
-         $('#id_contType').attr('name','contType[]');
-         $('#id_contType').css('width', '100%');
-         $('#id_contType').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_contType').val(null).trigger('change');
-
-         $('#id_movSh').attr('multiple','multiple');
-         $('#id_movSh').attr('class',"js-example-basic-multiple form-control");
-         $('#id_movSh').attr('name','movSh[]');
-         $('#id_movSh').css('width', '100%');
-         $('#id_movSh').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_movSh').val(null).trigger('change');
-
-         $('#id_movDir').attr('multiple','multiple');
-         $('#id_movDir').attr('class',"js-example-basic-multiple form-control");
-         $('#id_movDir').attr('name','movDir[]');
-         $('#id_movDir').css('width', '100%');
-         $('#id_movDir').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_movDir').val(null).trigger('change');
-
-
-         $('#id_namEnt').attr('multiple','multiple');
-         $('#id_namEnt').attr('class',"js-example-basic-multiple form-control");
-         $('#id_namEnt').attr('name','namEnt[]');
-         $('#id_namEnt').css('width', '100%');
-         $('#id_namEnt').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_namEnt').val(null).trigger('change');
-
-         $('#id_semField').attr('multiple','multiple');
-         $('#id_semField').attr('class',"js-example-basic-multiple form-control");
-         $('#id_semField').attr('name','semField[]');
-         $('#id_semField').css('width', '100%');
-         $('#id_semField').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_wordClass').val(null).trigger('change');
-
-         $('#id_wordClass').attr('multiple','multiple');
-         $('#id_wordClass').attr('class',"js-example-basic-multiple form-control");
-         $('#id_wordClass').attr('name','wordClass[]');
-         $('#id_wordClass').css('width', '100%');
-         $('#id_wordClass').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_wordClass').val(null).trigger('change');
-
+         $('#id_dialects').val(null).trigger('change');
 });
-
 
 
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
@@ -294,13 +178,13 @@ function do_adminsearch(el) {
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "morpheme":
-        $("#adminsearch").attr('action', '{{URL}}/morphemes/search/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/morphemes/search/');
         break;
     case "sign":
-        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
         break;
     case "sign_or_morpheme":
-        $("#adminsearch").attr('action', '{{URL}}/signs/search/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
         break;
   }
   document.getElementById('adminsearch').submit();
@@ -328,22 +212,24 @@ function do_toggle_groups(el) {
   }
   document.getElementById('adminsearch').submit();
 }
-   </script>
+</script>
 
-    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
+<script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
 
+<script type='text/javascript'>
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
+</script>
 {% endblock %}
 
 
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
-{% if perms.dictionary.search_gloss %}
-
 {{ form.media.css }}
 {{ form.media.js }}
 
-<form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/signs/search'>
+<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search'>
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
@@ -375,16 +261,15 @@ function do_toggle_groups(el) {
 
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
                 <div class="hidden">
-                    <input name='sortOrder' class='form-control' value='idgloss' >
+                    <input name='sortOrder' class='form-control' value='lemma__lemmaidglosstranslation__text' >
                     <input name='search_type' class='form-control' value='{{search_type}}'>
                 </div>
                 <div>
                     <table class='table' id='searchfields'>
                         {% for dataset_lang in dataset_languages %}
-                        {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
-                        {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
 
                         <tr>
+                            {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
                             <td>
                                 <div class='input-group'>
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
@@ -393,20 +278,25 @@ function do_toggle_groups(el) {
                                 <input name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                                 </div>
                             </td>
+                            {% endwith %}
 
+                            {% with searchform|get_lemma_field_for_language:dataset_lang as lemma_field %}
                             <td><div class='input-group'>
 
-                                <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
-                                <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
+                                <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
+                                    {{lemma_field.label}}
+                                </label>
+                                <input name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
                             </td>
+                            {% endwith %}
 
+                            {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
                             <td><div class='input-group'>
                                 <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
                                 <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
                             </td>
+                            {% endwith %}
                         </tr>
-                        {% endwith %}
-                        {% endwith %}
                         {% endfor %}
                     </table>
                 </div>
@@ -417,26 +307,17 @@ function do_toggle_groups(el) {
 
                         <div id='searchpanels' class='collapse'>
                         <table class='table'>
-                              <tr>
-                                <td>
-                                    <div class='input-group'>
-                                        <label class='input-group-addon' for='id_signlanguage'>{{searchform.signlanguage.label}}</label>
-                                        {{searchform.signlanguage}}
-                                    </div>
+                            {% csrf_token %}
+                            <tr id='signlanguage_selection'>
+                                <td><label>{{searchform.signLanguage.label}}</label>
+                                        {{ searchform.signLanguage }}
                                 </td>
-                                <td>
-                                    <div class='input-group'>
-                                        <label class='input-group-addon' for='id_dialect'>{{searchform.dialect.label}}</label>
-                                        {{searchform.dialect}}
-                                    </div>
+                            </tr>
+                            <tr id='dialect_selection'>
+                                  <td><label>{{searchform.dialects.label}}</label>
+                                        {{ searchform.dialects }}
                                 </td>
-                              </tr>
-
-                                                    <span class="select2 select2-container select2-container--below">
-                                                        <span class="selection">
-                                                            <span class="select2-selection select2-selection--multiple" role="combobox" aria-haspopup="true" tabindex="-1"></span>
-                                                        </span>
-                                                    </span>
+                            </tr>
                         </table>
 
                         <table class='table'>
@@ -730,7 +611,8 @@ function do_toggle_groups(el) {
             <button class="btn btn-primary" type="submit" name="view_type" value='gloss_list'/>{% trans "List View" %}</button>
             {% endif %}
         </a>
-        {% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{glosscount}}.
+        {% trans "Number of matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{glosscount}}.
+
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         {% trans "Datasets:" %}
         {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
@@ -738,7 +620,6 @@ function do_toggle_groups(el) {
         {% endif %}
     </div>
 </form>
-{% endif %}
 
 <div></div>
 
@@ -761,13 +642,39 @@ function do_toggle_groups(el) {
                  <tr>
                      {% if SHOW_DATASET_INTERFACE_OPTIONS %}
                      <td><select id="id_dataset" name="dataset" required="">
-                         <option value="" selected dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+                         <option value="" {% if add_gloss_form.last_used_dataset == None %}selected{% endif %}
+                                 dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
                          {% for dataset in selected_datasets %}
-                         <option value="{{ dataset.id }}" dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                         <option value="{{ dataset.id }}"
+                                 {% if add_gloss_form.last_used_dataset == dataset.name %}selected{% endif %}
+                                 dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
                          {% endfor %}
                      </select></td>
+                     {% else %}
+                     <div style="display: hidden"><select id="id_dataset" name="dataset"></select></div>
+                     <script type='text/javascript'>gloss_dataset_id = {{ selected_datasets.0.id }}</script>
                      {% endif %}
-                     <td>{{add_gloss_form.idgloss}}</td>
+                     <td>
+                         <div id="lemma_select">
+                             <!-- Input of the type ahead -->
+                             <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+                             <!-- Input that holds the lemma id the user chose from the type ahead -->
+                             <input type='hidden' name='idgloss' value='confirmed' required="">
+                             <a href="#" onclick="return toggleAddLemma()">{% trans "Create new" %}</a>
+                         </div>
+                         <div id="lemma_add">
+                            {% for dataset_lang in dataset_languages %}
+                             <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</span>
+                            <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                   name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                   maxlength="30" type="text"/>
+
+                            {% endfor %}
+
+                             <a href="#" onclick="return toggleAddLemma()">{% trans "Select" %}</a>
+                         </div>
+                         <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
+                     </td>
                      {% for dataset_lang in dataset_languages %}
                      <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
                          <input id="glosscreate_{{ dataset_lang.language_code_2char }}" name="glosscreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
@@ -836,7 +743,7 @@ function do_toggle_groups(el) {
            {% endwith %}
           {% endfor %}
 
-           {% with "idgloss translation handedness domhndsh subhndsh locprim" as head_fields %}
+           {% with "lemma__lemmaidglosstranslation__text translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% with minfield="-"|add:field %}
            <th>
@@ -858,7 +765,6 @@ function do_toggle_groups(el) {
     </thead>
     <tbody>
     {% for gloss in object_list %}
-            <!-- EK: the color depends on: (1) tag for wrong sign, (2) availability of video, and (3) gloss database value for 'isNew' -->
             {% tags_for_object gloss as tag_list %}
             {% if tag_list|wrong_sign %}
                 <tr class="danger">
@@ -872,7 +778,7 @@ function do_toggle_groups(el) {
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+          <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       {% for dataset_lang in dataset_languages %}
@@ -880,28 +786,27 @@ function do_toggle_groups(el) {
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
             {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            <div class="morpheme_gloss"><a href="{{PREFIX_URL}}/dictionary/morpheme/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% else %}
-            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
             {% if gloss.simultaneous_morphology.count > 0 %}
-              {% if gloss.simultaneous_morphology.count > 3 %}
-                  <span class="morpheme_in_gloss">({{gloss.simultaneous_morphology.all.count}} {% trans "morphemes" %})</span>
-              {% else %}
-                  <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.simultaneous_morphology.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}/">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                      {% if component.inWeb == 'True' or not user.is_anonymous %}
+                      <span><a class="morpheme_style" href="{{PREFIX_URL}}/dictionary/morpheme/{{morphdef.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                      {% endif %}
                   {% endfor %}
                   </div>
-              {% endif %}
             {% endif %}
 
             {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a  class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  {% if component.inWeb == 'True' or not user.is_anonymous %}
+                  <span><a  class="gloss_detail_component" href="{{PREFIX_URL}}/dictionary/gloss/{{component.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  {% endif %}
               {% endfor %}
               </div>
             {% endif %}
@@ -912,9 +817,9 @@ function do_toggle_groups(el) {
 
       <td>
           {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div class="morpheme_gloss">{{gloss.idgloss}}</div>
+          <div class="morpheme_gloss">{{gloss.lemma}}</div>
           {% else %}
-          <div>{{gloss.idgloss}}</div>
+          <div>{{gloss.lemma}}</div>
           {% endif %}
       </td>
 
@@ -937,17 +842,17 @@ function do_toggle_groups(el) {
                 <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
 
                 {% with gloss.domhndsh|translate_to_dutch:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -959,17 +864,17 @@ function do_toggle_groups(el) {
                 <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
 
                 {% with gloss.domhndsh|translate_to_chinese:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -983,17 +888,17 @@ function do_toggle_groups(el) {
                 <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
 
                 {% with gloss.domhndsh|translate_to_english:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
+                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
+                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -1060,7 +965,7 @@ function do_toggle_groups(el) {
 
 {% if object_list %}
 
-{% regroup object_list by idgloss as lemma_groups %}
+{% regroup object_list by lemma as lemma_groups %}
 
 <table class='table table-condensed'>
     <thead>
@@ -1102,7 +1007,7 @@ function do_toggle_groups(el) {
         <td></td>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail {% if CROP_GLOSS_IMAGES %}cropped_thumbnail{% endif %}" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+          <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
 
       {% for dataset_lang in dataset_languages %}
@@ -1110,9 +1015,9 @@ function do_toggle_groups(el) {
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
             {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-            <div class="morpheme_gloss"><a href="{{ URL }}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            <div class="morpheme_gloss"><a href="{{PREFIX_URL}}/dictionary/morpheme/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% else %}
-            <div><a href="{{ URL }}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+            <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
             {% endif %}
 
             {% if gloss.simultaneous_morphology.count > 0 %}
@@ -1122,7 +1027,7 @@ function do_toggle_groups(el) {
                   <!-- Number of morphemes is [1-3] -->
                   <div class="morpheme_in_gloss">
                   {% for morphdef in gloss.simultaneous_morphology.all %}
-                  <span><a class="morpheme_style" href="{{ URL }}/dictionary/morpheme/{{morphdef.morpheme.pk}}/">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
+                  <span><a class="morpheme_style" href="{{PREFIX_URL}}/dictionary/morpheme/{{morphdef.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ morphdef.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %}, {% endif %}</span>
                   {% endfor %}
                   </div>
               {% endif %}
@@ -1131,7 +1036,7 @@ function do_toggle_groups(el) {
             {% if gloss.parent_glosses.count > 0 %}
               <div class="component_in_gloss">
               {% for component in gloss.parent_glosses.all %}
-                  <span><a class="gloss_detail_component" href="{{ URL }}/dictionary/gloss/{{component.morpheme.pk}}/">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
+                  <span><a class="gloss_detail_component" href="{{PREFIX_URL}}/dictionary/gloss/{{component.morpheme.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{ component.morpheme|get_annotation_idgloss_translation:dataset_lang }}</a>{% if not forloop.last %} + {% endif %}</span>
               {% endfor %}
               </div>
             {% endif %}
@@ -1162,14 +1067,14 @@ function do_toggle_groups(el) {
                     {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
                     {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -1184,14 +1089,14 @@ function do_toggle_groups(el) {
                     {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
                     {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 
@@ -1208,14 +1113,14 @@ function do_toggle_groups(el) {
                     {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
                         <td>{{ domhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
                 {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
                     {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
                         <td>{{ subhndsh_display }}</td>
                     {% else %}
-                        <td><a href="{{ URL }}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
+                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
                     {% endif %}
                 {% endwith %}
 

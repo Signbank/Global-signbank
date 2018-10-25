@@ -45,7 +45,7 @@
                 var a = document.createElement("a");
                 a.setAttribute("class", "btn btn-default");
                 a.style["float"] = "none";
-                a.href = "{% url 'root_page' %}dictionary/handshape/" + json_data[key].id + "/";
+                a.href = "{{PREFIX_URL}}/dictionary/handshape/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
                 var linktext = document.createTextNode(json_data[key].handshape);
                 a.appendChild(linktext);
@@ -77,13 +77,35 @@
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
         $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
-        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').outerHeight() + $('#signinfo').outerHeight())});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
         });
         $('#collapse-panels').on('click', function() {
             $('#definition .collapse').collapse('hide');
         });
+        $('#panel-expand-collapse-btn-group').affix({
+            offset: {
+                top: $('#panel-expand-collapse-btn-group').offset().top - $('#signbank-bar').height() - $('#signinfo').height()
+                 + parseInt($('#signbank-bar').css('margin-bottom'))
+                 + parseInt($('#panel-expand-collapse-btn-group').css('height')),
+            }
+        });
+        $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
+            $('#panel-expand-collapse-btn-group').css({
+                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
+                'top': ($('#signbank-bar').height() - $('#navbar').height() + parseInt($('#definitionblock').css('padding-top')) + 3) + 'px',
+            });
+         });
+        $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
+            $('#panel-expand-collapse-btn-group').css({
+                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
+                'top': '0px',
+            });
+         });
+         $('#panel-expand-collapse-btn-toolbar').css({
+            'height': $('#panel-expand-collapse-btn-group').css('height'),
+         });
     </script>
 
 {% endblock %}
@@ -103,19 +125,19 @@
 
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
 
-    <div class='btn-group'>
-
-    <div id="listhandshapes">
-    <a class='btn btn-default navbar-btn' href="{% url 'root_page' %}dictionary/handshapes/">{% trans "Handshapes List" %}</a>
-    </div>
-    </div>
+    <ul class='nav navbar-nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/handshapes/">{% trans "Handshapes List" %}</a>
+        </li>
+    </ul>
 
     {% if perms.dictionary.change_gloss %}
-    <div class='pull-right' style="margin-right:15px;margin-top:3px;">
-         <span id='edit_message' style="padding-right: 1.8em;"></span>
+    <ul class='nav navbar-nav navbar-right' style="margin-right:15px;">
+        <li>
+         <span id='edit_message' style="padding-right: 1.8em;margin-bottom:-1px;"></span>
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
-
-    </div>
+        </li>
+    </ul>
     {% endif %}
 
 </div>
@@ -136,7 +158,7 @@
         <div class='editform'>
             <fieldset>
                 <legend>{% trans "Upload New Handshape Image" %}</legend>
-                <form action="{{URL}}/handshapeimage/upload/" method="post" enctype="multipart/form-data">
+                <form action="{{PREFIX_URL}}/handshapeimage/upload/" method="post" enctype="multipart/form-data">
                   {% csrf_token %}
                   <input type='hidden' name='redirect' value='{{request.path}}?edit'>
                 <table id="staffops">
@@ -155,7 +177,7 @@
     </div>
 
     <!-- Fields -->
-    <div class='panel-group' id="handshape">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;margin-top:15px;">
         <fieldset>
             <table class='table table-condensed'>
                 <tr><th style="width:18em;">{% trans "Handshape " %}</th><td id='idhandshape'>{% value handshape.english_name %}</td></tr>
