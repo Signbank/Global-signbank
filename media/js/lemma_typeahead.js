@@ -44,7 +44,9 @@ $('.lemmatypeahead').on("input", function() {
     });
 
 $(document).ready(function() {
-    $('.lemmatypeahead').prop("disabled", true);
+    if($("#id_dataset").val() == "") {  // No dataset selected
+        $('.lemmatypeahead').prop("disabled", true);
+    }
     $("#id_dataset").change(function() {
         if(this.value) {
             $('.lemmatypeahead').prop("disabled", false);
