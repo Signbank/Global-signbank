@@ -75,7 +75,6 @@ MINIMAL_PAIRS_COUNT = len(MINIMAL_PAIRS_FIELDS)
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {
-    'CV_ID': 'CNGT_RU-lexicon',
     'include_phonology_and_frequencies': True,
 
     # The order of languages matters as the first will

@@ -6,7 +6,7 @@
     <LANGUAGE LANG_DEF="{{ data.0 }}" LANG_ID="{{ language_code }}" LANG_LABEL="{{ data.1 }}"/>
     {% endfor %}
     {% endwith %}
-   <CONTROLLED_VOCABULARY CV_ID="{{ dataset.name }}-Signbank-lexicon">
+   <CONTROLLED_VOCABULARY CV_ID="{% if CV_ID %}{{ CV_ID }}{% else %}{{ dataset.name }}-Signbank-lexicon{% endif %}">
        {% for language in languages %}
        <DESCRIPTION LANG_REF="{{ language.language_code_3char }}">{{ dataset.description }}</DESCRIPTION>
        {% endfor %}
