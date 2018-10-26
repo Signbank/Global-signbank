@@ -1208,6 +1208,7 @@ def write_ecv_file_for_dataset(dataset_name):
     query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(lemma__dataset=dataset_id)
 
     context = {
+        'CV_ID': ECV_SETTINGS['CV_ID'] if 'CV_ID' in ECV_SETTINGS else "",
         'date': str(DT.date.today()) + 'T' + str(DT.datetime.now().time()),
         'glosses': query_dataset,
         'dataset': dataset_id,

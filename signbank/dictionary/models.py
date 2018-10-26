@@ -1655,10 +1655,10 @@ def fieldname_to_kind(fieldname):
             field_kind = field_type
     except:
         print('fieldname not found in fieldname_to_kind_table: ', fieldname)
+
         field_kind = fieldname
 
     return field_kind
-
 
 class Relation(models.Model):
     """A relation between two glosses"""
