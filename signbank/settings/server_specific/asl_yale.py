@@ -22,6 +22,7 @@ COUNTRY_NAME = "United States of America"
 SIGNBANK_VERSION_CODE = 'ASL'
 URL = 'https://aslsignbank.haskins.yale.edu/'
 ALLOWED_HOSTS = ['spinup-000691.yu.yale.edu','10.5.34.251','aslsignbank.haskins.yale.edu']
+PREFIX_URL = ''
 
 LANGUAGES = (
   ('en_US', 'American English'),
@@ -43,6 +44,13 @@ FIELDS['phonology'] = ['handedness','locPrimLH','initial_secondary_loc','final_s
 FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconType']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
+
+# The multiple select fields should be pull-down lists in the templates
+MULTIPLE_SELECT_GLOSS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
+                             'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
+                             'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
+MULTIPLE_SELECT_MORPHEME_FIELDS = ['namEnt', 'semField', 'wordClass', 'mrpType']
+
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
 ECV_FOLDER = WRITABLE_FOLDER+'ecv'
