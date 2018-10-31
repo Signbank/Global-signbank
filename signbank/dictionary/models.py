@@ -1537,6 +1537,19 @@ try:
 except:
     pass
 
+def generate_fieldname_to_kind_table():
+    temp_field_to_kind_table = dict()
+    for f in Gloss._meta.fields:
+        temp_field_to_kind_table[f.name] = (f.get_internal_type(), f.choices)
+    for h in Handshape._meta.fields:
+        if h not in temp_field_to_kind_table.keys():
+            temp_field_to_kind_table[h.name] = (h.get_internal_type(), h.choices)
+        else:
+            print('generate fieldname to kind table found identical field in Handshape and Gloss: ', h.name)
+    return temp_field_to_kind_table
+
+fieldname_to_kind_table = generate_fieldname_to_kind_table()
+
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
 def save_info_about_deleted_gloss(sender,instance,using,**kwarsg):
     from signbank.tools import get_default_annotationidglosstranslation
@@ -1628,27 +1641,24 @@ def fieldname_to_category(fieldname):
 
 # this can be used for phonology and handshape fields
 def fieldname_to_kind(fieldname):
-    if fieldname in ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic',
-                     'locprim', 'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir',
-                     'final_domdndsh', 'final_subhndsh', 'namEnt', 'semField', 'valence',
-                     'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
-                     'hsFingConf2', 'hsAperture',
-                     'hsSpread', 'hsFingUnsel', 'wordClass','wordClass2',
-                     'locPrimLH','initial_secondary_loc','final_secondary_loc',
-                     'domSF','domFlex','derivHist','iconType']:
-        field_kind = 'list'
-    elif fieldname in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'useInstr','lexCatNotes']:
-        field_kind = 'text'
-    elif fieldname in ['repeat','altern', 'weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter',
-                         'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
-                         'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
-                         'ufT', 'ufI', 'ufM', 'ufR', 'ufP',
-                         'oriChAbd','oriChFlex']:
-        field_kind = 'check'
-    else:
-        field_kind = fieldname
-    return field_kind
+    global fieldname_to_kind_table
 
+    try:
+        (field_type, choices) = fieldname_to_kind_table[fieldname]
+        if field_type == 'CharField' and choices:
+            field_kind = 'list'
+        elif field_type == 'TextField' or (field_type == 'CharField' and not choices):
+            field_kind = 'text'
+        elif field_type == 'NullBooleanField' or field_type == 'BooleanField':
+            field_kind = 'check'
+        else:
+            field_kind = field_type
+    except:
+        print('fieldname not found in fieldname_to_kind_table: ', fieldname)
+
+        field_kind = fieldname
+
+    return field_kind
 
 class Relation(models.Model):
     """A relation between two glosses"""
