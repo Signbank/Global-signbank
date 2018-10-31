@@ -1835,6 +1835,23 @@ class Dataset(models.Model):
     def __str__(self):
         return self.name
 
+    def generate_short_name(self):
+
+        CHARACTER_THRESHOLD = 16
+
+        if len(self.name) <= CHARACTER_THRESHOLD:
+            return self.name
+        else:
+
+            #Cut of last word
+            shortened_name = ' '.join(self.name.split()[:-1])
+
+            if len(shortened_name) <= CHARACTER_THRESHOLD:
+                return shortened_name
+            else:
+                return shortened_name[:CHARACTER_THRESHOLD]
+
+
     def count_glosses(self):
 
         count_glosses = LemmaIdgloss.objects.filter(dataset_id=self.id).count()
