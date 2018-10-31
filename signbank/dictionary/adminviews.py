@@ -2951,6 +2951,11 @@ class DatasetManagerView(ListView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
+        default_language_choice_dict = dict()
+        for language in dataset_languages:
+            default_language_choice_dict[language.name] = language.name
+        context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
