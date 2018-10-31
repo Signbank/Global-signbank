@@ -20,13 +20,13 @@
     <h1>Global <br/><span id="second-title-part">signbank</span></h1>
 
     {% if user.is_authenticated %}
-    {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
+    {% if SHOW_DATASET_INTERFACE_OPTIONS and viewable_datasets %}
         <div class='navbar-text' style="left-margin: 15px;">
             <div class='taglist ribbon_list'>
                 {% load underscore_to_space %}
-                {% for ds in selected_datasets %}
-                <div class="ribbon">
-                    {{ds.name|underscore_to_space}}
+                {% for ds,selected in viewable_datasets %}
+                <div class="ribbon {% if selected %}selected{% endif %}">
+                    {{ds.generate_short_name|underscore_to_space}}
                 </div>
                 {% endfor %}
             </div>
