@@ -11,6 +11,7 @@ from django.forms.utils import ValidationError
 import tagging
 import re
 import copy
+import shutil
 
 import sys, os
 import json
@@ -1401,6 +1402,37 @@ class Gloss(models.Model):
         """Test to see if the video for this sign is present"""
         
         return self.get_video() != None
+
+    def rename_video(self, old_video_path, new_video_path):
+        """
+        Renames the video files for this gloss.
+        :param old_video_path: 
+        :param new_video_path: 
+        :return: 
+        """
+        new_dir = os.path.dirname(new_video_path)
+        if not os.path.isdir(new_dir):
+            os.mkdir(new_dir)
+        shutil.move(old_video_path, new_video_path)
+
+        # _small video file
+        old_video_file, extension = os.path.splitext(old_video_path)
+        old_video_path_small = old_video_file + '_small' + extension
+        print(old_video_path_small)
+        if os.path.exists(old_video_path_small):
+            new_video_file, extension = os.path.splitext(new_video_path)
+            new_video_path_small = new_video_file + '_small' + extension
+            print(new_video_path_small)
+            shutil.move(old_video_path_small, new_video_path_small)
+
+        # backups
+        backup_index = 1
+        old_backup = old_video_path + '_' + str(backup_index)
+        while os.path.exists(old_backup):
+            new_backup = new_video_path + '_' + str(backup_index)
+            shutil.move(old_backup, new_backup)
+            backup_index += 1
+            old_backup = old_video_path + '_' + str(backup_index)
 
     def published_definitions(self):
         """Return a query set of just the published definitions for this gloss

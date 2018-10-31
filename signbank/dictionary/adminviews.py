@@ -3941,9 +3941,15 @@ def create_lemma_for_gloss(request, glossid):
 
     if form.is_valid():
         try:
-            lemma = form.save()
-            gloss.lemma = lemma
-            gloss.save()
+            old_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
+            with atomic():
+                lemma = form.save()
+                gloss.lemma = lemma
+                gloss.save()
+            new_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
+
+            # Rename video
+            gloss.rename_video(old_video_path, new_video_path)
         except ValidationError as ve:
             messages.add_message(request, messages.ERROR, ve.message)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
