@@ -299,7 +299,7 @@ class GlossSearchForm(forms.ModelForm):
                    'iconImg','iconType',
                    # 'namEnt', 'semField',
                    # 'wordClass',
-                   'wordClass2', 'derivHist', 'lexCatNotes', 'valence',
+                   'wordClass2', 'derivHist', 'lexCatNotes', 'valence','concConcSet',
 
                    'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
                    'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')

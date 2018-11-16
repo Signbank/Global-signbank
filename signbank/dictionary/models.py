@@ -510,6 +510,7 @@ class Gloss(models.Model):
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50, blank=True)
     lexCatNotes = models.CharField(_("Lexical category notes"),null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
+    concConcSet = models.CharField(_("Conception Concept Set"), null=True, blank=True, max_length=300)
 
     #Frequency fields
 
@@ -1401,7 +1402,7 @@ class Gloss(models.Model):
     def has_video(self):
         """Test to see if the video for this sign is present"""
         
-        return self.get_video() != None
+        return self.get_video() not in ['',None]
 
     def rename_video(self, old_video_path, new_video_path):
         """
