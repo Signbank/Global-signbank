@@ -538,16 +538,81 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    result = 'OK'
+    from os import listdir
+    from os.path import isfile
 
-    # for gloss in Gloss.objects.all():
-    #     for simultaneous_morphology in gloss.simultaneous_morphology.all():
-    #         definition = SimultaneousMorphologyDefinition()
-    #         definition.morpheme = simultaneous_morphology
-    #         definition.parent_gloss = gloss
-    #         definition.save()
+    s = ''
 
-    return HttpResponse(result)
+    pk_to_name = {}
+    skipped_filenames = []
+
+    video_folder = WRITABLE_FOLDER + 'glossvideo/'
+
+    for subfolder in listdir(video_folder):
+        subfolder = video_folder+subfolder+'/'
+
+        for filename in listdir(subfolder):
+
+            if '_small.mp4' in filename or '.bak' in filename or '    ' in filename:
+                continue
+
+            filename = filename.replace('_1.mp4','.mp4')
+
+            parts = filename.split('.')
+            shortened_filename = '.'.join(parts[:-1])
+            parts = shortened_filename.split('-')
+
+            name = '-'.join(parts[:-1])
+
+            try:
+                pk = int(parts[-1])
+            except ValueError:
+                skipped_filenames.append(filename)
+
+            pk_to_name[pk] = name
+
+    for gloss in Gloss.objects.all():
+
+        line = ''
+
+        if gloss.dataset != None and gloss.dataset.name == 'Shanghainese':
+
+            video_path = WRITABLE_FOLDER+gloss.get_video_path()
+            small_video_path = video_path.replace('.mp4','_small.mp4')
+            image_path = gloss.get_image_path()
+
+            if image_path == None:
+                image_path = ''
+            else:
+                image_path = WRITABLE_FOLDER+image_path
+
+            if not isfile(video_path) or not isfile(image_path):
+                line += '|' + gloss.idgloss + '|'
+
+                if isfile(video_path):
+                    line += 'x'
+
+                line += '|'
+
+                if isfile(small_video_path):
+                    line += 'x'
+
+                line += '|'
+
+                if gloss.pk in pk_to_name.keys():
+                    line += 'x'
+
+                line += '|'
+
+                if isfile(image_path):
+                    line += 'x'
+
+                line += '|<br>'
+
+            if '||||' not in line:
+                s += line
+
+    return HttpResponse(s)
 
 def import_authors(request):
 
