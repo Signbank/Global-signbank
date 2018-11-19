@@ -1188,13 +1188,10 @@ class Gloss(models.Model):
 
     # Homonyms
     # these are now defined in settings
-    # 19 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
     # add fields: 'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop'
-    # 20
-    def homonym_objects(self):
 
-        paren = ')'
+    def homonym_objects(self):
 
         homonym_objects_list = []
 
@@ -1220,44 +1217,43 @@ class Gloss(models.Model):
 
             return homonym_objects_list
 
-        where_homonyms_filled = ''
-        where_homonyms_empty = ''
+        q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
-        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
+        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter',
+                                                      'subhndsh_number', 'weakdrop', 'weakprop']:
+
             value_of_this_field = str(phonology_for_gloss.get(field))
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == 'None' or value_of_this_field == 'False'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += " + (" + field + " IS NOT NULL AND " \
-                                                 + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
-                else:
-                    where_homonyms_empty += "(" + field + " IS NOT NULL AND " \
-                                                 + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
+            if (value_of_this_field == 'False' and field in ['weakdrop', 'weakprop']):
+                # fields weakdrop and weakprop use 3-valued logic, False only matches False, not Null
+                comparison1 = field + '__exact'
+                q.add(Q(**{ comparison1 : False }),q.AND)
+            elif (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == ''
+                                                            or value_of_this_field == 'None' or value_of_this_field == 'False'):
+                comparison1 = field + '__isnull'
+                comparison2 = field + '__exact'
+                comparison3 = field + '__exact'
+                q_or = Q(**{ comparison1 : True })
+                q_or |= Q(**{ comparison2 : '0' })
+                q_or |= Q(**{ comparison3 : False })
+                q.add(q_or,q.AND)
             elif (value_of_this_field == 'Neutral'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += ' + (' + field + ' IS NOT NULL)'
-                else:
-                    where_homonyms_empty += '(' + field + ' IS NOT NULL)'
+                # Can only match Null, not True or False
+                comparison = field + '__isnull'
+                q.add(Q(**{ comparison : True }),q.AND)
             elif (value_of_this_field == 'True'):
-                if (where_homonyms_filled.endswith(paren)):
-                    where_homonyms_filled += ' + (' + field + '=0)'
-                else:
-                    where_homonyms_filled += '(' + field + '=0)'
+                comparison = field + '__exact'
+                q.add(Q(**{ comparison : True }),q.AND)
             else:
-                if (where_homonyms_filled.endswith(paren)):
-                    where_homonyms_filled += ' + (' + field + '!=' + value_of_this_field + ')'
-                else:
-                    where_homonyms_filled += '(' + field + '!=' + value_of_this_field + ')'
+                comparison = field + '__exact'
+                q.add(Q(**{ comparison : value_of_this_field }),q.AND)
 
-        where_homonyms = '(' + where_homonyms_filled +  ' + ' + where_homonyms_empty + ')=0'
-
-        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss ' +
-                               'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' +
-                               'WHERE dictionary_gloss.id != %s AND dictionary_lemmaidgloss.dataset_id = %s AND ' + where_homonyms, [self.id, str(self.lemma.dataset.id)])
+        qs = Gloss.objects.select_related('lemma').exclude(id=self.id).filter(q)
 
         for o in qs:
             homonym_objects_list.append(o)
-
+        #
         return homonym_objects_list
+        # return qs
 
 
     def homonyms(self):
@@ -1296,43 +1292,7 @@ class Gloss(models.Model):
         if (self.domhndsh == None or self.domhndsh == '-' or self.domhndsh == '0'):
             return ([], [], [])
 
-
-        where_homonyms_filled = ''
-        where_homonyms_empty = ''
-
-        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
-            value_of_this_field = str(phonology_for_gloss.get(field))
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == 'None' or value_of_this_field == 'False'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += " + (" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
-                else:
-                    where_homonyms_empty += "(" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
-            elif (value_of_this_field == 'Neutral'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += ' + (' + field + ' IS NULL)'
-                else:
-                    where_homonyms_empty += '(' + field + ' IS NULL)'
-            elif (value_of_this_field == 'True'):
-                if (where_homonyms_filled.endswith(paren)):
-                    where_homonyms_filled += ' + (' + field + '=1)'
-                else:
-                    where_homonyms_filled += '(' + field + '=1)'
-            else:
-                if (where_homonyms_filled.endswith(paren)):
-                    where_homonyms_filled += ' + (' + field + '=' + value_of_this_field + ')'
-                else:
-                    where_homonyms_filled += '(' + field + '=' + value_of_this_field + ')'
-
-        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=20' #+ str(settings.MINIMAL_PAIRS_COUNT)
-
-        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss ' +
-                               'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' +
-                               'WHERE dictionary_gloss.id != %s AND dictionary_lemmaidgloss.dataset_id = %s AND ' + where_homonyms, [self.id, str(self.lemma.dataset.id)])
-        match_glosses = [g for g in qs]
-
-        for other_gloss in match_glosses:
-            if other_gloss != self and other_gloss.dataset == self.dataset:
-                    homonyms_of_this_gloss += [other_gloss]
+        homonyms_of_this_gloss = [ g for g in self.homonym_objects() ]
 
         homonyms_not_saved = []
         saved_but_not_homonyms = []

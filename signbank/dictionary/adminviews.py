@@ -2297,6 +2297,9 @@ class HomonymListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        # this is used to set up the ajax calls, one per each focus gloss in the table
+        context['ids_of_all_glosses'] = [ g.id for g in Gloss.none_morpheme_objects().select_related('lemma').filter(lemma__dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}))).exclude((Q(**{'domhndsh__isnull': True}))) ]
+
         return context
 
     def get_queryset(self):

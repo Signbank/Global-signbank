@@ -7,8 +7,49 @@
 {% block extrahead %}
 {% endblock %}
 
-{% block content %}
+<head>
+{% block extrajs %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
+<script type='text/javascript'>
+var csrf_token = '{{csrf_token}}';
+var ids_of_all_glosses = {{ids_of_all_glosses|safe}};
+var url = '{{ PREFIX_URL }}'
+
+// This script gets homonym objects
+$(document).ready(function() {
+    for (var i = 0; i < ids_of_all_glosses.length; i++) {
+        $.ajax({
+            url : url + "/ajax/homonyms/" + ids_of_all_glosses[i] + "/",
+            datatype: "json",
+            success : function(result) {
+                for (var key in result) {
+                    var homonyms_i = result[key];
+                    if (homonyms_i.length > 0) {
+                        lookup = "#homonyms_"+ key;
+                        $.each(homonyms_i, function(key, value) {
+                            var input = $('<span><a href="'+url+'/dictionary/gloss/'+value.id+'/">' + value.gloss + '</a> &nbsp; </span>');
+                            $(lookup).append(input);
+                        });
+                        $(lookup).parent().removeClass('empty_row');
+                        $(lookup).parent().css({'display':'visible'});
+                    };
+                }
+            }
+        });
+
+    }
+});
+
+
+</script>
+{% endblock %}
+</head>
+
+{% block content %}
+<body>
 <div id="definitionblock">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
 
@@ -23,10 +64,8 @@
     </thead>
     <tbody>
     {% for focus_gloss in object_list %}
-      {% with focus_gloss.homonym_objects as homonym_objects_of_gloss %}
       {% with focus_gloss.homonym_relations as homonyms_saved %}
-        {% if homonyms_saved or homonym_objects_of_gloss %}
-        <tr>
+        <tr {%if homonyms_saved|length == 0 %} class="empty_row" style='display: none;'{% endif %}>
             <td>
                 <a href="{{PREFIX_URL}}/dictionary/gloss/{{ focus_gloss.pk }}/">{{ focus_gloss|get_annotation_idgloss_translation:language }}</a>
             </td>
@@ -36,14 +75,10 @@
                        href='{% url "dictionary:admin_gloss_view" pk=gl.pk %}'>{{ gl|get_annotation_idgloss_translation:language }}</a>
                 {% endfor %}
             </td>
-            <td>
-                {% for gl in homonym_objects_of_gloss %}
-                    <a style="padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.pk %}'>{{ gl|get_annotation_idgloss_translation:language }}</a>
-                {% endfor %}
+            <td class="focus_gloss_homonym_objects" id = "homonyms_{{focus_gloss.id}}" >
+
             </td>
         </tr>
-        {% endif %}
-    {% endwith %}
     {% endwith %}
     {% endfor %}
     </tbody>
@@ -53,5 +88,5 @@
 {% endif %}
 
 </div>
-
+</body>
 {% endblock content %}
