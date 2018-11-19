@@ -52,12 +52,14 @@
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
     var choice_lists = {{choice_lists|safe}};
-    console.log(choice_lists);
+    var generate_translated_choice_list_table = {{generate_translated_choice_list_table|safe}};
+    console.log(generate_translated_choice_list_table);
     var frequency_lists_phonology_fields = {{frequency_lists_phonology_fields|safe}};
     console.log(frequency_lists_phonology_fields);
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id = {{nextglossid}};
     var next_morpheme_id;
+    var this_gloss_id = {{gloss.id}};
 
     // This script gets and inserts the users last searched items on the gloss page
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
@@ -127,6 +129,43 @@
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
+
+   // This script gets minimal pairs data and displays it as table rows
+$(document).ready(function() {
+    lookup = "#header_mp_rows";
+    <!--target_mp_rows = "#gloss_mp_rows_" + this_gloss_id;-->
+    <!--console.log(target_mp_rows);-->
+    $.ajax({
+        url : url + "/ajax/minimalpairs/" + this_gloss_id + "/",
+        datatype: "json",
+        async: true,
+        data: { 'gloss_detail': true },
+        success : function(result) {
+            <!--console.log(result);-->
+            var elem = $(result);
+            var parsed = $.parseHTML(result);
+            console.log(parsed);
+            <!--var rows_mp = $(parsed).find('tr');-->
+            <!--console.log(mp_rows);-->
+            <!--$(lookup).append(rows_mp);-->
+            $(lookup).first().append(result);
+
+            <!--$.each( parsed, function(i, el ) {-->
+                <!--nodename = el.nodeName;-->
+                <!--console.log(nodename);-->
+                <!--if (nodename == 'TR') {-->
+                    <!--id_of_row = $(el).attr('id');-->
+                    <!--res = id_of_row.split("_");-->
+                    <!--id_of_gloss = res[1];-->
+                    <!--console.log(id_of_gloss);-->
+                    <!--focus_gloss_lookup = '#focusgloss_' + id_of_gloss;-->
+                    <!--$(lookup).find(focus_gloss_lookup).first().append(result).end().remove();-->
+                <!--};-->
+            <!--});-->
+        }
+    });
+});
+
         $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
         $('#expand-panels').on('click', function() {
@@ -820,8 +859,22 @@
                     <tr value="{{value}}">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>
+                            {% with generate_translated_choice_list_table|get_item:name as choices_for_field %}
+                            {% with gloss.domhndsh|to_int as domhndsh_value %}
+                            {% with choices_for_field|keyvalue:domhndsh_value as translates_for_field %}
+                            {% if translates_for_field %}
+                            {% with request.LANGUAGE_CODE as language %}
+                            {% with translates_for_field|get_item:language as translated_field %}
                             <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
-                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{value}}</a>
+                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{ translated_field }}</a>
+                            {% endwith %}
+                            {% endwith %}
+                            {% else %}
+                            <span style="color:red">{{domhndsh_value}}</span>
+                            {% endif %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
@@ -930,7 +983,7 @@
             </div>
         </div>
         <div id='minimalpairs' class='panel-collapse collapse'>
-            <table class='table table-condensed'>
+            <table class='table table-condensed' id = "header_mp_rows">
 
             {% if minimalpairs %}
                <tr>
@@ -939,37 +992,6 @@
                    <th style="width:auto; padding:0px 0px;">{% trans "Source Sign Value" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
                 </tr>
-                {% load field_choice %}
-                {% for gl, dict, minpar_display in minimalpairs %}
-                <tr>
-                {% for k, d in dict.items %}
-                    {% with d.0 as field_name %}
-                    {% with d.1|add:" " as field_category %}
-                    {% with d.2|stringformat:"s" as field_value %}
-                    {% with d.3|stringformat:"s" as other_field_value %}
-                    {% with request.LANGUAGE_CODE as language %}
-                    {% with field_category|add:language as args %}
-                    <td style="width:auto; padding:0px 0px;"><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ minpar_display }}</a></td>
-                    <td style="width:auto; padding:0px 0px;">{% trans d.0 %}</td>
-                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and field_value == "True" %}{% trans "Yes" %}
-                        {% elif d.4 == "check" and field_value == "False" %}{% trans "No" %}
-                        {% elif d.4 == "check" and k == "weakprop" %}{% trans "Neutral" %}
-                        {% elif d.4 == "check" and k == "weakdrop" %}{% trans "Neutral" %}
-                        {% else %}{{ field_value|machine_field_translate:args }}{% endif %}</td>
-                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and other_field_value == "True" %}{% trans "Yes" %}
-                        {% elif d.4 == "check" and other_field_value == "False" %}{% trans "No" %}
-                        {% elif d.4 == "check" and k == "weakprop" %}{% trans "Neutral" %}
-                        {% elif d.4 == "check" and k == "weakdrop" %}{% trans "Neutral" %}
-                        {% else %}{{ other_field_value|machine_field_translate:args }}{% endif %}</td>
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                {% endfor %}
-                </tr>
-                {% endfor %}
             {% endif %}
             </table>
         </div>

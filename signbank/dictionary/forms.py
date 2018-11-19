@@ -273,36 +273,36 @@ class GlossSearchForm(forms.ModelForm):
 
         model = Gloss
         fields = ('morph', 'sense',
-                   'sn', 'StemSN', 'comptf', 'compound',
-                   'inWeb', 'isNew',
-                   'initial_relative_orientation', 'final_relative_orientation',
-                   'initial_palm_orientation', 'final_palm_orientation', 
-                   'initial_secondary_loc', 'final_secondary_loc',
-                   # 'domhndsh', 'subhndsh', 'locprim',
-                   'locVirtObj', 'locsecond',
-                   'final_domhndsh', 'final_subhndsh', 'final_loc',
+                  'sn', 'StemSN', 'comptf', 'compound',
+                  'inWeb', 'isNew',
+                  'initial_relative_orientation', 'final_relative_orientation',
+                  'initial_palm_orientation', 'final_palm_orientation',
+                  'initial_secondary_loc', 'final_secondary_loc',
+                  # 'domhndsh', 'subhndsh', 'locprim',
+                  'locVirtObj', 'locsecond',
+                  'final_domhndsh', 'final_subhndsh', 'final_loc',
 
-                    'locPrimLH','locFocSite','locFocSiteLH','initArtOri','finArtOri','initArtOriLH','finArtOriLH',
+                  'locPrimLH', 'locFocSite', 'locFocSiteLH', 'initArtOri', 'finArtOri', 'initArtOriLH', 'finArtOriLH',
 
-                   # 'handedness',
-                    'useInstr','rmrks',
-                    # 'relatArtic',
+                  # 'handedness',
+                  'useInstr', 'rmrks',
+                  # 'relatArtic',
                   'absOriFing',
-                   # 'relOriMov','relOriLoc','oriCh','handCh',
-                   'repeat', 'altern',
-                   # 'movSh','movDir',
-                   'movMan',
-                   # 'contType',
-                   'mouthG',
-                   'mouthing', 'phonetVar', 'domSF', 'domFlex', 'oriChAbd', 'oriChFlex',
+                  # 'relOriMov','relOriLoc','oriCh','handCh',
+                  'repeat', 'altern',
+                  # 'movSh','movDir',
+                  'movMan',
+                  # 'contType',
+                  'mouthG',
+                  'mouthing', 'phonetVar', 'domSF', 'domFlex', 'oriChAbd', 'oriChFlex',
 
-                   'iconImg','iconType',
-                   # 'namEnt', 'semField',
-                   # 'wordClass',
-                   'wordClass2', 'derivHist', 'lexCatNotes', 'valence',
+                  'iconImg', 'iconType',
+                  # 'namEnt', 'semField',
+                  # 'wordClass',
+                  'wordClass2', 'derivHist', 'lexCatNotes', 'valence',
 
-                   'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
-                   'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
+                  'tokNoA', 'tokNoSgnrA', 'tokNoV', 'tokNoSgnrV', 'tokNoR', 'tokNoSgnrR', 'tokNoGe', 'tokNoSgnrGe',
+                  'tokNoGr', 'tokNoSgnrGr', 'tokNoO', 'tokNoSgnrO')
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')

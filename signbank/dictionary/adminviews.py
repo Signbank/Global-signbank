@@ -1147,28 +1147,6 @@ class GlossDetailView(DetailView):
         morphdefs = sorted(morphdefs, key=lambda tup: tup[1])
         context['morphdefs'] = morphdefs
 
-        minimal_pairs_dict = gl.minimal_pairs_dict()
-        minimalpairs = []
-
-        for mpg, dict in minimal_pairs_dict.items():
-            minimal_pairs_trans = {}
-            if mpg.dataset:
-                for language in mpg.dataset.translation_languages.all():
-                    minimal_pairs_trans[language.language_code_2char] = mpg.annotationidglosstranslation_set.filter(language=language)
-            else:
-                language = Language.objects.get(id=get_default_language_id())
-                minimal_pairs_trans[language.language_code_2char] = mpg.annotationidglosstranslation_set.filter(language=language)
-            if language_code in minimal_pairs_trans.keys():
-                minpar_display = minimal_pairs_trans[language_code][0].text
-            else:
-                # This should be set to the default language if the interface language hasn't been set for this gloss
-                minpar_display = minimal_pairs_trans[default_language_code][0].text
-
-            minimalpairs.append((mpg,dict,minpar_display))
-
-        context['minimalpairs'] = minimalpairs
-
-
         (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gl.homonyms()
         homonyms_different_phonology = []
 
