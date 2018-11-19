@@ -3819,6 +3819,37 @@ def lemma_ajax_complete(request, dataset_id, q):
 
     return HttpResponse(json.dumps(lemmas_dict), {'content-type': 'application/json'})
 
+def homonyms_ajax_complete(request, gloss_id):
+
+    language_code = request.LANGUAGE_CODE
+
+    if language_code == "zh-hans":
+        language_code = "zh"
+
+    try:
+        this_gloss = Gloss.objects.get(id=gloss_id)
+        homonym_objects = this_gloss.homonym_objects()
+    except:
+        homonym_objects = []
+
+    result = []
+    for homonym in homonym_objects:
+        translation = ""
+        translations = homonym.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
+        if translations is not None and len(translations) > 0:
+            translation = translations[0].text
+        else:
+            translations = homonym.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
+            if translations is not None and len(translations) > 0:
+                translation = translations[0].text
+
+        result.append({ 'id': str(homonym.id), 'gloss': translation })
+        # result.append({ 'id': str(homonym.id), 'gloss': str(homonym) })
+
+    homonyms_dict = { str(gloss_id) : result }
+
+    return HttpResponse(json.dumps(homonyms_dict), {'content-type': 'application/json'})
+
 
 class LemmaListView(ListView):
     model = LemmaIdgloss
