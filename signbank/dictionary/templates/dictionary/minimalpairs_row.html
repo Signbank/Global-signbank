@@ -1,45 +1,25 @@
 {% load i18n %}
+{% load bootstrap3 %}
 
-{% load guardian_tags %}
-
-        <div id='tags' style="z-index: 0;opacity:.99; position: relative; background-color: white;">
-        <fieldset>
-      {% load tagging_tags %}
-      {% tags_for_object gloss as tag_list %}
-      {% if tag_list %}
-          <ul class='taglist'>
-          {% for tag in tag_list %}
-            <li class='tagli'>
-               <div class='tag'>
-                   {% load underscore_to_space %}
-                 <span class='tagname'>{{tag.name|underscore_to_space}}</span>
-                {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-                {% if "change_dataset" in dataset_perms %}
-                 <span class='tagcount'>
-                     <a class='tagdelete editform'
-                        id='{{tag.name}}'
-                        href='{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}'
-                        title='{% trans "delete this tag" %}'>x</a>
-                 </span>
-                 {% endif %}
-                </div>
-            </li>
-          {% endfor %}
-          </ul>
-      {% endif %}
-    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-    {% if "change_dataset" in dataset_perms %}
-      <div id="tagcontainer"></div>
-      <div class='editform'>
-          <form id='tagaddform' 
-                action="{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}"
-                method="post" enctype="multipart/form-data">
-           {% csrf_token %}
-           <table>
-           <tr><td>{{tagform.tag}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add Tag" %}'></td></tr>
-           </table>
-          </form>
-      </div>
-      {% endif %}
-      </fieldset>
-    </div>
+    <tr id = "minimalpairs_{{focus_gloss.id}}">
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td style="width:12em;">{{focus_gloss.lemma.dataset.name}}</td>{% endif %}
+        <td style="width:20em;"><a href='{% url "dictionary:admin_gloss_view" pk=focus_gloss.id %}'>{{focus_gloss_translation}}</a></td>
+        <td colspan="4">
+        <table id = "gloss_mp_rows_{{focus_gloss.id}}" style="table-layout:fixed;width:100%;">
+        {% for mp in minimal_pairs_dict %}
+            <tr id = "cell_{{focus_gloss.id}}_{{mp.other_gloss.id}}" >
+        <td><a href='{% url "dictionary:admin_gloss_view" pk=mp.id %}'>{{mp.other_gloss_idgloss}}</a></td>
+        <td style="width:auto;">{{mp.field_display}}</td>
+        <td>{{mp.focus_gloss_value}}</td>
+                {% with mp.other_gloss_value as other_gloss_value %}
+                {% if other_gloss_value|slice:"0:6" == "ERROR_" %}
+                    <td style="color:red">{{other_gloss_value|slice:"6:"}}</td>
+                {% else %}
+                    <td>{{other_gloss_value}}</td>
+                {% endif %}
+                {% endwith %}
+            </tr>
+        {% endfor %}
+        </table>
+        </td>
+    </tr>

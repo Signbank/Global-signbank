@@ -2325,6 +2325,9 @@ class MinimalPairsListView(ListView):
         language = Language.objects.get(id=get_default_language_id())
         default_language_code = language.language_code_2char
 
+        # Refresh the "constant" translated choice lists table
+        translated_choice_lists_table = generate_translated_choice_list_table()
+
         context = super(MinimalPairsListView, self).get_context_data(**kwargs)
 
         languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
@@ -2355,7 +2358,19 @@ class MinimalPairsListView(ListView):
 
         context['field_labels'] = field_labels
 
+        context['page_number'] = context['page_obj'].number
+
+        context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
+
+        context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
+
         return context
+
+    def get_paginate_by(self, queryset):
+        """
+        Paginate by specified value in querystring, or use default class property value.
+        """
+        return self.request.GET.get('paginate_by', self.paginate_by)
 
     def get_queryset(self):
 
@@ -3850,6 +3865,121 @@ def homonyms_ajax_complete(request, gloss_id):
 
     return HttpResponse(json.dumps(homonyms_dict), {'content-type': 'application/json'})
 
+def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
+
+    if 'gloss_detail' in request.GET:
+        gloss_detail = request.GET['gloss_detail']
+
+    language_code = request.LANGUAGE_CODE
+
+    if language_code == "zh-hans":
+        language_code = "zh"
+
+    this_gloss = Gloss.objects.get(id=gloss_id)
+
+    try:
+        minimalpairs_objects = this_gloss.minimal_pairs_dict()
+    except:
+        minimalpairs_objects = []
+
+    translation_focus_gloss = ""
+    translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
+    if translations_this_gloss is not None and len(translations_this_gloss) > 0:
+        translation_focus_gloss = translations_this_gloss[0].text
+    else:
+        translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
+        if translations_this_gloss is not None and len(translations_this_gloss) > 0:
+            translation_focus_gloss = translations_this_gloss[0].text
+
+    result = []
+    for minimalpairs_object, minimal_pairs_dict in minimalpairs_objects.items():
+        other_gloss_dict = dict()
+        other_gloss_dict['id'] = str(minimalpairs_object.id)
+        other_gloss_dict['other_gloss'] = minimalpairs_object
+
+        for field, values in minimal_pairs_dict.items():
+            # print('values: ', values)
+            other_gloss_dict['field'] = field
+            other_gloss_dict['field_display'] = values[0]
+            other_gloss_dict['field_category'] = values[1]
+            # print('field: ', field, ', choice: ', values[2])
+            # print('translated_choice_lists_table: ', translated_choice_lists_table[field])
+            focus_gloss_choice = values[2]
+            other_gloss_choice = values[3]
+            field_kind = values[4]
+            # print('other gloss ', minimalpairs_object.id, ', field ', field, ': kind and choices: ', field_kind, ', ', focus_gloss_choice, ', ', other_gloss_choice)
+            if field_kind == 'list':
+                if focus_gloss_choice:
+                    try:
+                        focus_gloss_value = translated_choice_lists_table[field][int(focus_gloss_choice)][language_code]
+                    except:
+                        focus_gloss_value = 'ERROR_' + focus_gloss_choice
+                        print('Error for gloss ', minimalpairs_object.id, ' on stored choice (field: ', field, ', choice: ', focus_gloss_choice, ')')
+                else:
+                    focus_gloss_value = '-'
+            elif field_kind == 'check':
+                if focus_gloss_choice == 'True':
+                    focus_gloss_value = _('Yes')
+                elif focus_gloss_choice == 'Neutral' and field in ['weakdrop', 'weakprop']:
+                    focus_gloss_value = _('Neutral')
+                else:
+                    focus_gloss_value = _('No')
+            else:
+                # translate Boolean fields
+                focus_gloss_value = focus_gloss_choice
+            # print('focus gloss choice: ', focus_gloss_value)
+            other_gloss_dict['focus_gloss_value'] = focus_gloss_value
+            if field_kind == 'list':
+                if other_gloss_choice:
+                    try:
+                        other_gloss_value = translated_choice_lists_table[field][int(other_gloss_choice)][language_code]
+                    except:
+                        other_gloss_value = 'ERROR_' + other_gloss_choice
+                        print('Error for gloss ', minimalpairs_object.id, ' on stored choice (field: ', field, ', choice: ', other_gloss_choice, ')')
+                else:
+                    other_gloss_value = '-'
+            elif field_kind == 'check':
+                if other_gloss_choice == 'True':
+                    other_gloss_value = _('Yes')
+                elif other_gloss_choice == 'Neutral' and field in ['weakdrop', 'weakprop']:
+                    other_gloss_value = _('Neutral')
+                else:
+                    other_gloss_value = _('No')
+            else:
+                other_gloss_value = other_gloss_choice
+            # print('other gloss choice: ', other_gloss_value)
+            other_gloss_dict['other_gloss_value'] = other_gloss_value
+            other_gloss_dict['field_kind'] = field_kind
+
+        # print('min pairs other gloss dict: ', other_gloss_dict)
+        translation = ""
+        translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
+        if translations is not None and len(translations) > 0:
+            translation = translations[0].text
+        else:
+            translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
+            if translations is not None and len(translations) > 0:
+                translation = translations[0].text
+
+        other_gloss_dict['other_gloss_idgloss'] = translation
+
+        result.append(other_gloss_dict)
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        SHOW_DATASET_INTERFACE_OPTIONS = False
+
+    if gloss_detail:
+        return render(request, 'dictionary/minimalpairs_gloss_table.html', { 'focus_gloss': this_gloss,
+                                                                             'focus_gloss_translation': translation_focus_gloss,
+                                                                             'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS,
+                                                                             'minimal_pairs_dict' : result })
+    else:
+        return render(request, 'dictionary/minimalpairs_row.html', { 'focus_gloss': this_gloss,
+                                                                     'focus_gloss_translation': translation_focus_gloss,
+                                                                     'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS,
+                                                                     'minimal_pairs_dict' : result })
 
 class LemmaListView(ListView):
     model = LemmaIdgloss

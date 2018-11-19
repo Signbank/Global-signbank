@@ -6,17 +6,78 @@
 
 {% block extrahead %}
 {% endblock %}
+<head>
+{% block extrajs %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+
+<script type='text/javascript'>
+var csrf_token = '{{csrf_token}}';
+var url = '{{ PREFIX_URL }}';
+var page_number = {{ page_number }};
+var objects_on_this_page = {{objects_on_page|safe}};
+
+// This script gets minimal pairs data and displays it as table rows
+// Each ajax call can generate multiple rows, they are appended to the table dynamically
+$(document).ready(function() {
+    lookup = "#minimalpairs_table";
+    for (var i = 0; i < objects_on_this_page.length; i++) {
+        $.ajax({
+            url : url + "/ajax/minimalpairs/" + objects_on_this_page[i] + "/",
+            datatype: "json",
+            async: true,
+            success : function(result) {
+                <!--console.log(result);-->
+                var elem = $(result);
+                var parsed = $.parseHTML(result);
+                <!--console.log(parsed);-->
+                $.each( parsed, function(i, el ) {
+                    nodename = el.nodeName;
+                    <!--console.log(nodename);-->
+                    if (nodename == 'TR') {
+                        id_of_row = $(el).attr('id');
+                        res = id_of_row.split("_");
+                        id_of_gloss = res[1];
+                        <!--console.log(id_of_gloss);-->
+                        focus_gloss_lookup = '#focusgloss_' + id_of_gloss;
+                        $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
+                    };
+                });
+            }
+        });
+
+    }
+});
+
+
+</script>
+{% endblock %}
+</head>
 
 {% block content %}
-
+<body>
 <div id="definitionblock">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
 
+<form name="show_pages">
+<div class='form-group' id='paginate_by'>
+<label for='paginate_by'>{% trans "Glosses per page" %}</label>
+<select class='form-control' name="paginate_by" >
+    <option {% if paginate_by == 50 %}selected{% endif %}>50</option>
+    <option {% if paginate_by == 25 %}selected{% endif %}>25</option>
+    <option {% if paginate_by == 10 %}selected{% endif %}>10</option>
+</select>
+{% csrf_token %}
+    <input type="submit" value = '{% trans "Refresh" %}' />
+</div>
+</form>
+
 {% if object_list %}
-<table class='table table-condensed'>
+<table class='table table-condensed' id = 'minimalpairs_table'>
     <thead>
       <tr>
-            <th>{% trans "Dataset" %}</th>
+            {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
             <th>{% trans "Focus Gloss" %}</th>
             <th>{% trans "Minimal Pair Gloss" %}</th>
             <th style="width:auto;">{% trans "Field name" %}</th>
@@ -25,69 +86,59 @@
       </tr>
     </thead>
     <tbody>
-    {% get_current_language as WEBSITE_LANGUAGE %}
-    {% for focus_gloss in object_list %}
-    {% load annotation_idgloss_translation %}
-    {% with focus_gloss|display_language:WEBSITE_LANGUAGE as focus_gloss_translation %}
-    {% with focus_gloss.minimal_pairs_dict as focus_gloss_minimal_pairs_dict %}
-    {% for other_gloss, dict in focus_gloss_minimal_pairs_dict.items %}
-    {% with other_gloss|display_language:WEBSITE_LANGUAGE as other_gloss_translation %}
-    {% for field_name, d in dict.items %}
-        {% with d.0 as field_label %}
-        {% with d.1|add:" " as field_category %}
-        {% with d.2|stringformat:"s" as focus_gloss_value %}
-        {% with d.3|stringformat:"s" as other_gloss_value %}
-        {% with d.4 as field_kind %}
-        <tr>
-            <td>{{focus_gloss.dataset}}</td>
-            <td><a href='{% url "dictionary:admin_gloss_view" pk=focus_gloss.id %}'>{{focus_gloss_translation}}</a></td>
-            <td><a href='{% url "dictionary:admin_gloss_view" pk=other_gloss.id %}'>{{other_gloss_translation}}</a></td>
-            <td>{{field_labels|keyvalue:field_name}}</td>
-                {% if field_name == "weakdrop" or field_name == "weakprop" %}
-                    <td>{% if focus_gloss_value == "True" %}{% trans "Yes" %}
-                    {% elif focus_gloss_value == "False" %}{% trans "No" %}
-                    {% else %}{% trans "Neutral" %}{% endif %}</td>
-                    <td>{% if other_gloss_value == "True" %}{% trans "Yes" %}
-                    {% elif other_gloss_value == "False" %}{% trans "No" %}
-                    {% else %}{% trans "Neutral" %}{% endif %}</td>
-                {% elif field_kind == "check" %}
-                    <td>{% if focus_gloss_value == "True" %}
-                        {% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                    <td>{% if other_gloss_value == "True" %}
-                        {% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                {% else %}
-                    {% load field_choice %}
-                    {% with field_name|add:" " as field_name %}
-                    {% with request.LANGUAGE_CODE as this_language %}
-                    {% with field_category|add:this_language as args %}
-                    {% with focus_gloss_value|machine_field_translate:args as focus_gloss_display %}
-                    {% with other_gloss_value|machine_field_translate:args as other_gloss_display %}
-                    <td>{{focus_gloss_display}}</td><td>{{other_gloss_display}}</td>
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                {% endif %}
+    {% for gloss in object_list %}
+    <tr id = "focusgloss_{{gloss.id}}">
         </tr>
-        {% endwith %}
-        {% endwith %}
-        {% endwith %}
-        {% endwith %}
-        {% endwith %}
-    {% endfor %}
-    {% endwith %}
-    {% endfor %}
-    {% endwith %}
-    {% endwith %}
     {% endfor %}
     </tbody>
 </table>
 {% else %}
 {% trans "No minimal pairs found." %}
 {% endif %}
-
 </div>
+
+
+<div class="pagination">
+    <span class="step-links">
+
+        <ul class='pagination pagination-sm'>
+        {% if page_obj.has_previous %}
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&laquo;</a></li>
+        {% endif %}
+
+          {% if  page_obj.number > 10 %}
+            <li><a>...</a></li>
+          {% endif %}
+
+          {% for p in page_obj.paginator.page_range %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+             <li {% ifequal p page_obj.number %}class='active'{% endifequal %}>
+             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
+             </li>
+             {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+            <li><a>...</a></li>
+            <li>
+            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
+            </li>
+          {% endif %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&raquo;</a></li>
+
+
+      </ul>
+
+
+        {% endif %}
+    </span>
+</div>
+
+</body>
 
 {% endblock content %}
 

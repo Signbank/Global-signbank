@@ -1122,6 +1122,8 @@ class Gloss(models.Model):
 
         (ep, nep) = self.empty_non_empty_phonology()
 
+        phonology_for_this_gloss = self.phonology_matrix()
+
         # only consider minimal pairs if this gloss has more fields defined than handedness and strong hand
         if (len(nep) < 2):
             return minimal_pairs_fields
@@ -1129,18 +1131,16 @@ class Gloss(models.Model):
         wmp = self.minimal_pairs_objects()
 
         for o in wmp:
-            # ignore if dataset is different or handedness is different
-            if (self.dataset != o.dataset or self.handedness != o.handedness):
-                continue
-            # print('wmp o: ', o)
             different_fields = dict()
             onep = o.non_empty_phonology()
+            phonology_for_other_gloss = o.phonology_matrix()
             self_domhndsh = getattr(self,'domhndsh')
             other_domhndsh = getattr(o,'domhndsh')
             for f,n,v in onep:
                 fc = fieldname_to_category(f)
-                self_value_f = getattr(self,f)
-                other_value_f = getattr(o,f)
+                # use the phonology matrix to account for Neutral values
+                self_value_f = phonology_for_this_gloss.get(f)
+                other_value_f = phonology_for_other_gloss.get(f)
                 if self_value_f != other_value_f:
                     if (f == 'domhndsh_letter' or f == 'domhndsh_number'):
                         if self_domhndsh == other_domhndsh:
@@ -1153,17 +1153,12 @@ class Gloss(models.Model):
 
             different_fields_keys = different_fields.keys()
 
-            # if 'domhndsh' in different_fields_keys:
-            #     if 'domhndsh_letter' in different_fields_keys or 'domhndsh_number' in different_fields_keys:
-            #     # skip the candidate if handshape and number or letter are both different
-            #         print('skip object ', str(o.id))
-            #         continue
-
-            if (len(list(different_fields.keys())) == 0):
+            if (len(list(different_fields_keys)) == 0):
                 for sf,sn,sv in nep:
                     sfc = fieldname_to_category(sf)
-                    self_value_sf = getattr(self, sf)
-                    other_value_sf = getattr(o,sf)
+                    # need to look these up in nep
+                    self_value_sf = phonology_for_this_gloss.get(sf)
+                    other_value_sf = phonology_for_other_gloss.get(sf)
                     if other_value_sf != self_value_sf:
                         # the value of other_value_sf was '0' because it assumed it was empty since not in onep,
                         # but if it is the field 'altern' or 'repeat' and it's false, then it is False, not '0'
@@ -1176,9 +1171,7 @@ class Gloss(models.Model):
                         else:
                             different_fields[sf] = (sn, sfc, self_value_sf, other_value_sf, fieldname_to_kind(sf))
 
-
             if (len(list(different_fields.keys())) != 1):
-                # print('more than one different keys for gloss ', str(o.id), ': ', different_fields)
                 # if too many differing fields were found, skip this gloss
                 continue
             else:

@@ -64,6 +64,8 @@ urlpatterns = [
     url(r'^analysis/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),
     url(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete,
                       name='homonyms_complete'),
+    url(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete,
+                      name='minimalpairs_complete'),
     url(r'^analysis/minimalpairs/$', MinimalPairsListView.as_view(), name='admin_minimalpairs_list'),
     url(r'^analysis/frequencies/$', FrequencyListView.as_view(), name='admin_frequency_list'),
     url(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
