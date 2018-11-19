@@ -994,15 +994,15 @@
         </div>
         <div id='semantics' class='panel-collapse collapse'>
             <table class='table table-condensed'>
-		{% for value,name,label,kind in semantics_fields %}
-		    <tr><th>{{label}}
-
-            {% if name == 'concConcSet' %}
-                <span id='tooltip' class='glyphicon glyphicon-question-sign' aria-hidden='true' data-toggle='tooltip' data-placement='bottom' data-html='true' title='' data-original-title='<a href="http://www.concepticon.clid.org">http://www.concepticon.clid.org</a>'></span>
-            {% endif %}
-
-            </th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
-		{% endfor %}
+		    {% for value,name,label,kind in semantics_fields %}
+	              <tr><th>
+                    {% if name == 'concConcSet' %}
+                        <a target="_blank" href="http://concepticon.clld.org">{{label}}</a>
+                    {% else %}
+                        {{label}}
+                    {% endif %}
+                 </th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
+            {% endfor %}
             
             </table>
         </div>
