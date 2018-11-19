@@ -835,75 +835,57 @@ function do_toggle_groups(el) {
       </td>
 
             {% load field_choice %}
+            {% with request.LANGUAGE_CODE as language %}
 
-            {% if request.LANGUAGE_CODE == 'nl' %}
-                <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
+            {% with generate_translated_choice_list_table|get_item:'handedness' as choices_for_handedness %}
+            {% with gloss.handedness|to_int as handedness_value %}
+            {% with choices_for_handedness|keyvalue:handedness_value as translates_for_handedness %}
+            {% with translates_for_handedness|get_item:language as translated_handedness %}
+                <td>{{ translated_handedness }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
 
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-
-                {% with gloss.domhndsh|translate_to_dutch:"Handshape" as domhndsh_display %}
-                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
-                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_dutch:"Location" }}</td>
-
-            {% elif request.LANGUAGE_CODE == 'zh-hans' %}
-                <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
-
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-
-                {% with gloss.domhndsh|translate_to_chinese:"Handshape" as domhndsh_display %}
-                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
-                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_chinese:"Location" }}</td>
-
+            {% with generate_translated_choice_list_table|get_item:'domhndsh' as choices_for_domhndsh %}
+            {% with gloss.domhndsh|to_int as domhndsh_value %}
+            {% with choices_for_domhndsh|keyvalue:domhndsh_value as translates_for_domhndsh %}
+            {% with translates_for_domhndsh|get_item:language as translated_domhndsh %}
+            {% if user.is_anonymous or translated_domhndsh == '-' or translated_domhndsh == 'N/A' or translated_domhndsh == '' %}
+                <td>{{ translated_domhndsh }}</td>
             {% else %}
-
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-                <!--The translate_to_english function is needed to avoid None values showing up in display-->
-
-                <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
-
-                {% with gloss.domhndsh|translate_to_english:"Handshape" as domhndsh_display %}
-                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
-                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_english:"Location" }}</td>
+                <td><a href="{{PREFIX_URL}}/dictionary/handshape/{% if domhndsh_value %}{{domhndsh_value}}{% endif %}/">{{ translated_domhndsh }}</a></td>
             {% endif %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% with generate_translated_choice_list_table|get_item:'subhndsh' as choices_for_subhndsh %}
+            {% with gloss.subhndsh|to_int as subhndsh_value %}
+            {% with choices_for_subhndsh|keyvalue:subhndsh_value as translates_for_subhndsh %}
+            {% with translates_for_subhndsh|get_item:language as translated_subhndsh %}
+            {% if user.is_anonymous or translated_subhndsh == '-' or translated_subhndsh == 'N/A' or translated_subhndsh == '' %}
+                <td>{{ translated_subhndsh }}</td>
+            {% else %}
+                <td><a href="{{PREFIX_URL}}/dictionary/handshape/{% if subhndsh_value %}{{subhndsh_value}}{% endif %}/">{{ translated_subhndsh }}</a></td>
+            {% endif %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% with generate_translated_choice_list_table|get_item:'locprim' as choices_for_locprim %}
+            {% with gloss.locprim|to_int as locprim_value %}
+            {% with choices_for_locprim|keyvalue:locprim_value as translates_for_locprim %}
+            {% with translates_for_locprim|get_item:language as translated_locprim %}
+                <td>{{ translated_locprim }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% endwith %}
 
             {% load underscore_to_space %}
             {% tags_for_object gloss as tag_list %}
@@ -1058,74 +1040,59 @@ function do_toggle_groups(el) {
 
             {% load field_choice %}
 
-            {% if request.LANGUAGE_CODE == 'nl' %}
-                <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
+            {% with request.LANGUAGE_CODE as language %}
 
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
+            {% with generate_translated_choice_list_table|get_item:'handedness' as choices_for_handedness %}
+            {% with gloss.handedness|to_int as handedness_value %}
+            {% with choices_for_handedness|keyvalue:handedness_value as translates_for_handedness %}
+            {% with translates_for_handedness|get_item:language as translated_handedness %}
+                <td>{{ translated_handedness }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
 
-                {% with gloss.domhndsh|translate_to_dutch:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_dutch:"Location" }}</td>
-
-            {% elif request.LANGUAGE_CODE == 'zh-hans' %}
-                <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
-
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-
-                {% with gloss.domhndsh|translate_to_chinese:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_chinese:"Location" }}</td>
-
+            {% with generate_translated_choice_list_table|get_item:'domhndsh' as choices_for_domhndsh %}
+            {% with gloss.domhndsh|to_int as domhndsh_value %}
+            {% with choices_for_domhndsh|keyvalue:domhndsh_value as translates_for_domhndsh %}
+            {% with translates_for_domhndsh|get_item:language as translated_domhndsh %}
+            {% if user.is_anonymous or translated_domhndsh == '-' or translated_domhndsh == 'N/A' or translated_domhndsh == '' %}
+                <td>{{ translated_domhndsh }}</td>
             {% else %}
-
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-                <!--The translate_to_english function is needed to avoid None values showing up in display-->
-
-                <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
-
-                {% with gloss.domhndsh|translate_to_english:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_english:"Location" }}</td>
+                <td><a href="{{PREFIX_URL}}/dictionary/handshape/{% if domhndsh_value %}{{domhndsh_value}}{% endif %}/">{{ translated_domhndsh }}</a></td>
             {% endif %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% with generate_translated_choice_list_table|get_item:'subhndsh' as choices_for_subhndsh %}
+            {% with gloss.subhndsh|to_int as subhndsh_value %}
+            {% with choices_for_subhndsh|keyvalue:subhndsh_value as translates_for_subhndsh %}
+            {% with translates_for_subhndsh|get_item:language as translated_subhndsh %}
+            {% if user.is_anonymous or translated_subhndsh == '-' or translated_subhndsh == 'N/A' or translated_subhndsh == '' %}
+                <td>{{ translated_subhndsh }}</td>
+            {% else %}
+                <td><a href="{{PREFIX_URL}}/dictionary/handshape/{% if subhndsh_value %}{{subhndsh_value}}{% endif %}/">{{ translated_subhndsh }}</a></td>
+            {% endif %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% with generate_translated_choice_list_table|get_item:'locprim' as choices_for_locprim %}
+            {% with gloss.locprim|to_int as locprim_value %}
+            {% with choices_for_locprim|keyvalue:locprim_value as translates_for_locprim %}
+            {% with translates_for_locprim|get_item:language as translated_locprim %}
+                <td>{{ translated_locprim }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% endwith %}
+
+
 
             {% load underscore_to_space %}
             {% tags_for_object gloss as tag_list %}

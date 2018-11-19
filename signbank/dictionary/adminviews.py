@@ -6,6 +6,7 @@ from django.db.models import CharField, TextField, Value as V
 from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField
+from django.db.models.sql.where import NothingNode, WhereNode
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
@@ -15,6 +16,7 @@ from django.shortcuts import *
 from django.contrib import messages
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
+from signbank.dictionary.templatetags.field_choice import get_field_choice
 
 import csv
 import operator
@@ -271,6 +273,16 @@ class GlossListView(ListView):
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+
+        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
+
+        if self.search_type == 'sign' or not self.request.user.is_authenticated():
+            # Only count the none-morpheme glosses
+            # this branch is slower than the other one
+            context['glosscount'] = Gloss.none_morpheme_objects().select_related('lemma').select_related('dataset').filter(lemma__dataset__in=selected_datasets).count()
+        else:
+            context['glosscount'] = Gloss.objects.select_related('lemma').select_related('dataset').filter(lemma__dataset__in=selected_datasets).count()  # Count the glosses + morphemes
+
         return context
 
 
@@ -1391,6 +1403,8 @@ class GlossDetailView(DetailView):
             context['SHOW_LETTER_NUMBER_PHONOLOGY'] = settings.SHOW_LETTER_NUMBER_PHONOLOGY
         else:
             context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
+
+        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
 
         return context
 

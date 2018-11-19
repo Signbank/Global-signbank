@@ -22,6 +22,10 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 
 import signbank.settings
 
+# this variable is set later in the code, it needs to be declared before it is used
+choice_list_table = dict()
+
+
 def build_choice_list(field):
 
     choice_list = []
@@ -38,6 +42,16 @@ def build_choice_list(field):
     # Enter this exception if for example the db has no data yet (without this it is impossible to migrate)
     except:
         pass
+
+def build_choice_list2(field):
+    # this table is filled later in the code
+    global choice_list_table
+
+    try:
+        choices_for_field = choice_list_table[field]
+    except:
+        choices_for_field = []
+    return choices_for_field
 
 
 def get_default_language_id():
@@ -876,8 +890,9 @@ class Gloss(models.Model):
                     non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
                 else:
                     non_empty_phonology = non_empty_phonology + [(field, str(label), str('False'))]
+
             else:
-                # value is Neutral
+                # value is Neutral or Null
                 empty_phonology = empty_phonology + [(field, str(label))]
 
         return (empty_phonology, non_empty_phonology)
@@ -1550,6 +1565,28 @@ def generate_fieldname_to_kind_table():
 
 fieldname_to_kind_table = generate_fieldname_to_kind_table()
 
+def generate_choice_list_table():
+
+    temp_choice_list_table = dict()
+    for f in Gloss._meta.fields:
+        if f.choices:
+            temp_choice_list_table[f.name] = f.choices
+    for h in Handshape._meta.fields:
+        if h.choices:
+            if h not in temp_choice_list_table.keys():
+                temp_choice_list_table[h.name] = h.choices
+            else:
+                print('generate fieldname to kind table found identical field in Handshape and Gloss: ', h.name)
+    for k in Definition._meta.fields:
+        if k not in temp_choice_list_table.keys():
+            temp_choice_list_table[k.name] = k.choices
+        else:
+            print('generate fieldname to kind table found identical field in Handshape or Gloss and Definition: ', k.name)
+    return temp_choice_list_table
+
+choice_list_table = generate_choice_list_table()
+
+
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
 def save_info_about_deleted_gloss(sender,instance,using,**kwarsg):
     from signbank.tools import get_default_annotationidglosstranslation
@@ -1659,6 +1696,61 @@ def fieldname_to_kind(fieldname):
         field_kind = fieldname
 
     return field_kind
+
+def generate_translated_choice_list_table():
+    codes_to_adjectives = dict(settings.LANGUAGES)
+
+    temp_translated_choice_lists_table = dict()
+    for f in Gloss._meta.fields:
+        # print('inside first for loop')
+        if f.choices:
+            # print('inside if, field ', f.name)
+    #         # if there are choices for the field, get the human values from the FieldChoice table
+            f_category = fieldname_to_category(f.name)
+
+            if f_category == 'Handshape':
+                choice_list = Handshape.objects.all()
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=f_category)
+
+            # print('after getting choice_list: ', choice_list)
+            field_translated_choice_list = dict()
+
+            # add choices for 0 and 1
+            human_value_0 = '-'
+            translations_for_choice_0 = dict()
+            for (l_name, l_adjective) in codes_to_adjectives.items():
+                translations_for_choice_0[l_name] = human_value_0
+            field_translated_choice_list[0] = translations_for_choice_0
+            human_value_1 = 'N/A'
+            translations_for_choice_1 = dict()
+            for (l_name, l_adjective) in codes_to_adjectives.items():
+                translations_for_choice_1[l_name] = human_value_1
+            field_translated_choice_list[1] = translations_for_choice_1
+
+            if len(choice_list) > 0:
+                # print('choices found')
+                for c in choice_list:
+                    # c is either a Handshape or a FieldChoice object, get the translations from it
+                    # print('choice is: ', c.english_name)
+                    choices_machine_value = getattr(c, 'machine_value')
+                    translations_for_choice = dict()
+                    for (l_name, l_adjective) in codes_to_adjectives.items():
+                        adjective = l_adjective.lower()
+                        try:
+                            human_value = getattr(c, adjective + '_name')
+                        except AttributeError:
+                            # in case the language name is empty for the field choice
+                            human_value = getattr(c, 'english_name')
+                        translations_for_choice[l_name] = human_value
+                    field_translated_choice_list[choices_machine_value] = translations_for_choice
+    #
+                temp_translated_choice_lists_table[f.name] = field_translated_choice_list
+    # print('generated translated choice list table: ', temp_translated_choice_lists_table)
+
+    return temp_translated_choice_lists_table
+
+translated_choice_lists_table = generate_translated_choice_list_table()
 
 class Relation(models.Model):
     """A relation between two glosses"""
