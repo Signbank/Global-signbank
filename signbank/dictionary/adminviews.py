@@ -619,9 +619,10 @@ class GlossListView(ListView):
                       'repeat', 'altern',
                       'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
                       'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
-                      'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence',
-                      'lexCatNotes',
-                      'inWeb', 'isNew','derivHist']
+
+                      'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence', 'concConcSet',
+                      'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
+                      'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew','derivHist']
 
 
         # SignLanguage and basic property filters
@@ -1759,7 +1760,7 @@ class MorphemeListView(ListView):
                       'handCh', 'repeat', 'altern',
                       'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'iconType',
                       # 'namEnt', 'semField',
-                      'valence',
+                      'valence', 'concConcSet',
                       'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO',
                       'tokNoSgnrA',
                       'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
@@ -2950,6 +2951,11 @@ class DatasetManagerView(ListView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
+        default_language_choice_dict = dict()
+        for language in dataset_languages:
+            default_language_choice_dict[language.name] = language.name
+        context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -4070,9 +4076,15 @@ def create_lemma_for_gloss(request, glossid):
 
     if form.is_valid():
         try:
-            lemma = form.save()
-            gloss.lemma = lemma
-            gloss.save()
+            old_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
+            with atomic():
+                lemma = form.save()
+                gloss.lemma = lemma
+                gloss.save()
+            new_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
+
+            # Rename video
+            gloss.rename_video(old_video_path, new_video_path)
         except ValidationError as ve:
             messages.add_message(request, messages.ERROR, ve.message)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

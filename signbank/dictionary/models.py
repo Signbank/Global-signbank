@@ -11,6 +11,7 @@ from django.forms.utils import ValidationError
 import tagging
 import re
 import copy
+import shutil
 
 import sys, os
 import json
@@ -523,6 +524,7 @@ class Gloss(models.Model):
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50, blank=True)
     lexCatNotes = models.CharField(_("Lexical category notes"),null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
+    concConcSet = models.CharField(_("Conception Concept Set"), null=True, blank=True, max_length=300)
 
     #Frequency fields
 
@@ -664,17 +666,11 @@ class Gloss(models.Model):
         else:
             all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('lemma')
 
-        if all_glosses_ordered:
-
-            foundit = False
-
-            for gloss in all_glosses_ordered:
-                if gloss == self:
-                    foundit = True
-                elif foundit:
-                    return gloss
-                    break
-
+        all_glosses_ordered_pks = list(all_glosses_ordered.values_list('pk', flat=True))
+        index_of_this_gloss = all_glosses_ordered_pks.index(self.pk)
+        if len(all_glosses_ordered_pks) - 1 > index_of_this_gloss:
+            next_gloss = all_glosses_ordered_pks[all_glosses_ordered_pks.index(self.pk) + 1]
+            return Gloss.objects.get(pk=next_gloss)
         else:
             return None
  
@@ -1368,7 +1364,38 @@ class Gloss(models.Model):
     def has_video(self):
         """Test to see if the video for this sign is present"""
         
-        return self.get_video() != None
+        return self.get_video() not in ['',None]
+
+    def rename_video(self, old_video_path, new_video_path):
+        """
+        Renames the video files for this gloss.
+        :param old_video_path: 
+        :param new_video_path: 
+        :return: 
+        """
+        new_dir = os.path.dirname(new_video_path)
+        if not os.path.isdir(new_dir):
+            os.mkdir(new_dir)
+        shutil.move(old_video_path, new_video_path)
+
+        # _small video file
+        old_video_file, extension = os.path.splitext(old_video_path)
+        old_video_path_small = old_video_file + '_small' + extension
+        print(old_video_path_small)
+        if os.path.exists(old_video_path_small):
+            new_video_file, extension = os.path.splitext(new_video_path)
+            new_video_path_small = new_video_file + '_small' + extension
+            print(new_video_path_small)
+            shutil.move(old_video_path_small, new_video_path_small)
+
+        # backups
+        backup_index = 1
+        old_backup = old_video_path + '_' + str(backup_index)
+        while os.path.exists(old_backup):
+            new_backup = new_video_path + '_' + str(backup_index)
+            shutil.move(old_backup, new_backup)
+            backup_index += 1
+            old_backup = old_video_path + '_' + str(backup_index)
 
     def published_definitions(self):
         """Return a query set of just the published definitions for this gloss
@@ -1847,6 +1874,23 @@ class Dataset(models.Model):
 
     def __str__(self):
         return self.name
+
+    def generate_short_name(self):
+
+        CHARACTER_THRESHOLD = 16
+
+        if len(self.name) <= CHARACTER_THRESHOLD:
+            return self.name
+        else:
+
+            #Cut of last word
+            shortened_name = ' '.join(self.name.split()[:-1])
+
+            if len(shortened_name) <= CHARACTER_THRESHOLD:
+                return shortened_name
+            else:
+                return shortened_name[:CHARACTER_THRESHOLD]
+
 
     def count_glosses(self):
 

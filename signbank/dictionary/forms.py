@@ -288,21 +288,21 @@ class GlossSearchForm(forms.ModelForm):
                   'useInstr', 'rmrks',
                   # 'relatArtic',
                   'absOriFing',
-                  # 'relOriMov','relOriLoc','oriCh','handCh',
-                  'repeat', 'altern',
-                  # 'movSh','movDir',
-                  'movMan',
-                  # 'contType',
-                  'mouthG',
-                  'mouthing', 'phonetVar', 'domSF', 'domFlex', 'oriChAbd', 'oriChFlex',
+                   # 'relOriMov','relOriLoc','oriCh','handCh',
+                   'repeat', 'altern',
+                   # 'movSh','movDir',
+                   'movMan',
+                   # 'contType',
+                   'mouthG',
+                   'mouthing', 'phonetVar', 'domSF', 'domFlex', 'oriChAbd', 'oriChFlex',
 
-                  'iconImg', 'iconType',
-                  # 'namEnt', 'semField',
-                  # 'wordClass',
-                  'wordClass2', 'derivHist', 'lexCatNotes', 'valence',
+                   'iconImg','iconType',
+                   # 'namEnt', 'semField',
+                   # 'wordClass',
+                   'wordClass2', 'derivHist', 'lexCatNotes', 'valence','concConcSet',
 
-                  'tokNoA', 'tokNoSgnrA', 'tokNoV', 'tokNoSgnrV', 'tokNoR', 'tokNoSgnrR', 'tokNoGe', 'tokNoSgnrGe',
-                  'tokNoGr', 'tokNoSgnrGr', 'tokNoO', 'tokNoSgnrO')
+                   'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
+                   'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')

@@ -123,13 +123,17 @@
         video_player.type = "video/mp4";
         video_player.load();
     }
+
+    $('[data-toggle="tooltip"]').tooltip({
+        placement : 'bottom'
+    });
+
     </script>
 
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
-
    // This script gets minimal pairs data and displays it as table rows
 $(document).ready(function() {
     lookup = "#header_mp_rows";
@@ -166,7 +170,7 @@ $(document).ready(function() {
     });
 });
 
-        $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
+        $('#searchresults').css({'top': 10+Math.round($('#signbank-bar').height())});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
@@ -204,7 +208,7 @@ $(document).ready(function() {
 
 <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;margin-top:3px;">
+    <div id="search_results_label">{% trans "Search results" %}</div><div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;margin-top:3px;">
     </div>
     {% endif %}
 </div>
@@ -1011,9 +1015,15 @@ $(document).ready(function() {
         </div>
         <div id='semantics' class='panel-collapse collapse'>
             <table class='table table-condensed'>
-		{% for value,name,label,kind in semantics_fields %}
-		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
-		{% endfor %}
+		    {% for value,name,label,kind in semantics_fields %}
+	              <tr><th>
+                    {% if name == 'concConcSet' %}
+                        <a target="_blank" href="http://concepticon.clld.org">{{label}}</a>
+                    {% else %}
+                        {{label}}
+                    {% endif %}
+                 </th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
+            {% endfor %}
             
             </table>
         </div>
