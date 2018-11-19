@@ -648,21 +648,14 @@ class Gloss(models.Model):
 
         if staff:
             # Make sure we only include the none-Morpheme glosses
-            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('lemma')
+            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('lemma').values_list('pk', flat=True)
         else:
-            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('lemma')
+            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('lemma').values_list('pk', flat=True)
 
-        if all_glosses_ordered:
-
-            foundit = False
-
-            for gloss in all_glosses_ordered:
-                if gloss == self:
-                    foundit = True
-                elif foundit:
-                    return gloss
-                    break
-
+        index_of_this_gloss = all_glosses_ordered.index(self.pk)
+        if len(all_glosses_ordered) - 1 > index_of_this_gloss:
+            next_gloss = all_glosses_ordered[all_glosses_ordered.index(self.pk) + 1]
+            return Gloss.objects.get(pk=next_gloss)
         else:
             return None
  
