@@ -648,9 +648,9 @@ class Gloss(models.Model):
 
         if staff:
             # Make sure we only include the none-Morpheme glosses
-            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('lemma').values_list('pk', flat=True)
+            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('lemma')
         else:
-            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('lemma').values_list('pk', flat=True)
+            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('lemma')
 
         all_glosses_ordered_pks = list(all_glosses_ordered.values_list('pk', flat=True))
         index_of_this_gloss = all_glosses_ordered_pks.index(self.pk)
