@@ -543,12 +543,12 @@ class GlossListView(ListView):
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
 
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
-                    qs = Gloss.none_morpheme_objects().prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
+                    qs = Gloss.none_morpheme_objects().select_related('lemma').prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
                 else:
                     qs = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
             else:
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
-                    qs = Gloss.objects.all().prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
+                    qs = Gloss.objects.all().prefetch_related('lemma').prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
                 else:
                     qs = Gloss.objects.all().filter(lemma__dataset__in=selected_datasets)
 
@@ -562,6 +562,7 @@ class GlossListView(ListView):
         #If we wanted to get everything, we're done now
         if show_all:
             return order_queryset_by_sort_order(self.request.GET, qs)
+            # return qs
 
         #If not, we will go trhough a long list of filters
         if 'search' in get and get['search'] != '':
@@ -619,8 +620,8 @@ class GlossListView(ListView):
                       'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
                       'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
                       'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence',
-                      'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
-                      'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew','derivHist']
+                      'lexCatNotes',
+                      'inWeb', 'isNew','derivHist']
 
 
         # SignLanguage and basic property filters
@@ -672,34 +673,6 @@ class GlossListView(ListView):
                 if val != '':
                     kwargs = {key:val}
                     qs = qs.filter(**kwargs)
-
-        if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
-            val = get['initial_relative_orientation']
-            qs = qs.filter(initial_relative_orientation__exact=val)
-
-        if 'final_relative_orientation' in get and get['final_relative_orientation'] != '':
-            val = get['final_relative_orientation']
-            qs = qs.filter(final_relative_orientation__exact=val)
-
-        if 'initial_palm_orientation' in get and get['initial_palm_orientation'] != '':
-            val = get['initial_palm_orientation']
-            qs = qs.filter(initial_palm_orientation__exact=val)
-
-        if 'final_palm_orientation' in get and get['final_palm_orientation'] != '':
-            val = get['final_palm_orientation']
-            qs = qs.filter(final_palm_orientation__exact=val)
-
-        if 'initial_secondary_loc' in get and get['initial_secondary_loc'] != '':
-            val = get['initial_secondary_loc']
-            qs = qs.filter(initial_secondary_loc__exact=val)
-
-        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
-            val = get['final_secondary_loc']
-            qs = qs.filter(final_secondary_loc__exact=val)
-
-        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
-            val = get['final_secondary_loc']
-            qs = qs.filter(final_secondary_loc__exact=val)
 
         if 'defsearch' in get and get['defsearch'] != '':
 
@@ -853,9 +826,15 @@ class GlossListView(ListView):
         # Flush the previous queryset (just in case)
         # self.request.session['search_results'] = None
 
+        qs = qs.select_related('lemma')
+        try:
+            print('qs: ', qs.query.as_sql())
+        except:
+            pass
         # Make sure that the QuerySet has filters applied (user is searching for something instead of showing all results [objects.all()])
         if hasattr(qs.query.where, 'children') and len(qs.query.where.children) > 0:
 
+        # if not isinstance(qs.query.where.children, NothingNode):
             items = []
 
             for item in qs:
@@ -2327,14 +2306,14 @@ class HomonymListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        glosses_with_phonology = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
-                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})))
+        glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(lemma__dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}))).exclude((Q(**{'domhndsh__isnull': True})))
 
         return glosses_with_phonology
 
 class MinimalPairsListView(ListView):
     model = Gloss
     template_name = 'dictionary/admin_minimalpairs_list.html'
+    paginate_by = 10
 
     def get_context_data(self, **kwargs):
         # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
@@ -2383,8 +2362,7 @@ class MinimalPairsListView(ListView):
 
         finger_spelling_glosses = [ a_idgloss_trans.gloss_id for a_idgloss_trans in AnnotationIdglossTranslation.objects.filter(text__startswith="#") ]
 
-        glosses_with_phonology = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets).exclude(id__in=finger_spelling_glosses).exclude((Q(**{'handedness__isnull': True}) | Q(**{'handedness': 0})
-                                           | Q(**{'domhndsh__isnull': True}) | Q(**{'domhndsh': 0})))
+        glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(lemma__dataset__in=selected_datasets).exclude(id__in=finger_spelling_glosses).exclude((Q(**{'handedness__isnull': True}))).exclude((Q(**{'domhndsh__isnull': True})))
 
         return glosses_with_phonology
 
