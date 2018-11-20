@@ -76,7 +76,7 @@
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
-        $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
+        $('#searchresults').css({'top': 10+Math.round($('#signbank-bar').height())});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
