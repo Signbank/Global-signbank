@@ -43,7 +43,7 @@
         for (var key in json_data) {
             if (json_data.hasOwnProperty(key)) {
                 var a = document.createElement("a");
-                a.setAttribute("class", "btn btn-default");
+                a.setAttribute("class", "search_result");
                 a.style["float"] = "none";
                 a.href = "{{PREFIX_URL}}/dictionary/handshape/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
@@ -67,7 +67,7 @@
                 $('#searchresults').scrollLeft(leftOffset);
             }
             var signinfo = $('#signinfo');
-            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height())});
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
         }
     });
 
@@ -77,7 +77,7 @@
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
         $('#searchresults').css({'top': 10+Math.round($('#signbank-bar').height())});
-        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
+        $('#definitionblock').css({'padding-top': 10+Math.round($('#searchresults').height() + $('#signinfo').height())});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
         });
@@ -112,9 +112,9 @@
 
 {% block content %}
 
-<div id="searchresults" class='navbar navbar-default' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box;">
+<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background:white;margin-top:3px;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;margin-top:3px;">
     </div>
     {% endif %}
 </div>
@@ -125,7 +125,7 @@
 
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
 
-    <ul class='nav navbar-nav nav-tabs'>
+    <ul class='nav nav-tabs'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/handshapes/">{% trans "Handshapes List" %}</a>
         </li>
