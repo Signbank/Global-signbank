@@ -10,7 +10,15 @@
             <tr id = "cell_{{focus_gloss.id}}_{{mp.other_gloss.id}}" >
         <td><a href='{% url "dictionary:admin_gloss_view" pk=mp.id %}'>{{mp.other_gloss_idgloss}}</a></td>
         <td style="width:auto;">{{mp.field_display}}</td>
-        <td>{{mp.focus_gloss_value}}</td>
+
+        {% with mp.focus_gloss_value as focus_gloss_value %}
+        {% if focus_gloss_value|slice:"0:6" == "ERROR_" %}
+            <td style="color:red">{{focus_gloss_value|slice:"6:"}}</td>
+        {% else %}
+            <td>{{focus_gloss_value}}</td>
+        {% endif %}
+        {% endwith %}
+
                 {% with mp.other_gloss_value as other_gloss_value %}
                 {% if other_gloss_value|slice:"0:6" == "ERROR_" %}
                     <td style="color:red">{{other_gloss_value|slice:"6:"}}</td>

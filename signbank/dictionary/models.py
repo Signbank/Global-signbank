@@ -667,7 +667,10 @@ class Gloss(models.Model):
             all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('lemma')
 
         all_glosses_ordered_pks = list(all_glosses_ordered.values_list('pk', flat=True))
-        index_of_this_gloss = all_glosses_ordered_pks.index(self.pk)
+        try:
+            index_of_this_gloss = all_glosses_ordered_pks.index(self.pk)
+        except:
+            return None
         if len(all_glosses_ordered_pks) - 1 > index_of_this_gloss:
             next_gloss = all_glosses_ordered_pks[all_glosses_ordered_pks.index(self.pk) + 1]
             return Gloss.objects.get(pk=next_gloss)
