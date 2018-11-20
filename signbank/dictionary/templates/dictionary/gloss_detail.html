@@ -153,19 +153,6 @@ $(document).ready(function() {
             <!--console.log(mp_rows);-->
             <!--$(lookup).append(rows_mp);-->
             $(lookup).first().append(result);
-
-            <!--$.each( parsed, function(i, el ) {-->
-                <!--nodename = el.nodeName;-->
-                <!--console.log(nodename);-->
-                <!--if (nodename == 'TR') {-->
-                    <!--id_of_row = $(el).attr('id');-->
-                    <!--res = id_of_row.split("_");-->
-                    <!--id_of_gloss = res[1];-->
-                    <!--console.log(id_of_gloss);-->
-                    <!--focus_gloss_lookup = '#focusgloss_' + id_of_gloss;-->
-                    <!--$(lookup).find(focus_gloss_lookup).first().append(result).end().remove();-->
-                <!--};-->
-            <!--});-->
         }
     });
 });
@@ -208,7 +195,7 @@ $(document).ready(function() {
 
 <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="search_results_label">{% trans "Search results" %}</div><div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;margin-top:3px;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;margin-top:3px;">
     </div>
     {% endif %}
 </div>
