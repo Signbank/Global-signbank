@@ -373,7 +373,7 @@ class GlossListView(ListView):
             header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
         for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
-                             'Relations to other signs','Relations to foreign signs', 'Tags']:
+                             'Relations to other signs','Relations to foreign signs', 'Tags', 'Notes']:
             header.append(extra_column)
 
         writer.writerow(header)
@@ -483,6 +483,23 @@ class GlossListView(ListView):
 
             tag_names = ", ".join(tag_names_of_gloss)
             row.append(tag_names)
+
+            # export notes
+            note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+            notes_of_gloss = gloss.definition_set.all()
+            notes_list = []
+            for note in notes_of_gloss:
+                translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices, 'en')
+                note_string = translated_note_role + ": (" + str(note.published) +","+ str(note.count) +","+ note.text + ")"
+                # print('note string: ', note_string, ' | note list: ', notes_list)
+                if note_string in notes_list:
+                    pass
+                else:
+                    notes_list.append(note_string)
+            notes_display = ", ".join(notes_list)
+            row.append(notes_display)
+
+            # print('update gloss ', gloss.id, ' notes: ', notes_display)
 
             #Make it safe for weird chars
             safe_row = []
@@ -1194,6 +1211,7 @@ class GlossDetailView(DetailView):
         notes = context['gloss'].definition_set.all()
         notes_groupedby_role = {}
         for note in notes:
+            # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
             translated_note_role = machine_value_to_translated_human_value(note.role,note_role_choices,self.request.LANGUAGE_CODE)
             role_id = (note.role, translated_note_role)
             if role_id not in notes_groupedby_role:
