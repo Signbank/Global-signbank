@@ -379,7 +379,7 @@ class GlossListView(ListView):
         writer.writerow(header)
 
         for gloss in self.get_queryset():
-            row = [str(gloss.pk), gloss.lemma.dataset]
+            row = [str(gloss.pk), gloss.lemma.dataset.name]
 
             for language in dataset_languages:
                 lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
