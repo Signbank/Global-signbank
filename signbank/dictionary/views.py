@@ -929,9 +929,13 @@ def import_csv(request):
 
             if gloss.dataset == dataset:  # Dataset is not changed
                 # If there are changes in the LemmaIdglossTranslation, the changes should refer to another LemmaIdgloss
-                current_lemmaidglosstranslations = \
-                    [(language, LemmaIdglossTranslation.objects.get(language=language, lemma=gloss.lemma).text)
-                     for language in gloss.lemma.dataset.translation_languages.all()]
+                current_lemmaidglosstranslations = {}
+                for language in gloss.lemma.dataset.translation_languages.all():
+                    try:
+                        lemma_translation = LemmaIdglossTranslation.objects.get(language=language, lemma=gloss.lemma)
+                        current_lemmaidglosstranslations[language] = lemma_translation.text
+                    except:
+                        current_lemmaidglosstranslations[language] = ''
                 if lemmaidglosstranslations \
                         and current_lemmaidglosstranslations != lemmaidglosstranslations:
                     existing_lemmas = []
