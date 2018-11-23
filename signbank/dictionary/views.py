@@ -1994,3 +1994,52 @@ def show_unassigned_glosses(request):
                         "number_of_unassigned_glosses_without_signlanguage":number_of_unassigned_glosses_without_signlanguage,
                         "all_datasets":all_datasets
                       })
+
+def choice_lists(request,include_frequencies):
+
+    FIELDS_TO_EXCLUDE = ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
+                             'subhndsh_letter']
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    all_choice_lists = {}
+
+    # Translate the machine values to human values in the correct language, and save the choice lists along the way
+    for topic in ['main', 'phonology', 'semantics', 'frequency']:
+        for field in FIELDS[topic]:
+
+            if field in FIELDS_TO_EXCLUDE:
+                continue
+
+            # Get and save the choice list for this field
+            fieldchoice_category = fieldname_to_category(field)
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+            if len(choice_list) > 0:
+                all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,request.LANGUAGE_CODE)
+                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
+
+                #Also concatenate the frequencies of all values
+                if include_frequencies:
+                    for choice_list_field, machine_value in choice_list_machine_values:
+
+                        if machine_value == 0:
+                            frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
+                                                                       Q(**{field + '__isnull': True}) |
+                                                                       Q(**{field: 0})).count()
+
+                        else:
+                            variable_column = field
+                            search_filter = 'exact'
+                            filter = variable_column + '__' + search_filter
+                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
+
+                        all_choice_lists[field][choice_list_field] += ' ['+str(frequency_for_field)+']'
+
+    # Add morphology to choice lists
+    all_choice_lists['morphology_role'] = choicelist_queryset_to_translated_dict(
+        FieldChoice.objects.filter(field__iexact='MorphologyType'),request.LANGUAGE_CODE)
+
+    all_choice_lists['morph_type'] = choicelist_queryset_to_translated_dict(
+        FieldChoice.objects.filter(field__iexact='MorphemeType'),request.LANGUAGE_CODE)
+
+    return HttpResponse(json.dumps(all_choice_lists), content_type='application/json')
