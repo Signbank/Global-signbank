@@ -491,15 +491,10 @@ class GlossListView(ListView):
             for note in notes_of_gloss:
                 translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices, 'en')
                 note_string = translated_note_role + ": (" + str(note.published) +","+ str(note.count) +","+ note.text + ")"
-                # print('note string: ', note_string, ' | note list: ', notes_list)
-                if note_string in notes_list:
-                    pass
-                else:
-                    notes_list.append(note_string)
-            notes_display = ", ".join(notes_list)
+                notes_list.append(note_string)
+            sorted_notes_list = sorted(notes_list)
+            notes_display = ", ".join(sorted_notes_list)
             row.append(notes_display)
-
-            # print('update gloss ', gloss.id, ' notes: ', notes_display)
 
             #Make it safe for weird chars
             safe_row = []
