@@ -1999,13 +1999,18 @@ def show_unassigned_glosses(request):
                         "all_datasets":all_datasets
                       })
 
-def choice_lists(request,include_frequencies):
+def choice_lists(request):
 
     FIELDS_TO_EXCLUDE = ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
                              'subhndsh_letter']
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     all_choice_lists = {}
+
+    if 'dataset' in request.GET:
+        choices_to_exclude = Dataset.objects.get(name=request.GET['dataset']).exclude_choices.all()
+    else:
+        choices_to_exclude = None
 
     # Translate the machine values to human values in the correct language, and save the choice lists along the way
     for topic in ['main', 'phonology', 'semantics', 'frequency']:
@@ -2019,11 +2024,12 @@ def choice_lists(request,include_frequencies):
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             if len(choice_list) > 0:
-                all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,request.LANGUAGE_CODE)
+                all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,request.LANGUAGE_CODE,
+                                                                                 choices_to_exclude=choices_to_exclude)
                 choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
 
                 #Also concatenate the frequencies of all values
-                if include_frequencies:
+                if 'include_frequencies' in request.GET and request.GET['include_frequencies']:
                     for choice_list_field, machine_value in choice_list_machine_values:
 
                         if machine_value == 0:
@@ -2037,7 +2043,10 @@ def choice_lists(request,include_frequencies):
                             filter = variable_column + '__' + search_filter
                             frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
 
-                        all_choice_lists[field][choice_list_field] += ' ['+str(frequency_for_field)+']'
+                        try:
+                            all_choice_lists[field][choice_list_field] += ' ['+str(frequency_for_field)+']'
+                        except KeyError: #This might an excluded field
+                            continue
 
     # Add morphology to choice lists
     all_choice_lists['morphology_role'] = choicelist_queryset_to_translated_dict(
