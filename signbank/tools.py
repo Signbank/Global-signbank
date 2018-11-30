@@ -160,6 +160,22 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
     tag_name_error = False
     all_tags = [t.name for t in Tag.objects.all()]
     all_tags_display = ', '.join([t.replace('_',' ') for t in all_tags])
+    note_type_error = False
+    note_tuple_error = False
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+    all_notes = [ n.english_name for n in note_role_choices]
+    all_notes_display = ', '.join(all_notes)
+    # this is used to speedup matching updates to Notes
+    # it allows the type of note to be in either English or Dutch in the CSV file
+    note_reverse_translation = {}
+    for nrc in note_role_choices:
+        note_reverse_translation[nrc.english_name] = nrc.machine_value
+        note_reverse_translation[nrc.dutch_name] = nrc.machine_value
+        # probably not a good idea because of character set
+        # note_reverse_translation[nrc.chinese_name] = nrc.id
+    note_translations = {}
+    for nrc in note_role_choices:
+        note_translations[str(nrc.machine_value)] = nrc.english_name
 
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
@@ -189,10 +205,6 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
             new_human_value = new_human_value.strip()
-
-            #This fixes a casing problem that sometimes shows up
-            if human_key.lower() == 'id gloss':
-                human_key = 'ID Gloss'
 
             #If these are not fields, but relations to other parts of the database, compare complex values
             if human_key == 'Signbank ID':
@@ -228,15 +240,19 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                     lemma_idglosses = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
                     if lemma_idglosses:
                         lemma_idgloss_string = lemma_idglosses[0].text
-                        if lemma_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
-                            differences.append({'pk': gloss.pk,
-                                                'dataset': current_dataset,
-                                                'machine_key': human_key,
-                                                'human_key': human_key,
-                                                'original_machine_value': lemma_idgloss_string,
-                                                'original_human_value': lemma_idgloss_string,
-                                                'new_machine_value': new_human_value,
-                                                'new_human_value': new_human_value})
+                    else:
+                        # lemma not set
+                        lemma_idgloss_string = ''
+                    if lemma_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
+                        differences.append({'pk': gloss.pk,
+                                            'dataset': current_dataset,
+                                            'annotationidglosstranslation': default_annotationidglosstranslation,
+                                            'machine_key': human_key,
+                                            'human_key': human_key,
+                                            'original_machine_value': lemma_idgloss_string,
+                                            'original_human_value': lemma_idgloss_string,
+                                            'new_machine_value': new_human_value,
+                                            'new_human_value': new_human_value})
                 continue
 
             elif human_key == 'Keywords':
@@ -536,6 +552,82 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                                         'new_machine_value': new_tag_names_display,
                                         'new_human_value': new_tag_names_display})
                 continue
+
+            elif human_key == 'Notes':
+                if new_human_value == 'None' or new_human_value == '':
+                    # don't delete notes by accident
+                    continue
+
+                # export notes
+                notes_of_gloss = gloss.definition_set.all()
+                notes_list = []
+                for note in notes_of_gloss:
+                    # use the notes field choice machine value rather than the translation
+                    note_field = note_translations[note.role]
+                    note_tuple = (note_field, str(note.published),str(note.count), note.text)
+                    notes_list.append(note_tuple)
+
+                notes_display = [ role+':('+published+','+count+','+text+')' for (role,published,count,text) in notes_list]
+                sorted_notes_list = sorted(notes_display)
+                sorted_notes_display = ', '.join(sorted_notes_list)
+
+                # convert new Notes csv value to proper format
+                new_human_values = []
+                new_note_errors = []
+                split_human_values = re.findall(r'([^\:]+\:[^\)]*\)),?\s?', new_human_value)
+
+                # print('new split human values for notes: ', split_human_values)
+                for split_value in split_human_values:
+                    take_apart = re.match("([^\:]+)\:\s?\((False|True),(\d),([^\)]*)\)", split_value)
+                    if take_apart:
+                        (field,name,count,text) = take_apart.groups()
+
+                        if field not in all_notes:
+                            error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                                gloss.pk) + '), a non-existent note type was found: ' + field + '.'
+
+                            new_note_errors += [error_string]
+                            if not note_type_error:
+                                error_string = 'Current note types are: ' + all_notes_display + '.'
+                                new_note_errors += [error_string]
+                                note_type_error = True
+                        else:
+                            new_tuple = (field,name,count,text)
+                            new_human_values.append(new_tuple)
+                    else:
+                        # error in processing new notes
+                        error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                            gloss.pk) + '), could not parse note: ' + split_value
+
+                        if not note_tuple_error:
+                            new_note_errors += [error_string]
+                            error_string1 = "Note values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'"
+                            new_note_errors += [error_string1]
+                            error_string2 = 'Try exporting a CSV for glosses with Notes to check the format.'
+                            new_note_errors += [error_string2]
+                            note_tuple_error = True
+                        else:
+                            new_note_errors += [error_string]
+
+                new_notes_display = [ role+':('+published+','+count+','+text+')' for (role,published,count,text) in new_human_values]
+                sorted_new_notes_list = sorted(new_notes_display)
+                sorted_new_notes_display = ", ".join(sorted_new_notes_list)
+
+                if len(new_note_errors):
+                    errors_found += new_note_errors
+                elif sorted_notes_display != sorted_new_notes_display:
+                    differences.append({'pk': gloss.pk,
+                                        'dataset': current_dataset,
+                                        'annotationidglosstranslation':default_annotationidglosstranslation,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': sorted_notes_display,
+                                        'original_human_value': sorted_notes_display,
+                                        'new_machine_value': sorted_new_notes_display,
+                                        'new_human_value': sorted_new_notes_display})
+                continue
+
+
 
             #If not, find the matching field in the gloss, and remember its 'real' name
             try:
