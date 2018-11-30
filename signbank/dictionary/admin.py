@@ -103,7 +103,7 @@ class GlossAdmin(VersionAdmin):
     list_display = ['lemma','dataset']
 
     list_display += ['morph', 'sense', 'sn']
-    search_fields = ['^lemma', '=sn']
+    search_fields = ['^lemma__lemmaidglosstranslation__text', '=sn']
     list_filter = ['lemma__dataset', 'signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
     inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 
