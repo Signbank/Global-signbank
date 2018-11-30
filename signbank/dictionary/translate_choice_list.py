@@ -2,7 +2,7 @@ from collections import OrderedDict
 import signbank.settings.base as settings
 
 
-def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_',shortlist=False):
+def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
 
     codes_to_adjectives = dict(settings.LANGUAGES)
 
@@ -11,10 +11,17 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
     else:
         adjective = codes_to_adjectives[language_code].lower()
 
+    raw_choice_list = []
+
     try:
-        raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,adjective+'_name')) for choice in queryset]
+        for choice in queryset:
+            if choices_to_exclude == None or choice not in choices_to_exclude:
+                raw_choice_list.append((id_prefix + str(choice.machine_value), getattr(choice, adjective + '_name')))
+
     except AttributeError:
-        raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,'english_name')) for choice in queryset]
+        for choice in queryset:
+            if choices_to_exclude == None or choice not in choices_to_exclude:
+                raw_choice_list.append((id_prefix+str(choice.machine_value),getattr(choice,'english_name')))
 
     if ordered:
 

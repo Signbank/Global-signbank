@@ -1021,8 +1021,6 @@ class GlossDetailView(DetailView):
         context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
         context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
 
-        context['choice_lists'] = {}
-
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['main','phonology','semantics','frequency']:
             context[topic+'_fields'] = []
@@ -1035,9 +1033,6 @@ class GlossDetailView(DetailView):
                     fieldchoice_category = fieldname_to_category(field)
                     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-                    if len(choice_list) > 0:
-                        context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
-
                     #Take the human value in the language we are using
                     machine_value = getattr(gl,field)
                     human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
@@ -1046,98 +1041,6 @@ class GlossDetailView(DetailView):
                     kind = fieldname_to_kind(field)
                     context[topic+'_fields'].append([human_value,field,labels[field],kind])
 
-
-        # ADD FREQUENCY (COUNT) TO THE VALUES IN THE PULL-DOWN LISTS FOR PHONOLOGY AND SEMANTICS
-
-        # # to determine the frequency count of null or empty values for a field, a raw query is used
-        # # the raw query selected datasets parameter needs to have form (dataset_id,...,,dataset_id)
-        # selected_datasets_as_tuple_list = ""
-        # for ds in selected_datasets:
-        #     if selected_datasets_as_tuple_list:
-        #         selected_datasets_as_tuple_list = selected_datasets_as_tuple_list + ',' + str(ds.id)
-        #     else:
-        #         selected_datasets_as_tuple_list = str(ds.id)
-        # selected_datasets_as_tuple_list = '(' + selected_datasets_as_tuple_list + ')'
-
-        context['frequency_lists_phonology_fields'] = {}
-        for field in FIELDS['phonology']:
-            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter']:
-                fieldchoice_category = fieldname_to_category(field)
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
-                if len(choice_list) > 0:
-                    choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
-                    choice_list_frequencies = {}
-                    choice_list_labels = {}
-                    for choice_list_field, machine_value in choice_list_machine_values:
-                        if machine_value == 0:
-
-                            frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
-                                                                       Q(**{field + '__isnull': True}) |
-                                                                       Q(**{field: 0})).count()
-
-                            choice_list_frequencies[choice_list_field] = frequency_for_field
-                        else:
-                            variable_column = field
-                            search_filter = 'exact'
-                            filter = variable_column + '__' + search_filter
-                            choice_list_frequencies[choice_list_field] = Gloss.objects.\
-                                filter(lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
-                    context['frequency_lists_phonology_fields'][field] = choice_list_frequencies
-
-        # concatenate the frequency count to each of the menu choices
-        for field in FIELDS['phonology']:
-            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter']:
-                if field in context['choice_lists'].keys():
-                    if field in context['frequency_lists_phonology_fields'].keys():
-                        # revise entries in list with frequencies of choices
-                        old_choice_list = context['choice_lists'][field]
-                        for f_choice, f_freq in context['frequency_lists_phonology_fields'][field].items():
-                            old_choice_list[f_choice] = old_choice_list[f_choice] + '      [' + str(f_freq) + ']'
-                        context['choice_lists'][field] = old_choice_list
-
-
-        context['frequency_lists_semantics_fields'] = {}
-        for field in FIELDS['semantics']:
-            fieldchoice_category = fieldname_to_category(field)
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-            if len(choice_list) > 0:
-                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
-                choice_list_frequencies = {}
-                for choice_list_field, machine_value in choice_list_machine_values:
-                    if machine_value == 0:
-
-                        frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
-                                                                   Q(**{field + '__isnull': True}) |
-                                                                   Q(**{field: 0})).count()
-
-                        choice_list_frequencies[choice_list_field] = frequency_for_field
-                    else:
-                        variable_column = field
-                        search_filter = 'exact'
-                        filter = variable_column + '__' + search_filter
-                        choice_list_frequencies[choice_list_field] = Gloss.objects.\
-                            filter(lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
-                context['frequency_lists_semantics_fields'][field] = choice_list_frequencies
-
-        # concatenate the frequency count to each of the menu choices
-        for field in FIELDS['semantics']:
-            if field in context['choice_lists'].keys():
-                if field in context['frequency_lists_semantics_fields'].keys():
-                    # revise entries in list with frequencies of choices
-                    old_choice_list = context['choice_lists'][field]
-                    for f_choice, f_freq in context['frequency_lists_semantics_fields'][field].items():
-                        old_choice_list[f_choice] = old_choice_list[f_choice] + '      [' + str(f_freq) + ']'
-                    context['choice_lists'][field] = old_choice_list
-
-        #Add morphology to choice lists
-        context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
-                                                                                       self.request.LANGUAGE_CODE)
-
-        context['choice_lists']['morph_type'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphemeType'),
-                                                                                       self.request.LANGUAGE_CODE)
 
         #Collect all morphology definitions for th sequential morphology section, and make some translations in advance
         morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
@@ -1216,6 +1119,7 @@ class GlossDetailView(DetailView):
 
         #Gather the OtherMedia
         context['other_media'] = []
+        context['other_media_field_choices'] = {}
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
 
         for other_media in gl.othermedia_set.all():
@@ -1236,10 +1140,12 @@ class GlossDetailView(DetailView):
 
             context['other_media'].append([other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
 
-            #Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
-            context['choice_lists']['other-media-type_'+str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list,self.request.LANGUAGE_CODE)
+            # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
+            context['other_media_field_choices'][
+                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(
+                other_media_type_choice_list, self.request.LANGUAGE_CODE)
 
-        context['choice_lists'] = json.dumps(context['choice_lists'])
+        context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
@@ -3416,6 +3322,13 @@ class DatasetDetailView(DetailView):
 
         return HttpResponseRedirect(URL + '/datasets/detail/' + str(dataset_object.id))
 
+def dataset_field_choices_view(request):
+
+    context = {}
+    context['field_choices'] = sorted(FieldChoice.objects.all(),key=lambda x: (x.field,x.english_name))
+    context['datasets'] = Dataset.objects.all()
+
+    return render(request,'dictionary/dataset_field_choices.html',context)
 
 def order_handshape_queryset_by_sort_order(get, qs):
     """Change the sort-order of the query set, depending on the form field [sortOrder]

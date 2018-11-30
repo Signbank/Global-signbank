@@ -51,11 +51,9 @@
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
-    var choice_lists = {{choice_lists|safe}};
+    var choice_lists = [];
     var generate_translated_choice_list_table = {{generate_translated_choice_list_table|safe}};
-    console.log(generate_translated_choice_list_table);
-    var frequency_lists_phonology_fields = {{frequency_lists_phonology_fields|safe}};
-    console.log(frequency_lists_phonology_fields);
+
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id = {{nextglossid}};
     var next_morpheme_id;
@@ -126,6 +124,13 @@
 
     $('[data-toggle="tooltip"]').tooltip({
         placement : 'bottom'
+    });
+
+    //Fill choice_lists later
+    $.ajax("/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{gloss.lemma.dataset}}").done( function (data)
+    {
+        choice_lists = $.extend(data,{{other_media_field_choices | safe}});
+        console.log("Added field choices");
     });
 
     </script>

@@ -1,0 +1,32 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% block content %}
+
+<p>Here you can exclude field choices for some datasets you manage:</p>
+
+<table>
+
+    <tr>
+        <td></td>
+        {% for dataset in datasets %}
+            <td>{{ dataset.name }}</td>
+        {% endfor %}
+    </tr>
+
+    {% for choice in field_choices %}
+
+        <tr>
+            <td>{{choice}}</td>
+        {% for dataset in datasets %}
+            <td></td>
+        {% endfor %}
+        </tr>
+
+    {% endfor %}
+
+</table>
+
+{% endblock %}

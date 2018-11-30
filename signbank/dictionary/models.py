@@ -223,10 +223,10 @@ class FieldChoice(models.Model):
     chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(help_text="The actual numeric value stored in the database. Created automatically.")
 
-    # def __str__(self):
-    #
-    #     name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
-    #     return name
+    def __str__(self):
+
+        name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
+        return name
 
     class Meta:
         ordering = ['machine_value']
@@ -1869,6 +1869,8 @@ class Dataset(models.Model):
                                                         "This is different than the software code license.")
     acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
+
+    exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices")
 
     class Meta:
         permissions = (
