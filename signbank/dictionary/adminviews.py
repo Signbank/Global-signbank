@@ -3327,6 +3327,13 @@ class DatasetDetailView(DetailView):
 
         return HttpResponseRedirect(URL + '/datasets/detail/' + str(dataset_object.id))
 
+def dataset_field_choices_view(request):
+
+    context = {}
+    context['field_choices'] = sorted(FieldChoice.objects.all(),key=lambda x: (x.field,x.english_name))
+    context['datasets'] = Dataset.objects.all()
+
+    return render(request,'dictionary/dataset_field_choices.html',context)
 
 def order_handshape_queryset_by_sort_order(get, qs):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
