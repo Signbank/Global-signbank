@@ -720,6 +720,50 @@ def update_blend_morphology(gloss, field, values):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
+
+def subst_notes(gloss, field, values):
+    # this is called by csv_import to modify the notes for a gloss
+
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+    # this is used to speedup matching updates to Notes
+    # it allows the type of note to be in either English or Dutch in the CSV file
+    note_reverse_translation = {}
+    for nrc in note_role_choices:
+        note_reverse_translation[nrc.english_name] = nrc.machine_value
+        note_reverse_translation[nrc.dutch_name] = nrc.machine_value
+
+    for original_note in gloss.definition_set.all():
+        original_note.delete()
+
+    # convert new Notes csv value to proper format
+    # the syntax of the new note values has already been checked at a previous stage of csv import
+    new_notes_values = []
+
+    split_values = re.findall(r'([^\:]+\:[^\)]*\)),?\s?', values)
+
+    for note_value in split_values:
+        take_apart = re.match("([^\:]+)\:\s?\((False|True),(\d),([^\)]*)\)", note_value)
+        if take_apart:
+            (field, name, count, text) = take_apart.groups()
+            new_tuple = (field, name, count, text)
+            new_notes_values.append(new_tuple)
+
+    for (role, published, count, text) in new_notes_values:
+        is_published = (published == 'True')
+        note_role = str(note_reverse_translation[role])
+        index_count = int(count)
+        defn = Definition(gloss=gloss, count=index_count, role=note_role, text=text, published=is_published)
+        defn.save()
+
+    new_notes_refresh = [(note.role, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
+    notes_by_role = []
+    for note in new_notes_refresh:
+        notes_by_role.append(':'.join(note))
+
+    new_gloss_notes = ", ".join(notes_by_role)
+
+    return HttpResponse(str(new_gloss_notes), {'content-type': 'text/plain'})
+
 def subst_foreignrelations(gloss, field, values):
     # expecting possibly multiple values
     # values is a list of values, where each value is a tuple of the form 'Boolean:String:String'

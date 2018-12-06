@@ -22,7 +22,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
-    update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology
+    update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
 
@@ -837,9 +837,10 @@ def import_csv(request):
             for language in dataset.translation_languages.all():
                 column_name = "Lemma ID Gloss (%s)" % language.name_en
                 if column_name not in value_dict:
-                    e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + column_name + ' is required.'
-                    fatal_error = True
-                    error.append(e1)
+                    if creating_glosses:
+                        e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + column_name + ' is required.'
+                        fatal_error = True
+                        error.append(e1)
                 else:
                     lemma_idgloss_value = value_dict[column_name].strip()
                     lemmaidglosstranslations[language] = lemma_idgloss_value
@@ -940,17 +941,20 @@ def import_csv(request):
                         and current_lemmaidglosstranslations != lemmaidglosstranslations:
                     existing_lemmas = []
                     for language, term in lemmaidglosstranslations.items():
-                        try:
-                            existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset,
-                                                                                       language=language,
-                                                                                       text=term).lemma)
-                        except ObjectDoesNotExist as e:
-                            print("Error: {}".format(e))
+                        if term:
+                            try:
+                                existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset,
+                                                                                           language=language,
+                                                                                           text=term).lemma)
+                            except ObjectDoesNotExist as e:
+                                print("Error: {}".format(e))
+                                pass
+                        else:
+                            print('lemmaidglosstranslations empty text found for language ', language,' and term: ', term)
+
                     existing_lemmas_set = set(existing_lemmas)
 
-                    if len(existing_lemmas) != 0 and \
-                            not(len(existing_lemmas) == len(lemmaidglosstranslations)
-                                and len(existing_lemmas_set) == 1):
+                    if len(existing_lemmas) > 0 and len(existing_lemmas_set) > 1:
                         e1 = 'When changing Lemma Idgloss Translations, they should either all refer to ' \
                             'an existing Lemma Idgloss or make up a new one'
                         error.append(e1)
@@ -1001,14 +1005,14 @@ def import_csv(request):
                     continue
 
                 gloss = Gloss.objects.get(pk=pk)
-                if gloss not in lemmaidglosstranslations_per_gloss:
-                    lemmaidglosstranslations_per_gloss[gloss] = {}
 
                 # Updating the lemma idgloss is a special procedure, not only because it has relations to other parts of
                 # the database, but also because it only can be evaluated after reviewing all lemma idgloss translations
                 lemma_idgloss_key_prefix = "Lemma ID Gloss ("
                 if fieldname.startswith(lemma_idgloss_key_prefix):
                     language_name = fieldname[len(lemma_idgloss_key_prefix):-1]
+                    if gloss not in lemmaidglosstranslations_per_gloss:
+                        lemmaidglosstranslations_per_gloss[gloss] = {}
                     lemmaidglosstranslations_per_gloss[gloss][language_name] = new_value
 
                 # Updating the annotation idgloss is a special procedure, because it has relations to other parts of the
@@ -1063,12 +1067,21 @@ def import_csv(request):
                     # get dataset identifier
                     if new_value == 'None':
                         # don't allow the user to erase the current dataset, this should have already been caught
-                        # dataset_id = None
+                        print('csv import make changes error: gloss ', gloss.id, ' attempt to set dataset to empty')
                         continue
                     else:
-                        dataset_id = Dataset.objects.get(name=new_value)
-                    setattr(gloss,'dataset',dataset_id)
-                    gloss.save()
+                        # the existence of the new dataset should have already been tested
+                        new_dataset = Dataset.objects.get(name=new_value)
+                    try:
+                        gloss_lemma = gloss.lemma
+                    except:
+                        # this error should not happen
+                        print('csv import make changes error: gloss ', gloss.id, ' gloss.lemma is empty, cannot set dataset')
+                        continue
+
+                    # this could have an unwanted side effect on the Lemma translations?
+                    gloss_lemma.dataset = new_dataset
+                    gloss_lemma.save()
                     continue
 
                 if fieldname == 'Sequential Morphology':
@@ -1100,7 +1113,6 @@ def import_csv(request):
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                     subst_relations(gloss,None,new_human_value_list)
-                    gloss.save()    # is this needed?
                     continue
 
                 if fieldname == 'Relations to foreign signs':
@@ -1108,7 +1120,6 @@ def import_csv(request):
                     new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                     subst_foreignrelations(gloss,None,new_human_value_list)
-                    gloss.save()    # is this needed?
                     continue
 
                 if fieldname == 'Tags':
@@ -1116,7 +1127,11 @@ def import_csv(request):
                     new_human_value_list = [v.strip().replace(' ','_') for v in new_value.split(',')]
 
                     update_tags(gloss,None,new_human_value_list)
-                    gloss.save()    # is this needed?
+                    continue
+
+                if fieldname == 'Notes':
+
+                    subst_notes(gloss,None,new_value)
                     continue
 
                 with override(settings.LANGUAGE_CODE):
@@ -1283,7 +1298,6 @@ def import_csv(request):
 
         stage = 0
 
-    print('seen_datasets: ', seen_datasets)
     return render(request,'dictionary/import_csv.html',{'form':uploadform,'stage':stage,'changes':changes,
                                                         'creation':creation,
                                                         'gloss_already_exists':gloss_already_exists,
@@ -1291,7 +1305,8 @@ def import_csv(request):
                                                         'dataset_languages':dataset_languages,
                                                         'selected_datasets':selected_datasets,
                                                         'translation_languages_dict': translation_languages_dict,
-                                                        'seen_datasets': seen_datasets})
+                                                        'seen_datasets': seen_datasets,
+                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 def switch_to_language(request,language):
 

@@ -2,7 +2,10 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 {% load i18n %}
+{% load guardian_tags %}
 {% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}Signbank: Import CSV{% endblock %}
 
 {% block extrajs %}
     <script type="text/javascript" src="{{PREFIX_URL}}/static/js/bootstrap-filestyle.min.js"> </script>
@@ -27,10 +30,11 @@
 
 
 {% block content %}
+<h3>{% trans "Import CSV" %}</h3>
 
 {% if stage == 0 %}
 
-    <div>{% blocktrans %}Upload your changed CSV here::{% endblocktrans %}</div>
+    <div>{% blocktrans %}Upload your changed CSV here:{% endblocktrans %}</div>
 
     <form action="" method="post" enctype="multipart/form-data" role="form">
         {% csrf_token %}
@@ -83,7 +87,7 @@
                 <th style="width:10em; text-align:left;">{% trans "Dataset" %}</th>
                 <th style="width:25em; text-align:left;">{% trans "Annotation ID Gloss" %} ({% trans "Signbank ID" %})</th>
                 <th style="width:20em; text-align:left;">{% trans "Field" %}</th>
-                <th style="width:20em; text-align:left;">{% trans "Old" %}</th>
+                <th style="width:30em; text-align:left;">{% trans "Old" %}</th>
                 <th style="width:40em; text-align:left;">{% trans "New" %}</th>
             </tr>
             {% for change in changes %}

@@ -570,7 +570,7 @@ class Gloss(models.Model):
         try:
             return self.lemma.lemmaidglosstranslation_set.first().text
         except:
-            return ""
+            return str(self.id)
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
