@@ -1454,3 +1454,104 @@ def get_users_who_can_view_dataset(dataset_name):
             users_who_can_view_dataset.append(user.username)
 
     return users_who_can_view_dataset
+
+def update_cngt_counts(folder_index=None):
+
+    #Run the counter script
+    try:
+        from CNGT_scripts.python.signCounter import SignCounter
+    except ImportError:
+        return HttpResponse('Counter script not present')
+
+    folder_paths = []
+
+    for foldername in os.listdir(settings.CNGT_EAF_FILES_LOCATION):
+        if '.xml' not in foldername:
+            folder_paths.append(settings.CNGT_EAF_FILES_LOCATION+foldername+'/')
+
+    if folder_index != None:
+        folder_paths = [folder_paths[int(folder_index)]]
+
+    eaf_file_paths = []
+
+    for folder_path in folder_paths:
+        eaf_file_paths += [folder_path + f for f in os.listdir(folder_path)]
+
+    sign_counter = SignCounter(settings.CNGT_METADATA_LOCATION,
+                               eaf_file_paths,
+                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT)
+
+    sign_counter.run()
+
+    counts = sign_counter.get_result()
+
+    #Save the results to Signbank
+    location_to_fieldname_letter = {'Amsterdam': 'A', 'Voorburg': 'V', 'Rotterdam': 'R',
+                                    'St. Michielsgestel': 'Ge', 'Groningen': 'Gr', 'Other': 'O'}
+
+    glosses_not_in_signbank = []
+    updated_glosses = []
+
+    for gloss_id, frequency_info in counts.items():
+
+        #Collect the gloss needed
+        try:
+            if gloss_id.startswith("gloss"):
+                gloss_id = gloss_id[5:]
+            gloss = Gloss.objects.get(id=gloss_id)
+        except (ObjectDoesNotExist, ValueError):
+
+            if gloss_id != None:
+                glosses_not_in_signbank.append(gloss_id)
+
+            continue
+
+        #Save general frequency info
+        gloss.tokNo = frequency_info['frequency']
+        gloss.tokNoSgnr = frequency_info['numberOfSigners']
+        updated_glosses.append(gloss.idgloss+' (tokNo,tokNoSgnr)')
+
+        #Data for Mixed and Other should be added (1/3)
+        otherFrequency = 0
+        otherNumberofSigners = 0
+
+        #Iterate to them, and add to gloss
+        for region, data in frequency_info['frequenciesPerRegion'].items():
+
+            frequency = data['frequency']
+            numberOfSigners = data['numberOfSigners']
+
+            #Data for Mixed and Other should be added (2/3)
+            if region in ('Mixed', 'Other'):
+                otherFrequency += frequency
+                otherNumberofSigners += numberOfSigners
+            else:
+                try:
+                    attribute_name = 'tokNo' + location_to_fieldname_letter[region]
+                    setattr(gloss,attribute_name,frequency)
+                    updated_glosses.append(gloss.idgloss + ' ('+attribute_name+')')
+
+                    attribute_name = 'tokNoSgnr' + location_to_fieldname_letter[region]
+                    setattr(gloss,attribute_name,numberOfSigners)
+                    updated_glosses.append(gloss.idgloss + ' (' + attribute_name + ')')
+
+                except KeyError:
+                    continue
+
+        #Data for Mixed and Other should be added (3/3)
+        try:
+            attribute_name = 'tokNo' + location_to_fieldname_letter['Other']
+            setattr(gloss,attribute_name,otherFrequency)
+            updated_glosses.append(gloss.idgloss + ' ('+attribute_name+')')
+
+            attribute_name = 'tokNoSgnr' + location_to_fieldname_letter['Other']
+            setattr(gloss,attribute_name,otherNumberofSigners)
+            updated_glosses.append(gloss.idgloss + ' (' + attribute_name + ')')
+
+        except KeyError:
+            continue
+
+        gloss.save()
+
+    print('No glosses were found for these names',glosses_not_in_signbank)
+    print('Updated glosses',updated_glosses)
