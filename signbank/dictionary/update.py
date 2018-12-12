@@ -2058,3 +2058,30 @@ def update_owner(dataset, field, values):
         return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
 
     return HttpResponse(str(new_owners_value) + '\t' + str(owners_value), {'content-type': 'text/plain'})
+
+def update_excluded_choices(request):
+
+    r = ''
+
+    #We start with the assumption that everything is excluded
+    excluded_choices = {dataset.name: [field_choice.pk for field_choice in FieldChoice.objects.all()] for dataset in Dataset.objects.all()}
+
+    #And then remove from this list everything which was checked
+    for key in request.POST.keys():
+
+        if key == 'csrfmiddlewaretoken':
+            continue
+
+        dataset, choice_pk = key.split('|')
+        choice_pk = int(choice_pk)
+
+        excluded_choices[dataset].remove(choice_pk)
+
+    #Now update all datasets
+    for dataset_name, choice_pks in excluded_choices.items():
+
+        dataset = Dataset.objects.get(name=dataset_name)
+        dataset.exclude_choices = [FieldChoice.objects.get(pk=choice_pk) for choice_pk in choice_pks]
+        dataset.save()
+
+    return HttpResponseRedirect(reverse('admin_dataset_field_choices'))

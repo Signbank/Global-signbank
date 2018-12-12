@@ -7,7 +7,9 @@
 <br><br>
 <p>Here you can exclude field choices for some datasets you manage:</p>
 
-<form>
+<form method="post" action="/datasets/update_excluded_choices/">
+
+    {% csrf_token %}
 
     <input class="pull-right btn btn-primary" type="submit" value="Save">
 
@@ -27,7 +29,7 @@
             {% for dataset, excluded_choices in datasets %}
 
                 <td>
-                    <input type="checkbox" name="{{dataset.name}}" value=true
+                    <input type="checkbox" name="{{dataset.name}}|{{choice.pk}}" value=true
 
                     {% if choice not in excluded_choices %}
                        checked="checked"
