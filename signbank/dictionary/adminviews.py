@@ -3326,7 +3326,7 @@ def dataset_field_choices_view(request):
 
     context = {}
     context['field_choices'] = sorted(FieldChoice.objects.all(),key=lambda x: (x.field,x.english_name))
-    context['datasets'] = [(dataset,dataset.exclude_choices.all()) for dataset in Dataset.objects.all()]
+    context['datasets'] = [(dataset,dataset.exclude_choices.all()) for dataset in get_objects_for_user(request.user, 'change_dataset', Dataset,accept_global_perms=False)]
 
     return render(request,'dictionary/dataset_field_choices.html',context)
 
