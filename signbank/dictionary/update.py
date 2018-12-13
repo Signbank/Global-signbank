@@ -2061,8 +2061,6 @@ def update_owner(dataset, field, values):
 
 def update_excluded_choices(request):
 
-    r = ''
-
     #We start with the assumption that everything is excluded
     excluded_choices = {dataset.name: [field_choice.pk for field_choice in FieldChoice.objects.all()] for dataset in Dataset.objects.all()}
 
