@@ -423,7 +423,7 @@ class MorphemeSearchForm(forms.ModelForm):
                   'iconImg', 'iconType',
                   #'namEnt', 'semField', 'wordClass',
                   'wordClass2', 'derivHist', 'lexCatNotes',
-                  'valence',
+                  'valence', 'concConcSet',
 
                   'tokNoA', 'tokNoSgnrA', 'tokNoV', 'tokNoSgnrV', 'tokNoR', 'tokNoSgnrR', 'tokNoGe', 'tokNoSgnrGe',
                   'tokNoGr', 'tokNoSgnrGr', 'tokNoO', 'tokNoSgnrO')
