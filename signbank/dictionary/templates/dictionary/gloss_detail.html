@@ -314,9 +314,7 @@
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Video" %}</legend>
-            {% with gloss.count_videos as gloss_video_count %}
-            <p>{% blocktrans %} We have {{gloss_video_count}} videos for this sign. {% endblocktrans %}</p>
-            {% endwith %}
+
             <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
