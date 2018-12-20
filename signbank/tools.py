@@ -554,69 +554,19 @@ def compare_valuedict_to_gloss(valuedict,gloss,my_datasets):
                 continue
 
             elif human_key == 'Notes':
+
                 if new_human_value == 'None' or new_human_value == '':
-                    # don't delete notes by accident
                     continue
 
-                # export notes
-                notes_of_gloss = gloss.definition_set.all()
-                notes_list = []
-                for note in notes_of_gloss:
-                    # use the notes field choice machine value rather than the translation
-                    note_field = note_translations[note.role]
-                    note_tuple = (note_field, str(note.published),str(note.count), note.text)
-                    notes_list.append(note_tuple)
+                sorted_notes_display = get_notes_as_string(gloss)
 
-                notes_display = [ role+':('+published+','+count+','+text+')' for (role,published,count,text) in notes_list]
-                sorted_notes_list = sorted(notes_display)
-                sorted_notes_display = ', '.join(sorted_notes_list)
-
-                # convert new Notes csv value to proper format
-                new_human_values = []
-                new_note_errors = []
-                split_human_values = re.findall(r'([^\:]+\:[^\)]*\)),?\s?', new_human_value)
-
-                # print('new split human values for notes: ', split_human_values)
-                for split_value in split_human_values:
-                    take_apart = re.match("([^\:]+)\:\s?\((False|True),(\d),([^\)]*)\)", split_value)
-                    if take_apart:
-                        (field,name,count,text) = take_apart.groups()
-
-                        if field not in all_notes:
-                            error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                                gloss.pk) + '), a non-existent note type was found: ' + field + '.'
-
-                            new_note_errors += [error_string]
-                            if not note_type_error:
-                                error_string = 'Current note types are: ' + all_notes_display + '.'
-                                new_note_errors += [error_string]
-                                note_type_error = True
-                        else:
-                            new_tuple = (field,name,count,text)
-                            new_human_values.append(new_tuple)
-                    else:
-                        # error in processing new notes
-                        error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                            gloss.pk) + '), could not parse note: ' + split_value
-
-                        if not note_tuple_error:
-                            new_note_errors += [error_string]
-                            error_string1 = "Note values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'"
-                            new_note_errors += [error_string1]
-                            error_string2 = 'Try exporting a CSV for glosses with Notes to check the format.'
-                            new_note_errors += [error_string2]
-                            note_tuple_error = True
-                        else:
-                            new_note_errors += [error_string]
-
-                new_notes_display = [ role+':('+published+','+count+','+text+')' for (role,published,count,text) in new_human_values]
-                sorted_new_notes_list = sorted(new_notes_display)
-                sorted_new_notes_display = ", ".join(sorted_new_notes_list)
+                (sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = \
+                            check_existence_notes(gloss, new_human_value, note_type_error, note_tuple_error, default_annotationidglosstranslation)
 
                 if len(new_note_errors):
                     errors_found += new_note_errors
                 elif sorted_notes_display != sorted_new_notes_display:
-                    differences.append({'pk': gloss.pk,
+                    differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
                                         'annotationidglosstranslation':default_annotationidglosstranslation,
                                         'machine_key': human_key,
@@ -829,6 +779,87 @@ def check_existance_signlanguage(gloss, values):
         continue
 
     return (found, not_found, errors)
+
+note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+all_notes = [ n.english_name for n in note_role_choices]
+all_notes_display = ', '.join(all_notes)
+# this is used to speedup matching updates to Notes
+# it allows the type of note to be in either English or Dutch in the CSV file
+note_reverse_translation = {}
+for nrc in note_role_choices:
+    note_reverse_translation[nrc.english_name] = nrc.machine_value
+    note_reverse_translation[nrc.dutch_name] = nrc.machine_value
+    # probably not a good idea because of character set
+    # note_reverse_translation[nrc.chinese_name] = nrc.id
+note_translations = {}
+for nrc in note_role_choices:
+    note_translations[str(nrc.machine_value)] = nrc.english_name
+
+def check_existence_notes(gloss, values, note_type_error, note_tuple_error, default_annotationidglosstranslation):
+    # convert new Notes csv value to proper format
+    # values is not empty
+
+    new_human_values = []
+    new_note_errors = []
+
+    split_human_values = re.findall(r'([^:]+:[^)]*\)),?\s?', values)
+
+    # print('new split human values for notes: ', split_human_values)
+    for split_value in split_human_values:
+        take_apart = re.match("([^:]+):\s?\((False|True),(\d),([^)]*)\)", split_value)
+        if take_apart:
+            (field, name, count, text) = take_apart.groups()
+
+            if field not in all_notes:
+                error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                    gloss.pk) + '), a non-existent note type was found: ' + field + '.'
+
+                new_note_errors += [error_string]
+                if not note_type_error:
+                    error_string = 'Current note types are: ' + all_notes_display + '.'
+                    new_note_errors += [error_string]
+                    note_type_error = True
+            else:
+                new_tuple = (field, name, count, text)
+                new_human_values.append(new_tuple)
+        else:
+            # error in processing new notes
+            error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                gloss.pk) + '), could not parse note: ' + split_value
+
+            if not note_tuple_error:
+                new_note_errors += [error_string]
+                error_string1 = "Note values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'"
+                new_note_errors += [error_string1]
+                error_string2 = 'Try exporting a CSV for glosses with Notes to check the format.'
+                new_note_errors += [error_string2]
+                note_tuple_error = True
+            else:
+                new_note_errors += [error_string]
+
+    new_notes_display = [role + ':(' + published + ',' + count + ',' + text + ')' for (role, published, count, text) in
+                         new_human_values]
+    sorted_new_notes_list = sorted(new_notes_display)
+    sorted_new_notes_display = ", ".join(sorted_new_notes_list)
+
+    return (sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error)
+
+
+def get_notes_as_string(gloss):
+    notes_of_gloss = gloss.definition_set.all()
+    notes_list = []
+    for note in notes_of_gloss:
+        # use the notes field choice machine value rather than the translation
+        note_field = note_translations[note.role]
+        note_tuple = (note_field, str(note.published), str(note.count), note.text)
+        notes_list.append(note_tuple)
+
+    notes_display = [role + ':(' + published + ',' + count + ',' + text + ')' for (role, published, count, text) in
+                     notes_list]
+    sorted_notes_list = sorted(notes_display)
+    sorted_notes_display = ', '.join(sorted_notes_list)
+
+    return sorted_notes_display
 
 def check_existance_sequential_morphology(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
