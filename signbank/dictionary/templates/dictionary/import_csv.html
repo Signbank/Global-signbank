@@ -64,6 +64,8 @@
         </div>
     </form>
 
+<div>{% blocktrans %}To speed up processing of updates, remove columns that will not be updated.{% endblocktrans %}</div>
+
 {% elif stage == 1 %}
 
     <form action="" method="post">
@@ -140,8 +142,7 @@
                     {% with seen_datasets.0 as seen_dataset %}
                     {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
                     {% with dataset_trans_lang.language_code_2char as lang_code %}
-                     <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
-                        {{ gloss.lemma.lemmaidglosstranslations|keyvalue:lang_code }}</a></td>
+                     <td style="padding-left: 20px;">{{ gloss.lemmaidglosstranslations|keyvalue:lang_code }}</td>
                     {% endwith %}
                     {% endfor %}
                     {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
@@ -176,21 +177,20 @@
                         {% for dataset_lang in translation_languages_dict|keyvalue:seen_dataset %}
                             {% with newgloss.lemmaidglosstranslations as newglossdict %}
                             {% with dataset_lang.language_code_2char as lang_code %}
-                            <td class="bla">{{ newglossdict|keyvalue:lang_code }}</td>
+                            <td class="bla" style="padding-left: 20px;">{{ newglossdict|keyvalue:lang_code }}</td>
                             {% endwith %}
                             {% endwith %}
                          {% endfor %}
                         {% for dataset_lang in translation_languages_dict|keyvalue:seen_dataset %}
                             {% with newgloss.annotationidglosstranslations as newglossdict %}
                             {% with dataset_lang.language_code_2char as lang_code %}
-                            <td class="bla">{{ newglossdict|keyvalue:lang_code }}</td>
+                            <td class="bla" style="padding-left: 20px;">{{ newglossdict|keyvalue:lang_code }}</td>
                             {% endwith %}
                             {% endwith %}
                          {% endfor %}
                          {% endwith %}
                     </tr>
                 <input type="hidden" name="{{newgloss.gloss_pk}}.dataset"  value="{{ newgloss.dataset }}">
-                <input type="hidden" name="{{newgloss.gloss_pk}}.lemma_id_gloss"  value="{{ newgloss.lemma_id_gloss_value }}">
                 {% for dataset_lang in dataset_languages %}
                  <input type="hidden" name="{{newgloss.gloss_pk}}.lemma_id_gloss_{{ dataset_lang.language_code_2char }}"
                         value="{{ newgloss.lemmaidglosstranslations|keyvalue:dataset_lang.language_code_2char }}"></input>
