@@ -4,29 +4,48 @@
 {% load bootstrap3 %}
 
 {% block content %}
+<br><br>
+<p>{% trans "Here you can exclude field choices for datasets you manage:" %}</p>
 
-<p>Here you can exclude field choices for some datasets you manage:</p>
+<form method="post" action="/datasets/update_excluded_choices/">
 
-<table>
+    {% csrf_token %}
 
-    <tr>
-        <td></td>
-        {% for dataset in datasets %}
-            <td>{{ dataset.name }}</td>
+    <input class="pull-right btn btn-primary" type="submit" value="Save">
+
+    <table class="table table-condensed">
+        <thead>
+            <tr>
+                <th></th>
+                {% for dataset, excluded_choices in datasets %}
+                    <th>{{ dataset.name }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        {% for choice in field_choices %}
+
+            <tr>
+                <td>{{choice}}</td>
+            {% for dataset, excluded_choices in datasets %}
+
+                <td>
+                    <input type="checkbox" name="{{dataset.name}}|{{choice.pk}}" value=true
+
+                    {% if choice not in excluded_choices %}
+                       checked="checked"
+                    {% endif %}
+                    >
+                </td>
+
+            {% endfor %}
+            </tr>
+
         {% endfor %}
-    </tr>
 
-    {% for choice in field_choices %}
+    </table>
 
-        <tr>
-            <td>{{choice}}</td>
-        {% for dataset in datasets %}
-            <td></td>
-        {% endfor %}
-        </tr>
+    <input class="pull-right btn btn-primary" type="submit" value="Save">
 
-    {% endfor %}
-
-</table>
+</form>
 
 {% endblock %}
