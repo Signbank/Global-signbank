@@ -637,3 +637,16 @@ tr.rotated th {
     margin-left: 15px;
     color: #00000080;
 }
+
+.hover-shows-video
+{
+    width: 115px;
+}
+
+.thumbnail-video
+{
+    object-fit: cover;
+    max-width: 115px;
+    height: 115px;
+    display:block;
+}
