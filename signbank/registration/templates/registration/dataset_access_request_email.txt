@@ -1,4 +1,4 @@
-{{user.firstname}}, {{user.lastname}} (user {{user.username}}, email address {{user.email}})
+User {{user.username}} (email address: {{user.email}})
 would like to gain access to dataset {{dataset}}.
 
 You are the dataset manager for {{dataset}}. Please go to the following page to allow access for the user:
