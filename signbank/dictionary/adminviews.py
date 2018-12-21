@@ -626,16 +626,7 @@ class GlossListView(ListView):
             qs = qs.filter(definition__published=val)
 
 
-        fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN', 'compound', 'rmrks',
-                      'locVirtObj',
-                      'repeat', 'altern',
-                      'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'weakprop', 'weakdrop',
-                      'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
-
-                      'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType', 'valence', 'concConcSet',
-                      'lexCatNotes','tokNo', 'tokNoSgnr','tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO', 'tokNoSgnrA',
-                      'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew','derivHist']
-
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
 
         # SignLanguage and basic property filters
         # allows for multiselect
@@ -667,6 +658,7 @@ class GlossListView(ListView):
                 qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
+        fieldnames = [ f for f in fieldnames if f not in settings.MULTIPLE_SELECT_GLOSS_FIELDS ]
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
@@ -1673,17 +1665,7 @@ class MorphemeListView(ListView):
             qs = qs.filter(definition__published=val)
 
 
-        fieldnames = ['idgloss', 'useInstr', 'sense', 'morph', 'StemSN',
-                      'compound', 'rmrks', 'handedness',
-                      'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'relatArtic', 'relOriMov', 'relOriLoc', 'oriCh',
-                      'handCh', 'repeat', 'altern',
-                      'movSh', 'movDir', 'contType', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'iconType',
-                      # 'namEnt', 'semField',
-                      'valence', 'concConcSet',
-                      'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV', 'tokNoR', 'tokNoGe', 'tokNoGr', 'tokNoO',
-                      'tokNoSgnrA',
-                      'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe', 'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
-
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
 
         # SignLanguage and basic property filters
         # allows for multiselect
@@ -1715,6 +1697,7 @@ class MorphemeListView(ListView):
                 qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
+        fieldnames = [ f for f in fieldnames if f not in settings.MULTIPLE_SELECT_MORPHEME_FIELDS ]
         for fieldname in fieldnames:
 
             if fieldname in get:
@@ -1727,34 +1710,6 @@ class MorphemeListView(ListView):
                 if val != '':
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
-
-        if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
-            val = get['initial_relative_orientation']
-            qs = qs.filter(initial_relative_orientation__exact=val)
-
-        if 'final_relative_orientation' in get and get['final_relative_orientation'] != '':
-            val = get['final_relative_orientation']
-            qs = qs.filter(final_relative_orientation__exact=val)
-
-        if 'initial_palm_orientation' in get and get['initial_palm_orientation'] != '':
-            val = get['initial_palm_orientation']
-            qs = qs.filter(initial_palm_orientation__exact=val)
-
-        if 'final_palm_orientation' in get and get['final_palm_orientation'] != '':
-            val = get['final_palm_orientation']
-            qs = qs.filter(final_palm_orientation__exact=val)
-
-        if 'initial_secondary_loc' in get and get['initial_secondary_loc'] != '':
-            val = get['initial_secondary_loc']
-            qs = qs.filter(initial_secondary_loc__exact=val)
-
-        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
-            val = get['final_secondary_loc']
-            qs = qs.filter(final_secondary_loc__exact=val)
-
-        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
-            val = get['final_secondary_loc']
-            qs = qs.filter(final_secondary_loc__exact=val)
 
         if 'defsearch' in get and get['defsearch'] != '':
 
@@ -1922,18 +1877,8 @@ class MorphemeListView(ListView):
         #        fields = [f.name for f in Gloss._meta.fields]
         # We want to manually set which fields to export here
 
-        fieldnames = ['idgloss', 'dataset',
-                      'mrpType',
-                      'useInstr', 'sense', 'StemSN', 'rmrks',
-                      'handedness',
-                      'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'locVirtObj', 'relOriMov', 'relOriLoc',
-                      'oriCh', 'contType',
-                      'movSh', 'movDir', 'repeat', 'altern', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
-                      'domSF', 'domFlex', 'oriChAbd', 'oriChFlex', 'iconImg', 'iconType',
-                      'namEnt', 'semField', 'valence', 'lexCatNotes', 'tokNo', 'tokNoSgnr', 'tokNoA', 'tokNoV',
-                      'tokNoR', 'tokNoGe',
-                      'tokNoGr', 'tokNoO', 'tokNoSgnrA', 'tokNoSgnrV', 'tokNoSgnrR', 'tokNoSgnrGe',
-                      'tokNoSgnrGr', 'tokNoSgnrO', 'inWeb', 'isNew']
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
+
         # Different from Gloss: we use Morpheme here
         fields = [Morpheme._meta.get_field(fieldname) for fieldname in fieldnames]
 
@@ -2564,11 +2509,7 @@ class HandshapeListView(ListView):
 
             qs = Handshape.objects.all().order_by('machine_value')
 
-        fieldnames = ['machine_value', 'english_name', 'dutch_name', 'chinese_name',
-                      'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2', 'hsAperture',
-                      'hsThumb', 'hsSpread', 'hsFingUnsel', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
-                      'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
-                      'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
+        fieldnames = ['machine_value', 'english_name', 'dutch_name', 'chinese_name']+FIELDS['handshape']
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:

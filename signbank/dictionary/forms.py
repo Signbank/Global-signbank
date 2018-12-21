@@ -275,34 +275,13 @@ class GlossSearchForm(forms.ModelForm):
         fields = ('morph', 'sense',
                   'sn', 'StemSN', 'comptf', 'compound',
                   'inWeb', 'isNew',
-                  'initial_relative_orientation', 'final_relative_orientation',
-                  'initial_palm_orientation', 'final_palm_orientation',
-                  'initial_secondary_loc', 'final_secondary_loc',
-                  # 'domhndsh', 'subhndsh', 'locprim',
-                  'locVirtObj', 'locsecond',
-                  'final_domhndsh', 'final_subhndsh', 'final_loc',
-
-                  'locPrimLH', 'locFocSite', 'locFocSiteLH', 'initArtOri', 'finArtOri', 'initArtOriLH', 'finArtOriLH',
-
-                  # 'handedness',
-                  'useInstr', 'rmrks',
-                  # 'relatArtic',
-                  'absOriFing',
-                   # 'relOriMov','relOriLoc','oriCh','handCh',
+                  'locVirtObj',
+                  'useInstr',
                    'repeat', 'altern',
-                   # 'movSh','movDir',
-                   'movMan',
-                   # 'contType',
                    'mouthG',
-                   'mouthing', 'phonetVar', 'domSF', 'domFlex', 'oriChAbd', 'oriChFlex',
-
+                   'mouthing', 'phonetVar',
                    'iconImg','iconType',
-                   # 'namEnt', 'semField',
-                   # 'wordClass',
-                   'wordClass2', 'derivHist', 'lexCatNotes', 'valence','concConcSet',
-
-                   'tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
-                   'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO')
+                  'valence','concConcSet')
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
@@ -403,30 +382,16 @@ class MorphemeSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Morpheme
-        fields = ('morph', 'sense', # 'mrpType',
+        fields = ('morph', 'sense',
                   'sn', 'StemSN', 'comptf', 'compound',
-                  # 'inWeb', 'isNew',
-                  'initial_relative_orientation', 'final_relative_orientation',
-                  'initial_palm_orientation', 'final_palm_orientation',
-                  'initial_secondary_loc', 'final_secondary_loc',
-                  'domhndsh', 'subhndsh', 'locprim', 'locVirtObj', 'locsecond',
-                  'final_domhndsh', 'final_subhndsh', 'final_loc',
-
-                  'locPrimLH', 'locFocSite', 'locFocSiteLH', 'initArtOri', 'finArtOri', 'initArtOriLH', 'finArtOriLH',
-
-                  'handedness', 'useInstr', 'rmrks', 'relatArtic',
-                  'absOriFing',
-                  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern', 'movSh', 'movDir', 'movMan',
+                  'domhndsh', 'subhndsh', 'locprim', 'locVirtObj',
+                  'handedness', 'useInstr',
+                  'relatArtic',
+                  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern', 'movSh', 'movDir',
                   'contType', 'mouthG',
                   'mouthing', 'phonetVar',
-
                   'iconImg', 'iconType',
-                  #'namEnt', 'semField', 'wordClass',
-                  'wordClass2', 'derivHist', 'lexCatNotes',
-                  'valence', 'concConcSet',
-
-                  'tokNoA', 'tokNoSgnrA', 'tokNoV', 'tokNoSgnrV', 'tokNoR', 'tokNoSgnrR', 'tokNoGe', 'tokNoSgnrGe',
-                  'tokNoGr', 'tokNoSgnrGr', 'tokNoO', 'tokNoSgnrO')
+                  'valence', 'concConcSet')
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
