@@ -43,18 +43,18 @@ class RegistrationForm(forms.Form):
     """
     error_css_class = 'error'
 
-    username = forms.CharField(max_length=30,
+    username = forms.CharField(max_length=30, required=True,
                                widget=forms.TextInput(attrs=attrs_reqd),
                                label=_(u'Username'))
-    first_name = forms.CharField(max_length=30,
+    first_name = forms.CharField(max_length=30, required=True,
                                widget=forms.TextInput(attrs=attrs_reqd),
                                label=_(u'First Name'))
-    last_name = forms.CharField(max_length=30,
+    last_name = forms.CharField(max_length=30, required=True,
                                  widget=forms.TextInput(attrs=attrs_reqd),
                                  label=_(u'Last Name'))
-    email = forms.EmailField(widget=forms.TextInput(attrs=attrs_reqd),
+    email = forms.EmailField(widget=forms.TextInput(attrs=attrs_reqd), required=True,
                              label=_(u'Your Email Address'))
-    password1 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_reqd),
+    password1 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_reqd), required=True,
                                 label=_(u'Password'))
     password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_reqd),
                                 label=_(u'Password (again)'))
