@@ -1,6 +1,6 @@
-
 {% extends "baselayout.html" %}
 {% load i18n %}
+{% load stylesheet %}
 {% load bootstrap3 %}
 {% block bootstrap3_title %}Signbank: Registration{% endblock %}
 
@@ -8,7 +8,7 @@
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script type='text/javascript'>
-    var url = '{{URL}}';
+    var url = '{{URL}}{{PREFIX_URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 
      $(document).ready(function(){
@@ -24,6 +24,9 @@
          });
          $('#id_dataset').val(null).trigger('change');
 
+         $('#id_motivation').attr('name','motivation_for_use');
+         $('#id_motivation').val(null).trigger('change');
+
 });
 
 </script>
@@ -32,7 +35,7 @@
 
 {% block content %}
 
-<form class='form-horizontal' method="post" action="{{PREFIX_URL}}">
+<form class='form-horizontal' method="post" action="">
 
     <div><h2>{% trans "Registration" %}</h2></div>
 
@@ -48,6 +51,6 @@
         {% endbuttons %}
     </div>
   </form>
-{% endblock %}							
+{% endblock %}
 
 

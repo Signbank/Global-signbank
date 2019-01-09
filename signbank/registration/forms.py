@@ -67,6 +67,16 @@ class RegistrationForm(forms.Form):
         dataset = forms.TypedMultipleChoiceField(label=_(u'Requested Datasets'),
                                                   choices=dataset_choices,
                                                   required=False, widget=Select2)
+        motivation = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5,
+                                                                  'placeholder': 'Motivation'}),
+                                     label=_(u'Motivation'), required=False, # this has to be False
+                                     # the motivation field is not stored in the database
+                                     # it is retrieved from the form to be used in the request access email sent to the dataset manager
+                                     # in order to avoid default Django behaviour, it is renamed in the form to motivation_for_use
+                                     # required needs to be False
+                                     # otherwise Django can't match the new field name with this one
+                                     # requested datasets are also passed this way rather than stored in the database
+                                     help_text=_("Please explain why you would like to get access to this dataset. What are the purposes for which you wish to use it?"))
 
     tos_choices = [(True, 'Agree'), (False, 'Disagree')]
     tos = forms.BooleanField(label=_(u'I have read and agree to the Terms of Service'),
@@ -94,6 +104,15 @@ class RegistrationForm(forms.Form):
             if self.cleaned_data['password1'] == self.cleaned_data['password2']:
                 return self.cleaned_data['password2']
             raise forms.ValidationError(_(u'You must type the same password each time'))
+
+    def clean_motivation(self):
+
+        if 'motivation_for_use' in self.cleaned_data:
+            return self.cleaned_data['motivation_for_use']
+        elif 'motivation' in self.cleaned_data:
+            return self.cleaned_data['motivation']
+        else:
+            raise forms.ValidationError(_(u'Please provide motivation for your request'))
 
     def clean_tos(self):
         """
