@@ -650,3 +650,16 @@ tr.rotated th {
     height: 115px;
     display:block;
 }
+
+.exclude-field-choices
+{
+    overflow-y: auto;
+    height: 600px;
+}
+
+.exclude-field-choices th
+{
+    position: sticky;
+    top: 0px;
+    background-color: white;
+}

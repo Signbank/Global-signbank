@@ -11,41 +11,40 @@
 
     {% csrf_token %}
 
-    <input class="pull-right btn btn-primary" type="submit" value="Save">
+    <div class="exclude-field-choices">
+        <table class="table table-condensed">
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for dataset, excluded_choices in datasets %}
+                        <th>{{ dataset.generate_short_name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            {% for choice in field_choices %}
 
-    <table class="table table-condensed">
-        <thead>
-            <tr>
-                <th></th>
+                <tr>
+                    <td>{{choice}}</td>
                 {% for dataset, excluded_choices in datasets %}
-                    <th>{{ dataset.name }}</th>
+
+                    <td>
+                        <input type="checkbox" name="{{dataset.name}}|{{choice.pk}}" value=true
+
+                        {% if choice not in excluded_choices %}
+                           checked="checked"
+                        {% endif %}
+                        >
+                    </td>
+
                 {% endfor %}
-            </tr>
-        </thead>
-        {% for choice in field_choices %}
-
-            <tr>
-                <td>{{choice}}</td>
-            {% for dataset, excluded_choices in datasets %}
-
-                <td>
-                    <input type="checkbox" name="{{dataset.name}}|{{choice.pk}}" value=true
-
-                    {% if choice not in excluded_choices %}
-                       checked="checked"
-                    {% endif %}
-                    >
-                </td>
+                </tr>
 
             {% endfor %}
-            </tr>
 
-        {% endfor %}
-
-    </table>
+        </table>
+    </div>
 
     <input class="pull-right btn btn-primary" type="submit" value="Save">
-
 </form>
 
 {% endblock %}

@@ -1882,19 +1882,22 @@ class Dataset(models.Model):
 
     def generate_short_name(self):
 
-        CHARACTER_THRESHOLD = 16
+        CHARACTER_THRESHOLD = 15
 
         if len(self.name) <= CHARACTER_THRESHOLD:
             return self.name
         else:
 
-            #Cut of last word
-            shortened_name = ' '.join(self.name.split()[:-1])
+            #Cut off last word
+            if len(self.name.split()) > 1:
+                result = ' '.join(self.name.split()[:-1])
 
-            if len(shortened_name) <= CHARACTER_THRESHOLD:
-                return shortened_name
+                if len(result) <= CHARACTER_THRESHOLD:
+                    return result
             else:
-                return shortened_name[:CHARACTER_THRESHOLD]
+                result = self.name
+
+            return result[:CHARACTER_THRESHOLD]
 
 
     def count_glosses(self):
