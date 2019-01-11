@@ -115,10 +115,7 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                         glosses_with_same_text += glosses_with_text
 
                     if len(glosses_with_same_text) > 0:
-                        print('Row ', str(row_nr+1), ': existing glosses for ', annotationidglosstranslation_text, ': ', glosses_with_same_text)
-
                         existing_glosses[language.language_code_2char] = glosses_with_same_text
-
                 else:
                     error_string = 'Row ' + str(row_nr + 1) + ' has an empty ' + column_name
                     errors_found += [error_string]
@@ -263,6 +260,9 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
         fields = {field.verbose_name: field for field in Gloss._meta.fields if field.name not in FIELDS['frequency']}
 
         columnheaders = fields.keys()
+
+        columns_to_skip = {field.verbose_name: field for field in Gloss._meta.fields if field.name in FIELDS['frequency']}
+
         # print('fields: ', columnheaders)
 
         if gloss.dataset:
@@ -273,6 +273,9 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
         #Go through all values in the value dict, looking for differences with the gloss
         for human_key, new_human_value in valuedict.items():
+
+            if human_key in columns_to_skip.keys():
+                continue
 
             new_human_value_list = []
 

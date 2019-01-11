@@ -53,7 +53,7 @@ def activate(request, activation_key, template_name='registration/activate.html'
                               { 'account': account,
                                 'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS })
 
-def register(request, success_url=settings.URL + '/accounts/register/complete/',
+def register(request, success_url=settings.URL + settings.PREFIX_URL + '/accounts/register/complete/',
              form_class=RegistrationForm, profile_callback=None,
              template_name='registration/registration_form.html'):
     """
@@ -106,10 +106,11 @@ def register(request, success_url=settings.URL + '/accounts/register/complete/',
                 list_of_datasets = request.POST.getlist('dataset[]')
                 if '' in list_of_datasets:
                     list_of_datasets.remove('')
-                print('requested: ', list_of_datasets)
 
                 from django.contrib.auth.models import Group, User
                 group_manager = Group.objects.get(name='Dataset_Manager')
+
+                motivation = request.POST.get('motivation_for_use', '')  # motivation is a required field in the form
 
                 # send email to each of the dataset owners
                 for dataset_name in list_of_datasets:
@@ -138,6 +139,7 @@ def register(request, success_url=settings.URL + '/accounts/register/complete/',
                                                             'new_user_firstname': new_user.first_name,
                                                             'new_user_lastname': new_user.last_name,
                                                             'new_user_email': new_user.email,
+                                                            'motivation': motivation,
                                                             'site': current_site})
 
                         # for debug purposes on local machine

@@ -1,0 +1,181 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}Signbank: Import CSV{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{PREFIX_URL}}/static/js/bootstrap-filestyle.min.js"> </script>
+    <script type='text/javascript'>
+
+     $(document).ready(function(){
+
+
+        $('.collapsetoggle').click(function() {
+            if ($(this).text() == 'Show') {
+                $(this).text('Hide');
+            } else {
+                $(this).text('Show');
+            }
+        });
+
+        $('[data-toggle="tooltip"]').tooltip();
+
+    });
+   </script>
+{% endblock %}
+
+
+{% block content %}
+<h3>{% trans "Import CSV Create" %}</h3>
+
+{% if stage == 0 %}
+
+    <div>{% blocktrans %}Upload your changed CSV here:{% endblocktrans %}</div>
+
+    <form action="" method="post" enctype="multipart/form-data" role="form">
+        {% csrf_token %}
+        <div class="form-group">
+            <div class="row">
+                <div class="col-sm-1">
+                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom"
+                          data-html="true"
+                          title="To import new glosses, CSV files should omit the ID number column, but include the field columns:
+                          Dataset, Lemma ID Gloss, and Annotation ID Gloss for the translation languages of the dataset. Only one dataset can be modified."></span>
+                </div>
+                <div class="col-sm-10">
+                    <input type="file" required="" name="file" class="filestyle" data-icon="false" data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
+                </div>
+                <div class="col-sm-1">
+                    <input class="btn btn-primary" type="submit" value="{% blocktrans %}Submit{% endblocktrans %}" />
+                </div>
+            </div>
+        </div>
+    </form>
+
+{% elif stage == 1 %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+
+        {% if error %}
+
+            <ul>
+            {% for e in error %}
+                <li>{{ e | linebreaks }}</li>
+            {% endfor %}
+            </ul>
+
+        {% else %}
+
+            {% if creation or gloss_already_exists %}
+                {% if gloss_already_exists %}
+                {% trans "Already existing Annotation ID Glosses:" %}
+                <table class="table table-striped">
+                    <tr>
+                        <th>{% trans "Dataset" %}</th>
+                         {% with seen_datasets.0 as seen_dataset %}
+                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                         <th >{% trans "Lemma ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% endfor %}
+                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% endfor %}
+                         {% endwith %}
+                    </tr>
+                {% for gloss in gloss_already_exists %}
+                    <tr>
+                    <td>{{ gloss.dataset }}</td>
+
+                    {% with seen_datasets.0 as seen_dataset %}
+                    {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                    {% with dataset_trans_lang.language_code_2char as lang_code %}
+                     <td style="padding-left: 20px;">{{ gloss.lemmaidglosstranslations|keyvalue:lang_code }}</td>
+                    {% endwith %}
+                    {% endfor %}
+                    {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                    {% with dataset_trans_lang.language_code_2char as lang_code %}
+                     <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
+                        {{ gloss.annotationidglosstranslations|keyvalue:lang_code }}</a></td>
+                    {% endwith %}
+                    {% endfor %}
+                    {% endwith %}
+                    </tr>
+                {% endfor %}
+                </table>
+                {% endif %}
+                {% if creation %}
+                {% trans "Glosses to Create:" %}
+                <table class="table table-striped">
+                    <tr>
+                        <th>{% trans "Dataset" %}</th>
+                         {% with seen_datasets.0 as seen_dataset %}
+                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                         <th >{% trans "Lemma ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% endfor %}
+                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% endfor %}
+                         {% endwith %}
+                    </tr>
+                {% for newgloss in creation %}
+                    <tr>
+                        <td>{{ newgloss.dataset }}</td>
+                        {% with seen_datasets.0 as seen_dataset %}
+                        {% for dataset_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                            {% with newgloss.lemmaidglosstranslations as newglossdict %}
+                            {% with dataset_lang.language_code_2char as lang_code %}
+                            <td class="bla" style="padding-left: 20px;">{{ newglossdict|keyvalue:lang_code }}</td>
+                            {% endwith %}
+                            {% endwith %}
+                         {% endfor %}
+                        {% for dataset_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                            {% with newgloss.annotationidglosstranslations as newglossdict %}
+                            {% with dataset_lang.language_code_2char as lang_code %}
+                            <td class="bla" style="padding-left: 20px;">{{ newglossdict|keyvalue:lang_code }}</td>
+                            {% endwith %}
+                            {% endwith %}
+                         {% endfor %}
+                         {% endwith %}
+                    </tr>
+                <input type="hidden" name="{{newgloss.gloss_pk}}.dataset"  value="{{ newgloss.dataset }}">
+                {% for dataset_lang in dataset_languages %}
+                 <input type="hidden" name="{{newgloss.gloss_pk}}.lemma_id_gloss_{{ dataset_lang.language_code_2char }}"
+                        value="{{ newgloss.lemmaidglosstranslations|keyvalue:dataset_lang.language_code_2char }}">
+                 {% endfor %}
+                {% for dataset_lang in dataset_languages %}
+                 <input type="hidden" name="{{newgloss.gloss_pk}}.annotation_id_gloss_{{ dataset_lang.language_code_2char }}"
+                        value="{{ newgloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}">
+                 {% endfor %}
+
+                <input type="hidden" name="update_or_create" value="create">
+                {% endfor %}
+                </table>
+                <input type="submit" value="{% blocktrans %}Create glosses{% endblocktrans %}" />
+                {% endif %}
+            {% else %}
+            <div>{% blocktrans %}No changes were found.{% endblocktrans %}</div>
+            {% endif %}
+        {% endif %}
+
+    </form>
+
+{% elif stage == 2 %}
+    <p>{% blocktrans %}Changes are live.{% endblocktrans %} {{ info }}</p>
+
+    {% if error %}
+
+        <ul>
+        {% for e in error %}
+            <li>{{ e | linebreaks }}</li>
+        {% endfor %}
+        </ul>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

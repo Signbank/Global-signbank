@@ -641,6 +641,817 @@ def add_new_morpheme(request):
     return oBack
 
 
+
+
+def import_csv_create(request):
+    user = request.user
+    import guardian
+    user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
+    user_datasets_names = [ dataset.name for dataset in user_datasets ]
+
+    selected_datasets = get_selected_datasets_for_user(user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    translation_languages_dict = {}
+    for dataset_object in user_datasets:
+        translation_languages_dict[dataset_object] = []
+
+        for language in dataset_object.translation_languages.all():
+            translation_languages_dict[dataset_object].append(language)
+
+    seen_datasets = []
+    seen_dataset_names = []
+
+    # fatal errors are duplicate column headers, data in columns without headers
+    # column headers that do not correspond to database fields
+    # non-numerical gloss ids
+    # non-existent dataset or no permission for dataset
+    # attempt to create glosses in multiple datasets in the same csv
+    # missing Dataset column
+    # missing Lemma or Annotation translations required for the dataset during creation
+    # extra columns during creation:
+    # (although these are ignored, it is advised to remove them to make it clear the data is not being stored)
+
+    fatal_error = False
+
+    uploadform = signbank.dictionary.forms.CSVUploadForm
+    changes = []
+    error = []
+    creation = []
+    gloss_already_exists = []
+    earlier_creation_same_csv = {}
+    earlier_creation_annotationidgloss = {}
+    earlier_creation_lemmaidgloss = {}
+
+    columns_to_skip = {field.verbose_name: field for field in Gloss._meta.fields if field.name in FIELDS['frequency']}
+
+    #Propose changes
+    if len(request.FILES) > 0:
+
+        csv_text = request.FILES['file'].read().decode('UTF-8')
+        csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
+        creation = []
+        keys = {}   # in case something goes wrong in header row
+        for nl, line in enumerate(csv_lines):
+
+            #The first line contains the keys
+            if nl == 0:
+                keys = line.strip().split(',')
+                num_keys = len(keys)
+                continue
+            elif len(line) == 0:
+                continue
+
+            values = csv.reader([line]).__next__()
+            value_dict = {}
+
+            for nv,value in enumerate(values):
+
+                try:
+                    if keys[nv]:
+                        if keys[nv] in value_dict.keys():
+                            e = 'Duplicate header column found: ' + keys[nv]
+                            error.append(e)
+                            fatal_error = True
+                            break
+                        if keys[nv] not in columns_to_skip:
+                            value_dict[keys[nv]] = value
+                    elif value:
+                        # empty column header
+                        e = 'Row '+str(nl + 1) + ': Extra data found in column without header: ' + value
+                        error.append(e)
+                        fatal_error = True
+                        break
+                except IndexError:
+                    e = 'Row '+str(nl + 1) + ': Index error in column: ' + str(nv)
+                    error.append(e)
+                    fatal_error = True
+                    break
+
+            if fatal_error:
+                break
+
+            if 'Signbank ID' in value_dict:
+                e = 'Signbank ID column found.'
+                error.append(e)
+                fatal_error = True
+                break
+
+            # Check whether the user may change the dataset of the current row
+            if 'Dataset' in value_dict:
+                dataset_name = value_dict['Dataset'].strip()
+            else:
+                e1 = 'The Dataset column is required.'
+                error.append(e1)
+                fatal_error = True
+                break
+            if dataset_name not in seen_dataset_names:
+                # catch possible empty values for dataset, primarily for pretty printing error message
+                if dataset_name == '' or dataset_name == None or dataset_name == 0 or dataset_name == 'NULL':
+                    e_dataset_empty = 'Row '+str(nl + 1) + ': The Dataset is missing.'
+                    error.append(e_dataset_empty)
+                    break
+                try:
+                    dataset = Dataset.objects.get(name=dataset_name)
+                except:
+                    # An error message should be returned here, the dataset does not exist
+                    e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    error.append(e_dataset_not_found)
+                    fatal_error = True
+                    break
+
+                if dataset_name not in user_datasets_names:
+                    e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                    error.append(e3)
+                    fatal_error = True
+                    break
+                if dataset not in selected_datasets:
+                    e3 = 'Row '+str(nl + 1) + ': Please select the dataset %s.' % value_dict['Dataset'].strip()
+                    error.append(e3)
+                    fatal_error = True
+                    break
+                if seen_datasets:
+                    # already seen a dataset
+                    if dataset in seen_datasets:
+                        pass
+                    else:
+                        # seen more than one dataset
+                        # e4 = 'You are attempting to modify two datasets.'
+
+                        e4 = 'You can only create glosses for one dataset at a time.'
+                        e5 = 'To create glosses in multiple datasets, use a separate CSV file for each dataset.'
+                        error.append(e4)
+                        error.append(e5)
+                        fatal_error = True
+                        break
+
+                else:
+                    seen_datasets.append(dataset)
+                    seen_dataset_names.append(dataset_name)
+
+                    # saw the first dataset
+                    # if creating glosses
+                    # check the required columns for translations
+                    # and make sure there are no extra columns which will be ignored
+
+                    number_of_translation_languages_for_dataset = len(translation_languages_dict[dataset])
+                    # there should be columns for Dataset + Lemma ID Gloss per dataset + Annotation ID Gloss per dataset
+                    number_of_required_columns = 1 + 2 * number_of_translation_languages_for_dataset
+                    required_columns = ['Dataset']
+                    for language in dataset.translation_languages.all():
+                        lemma_column_name = "Lemma ID Gloss (%s)" % language.name_en
+                        required_columns.append(lemma_column_name)
+                        if lemma_column_name not in value_dict:
+                            e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + lemma_column_name + ' is required.'
+                            error.append(e1)
+                        annotation_column_name = "Annotation ID Gloss (%s)" % language.name_en
+                        required_columns.append(annotation_column_name)
+                        if annotation_column_name not in value_dict:
+                            e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + annotation_column_name + ' is required.'
+                            error.append(e1)
+                    if len(value_dict) > number_of_required_columns:
+                        # print an error message about extra columns
+                        # if already found an error, the extra column might be a different language
+                        extra_column_headers = []
+                        for col in keys:
+                            if col not in required_columns:
+                                extra_column_headers.append(col)
+
+                        e_extra_columns = 'Extra columns found for gloss creation: ' + ', '.join(extra_column_headers)
+                        error.append(e_extra_columns)
+                        e_extra_columns_create = 'Use a separate CSV file to update glosses after creation.'
+                        error.append(e_extra_columns_create)
+                        e_create_or_update = 'To update existing glosses, the Signbank ID column is required.'
+                        error.append(e_create_or_update)
+
+                    if len(error) > 0:
+                        fatal_error = True
+                        break
+
+
+            if fatal_error:
+                break
+
+            # The Lemma ID Gloss may already exist.
+            lemmaidglosstranslations = {}
+            contextual_error_messages_lemmaidglosstranslations = []
+            for language in dataset.translation_languages.all():
+                column_name = "Lemma ID Gloss (%s)" % language.name_en
+                lemma_idgloss_value = value_dict[column_name].strip()
+                # also stores empty values
+                lemmaidglosstranslations[language] = lemma_idgloss_value
+
+            # if we get to here, the dataset and required permissions are okay.
+            # check that the required columns are available, and check that
+            # values are present in the row for these column
+            # Checks if all columns for creating a gloss are there.
+            fatal_error = False
+            row_error = False
+
+            existing_lemmas = []
+            for language, term in lemmaidglosstranslations.items():
+                try:
+                    existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset,
+                                                                               language=language,
+                                                                               text=term).lemma)
+                    help = 'Row ' + str(nl + 1) + ": Existing Lemma ID Gloss (" + language.name_en + '): ' + term
+                    contextual_error_messages_lemmaidglosstranslations.append(help)
+                except ObjectDoesNotExist as e:
+                    if term:
+                        other_language_for_term = LemmaIdgloss.objects.filter(dataset=dataset,
+                                                                              lemmaidglosstranslation__text=term)
+                        if other_language_for_term and lemmaidglosstranslations[language]:
+                            help = 'Row ' + str(nl + 1) + ': Wrong lemma translation for Lemma ID Gloss (' + language.name_en + '): ' + term
+                            row_error = True
+                            contextual_error_messages_lemmaidglosstranslations.append(help)
+                        else:
+                            help = 'Row ' + str(nl + 1) + ': New Lemma ID Gloss (' + language.name_en + '): ' + term
+                            contextual_error_messages_lemmaidglosstranslations.append(help)
+                    else:
+                        row_error = True
+                        help = 'Row ' + str(nl + 1) + ': Lemma ID Gloss (' + language.name_en + ') is empty'
+                        contextual_error_messages_lemmaidglosstranslations.append(help)
+                    # pass
+            existing_lemmas_set = set(existing_lemmas)
+
+            if row_error:
+                # everything is either new or empty
+                # after processing all lemma translations, determine if an existing lemma has an empty translation
+                # and matches an empty column
+                for (lang, term) in lemmaidglosstranslations.items():
+                    for lem in existing_lemmas_set:
+
+                        lem_trans = lem.lemmaidglosstranslation_set.filter(language=lang, text=term)
+                        if lem_trans:
+                            # the lemma gloss translation matches the column
+                            row_error = False
+                        else:
+                            if term:
+                                # no matching translation found
+                                row_error = True
+                            else:
+                                # term is empty and lemma has empty translation, it's okay
+                                row_error = False
+
+            if row_error:
+                # row error is still true if not enough matches were found for existing lemmas
+                # there is still a row error
+                number_of_new_lemmas = len(re.findall('New', ' '.join(contextual_error_messages_lemmaidglosstranslations)))
+                number_of_empty_lemmas = len(re.findall('empty', ' '.join(contextual_error_messages_lemmaidglosstranslations)))
+                if number_of_new_lemmas and number_of_empty_lemmas:
+                    addendum = 'Row '+str(nl + 1)+': The Lemma translations may refer to different lemmas.'
+                    contextual_error_messages_lemmaidglosstranslations.append(addendum)
+
+                error += contextual_error_messages_lemmaidglosstranslations
+
+            if len(existing_lemmas_set) == 1:
+                existing_lemma = existing_lemmas[0]
+            elif len(existing_lemmas):
+                e1 = 'Row '+str(nl + 1)+': To create glosses in dataset ' + dataset_name + \
+                     ', the combination of Lemma ID Gloss translations should either refer ' \
+                     'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
+                fatal_error = True
+                error.append(e1)
+                if contextual_error_messages_lemmaidglosstranslations:
+                    number_of_existing_lemmas = len(re.findall('Existing', ' '.join(contextual_error_messages_lemmaidglosstranslations)))
+                    if number_of_existing_lemmas > 1:
+                        addendum = 'The Lemma translations refer to different lemmas.'
+                        contextual_error_messages_lemmaidglosstranslations.append(addendum)
+                    error += contextual_error_messages_lemmaidglosstranslations
+
+            # Annotation ID Gloss needs to be checked dynamically for each dataset language.
+            for language in dataset.translation_languages.all():
+                column_name = "Annotation ID Gloss (%s)" % language.name_en
+                if column_name not in value_dict:
+                    e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + column_name + ' is required.'
+                    fatal_error = True
+                    error.append(e1)
+                    break
+
+            # break at this level to get out of iteration over csv lines in case of missing column
+            if fatal_error:
+                break
+
+            (new_gloss, already_exists, error_create, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss) \
+                = create_gloss_from_valuedict(value_dict,dataset,nl, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss)
+            creation += new_gloss
+            gloss_already_exists += already_exists
+            if len(error_create):
+                # more than one error found
+                errors_found_string = '\n'.join(error_create)
+                error.append(errors_found_string)
+            continue
+
+        stage = 1
+
+    #Do changes
+    elif len(request.POST) > 0:
+
+        glosses_to_create = dict()
+
+        for key, new_value in request.POST.items():
+
+            # obtain tuple values for each proposed gloss
+            # pk is the row number in the import file!
+            try:
+                pk, fieldname = key.split('.')
+
+                if pk not in glosses_to_create.keys():
+                    glosses_to_create[pk] = dict()
+                glosses_to_create[pk][fieldname] = new_value
+
+            #In case there's no dot, this is not a value we set at the previous page
+            except ValueError:
+                # when the database token csrfmiddlewaretoken is passed, there is no dot
+                continue
+
+        # these should be error free based on the django template import_csv.html
+        for row in glosses_to_create.keys():
+            dataset = glosses_to_create[row]['dataset']
+
+            try:
+                dataset_id = Dataset.objects.get(name=dataset)
+            except:
+                # this is an error, this should have already been caught
+                e1 = 'Dataset not found: ' + dataset
+                error.append(e1)
+                continue
+
+            lemmaidglosstranslations = {}
+            for language in dataset_id.translation_languages.all():
+                lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss_' + language.language_code_2char]
+                if lemma_id_gloss:
+                    lemmaidglosstranslations[language] = lemma_id_gloss
+            # Check whether it is an existing one (correct, make a reference), ...
+            existing_lemmas = []
+            for language, term in lemmaidglosstranslations.items():
+                try:
+                    existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset_id,
+                                                                               language=language,
+                                                                               text=term).lemma)
+                except ObjectDoesNotExist as e:
+                    # print("Error: {}".format(e))
+                    # New lemma will be created
+                    pass
+            existing_lemmas_set = set(existing_lemmas)
+
+            if len(existing_lemmas) == len(lemmaidglosstranslations) and len(existing_lemmas_set) == 1:
+                lemma_for_gloss = existing_lemmas[0]
+            elif len(existing_lemmas) == 0:
+                with atomic():
+                    lemma_for_gloss = LemmaIdgloss(dataset=dataset_id)
+                    lemma_for_gloss.save()
+                    for language, term in lemmaidglosstranslations.items():
+                        new_lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma_for_gloss,
+                                                                              language=language, text=term)
+                        new_lemmaidglosstranslation.save()
+            else:
+                # This case should not happen, it should have been caught in stage 1
+                e1 = 'To create glosses in dataset ' + dataset_id.name + \
+                     ', the combination of Lemma ID Gloss translations should either refer ' \
+                     'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
+                error.append(e1)
+                continue
+
+            new_gloss = Gloss()
+            new_gloss.lemma = lemma_for_gloss
+            # Save the new gloss before updating it
+            new_gloss.save()
+            new_gloss.creationDate = DT.datetime.now()
+            new_gloss.creator.add(request.user)
+            new_gloss.excludeFromEcv = False
+            new_gloss.save()
+
+            for language in dataset_languages:
+                annotation_id_gloss = glosses_to_create[row]['annotation_id_gloss_' + language.language_code_2char]
+                if annotation_id_gloss:
+                    annotationidglosstranslation = AnnotationIdglossTranslation()
+                    annotationidglosstranslation.language = language
+                    annotationidglosstranslation.gloss = new_gloss
+                    annotationidglosstranslation.text = annotation_id_gloss
+                    annotationidglosstranslation.save()
+
+        stage = 2
+
+    #Show uploadform
+    else:
+
+        stage = 0
+
+    return render(request,'dictionary/import_csv_create.html',{'form':uploadform,'stage':stage,'changes':changes,
+                                                        'creation':creation,
+                                                        'gloss_already_exists':gloss_already_exists,
+                                                        'error':error,
+                                                        'dataset_languages':dataset_languages,
+                                                        'selected_datasets':selected_datasets,
+                                                        'translation_languages_dict': translation_languages_dict,
+                                                        'seen_datasets': seen_datasets,
+                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+
+
+def import_csv_update(request):
+    user = request.user
+    import guardian
+    user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
+    user_datasets_names = [ dataset.name for dataset in user_datasets ]
+
+    selected_datasets = get_selected_datasets_for_user(user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    translation_languages_dict = {}
+    for dataset_object in user_datasets:
+        translation_languages_dict[dataset_object] = []
+
+        for language in dataset_object.translation_languages.all():
+            translation_languages_dict[dataset_object].append(language)
+
+    seen_datasets = []
+    seen_dataset_names = []
+
+    # fatal errors are duplicate column headers, data in columns without headers
+    # column headers that do not correspond to database fields
+    # non-numerical gloss ids
+    # non-existent dataset or no permission for dataset
+    # attempt to create glosses in multiple datasets in the same csv
+    # missing Dataset column
+    # missing Lemma or Annotation translations required for the dataset during creation
+    # extra columns during creation:
+    # (although these are ignored, it is advised to remove them to make it clear the data is not being stored)
+
+    fatal_error = False
+
+    uploadform = signbank.dictionary.forms.CSVUploadForm
+    changes = []
+    error = []
+    creation = []
+    gloss_already_exists = []
+    earlier_updates_same_csv = []
+    earlier_updates_lemmaidgloss = {}
+
+    # this is needed in case the user has exported the csv first and not removed the frequency columns
+    # this code retrieves the column headers in English
+    with override(LANGUAGE_CODE):
+        columns_to_skip = {field.verbose_name: field for field in Gloss._meta.fields if field.name in FIELDS['frequency']}
+
+    #Propose changes
+    if len(request.FILES) > 0:
+        fatal_error = False
+        csv_text = request.FILES['file'].read().decode('UTF-8')
+        csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
+        creation = []
+        keys = {}   # in case something goes wrong in header row
+        for nl, line in enumerate(csv_lines):
+
+            #The first line contains the keys
+            if nl == 0:
+                keys = line.strip().split(',')
+                num_keys = len(keys)
+                continue
+            elif len(line) == 0:
+                continue
+
+            values = csv.reader([line]).__next__()
+            value_dict = {}
+
+            for nv,value in enumerate(values):
+
+                try:
+                    if keys[nv]:
+                        if keys[nv] in columns_to_skip.keys():
+                            continue
+                        if keys[nv] in value_dict.keys():
+                            e = 'Duplicate header column found: ' + keys[nv]
+                            error.append(e)
+                            fatal_error = True
+                            break
+                        value_dict[keys[nv]] = value
+                    elif value:
+                        # empty column header
+                        e = 'Row '+str(nl + 1) + ': Extra data found in column without header: ' + value
+                        error.append(e)
+                        fatal_error = True
+                        break
+                except IndexError:
+                    e = 'Row '+str(nl + 1) + ': Index error in column: ' + str(nv)
+                    error.append(e)
+                    fatal_error = True
+                    break
+
+            if fatal_error:
+                break
+
+            if 'Signbank ID' in value_dict:
+                try:
+                    pk = int(value_dict['Signbank ID'])
+                except ValueError:
+                    e = 'Row '+str(nl + 1) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
+                    error.append(e)
+                    fatal_error = True
+            else:
+                e = 'Signbank ID required to update glosses.'
+                error.append(e)
+                fatal_error = True
+
+            if fatal_error:
+                break
+
+            # Check whether the user may change the dataset of the current row
+            if 'Dataset' in value_dict:
+                dataset_name = value_dict['Dataset'].strip()
+            else:
+                e1 = 'The Dataset column is required.'
+                error.append(e1)
+                fatal_error = True
+                break
+            if dataset_name not in seen_dataset_names:
+                # catch possible empty values for dataset, primarily for pretty printing error message
+                if dataset_name == '' or dataset_name == None or dataset_name == 0 or dataset_name == 'NULL':
+                    e_dataset_empty = 'Row '+str(nl + 1) + ': The Dataset is missing.'
+                    error.append(e_dataset_empty)
+                    break
+                try:
+                    dataset = Dataset.objects.get(name=dataset_name)
+                except:
+                    # An error message should be returned here, the dataset does not exist
+                    e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    error.append(e_dataset_not_found)
+                    fatal_error = True
+                    break
+
+                if dataset_name not in user_datasets_names:
+                    e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                    error.append(e3)
+                    fatal_error = True
+                    break
+                if dataset not in selected_datasets:
+                    e3 = 'Row '+str(nl + 1) + ': Please select the dataset %s.' % value_dict['Dataset'].strip()
+                    error.append(e3)
+                    fatal_error = True
+                    break
+                if seen_datasets:
+                    # already seen a dataset
+                    if dataset in seen_datasets:
+                        pass
+                    else:
+                        # seen more than one dataset
+                        seen_datasets.append(dataset)
+                        seen_dataset_names.append(dataset_name)
+                else:
+                    seen_datasets.append(dataset)
+                    seen_dataset_names.append(dataset_name)
+                    # saw the first dataset
+
+            if fatal_error:
+                break
+
+            # The Lemma ID Gloss may already exist.
+            lemmaidglosstranslations = {}
+            contextual_error_messages_lemmaidglosstranslations = []
+            for language in dataset.translation_languages.all():
+                column_name = "Lemma ID Gloss (%s)" % language.name_en
+                lemma_idgloss_value = value_dict[column_name].strip()
+                # also stores empty values
+                lemmaidglosstranslations[language] = lemma_idgloss_value
+
+            # updating glosses
+            try:
+                gloss = Gloss.objects.select_related().get(pk=pk)
+            except ObjectDoesNotExist as e:
+
+                e = 'Row '+ str(nl + 1) + ': Could not find gloss for Signbank ID '+str(pk)
+                error.append(e)
+                continue
+
+            if gloss.lemma.dataset != dataset:
+                e1 = 'Row '+ str(nl + 1) + ': The Dataset column (' + dataset.name + ') does not correspond to that of the Signbank ID (' \
+                                                    + str(pk) + ').'
+                error.append(e1)
+                # ignore the rest of the row
+                continue
+            # dataset is the same
+
+            # If there are changes in the LemmaIdglossTranslation, the changes should refer to another LemmaIdgloss
+            current_lemmaidglosstranslations = {}
+            for language in gloss.lemma.dataset.translation_languages.all():
+                try:
+                    lemma_translation = LemmaIdglossTranslation.objects.get(language=language, lemma=gloss.lemma)
+                    current_lemmaidglosstranslations[language] = lemma_translation.text
+                except:
+                    current_lemmaidglosstranslations[language] = ''
+            if lemmaidglosstranslations \
+                    and current_lemmaidglosstranslations != lemmaidglosstranslations:
+
+                help = 'Row '+ str(nl + 1) + ': Attempt to update Lemma ID Gloss translations for Signbank ID (' + str(pk) + ")."
+                error.append(help)
+                continue
+
+            try:
+                (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
+                            compare_valuedict_to_gloss(value_dict,gloss.id,user_datasets_names, nl, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+                changes += changes_found
+
+                if len(errors_found):
+                    # more than one error found
+                    errors_found_string = '\n'.join(errors_found)
+                    error.append(errors_found_string)
+
+            except MachineValueNotFoundError as e:
+
+                e_string = str(e)
+                error.append(e_string)
+        stage = 1
+
+    #Do changes
+    elif len(request.POST) > 0:
+
+        lemmaidglosstranslations_per_gloss = {}
+        for key, new_value in request.POST.items():
+
+            try:
+                pk, fieldname = key.split('.')
+
+            #In case there's no dot, this is not a value we set at the previous page
+            except ValueError:
+                # when the database token csrfmiddlewaretoken is passed, there is no dot
+                # print('no dot found')
+                continue
+
+            gloss = Gloss.objects.select_related().get(pk=pk)
+
+            # This is no longer allowed. The column is skipped.
+            # Updating the lemma idgloss is a special procedure, not only because it has relations to other parts of
+            # the database, but also because it only can be evaluated after reviewing all lemma idgloss translations
+            lemma_idgloss_key_prefix = "Lemma ID Gloss ("
+            if fieldname.startswith(lemma_idgloss_key_prefix):
+                language_name = fieldname[len(lemma_idgloss_key_prefix):-1]
+                if gloss not in lemmaidglosstranslations_per_gloss:
+                    lemmaidglosstranslations_per_gloss[gloss] = {}
+                lemmaidglosstranslations_per_gloss[gloss][language_name] = new_value
+                continue   # avoid default field update
+
+            # Updating the annotation idgloss is a special procedure, because it has relations to other parts of the
+            # database
+            annotation_idgloss_key_prefix = "Annotation ID Gloss ("
+            if fieldname.startswith(annotation_idgloss_key_prefix):
+                language_name = fieldname[len(annotation_idgloss_key_prefix):-1]
+                languages = Language.objects.filter(name_en=language_name)
+                if languages:
+                    language = languages[0]
+                    annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
+                    if annotation_idglosses:
+                        annotation_idgloss = annotation_idglosses[0]
+                        annotation_idgloss.text = new_value
+                        annotation_idgloss.save()
+                continue
+
+            # Updating the keywords is a special procedure, because it has relations to other parts of the database
+            if fieldname == 'Keywords':
+                # The following is necessary to process keywords for multiple languages
+                keywords_dict = {}
+                for keyword_string in new_value.split(", "):
+                    (keyword, language_code_2char) = keyword_string.split(":")
+                    if language_code_2char in keywords_dict:
+                        keywords_dict[language_code_2char] += ", " + keyword
+                    else:
+                        keywords_dict[language_code_2char] = keyword
+                for language_code_2char, keywords in keywords_dict.items():
+                    update_keywords(gloss, "keywords_" + language_code_2char, keywords)
+                gloss.save()
+                continue
+
+            if fieldname == 'SignLanguages':
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                update_signlanguage(gloss,None,new_human_value_list)
+                gloss.save()
+                continue
+
+            if fieldname == 'Dialects':
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                update_dialect(gloss,None,new_human_value_list)
+                gloss.save()
+                continue
+
+            if fieldname == 'Dataset':
+
+                # this has already been checked for existance and permission in the previous step
+                # get dataset identifier
+                if new_value == 'None':
+                    # don't allow the user to erase the current dataset, this should have already been caught
+                    print('csv import make changes error: gloss ', gloss.id, ' attempt to set dataset to empty')
+                    continue
+                else:
+                    # the existence of the new dataset should have already been tested
+                    new_dataset = Dataset.objects.get(name=new_value)
+                try:
+                    gloss_lemma = gloss.lemma
+                except:
+                    # this error should not happen
+                    print('csv import make changes error: gloss ', gloss.id, ' gloss.lemma is empty, cannot set dataset')
+                    continue
+
+                # this could have an unwanted side effect on the Lemma translations?
+                gloss_lemma.dataset = new_dataset
+                gloss_lemma.save()
+                continue
+
+            if fieldname == 'Sequential Morphology':
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                update_sequential_morphology(gloss,None,new_human_value_list)
+
+                continue
+
+            if fieldname == 'Simultaneous Morphology':
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                update_simultaneous_morphology(gloss,None,new_human_value_list)
+
+                continue
+
+            if fieldname == 'Blend Morphology':
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                update_blend_morphology(gloss,None,new_human_value_list)
+
+                continue
+
+            if fieldname == 'Relations to other signs':
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                subst_relations(gloss,None,new_human_value_list)
+                continue
+
+            if fieldname == 'Relations to foreign signs':
+
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                subst_foreignrelations(gloss,None,new_human_value_list)
+                continue
+
+            if fieldname == 'Tags':
+
+                new_human_value_list = [v.strip().replace(' ','_') for v in new_value.split(',')]
+
+                update_tags(gloss,None,new_human_value_list)
+                continue
+
+            if fieldname == 'Notes':
+
+                subst_notes(gloss,None,new_value)
+                continue
+
+            with override(settings.LANGUAGE_CODE):
+
+                #Replace the value for bools
+                if fieldname in Gloss._meta.get_fields() and Gloss._meta.get_field(fieldname).__class__.__name__ == 'NullBooleanField':
+
+                    if new_value in ['true','True', 'TRUE']:
+                        new_value = True
+                    elif new_value == 'None' or new_value == 'Neutral':
+                        new_value = None
+                    else:
+                        new_value = False
+
+                #Remember this for renaming the video later
+                if fieldname == 'idgloss':
+                    video_path_before = settings.WRITABLE_FOLDER+gloss.get_video_path()
+
+                #The normal change and save procedure
+                setattr(gloss,fieldname,new_value)
+                gloss.save()
+
+                #Also update the video if needed
+                if fieldname == 'idgloss':
+                    video_path_after = settings.WRITABLE_FOLDER+gloss.get_video_path()
+                    if os.path.isfile(video_path_before):
+                        os.rename(video_path_before,video_path_after)
+
+        stage = 2
+
+    #Show uploadform
+    else:
+
+        stage = 0
+
+    return render(request,'dictionary/import_csv_update.html',{'form':uploadform,'stage':stage,'changes':changes,
+                                                        'creation':creation,
+                                                        'gloss_already_exists':gloss_already_exists,
+                                                        'error':error,
+                                                        'dataset_languages':dataset_languages,
+                                                        'selected_datasets':selected_datasets,
+                                                        'translation_languages_dict': translation_languages_dict,
+                                                        'seen_datasets': seen_datasets,
+                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+
+
 def import_csv(request):
     user = request.user
     import guardian
@@ -957,7 +1768,7 @@ def import_csv(request):
                 gloss = Gloss.objects.select_related().get(pk=pk)
             except ObjectDoesNotExist as e:
 
-                e = 'Could not find gloss for ID '+str(pk)
+                e = 'Could not find gloss for Signbank ID '+str(pk)
                 error.append(e)
                 continue
 
@@ -1002,8 +1813,6 @@ def import_csv(request):
 
     #Do changes
     elif len(request.POST) > 0:
-
-        post_items = [ (key, value) for key, value in request.POST.items() ]
 
         csv_update = False
         csv_create = False
