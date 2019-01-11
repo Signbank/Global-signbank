@@ -61,10 +61,10 @@
                         <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
                     </div>
                     <div class='btn-group'>
-                        <textarea id="id_motivation" class="form-control"
-                                  name="motivation_for_use"
+                        <label>{% trans "Motivation" %}</label>
+                        <textarea id="id_motivation" class="form-control" name="motivation_for_use" data-toggle="tooltip" data-placement="left"
                                   cols="80" rows="5" placeholder="Motivation" required="required"
-                                  title="Please explain why you would like to access this dataset. What are the purposes for which you wish to use it?"></textarea>
+                        title="Please explain why you would like to access this dataset. What are the purposes for which you wish to use it?"></textarea>
                         <button id='request_view_access' class='btn btn-primary' type='submit' name='request_view_access' value='VIEW'>{% trans "Request View Access" %}</button>
                     </div>
                 </form>
