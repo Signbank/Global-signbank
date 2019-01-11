@@ -309,7 +309,7 @@ class GlossListView(ListView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
-            return HttpResponseRedirect(URL + '/signs/search/')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
         get = self.request.GET
@@ -317,13 +317,13 @@ class GlossListView(ListView):
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
             messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(URL + '/signs/search/')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         try:
             dataset_object = Dataset.objects.get(name=self.dataset_name)
         except:
             messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
-            return HttpResponseRedirect(URL + '/signs/search/')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # make sure the user can write to this dataset
         import guardian
@@ -333,13 +333,13 @@ class GlossListView(ListView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
-            return HttpResponseRedirect(URL + '/signs/search/')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # if we get to here, the user is authenticated and has permission to export the dataset
         ecv_file = write_ecv_file_for_dataset(self.dataset_name)
 
         messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_name + ' successfully updated.'))
-        return HttpResponseRedirect(URL + '/signs/search/')
+        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
     # noinspection PyInterpreter,PyInterpreter
     def render_to_csv_response(self, context):
@@ -2650,7 +2650,7 @@ class DatasetListView(ListView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
         get = self.request.GET
@@ -2658,13 +2658,13 @@ class DatasetListView(ListView):
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
             messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         try:
             dataset_object = Dataset.objects.get(name=self.dataset_name)
         except:
             messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # make sure the user can write to this dataset
         # from guardian.shortcuts import get_objects_for_user
@@ -2675,7 +2675,11 @@ class DatasetListView(ListView):
         else:
             # this should not happen from the html page. the check is made to catch a user adding a parameter to the url
             messages.add_message(self.request, messages.INFO, ('You can already view this dataset.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+
+        motivation = ''
+        if 'motivation_for_use' in get:
+            motivation = get['motivation_for_use']  # motivation is a required field in the form
 
         from django.contrib.auth.models import Group, User
         group_manager = Group.objects.get(name='Dataset_Manager')
@@ -2703,6 +2707,7 @@ class DatasetListView(ListView):
             message = render_to_string('registration/dataset_access_request_email.txt',
                                        context={'user': self.request.user,
                                                 'dataset': dataset_object.name,
+                                                'motivation': motivation,
                                                 'site': current_site})
 
             # for debug purposes on local machine
@@ -2717,7 +2722,7 @@ class DatasetListView(ListView):
             messages.add_message(self.request, messages.ERROR, ('No dataset manager has been found for '+dataset_object.name+'. Your request could not be submitted.'))
         else:
             messages.add_message(self.request, messages.INFO, ('Your request for view access to dataset '+dataset_object.name+' has been submitted.'))
-        return HttpResponseRedirect(URL + '/datasets/available')
+        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
     def render_to_ecv_export_response(self, context):
 
@@ -3121,7 +3126,7 @@ class DatasetManagerView(ListView):
                 group_manager = Group.objects.get(name='Dataset_Manager')
             except:
                 messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
-                return HttpResponseRedirect(URL + '/datasets/available')
+                return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
             groups_of_user = self.request.user.groups.all()
             if not group_manager in groups_of_user:
@@ -3210,7 +3215,7 @@ class DatasetDetailView(DetailView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # check if the user can manage this dataset
         from django.contrib.auth.models import Group, User
@@ -3219,12 +3224,12 @@ class DatasetDetailView(DetailView):
             group_manager = Group.objects.get(name='Dataset_Manager')
         except:
             messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         groups_of_user = self.request.user.groups.all()
         if not group_manager in groups_of_user:
             messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset Manager to modify dataset permissions.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
         get = self.request.GET
@@ -3232,26 +3237,26 @@ class DatasetDetailView(DetailView):
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
             messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         try:
             dataset_object = Dataset.objects.get(name=self.dataset_name)
         except:
             messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         username = ''
         if 'username' in get:
             username = get['username']
         if username == '':
             messages.add_message(self.request, messages.ERROR, ('Username must be non-empty.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         try:
             user_object = User.objects.get(username=username)
         except:
             messages.add_message(self.request, messages.ERROR, ('No user with name '+username+' found.'))
-            return HttpResponseRedirect(URL + '/datasets/available')
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # if we get to here, we have a dataset object and a user object to add as an owner of the dataset
 
@@ -3261,7 +3266,7 @@ class DatasetDetailView(DetailView):
         messages.add_message(self.request, messages.INFO,
                      ('User ' + username + ' successfully made (co-)owner of this dataset.'))
 
-        return HttpResponseRedirect(URL + '/datasets/detail/' + str(dataset_object.id))
+        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/detail/' + str(dataset_object.id))
 
 def dataset_field_choices_view(request):
 
