@@ -206,11 +206,6 @@ class GlossListView(ListView):
         context['view_type'] = self.view_type
         context['web_search'] = self.web_search
 
-        if self.search_type == 'sign' or not self.request.user.is_authenticated():
-            context['glosscount'] = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets).count()   # Only count the none-morpheme glosses
-        else:
-            context['glosscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets).count()  # Count the glosses + morphemes
-
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and self.request.user.is_authenticated():
