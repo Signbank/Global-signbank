@@ -19,7 +19,7 @@
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
           <th style="width:80px;">{% trans "View Dataset" %}</th>
           <th style="width:80px;">{% trans "Change Dataset" %}</th>
-          <th style="width:200px;">{% trans "Request Access" %}</th>
+          <th style="width:300px;">{% trans "Request Access" %}</th>
           <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
           <th style="width:80px;">{% trans "Selected" %}</th>
           <th style="width:200px;">{% trans "Languages" %}</th>
@@ -52,18 +52,27 @@
                 {% if dataset.is_public %}
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
                 {% if not "view_dataset" in dataset_perms %}
+
+                <div data-toggle="collapse" href="#dataset_{{dataset.name|cut:' '}}_request_view"><button>{% trans "Request View Access" %}</button></div>
+                <div id='dataset_{{dataset.name|cut:" "}}_request_view' class='collapse'>
+
                 <form name='request_view_dataset_form' id='request_view_dataset_form' method='get'>
                     <div class="hidden">
                         <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
                     </div>
                     <div class='btn-group'>
+                        <label>{% trans "Motivation" %}</label>
+                        <textarea id="id_motivation" class="form-control" name="motivation_for_use" data-toggle="tooltip" data-placement="left"
+                                  cols="80" rows="5" placeholder="Motivation" required="required"
+                        title="Please explain why you would like to access this dataset. What are the purposes for which you wish to use it?"></textarea>
                         <button id='request_view_access' class='btn btn-primary' type='submit' name='request_view_access' value='VIEW'>{% trans "Request View Access" %}</button>
                     </div>
                 </form>
+                </div>
                 {% endif %}
                 {% endif %}
             </td>
-            <td>{{dataset.count_glosses}}
+            <td>{{dataset.lemmaidgloss__gloss__count}}
             </td>
             <td>
                 {% if dataset.user.0.user %}

@@ -1902,7 +1902,7 @@ class Dataset(models.Model):
 
     def count_glosses(self):
 
-        count_glosses = LemmaIdgloss.objects.filter(dataset_id=self.id).count()
+        count_glosses = Gloss.objects.filter(lemma__dataset_id=self.id).count()
 
         return count_glosses
 
