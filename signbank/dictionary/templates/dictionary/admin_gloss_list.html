@@ -804,10 +804,10 @@
           <div class="thumbnail_container">
           <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
 
-            <div {% if page_obj.paginator.count < 200 %} class="hover-shows-video" {% endif%} >
+            <div {% if page_obj.paginator.count < DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES %} class="hover-shows-video" {% endif%} >
                 <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}">
 
-              {% if page_obj.paginator.count < 200 %}
+              {% if page_obj.paginator.count < DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES %}
                 <video id="videoplayer" class="thumbnail-video" src="{{protected_media_url}}{{gloss.get_video_path}}"  type="video/mp4" muted="muted"></video>
               {% endif %}
 
