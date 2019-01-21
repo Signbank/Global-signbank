@@ -734,7 +734,9 @@
           <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
 
-          <th>{% trans "Lemma ID gloss" %}</th>
+          {% for dataset_lang in dataset_languages %}
+          <th>{% trans "Lemma ID gloss" %} ({{ dataset_lang.name }})</th>
+          {% endfor %}
 
            <th>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
@@ -765,7 +767,25 @@
            {% endwith %}
           {% endfor %}
 
-           {% with "lemma__lemmaidglosstranslation__text translation handedness domhndsh subhndsh locprim" as head_fields %}
+          {% for dataset_lang in dataset_languages %}
+          {% with "lemmaidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
+          {% with minfield="-"|add:field %}
+           <th>
+             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+             </a>
+             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+             </a>
+             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
+               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
+             {% endif %}
+           </th>
+           {% endwith %}
+           {% endwith %}
+          {% endfor %}
+
+           {% with "translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% with minfield="-"|add:field %}
            <th>
@@ -851,13 +871,13 @@
         {% endwith %}
       {% endfor %}
 
+      {% for dataset_lang in dataset_languages %}
+        {% with gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
       <td>
-          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div class="morpheme_gloss">{{gloss.lemma}}</div>
-          {% else %}
-          <div>{{gloss.lemma}}</div>
-          {% endif %}
+          <div>{{ lemmaidglosstranslation }}</div>
       </td>
+        {% endwith %}
+      {% endfor %}
 
       <td>
       {% for translation in gloss.translation_set.all %}
