@@ -86,6 +86,16 @@ def order_queryset_by_sort_order(get, qs):
         qs = qs.annotate(**{sOrderAsc: Subquery(annotationidglosstranslation.values('text')[:1])}).order_by(sOrder)
         return qs
 
+    def order_queryset_by_lemmaidglosstranslation(qs, sOrder):
+        language_code_2char = sOrder[-2:]
+        sOrderAsc = sOrder
+        if (sOrder[0:1] == '-'):
+            # A starting '-' sign means: descending order
+            sOrderAsc = sOrder[1:]
+        lemmaidglosstranslation = LemmaIdglossTranslation.objects.filter(lemma=OuterRef('lemma'), language__language_code_2char__iexact=language_code_2char)
+        qs = qs.annotate(**{sOrderAsc: Subquery(lemmaidglosstranslation.values('text')[:1])}).order_by(sOrder)
+        return qs
+
     # Set the default sort order
     sOrder = 'lemma__lemmaidglosstranslation__text'  # Default sort order if nothing is specified
     # See if the form contains any sort-order information
@@ -104,6 +114,8 @@ def order_queryset_by_sort_order(get, qs):
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Location")
     elif "annotationidglosstranslation_order_" in sOrder:
         ordered = order_queryset_by_annotationidglosstranslation(qs, sOrder)
+    elif "lemmaidglosstranslation_order_" in sOrder:
+        ordered = order_queryset_by_lemmaidglosstranslation(qs, sOrder)
     else:
         # Use straightforward ordering on field [sOrder]
 
@@ -220,6 +232,11 @@ class GlossListView(ListView):
             context['SHOW_MORPHEME_SEARCH'] = False
 
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = settings.MULTIPLE_SELECT_GLOSS_FIELDS
+
+        if hasattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'):
+            context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = settings.DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
+        else:
+            context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = 0
 
         context['input_names_fields_and_labels'] = {}
 
