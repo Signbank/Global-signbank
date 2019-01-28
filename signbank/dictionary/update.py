@@ -142,7 +142,6 @@ def update_gloss(request, glossid):
         if len(value) == 0:
             # this seems a bit dangerous
             value = ' '
-            # print('value was set to space')
 
         elif value[0] == '_':
             value = value[1:]
@@ -364,15 +363,13 @@ def update_gloss(request, glossid):
                     value = (value.lower() in [_('Yes').lower(),'true',True,1])
 
             # special value of 'notset' or -1 means remove the value
-            if value == 'notset' or value == -1 or value == '':
-                # print('field ', field, ' is being set to None.')
+            if (value == 'notset' or value == -1 or value == '') and field not in ['phonetVar', 'mouthG', 'mouthing', 'phonOth']:
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
 
             #Regular field updating
             else:
-
                 #Remember the old video path if you're changing the name
                 if field == 'idgloss':
                     old_video_path = gloss.get_video_path()
