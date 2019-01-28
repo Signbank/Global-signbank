@@ -9,6 +9,11 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.conf import settings
 from signbank.settings.server_specific import *
+from django.utils.safestring import mark_safe
+from django.utils.functional import lazy
+from django.utils import six
+
+mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 from signbank.registration.models import RegistrationProfile, UserProfile
 
@@ -79,7 +84,9 @@ class RegistrationForm(forms.Form):
                                      help_text=_("Please explain why you would like to get access to this dataset. What are the purposes for which you wish to use it?"))
 
     tos_choices = [(True, 'Agree'), (False, 'Disagree')]
-    tos = forms.BooleanField(label=_(u'I have read and agree to the Terms of Service'),
+    href_hyperlink = settings.URL + settings.PREFIX_URL + '/about/conditions/'
+    tos_hyperlink = _(u'I have read and agree to the <a href="' + href_hyperlink + '" target="_blank">Terms of Service</a>')
+    tos = forms.BooleanField(label=mark_safe_lazy(tos_hyperlink),
                              widget=forms.RadioSelect(choices=tos_choices),
                              error_messages={'required': 'Error: You must agree to the Terms of Service in order to register'})
 
