@@ -8,6 +8,7 @@ from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
 from django.http import HttpResponse, HttpResponseRedirect
+from django.template import RequestContext
 from django.core.urlresolvers import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.utils.translation import override, ugettext_lazy as _
@@ -3857,6 +3858,57 @@ class LemmaListView(ListView):
 
         return context
 
+    def render_to_response(self, context):
+        # Look for a 'format=json' GET argument
+        if self.request.GET.get('format') == 'CSV':
+            return self.render_to_csv_response(context)
+        else:
+            return super(LemmaListView, self).render_to_response(context)
+
+    def render_to_csv_response(self, context):
+
+        if not self.request.user.has_perm('dictionary.export_csv'):
+            raise PermissionDenied
+
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="dictionary-export-lemmas.csv"'
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+
+        lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                          for language in dataset_languages]
+
+        writer = csv.writer(response)
+
+        with override(LANGUAGE_CODE):
+            header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields
+
+        writer.writerow(header)
+
+        for lemma in self.get_queryset():
+            row = [str(lemma.pk), lemma.dataset.name]
+
+            for language in dataset_languages:
+                lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
+                if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
+                    row.append(lemmaidglosstranslations[0].text)
+                else:
+                    row.append("")
+
+            #Make it safe for weird chars
+            safe_row = []
+            for column in row:
+                try:
+                    safe_row.append(column.encode('utf-8').decode())
+                except AttributeError:
+                    safe_row.append(None)
+
+            writer.writerow(row)
+
+        return response
 
 class LemmaCreateView(CreateView):
     model = LemmaIdgloss
@@ -3864,7 +3916,13 @@ class LemmaCreateView(CreateView):
     fields = []
 
     def get_context_data(self, **kwargs):
-        context = {}
+        context = super(CreateView, self).get_context_data(**kwargs)
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -3965,48 +4023,77 @@ def create_lemma_for_gloss(request, glossid):
 class LemmaUpdateView(UpdateView):
     model = LemmaIdgloss
     success_url = reverse_lazy('dictionary:admin_lemma_list')
+    page_in_lemma_list = ''
     template_name = 'dictionary/update_lemma.html'
     fields = []
 
     def get_context_data(self, **kwargs):
         context = super(LemmaUpdateView, self).get_context_data(**kwargs)
+
+        # this is needed by the menu bar
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        # get the page of the lemma list on which this lemma appears in order ro return to it after update
+        request_path = self.request.META.get('HTTP_REFERER')
+        path_parms = request_path.split('?page=')
+        if len(path_parms) > 1:
+            self.page_in_lemma_list = str(path_parms[1])
+        context['page_in_lemma_list'] = self.page_in_lemma_list
         dataset = self.object.dataset
         context['dataset'] = dataset
         dataset_languages = Language.objects.filter(dataset=dataset).distinct()
         context['dataset_languages'] = dataset_languages
-        context['change_lemma_form'] = LemmaUpdateForm(instance=self.object)
+        context['change_lemma_form'] = LemmaUpdateForm(instance=self.object, page_in_lemma_list=self.page_in_lemma_list)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
 
     def post(self, request, *args, **kwargs):
-        print(request.POST)
         instance = self.get_object()
         dataset = instance.dataset
-
         form = LemmaUpdateForm(request.POST, instance=instance)
 
         for item, value in request.POST.items():
             if item.startswith(form.lemma_update_field_prefix):
-                language_code_2char = item[len(form.lemma_update_field_prefix):]
-                language = Language.objects.get(language_code_2char=language_code_2char)
-                lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(
-                    lemmaidglosstranslation__language=language,
-                    lemmaidglosstranslation__text__exact=value.upper(),
-                    dataset=dataset)
-                if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
-                    return render(request, 'dictionary/warning.html',
-                                  {'warning': language.name + " " + 'lemma ID Gloss not unique.'})
+                if value != '':
+                    language_code_2char = item[len(form.lemma_update_field_prefix):]
+                    language = Language.objects.get(language_code_2char=language_code_2char)
+                    lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(
+                        lemmaidglosstranslation__language=language,
+                        lemmaidglosstranslation__text__exact=value.upper(),
+                        dataset=dataset)
+                    if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
+                        for nextLemma in lemmas_for_this_language_and_annotation_idgloss:
+                            if nextLemma.id != instance.id:
+                                # found a different lemma with same translation
+                                return render(request, 'dictionary/warning.html',
+                                            {'warning': language.name + " " + 'lemma ID Gloss not unique.'})
+
+                else:
+                    # intent to set lemma translation to empty
+                    pass
+            elif item.startswith('page') and value:
+                # page of the lemma list where the gloss to update is displayed
+                self.page_in_lemma_list = value
 
         if form.is_valid():
             try:
-                lemma = form.save()
-                print("LEMMA " + str(lemma.pk))
-            except ValidationError as ve:
-                messages.add_message(request, messages.ERROR, ve.message)
-                return render(request, 'dictionary/update_lemma.html', {'change_lemma_form': LemmaUpdateForm(instance=self.get_object())})
+                form.save()
+                messages.add_message(request, messages.INFO, _("The changes to the lemma have been saved."))
 
-            # return HttpResponseRedirect(reverse('dictionary:admin_lemma_list', kwargs={'pk': lemma.id}))
-            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+            except:
+                # a specific message is put into the messages frmaework rather than the message caught in the exception
+                # if it's not done this way, it gives a runtime error
+                messages.add_message(request, messages.ERROR, _("There must be at least one translation for this lemma."))
+
+            # return to the same page in the list of lemmas, if available
+            if self.page_in_lemma_list:
+                return HttpResponseRedirect(self.success_url + '?page='+self.page_in_lemma_list)
+            else:
+                return HttpResponseRedirect(self.success_url)
+
         else:
             return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
 

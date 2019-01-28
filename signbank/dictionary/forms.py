@@ -690,13 +690,16 @@ class LemmaUpdateForm(forms.ModelForm):
         fields = []
 
     def __init__(self, queryDict=None, *args, **kwargs):
+        if 'page_in_lemma_list' in kwargs:
+            self.page_in_lemma_list = kwargs.pop('page_in_lemma_list')
+
         super(LemmaUpdateForm, self).__init__(queryDict, *args, **kwargs)
-        print("Object: " + str(self.instance))
+        # print("Object: " + str(self.instance))
         self.languages = self.instance.dataset.translation_languages.all()
 
         for language in self.languages:
             lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
-            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name))
+            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name), required=False)
             if queryDict:
                 if lemmaupdate_field_name in queryDict:
                     self.fields[lemmaupdate_field_name].initial = queryDict[lemmaupdate_field_name]
@@ -709,25 +712,50 @@ class LemmaUpdateForm(forms.ModelForm):
 
     @atomic
     def save(self, commit=True):
-        print("PRE SAVE for Translations")
+        # print("PRE SAVE for Translations")
+        # print('languages: ', self.languages)
+        # the number of translations should be at least 1
+        instance_has_translations = self.instance.lemmaidglosstranslation_set.count()
+        # print('instance has translations: ', instance_has_translations)
         for language in self.languages:
             lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
             lemma_idgloss_text = self.fields[lemmaupdate_field_name].initial
             existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.filter(language=language)
+            # print('existing lemma trans for lang ', language, ': ', existing_lemmaidglosstranslations)
             if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
-                lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
-                                                                  text=lemma_idgloss_text)
-                lemmaidglosstranslation.save()
+                if lemma_idgloss_text == '':
+                    # lemma translation is already empty for this language
+                    # don't create an empty translation
+                    pass
+                else:
+                    # save a new translation
+                    lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
+                                                                    text=lemma_idgloss_text)
+                    lemmaidglosstranslation.save()
             elif len(existing_lemmaidglosstranslations) == 1:
                 lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
-                lemmaidglosstranslation.text = lemma_idgloss_text
-                lemmaidglosstranslation.save()
+                if lemma_idgloss_text == '':
+                    # delete existing translation if there is already a translation for a different language
+                    if instance_has_translations > 1:
+                        # print('try to delete text', str(lemmaidglosstranslation.pk))
+                        translation_to_delete = LemmaIdglossTranslation.objects.get(pk = lemmaidglosstranslation.pk, language = language)
+                        translation_to_delete.delete()
+                        # one of the translations has been deleted, update the total
+                        instance_has_translations -= 1
+                    else:
+                        # print('raise exception 1')
+                        # this exception refuses to be put into messages after being caught in LemmaUpdateView
+                        # gives a runtime error
+                        # therefore the exception is caught byt a different message is displayed
+                        raise Exception("Lemma with id %s must have at least one translation."% (self.instance.pk))
+                else:
+                    # print('save new translation')
+                    lemmaidglosstranslation.text = lemma_idgloss_text
+                    lemmaidglosstranslation.save()
             else:
-                raise Exception(
-                    "In class %s: gloss with id %s has more than one lemma idgloss translation for language %s"
-                    % (self.__class__.__name__, self.instance.pk, language.name)
-                )
-        print("POST SAVE for Translations")
-        return self.instance
+                # print('exception 2: existing translations length > 1: ', existing_lemmaidglosstranslations)
+                raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s"% (self.instance.pk, language.name))
+        # print("POST SAVE for Translations")
+        return
 
 
