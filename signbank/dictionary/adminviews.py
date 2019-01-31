@@ -97,15 +97,18 @@ def order_queryset_by_sort_order(get, qs):
         return qs
 
     # Set the default sort order
-    sOrder = 'lemma__lemmaidglosstranslation__text'  # Default sort order if nothing is specified
+    default_sort_order = True
+    sOrder = 'annotationidglosstranslation__text'  # Default sort order if nothing is specified
     # See if the form contains any sort-order information
     if ('sortOrder' in get and get['sortOrder'] != ''):
         # Take the user-indicated sort order
         sOrder = get['sortOrder']
+        default_sort_order = False
 
     # The ordering method depends on the kind of field:
     # (1) text fields are ordered straightforwardly
     # (2) fields made from a choice_list need special treatment
+
     if (sOrder.endswith('handedness')):
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness")
     elif (sOrder.endswith('domhndsh') or sOrder.endswith('subhndsh')):
@@ -124,13 +127,17 @@ def order_queryset_by_sort_order(get, qs):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
             bReversed = True
-        qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'})
-        qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'})
+        if default_sort_order:
+            lang_attr_name = DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+            sort_language = 'annotationidglosstranslation__language__language_code_2char'
+            qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'}, **{sort_language:lang_attr_name})
+            qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'}, **{sort_language:lang_attr_name})
 
-        sort_key = sOrder[:sOrder.find('__')]
-        ordered = list(qs_letters.order_by(sort_key))
-        ordered += list(qs_special.order_by(sort_key))
-
+            sort_key = sOrder
+            ordered = list(qs_letters.order_by(sort_key))
+            ordered += list(qs_special.order_by(sort_key))
+        else:
+            ordered = qs
         if bReversed:
             ordered.reverse()
 
