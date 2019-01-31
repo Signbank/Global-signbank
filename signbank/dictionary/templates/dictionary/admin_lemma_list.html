@@ -10,18 +10,30 @@
 
 {% block content %}
 
+<h3>{% trans "Lemmas" %}</h3>
+
 {% if object_list %}
+<form id="export">
+<div class='btn-group' style="margin-bottom: 20px">
+    {% if perms.dictionary.add_lemmaidgloss %}
+    <a class="btn btn-primary" href="{% url 'dictionary:create_lemma' %}">{% trans "Create New Lemma" %}</a>
+    {% endif %}
+    {% if perms.dictionary.export_csv %}
+    <input class='btn btn-default' type='submit' name='format' value='CSV'>
+    {% endif %}
+
+</div>
+</form>
 
 <table class='table table-condensed'>
-    <caption style="text-align: left;font-weight: bold;"><h3>{% trans "Lemmas" %}</h3> <a class="btn btn-primary pull-right" href="{% url 'dictionary:create_lemma' %}">{% trans "New" %}</a></caption>
     <thead>
       <tr>
           {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
           {% for dataset_lang in dataset_languages %}
-          <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+          <th>{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
           <th>{% trans "Number of glosses" %}</th>
-          <th></th>
+          <th>{% trans "Update" %}</th>
       </tr>
     </thead>
     <tbody>

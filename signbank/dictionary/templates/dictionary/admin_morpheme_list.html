@@ -179,7 +179,7 @@ function do_sort_column(field_name, action, frmName) {
     sOrder = '-' + sOrder;
   } else if (action == 'del') {
     // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
-    sOrder = 'idgloss';
+    sOrder = '';
   }
 
   // Set the value of the [sortOrder] field defined in dictionary/forms.py::MorphemeSearchForm

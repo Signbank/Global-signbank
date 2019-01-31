@@ -11,6 +11,7 @@ from django.forms.utils import ValidationError
 import tagging
 import re
 import copy
+import shutil
 
 import sys, os
 import json
@@ -21,6 +22,10 @@ from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGU
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 
 import signbank.settings
+
+# this variable is set later in the code, it needs to be declared before it is used
+choice_list_table = dict()
+
 
 def build_choice_list(field):
 
@@ -38,6 +43,16 @@ def build_choice_list(field):
     # Enter this exception if for example the db has no data yet (without this it is impossible to migrate)
     except:
         pass
+
+def build_choice_list2(field):
+    # this table is filled later in the code
+    global choice_list_table
+
+    try:
+        choices_for_field = choice_list_table[field]
+    except:
+        choices_for_field = []
+    return choices_for_field
 
 
 def get_default_language_id():
@@ -208,10 +223,10 @@ class FieldChoice(models.Model):
     chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(help_text="The actual numeric value stored in the database. Created automatically.")
 
-    # def __str__(self):
-    #
-    #     name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
-    #     return name
+    def __str__(self):
+
+        name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
+        return name
 
     class Meta:
         ordering = ['machine_value']
@@ -509,6 +524,7 @@ class Gloss(models.Model):
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50, blank=True)
     lexCatNotes = models.CharField(_("Lexical category notes"),null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
+    concConcSet = models.CharField(_("Conception Concept Set"), null=True, blank=True, max_length=300)
 
     #Frequency fields
 
@@ -554,7 +570,7 @@ class Gloss(models.Model):
         try:
             return self.lemma.lemmaidglosstranslation_set.first().text
         except:
-            return ""
+            return str(self.id)
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
@@ -650,17 +666,14 @@ class Gloss(models.Model):
         else:
             all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('lemma')
 
-        if all_glosses_ordered:
-
-            foundit = False
-
-            for gloss in all_glosses_ordered:
-                if gloss == self:
-                    foundit = True
-                elif foundit:
-                    return gloss
-                    break
-
+        all_glosses_ordered_pks = list(all_glosses_ordered.values_list('pk', flat=True))
+        try:
+            index_of_this_gloss = all_glosses_ordered_pks.index(self.pk)
+        except:
+            return None
+        if len(all_glosses_ordered_pks) - 1 > index_of_this_gloss:
+            next_gloss = all_glosses_ordered_pks[all_glosses_ordered_pks.index(self.pk) + 1]
+            return Gloss.objects.get(pk=next_gloss)
         else:
             return None
  
@@ -876,8 +889,9 @@ class Gloss(models.Model):
                     non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
                 else:
                     non_empty_phonology = non_empty_phonology + [(field, str(label), str('False'))]
+
             else:
-                # value is Neutral
+                # value is Neutral or Null
                 empty_phonology = empty_phonology + [(field, str(label))]
 
         return (empty_phonology, non_empty_phonology)
@@ -1107,6 +1121,8 @@ class Gloss(models.Model):
 
         (ep, nep) = self.empty_non_empty_phonology()
 
+        phonology_for_this_gloss = self.phonology_matrix()
+
         # only consider minimal pairs if this gloss has more fields defined than handedness and strong hand
         if (len(nep) < 2):
             return minimal_pairs_fields
@@ -1114,18 +1130,16 @@ class Gloss(models.Model):
         wmp = self.minimal_pairs_objects()
 
         for o in wmp:
-            # ignore if dataset is different or handedness is different
-            if (self.dataset != o.dataset or self.handedness != o.handedness):
-                continue
-            # print('wmp o: ', o)
             different_fields = dict()
             onep = o.non_empty_phonology()
+            phonology_for_other_gloss = o.phonology_matrix()
             self_domhndsh = getattr(self,'domhndsh')
             other_domhndsh = getattr(o,'domhndsh')
             for f,n,v in onep:
                 fc = fieldname_to_category(f)
-                self_value_f = getattr(self,f)
-                other_value_f = getattr(o,f)
+                # use the phonology matrix to account for Neutral values
+                self_value_f = phonology_for_this_gloss.get(f)
+                other_value_f = phonology_for_other_gloss.get(f)
                 if self_value_f != other_value_f:
                     if (f == 'domhndsh_letter' or f == 'domhndsh_number'):
                         if self_domhndsh == other_domhndsh:
@@ -1138,17 +1152,12 @@ class Gloss(models.Model):
 
             different_fields_keys = different_fields.keys()
 
-            # if 'domhndsh' in different_fields_keys:
-            #     if 'domhndsh_letter' in different_fields_keys or 'domhndsh_number' in different_fields_keys:
-            #     # skip the candidate if handshape and number or letter are both different
-            #         print('skip object ', str(o.id))
-            #         continue
-
-            if (len(list(different_fields.keys())) == 0):
+            if (len(list(different_fields_keys)) == 0):
                 for sf,sn,sv in nep:
                     sfc = fieldname_to_category(sf)
-                    self_value_sf = getattr(self, sf)
-                    other_value_sf = getattr(o,sf)
+                    # need to look these up in nep
+                    self_value_sf = phonology_for_this_gloss.get(sf)
+                    other_value_sf = phonology_for_other_gloss.get(sf)
                     if other_value_sf != self_value_sf:
                         # the value of other_value_sf was '0' because it assumed it was empty since not in onep,
                         # but if it is the field 'altern' or 'repeat' and it's false, then it is False, not '0'
@@ -1161,9 +1170,7 @@ class Gloss(models.Model):
                         else:
                             different_fields[sf] = (sn, sfc, self_value_sf, other_value_sf, fieldname_to_kind(sf))
 
-
             if (len(list(different_fields.keys())) != 1):
-                # print('more than one different keys for gloss ', str(o.id), ': ', different_fields)
                 # if too many differing fields were found, skip this gloss
                 continue
             else:
@@ -1173,13 +1180,10 @@ class Gloss(models.Model):
 
     # Homonyms
     # these are now defined in settings
-    # 19 total phonology fields
     # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
     # add fields: 'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop'
-    # 20
-    def homonym_objects(self):
 
-        paren = ')'
+    def homonym_objects(self):
 
         homonym_objects_list = []
 
@@ -1205,44 +1209,43 @@ class Gloss(models.Model):
 
             return homonym_objects_list
 
-        where_homonyms_filled = ''
-        where_homonyms_empty = ''
+        q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
-        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
+        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter',
+                                                      'subhndsh_number', 'weakdrop', 'weakprop']:
+
             value_of_this_field = str(phonology_for_gloss.get(field))
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == 'None' or value_of_this_field == 'False'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += " + (" + field + " IS NOT NULL AND " \
-                                                 + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
-                else:
-                    where_homonyms_empty += "(" + field + " IS NOT NULL AND " \
-                                                 + field + "!=0 AND " + field + "!='-' AND " + field + "!='' AND " + field + "!=' ')"
+            if (value_of_this_field == 'False' and field in ['weakdrop', 'weakprop']):
+                # fields weakdrop and weakprop use 3-valued logic, False only matches False, not Null
+                comparison1 = field + '__exact'
+                q.add(Q(**{ comparison1 : False }),q.AND)
+            elif (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == ''
+                                                            or value_of_this_field == 'None' or value_of_this_field == 'False'):
+                comparison1 = field + '__isnull'
+                comparison2 = field + '__exact'
+                comparison3 = field + '__exact'
+                q_or = Q(**{ comparison1 : True })
+                q_or |= Q(**{ comparison2 : '0' })
+                q_or |= Q(**{ comparison3 : False })
+                q.add(q_or,q.AND)
             elif (value_of_this_field == 'Neutral'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += ' + (' + field + ' IS NOT NULL)'
-                else:
-                    where_homonyms_empty += '(' + field + ' IS NOT NULL)'
+                # Can only match Null, not True or False
+                comparison = field + '__isnull'
+                q.add(Q(**{ comparison : True }),q.AND)
             elif (value_of_this_field == 'True'):
-                if (where_homonyms_filled.endswith(paren)):
-                    where_homonyms_filled += ' + (' + field + '=0)'
-                else:
-                    where_homonyms_filled += '(' + field + '=0)'
+                comparison = field + '__exact'
+                q.add(Q(**{ comparison : True }),q.AND)
             else:
-                if (where_homonyms_filled.endswith(paren)):
-                    where_homonyms_filled += ' + (' + field + '!=' + value_of_this_field + ')'
-                else:
-                    where_homonyms_filled += '(' + field + '!=' + value_of_this_field + ')'
+                comparison = field + '__exact'
+                q.add(Q(**{ comparison : value_of_this_field }),q.AND)
 
-        where_homonyms = '(' + where_homonyms_filled +  ' + ' + where_homonyms_empty + ')=0'
-
-        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss ' +
-                               'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' +
-                               'WHERE dictionary_gloss.id != %s AND dictionary_lemmaidgloss.dataset_id = %s AND ' + where_homonyms, [self.id, str(self.lemma.dataset.id)])
+        qs = Gloss.objects.select_related('lemma').exclude(id=self.id).filter(q)
 
         for o in qs:
             homonym_objects_list.append(o)
-
+        #
         return homonym_objects_list
+        # return qs
 
 
     def homonyms(self):
@@ -1281,43 +1284,7 @@ class Gloss(models.Model):
         if (self.domhndsh == None or self.domhndsh == '-' or self.domhndsh == '0'):
             return ([], [], [])
 
-
-        where_homonyms_filled = ''
-        where_homonyms_empty = ''
-
-        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop']:
-            value_of_this_field = str(phonology_for_gloss.get(field))
-            if (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == '' or value_of_this_field == 'None' or value_of_this_field == 'False'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += " + (" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
-                else:
-                    where_homonyms_empty += "(" + field + " IS NULL OR " + field + "=0 OR " + field + "='-' OR " + field + "='' OR " + field + "=' ')"
-            elif (value_of_this_field == 'Neutral'):
-                if (where_homonyms_empty.endswith(paren)):
-                    where_homonyms_empty += ' + (' + field + ' IS NULL)'
-                else:
-                    where_homonyms_empty += '(' + field + ' IS NULL)'
-            elif (value_of_this_field == 'True'):
-                if (where_homonyms_filled.endswith(paren)):
-                    where_homonyms_filled += ' + (' + field + '=1)'
-                else:
-                    where_homonyms_filled += '(' + field + '=1)'
-            else:
-                if (where_homonyms_filled.endswith(paren)):
-                    where_homonyms_filled += ' + (' + field + '=' + value_of_this_field + ')'
-                else:
-                    where_homonyms_filled += '(' + field + '=' + value_of_this_field + ')'
-
-        where_homonyms = '(' + where_homonyms_filled + ' + ' + where_homonyms_empty + ')=20' #+ str(settings.MINIMAL_PAIRS_COUNT)
-
-        qs = Gloss.objects.raw('SELECT * FROM dictionary_gloss ' +
-                               'INNER JOIN dictionary_lemmaidgloss ON (dictionary_gloss.lemma_id = dictionary_lemmaidgloss.id) ' +
-                               'WHERE dictionary_gloss.id != %s AND dictionary_lemmaidgloss.dataset_id = %s AND ' + where_homonyms, [self.id, str(self.lemma.dataset.id)])
-        match_glosses = [g for g in qs]
-
-        for other_gloss in match_glosses:
-            if other_gloss != self and other_gloss.dataset == self.dataset:
-                    homonyms_of_this_gloss += [other_gloss]
+        homonyms_of_this_gloss = [ g for g in self.homonym_objects() ]
 
         homonyms_not_saved = []
         saved_but_not_homonyms = []
@@ -1399,7 +1366,38 @@ class Gloss(models.Model):
     def has_video(self):
         """Test to see if the video for this sign is present"""
         
-        return self.get_video() != None
+        return self.get_video() not in ['',None]
+
+    def rename_video(self, old_video_path, new_video_path):
+        """
+        Renames the video files for this gloss.
+        :param old_video_path: 
+        :param new_video_path: 
+        :return: 
+        """
+        new_dir = os.path.dirname(new_video_path)
+        if not os.path.isdir(new_dir):
+            os.mkdir(new_dir)
+        shutil.move(old_video_path, new_video_path)
+
+        # _small video file
+        old_video_file, extension = os.path.splitext(old_video_path)
+        old_video_path_small = old_video_file + '_small' + extension
+        print(old_video_path_small)
+        if os.path.exists(old_video_path_small):
+            new_video_file, extension = os.path.splitext(new_video_path)
+            new_video_path_small = new_video_file + '_small' + extension
+            print(new_video_path_small)
+            shutil.move(old_video_path_small, new_video_path_small)
+
+        # backups
+        backup_index = 1
+        old_backup = old_video_path + '_' + str(backup_index)
+        while os.path.exists(old_backup):
+            new_backup = new_video_path + '_' + str(backup_index)
+            shutil.move(old_backup, new_backup)
+            backup_index += 1
+            old_backup = old_video_path + '_' + str(backup_index)
 
     def published_definitions(self):
         """Return a query set of just the published definitions for this gloss
@@ -1549,6 +1547,28 @@ def generate_fieldname_to_kind_table():
 
 fieldname_to_kind_table = generate_fieldname_to_kind_table()
 
+def generate_choice_list_table():
+
+    temp_choice_list_table = dict()
+    for f in Gloss._meta.fields:
+        if f.choices:
+            temp_choice_list_table[f.name] = f.choices
+    for h in Handshape._meta.fields:
+        if h.choices:
+            if h not in temp_choice_list_table.keys():
+                temp_choice_list_table[h.name] = h.choices
+            else:
+                print('generate fieldname to kind table found identical field in Handshape and Gloss: ', h.name)
+    for k in Definition._meta.fields:
+        if k not in temp_choice_list_table.keys():
+            temp_choice_list_table[k.name] = k.choices
+        else:
+            print('generate fieldname to kind table found identical field in Handshape or Gloss and Definition: ', k.name)
+    return temp_choice_list_table
+
+choice_list_table = generate_choice_list_table()
+
+
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
 def save_info_about_deleted_gloss(sender,instance,using,**kwarsg):
     from signbank.tools import get_default_annotationidglosstranslation
@@ -1658,6 +1678,61 @@ def fieldname_to_kind(fieldname):
         field_kind = fieldname
 
     return field_kind
+
+def generate_translated_choice_list_table():
+    codes_to_adjectives = dict(settings.LANGUAGES)
+
+    temp_translated_choice_lists_table = dict()
+    for f in Gloss._meta.fields:
+        # print('inside first for loop')
+        if f.choices:
+            # print('inside if, field ', f.name)
+    #         # if there are choices for the field, get the human values from the FieldChoice table
+            f_category = fieldname_to_category(f.name)
+
+            if f_category == 'Handshape':
+                choice_list = Handshape.objects.all()
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=f_category)
+
+            # print('after getting choice_list: ', choice_list)
+            field_translated_choice_list = dict()
+
+            # add choices for 0 and 1
+            human_value_0 = '-'
+            translations_for_choice_0 = dict()
+            for (l_name, l_adjective) in codes_to_adjectives.items():
+                translations_for_choice_0[l_name] = human_value_0
+            field_translated_choice_list[0] = translations_for_choice_0
+            human_value_1 = 'N/A'
+            translations_for_choice_1 = dict()
+            for (l_name, l_adjective) in codes_to_adjectives.items():
+                translations_for_choice_1[l_name] = human_value_1
+            field_translated_choice_list[1] = translations_for_choice_1
+
+            if len(choice_list) > 0:
+                # print('choices found')
+                for c in choice_list:
+                    # c is either a Handshape or a FieldChoice object, get the translations from it
+                    # print('choice is: ', c.english_name)
+                    choices_machine_value = getattr(c, 'machine_value')
+                    translations_for_choice = dict()
+                    for (l_name, l_adjective) in codes_to_adjectives.items():
+                        adjective = l_adjective.lower()
+                        try:
+                            human_value = getattr(c, adjective + '_name')
+                        except AttributeError:
+                            # in case the language name is empty for the field choice
+                            human_value = getattr(c, 'english_name')
+                        translations_for_choice[l_name] = human_value
+                    field_translated_choice_list[choices_machine_value] = translations_for_choice
+    #
+                temp_translated_choice_lists_table[f.name] = field_translated_choice_list
+    # print('generated translated choice list table: ', temp_translated_choice_lists_table)
+
+    return temp_translated_choice_lists_table
+
+translated_choice_lists_table = generate_translated_choice_list_table()
 
 class Relation(models.Model):
     """A relation between two glosses"""
@@ -1794,6 +1869,8 @@ class Dataset(models.Model):
     acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
+    exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices")
+
     class Meta:
         permissions = (
             ('view_dataset', _('View dataset')),
@@ -1802,9 +1879,29 @@ class Dataset(models.Model):
     def __str__(self):
         return self.name
 
+    def generate_short_name(self):
+
+        CHARACTER_THRESHOLD = 15
+
+        if len(self.name) <= CHARACTER_THRESHOLD:
+            return self.name
+        else:
+
+            #Cut off last word
+            if len(self.name.split()) > 1:
+                result = ' '.join(self.name.split()[:-1])
+
+                if len(result) <= CHARACTER_THRESHOLD:
+                    return result
+            else:
+                result = self.name
+
+            return result[:CHARACTER_THRESHOLD]
+
+
     def count_glosses(self):
 
-        count_glosses = LemmaIdgloss.objects.filter(dataset_id=self.id).count()
+        count_glosses = Gloss.objects.filter(lemma__dataset_id=self.id).count()
 
         return count_glosses
 

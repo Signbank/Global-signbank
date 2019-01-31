@@ -62,6 +62,9 @@ urlpatterns = [
     url(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),
     url(r'^ajax/handshapesearchresults/$', signbank.dictionary.adminviews.handshape_ajax_search_results, name='handshape_ajax_search_results'),
     url(r'^ajax/lemma/(?P<dataset_id>.*)/(?P<q>.*)$', signbank.dictionary.adminviews.lemma_ajax_complete, name='lemma_complete'),
+    url(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete, name='homonyms_ajax_complete'),
+    url(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete, name='minimalpairs_ajax_complete'),
+    url(r'^ajax/choice_lists/$', signbank.dictionary.views.choice_lists,name='choice_lists'),
 
     url(r'^missingvideo.html$', signbank.dictionary.views.missing_video_view),
 

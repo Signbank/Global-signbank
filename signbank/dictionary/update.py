@@ -144,7 +144,6 @@ def update_gloss(request, glossid):
         if len(value) == 0:
             # this seems a bit dangerous
             value = ' '
-            # print('value was set to space')
 
         elif value[0] == '_':
             value = value[1:]
@@ -306,8 +305,13 @@ def update_gloss(request, glossid):
                 dataset = gloss.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
                 if dataset == lemma.dataset:
+                    old_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
                     gloss.lemma = lemma
                     gloss.save()
+                    new_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
+
+                    # Rename video
+                    gloss.rename_video(old_video_path, new_video_path)
                 else:
                     messages.add_message(messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
             except ObjectDoesNotExist:
@@ -361,15 +365,13 @@ def update_gloss(request, glossid):
                     value = (value.lower() in [_('Yes').lower(),'true',True,1])
 
             # special value of 'notset' or -1 means remove the value
-            if value == 'notset' or value == -1 or value == '':
-                # print('field ', field, ' is being set to None.')
+            if (value == 'notset' or value == -1 or value == '') and field not in ['phonetVar', 'mouthG', 'mouthing', 'phonOth']:
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
 
             #Regular field updating
             else:
-
                 #Remember the old video path if you're changing the name
                 if field == 'idgloss':
                     old_video_path = gloss.get_video_path()
@@ -716,6 +718,50 @@ def update_blend_morphology(gloss, field, values):
     newvalue = blend_morphemes
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+
+def subst_notes(gloss, field, values):
+    # this is called by csv_import to modify the notes for a gloss
+
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+    # this is used to speedup matching updates to Notes
+    # it allows the type of note to be in either English or Dutch in the CSV file
+    note_reverse_translation = {}
+    for nrc in note_role_choices:
+        note_reverse_translation[nrc.english_name] = nrc.machine_value
+        note_reverse_translation[nrc.dutch_name] = nrc.machine_value
+
+    for original_note in gloss.definition_set.all():
+        original_note.delete()
+
+    # convert new Notes csv value to proper format
+    # the syntax of the new note values has already been checked at a previous stage of csv import
+    new_notes_values = []
+
+    split_values = re.findall(r'([^\:]+\:[^\)]*\)),?\s?', values)
+
+    for note_value in split_values:
+        take_apart = re.match("([^\:]+)\:\s?\((False|True),(\d),([^\)]*)\)", note_value)
+        if take_apart:
+            (field, name, count, text) = take_apart.groups()
+            new_tuple = (field, name, count, text)
+            new_notes_values.append(new_tuple)
+
+    for (role, published, count, text) in new_notes_values:
+        is_published = (published == 'True')
+        note_role = str(note_reverse_translation[role])
+        index_count = int(count)
+        defn = Definition(gloss=gloss, count=index_count, role=note_role, text=text, published=is_published)
+        defn.save()
+
+    new_notes_refresh = [(note.role, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
+    notes_by_role = []
+    for note in new_notes_refresh:
+        notes_by_role.append(':'.join(note))
+
+    new_gloss_notes = ", ".join(notes_by_role)
+
+    return HttpResponse(str(new_gloss_notes), {'content-type': 'text/plain'})
 
 def subst_foreignrelations(gloss, field, values):
     # expecting possibly multiple values
@@ -1670,8 +1716,13 @@ def update_morpheme(request, morphemeid):
                 dataset = morpheme.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
                 if dataset == lemma.dataset:
+                    old_video_path = settings.MEDIA_ROOT + morpheme.get_video_path()
                     morpheme.lemma = lemma
                     morpheme.save()
+                    new_video_path = settings.MEDIA_ROOT + morpheme.get_video_path()
+
+                    # Rename video
+                    morpheme.rename_video(old_video_path, new_video_path)
                 else:
                     messages.add_message(messages.ERROR, _("The dataset of the morpheme is not the same as that of the lemma."))
             except ObjectDoesNotExist:
@@ -2006,3 +2057,28 @@ def update_owner(dataset, field, values):
         return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
 
     return HttpResponse(str(new_owners_value) + '\t' + str(owners_value), {'content-type': 'text/plain'})
+
+def update_excluded_choices(request):
+
+    #We start with the assumption that everything is excluded
+    excluded_choices = {dataset.name: [field_choice.pk for field_choice in FieldChoice.objects.all()] for dataset in Dataset.objects.all()}
+
+    #And then remove from this list everything which was checked
+    for key in request.POST.keys():
+
+        if key == 'csrfmiddlewaretoken':
+            continue
+
+        dataset, choice_pk = key.split('|')
+        choice_pk = int(choice_pk)
+
+        excluded_choices[dataset].remove(choice_pk)
+
+    #Now update all datasets
+    for dataset_name, choice_pks in excluded_choices.items():
+
+        dataset = Dataset.objects.get(name=dataset_name)
+        dataset.exclude_choices = [FieldChoice.objects.get(pk=choice_pk) for choice_pk in choice_pks]
+        dataset.save()
+
+    return HttpResponseRedirect(reverse('admin_dataset_field_choices'))

@@ -1,0 +1,33 @@
+{% load i18n %}
+{% load bootstrap3 %}
+
+    <tr id = "minimalpairs_{{focus_gloss.id}}">
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td style="width:12em;">{{focus_gloss.lemma.dataset.name}}</td>{% endif %}
+        <td style="width:20em;"><a href='{% url "dictionary:admin_gloss_view" pk=focus_gloss.id %}'>{{focus_gloss_translation}}</a></td>
+        <td colspan="4">
+        <table id = "gloss_mp_rows_{{focus_gloss.id}}" style="table-layout:fixed;width:100%;">
+        {% for mp in minimal_pairs_dict %}
+            <tr id = "cell_{{focus_gloss.id}}_{{mp.other_gloss.id}}" >
+        <td><a href='{% url "dictionary:admin_gloss_view" pk=mp.id %}'>{{mp.other_gloss_idgloss}}</a></td>
+        <td style="width:auto;">{{mp.field_display}}</td>
+
+        {% with mp.focus_gloss_value as focus_gloss_value %}
+        {% if focus_gloss_value|slice:"0:6" == "ERROR_" %}
+            <td style="color:red">{{focus_gloss_value|slice:"6:"}}</td>
+        {% else %}
+            <td>{{focus_gloss_value}}</td>
+        {% endif %}
+        {% endwith %}
+
+                {% with mp.other_gloss_value as other_gloss_value %}
+                {% if other_gloss_value|slice:"0:6" == "ERROR_" %}
+                    <td style="color:red">{{other_gloss_value|slice:"6:"}}</td>
+                {% else %}
+                    <td>{{other_gloss_value}}</td>
+                {% endif %}
+                {% endwith %}
+            </tr>
+        {% endfor %}
+        </table>
+        </td>
+    </tr>

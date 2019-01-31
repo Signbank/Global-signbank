@@ -1,0 +1,33 @@
+{% load i18n %}
+{% load bootstrap3 %}
+
+<table id = "gloss_mp_rows_{{focus_gloss.id}}" style="table-layout:fixed;width:100%;">
+    <tr>
+       <th style="width:auto; padding:0px 0px;">{% trans "ID Gloss" %}</th>
+       <th style="width:auto; padding:0px 0px;">{% trans "Field name" %}</th>
+       <th style="width:auto; padding:0px 0px;">{% trans "Source Sign Value" %}</th>
+       <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
+    </tr>
+{% for mp in minimal_pairs_dict %}
+    <tr id = "cell_{{focus_gloss.id}}_{{mp.other_gloss.id}}" >
+<td><a href='{% url "dictionary:admin_gloss_view" pk=mp.id %}'>{{mp.other_gloss_idgloss}}</a></td>
+<td style="width:auto;">{{mp.field_display}}</td>
+
+{% with mp.focus_gloss_value as focus_gloss_value %}
+{% if focus_gloss_value|slice:"0:6" == "ERROR_" %}
+    <td style="color:red">{{focus_gloss_value|slice:"6:"}}</td>
+{% else %}
+    <td>{{focus_gloss_value}}</td>
+{% endif %}
+{% endwith %}
+
+        {% with mp.other_gloss_value as other_gloss_value %}
+        {% if other_gloss_value|slice:"0:6" == "ERROR_" %}
+            <td style="color:red">{{other_gloss_value|slice:"6:"}}</td>
+        {% else %}
+            <td>{{other_gloss_value}}</td>
+        {% endif %}
+        {% endwith %}
+    </tr>
+{% endfor %}
+</table>

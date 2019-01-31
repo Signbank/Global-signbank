@@ -106,112 +106,134 @@
 });
 
 
-// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
-function clearForm(myFormElement) {
+        // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
+        function clearForm(myFormElement) {
 
-  var elements = myFormElement.elements;
+          var elements = myFormElement.elements;
 
-  myFormElement.reset();
+          myFormElement.reset();
 
-  for(i=0; i<elements.length; i++) {
+          for(i=0; i<elements.length; i++) {
 
-      field_type = elements[i].type.toLowerCase();
+              field_type = elements[i].type.toLowerCase();
 
-      switch(field_type) {
+              switch(field_type) {
 
-        case "text":
-        case "password":
-        case "textarea":
-        case "hidden":
+                case "text":
+                case "password":
+                case "textarea":
+                case "hidden":
 
-          elements[i].value = "";
-          break;
+                  elements[i].value = "";
+                  break;
 
-        case "radio":
-        case "checkbox":
-          if (elements[i].checked) {
-              elements[i].checked = false;
+                case "radio":
+                case "checkbox":
+                  if (elements[i].checked) {
+                      elements[i].checked = false;
+                  }
+                  break;
+
+                case "select-one":
+                case "select-multiple":
+                  elements[i].selectedIndex = -1;
+                  break;
+
+                default:
+                  break;
+              }
+            }
+            return(false);
+        }
+
+        /**
+         * @param {string} field_name - name of the field to sort on
+         * @param {string} action     - one of: desc, asc, del
+         * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
+         * @returns {void}
+         */
+        function do_sort_column(field_name, action, frmName) {
+          // Combine @field_name and @action into [sOrder]
+          var sOrder = field_name;
+          if (action == 'desc') {
+            // Descending sort order is signified by a '-' prefix
+            sOrder = '-' + sOrder;
+          } else if (action == 'del') {
+            // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
+            sOrder = '';
           }
-          break;
 
-        case "select-one":
-        case "select-multiple":
-          elements[i].selectedIndex = -1;
-          break;
+          // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
+          $("#" + frmName + " input[name='sortOrder']").val(sOrder);
 
-        default:
-          break;
-      }
-    }
-    return(false);
-}
+          // Submit the form with the indicated name
+          $("#" + frmName).submit();
+        }
 
-/**
- * @param {string} field_name - name of the field to sort on
- * @param {string} action     - one of: desc, asc, del
- * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
- * @returns {void}
- */
-function do_sort_column(field_name, action, frmName) {
-  // Combine @field_name and @action into [sOrder]
-  var sOrder = field_name;
-  if (action == 'desc') {
-    // Descending sort order is signified by a '-' prefix
-    sOrder = '-' + sOrder;
-  } else if (action == 'del') {
-    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
-    sOrder = 'idgloss';
-  }
+        /**
+         * @returns {void}
+         */
+        function do_adminsearch(el) {
+         var sSearchType = $(el).attr('value');
+          $("#adminsearch input[name='search_type']").val(sSearchType);
+          switch(sSearchType) {
+            case "morpheme":
+                $("#adminsearch").attr('action', '{{PREFIX_URL}}/morphemes/search/');
+                break;
+            case "sign":
+                $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
+                break;
+            case "sign_or_morpheme":
+                $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
+                break;
+          }
+          document.getElementById('adminsearch').submit();
+        }
 
-  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
-  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
+        /**
+         * toggle between normal list view and lemma group list view
+         */
+        function do_toggle_groups(el) {
+          var sViewType = $(el).attr('value');
+          $("#toggle_groups input[name='view_type']").val(sViewType);
+          console.log('switch');
+          console.log(sViewType);
+          switch(sViewType) {
+            case "lemma_groups":
+                $(el).val('gloss_list');
+                console.log('change to gloss list');
+                $(el).html("Gloss View");
+                break;
+            case "gloss_list":
+                $(el).val('lemma_groups');
+                console.log('change to lemma groups');
+                $(el).html("Lemma View");
+                break;
+          }
+          document.getElementById('adminsearch').submit();
+        }
 
-  // Submit the form with the indicated name
-  $("#" + frmName).submit();
-}
+        $(document).ready(function()
+        {
+            $('.hover-shows-video').find('video').hide();
 
-/**
- * @returns {void}
- */
-function do_adminsearch(el) {
- var sSearchType = $(el).attr('value');
-  $("#adminsearch input[name='search_type']").val(sSearchType);
-  switch(sSearchType) {
-    case "morpheme":
-        $("#adminsearch").attr('action', '{{PREFIX_URL}}/morphemes/search/');
-        break;
-    case "sign":
-        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
-        break;
-    case "sign_or_morpheme":
-        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
-        break;
-  }
-  document.getElementById('adminsearch').submit();
-}
+            $('.hover-shows-video').mouseenter(function ()
+            {
+                $(this).find('img').hide();
+                $(this).find('video').show();
+                $(this).find('video').get(0).play();
+            });
 
-/**
- * toggle between normal list view and lemma group list view
- */
-function do_toggle_groups(el) {
-  var sViewType = $(el).attr('value');
-  $("#toggle_groups input[name='view_type']").val(sViewType);
-  console.log('switch');
-  console.log(sViewType);
-  switch(sViewType) {
-    case "lemma_groups":
-        $(el).val('gloss_list');
-        console.log('change to gloss list');
-        $(el).html("Gloss View");
-        break;
-    case "gloss_list":
-        $(el).val('lemma_groups');
-        console.log('change to lemma groups');
-        $(el).html("Lemma View");
-        break;
-  }
-  document.getElementById('adminsearch').submit();
-}
+            $('.hover-shows-video').mouseleave(function ()
+            {
+                $(this).find('img').show();
+                $(this).find('video').hide();
+
+                $(this).find('video').get(0).pause();
+                $(this).find('video').get(0).currentTime = 0;
+            });
+        });
+
 </script>
 
 <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
@@ -712,7 +734,9 @@ function do_toggle_groups(el) {
           <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
 
-          <th>{% trans "Lemma ID gloss" %}</th>
+          {% for dataset_lang in dataset_languages %}
+          <th>{% trans "Lemma ID gloss" %} ({{ dataset_lang.name }})</th>
+          {% endfor %}
 
            <th>{% trans "Translation equivalents" %}</th>
            <th>{% trans "Handedness" %}</th>
@@ -743,7 +767,25 @@ function do_toggle_groups(el) {
            {% endwith %}
           {% endfor %}
 
-           {% with "lemma__lemmaidglosstranslation__text translation handedness domhndsh subhndsh locprim" as head_fields %}
+          {% for dataset_lang in dataset_languages %}
+          {% with "lemmaidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
+          {% with minfield="-"|add:field %}
+           <th>
+             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+             </a>
+             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+             </a>
+             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
+               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
+             {% endif %}
+           </th>
+           {% endwith %}
+           {% endwith %}
+          {% endfor %}
+
+           {% with "translation handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% with minfield="-"|add:field %}
            <th>
@@ -777,8 +819,22 @@ function do_toggle_groups(el) {
             {% endif %}
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
-      <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
-          <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
+      <td>{%if gloss.get_image_path != None %}
+
+          <div class="thumbnail_container">
+          <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
+
+            <div {% if page_obj.paginator.count < DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES %} class="hover-shows-video" {% endif%} >
+                <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}">
+
+              {% if page_obj.paginator.count < DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES %}
+                <video id="videoplayer" class="thumbnail-video" src="{{protected_media_url}}{{gloss.get_video_path}}"  type="video/mp4" muted="muted"></video>
+              {% endif %}
+
+            </div>
+
+          </a>{% endif %}
+          </div>
       </td>
 
       {% for dataset_lang in dataset_languages %}
@@ -815,13 +871,13 @@ function do_toggle_groups(el) {
         {% endwith %}
       {% endfor %}
 
+      {% for dataset_lang in dataset_languages %}
+        {% with gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
       <td>
-          {% if request.search_type == "sign_or_morpheme" and gloss.is_morpheme %}
-          <div class="morpheme_gloss">{{gloss.lemma}}</div>
-          {% else %}
-          <div>{{gloss.lemma}}</div>
-          {% endif %}
+          <div>{{ lemmaidglosstranslation }}</div>
       </td>
+        {% endwith %}
+      {% endfor %}
 
       <td>
       {% for translation in gloss.translation_set.all %}
@@ -835,75 +891,57 @@ function do_toggle_groups(el) {
       </td>
 
             {% load field_choice %}
+            {% with request.LANGUAGE_CODE as language %}
 
-            {% if request.LANGUAGE_CODE == 'nl' %}
-                <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
+            {% with generate_translated_choice_list_table|get_item:'handedness' as choices_for_handedness %}
+            {% with gloss.handedness|to_int as handedness_value %}
+            {% with choices_for_handedness|keyvalue:handedness_value as translates_for_handedness %}
+            {% with translates_for_handedness|get_item:language as translated_handedness %}
+                <td>{{ translated_handedness }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
 
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-
-                {% with gloss.domhndsh|translate_to_dutch:"Handshape" as domhndsh_display %}
-                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
-                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_dutch:"Location" }}</td>
-
-            {% elif request.LANGUAGE_CODE == 'zh-hans' %}
-                <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
-
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-
-                {% with gloss.domhndsh|translate_to_chinese:"Handshape" as domhndsh_display %}
-                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
-                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_chinese:"Location" }}</td>
-
+            {% with generate_translated_choice_list_table|get_item:'domhndsh' as choices_for_domhndsh %}
+            {% with gloss.domhndsh|to_int as domhndsh_value %}
+            {% with choices_for_domhndsh|keyvalue:domhndsh_value as translates_for_domhndsh %}
+            {% with translates_for_domhndsh|get_item:language as translated_domhndsh %}
+            {% if user.is_anonymous or translated_domhndsh == '-' or translated_domhndsh == 'N/A' or translated_domhndsh == '' %}
+                <td>{{ translated_domhndsh }}</td>
             {% else %}
-
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-                <!--The translate_to_english function is needed to avoid None values showing up in display-->
-
-                <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
-
-                {% with gloss.domhndsh|translate_to_english:"Handshape" as domhndsh_display %}
-                    {% if user.is_anonymous or domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
-                    {% if user.is_anonymous or subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_english:"Location" }}</td>
+                <td><a href="{{PREFIX_URL}}/dictionary/handshape/{% if domhndsh_value %}{{domhndsh_value}}{% endif %}/">{{ translated_domhndsh }}</a></td>
             {% endif %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% with generate_translated_choice_list_table|get_item:'subhndsh' as choices_for_subhndsh %}
+            {% with gloss.subhndsh|to_int as subhndsh_value %}
+            {% with choices_for_subhndsh|keyvalue:subhndsh_value as translates_for_subhndsh %}
+            {% with translates_for_subhndsh|get_item:language as translated_subhndsh %}
+            {% if user.is_anonymous or translated_subhndsh == '-' or translated_subhndsh == 'N/A' or translated_subhndsh == '' %}
+                <td>{{ translated_subhndsh }}</td>
+            {% else %}
+                <td><a href="{{PREFIX_URL}}/dictionary/handshape/{% if subhndsh_value %}{{subhndsh_value}}{% endif %}/">{{ translated_subhndsh }}</a></td>
+            {% endif %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% with generate_translated_choice_list_table|get_item:'locprim' as choices_for_locprim %}
+            {% with gloss.locprim|to_int as locprim_value %}
+            {% with choices_for_locprim|keyvalue:locprim_value as translates_for_locprim %}
+            {% with translates_for_locprim|get_item:language as translated_locprim %}
+                <td>{{ translated_locprim }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% endwith %}
 
             {% load underscore_to_space %}
             {% tags_for_object gloss as tag_list %}
@@ -1058,74 +1096,59 @@ function do_toggle_groups(el) {
 
             {% load field_choice %}
 
-            {% if request.LANGUAGE_CODE == 'nl' %}
-                <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
+            {% with request.LANGUAGE_CODE as language %}
 
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
+            {% with generate_translated_choice_list_table|get_item:'handedness' as choices_for_handedness %}
+            {% with gloss.handedness|to_int as handedness_value %}
+            {% with choices_for_handedness|keyvalue:handedness_value as translates_for_handedness %}
+            {% with translates_for_handedness|get_item:language as translated_handedness %}
+                <td>{{ translated_handedness }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
 
-                {% with gloss.domhndsh|translate_to_dutch:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_dutch:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_dutch:"Location" }}</td>
-
-            {% elif request.LANGUAGE_CODE == 'zh-hans' %}
-                <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
-
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-
-                {% with gloss.domhndsh|translate_to_chinese:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_chinese:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_chinese:"Location" }}</td>
-
+            {% with generate_translated_choice_list_table|get_item:'domhndsh' as choices_for_domhndsh %}
+            {% with gloss.domhndsh|to_int as domhndsh_value %}
+            {% with choices_for_domhndsh|keyvalue:domhndsh_value as translates_for_domhndsh %}
+            {% with translates_for_domhndsh|get_item:language as translated_domhndsh %}
+            {% if user.is_anonymous or translated_domhndsh == '-' or translated_domhndsh == 'N/A' or translated_domhndsh == '' %}
+                <td>{{ translated_domhndsh }}</td>
             {% else %}
-
-                <!--Catch empty/undefined Handshape values in order to create hyperlinks-->
-                <!--The translate_to_english function is needed to avoid None values showing up in display-->
-
-                <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
-
-                {% with gloss.domhndsh|translate_to_english:"Handshape" as domhndsh_display %}
-                    {% if domhndsh_display == '-' or domhndsh_display == 'N/A' or domhndsh_display == '' %}
-                        <td>{{ domhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.domhndsh}}/">{{ domhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-                {% with gloss.subhndsh|translate_to_english:"Handshape" as subhndsh_display %}
-                    {% if subhndsh_display == '-' or subhndsh_display == 'N/A' or subhndsh_display == '' %}
-                        <td>{{ subhndsh_display }}</td>
-                    {% else %}
-                        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh}}/">{{ subhndsh_display }}</a></td>
-                    {% endif %}
-                {% endwith %}
-
-                <td>{{ gloss.locprim|translate_to_english:"Location" }}</td>
+                <td><a href="{{PREFIX_URL}}/dictionary/handshape/{% if domhndsh_value %}{{domhndsh_value}}{% endif %}/">{{ translated_domhndsh }}</a></td>
             {% endif %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% with generate_translated_choice_list_table|get_item:'subhndsh' as choices_for_subhndsh %}
+            {% with gloss.subhndsh|to_int as subhndsh_value %}
+            {% with choices_for_subhndsh|keyvalue:subhndsh_value as translates_for_subhndsh %}
+            {% with translates_for_subhndsh|get_item:language as translated_subhndsh %}
+            {% if user.is_anonymous or translated_subhndsh == '-' or translated_subhndsh == 'N/A' or translated_subhndsh == '' %}
+                <td>{{ translated_subhndsh }}</td>
+            {% else %}
+                <td><a href="{{PREFIX_URL}}/dictionary/handshape/{% if subhndsh_value %}{{subhndsh_value}}{% endif %}/">{{ translated_subhndsh }}</a></td>
+            {% endif %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% with generate_translated_choice_list_table|get_item:'locprim' as choices_for_locprim %}
+            {% with gloss.locprim|to_int as locprim_value %}
+            {% with choices_for_locprim|keyvalue:locprim_value as translates_for_locprim %}
+            {% with translates_for_locprim|get_item:language as translated_locprim %}
+                <td>{{ translated_locprim }}</td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+            {% endwith %}
+
+
 
             {% load underscore_to_space %}
             {% tags_for_object gloss as tag_list %}

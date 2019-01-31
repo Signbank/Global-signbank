@@ -1,1 +1,1 @@
-from signbank.settings.server_specific.asl_yale import *
+from signbank.settings.server_specific.server_specific import *

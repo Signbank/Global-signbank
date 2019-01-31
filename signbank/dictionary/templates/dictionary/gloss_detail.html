@@ -50,13 +50,15 @@
     var gloss_dataset_id = {{ gloss.lemma.dataset_id}}
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
-    var choice_lists = {{choice_lists|safe}};
-    console.log(choice_lists);
-    var frequency_lists_phonology_fields = {{frequency_lists_phonology_fields|safe}};
-    console.log(frequency_lists_phonology_fields);
+
+    var choice_lists = [];
+    var generate_translated_choice_list_table = {{generate_translated_choice_list_table|safe}};
+
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id = {{nextglossid}};
     var next_morpheme_id;
+    var this_gloss_id = {{gloss.id}};
+
     // This script gets and inserts the users last searched items on the gloss page
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     var req = $.ajax({
@@ -92,7 +94,7 @@
                 $('#searchresults').scrollLeft(leftOffset);
             }
             var signinfo = $('#signinfo');
-            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height())});
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
         }
     });
     function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
@@ -117,14 +119,41 @@
         video_player.type = "video/mp4";
         video_player.load();
     }
+
+    $('[data-toggle="tooltip"]').tooltip({
+        placement : 'bottom'
+    });
+
+    //Fill choice_lists later
+    $.ajax("/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{gloss.lemma.dataset}}").done( function (data)
+    {
+        choice_lists = $.extend(data,{{other_media_field_choices | safe}});
+        console.log("Added field choices");
+    });
+
     </script>
 
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
-        $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
-        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
+        // This script gets minimal pairs data and displays it as table rows
+        $(document).ready(function() {
+            lookup = "#header_mp_rows";
+            $.ajax({
+                url : url + "/ajax/minimalpairs/" + this_gloss_id + "/",
+                datatype: "json",
+                async: true,
+                data: { 'gloss_detail': true },
+                success : function(result) {
+                    var parsed = $.parseHTML(result);
+                    $(lookup).first().append(result);
+                }
+            });
+        });
+
+        $('#searchresults').css({'top': Math.round($('#signbank-bar').height() + 10)});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
         });
@@ -161,7 +190,7 @@
 
 <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;margin-top:3px;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
     </div>
     {% endif %}
 </div>
@@ -171,7 +200,7 @@
 {% endif %}
 
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0; z-index: 50;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
    
     <div class='btn-group'>
         {% if SIGN_NAVIGATION %}
@@ -243,7 +272,7 @@
         </div>
         {% endif %}
 
-<div id="definitionblock">
+<div id="definitionblock" style="z-index:0;">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
     <div id="videocontainer">
@@ -252,7 +281,7 @@
      <!-- {{ gloss.get_video }} -->
 
         <div id="player">
-          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video}}" controls type="video/mp4"></video>
+          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video}}" controls type="video/mp4" autoplay muted></video>
         </div>
         <div id="replay"></div>
 
@@ -282,9 +311,7 @@
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Video" %}</legend>
-            {% with gloss.count_videos as gloss_video_count %}
-            <p>{% blocktrans %} We have {{gloss_video_count}} videos for this sign. {% endblocktrans %}</p>
-            {% endwith %}
+
             <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
@@ -815,8 +842,22 @@
                     <tr value="{{value}}">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}'>
+                            {% with generate_translated_choice_list_table|get_item:name as choices_for_field %}
+                            {% with gloss.domhndsh|to_int as domhndsh_value %}
+                            {% with choices_for_field|keyvalue:domhndsh_value as translates_for_field %}
+                            {% if translates_for_field %}
+                            {% with request.LANGUAGE_CODE as language %}
+                            {% with translates_for_field|get_item:language as translated_field %}
                             <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
-                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{value}}</a>
+                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{ translated_field }}</a>
+                            {% endwith %}
+                            {% endwith %}
+                            {% else %}
+                            <span style="color:red">{{domhndsh_value}}</span>
+                            {% endif %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
@@ -925,7 +966,7 @@
             </div>
         </div>
         <div id='minimalpairs' class='panel-collapse collapse'>
-            <table class='table table-condensed'>
+            <table class='table table-condensed' id = "header_mp_rows">
 
             {% if minimalpairs %}
                <tr>
@@ -934,37 +975,6 @@
                    <th style="width:auto; padding:0px 0px;">{% trans "Source Sign Value" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
                 </tr>
-                {% load field_choice %}
-                {% for gl, dict, minpar_display in minimalpairs %}
-                <tr>
-                {% for k, d in dict.items %}
-                    {% with d.0 as field_name %}
-                    {% with d.1|add:" " as field_category %}
-                    {% with d.2|stringformat:"s" as field_value %}
-                    {% with d.3|stringformat:"s" as other_field_value %}
-                    {% with request.LANGUAGE_CODE as language %}
-                    {% with field_category|add:language as args %}
-                    <td style="width:auto; padding:0px 0px;"><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ minpar_display }}</a></td>
-                    <td style="width:auto; padding:0px 0px;">{% trans d.0 %}</td>
-                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and field_value == "True" %}{% trans "Yes" %}
-                        {% elif d.4 == "check" and field_value == "False" %}{% trans "No" %}
-                        {% elif d.4 == "check" and k == "weakprop" %}{% trans "Neutral" %}
-                        {% elif d.4 == "check" and k == "weakdrop" %}{% trans "Neutral" %}
-                        {% else %}{{ field_value|machine_field_translate:args }}{% endif %}</td>
-                    <td style="width:auto; padding:0px 0px;">{% if d.4 == "check" and other_field_value == "True" %}{% trans "Yes" %}
-                        {% elif d.4 == "check" and other_field_value == "False" %}{% trans "No" %}
-                        {% elif d.4 == "check" and k == "weakprop" %}{% trans "Neutral" %}
-                        {% elif d.4 == "check" and k == "weakdrop" %}{% trans "Neutral" %}
-                        {% else %}{{ other_field_value|machine_field_translate:args }}{% endif %}</td>
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
-                {% endfor %}
-                </tr>
-                {% endfor %}
             {% endif %}
             </table>
         </div>
@@ -984,9 +994,15 @@
         </div>
         <div id='semantics' class='panel-collapse collapse'>
             <table class='table table-condensed'>
-		{% for value,name,label,kind in semantics_fields %}
-		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
-		{% endfor %}
+		    {% for value,name,label,kind in semantics_fields %}
+	              <tr><th>
+                    {% if name == 'concConcSet' %}
+                        <a target="_blank" href="http://concepticon.clld.org">{{label}}</a>
+                    {% else %}
+                        {{label}}
+                    {% endif %}
+                 </th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
+            {% endfor %}
             
             </table>
         </div>

@@ -30,7 +30,7 @@
 
 
 {% block content %}
-<h3>{% trans "Import CSV" %}</h3>
+<h3>{% trans "Import CSV Create" %}</h3>
 
 {% if stage == 0 %}
 
@@ -43,16 +43,8 @@
                 <div class="col-sm-1">
                     <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom"
                           data-html="true"
-                          title="<em>Option 1</em>:
-                          CSV files should have min. two columns,
-                          the first being the ID number of the sign (obtained through CSV export),
-                          the second column the value that needs to be put in the field. Make sure the header row is cf. the CSV export,
-                          indicating the fields you want to make changes to.
-                          In case of adding new values to comma-separated fields like Translation Equivalents,
-                          make sure that the old values that should stay are also in the second column.<br>
-                          <em>Option 2</em>:
-                          To import new glosses, CSV files should omit the ID number column, but include the field columns:
-                          ID Gloss, Annotation ID Gloss, and Annotation ID Gloss English."></span>
+                          title="To import new glosses, CSV files should omit the ID number column, but include the field columns:
+                          Dataset, Lemma ID Gloss, and Annotation ID Gloss for the translation languages of the dataset. Only one dataset can be modified."></span>
                 </div>
                 <div class="col-sm-10">
                     <input type="file" required="" name="file" class="filestyle" data-icon="false" data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
@@ -63,8 +55,6 @@
             </div>
         </div>
     </form>
-
-<div>{% blocktrans %}To speed up processing of updates, remove columns that will not be updated.{% endblocktrans %}</div>
 
 {% elif stage == 1 %}
 
@@ -81,46 +71,7 @@
 
         {% else %}
 
-            {% if changes %}
-            <div>{% blocktrans %}The following changes were detected:{% endblocktrans %}</div>
-        <br>
-        <table class="table table-striped">
-            <tr>
-                <th style="width:10em; text-align:left;">{% trans "Dataset" %}</th>
-                <th style="width:25em; text-align:left;">{% trans "Annotation ID Gloss" %} ({% trans "Signbank ID" %})</th>
-                <th style="width:20em; text-align:left;">{% trans "Field" %}</th>
-                <th style="width:30em; text-align:left;">{% trans "Old" %}</th>
-                <th style="width:40em; text-align:left;">{% trans "New" %}</th>
-            </tr>
-            {% for change in changes %}
-            <!--The following check is necessary to account for None and False values, which are not empty -->
-                {% if change.original_human_value == change.original_machine_value and change.new_human_value == change.new_machine_value %}
-                    {% if change.original_human_value %}
-                    {% blocktrans with dataset=change.dataset pk=change.pk annotationidglosstranslation=change.annotationidglosstranslation human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
-            <tr><td>{{ dataset }}</td><td>{{ annotationidglosstranslation }} ({{pk}})</td><td><em>{{ human_key }}</em></td>
-                <td>{{ original_human_value }}</td><td>{{new_human_value}}</td></tr>
-                    {% endblocktrans %}
-                    {% else %}
-                    {% blocktrans with dataset=change.dataset pk=change.pk annotationidglosstranslation=change.annotationidglosstranslation human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
-
-            <tr><td>{{ dataset }}</td><td>{{ annotationidglosstranslation }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>&nbsp;</td><td>{{new_human_value}}</td></tr>
-                    {% endblocktrans %}
-                    {% endif %}
-                {% else %}
-                    {% blocktrans with dataset=change.dataset pk=change.pk annotationidglosstranslation=change.annotationidglosstranslation human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
-
-            <tr><td>{{ dataset }}</td><td>{{ annotationidglosstranslation }} ({{pk}})</td><td><em>{{ human_key }}</em></td><td>{{ original_human_value }}</td>
-                                <td>{{new_human_value}}</td></tr>
-                    {% endblocktrans %}
-                {% endif %}
-            <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
-            <input type="hidden" name="update_or_create" value="update">
-            {% endfor %}
-        </table>
-
-            <input type="submit" value="{% blocktrans %}Make changes{% endblocktrans %}" />
-
-            {% elif creation or gloss_already_exists %}
+            {% if creation or gloss_already_exists %}
                 {% if gloss_already_exists %}
                 {% trans "Already existing Annotation ID Glosses:" %}
                 <table class="table table-striped">
@@ -193,11 +144,11 @@
                 <input type="hidden" name="{{newgloss.gloss_pk}}.dataset"  value="{{ newgloss.dataset }}">
                 {% for dataset_lang in dataset_languages %}
                  <input type="hidden" name="{{newgloss.gloss_pk}}.lemma_id_gloss_{{ dataset_lang.language_code_2char }}"
-                        value="{{ newgloss.lemmaidglosstranslations|keyvalue:dataset_lang.language_code_2char }}"></input>
+                        value="{{ newgloss.lemmaidglosstranslations|keyvalue:dataset_lang.language_code_2char }}">
                  {% endfor %}
                 {% for dataset_lang in dataset_languages %}
                  <input type="hidden" name="{{newgloss.gloss_pk}}.annotation_id_gloss_{{ dataset_lang.language_code_2char }}"
-                        value="{{ newgloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}"></input>
+                        value="{{ newgloss.annotationidglosstranslations|keyvalue:dataset_lang.language_code_2char }}">
                  {% endfor %}
 
                 <input type="hidden" name="update_or_create" value="create">

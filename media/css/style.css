@@ -45,6 +45,7 @@ body {
     background-color: #ffffff;
     margin-bottom: 0px;
     margin-top: 10px;
+    padding-left: 0px;
 }
 
 #signinfo .navbar-text {
@@ -570,9 +571,11 @@ tr.rotated th {
 {
     display: flex;
     flex-direction: column;
-    height: 85px;
-    width: 440px;
+    height: 100px;
     flex-wrap: wrap;
+    margin-left: -75px;
+    margin-top: 3px;
+    justify-content: center;
 }
 
  .ribbon
@@ -582,12 +585,12 @@ tr.rotated th {
     min-width: 125px;
     height: 20px;
     width: 100px;
-    color: white;
+    color: #ffffff80;
     text-align: center;
     text-decoration: none;
     line-height: 20px;
-    margin-top: 4px;
     margin-bottom: 4px;
+    margin-right: 20px;
 }
 
 .ribbon:before, .ribbon:after
@@ -597,7 +600,9 @@ tr.rotated th {
     width: 100%;
     left: 0px;
     height: 10px;
-    border: 1px solid white;
+    border-width: 2px;
+    border-style: solid;
+    border-color: #fff6;
 }
 
 .ribbon:before
@@ -611,4 +616,50 @@ tr.rotated th {
     top: 10px;
     transform: perspective(3px) rotateX(-3deg);
     border-top: none;
+}
+
+.ribbon_list .selected
+{
+    color: white;
+}
+
+.ribbon_list .selected:before, .ribbon_list .selected:after
+{
+    border-color: #fffc;
+}
+
+#search_results_label
+{
+    float: left;
+    margin-right: 52px;
+    margin-top: 4px;
+    font-size: 12px;
+    margin-left: 15px;
+    color: #00000080;
+}
+
+.hover-shows-video
+{
+    width: 115px;
+}
+
+.thumbnail-video
+{
+    object-fit: cover;
+    max-width: 115px;
+    height: 115px;
+    display:block;
+}
+
+.exclude-field-choices
+{
+    overflow-y: auto;
+    height: 600px;
+}
+
+.exclude-field-choices th
+{
+    position: sticky;
+    top: 0px;
+    background-color: white;
 }

@@ -14,6 +14,7 @@
     var csrf_token = '{{csrf_token}}';
     var saving_str = '{% trans "Saving..." %}'
     var edit_post_url = '';
+    var language_choices = '{{default_language_choice_list|safe}}';
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
@@ -34,6 +35,8 @@
 
 {% block content %}
 <h3>{% trans "Manage Datasets" %}</h3>
+
+<a href="{% url 'admin_dataset_field_choices' %}"><button class="btn btn-primary" >{% trans "Exclude field choices for datasets" %}</button></a>
 
 {% if object_list %}
 

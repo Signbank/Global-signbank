@@ -2,18 +2,30 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 {% load i18n %}
+{% load guardian_tags %}
+{% block bootstrap3_title %}Signbank: Update Lemma{% endblock %}
+
+<script type="text/javascript">
+
+</script>
 
 {% block content %}
 
    {% if perms.dictionary.change_lemmaidgloss %}
-   <p>{% trans "Update lemma" %}</p>
+   <h3>{% trans "Update lemma" %}</h3>
 
+    {% if page_in_lemma_list %}
+    <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}?page={{page_in_lemma_list}}'>{% trans "Return to Lemma List" %}</a>
+    {% else %}
+    <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}'>{% trans "Return to Lemma List" %}</a>
+    {% endif %}
      <form action='{% url "dictionary:change_lemma" object.pk %}' method='post'>
          {% csrf_token %}
          <table class='table' style='width: 400px;'>
          {{ change_lemma_form.as_table }}
          </table>
 
+     <input type='hidden' id="page" name="page" value="{{page_in_lemma_list}}">
      <input class='btn btn-primary' type='submit' value='{% trans "Update" %}'>
      </form>
     {% else %}

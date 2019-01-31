@@ -19,7 +19,7 @@ import django.contrib.admindocs.urls
 import django_summernote.urls
 
 from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
-                                            HomonymListView, MinimalPairsListView, DatasetManagerView, DatasetDetailView, FrequencyListView
+                                            HomonymListView, MinimalPairsListView, DatasetManagerView, DatasetDetailView, FrequencyListView, dataset_field_choices_view
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -60,8 +60,14 @@ urlpatterns = [
     url(r'^signs/search/$', GlossListView.as_view(), name='signs_search'),
     url(r'^signs/show_all/$', GlossListView.as_view(),{'show_all':True}),
     url(r'^signs/add/$', signbank.dictionary.views.add_new_sign),
+    url(r'^signs/import_csv_create/$', signbank.dictionary.views.import_csv_create, name='import_csv_create'),
+    url(r'^signs/import_csv_update/$', signbank.dictionary.views.import_csv_update, name='import_csv_update'),
     url(r'^signs/import_csv/$', signbank.dictionary.views.import_csv, name='import_csv'),
     url(r'^analysis/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),
+    url(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete,
+                      name='homonyms_complete'),
+    url(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete,
+                      name='minimalpairs_complete'),
     url(r'^analysis/minimalpairs/$', MinimalPairsListView.as_view(), name='admin_minimalpairs_list'),
     url(r'^analysis/frequencies/$', FrequencyListView.as_view(), name='admin_frequency_list'),
     url(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
@@ -101,6 +107,8 @@ urlpatterns = [
     url(r'^datasets/manager', login_required(DatasetManagerView.as_view()), name='admin_dataset_manager'),
     url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
     url(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
+    url(r'^datasets/field_choices/$', dataset_field_choices_view, name='admin_dataset_field_choices'),
+    url(r'^datasets/update_excluded_choices/$',signbank.dictionary.update.update_excluded_choices,name='update_excluded_choices'),
     url(r'^__debug__/', include(debug_toolbar.urls))
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

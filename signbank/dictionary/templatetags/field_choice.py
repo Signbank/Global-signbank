@@ -3,11 +3,11 @@ from signbank.dictionary.models import FieldChoice, Dataset
 
 def get_field_choice(machine_value,field_category):
 
-    if machine_value in [None,'None']:
-        return ""
-    elif machine_value == '0':
+    if machine_value == '' or machine_value in [None,'None']:
         return '-'
-    elif machine_value == '1':
+    elif machine_value == '0' or machine_value == 0:
+        return '-'
+    elif machine_value == '1' or machine_value == 1:
         return 'N/A'
 
     choice_list = FieldChoice.objects.filter(field__iexact=field_category).filter(machine_value=machine_value)
