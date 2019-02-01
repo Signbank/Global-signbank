@@ -689,19 +689,35 @@ def import_csv_create(request):
 
         csv_text = request.FILES['file'].read().decode('UTF-8')
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
+
+        delimiter = ','
+
+        # the following code allows for specifying a column delimiter in the import_csv_create.html template
+        # if 'delimiter' in request.POST:
+        #     delimiter_radio = request.POST['delimiter']
+        #     print('radio is: ', delimiter_radio)
+        #     if delimiter_radio == 'tab':
+        #         delimiter = '\t'
+        #     elif delimiter_radio == 'comma':
+        #         delimiter = ','
+        #     elif delimiter_radio == 'semicolon':
+        #         delimiter = ';'
+        #     else:
+        #         print('unknown delimiter found during import_csv_create')
+
         creation = []
         keys = {}   # in case something goes wrong in header row
         for nl, line in enumerate(csv_lines):
 
             #The first line contains the keys
             if nl == 0:
-                keys = line.strip().split(',')
+                keys = line.strip().split(delimiter)
                 num_keys = len(keys)
                 continue
             elif len(line) == 0:
                 continue
 
-            values = csv.reader([line]).__next__()
+            values = csv.reader([line], delimiter=delimiter).__next__()
             value_dict = {}
 
             for nv,value in enumerate(values):
