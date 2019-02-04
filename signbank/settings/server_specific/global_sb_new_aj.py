@@ -43,6 +43,8 @@ SEPARATE_ENGLISH_IDGLOSS_FIELD = True
 
 DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en'}
 
+DEFAULT_LANGUAGE_HEADER_COLUMN = {'English': 'name_en'}
+
 FIELDS = {}
 
 FIELDS['main'] = ['useInstr','wordClass']

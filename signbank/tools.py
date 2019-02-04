@@ -67,7 +67,7 @@ class MachineValueNotFoundError(Exception):
 
 table_column_name_lemma_id_gloss_translations = {}
 for language in Language.objects.all():
-    lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % language.name_en
+    lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
     table_column_name_lemma_id_gloss_translations[language.language_code_2char] = lemmaidgloss_comumn_name
 
 def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss):
@@ -89,7 +89,7 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
         for language in dataset.translation_languages.all():
             other_lemmas_for_language = LemmaIdglossTranslation.objects.filter(lemma__in=lemmas_in_dataset, language_id=language.id)
 
-            lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % language.name_en
+            lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
             if lemmaidgloss_comumn_name in valuedict:
                 lemmaidglosstranslation_text = valuedict[lemmaidgloss_comumn_name].strip()
                 lemmaidglosstranslations[language.language_code_2char] = lemmaidglosstranslation_text
@@ -100,7 +100,7 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                         lemmas_with_same_text.append(lem)
                     existing_lemmas[language.language_code_2char] = lemmas_with_same_text
 
-            column_name = "Annotation ID Gloss (%s)" % language.name_en
+            column_name = "Annotation ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
             if column_name in valuedict:
                 annotationidglosstranslation_text = valuedict[column_name].strip()
                 if annotationidglosstranslation_text:
@@ -131,13 +131,15 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                         }
                         annotationidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
-                            annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % lang.name_en]
+                            language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                            annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % (language_name) ]
                             annotationidglosstranslation_dict[lang.language_code_2char] = annotationidglosstranslation_text
                         gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
 
                         lemmaidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
-                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % lang.name_en]
+                            language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
                             lemmaidglosstranslation_dict[lang.language_code_2char] = lemmaidglosstranslation_text
                         gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
 
@@ -149,13 +151,14 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
             trans_languages = [ l for l in dataset.translation_languages.all() ]
             annotationidglosstranslation_dict = {}
             for language in trans_languages:
-                annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language.name_en]
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % (language_name) ]
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
 
                 if earlier_creation_annotationidgloss and \
                         language.language_code_2char in earlier_creation_annotationidgloss.keys() and \
                         annotationidglosstranslation_text in earlier_creation_annotationidgloss[language.language_code_2char]:
-                    error_string = 'Row ' + str(row_nr + 1) + ' contains a duplicate Annotation ID Gloss for '+ language.name_en +'.'
+                    error_string = 'Row ' + str(row_nr + 1) + ' contains a duplicate Annotation ID Gloss for '+ language_name +'.'
 
                     errors_found += [error_string]
                 if not earlier_creation_annotationidgloss or (
@@ -167,7 +170,8 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
 
             lemmaidglosstranslation_dict = {}
             for language in trans_languages:
-                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language.name_en]
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
                 lemmaidglosstranslation_dict[language.language_code_2char] = lemmaidglosstranslation_text
 
             gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
@@ -290,8 +294,9 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             annotation_idgloss_key_prefix = "Annotation ID Gloss ("
             if human_key.startswith(annotation_idgloss_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(annotation_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(name_en=language_name)
+                languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
                     language = languages[0]
                     annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
@@ -324,12 +329,12 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             lemma_idgloss_key_prefix = "Lemma ID Gloss ("
             if human_key.startswith(lemma_idgloss_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(lemma_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(name_en=language_name)
+                languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
                     language = languages[0]
                     lemma_idglosses = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
-                    # print('lemma idglosses ', lemma_idglosses)
                     if lemma_idglosses:
                         lemma_idgloss_string = lemma_idglosses[0].text
                     else:

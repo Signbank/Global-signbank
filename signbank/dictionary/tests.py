@@ -383,7 +383,8 @@ class ImportExportTests(TestCase):
         test_translation_index = 2
         form_data = {'update_or_create': 'update'}
         for language in test_dataset.translation_languages.all():
-            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language.name_en)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
 
@@ -394,7 +395,8 @@ class ImportExportTests(TestCase):
         test_translation_index = 1
         form_data = {'update_or_create': 'update'}
         for language in test_dataset.translation_languages.all():
-            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language.name_en)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
 
@@ -408,7 +410,8 @@ class ImportExportTests(TestCase):
                 test_translation_index = 1
             else:
                 test_translation_index = 2
-            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language.name_en)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
 
@@ -423,7 +426,8 @@ class ImportExportTests(TestCase):
                 test_translation_index = 1
             else:
                 test_translation_index = 3
-            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language.name_en)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
 

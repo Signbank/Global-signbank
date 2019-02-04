@@ -651,12 +651,16 @@ def import_csv_create(request):
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
     translation_languages_dict = {}
+    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
     for dataset_object in user_datasets:
         translation_languages_dict[dataset_object] = []
 
         for language in dataset_object.translation_languages.all():
-            translation_languages_dict[dataset_object].append(language)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_tuple = (language_name, language.language_code_2char)
+            translation_languages_dict[dataset_object].append(language_tuple)
 
     seen_datasets = []
     seen_dataset_names = []
@@ -694,7 +698,7 @@ def import_csv_create(request):
 
         # the following code allows for specifying a column delimiter in the import_csv_create.html template
         # if 'delimiter' in request.POST:
-        #     delimiter_radio = request.POST['delimiter']
+        #     delimiter_radio = request.POST['delimiter']multiple_select_fields
         #     print('radio is: ', delimiter_radio)
         #     if delimiter_radio == 'tab':
         #         delimiter = '\t'
@@ -814,12 +818,13 @@ def import_csv_create(request):
                     number_of_required_columns = 1 + 2 * number_of_translation_languages_for_dataset
                     required_columns = ['Dataset']
                     for language in dataset.translation_languages.all():
-                        lemma_column_name = "Lemma ID Gloss (%s)" % language.name_en
+                        language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                        lemma_column_name = "Lemma ID Gloss (%s)" % language_name
                         required_columns.append(lemma_column_name)
                         if lemma_column_name not in value_dict:
                             e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + lemma_column_name + ' is required.'
                             error.append(e1)
-                        annotation_column_name = "Annotation ID Gloss (%s)" % language.name_en
+                        annotation_column_name = "Annotation ID Gloss (%s)" % language_name
                         required_columns.append(annotation_column_name)
                         if annotation_column_name not in value_dict:
                             e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + annotation_column_name + ' is required.'
@@ -851,7 +856,8 @@ def import_csv_create(request):
             lemmaidglosstranslations = {}
             contextual_error_messages_lemmaidglosstranslations = []
             for language in dataset.translation_languages.all():
-                column_name = "Lemma ID Gloss (%s)" % language.name_en
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                column_name = "Lemma ID Gloss (%s)" % language_name
                 lemma_idgloss_value = value_dict[column_name].strip()
                 # also stores empty values
                 lemmaidglosstranslations[language] = lemma_idgloss_value
@@ -865,26 +871,27 @@ def import_csv_create(request):
 
             existing_lemmas = []
             for language, term in lemmaidglosstranslations.items():
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 try:
                     existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset,
                                                                                language=language,
                                                                                text=term).lemma)
-                    help = 'Row ' + str(nl + 1) + ": Existing Lemma ID Gloss (" + language.name_en + '): ' + term
+                    help = 'Row ' + str(nl + 1) + ": Existing Lemma ID Gloss (" + language_name + '): ' + term
                     contextual_error_messages_lemmaidglosstranslations.append(help)
                 except ObjectDoesNotExist as e:
                     if term:
                         other_language_for_term = LemmaIdgloss.objects.filter(dataset=dataset,
                                                                               lemmaidglosstranslation__text=term)
                         if other_language_for_term and lemmaidglosstranslations[language]:
-                            help = 'Row ' + str(nl + 1) + ': Wrong lemma translation for Lemma ID Gloss (' + language.name_en + '): ' + term
+                            help = 'Row ' + str(nl + 1) + ': Wrong lemma translation for Lemma ID Gloss (' + language_name + '): ' + term
                             row_error = True
                             contextual_error_messages_lemmaidglosstranslations.append(help)
                         else:
-                            help = 'Row ' + str(nl + 1) + ': New Lemma ID Gloss (' + language.name_en + '): ' + term
+                            help = 'Row ' + str(nl + 1) + ': New Lemma ID Gloss (' + language_name + '): ' + term
                             contextual_error_messages_lemmaidglosstranslations.append(help)
                     else:
                         row_error = True
-                        help = 'Row ' + str(nl + 1) + ': Lemma ID Gloss (' + language.name_en + ') is empty'
+                        help = 'Row ' + str(nl + 1) + ': Lemma ID Gloss (' + language_name + ') is empty'
                         contextual_error_messages_lemmaidglosstranslations.append(help)
                     # pass
             existing_lemmas_set = set(existing_lemmas)
@@ -936,7 +943,8 @@ def import_csv_create(request):
 
             # Annotation ID Gloss needs to be checked dynamically for each dataset language.
             for language in dataset.translation_languages.all():
-                column_name = "Annotation ID Gloss (%s)" % language.name_en
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                column_name = "Annotation ID Gloss (%s)" % language_name
                 if column_name not in value_dict:
                     e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + column_name + ' is required.'
                     fatal_error = True
@@ -1074,11 +1082,14 @@ def import_csv_update(request):
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     translation_languages_dict = {}
+    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
     for dataset_object in user_datasets:
         translation_languages_dict[dataset_object] = []
 
         for language in dataset_object.translation_languages.all():
-            translation_languages_dict[dataset_object].append(language)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_tuple = (language_name, language.language_code_2char)
+            translation_languages_dict[dataset_object].append(language_tuple)
 
     seen_datasets = []
     seen_dataset_names = []
@@ -1223,7 +1234,8 @@ def import_csv_update(request):
             lemmaidglosstranslations = {}
             contextual_error_messages_lemmaidglosstranslations = []
             for language in dataset.translation_languages.all():
-                column_name = "Lemma ID Gloss (%s)" % language.name_en
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                column_name = "Lemma ID Gloss (%s)" % language_name
                 lemma_idgloss_value = value_dict[column_name].strip()
                 # also stores empty values
                 lemmaidglosstranslations[language] = lemma_idgloss_value
@@ -1308,8 +1320,9 @@ def import_csv_update(request):
             # database
             annotation_idgloss_key_prefix = "Annotation ID Gloss ("
             if fieldname.startswith(annotation_idgloss_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = fieldname[len(annotation_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(name_en=language_name)
+                languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
                     language = languages[0]
                     annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
@@ -1477,11 +1490,14 @@ def import_csv(request):
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     translation_languages_dict = {}
+    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
     for dataset_object in user_datasets:
         translation_languages_dict[dataset_object] = []
 
         for language in dataset_object.translation_languages.all():
-            translation_languages_dict[dataset_object].append(language)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_tuple = (language_name, language.language_code_2char)
+            translation_languages_dict[dataset_object].append(language_tuple)
 
     seen_datasets = []
     seen_dataset_names = []
@@ -1633,12 +1649,13 @@ def import_csv(request):
                         number_of_required_columns = 1 + 2 * number_of_translation_languages_for_dataset
                         required_columns = ['Dataset']
                         for language in dataset.translation_languages.all():
-                            lemma_column_name = "Lemma ID Gloss (%s)" % language.name_en
+                            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                            lemma_column_name = "Lemma ID Gloss (%s)" % language_name
                             required_columns.append(lemma_column_name)
                             if lemma_column_name not in value_dict:
                                 e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + lemma_column_name + ' is required.'
                                 error.append(e1)
-                            annotation_column_name = "Annotation ID Gloss (%s)" % language.name_en
+                            annotation_column_name = "Annotation ID Gloss (%s)" % language_name
                             required_columns.append(annotation_column_name)
                             if annotation_column_name not in value_dict:
                                 e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + annotation_column_name + ' is required.'
@@ -1670,7 +1687,8 @@ def import_csv(request):
             lemmaidglosstranslations = {}
             contextual_error_messages_lemmaidglosstranslations = []
             for language in dataset.translation_languages.all():
-                column_name = "Lemma ID Gloss (%s)" % language.name_en
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                column_name = "Lemma ID Gloss (%s)" % language_name
                 lemma_idgloss_value = value_dict[column_name].strip()
                 # also stores empty values
                 lemmaidglosstranslations[language] = lemma_idgloss_value
@@ -1685,26 +1703,27 @@ def import_csv(request):
 
                 existing_lemmas = []
                 for language, term in lemmaidglosstranslations.items():
+                    language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                     try:
                         existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset,
                                                                                    language=language,
                                                                                    text=term).lemma)
-                        help = 'Row ' + str(nl + 1) + ": Existing Lemma ID Gloss (" + language.name_en + '): ' + term
+                        help = 'Row ' + str(nl + 1) + ": Existing Lemma ID Gloss (" + language_name + '): ' + term
                         contextual_error_messages_lemmaidglosstranslations.append(help)
                     except ObjectDoesNotExist as e:
                         if term:
                             other_language_for_term = LemmaIdgloss.objects.filter(dataset=dataset,
                                                                                   lemmaidglosstranslation__text=term)
                             if other_language_for_term and lemmaidglosstranslations[language]:
-                                help = 'Row ' + str(nl + 1) + ': Wrong lemma translation for Lemma ID Gloss (' + language.name_en + '): ' + term
+                                help = 'Row ' + str(nl + 1) + ': Wrong lemma translation for Lemma ID Gloss (' + language_name + '): ' + term
                                 row_error = True
                                 contextual_error_messages_lemmaidglosstranslations.append(help)
                             else:
-                                help = 'Row ' + str(nl + 1) + ': New Lemma ID Gloss (' + language.name_en + '): ' + term
+                                help = 'Row ' + str(nl + 1) + ': New Lemma ID Gloss (' + language_name + '): ' + term
                                 contextual_error_messages_lemmaidglosstranslations.append(help)
                         else:
                             row_error = True
-                            help = 'Row ' + str(nl + 1) + ': Lemma ID Gloss (' + language.name_en + ') is empty'
+                            help = 'Row ' + str(nl + 1) + ': Lemma ID Gloss (' + language_name + ') is empty'
                             contextual_error_messages_lemmaidglosstranslations.append(help)
                         # pass
                 existing_lemmas_set = set(existing_lemmas)
@@ -1756,7 +1775,8 @@ def import_csv(request):
 
                 # Annotation ID Gloss needs to be checked dynamically for each dataset language.
                 for language in dataset.translation_languages.all():
-                    column_name = "Annotation ID Gloss (%s)" % language.name_en
+                    language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                    column_name = "Annotation ID Gloss (%s)" % language_name
                     if column_name not in value_dict:
                         e1 = 'To create glosses in dataset ' + dataset_name + ', column ' + column_name + ' is required.'
                         fatal_error = True
@@ -1872,8 +1892,9 @@ def import_csv(request):
                 # database
                 annotation_idgloss_key_prefix = "Annotation ID Gloss ("
                 if fieldname.startswith(annotation_idgloss_key_prefix):
+                    language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                     language_name = fieldname[len(annotation_idgloss_key_prefix):-1]
-                    languages = Language.objects.filter(name_en=language_name)
+                    languages = Language.objects.filter(**{language_name_column: language_name})
                     if languages:
                         language = languages[0]
                         annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)

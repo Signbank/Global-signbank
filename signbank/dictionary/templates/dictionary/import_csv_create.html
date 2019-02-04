@@ -86,12 +86,14 @@
                     <tr>
                         <th>{% trans "Dataset" %}</th>
                          {% with seen_datasets.0 as seen_dataset %}
-                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
-                         <th >{% trans "Lemma ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% with translation_languages_dict|keyvalue:seen_dataset as translation_tuples_list %}
+                         {% for dataset_trans_lang in translation_tuples_list %}
+                         <th >{% trans "Lemma ID Gloss" %} ({% trans dataset_trans_lang.0 %})</th>
                          {% endfor %}
-                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
-                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% for dataset_trans_lang in translation_tuples_list %}
+                         <th >{% trans "Annotation ID Gloss" %} ({% trans dataset_trans_lang.0 %})</th>
                          {% endfor %}
+                         {% endwith %}
                          {% endwith %}
                     </tr>
                 {% for gloss in gloss_already_exists %}
@@ -99,17 +101,19 @@
                     <td>{{ gloss.dataset }}</td>
 
                     {% with seen_datasets.0 as seen_dataset %}
-                    {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
-                    {% with dataset_trans_lang.language_code_2char as lang_code %}
-                     <td style="padding-left: 20px;">{{ gloss.lemmaidglosstranslations|keyvalue:lang_code }}</td>
-                    {% endwith %}
+                    {% with translation_languages_dict|keyvalue:seen_dataset as translation_tuples_list %}
+                    {% for dataset_trans_lang in translation_tuples_list %}
+                    <!--{% with dataset_trans_lang.language_code_2char as lang_code %}-->
+                     <td style="padding-left: 20px;">{{ gloss.lemmaidglosstranslations|keyvalue:dataset_trans_lang.1 }}</td>
+                    <!--{% endwith %}-->
                     {% endfor %}
-                    {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
-                    {% with dataset_trans_lang.language_code_2char as lang_code %}
+                    {% for dataset_trans_lang in translation_tuples_list %}
+                    <!--{% with dataset_trans_lang.language_code_2char as lang_code %}-->
                      <td><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gloss.gloss_pk %}'>
-                        {{ gloss.annotationidglosstranslations|keyvalue:lang_code }}</a></td>
-                    {% endwith %}
+                        {{ gloss.annotationidglosstranslations|keyvalue:dataset_trans_lang.1 }}</a></td>
+                    <!--{% endwith %}-->
                     {% endfor %}
+                    {% endwith %}
                     {% endwith %}
                     </tr>
                 {% endfor %}
@@ -121,32 +125,36 @@
                     <tr>
                         <th>{% trans "Dataset" %}</th>
                          {% with seen_datasets.0 as seen_dataset %}
-                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
-                         <th >{% trans "Lemma ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% with translation_languages_dict|keyvalue:seen_dataset as translation_tuples_list %}
+                         {% for dataset_trans_lang in translation_tuples_list %}
+                         <th >{% trans "Lemma ID Gloss" %} ({% trans dataset_trans_lang.0 %})</th>
                          {% endfor %}
-                         {% for dataset_trans_lang in translation_languages_dict|keyvalue:seen_dataset %}
-                         <th >{% trans "Annotation ID Gloss" %} ({{ dataset_trans_lang.name_en }})</th>
+                         {% for dataset_trans_lang in translation_tuples_list %}
+                         <th >{% trans "Annotation ID Gloss" %} ({% trans dataset_trans_lang.0 %})</th>
                          {% endfor %}
+                         {% endwith %}
                          {% endwith %}
                     </tr>
                 {% for newgloss in creation %}
                     <tr>
                         <td>{{ newgloss.dataset }}</td>
                         {% with seen_datasets.0 as seen_dataset %}
-                        {% for dataset_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                        {% with translation_languages_dict|keyvalue:seen_dataset as translation_tuples_list %}
+                         {% for dataset_trans_lang in translation_tuples_list %}
                             {% with newgloss.lemmaidglosstranslations as newglossdict %}
-                            {% with dataset_lang.language_code_2char as lang_code %}
-                            <td class="bla" style="padding-left: 20px;">{{ newglossdict|keyvalue:lang_code }}</td>
-                            {% endwith %}
+                            <!--{% with dataset_lang.language_code_2char as lang_code %}-->
+                            <td class="bla" style="padding-left: 20px;">{{ newglossdict|keyvalue:dataset_trans_lang.1 }}</td>
+                            <!--{% endwith %}-->
                             {% endwith %}
                          {% endfor %}
-                        {% for dataset_lang in translation_languages_dict|keyvalue:seen_dataset %}
+                         {% for dataset_trans_lang in translation_tuples_list %}
                             {% with newgloss.annotationidglosstranslations as newglossdict %}
-                            {% with dataset_lang.language_code_2char as lang_code %}
-                            <td class="bla" style="padding-left: 20px;">{{ newglossdict|keyvalue:lang_code }}</td>
-                            {% endwith %}
+                            <!--{% with dataset_lang.language_code_2char as lang_code %}-->
+                            <td class="bla" style="padding-left: 20px;">{{ newglossdict|keyvalue:dataset_trans_lang.1 }}</td>
+                            <!--{% endwith %}-->
                             {% endwith %}
                          {% endfor %}
+                         {% endwith %}
                          {% endwith %}
                     </tr>
                 <input type="hidden" name="{{newgloss.gloss_pk}}.dataset"  value="{{ newgloss.dataset }}">
