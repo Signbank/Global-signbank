@@ -1418,10 +1418,19 @@ def write_ecv_file_for_dataset(dataset_name):
 
     query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(lemma__dataset=dataset_id)
 
+    sOrder = 'annotationidglosstranslation__text'
+    lang_attr_name = dataset_id.default_language.language_code_2char
+    sort_language = 'annotationidglosstranslation__language__language_code_2char'
+    qs_letters = query_dataset.filter(**{sOrder + '__regex': r'^[a-zA-Z]'}, **{sort_language: lang_attr_name})
+    qs_special = query_dataset.filter(**{sOrder + '__regex': r'^[^a-zA-Z]'}, **{sort_language: lang_attr_name})
+
+    ordered = list(qs_letters.order_by(sOrder))
+    ordered += list(qs_special.order_by(sOrder))
+
     context = {
         'CV_ID': ECV_SETTINGS['CV_ID'] if 'CV_ID' in ECV_SETTINGS else "",
         'date': str(DT.date.today()) + 'T' + str(DT.datetime.now().time()),
-        'glosses': query_dataset,
+        'glosses': ordered,
         'dataset': dataset_id,
         'languages': dataset_id.translation_languages.all(),
         'resource_url': URL + PREFIX_URL + '/dictionary/gloss/'
