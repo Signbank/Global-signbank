@@ -647,7 +647,7 @@ def import_csv_create(request):
     user = request.user
     import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
-    user_datasets_names = [ dataset.name for dataset in user_datasets ]
+    user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -993,7 +993,7 @@ def import_csv_create(request):
             dataset = glosses_to_create[row]['dataset']
 
             try:
-                dataset_id = Dataset.objects.get(name=dataset)
+                dataset_id = Dataset.objects.get(acronym=dataset)
             except:
                 # this is an error, this should have already been caught
                 e1 = 'Dataset not found: ' + dataset
@@ -1030,7 +1030,7 @@ def import_csv_create(request):
                         new_lemmaidglosstranslation.save()
             else:
                 # This case should not happen, it should have been caught in stage 1
-                e1 = 'To create glosses in dataset ' + dataset_id.name + \
+                e1 = 'To create glosses in dataset ' + dataset_id.acronym + \
                      ', the combination of Lemma ID Gloss translations should either refer ' \
                      'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
                 error.append(e1)
@@ -1077,7 +1077,7 @@ def import_csv_update(request):
     user = request.user
     import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
-    user_datasets_names = [ dataset.name for dataset in user_datasets ]
+    user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -1196,14 +1196,14 @@ def import_csv_update(request):
                     error.append(e_dataset_empty)
                     break
                 try:
-                    dataset = Dataset.objects.get(name=dataset_name)
+                    dataset = Dataset.objects.get(acronym=dataset_name)
                 except:
+                    print('exception trying to get dataset object')
                     # An error message should be returned here, the dataset does not exist
                     e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
                     error.append(e_dataset_not_found)
                     fatal_error = True
                     break
-
                 if dataset_name not in user_datasets_names:
                     e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
                     error.append(e3)
@@ -1229,16 +1229,17 @@ def import_csv_update(request):
 
             if fatal_error:
                 break
-
+            print('checking lemmas')
             # The Lemma ID Gloss may already exist.
             lemmaidglosstranslations = {}
             contextual_error_messages_lemmaidglosstranslations = []
             for language in dataset.translation_languages.all():
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 column_name = "Lemma ID Gloss (%s)" % language_name
-                lemma_idgloss_value = value_dict[column_name].strip()
-                # also stores empty values
-                lemmaidglosstranslations[language] = lemma_idgloss_value
+                if column_name in value_dict:
+                    lemma_idgloss_value = value_dict[column_name].strip()
+                    # also stores empty values
+                    lemmaidglosstranslations[language] = lemma_idgloss_value
 
             # updating glosses
             try:
@@ -1250,7 +1251,7 @@ def import_csv_update(request):
                 continue
 
             if gloss.lemma.dataset != dataset:
-                e1 = 'Row '+ str(nl + 1) + ': The Dataset column (' + dataset.name + ') does not correspond to that of the Signbank ID (' \
+                e1 = 'Row '+ str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Signbank ID (' \
                                                     + str(pk) + ').'
                 error.append(e1)
                 # ignore the rest of the row
@@ -1373,7 +1374,7 @@ def import_csv_update(request):
                     continue
                 else:
                     # the existence of the new dataset should have already been tested
-                    new_dataset = Dataset.objects.get(name=new_value)
+                    new_dataset = Dataset.objects.get(acronym=new_value)
                 try:
                     gloss_lemma = gloss.lemma
                 except:
@@ -1485,12 +1486,12 @@ def import_csv(request):
     user = request.user
     import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
-    user_datasets_names = [ dataset.name for dataset in user_datasets ]
+    user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     translation_languages_dict = {}
-    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
+    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of translation language, language_code_2char)
     for dataset_object in user_datasets:
         translation_languages_dict[dataset_object] = []
 
@@ -1809,7 +1810,7 @@ def import_csv(request):
                 continue
 
             if gloss.lemma.dataset != dataset:
-                e1 = 'Row '+ str(nl + 1) + ': The Dataset column (' + dataset.name + ') does not correspond to that of the Signbank ID (' \
+                e1 = 'Row '+ str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Signbank ID (' \
                                                     + str(pk) + ').'
                 error.append(e1)
                 # ignore the rest of the row
@@ -2098,7 +2099,7 @@ def import_csv(request):
                             new_lemmaidglosstranslation.save()
                 else:
                     # This case should not happen, it should have been caught in stage 1
-                    e1 = 'To create glosses in dataset ' + dataset_id.name + \
+                    e1 = 'To create glosses in dataset ' + dataset_id.acronym + \
                          ', the combination of Lemma ID Gloss translations should either refer ' \
                          'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
                     error.append(e1)
@@ -2630,7 +2631,7 @@ def package(request):
 def info(request):
     import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
-    user_datasets_names = [dataset.name for dataset in user_datasets]
+    user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     # Put the default dataset in first position
     if DEFAULT_DATASET in user_datasets_names:

@@ -270,7 +270,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
         # print('fields: ', columnheaders)
 
         if gloss.dataset:
-            current_dataset = gloss.dataset.name
+            current_dataset = gloss.dataset.acronym
         else:
             # because of legacy code, the current dataset might not have been set
             current_dataset = 'None'
@@ -1346,7 +1346,7 @@ def get_selected_datasets_for_user(user):
         if public_datasets:
             selected_datasets = public_datasets
         else:
-            selected_datasets = [ Dataset.objects.get(name=DEFAULT_DATASET) ]
+            selected_datasets = [ Dataset.objects.get(acronym=DEFAULT_DATASET) ]
         return selected_datasets
 
 
@@ -1573,7 +1573,7 @@ def write_csv_for_handshapes(handshapelistview, csvwriter):
 
 def get_users_who_can_view_dataset(dataset_name):
 
-    dataset = Dataset.objects.get(name=dataset_name)
+    dataset = Dataset.objects.get(acronym=dataset_name)
 
     all_users = User.objects.all()
 

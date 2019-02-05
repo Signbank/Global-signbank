@@ -399,7 +399,7 @@ class GlossListView(ListView):
         writer.writerow(header)
 
         for gloss in self.get_queryset():
-            row = [str(gloss.pk), gloss.lemma.dataset.name]
+            row = [str(gloss.pk), gloss.lemma.dataset.acronym]
 
             for language in dataset_languages:
                 lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
@@ -999,7 +999,7 @@ class GlossDetailView(DetailView):
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
         if gl.dataset:
             self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.name
+            self.last_used_dataset = gl.dataset.acronym
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
@@ -1280,7 +1280,7 @@ class GlossDetailView(DetailView):
                 qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = {}
                 for dataset in qs:
-                    dataset_choices[dataset.name] = dataset.name
+                    dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
@@ -2957,15 +2957,15 @@ class DatasetManagerView(ListView):
                 dataset_object.save()
                 messages.add_message(self.request, messages.INFO,
                                      ('The default language of {} is set to {}.'
-                                      .format(dataset_object.name, language.name)))
+                                      .format(dataset_object.acronym, language.name)))
             else:
                 messages.add_message(self.request, messages.INFO,
                                      ('{} is not in the set of languages of dataset {}.'
-                                      .format(language.name, dataset_object.name)))
+                                      .format(language.name, dataset_object.acronym)))
         except:
             messages.add_message(self.request, messages.ERROR,
                                  ('Something went wrong setting the default language for '
-                                  + dataset_object.name))
+                                  + dataset_object.acronym))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     def render_to_add_user_response(self, context):
@@ -2983,7 +2983,7 @@ class DatasetManagerView(ListView):
         username = user_object.username
 
         # user has permission to modify dataset permissions for other users
-        manage_identifier = 'dataset_' + dataset_object.name.replace(' ','')
+        manage_identifier = 'dataset_' + dataset_object.acronym.replace(' ','')
 
         from guardian.shortcuts import assign_perm, remove_perm
         if 'add_view_perm' in self.request.GET:
@@ -3055,7 +3055,7 @@ class DatasetManagerView(ListView):
                                      ') does not have view permission for this dataset. Please grant view permission first.'))
 
                 # open Manage View Dataset pane instead of Manage Change Dataset
-                manage_identifier = 'dataset_' + dataset_object.name.replace(' ', '')
+                manage_identifier = 'dataset_' + dataset_object.acronym.replace(' ', '')
                 manage_identifier += '_manage_view'
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
             try:
@@ -3479,7 +3479,7 @@ class MorphemeDetailView(DetailView):
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
         if gl.dataset:
             self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.name
+            self.last_used_dataset = gl.dataset.acronym
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
@@ -3573,7 +3573,7 @@ class MorphemeDetailView(DetailView):
                 qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = dict()
                 for dataset in qs:
-                    dataset_choices[dataset.name] = dataset.name
+                    dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -3913,7 +3913,7 @@ class LemmaListView(ListView):
         writer.writerow(header)
 
         for lemma in self.get_queryset():
-            row = [str(lemma.pk), lemma.dataset.name]
+            row = [str(lemma.pk), lemma.dataset.acronym]
 
             for language in dataset_languages:
                 lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)

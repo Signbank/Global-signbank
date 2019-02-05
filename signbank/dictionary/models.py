@@ -1491,7 +1491,7 @@ class Gloss(models.Model):
 
         d = dict()
         for s in Dataset.objects.all():
-            d[s.name] = s.name
+            d[s.acronym] = s.acronym
 
         return json.dumps(d)
 
@@ -1878,24 +1878,24 @@ class Dataset(models.Model):
         )
 
     def __str__(self):
-        return self.name
+        return self.acronym
 
     def generate_short_name(self):
 
         CHARACTER_THRESHOLD = 15
 
-        if len(self.name) <= CHARACTER_THRESHOLD:
-            return self.name
+        if len(self.acronym) <= CHARACTER_THRESHOLD:
+            return self.acronym
         else:
 
             #Cut off last word
-            if len(self.name.split()) > 1:
-                result = ' '.join(self.name.split()[:-1])
+            if len(self.acronym.split()) > 1:
+                result = ' '.join(self.acronym.split()[:-1])
 
                 if len(result) <= CHARACTER_THRESHOLD:
                     return result
             else:
-                result = self.name
+                result = self.acronym
 
             return result[:CHARACTER_THRESHOLD]
 
@@ -2100,7 +2100,7 @@ class AnnotationIdglossTranslation(models.Model):
                 (len(glosses_with_same_text) == 1 and glosses_with_same_text[0] == self)
                    or glosses_with_same_text is None or len(glosses_with_same_text) == 0):
                 msg = "The annotation idgloss translation text '%s' is not unique within dataset '%s' for gloss '%s'." \
-                      % (self.text, dataset.name, self.gloss.id)
+                      % (self.text, dataset.acronym, self.gloss.id)
                 raise ValidationError(msg)
 
         super(AnnotationIdglossTranslation, self).save(*args, **kwargs)
@@ -2111,7 +2111,7 @@ class LemmaIdgloss(models.Model):
                                 help_text=_("Dataset a lemma is part of"), null=True)
 
     class Meta:
-        ordering = ['dataset__name']
+        ordering = ['dataset__acronym']
 
     def __str__(self):
         return ", ".join(["%s: %s" % (translation.language, translation.text)
@@ -2150,7 +2150,7 @@ class LemmaIdglossTranslation(models.Model):
                 (len(lemmas_with_same_text) == 1 and lemmas_with_same_text[0] == self.lemma)
                    or lemmas_with_same_text is None or len(lemmas_with_same_text) == 0):
                 msg = "The lemma idgloss translation text '%s' is not unique within dataset '%s' for lemma '%s'." \
-                      % (self.text, dataset.name, self.lemma.id)
+                      % (self.text, dataset.acronym, self.lemma.id)
                 raise ValidationError(msg)
 
         super(LemmaIdglossTranslation, self).save(*args, **kwargs)

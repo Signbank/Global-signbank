@@ -637,7 +637,7 @@
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         {% trans "Datasets:" %}
-        {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}.{% endif %}
         {% endfor %}
         {% endif %}
     </div>
@@ -668,8 +668,8 @@
                                  dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
                          {% for dataset in selected_datasets %}
                          <option value="{{ dataset.id }}"
-                                 {% if add_gloss_form.last_used_dataset == dataset.name %}selected{% endif %}
-                                 dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                                 {% if add_gloss_form.last_used_dataset == dataset.acronym %}selected{% endif %}
+                                 dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.acronym }}</option>
                          {% endfor %}
                      </select></td>
                      {% else %}
@@ -818,7 +818,7 @@
                 <tr>
             {% endif %}
 
-        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.acronym }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}
 
           <div class="thumbnail_container">
@@ -1043,7 +1043,7 @@
       {% for gloss in lemma.list %}
         <tr>
         <td></td>
-        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.acronym }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
           <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>
