@@ -3705,7 +3705,8 @@ def lemma_ajax_complete(request, dataset_id, q):
     """Return a list of users matching the search term
     as a JSON structure suitable for typeahead."""
 
-    lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id, lemmaidglosstranslation__text__icontains=q)
+    lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id, lemmaidglosstranslation__text__icontains=q)\
+        .order_by('lemmaidglosstranslation__text')
     lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in lemmas]
 
     return HttpResponse(json.dumps(lemmas_dict), {'content-type': 'application/json'})
