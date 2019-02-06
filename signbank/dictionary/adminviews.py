@@ -1731,6 +1731,37 @@ class MorphemeListView(ListView):
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
 
+
+        # these fields are for ASL searching
+        if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
+            val = get['initial_relative_orientation']
+            qs = qs.filter(initial_relative_orientation__exact=val)
+
+        if 'final_relative_orientation' in get and get['final_relative_orientation'] != '':
+            val = get['final_relative_orientation']
+            qs = qs.filter(final_relative_orientation__exact=val)
+
+        if 'initial_palm_orientation' in get and get['initial_palm_orientation'] != '':
+            val = get['initial_palm_orientation']
+            qs = qs.filter(initial_palm_orientation__exact=val)
+
+        if 'final_palm_orientation' in get and get['final_palm_orientation'] != '':
+            val = get['final_palm_orientation']
+            qs = qs.filter(final_palm_orientation__exact=val)
+
+        if 'initial_secondary_loc' in get and get['initial_secondary_loc'] != '':
+            val = get['initial_secondary_loc']
+            qs = qs.filter(initial_secondary_loc__exact=val)
+
+        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
+            val = get['final_secondary_loc']
+            qs = qs.filter(final_secondary_loc__exact=val)
+
+        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
+            val = get['final_secondary_loc']
+            qs = qs.filter(final_secondary_loc__exact=val)
+
+
         if 'defsearch' in get and get['defsearch'] != '':
 
             val = get['defsearch']
