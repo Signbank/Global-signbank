@@ -127,7 +127,7 @@
     });
 
     //Fill choice_lists later
-    $.ajax("/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{gloss.lemma.dataset}}").done( function (data)
+    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{gloss.lemma.dataset}}").done( function (data)
     {
         choice_lists = $.extend(data,{{other_media_field_choices | safe}});
         console.log("Added field choices");
