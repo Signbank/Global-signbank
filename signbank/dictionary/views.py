@@ -368,7 +368,11 @@ def import_media(request,video):
     for dataset_folder_name in [name for name in os.listdir(import_folder) if os.path.isdir(os.path.join(import_folder, name))]:
         # Check whether the folder name is equal to a dataset name
         print("Dataset folder name: %s " % dataset_folder_name)
-        dataset = Dataset.objects.get(name=dataset_folder_name)
+        try:
+            dataset = Dataset.objects.get(name=dataset_folder_name)
+        except:
+            dataset = Dataset.objects.get(acronym=dataset_folder_name)
+
         if not dataset:
             continue
 
@@ -771,7 +775,7 @@ def import_csv_create(request):
                     error.append(e_dataset_empty)
                     break
                 try:
-                    dataset = Dataset.objects.get(name=dataset_name)
+                    dataset = Dataset.objects.get(acronym=dataset_name)
                 except:
                     # An error message should be returned here, the dataset does not exist
                     e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
@@ -1600,7 +1604,7 @@ def import_csv(request):
                     error.append(e_dataset_empty)
                     break
                 try:
-                    dataset = Dataset.objects.get(name=dataset_name)
+                    dataset = Dataset.objects.get(acronym=dataset_name)
                 except:
                     # An error message should be returned here, the dataset does not exist
                     e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
@@ -1946,7 +1950,7 @@ def import_csv(request):
                         continue
                     else:
                         # the existence of the new dataset should have already been tested
-                        new_dataset = Dataset.objects.get(name=new_value)
+                        new_dataset = Dataset.objects.get(acronym=new_value)
                     try:
                         gloss_lemma = gloss.lemma
                     except:
@@ -2062,7 +2066,7 @@ def import_csv(request):
                 dataset = glosses_to_create[row]['dataset']
 
                 try:
-                    dataset_id = Dataset.objects.get(name=dataset)
+                    dataset_id = Dataset.objects.get(acronym=dataset)
                 except:
                     # this is an error, this should have already been caught
                     e1 = 'Dataset not found: ' + dataset
@@ -2591,7 +2595,7 @@ def package(request):
 
     dataset = None
     if 'dataset_name' in request.GET:
-        dataset = Dataset.objects.get(name=request.GET['dataset_name'])
+        dataset = Dataset.objects.get(acronym=request.GET['dataset_name'])
 
 
     video_folder_name = 'glossvideo'
@@ -2755,7 +2759,7 @@ def choice_lists(request):
     all_choice_lists = {}
 
     if 'dataset' in request.GET:
-        choices_to_exclude = Dataset.objects.get(name=request.GET['dataset']).exclude_choices.all()
+        choices_to_exclude = Dataset.objects.get(acronym=request.GET['dataset']).exclude_choices.all()
     else:
         choices_to_exclude = None
 
