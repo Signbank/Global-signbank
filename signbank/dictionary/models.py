@@ -2114,8 +2114,14 @@ class LemmaIdgloss(models.Model):
         ordering = ['dataset__acronym']
 
     def __str__(self):
-        return ", ".join(["%s: %s" % (translation.language, translation.text)
-                          for translation in self.lemmaidglosstranslation_set.all()])
+        translations = []
+        for translation in self.lemmaidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations)
+
 
 class LemmaIdglossTranslation(models.Model):
     """A Lemma ID Gloss"""
