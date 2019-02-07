@@ -44,6 +44,8 @@ $('.lemmatypeahead').on("input", function() {
     });
 
 $(document).ready(function() {
+    gloss_dataset_id = $('#id_dataset').find(":selected").attr('value');
+    lemma_bloodhound.remote.url = url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/%QUERY'
     if($("#id_dataset").val() == "") {  // No dataset selected
         $('.lemmatypeahead').prop("disabled", true);
     }
