@@ -731,11 +731,19 @@
           {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
           <th></th>
            {% for dataset_lang in dataset_languages %}
-          <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+          <th>{% trans "Annotation ID Gloss" %}
+              {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+                ({{ dataset_lang.name }})
+              {% endif %}
+          </th>
           {% endfor %}
 
           {% for dataset_lang in dataset_languages %}
-          <th>{% trans "Lemma ID gloss" %} ({{ dataset_lang.name }})</th>
+          <th>{% trans "Lemma ID gloss" %}
+              {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+                ({{ dataset_lang.name }})
+              {% endif %}
+          </th>
           {% endfor %}
 
            <th>{% trans "Translation equivalents" %}</th>
