@@ -387,12 +387,15 @@ class GlossListView(ListView):
         lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                           for language in dataset_languages]
 
+        keyword_fields = ["Keywords" + " (" + getattr(language, lang_attr_name) + ")"
+                                               for language in dataset_languages]
         writer = csv.writer(response)
 
         with override(LANGUAGE_CODE):
-            header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
+            header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+                                                    + keyword_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
-        for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
+        for extra_column in ['SignLanguages','Dialects', 'Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
                              'Relations to other signs','Relations to foreign signs', 'Tags', 'Notes']:
             header.append(extra_column)
 
@@ -415,6 +418,16 @@ class GlossListView(ListView):
                 else:
                     row.append("")
 
+            # Keywords per language
+            for language in dataset_languages:
+                # translations = gloss.annotationidglosstranslation_set.filter(language=language)
+                translations = [t.translation.text for t in gloss.translation_set.filter(language=language)]
+
+                if translations:
+                    row.append(", ".join(translations))
+                else:
+                    row.append("")
+
             for f in fields:
 
                 #Try the value of the choicelist
@@ -425,13 +438,16 @@ class GlossListView(ListView):
                 except AttributeError:
                     value = getattr(gloss,f.name)
 
-                    if f.name == 'weakdrop' or f.name == 'weakprop':
-                        if value == None:
-                            value = 'Neutral'
+                # for csv export, the text fields need quotes around them to stop e.g., semicolons from spliting the data into multiple columns
+                if f.name in ['phonetVar', 'mouthing', 'mouthG', 'phonOth'] and value:
+                    value = str(value)
+                if f.name == 'weakdrop' or f.name == 'weakprop':
+                    if value == None:
+                        value = 'Neutral'
 
-                    # This was disabled with the move to Python 3... might not be needed anymore?
-                    # if isinstance(value,unicode):
-                    #     value = str(value.encode('ascii','xmlcharrefreplace'))
+                # This was disabled with the move to Python 3... might not be needed anymore?
+                # if isinstance(value,unicode):
+                #     value = str(value.encode('ascii','xmlcharrefreplace'))
 
                 if not isinstance(value,str):
                     value = str(value)
@@ -449,10 +465,6 @@ class GlossListView(ListView):
             # get dialects
             dialects = [dialect.name for dialect in gloss.dialect.all()]
             row.append(", ".join(dialects))
-
-            # get translations (keywords)
-            trans = [t.translation.text + ":" + t.language.language_code_2char for t in gloss.translation_set.all()]
-            row.append(", ".join(trans))
 
             # get morphology
             # Sequential Morphology

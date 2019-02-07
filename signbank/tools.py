@@ -352,10 +352,18 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                                             'new_human_value': new_human_value})
                 continue
 
-            elif human_key == 'Keywords':
-
-                current_keyword_string = str(', '.join([str(translation.translation.text)+":"+translation.language.language_code_2char
-                                                       for translation in gloss.translation_set.all()]))
+            keywords_key_prefix = "Keywords ("
+            if human_key.startswith(keywords_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name = human_key[len(keywords_key_prefix):-1]
+                languages = Language.objects.filter(**{language_name_column:language_name})
+                if languages:
+                    language = languages[0]
+                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language)]
+                    current_keyword_string = ", ".join(translations)
+                else:
+                    error_string = 'ERROR: Non-existant language specified for Keywords column: ' + human_key
+                    errors_found += [error_string]
 
                 if current_keyword_string != new_human_value and new_human_value != 'None' and new_human_value != '':
                     differences.append({'pk':gloss_id,

@@ -1233,7 +1233,6 @@ def import_csv_update(request):
 
             if fatal_error:
                 break
-            print('checking lemmas')
             # The Lemma ID Gloss may already exist.
             lemmaidglosstranslations = {}
             contextual_error_messages_lemmaidglosstranslations = []
@@ -1337,19 +1336,17 @@ def import_csv_update(request):
                         annotation_idgloss.save()
                 continue
 
+            keywords_key_prefix = "Keywords ("
             # Updating the keywords is a special procedure, because it has relations to other parts of the database
-            if fieldname == 'Keywords':
-                # The following is necessary to process keywords for multiple languages
-                keywords_dict = {}
-                for keyword_string in new_value.split(", "):
-                    (keyword, language_code_2char) = keyword_string.split(":")
-                    if language_code_2char in keywords_dict:
-                        keywords_dict[language_code_2char] += ", " + keyword
-                    else:
-                        keywords_dict[language_code_2char] = keyword
-                for language_code_2char, keywords in keywords_dict.items():
-                    update_keywords(gloss, "keywords_" + language_code_2char, keywords)
-                gloss.save()
+            if fieldname.startswith(keywords_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name = fieldname[len(keywords_key_prefix):-1]
+                languages = Language.objects.filter(**{language_name_column:language_name})
+                if languages:
+                    language = languages[0]
+                    language_code_2char = language.language_code_2char
+                    update_keywords(gloss, "keywords_" + language_code_2char, new_value)
+                    gloss.save()
                 continue
 
             if fieldname == 'SignLanguages':
