@@ -884,7 +884,7 @@ class GlossListView(ListView):
                     items.append(dict(id = item.id, gloss = annotationidglosstranslations[0].text))
                 else:
                     annotationidglosstranslations = item.annotationidglosstranslation_set.filter(
-                        language__language_code_2char__exact='en'
+                        language__language_code_2char__exact= settings.LANGUAGES[0][0]
                     )
                     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
                         items.append(dict(id=item.id, gloss=annotationidglosstranslations[0].text))
