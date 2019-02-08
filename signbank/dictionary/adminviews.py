@@ -130,12 +130,14 @@ def order_queryset_by_sort_order(get, qs):
         if default_sort_order:
             lang_attr_name = DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
             sort_language = 'annotationidglosstranslation__language__language_code_2char'
+            qs_empty = qs.filter(**{sOrder+'__isnull': True})
             qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'}, **{sort_language:lang_attr_name})
             qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'}, **{sort_language:lang_attr_name})
 
             sort_key = sOrder
             ordered = list(qs_letters.order_by(sort_key))
             ordered += list(qs_special.order_by(sort_key))
+            ordered += list(qs_empty)
         else:
             ordered = qs
         if bReversed:
