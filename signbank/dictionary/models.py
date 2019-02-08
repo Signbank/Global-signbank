@@ -1681,7 +1681,8 @@ def fieldname_to_kind(fieldname):
     return field_kind
 
 def generate_translated_choice_list_table():
-    codes_to_adjectives = dict(settings.LANGUAGES)
+    #Result is a list in this format {'en-us':'english'}
+    codes_to_adjectives = dict([(language.lower().replace('_','-'),adjective) for language, adjective in settings.LANGUAGES])
 
     temp_translated_choice_lists_table = dict()
     for f in Gloss._meta.fields:
