@@ -68,7 +68,7 @@ class RegistrationForm(forms.Form):
 
         dataset_choices = [ (ds.name, ds.name) for ds in Dataset.objects.filter(is_public='1') ]
         if not dataset_choices:
-            dataset_choices = [(ds.name, ds.name) for ds in Dataset.objects.filter(name=DEFAULT_DATASET)]
+            dataset_choices = [(ds.name, ds.name) for ds in Dataset.objects.filter(acronym=DEFAULT_DATASET)]
         dataset = forms.TypedMultipleChoiceField(label=_(u'Requested Datasets'),
                                                   choices=dataset_choices,
                                                   required=False, widget=Select2)
