@@ -26,6 +26,7 @@
     var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
     var csrf_token = '{{csrf_token}}';
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
+    var gloss_fields_to_populate = {{ gloss_fields_to_populate|safe }}
 
      $(document).ready(function(){
 
@@ -103,6 +104,15 @@
             width: 'resolve'
          });
          $('#id_dialects').val(null).trigger('change');
+
+         // Populate query form fields from 'search' field
+         if(!jQuery.isEmptyObject(gloss_fields_to_populate)) {
+            let searchParams = new URLSearchParams(window.location.search);
+            let search = searchParams.get('search');
+            gloss_fields_to_populate.forEach(function(item, index) {
+                $('#glosssearch_'+item).val(search);
+            });
+         }
 });
 
 
@@ -297,7 +307,7 @@
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                                     {{search_field.label}}
                                 </label>
-                                <input name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                                <input id='glosssearch_{{ dataset_lang.language_code_2char }}' name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                                 </div>
                             </td>
                             {% endwith %}

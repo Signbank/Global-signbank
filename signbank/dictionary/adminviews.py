@@ -228,6 +228,19 @@ class GlossListView(ListView):
         context['view_type'] = self.view_type
         context['web_search'] = self.web_search
 
+        # If the menu bar search form was used, populate the search form with the query string
+        # for all languages for which results were found.
+        if 'search' in self.request.GET and self.request.GET['search'] != '':
+            val = self.request.GET['search']
+            context['gloss_fields_to_populate'] = json.dumps([
+                language[0] for language in
+                AnnotationIdglossTranslation.objects.filter(text__iregex=val,
+                                                            gloss__lemma__dataset__in=selected_datasets)
+                    .values_list('language__language_code_2char').distinct()
+            ])
+        else:
+            context['gloss_fields_to_populate'] = json.dumps([])
+
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and self.request.user.is_authenticated():
