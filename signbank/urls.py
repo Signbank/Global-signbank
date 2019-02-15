@@ -1,7 +1,7 @@
 from django.conf.urls import *
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
-import signbank.registration.forms
+#import signbank.registration.forms # I think this is unused?
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
