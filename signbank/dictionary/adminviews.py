@@ -157,7 +157,7 @@ class GlossListView(ListView):
     view_type = 'gloss_list'
     web_search = False
     show_all = False
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
 
     def get_context_data(self, **kwargs):
@@ -1557,7 +1557,7 @@ class MorphemeListView(ListView):
 
     model = Morpheme
     search_type = 'morpheme'
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
     template_name = 'dictionary/admin_morpheme_list.html'
     paginate_by = 500
@@ -2677,7 +2677,7 @@ class HandshapeListView(ListView):
 class DatasetListView(ListView):
     model = Dataset
     # set the default dataset, this should not be empty
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
 
 
     def get_context_data(self, **kwargs):
@@ -2807,7 +2807,7 @@ class DatasetListView(ListView):
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         try:
-            dataset_object = Dataset.objects.get(name=self.dataset_name)
+            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
         except:
             messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
@@ -2837,7 +2837,7 @@ class DatasetListView(ListView):
         # Then check what kind of stuff we want
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
-        # otherwise the default dataset_name DEFAULT_DATASET is used
+        # otherwise the default dataset_name DEFAULT_DATASET_ACRONYM is used
 
         setattr(self.request, 'dataset_name', self.dataset_name)
 
@@ -2870,7 +2870,7 @@ class DatasetManagerView(ListView):
     template_name = 'dictionary/admin_dataset_manager.html'
 
     # set the default dataset, this should not be empty
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
 
 
     def get_context_data(self, **kwargs):
@@ -3179,7 +3179,7 @@ class DatasetManagerView(ListView):
         # Then check what kind of stuff we want
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
-        # otherwise the default dataset_name DEFAULT_DATASET is used
+        # otherwise the default dataset_name DEFAULT_DATASET_ACRONYM is used
 
         setattr(self.request, 'dataset_name', self.dataset_name)
 
@@ -3224,7 +3224,7 @@ class DatasetDetailView(DetailView):
     template_name = 'dictionary/dataset_detail.html'
 
     # set the default dataset, this should not be empty
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
 
     #Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):

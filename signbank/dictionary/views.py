@@ -2635,8 +2635,8 @@ def info(request):
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     # Put the default dataset in first position
-    if DEFAULT_DATASET in user_datasets_names:
-        user_datasets_names.insert(0, user_datasets_names.pop(user_datasets_names.index(DEFAULT_DATASET)))
+    if settings.DEFAULT_DATASET_ACRONYM in user_datasets_names:
+        user_datasets_names.insert(0, user_datasets_names.pop(user_datasets_names.index(settings.DEFAULT_DATASET_ACRONYM)))
 
     if user_datasets_names:
         return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')

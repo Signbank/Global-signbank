@@ -1354,7 +1354,7 @@ def get_selected_datasets_for_user(user):
         if public_datasets:
             selected_datasets = public_datasets
         else:
-            selected_datasets = [ Dataset.objects.get(acronym=DEFAULT_DATASET) ]
+            selected_datasets = [ Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM) ]
         return selected_datasets
 
 
@@ -1420,14 +1420,14 @@ def write_ecv_files_for_all_datasets():
     all_dataset_objects = Dataset.objects.all()
 
     for ds in all_dataset_objects:
-        ecv_filename = write_ecv_file_for_dataset(ds.name)
+        ecv_filename = write_ecv_file_for_dataset(ds.acronym)
         print('Saved ECV for Dataset ', ds.name, ' to file: ', ecv_filename)
 
     return True
 
 
 def write_ecv_file_for_dataset(dataset_name):
-    dataset_id = Dataset.objects.get(name=dataset_name)
+    dataset_id = Dataset.objects.get(acronym=dataset_name)
 
     query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(lemma__dataset=dataset_id)
 
