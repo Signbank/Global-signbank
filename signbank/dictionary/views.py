@@ -11,6 +11,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlquote
 from collections import OrderedDict
+from django.contrib import messages
 
 import os
 import shutil
@@ -929,6 +930,7 @@ def import_csv_create(request):
                     contextual_error_messages_lemmaidglosstranslations.append(addendum)
 
                 error += contextual_error_messages_lemmaidglosstranslations
+                messages.add_message(request, messages.ERROR, ('The Lemma translations may refer to different lemmas.'))
 
             if len(existing_lemmas_set) == 1:
                 existing_lemma = existing_lemmas[0]
@@ -1274,6 +1276,7 @@ def import_csv_update(request):
 
                 help = 'Row '+ str(nl + 1) + ': Attempt to update Lemma ID Gloss translations for Signbank ID (' + str(pk) + ")."
                 error.append(help)
+                messages.add_message(request, messages.ERROR, ('Attempt to update Lemma ID Gloss translations for Signbank ID.'))
                 continue
 
             try:
@@ -1318,6 +1321,27 @@ def import_csv_update(request):
                 if gloss not in lemmaidglosstranslations_per_gloss:
                     lemmaidglosstranslations_per_gloss[gloss] = {}
                 lemmaidglosstranslations_per_gloss[gloss][language_name] = new_value
+
+                # compare new value to existing value
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                languages = Language.objects.filter(**{language_name_column:language_name})
+                if languages:
+                    language = languages[0]
+                    lemma_idglosses = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
+                    if lemma_idglosses:
+                        lemma_idgloss_string = lemma_idglosses[0].text
+                    else:
+                        # lemma not set
+                        lemma_idgloss_string = ''
+                    if lemma_idgloss_string != new_value and new_value != 'None' and new_value != '':
+                        error_string = 'ERROR: Attempt to update Lemma ID Gloss translations: ' + new_value
+                        # print('error string: ', error_string)
+                        if error:
+                            error.append(error_string)
+                        else:
+                            error = [error_string]
+                        messages.add_message(request, messages.ERROR, ('Attempt to update Lemma ID Gloss translations.'))
+
                 continue   # avoid default field update
 
             # Updating the annotation idgloss is a special procedure, because it has relations to other parts of the

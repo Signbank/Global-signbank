@@ -341,15 +341,17 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                         # lemma not set
                         lemma_idgloss_string = ''
                     if lemma_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
-                        differences.append({'pk': gloss_id,
-                                            'dataset': current_dataset,
-                                            'annotationidglosstranslation': default_annotationidglosstranslation,
-                                            'machine_key': human_key,
-                                            'human_key': human_key,
-                                            'original_machine_value': lemma_idgloss_string,
-                                            'original_human_value': lemma_idgloss_string,
-                                            'new_machine_value': new_human_value,
-                                            'new_human_value': new_human_value})
+                        error_string = 'ERROR: Attempt to update Lemma ID Gloss translations: ' + human_key
+                        errors_found += [error_string]
+                        # differences.append({'pk': gloss_id,
+                        #                     'dataset': current_dataset,
+                        #                     'annotationidglosstranslation': default_annotationidglosstranslation,
+                        #                     'machine_key': human_key,
+                        #                     'human_key': human_key,
+                        #                     'original_machine_value': lemma_idgloss_string,
+                        #                     'original_human_value': lemma_idgloss_string,
+                        #                     'new_machine_value': new_human_value,
+                        #                     'new_human_value': new_human_value})
                 continue
 
             keywords_key_prefix = "Keywords ("

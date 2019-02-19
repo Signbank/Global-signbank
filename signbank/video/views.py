@@ -29,7 +29,7 @@ def addvideo(request):
 
             gloss_id = form.cleaned_data['gloss_id']
             gloss = get_object_or_404(Gloss, pk=gloss_id)
-            
+
             vfile = form.cleaned_data['videofile']
             
             # construct a filename for the video, use sn
@@ -38,7 +38,7 @@ def addvideo(request):
                 vfile.name = str(gloss.sn) + ".mp4"
             else:
                 vfile.name = gloss.idgloss + "-" + str(gloss.pk) + ".mp4"
-            
+
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing video for this sign
@@ -77,7 +77,7 @@ def addvideo(request):
 
             #Make sure the rights of the new file are okay
             if os.path.isfile(goal_location):
-                os.chmod(goal_location,0o660)
+                os.chmod(goal_location,0o664)
 
             # Issue #162: log the upload history
             log_entry = GlossVideoHistory(action="upload", gloss=gloss, actor=request.user,
@@ -101,10 +101,9 @@ def addvideo(request):
                 print('Error generating still image')
 
             if os.path.isfile(goal_location_small):
-                os.chmod(goal_location_small,0o660)
+                os.chmod(goal_location_small,0o664)
 
-            # TODO: provide some feedback that it worked (if
-            # immediate display of video isn't working)
+            # TODO: provide some feedback
             return redirect(redirect_url)
 
     # if we can't process the form, just redirect back to the
@@ -129,11 +128,24 @@ def deletevideo(request, videoid):
         for v in vids:
             # this will remove the most recent video, ie it's equivalent
             # to delete if version=0
+            # we are only storing one video, not versions
             v.reversion(revert=True)
 
         # Issue #162: log the deletion history
         log_entry = GlossVideoHistory(action="delete", gloss=gloss, actor=request.user)
         log_entry.save()
+
+        # deal with any existing video for this sign
+        goal_folder = WRITABLE_FOLDER + GLOSS_VIDEO_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
+        goal_filename = gloss.idgloss + '-' + str(gloss.pk) + '.mp4'
+        goal_location = goal_folder + goal_filename
+        goal_filename_small = gloss.idgloss + '-' + str(gloss.pk) + '_small' + '.mp4'
+        goal_location_small = goal_folder + goal_filename_small
+
+        if os.path.isfile(goal_location):
+            os.remove(goal_location)
+        if os.path.isfile(goal_location_small):
+            os.remove(goal_location_small)
 
         #Extra check: if the file is still there, delete it manually
         if os.path.isfile(WRITABLE_FOLDER + gloss.get_video_path()):
