@@ -7,6 +7,9 @@ from django.test import TestCase
 import json
 from django.test import Client
 from django.contrib.messages.storage.cookie import MessageDecoder
+from django.contrib import messages
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.contrib.messages.storage.cookie import CookieStorage
 
 from guardian.shortcuts import assign_perm
 
@@ -33,7 +36,7 @@ class BasicCRUDTests(TestCase):
         #self.assertGreater(total_nr_of_glosses,0) #Verify that the database is not empty
 
         # Create the glosses
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -82,7 +85,7 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(Translation.objects.all().count(), 3)
 
         #Throwing stuff away with the update functionality
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'handedness','value':'confirmed',
+        client.post(settings.PREFIX_URL + '/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'handedness','value':'confirmed',
                                                                    'field':'deletegloss'})
         found = 0
         for gloss in Gloss.objects.filter(handedness=4):
@@ -103,7 +106,7 @@ class BasicCRUDTests(TestCase):
         self.assertContains(response, 'href="/logout.html">Logout')
 
         # Get the test dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Construct the Create Gloss form data
@@ -147,7 +150,7 @@ class BasicCRUDTests(TestCase):
         assign_perm('dictionary.search_gloss', self.user)
 
         #Create the glosses
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -206,7 +209,7 @@ class BasicQueryTests(TestCase):
         client.login(username='test-user', password='test-user')
 
         #Get a dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
@@ -215,9 +218,20 @@ class BasicQueryTests(TestCase):
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
 
+        # Create a lemma in order to store the dataset with the new gloss
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
         # #Create the gloss
         new_gloss = Gloss()
         new_gloss.handedness = 4
+        new_gloss.lemma = new_lemma
         new_gloss.save()
         for language in test_dataset.translation_languages.all():
             annotationIdgloss = AnnotationIdglossTranslation()
@@ -230,10 +244,11 @@ class BasicQueryTests(TestCase):
         # response = client.get('/signs/search/?handedness=4')
         # response = client.get('/signs/search/?handedness=4', follow=True)
         response = client.get('/signs/search/?handedness=4&glosssearch_nl=test', follow=True)
+        self.assertEqual(len(response.context['object_list']), 1)
 
         #print(response)
         #print(response.context.keys())
-        #print(response.context['object_list'],response.context['glosscount'])
+        # print(response.context['object_list'],response.context['glosscount'])
         #print(response.context['selected_datasets'])
 
 class ImportExportTests(TestCase):
@@ -253,11 +268,11 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv with permission change_dataset')
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET_ACRONYM
         print('Test Dataset is: ', dataset_name)
 
         # Give the test user permission to change a dataset
-        test_dataset = Dataset.objects.get(name=dataset_name)
+        test_dataset = Dataset.objects.get(acronym=dataset_name)
         assign_perm('change_dataset', self.user, test_dataset)
         print('User has permmission to change dataset.')
 
@@ -281,7 +296,7 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv without permission')
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET_ACRONYM
         print('Test Dataset is: ', dataset_name)
 
         client = Client()
@@ -304,7 +319,7 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv anonymous user not logged in')
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET_ACRONYM
         print('Test Dataset is: ', dataset_name)
 
         client = Client()
@@ -322,7 +337,7 @@ class ImportExportTests(TestCase):
         logged_in = client.login(username=self.user.username, password='test-user')
         print(str(logged_in))
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         print('Test Dataset is: ', dataset_name)
 
         # Give the test user permission to change a dataset
@@ -354,7 +369,7 @@ class ImportExportTests(TestCase):
         logged_in = client.login(username=self.user.username, password='test-user')
         print(str(logged_in))
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         print('Test Dataset is: ', dataset_name)
 
         # Give the test user permission to change a dataset
@@ -388,8 +403,8 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
-        self.assertContains(response, 'Changes are live.')
+        response = client.post(reverse_lazy('import_csv_update'), form_data)
+        self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
 
         # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_translation_index = 1
@@ -400,7 +415,7 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
+        response = client.post(reverse_lazy('import_csv_update'), form_data)
         self.assertContains(response, 'Changes are live.')
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
@@ -415,9 +430,13 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
-        self.assertContains(response, "The following lemma idgloss translations refer to several lemma idglosses "
-                                     "instead of 0 or 1: ")
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+        # for item in response.context['request'].POST.items():
+        #     print('response item: ', item)
+        # all_messages = list(response.context['messages'])
+        # for m in all_messages:
+        #     print('response message: ', m.message)
+        self.assertContains(response, 'Import CSV Update')
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         form_data = {'update_or_create': 'update'}
@@ -431,9 +450,8 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
-        self.assertContains(response, "The following lemma idgloss translations do only partially refer to a lemma "
-                                 "idgloss: ")
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+        self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
 
     def test_Import_csv_new_gloss_for_lemma(self):
         """
@@ -444,7 +462,7 @@ class ImportExportTests(TestCase):
         logged_in = client.login(username=self.user.username, password='test-user')
         print(str(logged_in))
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         print('Test Dataset is: ', dataset_name)
 
         # Give the test user permission to change a dataset
@@ -459,7 +477,7 @@ class ImportExportTests(TestCase):
         # Prepare form data for making A NEW LemmaIdgloss + LemmaIdglossTranslations
         test_lemma_translation_index = 1
         test_annotation_translation_index = 1
-        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): dataset_name}
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): test_dataset.acronym}
         for language in test_dataset.translation_languages.all():
             form_name = '{}.lemma_id_gloss_{}'.format(gloss_id, language.language_code_2char)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
@@ -468,12 +486,12 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
+        response = client.post(reverse_lazy('import_csv_create'), form_data)
         self.assertContains(response, 'Changes are live.')
 
         # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_annotation_translation_index = 2
-        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): dataset_name}
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): test_dataset.acronym}
         for language in test_dataset.translation_languages.all():
             form_name = '{}.lemma_id_gloss_{}'.format(gloss_id, language.language_code_2char)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
@@ -482,12 +500,12 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
+        response = client.post(reverse_lazy('import_csv_create'), form_data)
         self.assertContains(response, 'Changes are live.')
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_annotation_translation_index = 3
-        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): dataset_name}
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): test_dataset.acronym}
         for index, language in enumerate(test_dataset.translation_languages.all()):
             if index == 0:
                 test_lemma_translation_index = 1
@@ -500,10 +518,13 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
-        self.assertContains(response, "To create glosses in dataset {}, the combination of Lemma ID "
-                                      "Gloss translations should either refer to an existing Lemma ID Gloss or make "
-                                      "up a completely new Lemma ID gloss.".format(dataset_name))
+        response = client.post(reverse_lazy('import_csv_create'), form_data, follow=True)
+        # for item in response.context['request'].POST.items():
+        #     print('response item: ', item)
+        # all_messages = list(response.context['messages'])
+        # for m in all_messages:
+        #     print('response message: ', m.message)
+        self.assertContains(response, "the combination of Lemma ID Gloss translations should either refer")
 
 
 class VideoTests(TestCase):
@@ -516,12 +537,16 @@ class VideoTests(TestCase):
 
     def test_create_and_delete_video(self):
 
+        client = Client()
+
+        logged_in = client.login(username='test-user', password='test-user')
+
         NAME = 'thisisatemporarytestlemmaidglosstranslation'
 
         # Create the glosses
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        default_language = test_dataset.translation_languages.first()
+        default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
         test_dataset.default_language = default_language
         test_dataset.save()
 
@@ -544,31 +569,48 @@ class VideoTests(TestCase):
         client.login(username='test-user', password='test-user')
 
         video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
-
         #We expect no video before
         response = client.get(video_url)
-        self.assertEqual(response.status_code,302)
+        # print("Video url first test: {}".format(video_url))
+        # print("Video upload response first test: {}".format(response))
+        if response.status_code == 200:
+            print('The test video already exists in the archive: ', video_url)
+            self.assertEqual(response.status_code,200)
+        else:
+            print('The test video does not exist in the archive: ', video_url)
+            self.assertEqual(response.status_code,302)
 
-        #Upload the video
-        videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
-        client.post('/video/upload/',{'gloss_id':new_gloss.pk, 'videofile': videofile,'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'})
+            #Upload the video
+            print('Proceding with video upload tests...')
+            videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
+            response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
+                                                     'videofile': videofile,
+                                                     'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
+            print("Post video response upload: {}".format(response))
+            self.assertEqual(response.status_code,200)
 
         #We expect a video now
-        response = client.get(video_url)
-        print("Video url: {}".format(video_url))
-        print("Video upload response: {}".format(response))
+        response = client.get(video_url, follow=True)
+        # print("Video url second test: {}".format(video_url))
+        # print("Video upload response second test: {}".format(response))
         self.assertEqual(response.status_code,200)
 
         #You can't see it if you log out
         client.logout()
+        print('User has logged out.')
+        print('Attempt to see video.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
         #Remove the video
         client.login(username='test-user',password='test-user')
-        client.post('/video/delete/'+str(new_gloss.pk))
+        print('User has logged in.')
+        print('Delete the uploaded video.')
+        response = client.post('/video/delete/'+str(new_gloss.pk))
+        print("Post delete video response: {}".format(response))
 
         #We expect no video anymore
+        print('Attempt to see video.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
 
@@ -585,7 +627,7 @@ class AjaxTests(TestCase):
         NAME = 'thisisatemporarytestgloss'
 
         #Create the dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         #Create a lemma
@@ -631,7 +673,7 @@ class FrontEndTests(TestCase):
         NAME = 'thisisatemporarytestgloss'
 
         #Create the dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
 
         #Create lemma
@@ -738,7 +780,7 @@ class ManageDatasetTests(TestCase):
         ANNOTATION_PREFIX = 'thisisatemporarytestannotation'
 
         # Create the dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -978,7 +1020,7 @@ class ManageDatasetTests(TestCase):
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
-                                                            language.name, self.test_dataset.name))
+                                                            language.name, self.test_dataset.acronym))
 
 
 # Helper function to retrieve contents of json-encoded message
