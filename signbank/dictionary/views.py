@@ -394,7 +394,7 @@ def import_media(request,video):
                 extension = extension[1:]  # Remove the dot
 
                 try:
-                    glosses = Gloss.objects.filter(dataset=dataset, annotationidglosstranslation__language=language,
+                    glosses = Gloss.objects.filter(lemma__dataset=dataset, annotationidglosstranslation__language=language,
                                                  annotationidglosstranslation__text__exact=filename_without_extension)
                     if glosses:
                         gloss = glosses[0]
@@ -432,9 +432,9 @@ def import_media(request,video):
                         resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
                         resizer.run()
                     except ImportError as i:
-                        print(i.message)
+                        print(i)
                     except IOError as io:
-                        print(io.message)
+                        print(io)
 
                     # Issue #255: generate still image
                     try:

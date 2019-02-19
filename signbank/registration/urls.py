@@ -14,7 +14,7 @@ from django.contrib.auth import views as auth_views
 
 # local imports
 from signbank.registration.views import activate, register, mylogin
-from signbank.registration.forms import *
+from signbank.registration.forms import RegistrationForm
 
 #It's weird that I have to set the correct success url by hand, but it doesn't work any other way
 password_reset_view = auth_views.PasswordResetView
