@@ -3765,7 +3765,7 @@ def lemma_ajax_complete(request, dataset_id, q):
 
     lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id, lemmaidglosstranslation__text__icontains=q)\
         .order_by('lemmaidglosstranslation__text')
-    lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in lemmas]
+    lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in set(lemmas)]
 
     return HttpResponse(json.dumps(lemmas_dict), {'content-type': 'application/json'})
 
