@@ -1437,11 +1437,13 @@ def write_ecv_file_for_dataset(dataset_name):
     else:
         lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE
     sort_language = 'annotationidglosstranslation__language__language_code_2char'
+    qs_empty = query_dataset.filter(**{sOrder + '__isnull': True})
     qs_letters = query_dataset.filter(**{sOrder + '__regex': r'^[a-zA-Z]'}, **{sort_language: lang_attr_name})
     qs_special = query_dataset.filter(**{sOrder + '__regex': r'^[^a-zA-Z]'}, **{sort_language: lang_attr_name})
 
     ordered = list(qs_letters.order_by(sOrder))
     ordered += list(qs_special.order_by(sOrder))
+    ordered += list(qs_empty)
 
     context = {
         'CV_ID': ECV_SETTINGS['CV_ID'] if 'CV_ID' in ECV_SETTINGS else "",
