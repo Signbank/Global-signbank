@@ -124,7 +124,6 @@
     </form>
 
 {% elif stage == 2 %}
-    <p>{% blocktrans %}Changes are live.{% endblocktrans %} {{ info }}</p>
 
     {% if error %}
 
@@ -133,6 +132,10 @@
             <li>{{ e | linebreaks }}</li>
         {% endfor %}
         </ul>
+
+    {% else %}
+
+    <p>{% blocktrans %}Changes are live.{% endblocktrans %}</p>
 
     {% endif %}
 

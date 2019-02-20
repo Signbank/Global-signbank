@@ -2,7 +2,7 @@
 {% load bootstrap3 %}
 
     <tr id = "minimalpairs_{{focus_gloss.id}}">
-        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td style="width:12em;">{{focus_gloss.lemma.dataset.name}}</td>{% endif %}
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td style="width:12em;">{{focus_gloss.lemma.dataset.acronym}}</td>{% endif %}
         <td style="width:20em;"><a href='{% url "dictionary:admin_gloss_view" pk=focus_gloss.id %}'>{{focus_gloss_translation}}</a></td>
         <td colspan="4">
         <table id = "gloss_mp_rows_{{focus_gloss.id}}" style="table-layout:fixed;width:100%;">

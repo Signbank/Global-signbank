@@ -275,7 +275,7 @@ class GlossVideo(models.Model):
                 (newname, bak) = os.path.splitext(self.videofile.name)
                 if bak != '.bak':
                     # hmm, something bad happened
-                    raise Http500()
+                    raise Exception('Unknown suffix on stored video file. Expected .bak')
                 self.version -= 1
         else:
             # find a name for the backup, a filename that isn't used already
