@@ -443,6 +443,15 @@ body {
   object-fit: cover;
 }
 
+.thumbnail_handshape
+{
+  height:115px;
+  margin: auto;
+  padding: 0px;
+  max-width: auto;
+  object-fit: cover;
+}
+
 .cropped_thumbnail
 {
   margin: -4px -50px -8px -50px
