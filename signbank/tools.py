@@ -1437,7 +1437,7 @@ def write_ecv_file_for_dataset(dataset_name):
     if dataset_id.default_language:
         lang_attr_name = dataset_id.default_language.language_code_2char
     else:
-        lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE
+        lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
     sort_language = 'annotationidglosstranslation__language__language_code_2char'
     qs_empty = query_dataset.filter(**{sOrder + '__isnull': True})
     qs_letters = query_dataset.filter(**{sOrder + '__regex': r'^[a-zA-Z]'}, **{sort_language: lang_attr_name})
