@@ -85,8 +85,8 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
         lemmaidglosstranslations = {}
         annotationidglosstranslations = {}
         lemmas_in_dataset = dataset.lemmaidgloss_set.all()
-
-        for language in dataset.translation_languages.all():
+        translation_languages = dataset.translation_languages.all()
+        for language in translation_languages:
             other_lemmas_for_language = LemmaIdglossTranslation.objects.filter(lemma__in=lemmas_in_dataset, language_id=language.id)
 
             lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
@@ -105,21 +105,18 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                 annotationidglosstranslation_text = valuedict[column_name].strip()
                 if annotationidglosstranslation_text:
                     annotationidglosstranslations[language.language_code_2char] = annotationidglosstranslation_text
-                    # The annotation idgloss translation text for a language must be unique within a dataset.
-                    lemmas_in_dataset = dataset.lemmaidgloss_set.all()
-                    glosses_with_same_text = []
-                    for lem in lemmas_in_dataset:
-                        glosses_with_text = lem.gloss_set.filter(
-                                                    annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
-                                                    annotationidglosstranslation__language=language)
-                        glosses_with_same_text += glosses_with_text
 
+                    # The annotation idgloss translation text for a language must be unique within a dataset.
+                    glosses_with_same_text = Gloss.objects.filter(lemma__dataset=dataset,
+                                                                  annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
+                                                                  annotationidglosstranslation__language=language)
                     if len(glosses_with_same_text) > 0:
                         existing_glosses[language.language_code_2char] = glosses_with_same_text
                 else:
                     error_string = 'Row ' + str(row_nr + 1) + ' has an empty ' + column_name
                     errors_found += [error_string]
-
+            else:
+                print('column name not in value dict: ', column_name)
         if existing_glosses:
             existing_gloss_set = set()
             for language_code_2char,glosses in existing_glosses.items():
@@ -159,15 +156,14 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                         language.language_code_2char in earlier_creation_annotationidgloss.keys() and \
                         annotationidglosstranslation_text in earlier_creation_annotationidgloss[language.language_code_2char]:
                     error_string = 'Row ' + str(row_nr + 1) + ' contains a duplicate Annotation ID Gloss for '+ language_name +'.'
-
                     errors_found += [error_string]
+
                 if not earlier_creation_annotationidgloss or (
                         language.language_code_2char not in earlier_creation_annotationidgloss.keys()):
                     earlier_creation_annotationidgloss[language.language_code_2char] = []
                 earlier_creation_annotationidgloss[language.language_code_2char].append(annotationidglosstranslation_text)
 
             gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
-
             lemmaidglosstranslation_dict = {}
             for language in trans_languages:
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
@@ -175,7 +171,6 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                 lemmaidglosstranslation_dict[language.language_code_2char] = lemmaidglosstranslation_text
 
             gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
-
             new_gloss.append(gloss_dict)
 
         range_of_earlier_lemmaidgloss_creation = [ v for (i,v) in earlier_creation_lemmaidgloss.items() ]

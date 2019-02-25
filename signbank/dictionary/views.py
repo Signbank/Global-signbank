@@ -691,7 +691,7 @@ def import_csv_create(request):
     earlier_creation_annotationidgloss = {}
     earlier_creation_lemmaidgloss = {}
 
-    columns_to_skip = {field.verbose_name: field for field in Gloss._meta.fields if field.name in FIELDS['frequency']}
+    # columns_to_skip = {field.verbose_name: field for field in Gloss._meta.fields if field.name in FIELDS['frequency']}
 
     #Propose changes
     if len(request.FILES) > 0:
@@ -725,6 +725,8 @@ def import_csv_create(request):
                 continue
             elif len(line) == 0:
                 continue
+            # if nl < 100:
+            #     print('line ', str(nl), ': ', line)
 
             values = csv.reader([line], delimiter=delimiter).__next__()
             value_dict = {}
@@ -738,8 +740,7 @@ def import_csv_create(request):
                             error.append(e)
                             fatal_error = True
                             break
-                        if keys[nv] not in columns_to_skip:
-                            value_dict[keys[nv]] = value
+                        value_dict[keys[nv]] = value
                     elif value:
                         # empty column header
                         e = 'Row '+str(nl + 1) + ': Extra data found in column without header: ' + value
@@ -770,6 +771,7 @@ def import_csv_create(request):
                 fatal_error = True
                 break
             if dataset_name not in seen_dataset_names:
+                # only process a dataset_name once for the csv file being imported
                 # catch possible empty values for dataset, primarily for pretty printing error message
                 if dataset_name == '' or dataset_name == None or dataset_name == 0 or dataset_name == 'NULL':
                     e_dataset_empty = 'Row '+str(nl + 1) + ': The Dataset is missing.'
@@ -852,9 +854,11 @@ def import_csv_create(request):
                     if len(error) > 0:
                         fatal_error = True
                         break
+            else:
+                pass
 
-
-            if fatal_error:
+            if len(seen_datasets) == 0 or fatal_error:
+                print('fatal error: ', error)
                 break
 
             # The Lemma ID Gloss may already exist.
@@ -875,30 +879,34 @@ def import_csv_create(request):
             row_error = False
 
             existing_lemmas = []
-            for language, term in lemmaidglosstranslations.items():
-                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                try:
-                    existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset,
-                                                                               language=language,
-                                                                               text=term).lemma)
-                    help = 'Row ' + str(nl + 1) + ": Existing Lemma ID Gloss (" + language_name + '): ' + term
-                    contextual_error_messages_lemmaidglosstranslations.append(help)
-                except ObjectDoesNotExist as e:
-                    if term:
-                        other_language_for_term = LemmaIdgloss.objects.filter(dataset=dataset,
-                                                                              lemmaidglosstranslation__text=term)
-                        if other_language_for_term and lemmaidglosstranslations[language]:
-                            help = 'Row ' + str(nl + 1) + ': Wrong lemma translation for Lemma ID Gloss (' + language_name + '): ' + term
-                            row_error = True
-                            contextual_error_messages_lemmaidglosstranslations.append(help)
-                        else:
-                            help = 'Row ' + str(nl + 1) + ': New Lemma ID Gloss (' + language_name + '): ' + term
-                            contextual_error_messages_lemmaidglosstranslations.append(help)
-                    else:
-                        row_error = True
-                        help = 'Row ' + str(nl + 1) + ': Lemma ID Gloss (' + language_name + ') is empty'
+            existing_lemmas_for_dataset = LemmaIdgloss.objects.filter(dataset=seen_datasets[0])
+            # see if there are any lemmas for this dataset
+            if existing_lemmas_for_dataset:
+                for language, term in lemmaidglosstranslations.items():
+                    language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                    try:
+                        existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset,
+                                                                                   language=language,
+                                                                                   text=term).lemma)
+                        help = 'Row ' + str(nl + 1) + ": Existing Lemma ID Gloss (" + language_name + '): ' + term
                         contextual_error_messages_lemmaidglosstranslations.append(help)
-                    # pass
+                    except ObjectDoesNotExist as e:
+                        print('exception looking up lemma translation, row ', str(nl))
+                        if term:
+                            other_language_for_term = LemmaIdgloss.objects.filter(dataset=dataset,
+                                                                                  lemmaidglosstranslation__text=term)
+                            if other_language_for_term and lemmaidglosstranslations[language]:
+                                help = 'Row ' + str(nl + 1) + ': Wrong lemma translation for Lemma ID Gloss (' + language_name + '): ' + term
+                                row_error = True
+                                contextual_error_messages_lemmaidglosstranslations.append(help)
+                            else:
+                                help = 'Row ' + str(nl + 1) + ': New Lemma ID Gloss (' + language_name + '): ' + term
+                                contextual_error_messages_lemmaidglosstranslations.append(help)
+                        else:
+                            row_error = True
+                            help = 'Row ' + str(nl + 1) + ': Lemma ID Gloss (' + language_name + ') is empty'
+                            contextual_error_messages_lemmaidglosstranslations.append(help)
+                        # pass
             existing_lemmas_set = set(existing_lemmas)
 
             if row_error:
@@ -946,7 +954,8 @@ def import_csv_create(request):
                         addendum = 'The Lemma translations refer to different lemmas.'
                         contextual_error_messages_lemmaidglosstranslations.append(addendum)
                     error += contextual_error_messages_lemmaidglosstranslations
-
+            if error:
+                print('error row ', str(nl), error)
             # Annotation ID Gloss needs to be checked dynamically for each dataset language.
             for language in dataset.translation_languages.all():
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
@@ -959,16 +968,26 @@ def import_csv_create(request):
 
             # break at this level to get out of iteration over csv lines in case of missing column
             if fatal_error:
+                print('fatal error row ', str(nl), ': ', error)
                 break
 
-            (new_gloss, already_exists, error_create, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss) \
-                = create_gloss_from_valuedict(value_dict,dataset,nl, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss)
+            # put creation of value_dict for the new gloss inside an exception to catch any unexpected errors
+            # errors are kept track of as user feedback, but the code needs to be safe
+            try:
+                (new_gloss, already_exists, error_create, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss) \
+                    = create_gloss_from_valuedict(value_dict,dataset,nl, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss)
+            except:
+                print('got this far in processing loop before error in row ', str(nl))
+                break
             creation += new_gloss
             gloss_already_exists += already_exists
             if len(error_create):
                 # more than one error found
                 errors_found_string = '\n'.join(error_create)
                 error.append(errors_found_string)
+                # this break is new!
+                # without this break the code hangs
+                break
             continue
 
         stage = 1
