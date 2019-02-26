@@ -456,7 +456,13 @@ class GlossListView(ListView):
                     value = getattr(gloss,f.name)
 
                 # for csv export, the text fields need quotes around them to stop e.g., semicolons from spliting the data into multiple columns
-                if f.name in ['phonetVar', 'mouthing', 'mouthG', 'phonOth'] and value:
+
+                fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+
+                char_fields_not_null = [f.name for f in Gloss._meta.fields
+                                        if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+
+                if f.name in char_fields_not_null and value:
                     value = str(value)
                 if f.name == 'weakdrop' or f.name == 'weakprop':
                     if value == None:
