@@ -70,7 +70,7 @@
         {% csrf_token %}
 
         {% if error %}
-
+            <h4>{% trans "Errors" %}</h4>
             <ul>
             {% for e in error %}
                 <li>{{ e | linebreaks }}</li>
@@ -81,7 +81,7 @@
 
             {% if creation or gloss_already_exists %}
                 {% if gloss_already_exists %}
-                {% trans "Already existing Annotation ID Glosses:" %}
+                <h4>{% trans "Already existing Annotation ID Glosses:" %}</h4>
                 <table class="table table-striped">
                     <tr>
                         <th>{% trans "Dataset" %}</th>
@@ -120,7 +120,7 @@
                 </table>
                 {% endif %}
                 {% if creation %}
-                {% trans "Glosses to Create:" %}
+                <h4>{% trans "Glosses to Create:" %}</h4>
                 <table class="table table-striped">
                     <tr>
                         <th>{% trans "Dataset" %}</th>
