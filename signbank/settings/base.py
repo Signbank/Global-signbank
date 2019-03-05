@@ -221,9 +221,6 @@ QUICK_UPDATE_GLOSS_FIELDS = ['signlanguage', 'dialect']
 # should we always require a login for viewing dictionary content
 ALWAYS_REQUIRE_LOGIN = True
 
-# name of the primary css file, relative to the media directory
-PRIMARY_CSS = "bootstrap_css/test-server.css"
-
 
 # do we allow people to register for the site
 ALLOW_REGISTRATION = True
@@ -252,31 +249,6 @@ VIDEO_ASPECT_RATIO = 3.0/4.0
 FORCE_LOWERCASE_TAGS = False
 
 PRIMARY_CSS = "css/"+SIGNBANK_VERSION_CODE+"/main.css"
-
-
-# defines the aspect ratio for videos
-#VIDEO_ASPECT_RATIO = 360.0/640.0
-
-
-# show/don't show sign navigation
-SIGN_NAVIGATION = False
-
-# show the number signs page or an under construction page?
-#SHOW_NUMBERSIGNS = False
-
-# do we show the 'advanced search' form and implement 'safe' search?
-#ADVANCED_SEARCH = False
-
-# which definition fields do we show and in what order?
-#DEFINITION_FIELDS = []
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {},
-    'loggers': {},
-}
-
 
 import mimetypes
 mimetypes.add_type("video/mp4", ".mov", True)
