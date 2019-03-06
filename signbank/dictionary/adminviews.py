@@ -253,7 +253,9 @@ class GlossListView(ListView):
         else:
             context['SHOW_MORPHEME_SEARCH'] = False
 
-        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = settings.MULTIPLE_SELECT_GLOSS_FIELDS
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
         if hasattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'):
             context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = settings.DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
@@ -454,7 +456,13 @@ class GlossListView(ListView):
                     value = getattr(gloss,f.name)
 
                 # for csv export, the text fields need quotes around them to stop e.g., semicolons from spliting the data into multiple columns
-                if f.name in ['phonetVar', 'mouthing', 'mouthG', 'phonOth'] and value:
+
+                fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+
+                char_fields_not_null = [f.name for f in Gloss._meta.fields
+                                        if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+
+                if f.name in char_fields_not_null and value:
                     value = str(value)
                 if f.name == 'weakdrop' or f.name == 'weakprop':
                     if value == None:
@@ -693,7 +701,9 @@ class GlossListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
-        for fieldnamemulti in settings.MULTIPLE_SELECT_GLOSS_FIELDS:
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+
+        for fieldnamemulti in multiple_select_gloss_fields:
 
             fieldnamemultiVarname = fieldnamemulti + '[]'
             fieldnameQuery = fieldnamemulti + '__in'
@@ -705,7 +715,7 @@ class GlossListView(ListView):
                 qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
-        fieldnames = [ f for f in fieldnames if f not in settings.MULTIPLE_SELECT_GLOSS_FIELDS ]
+        fieldnames = [ f for f in fieldnames if f not in multiple_select_gloss_fields ]
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
@@ -1649,7 +1659,10 @@ class MorphemeListView(ListView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
-        context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = settings.MULTIPLE_SELECT_MORPHEME_FIELDS
+
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+        context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = multiple_select_morpheme_fields
 
         return context
 
@@ -1712,7 +1725,7 @@ class MorphemeListView(ListView):
             qs = qs.filter(definition__published=val)
 
 
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
 
         # SignLanguage and basic property filters
         # allows for multiselect
@@ -1732,7 +1745,8 @@ class MorphemeListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
-        for fieldnamemulti in settings.MULTIPLE_SELECT_MORPHEME_FIELDS:
+        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+        for fieldnamemulti in multiple_select_morpheme_fields:
 
             fieldnamemultiVarname = fieldnamemulti + '[]'
             fieldnameQuery = fieldnamemulti + '__in'
@@ -1744,7 +1758,7 @@ class MorphemeListView(ListView):
                 qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
-        fieldnames = [ f for f in fieldnames if f not in settings.MULTIPLE_SELECT_MORPHEME_FIELDS ]
+        fieldnames = [ f for f in fieldnames if f not in multiple_select_morpheme_fields ]
         for fieldname in fieldnames:
 
             if fieldname in get:

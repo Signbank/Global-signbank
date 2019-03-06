@@ -363,7 +363,12 @@ def update_gloss(request, glossid):
                     value = (value.lower() in [_('Yes').lower(),'true',True,1])
 
             # special value of 'notset' or -1 means remove the value
-            if (value == 'notset' or value == -1 or value == '') and field not in ['phonetVar', 'mouthG', 'mouthing', 'phonOth']:
+            fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+
+            char_fields_not_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+
+            if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
@@ -1752,7 +1757,12 @@ def update_morpheme(request, morphemeid):
                 value = (value == 'Yes')
 
             # special value of 'notset' or -1 means remove the value
-            if value == 'notset' or value == -1 or value == '':
+            fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+
+            char_fields_not_null = [f.name for f in Morpheme._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+
+            if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
                 morpheme.__setattr__(field, None)
                 morpheme.save()
                 newvalue = ''

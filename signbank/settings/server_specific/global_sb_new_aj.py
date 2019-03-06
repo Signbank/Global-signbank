@@ -64,12 +64,6 @@ FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
                        'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
 
-# The multiple select fields should be pull-down lists in the templates
-MULTIPLE_SELECT_GLOSS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                             'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
-                             'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
-MULTIPLE_SELECT_MORPHEME_FIELDS = ['namEnt', 'semField', 'wordClass', 'mrpType']
-
 MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
 MINIMAL_PAIRS_COUNT = len(MINIMAL_PAIRS_FIELDS)

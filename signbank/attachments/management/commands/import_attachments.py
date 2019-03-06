@@ -15,13 +15,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         if len(args) != 1:
-            print "Usage: import_attachments", self.args
+            print("Usage: import_attachments", self.args)
             return
         try:
             user = args[0]
             user = User.objects.get(username=user)
         except:
-            print "unknown user", user
+            print("unknown user", user)
             return
 
         dirname = os.path.join(settings.MEDIA_ROOT, settings.ATTACHMENT_LOCATION)
@@ -32,6 +32,6 @@ class Command(BaseCommand):
                 if len(existing) == 0:
                     a = Attachment(file=path, uploader=user, description=f)
                     a.save()
-                    print "storing ", path
+                    print("storing ", path)
                 else:
-                    print "not storing ", path
+                    print("not storing ", path)

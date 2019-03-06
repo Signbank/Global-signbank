@@ -72,6 +72,11 @@ for language in Language.objects.all():
 
 def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss):
 
+    # print('row ', str(row_nr+1), ' create gloss from valuedict, valuedict: ', valuedict)
+    # print('row ', str(row_nr+1), ' create gloss from valuedict, earlier_creation_same_csv: ', earlier_creation_same_csv)
+    # print('row ', str(row_nr+1), 'create gloss from valuedict, earlier_creation_annotationidgloss: ', earlier_creation_annotationidgloss)
+    # print('row ', str(row_nr+1), 'create gloss from valuedict, earlier_creation_lemmaidgloss: ', earlier_creation_lemmaidgloss)
+
     errors_found = []
     new_gloss = []
     already_exists = []
@@ -79,27 +84,39 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
 
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
-
+        empty_lemma_translation = False
         existing_glosses = {}
         existing_lemmas = {}
+        existing_lemmas_list = []
+        new_lemmas = {}
         lemmaidglosstranslations = {}
         annotationidglosstranslations = {}
-        lemmas_in_dataset = dataset.lemmaidgloss_set.all()
         translation_languages = dataset.translation_languages.all()
         for language in translation_languages:
-            other_lemmas_for_language = LemmaIdglossTranslation.objects.filter(lemma__in=lemmas_in_dataset, language_id=language.id)
 
             lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
+            # print('column name: ', lemmaidgloss_comumn_name)
+            # print('value dict: ', valuedict)
             if lemmaidgloss_comumn_name in valuedict:
                 lemmaidglosstranslation_text = valuedict[lemmaidgloss_comumn_name].strip()
+                # print('lemma translation text: ', lemmaidglosstranslation_text)
                 lemmaidglosstranslations[language.language_code_2char] = lemmaidglosstranslation_text
 
-                lemmas_with_same_text = []
-                for lem in other_lemmas_for_language:
-                    if lem.text == lemmaidglosstranslation_text:
-                        lemmas_with_same_text.append(lem)
-                    existing_lemmas[language.language_code_2char] = lemmas_with_same_text
+                lemmatranslation_for_this_text_language = LemmaIdglossTranslation.objects.filter(lemma__dataset=dataset,
+                                                                                   language=language, text__exact=lemmaidglosstranslation_text)
+                # print('OTHER LEMMAS FOR LANGUAGE ', language, ': ', other_lemmas_for_language)
+                if lemmatranslation_for_this_text_language:
+                    one_lemma = lemmatranslation_for_this_text_language[0].lemma
+                    existing_lemmas[language.language_code_2char] = one_lemma
+                    if not one_lemma in existing_lemmas_list:
+                        existing_lemmas_list.append(one_lemma)
+                    # print('saved one lemma')
+                elif not lemmaidglosstranslation_text:
+                    empty_lemma_translation = True
+                else:
+                    new_lemmas[language.language_code_2char] = lemmaidglosstranslation_text
 
+            # print('row ', str(row_nr+1), ' existing lemmas: ', existing_lemmas)
             column_name = "Annotation ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
             if column_name in valuedict:
                 annotationidglosstranslation_text = valuedict[column_name].strip()
@@ -117,6 +134,12 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                     errors_found += [error_string]
             else:
                 print('column name not in value dict: ', column_name)
+        # print('lemma translations: ', lemmaidglosstranslations)
+        # print('annotation translations: ', annotationidglosstranslations)
+        # print('existing glosses: ', existing_glosses)
+        # print('EXISTING LEMMAS: ', existing_lemmas)
+        # print('new gloss: ', new_gloss)
+        # print('already exists before if: ', already_exists)
         if existing_glosses:
             existing_gloss_set = set()
             for language_code_2char,glosses in existing_glosses.items():
@@ -139,10 +162,11 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                             lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
                             lemmaidglosstranslation_dict[lang.language_code_2char] = lemmaidglosstranslation_text
                         gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
-
+                        # print('gloss dict: ', gloss_dict)
                         already_exists.append(gloss_dict)
                         existing_gloss_set.add(gloss)
-
+            # print('already exists after loop: ', already_exists)
+            # print('existing gloss set: ', existing_gloss_set)
         else:
             gloss_dict = {'gloss_pk' : str(row_nr + 1), 'dataset': dataset }
             trans_languages = [ l for l in dataset.translation_languages.all() ]
@@ -164,46 +188,83 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                 earlier_creation_annotationidgloss[language.language_code_2char].append(annotationidglosstranslation_text)
 
             gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
+
             lemmaidglosstranslation_dict = {}
             for language in trans_languages:
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
                 lemmaidglosstranslation_dict[language.language_code_2char] = lemmaidglosstranslation_text
 
+                # if earlier_creation_lemmaidgloss and \
+                #         language.language_code_2char in earlier_creation_lemmaidgloss.keys() and \
+                #         lemmaidglosstranslation_text in earlier_creation_lemmaidgloss[language.language_code_2char]:
+                #     error_string = 'Row ' + str(row_nr + 1) + ' contains a duplicate Annotation ID Gloss for '+ language_name +'.'
+                #     errors_found += [error_string]
+
+                # if not earlier_creation_lemmaidgloss or (
+                #         language.language_code_2char not in earlier_creation_lemmaidgloss.keys()):
+                #     earlier_creation_lemmaidgloss[language.language_code_2char] = []
+                # earlier_creation_lemmaidgloss[language.language_code_2char].append(lemmaidglosstranslation_text)
+
+
             gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
+            # print('gloss dict inside of else: ', gloss_dict)
             new_gloss.append(gloss_dict)
+        # print('already exists: ', already_exists)
+        if len(existing_lemmas_list) > 0:
+            # print('************************************')
+            # print('existing lemmas list: ', existing_lemmas_list)
+            # print('existing lemmas dict: ', existing_lemmas)
+            # print('new lemmas dict: ', new_lemmas)
+            # print('lemmaidglosstranslations: ', lemmaidglosstranslations)
+            if len(existing_lemmas_list) > 1:
+                print('TOOLS more than one existing lemma in row ', str(row_nr+1))
+            elif empty_lemma_translation:
+                print('TOOLS exactly one lemma matches, but one of the translations in the csv is empty')
+            if len(new_lemmas.keys()) and len(existing_lemmas.keys()):
+                print('TOOLS existing and new lemmas in row ', str(row_nr+1))
+            # for (lang, lemmatrans) in lemmaidglosstranslations:
+            #     for
+        # print('earlier_creation_lemmaidgloss: ', earlier_creation_lemmaidgloss)
 
-        range_of_earlier_lemmaidgloss_creation = [ v for (i,v) in earlier_creation_lemmaidgloss.items() ]
-
-        if range_of_earlier_lemmaidgloss_creation and lemmaidglosstranslations not in range_of_earlier_lemmaidgloss_creation:
-            for (row, lemma_dict) in earlier_creation_lemmaidgloss.items():
-
-                for (k,t) in lemma_dict.items():
-                    if lemmaidglosstranslations[k] == t:
-                        # found the partially matched row
-                        this_column_name = table_column_name_lemma_id_gloss_translations[k]
-
-                        error_string = 'Row ' + str(row_nr + 1) + ': Same value as Row ' + str(row) + ' for ' + this_column_name
-                        errors_found += [error_string]
-                        lemma_dict_keys = lemma_dict.keys()
-                        for other_k in lemma_dict_keys:
-                            other_column_name = table_column_name_lemma_id_gloss_translations[other_k]
-                            if lemmaidglosstranslations[other_k] != lemma_dict[other_k]:
-
-                                error_string = 'Row ' + str(row_nr + 1) + ': Different value than Row ' + str(row) + ' for ' + other_column_name
-                                errors_found += [error_string]
+        # print('existing gloss set: ', existing_gloss_set)
+        # print('new gloss after appending gloss_dict: ', new_gloss)
+        # range_of_earlier_lemmaidgloss_creation = [ v for (i,v) in earlier_creation_lemmaidgloss.items() ]
+        #
+        # if range_of_earlier_lemmaidgloss_creation and lemmaidglosstranslations not in range_of_earlier_lemmaidgloss_creation:
+        #     for (row, lemma_dict) in earlier_creation_lemmaidgloss.items():
+        #
+        #         for (k,t) in lemma_dict.items():
+        #             if lemmaidglosstranslations[k] == t:
+        #                 # found the partially matched row
+        #                 this_column_name = table_column_name_lemma_id_gloss_translations[k]
+        #
+        #                 error_string = 'Row ' + str(row_nr + 1) + ': Same value as Row ' + str(row) + ' for ' + this_column_name
+        #                 errors_found += [error_string]
+        #                 lemma_dict_keys = lemma_dict.keys()
+        #                 for other_k in lemma_dict_keys:
+        #                     other_column_name = table_column_name_lemma_id_gloss_translations[other_k]
+        #                     if lemmaidglosstranslations[other_k] != lemma_dict[other_k]:
+        #
+        #                         error_string = 'Row ' + str(row_nr + 1) + ': Different value than Row ' + str(row) + ' for ' + other_column_name
+        #                         errors_found += [error_string]
+        # if already_exists:
+        #     print('gloss already exists, new gloss is: ', new_gloss)
+        #     error_string = 'Row ' + str(row_nr + 1) + ' is a gloss that already exists.'
+        #     errors_found += [error_string]
         range_of_earlier_creation = [ v for (i,v) in earlier_creation_same_csv.items() ]
         if earlier_creation_same_csv and new_gloss in range_of_earlier_creation:
             error_string = 'Row ' + str(row_nr + 1) + ' is a duplicate gloss creation.'
-
             errors_found += [error_string]
 
     # save the parameters for the new gloss under the row number
     # make sure this gloss isn't being created twice
-    if len(errors_found) == 0:
+    if len(errors_found) == 0 and len(already_exists) == 0:
+        # print('no errors found, add new gloss to earlier creation, add lemma to earlier creation: ', lemmaidglosstranslations)
         earlier_creation_same_csv[str(row_nr+1)] = new_gloss
         earlier_creation_lemmaidgloss[str(row_nr+1)] = lemmaidglosstranslations
-
+    # else:
+    #     print('errors found: ', errors_found)
     return (new_gloss, already_exists, errors_found, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss)
 
 def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updates_same_csv, earlier_updates_lemmaidgloss):

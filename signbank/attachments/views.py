@@ -25,8 +25,8 @@ def upload_file(request):
             description = form.cleaned_data['description']
             attachment = Attachment(file=request.FILES['file'], description=description, uploader=request.user)
             attachment.save()
-            return HttpResponseRedirect('/attachments/')
-    return HttpResponseRedirect('/attachments/')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/attachments/')
+    return HttpResponseRedirect(settings.PREFIX_URL + '/attachments/')
 
 
 class AttachmentListView(ListView):
