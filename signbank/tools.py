@@ -67,7 +67,9 @@ class MachineValueNotFoundError(Exception):
 
 table_column_name_lemma_id_gloss_translations = {}
 for language in Language.objects.all():
-    lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % language.name_en
+    
+    lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
+
     table_column_name_lemma_id_gloss_translations[language.language_code_2char] = lemmaidgloss_comumn_name
 
 def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss):
