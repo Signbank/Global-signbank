@@ -3362,6 +3362,13 @@ class DatasetDetailView(DetailView):
 
 def dataset_field_choices_view(request):
 
+    # check that the user is logged in
+    if request.user.is_authenticated():
+        pass
+    else:
+        messages.add_message(request, messages.ERROR, ('Please login to use this functionality.'))
+        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+
     context = {}
     context['field_choices'] = sorted(FieldChoice.objects.all(),key=lambda x: (x.field,x.english_name))
     context['datasets'] = [(dataset,dataset.exclude_choices.all()) for dataset in get_objects_for_user(request.user, 'change_dataset', Dataset,accept_global_perms=False)]
