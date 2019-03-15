@@ -31,6 +31,7 @@ LANGUAGES = (
 LANGUAGE_CODE = "en-us"
 
 DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en_US'}
+DEFAULT_LANGUAGE_HEADER_COLUMN = {'English': 'name'}
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = False
 
