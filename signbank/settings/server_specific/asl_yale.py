@@ -45,13 +45,6 @@ FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconT
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
-# The multiple select fields should be pull-down lists in the templates
-MULTIPLE_SELECT_GLOSS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                             'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
-                             'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
-MULTIPLE_SELECT_MORPHEME_FIELDS = ['namEnt', 'semField', 'wordClass', 'mrpType']
-
-
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
 ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {
