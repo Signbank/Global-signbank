@@ -272,16 +272,7 @@ class GlossSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class':'form-control'}
 
         model = Gloss
-        fields = ('morph', 'sense',
-                  'sn', 'StemSN', 'comptf', 'compound',
-                  'inWeb', 'isNew',
-                  'locVirtObj',
-                  'useInstr',
-                   'repeat', 'altern',
-                   'mouthG',
-                   'mouthing', 'phonetVar',
-                   'iconImg','iconType',
-                  'valence','concConcSet')
+        fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew']
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
@@ -382,16 +373,7 @@ class MorphemeSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Morpheme
-        fields = ('morph', 'sense',
-                  'sn', 'StemSN', 'comptf', 'compound',
-                  'domhndsh', 'subhndsh', 'locprim', 'locVirtObj',
-                  'handedness', 'useInstr',
-                  'relatArtic',
-                  'relOriMov', 'relOriLoc', 'oriCh', 'handCh', 'repeat', 'altern', 'movSh', 'movDir',
-                  'contType', 'mouthG',
-                  'mouthing', 'phonetVar',
-                  'iconImg', 'iconType',
-                  'valence', 'concConcSet')
+        fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew']
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
