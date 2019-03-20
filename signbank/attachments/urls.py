@@ -3,7 +3,7 @@ from signbank.attachments.views import *
 
 urlpatterns = [
     
-    url(r'^$', AttachmentListView.as_view(), name="attachments"),
+    url(r'^$', permission_required('attachments.add_attachment') (AttachmentListView.as_view()), name="attachments"),
     url(r'^upload/', upload_file),
 ]
 

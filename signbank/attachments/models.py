@@ -14,3 +14,13 @@ class Attachment(models.Model):
     date = models.DateField(auto_now=True)
     uploader = models.ForeignKey(authmodels.User)
 
+    def get_absolute_url(self):
+
+        return self.file.url
+
+    def get_filename(self):
+
+        return self.file.name
+
+    def __str__(self):
+        return self.file.name

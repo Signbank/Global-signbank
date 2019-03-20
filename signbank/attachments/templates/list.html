@@ -14,6 +14,7 @@
     The files are listed below once uploaded and can be referenced by their URL
     in any page.  The URL is listed after the file link below.</p>
 
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
 
 
         <form enctype="multipart/form-data" method="post" action="{{PREFIX_URL}}/attachments/upload/">
@@ -34,7 +35,7 @@
         <table>
             <tr><th style="width:300px">{% trans "File link" %}</th><th>{% trans "URL" %}</th></tr>
         {% for o in object_list %}
-            <tr><td><a href="{{o.file.url}}">{{o.description}}</a></td><td>{{o.file.url}}</td></tr>
+            <tr><td><a href="{{protected_media_url}}{{o.get_filename}}">{{o.description}}</a></td><td>{{protected_media_url}}{{o.get_filename}}</td></tr>
         {% endfor %}
         </table>
         {% endif %}
