@@ -99,6 +99,8 @@
         <tr><th>{% trans "Copyright statement" %}</th>
             <td class='edit edit_area' id='copyright' name='copyright'
                 placeholder='{% trans "Copyright statement" %}' value="{{datasetform.copyright.value|default:''}}">{{dataset.copyright}}</td></tr>
-
+        <tr><th>{% trans "Reference" %}</th>
+            <td class='edit edit_area' id='reference' name='reference'
+                placeholder='{% trans "Reference" %}' value="{{datasetform.reference.value|default:''}}">{{dataset.reference}}</td></tr>
     </table>
 {% endblock %}
