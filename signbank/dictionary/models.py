@@ -1897,11 +1897,11 @@ class Dataset(models.Model):
                                                         "This is different than the software code license.")
     copyright = models.TextField(blank=True, help_text="Copyright. Content license."
                                                         "This is different than the software code license.")
-    #reference = models.TextField(blank=True, help_text="")
+    reference = models.TextField(blank=True, help_text="")
     acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
-    exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices")
+    exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True, null=True)
 
     class Meta:
         permissions = (

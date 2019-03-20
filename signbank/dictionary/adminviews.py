@@ -135,9 +135,9 @@ def order_queryset_by_sort_order(get, qs):
             qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'}, **{sort_language:lang_attr_name})
 
             sort_key = sOrder
-            ordered = list(qs_letters.order_by(sort_key))
-            ordered += list(qs_special.order_by(sort_key))
-            ordered += list(qs_empty)
+            ordered = list(set(qs_letters.order_by(sort_key)))
+            ordered += list(set(qs_special.order_by(sort_key)))
+            ordered += list(set(qs_empty))
         else:
             ordered = qs
         if bReversed:
@@ -167,6 +167,9 @@ class GlossListView(ListView):
         # Retrieve the search_type,so that we know whether the search should be restricted to Gloss or not
         if 'search_type' in self.request.GET:
             self.search_type = self.request.GET['search_type']
+
+        if 'search' in self.request.GET:
+            context['menu_bar_search'] = self.request.GET['search']
 
         # self.request.session['search_type'] = self.search_type
 
@@ -765,6 +768,7 @@ class GlossListView(ListView):
             qs = qs & tqs
 
         qs = qs.distinct()
+        # print("COUNT: {}".format(qs.count()))
 
         if 'nottags' in get and get['nottags'] != '':
             vals = get.getlist('nottags')
@@ -3361,6 +3365,13 @@ class DatasetDetailView(DetailView):
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/detail/' + str(dataset_object.id))
 
 def dataset_field_choices_view(request):
+
+    # check that the user is logged in
+    if request.user.is_authenticated():
+        pass
+    else:
+        messages.add_message(request, messages.ERROR, ('Please login to use this functionality.'))
+        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
     context = {}
     context['field_choices'] = sorted(FieldChoice.objects.all(),key=lambda x: (x.field,x.english_name))

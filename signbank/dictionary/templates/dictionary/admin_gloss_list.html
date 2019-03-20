@@ -105,14 +105,10 @@
          });
          $('#id_dialects').val(null).trigger('change');
 
-         // Populate query form fields from 'search' field
-         if(!jQuery.isEmptyObject(gloss_fields_to_populate)) {
-            let searchParams = new URLSearchParams(window.location.search);
-            let search = searchParams.get('search');
-            gloss_fields_to_populate.forEach(function(item, index) {
-                $('#glosssearch_'+item).val(search);
-            });
-         }
+         // Empty menu_bar_search_mirror
+         $("#adminsearch :input").change(function() {
+            $("#menu_bar_search_mirror").val("");
+         });
 });
 
 
@@ -295,6 +291,9 @@
                 <div class="hidden">
                     <input name='sortOrder' class='form-control' value='lemma__lemmaidglosstranslation__text' >
                     <input name='search_type' class='form-control' value='{{search_type}}'>
+                </div>
+                <div>
+                    <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{ menu_bar_search }}"/>
                 </div>
                 <div>
                     <table class='table' id='searchfields'>

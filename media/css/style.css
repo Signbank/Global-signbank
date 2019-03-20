@@ -663,7 +663,7 @@ tr.rotated th {
 .exclude-field-choices
 {
     overflow-y: auto;
-    height: 600px;
+    height: 64vh;
 }
 
 .exclude-field-choices th

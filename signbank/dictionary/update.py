@@ -1975,6 +1975,11 @@ def update_dataset(request, datasetid):
                 setattr(dataset, field, value)
                 dataset.save()
                 return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+        elif field == 'reference':
+                original_value = getattr(dataset, field)
+                setattr(dataset, field, value)
+                dataset.save()
+                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         elif field == 'conditions_of_use':
                 original_value = getattr(dataset, field)
                 setattr(dataset, field, value)
