@@ -1300,22 +1300,38 @@ class Gloss(models.Model):
 
     def get_image_path(self,check_existance=True):
         """Returns the path within the writable and static folder"""
-
+        check_existance = True
         foldername = self.idgloss[:2]+'/'
         filename_without_extension = self.idgloss+'-'+str(self.pk)
 
         dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername
 
+        if not os.path.exists(dir_path):
+            # folder for gloss image storage not found, hence no image
+            return None
         if check_existance:
-            try:
-                for filename in os.listdir(dir_path):
-                    if not re.match(r'.*_\d+$', filename):
-                        existing_file_without_extension = os.path.splitext(filename)[0]
-                        if filename_without_extension == existing_file_without_extension:
-                            return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
-            except OSError:
-                return None
+            files = [f for f in os.listdir(dir_path.encode('utf-8'))]
+            for filename in files:
+                unicode_filename = filename.decode('utf-8')
+
+                if not re.match(b'.*_\d+$', filename):
+                    existing_file_without_extension = os.path.splitext(filename)[0]
+                    unicode_existing_file_without_extension = existing_file_without_extension.decode('utf-8')
+                    if filename_without_extension == unicode_existing_file_without_extension:
+                        path_to_image = settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+ unicode_filename
+                        return path_to_image
+                    else:
+                        # try quoted filename
+                        import urllib.parse
+                        quoted_filename = urllib.parse.quote(self.idgloss, safe='')
+                        quoted_filename_without_extension = quoted_filename +'-'+str(self.pk)
+                        if quoted_filename_without_extension == unicode_existing_file_without_extension:
+                            path_to_image = settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + unicode_filename
+                            return path_to_image
+
         else:
+            # check existence has been set to true at the start of the method, this is not executed
+            # note that this returns a filename without an extension, that looks wrong
             return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename_without_extension
 
 
@@ -1342,13 +1358,26 @@ class Gloss(models.Model):
         """Return the video object for this gloss or None if no video available"""
 
         video_path = self.get_video_path()
-
-        if os.path.isfile(settings.WRITABLE_FOLDER+'/'+video_path):
+        filepath = settings.WRITABLE_FOLDER+'/'+video_path
+        if os.path.exists(filepath.encode('utf-8')):
             return video_path
         else:
-            return ''
+            # construct quoted filename path to catch special characters
+            import urllib.parse
+            unquoted_filename = urllib.parse.quote(self.idgloss)
+            foldername = self.idgloss[:2]
 
-        
+            if len(foldername) == 1:
+                foldername += '-'
+
+            videopath = 'glossvideo/'+foldername+'/'+unquoted_filename+'-'+str(self.pk)+'.mp4'
+            filepath = settings.WRITABLE_FOLDER+'/'+videopath
+            if os.path.exists(filepath.encode('utf-8')):
+                return videopath
+            else:
+                return ''
+
+
     def count_videos(self):
         """Return a count of the number of videos as indicated in the database"""
 

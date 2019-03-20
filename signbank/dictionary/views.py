@@ -12,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlquote
 from collections import OrderedDict
 from django.contrib import messages
+from django.core.files import File
 
 import os
 import shutil
@@ -2240,7 +2241,7 @@ def add_image(request):
 
             # deal with any existing image for this sign
             goal_path =  settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
-            goal_location = goal_path + gloss.idgloss + '-' + str(gloss.pk) + extension
+            goal_location_str = goal_path + gloss.idgloss + '-' + str(gloss.pk) + extension
 
             #First make the dir if needed
             try:
@@ -2252,9 +2253,24 @@ def add_image(request):
             if gloss.get_image_path():
                 os.remove(settings.WRITABLE_FOLDER+gloss.get_image_path())
 
-            with open(goal_location, 'wb+') as destination:
-                for chunk in imagefile.chunks():
-                    destination.write(chunk)
+            try:
+                f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
+                destination = File(f)
+            except:
+                import urllib.parse
+                quoted_filename = urllib.parse.quote(gloss.idgloss, safe='')
+                filename = quoted_filename + '-' + str(gloss.pk) + extension
+                goal_location_str = goal_path + filename
+                try:
+                    f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
+                    destination = File(f)
+                except:
+                    print('add_image, failed to open destintation: ', goal_location_str)
+                    return redirect(redirect_url)
+            # if we get to here, destination has been opened
+            for chunk in imagefile.chunks():
+                destination.write(chunk)
+            destination.close()
 
             return redirect(redirect_url)
 
@@ -2271,11 +2287,12 @@ def delete_image(request, pk):
         # deal with any existing video for this sign
         gloss = get_object_or_404(Gloss, pk=pk)
         image_path = gloss.get_image_path()
-
+        full_image_path = settings.WRITABLE_FOLDER + os.sep + image_path
         default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-
-        os.remove(settings.WRITABLE_FOLDER+image_path)
-
+        if os.path.exists(full_image_path.encode('utf-8')):
+            os.remove(full_image_path.encode('utf-8'))
+        else:
+            print('delete_image: wrong type for image path, file does not exist')
         deleted_image = DeletedGlossOrMedia()
         deleted_image.item_type = 'image'
         deleted_image.idgloss = gloss.idgloss
@@ -2664,11 +2681,23 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
 
         #If we got here, the gloss was found and in the web dictionary, so we can continue
 
-    path = WRITABLE_FOLDER + filename
-    exists = os.path.exists(path)
+    filename = os.path.normpath(filename)
 
+    dir_path = WRITABLE_FOLDER
+    path = dir_path.encode('utf-8') + filename.encode('utf-8')
+    exists = os.path.exists(path)
     if not exists:
-        raise Http404("File does not exist.")
+        # quote the filename instead to resolve special characters in the url
+        (head, tail) = os.path.split(filename)
+        import urllib.parse
+        quoted_filename = urllib.parse.quote(tail, safe='')
+        quoted_path = os.path.join(dir_path, head, quoted_filename)
+        exists = os.path.exists(quoted_path)
+        if not exists:
+            raise Http404("File does not exist.")
+        else:
+            filename = quoted_filename
+            path = quoted_path
 
     USE_NEW_X_SENDFILE_APPROACH = True
 
@@ -2678,11 +2707,13 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
             response = HttpResponse(content_type='video/mp4')
         elif filename.split('.')[-1] == 'png':
             response = HttpResponse(content_type='image/png')
+        elif filename.split('.')[-1] == 'jpg':
+            response = HttpResponse(content_type='image/jpg')
         else:
             response = HttpResponse()
 
-        response['Content-Disposition'] = 'inline;filename='+filename
-        response['X-Sendfile'] = WRITABLE_FOLDER + filename
+        response['Content-Disposition'] = 'inline;filename='+filename+';filename*=UTF-8'
+        response['X-Sendfile'] = path
 
         return response
 

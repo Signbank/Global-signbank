@@ -1374,11 +1374,13 @@ def get_deleted_gloss_or_media_data(item_type,since_timestamp):
 def generate_still_image(gloss_prefix, vfile_location, vfile_name):
     try:
         from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
+        # local copy for debugging purposes
+        # from signbank.video.extractMiddleFrame import MiddleFrameExtracter
         from signbank.settings.server_specific import FFMPEG_PROGRAM, TMP_DIR
         from signbank.settings.base import GLOSS_IMAGE_DIRECTORY
 
         # Extract frames (incl. middle)
-        extracter = MiddleFrameExtracter([vfile_location+vfile_name], TMP_DIR + os.sep + "signbank-extractMiddleFrame",
+        extracter = MiddleFrameExtracter([vfile_location+os.sep+vfile_name], TMP_DIR + os.sep + "signbank-extractMiddleFrame",
                                          FFMPEG_PROGRAM, True)
         output_dirs = extracter.run()
 
