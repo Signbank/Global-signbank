@@ -251,6 +251,59 @@ class BasicQueryTests(TestCase):
         # print(response.context['object_list'],response.context['glosscount'])
         #print(response.context['selected_datasets'])
 
+class ECVsNonEmptyTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+
+    def test_ECV_files_nonempty(self):
+
+        # test to see if there are glosses in all ecv files
+        # note: only the files in the ecv folder are checked for non-emptiness
+        # it is not checked whether there is an ecv file for all datasets
+        # ecv files for non-existing datasets are reported if empty
+
+        location_ecv_files = ECV_FOLDER
+        found_errors = False
+
+        from xml.etree import ElementTree
+
+        for filename in os.listdir(location_ecv_files):
+            fname, ext = os.path.splitext(os.path.basename(filename))
+            filetree = ElementTree.parse(location_ecv_files + os.sep + filename)
+            filetreeroot = filetree.getroot()
+            entry_nodes = filetreeroot.findall("./CONTROLLED_VOCABULARY/CV_ENTRY_ML")
+            if not len(entry_nodes):
+                # no glosses in the ecv
+                # get the dataset using filter (returns a list)
+                dataset_of_filename = Dataset.objects.filter(acronym__iexact=fname)
+                if dataset_of_filename:
+                    # dataset of file exists
+
+                    # # choice 1:
+                    # # check whether there are glosses in the dataset
+                    # # the following code checks whether the dataset is actually empty
+                    # dataset = dataset_of_filename[0]
+                    # # the following looks at the count of glosses in the (test) database
+                    # # this will be empty if the test database is empty
+                    # count_glosses_dataset = dataset.count_glosses()
+                    # if count_glosses_dataset:
+                    #     print('EMPTY ECV ', filename)
+                    #     found_errors = True
+
+                    # choice 2:
+                    # use this code to avoid counting the glosses in the dataset and simply report
+                    print('EMPTY ECV ', filename)
+                    found_errors = True
+                else:
+                    # dataset of file does not exist, it might be old
+                    print('EMPTY ECV, DATASET NOT FOUND: ', filename)
+                    found_errors = True
+
+        self.assertEqual(found_errors, False)
+
 class ImportExportTests(TestCase):
 
     # Three test case scenario's for exporting ECV via the DatasetListView with DEFAULT_DATASET
