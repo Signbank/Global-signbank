@@ -30,19 +30,19 @@ choice_list_table = dict()
 def build_choice_list(field):
 
     choice_list = []
+    try:
+        field_choices = FieldChoice.objects.filter(field__exact=field)
+    except:
+        field_choices = []
 
     # Get choices for a certain field in FieldChoices, append machine_value and english_name
-    try:
-        for choice in FieldChoice.objects.filter(field__iexact=field):
-            choice_list.append((str(choice.machine_value),choice.english_name))
+    for choice in field_choices:
+        choice_list.append((str(choice.machine_value),choice.english_name))
 
-        choice_list = sorted(choice_list,key=lambda x: x[1])
+    choice_list = sorted(choice_list,key=lambda x: x[1])
+    built_choice_list = [('0','-'),('1','N/A')] + choice_list
 
-        return [('0','-'),('1','N/A')] + choice_list
-
-    # Enter this exception if for example the db has no data yet (without this it is impossible to migrate)
-    except:
-        pass
+    return built_choice_list
 
 def build_choice_list2(field):
     # this table is filled later in the code
@@ -158,7 +158,7 @@ class Definition(models.Model):
         
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
-    role = models.CharField("Type",max_length=20, choices=build_choice_list('NoteType'))
+    role = models.CharField(_("Type"), blank=True, null=True, choices=build_choice_list("NoteType"),max_length=5)
     count = models.IntegerField()
     published = models.BooleanField(default=True)
 
@@ -1639,15 +1639,17 @@ def fieldname_to_category(fieldname):
 
     if fieldname in ['domhndsh','subhndsh','final_domdndsh','final_subhndsh']:
         field_category = 'Handshape'
-    elif fieldname in ['locprim','locPrimLH','final_loc','loc_second']:
+    elif fieldname in ['handedness']:
+        field_category = 'Handedness'
+    elif fieldname in ['locprim','locPrimLH','final_loc','loc_second', 'locsecond']:
         field_category = 'Location'
     elif fieldname in ['initial_secondary_loc','final_secondary_loc']:
         field_category = 'MinorLocation'
     elif fieldname == 'handCh':
-        field_category = 'handshapeChange'
+        field_category = 'HandshapeChange'
     elif fieldname == 'oriCh':
-        field_category = 'oriChange'
-    elif fieldname == 'movSh':
+        field_category = 'OriChange'
+    elif fieldname in ['movSh', 'derivHist']:
         field_category = 'MovementShape'
     elif fieldname == 'movDir':
         field_category = 'MovementDir'
@@ -1683,6 +1685,23 @@ def fieldname_to_category(fieldname):
         field_category = 'Thumb'
     elif fieldname == 'hsSpread':
         field_category = 'Spreading'
+    elif fieldname == 'relatArtic':
+        field_category = 'RelatArtic'
+    elif fieldname == 'absOriPalm':
+        field_category = 'AbsOriPalm'
+    elif fieldname == 'absOriFing':
+        field_category = 'AbsOriFing'
+    elif fieldname == 'relOriMov':
+        field_category = 'RelOriMov'
+    elif fieldname == 'relOriLoc':
+        field_category = 'RelOriLoc'
+    elif fieldname == 'valence':
+        field_category = 'Valence'
+    elif fieldname == 'role':
+        print('fieldname_to_category invoked for field role')
+        field_category = 'NoteType'  # also 'MorphologyType'
+    elif fieldname == 'type':
+        field_category = 'OtherMediaType'
     else:
         field_category = fieldname
 
