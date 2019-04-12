@@ -1920,7 +1920,7 @@ class Dataset(models.Model):
     acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
-    exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True, null=True)
+    exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
 
     class Meta:
         permissions = (
