@@ -309,6 +309,25 @@ class Handshape(models.Model):
             selection += 'P'
         return selection
 
+    def set_fingerSelection_display(self):
+        # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel
+        try:
+            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection', machine_value=self.hsFingSel)
+        except:
+            print('set_fingerSelection failed for: ', self)
+            return
+        if not fieldSelectionMatch:
+            # no finger selection
+            return
+        # get the pattern, only one match is returned, in a list because of filter
+        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        self.fsT = 'T' in fingerSelectionPattern
+        self.fsI = 'I' in fingerSelectionPattern
+        self.fsM = 'M' in fingerSelectionPattern
+        self.fsR = 'R' in fingerSelectionPattern
+        self.fsP = 'P' in fingerSelectionPattern
+        return
+
     def get_fingerSelection2_display(self):
 
         selection = ''
@@ -324,6 +343,25 @@ class Handshape(models.Model):
             selection += 'P'
         return selection
 
+    def set_fingerSelection2_display(self):
+        # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel2
+        try:
+            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection', machine_value=self.hsFingSel2)
+        except:
+            print('set_fingerSelection2 failed for: ', self)
+            return
+        if not fieldSelectionMatch:
+            # no finger selection
+            return
+        # get the pattern, only one match is returned, in a list because of filter
+        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        self.fs2T = 'T' in fingerSelectionPattern
+        self.fs2I = 'I' in fingerSelectionPattern
+        self.fs2M = 'M' in fingerSelectionPattern
+        self.fs2R = 'R' in fingerSelectionPattern
+        self.fs2P = 'P' in fingerSelectionPattern
+        return
+
     def get_unselectedFingers_display(self):
 
         selection = ''
@@ -338,6 +376,25 @@ class Handshape(models.Model):
         if self.ufP:
             selection += 'P'
         return selection
+
+    def set_unselectedFingers_display(self):
+        # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingUnsel
+        try:
+            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection', machine_value=self.hsFingUnsel)
+        except:
+            print('set_unselectedFingers failed for: ', self)
+            return
+        if not fieldSelectionMatch:
+            # no finger selection
+            return
+        # get the pattern, only one match is returned, in a list because of filter
+        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        self.ufT = 'T' in fingerSelectionPattern
+        self.ufI = 'I' in fingerSelectionPattern
+        self.ufM = 'M' in fingerSelectionPattern
+        self.ufR = 'R' in fingerSelectionPattern
+        self.ufP = 'P' in fingerSelectionPattern
+        return
 
     def count_selected_fingers(self):
 
