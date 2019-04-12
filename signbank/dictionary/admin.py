@@ -174,11 +174,14 @@ class FieldChoiceAdmin(VersionAdmin):
 
     def has_delete_permission(self, request, obj=None):
         if not obj:
+            print('ADMIN has_delete_permission obj is None')
             # just return False if there is no object, prevent arbitrary deletion of field choices
             return False
 
         field_value = obj.__dict__.get('field', '')
         field_machine_value = obj.__dict__.get('machine_value', 0)
+        if not field_machine_value:
+            print('ADMIN has_delete_permission: field ', field_value, ' has an empty machine value')
 
         from signbank.tools import fields_with_choices_glosses, fields_with_choices_handshapes, \
             fields_with_choices_definition, fields_with_choices_morphology_definition, \
@@ -239,7 +242,7 @@ class FieldChoiceAdmin(VersionAdmin):
             return not count_in_use
 
         # fall through: the fieldname is not used in Gloss, Handshape, Definition, MorphologyDefinition, OtherMedia, Morpheme
-        print('admin, field choices, has_delete_permission: fall through on: ', field_value)
+        print('ADMIN, field choices, has_delete_permission: fall through on: ', field_value)
         opts = self.opts
         codename = get_permission_codename('delete', opts)
         # note that this delete option only checks whether the user is allowed, not if there are other uses of the field
@@ -251,6 +254,7 @@ class FieldChoiceAdmin(VersionAdmin):
         if obj is not None and obj.field == 'FingerSelection':
             # This is a reserved field, used for displaying the Finger Selection
             # Do not allow deletion
+            # print('ADMIN has_change_permission is False for FingerSelection')
             return False
 
         opts = self.opts
