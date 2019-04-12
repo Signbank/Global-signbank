@@ -1478,6 +1478,10 @@ import datetime as DT
 
 def lookup_field_choice_category(choicelist):
 
+    # this is a helper function used by the functions that follow
+    # the functions that call this function retrieve a choicelist from the _meta information
+    # and want to see which field choice category it belongs to
+
     all_field_choices = FieldChoice.objects.all().order_by('english_name')
     all_field_categories = [ field.field for field in all_field_choices ]
 
@@ -1485,6 +1489,8 @@ def lookup_field_choice_category(choicelist):
 
         choice_list = build_choice_list(fc)
 
+        # compare the choicelist parameter to this method to the one built by build_choice_list based on the category
+        # in order to figure out which category the parameter choicelist has
         if choice_list == choicelist:
             return fc
     return ''
@@ -1507,6 +1513,7 @@ def fields_with_choices_glosses():
 
 def fields_with_choices_handshapes():
     # return a dict that maps the field choice categories to the fields of Handshape that have the category
+    # e.g., FingerSelection maps to a list of Handshape fields ['fing
 
     fields_with_choices = [field for field in Handshape._meta.fields if len(field.choices) > 0]
 
