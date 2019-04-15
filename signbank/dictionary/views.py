@@ -34,7 +34,7 @@ from signbank.tools import save_media, compare_valuedict_to_gloss, MachineValueN
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 
 import signbank.settings
-from signbank.settings.base import WRITABLE_FOLDER, URL
+from signbank.settings.base import *
 from django.utils.translation import override
 
 from urllib.parse import urlencode, urlparse
@@ -202,6 +202,7 @@ def word(request, keyword, n):
 def gloss(request, glossid):
     """View of a gloss - mimics the word view, really for admin use
        when we want to preview a particular gloss"""
+    # this is public view of a gloss
 
     if 'feedbackmessage' in request.GET:
         feedbackmessage = request.GET['feedbackmessage']
@@ -221,7 +222,7 @@ def gloss(request, glossid):
 
     allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
-        trans = Translation()
+        trans = None
     else:
         trans = allkwds[0]
 
@@ -268,7 +269,9 @@ def gloss(request, glossid):
     # get the last match keyword if there is one passed along as a form variable
     if 'lastmatch' in request.GET:
         lastmatch = request.GET['lastmatch']
+        print('lastmatch: ', lastmatch)
         if lastmatch == "None":
+            # this looks weird, comparing to None in quotes
             lastmatch = False
     else:
         lastmatch = False
