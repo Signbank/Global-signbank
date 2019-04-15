@@ -71,7 +71,10 @@ class Translation(models.Model):
     index = models.IntegerField("Index")
     
     def __str__(self):
-        return self.gloss.idgloss + '-' + self.translation.text
+        if self.translation and self.translation.text:
+            return self.gloss.idgloss + ' (' + self.translation.text + ')'
+        else:
+            return self.gloss.idgloss
 
     def get_absolute_url(self):
         """Return a URL for a view of this translation."""
