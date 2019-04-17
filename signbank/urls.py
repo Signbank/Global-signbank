@@ -62,7 +62,6 @@ urlpatterns = [
     url(r'^signs/add/$', signbank.dictionary.views.add_new_sign),
     url(r'^signs/import_csv_create/$', signbank.dictionary.views.import_csv_create, name='import_csv_create'),
     url(r'^signs/import_csv_update/$', signbank.dictionary.views.import_csv_update, name='import_csv_update'),
-    url(r'^signs/import_csv/$', signbank.dictionary.views.import_csv, name='import_csv'),
     url(r'^analysis/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),
     url(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete,
                       name='homonyms_complete'),
