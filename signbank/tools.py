@@ -1475,6 +1475,100 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import datetime as DT
 
+
+def lookup_field_choice_category(choicelist):
+
+    # this is a helper function used by the functions that follow
+    # the functions that call this function retrieve a choicelist from the _meta information
+    # and want to see which field choice category it belongs to
+
+    all_field_choices = FieldChoice.objects.all().order_by('english_name')
+    all_field_categories = [ field.field for field in all_field_choices ]
+
+    for fc in all_field_categories:
+
+        choice_list = build_choice_list(fc)
+
+        # compare the choicelist parameter to this method to the one built by build_choice_list based on the category
+        # in order to figure out which category the parameter choicelist has
+        if choice_list == choicelist:
+            return fc
+    return ''
+
+def fields_with_choices_glosses():
+    # return a dict that maps the field choice categories to the fields of Gloss that have the category
+    fields_with_choices = [field for field in Gloss._meta.fields if len(field.choices) > 0]
+
+    fields_dict = {}
+
+    for field in fields_with_choices:
+        field_category = lookup_field_choice_category(field.choices)
+
+        if field_category:
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
+    return fields_dict
+
+def fields_with_choices_handshapes():
+    # return a dict that maps the field choice categories to the fields of Handshape that have the category
+    # e.g., FingerSelection maps to a list of Handshape fields ['fing
+
+    fields_with_choices = [field for field in Handshape._meta.fields if len(field.choices) > 0]
+
+    fields_dict = {}
+
+    for field in fields_with_choices:
+        field_category = lookup_field_choice_category(field.choices)
+
+        if field_category:
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
+    return fields_dict
+
+def fields_with_choices_definition():
+    # return a dict that maps the field choice categories to the fields of Definition that have the category
+    # this is implemented as a constant return value
+
+    fields_dict = {}
+
+    fields_dict['NoteType'] = ['role']
+
+    return fields_dict
+
+def fields_with_choices_morphology_definition():
+    # return a dict that maps the field choice categories to the fields of MorphologyDefinition that have the category
+    # this is implemented as a constant return value
+
+    fields_dict = {}
+
+    fields_dict['MorphologyType'] = ['role']
+
+    return fields_dict
+
+def fields_with_choices_other_media_type():
+    # return a dict that maps the field choice categories to the fields of OtherMediaType that have the category
+    # this is implemented as a constant return value
+
+    fields_dict = {}
+
+    fields_dict['OtherMediaType'] = ['type']
+
+    return fields_dict
+
+def fields_with_choices_morpheme_type():
+    # return a dict that maps the field choice categories to the fields of MorphemeType that have the category
+    # this is implemented as a constant return value
+
+    fields_dict = {}
+
+    fields_dict['MorphemeType'] = ['mrpType']
+
+    return fields_dict
+
 def write_ecv_files_for_all_datasets():
 
     all_dataset_objects = Dataset.objects.all()

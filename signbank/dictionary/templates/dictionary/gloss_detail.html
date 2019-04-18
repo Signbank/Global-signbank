@@ -4,6 +4,10 @@
 {% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 
+{% block bootstrap3_title %}
+{% blocktrans %}Sign for {{ gloss }}{% endblocktrans %}
+{% endblock %}
+
 {% load guardian_tags %}
 
 {% block extrahead %}

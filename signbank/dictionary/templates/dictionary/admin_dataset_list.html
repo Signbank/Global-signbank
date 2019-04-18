@@ -90,7 +90,7 @@
             </td>
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
-                {% if "change_dataset" in dataset_perms %}
+                {% if "change_dataset" in dataset_perms and dataset.lemmaidgloss__gloss__count %}
                 <form name='export_ecv_form' id='export_ecv_form' method='get'>
                     <div class="hidden">
                         <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.acronym}}' >

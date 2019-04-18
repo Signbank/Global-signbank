@@ -2852,6 +2852,12 @@ class DatasetListView(ListView):
             messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
+        # make sure the dataset is non-empty, don't create an empty ecv file
+        dataset_count = dataset_object.count_glosses()
+        if not dataset_count:
+            messages.add_message(self.request, messages.INFO, ('The dataset '+self.dataset_name+' is empty, export ECV is not available.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
         # if we get to here, the user is authenticated and has permission to export the dataset
         ecv_file = write_ecv_file_for_dataset(self.dataset_name)
 

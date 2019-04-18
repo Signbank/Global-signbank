@@ -158,22 +158,95 @@ class FieldChoiceAdmin(VersionAdmin):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
         return form
 
+    def get_actions(self, request):
+        actions = super(FieldChoiceAdmin, self).get_actions(request)
+        if 'delete_selected' in actions:
+            # for field choices, do not offer delete selected to user
+            # in order to protect accidently field choice deletion
+            del actions['delete_selected']
+        return actions
+
+    def get_action_choices(self, request):
+        # remove the empty choice '---------' from actions
+        choices = super(FieldChoiceAdmin, self).get_action_choices(request)
+        choices.pop(0)
+        return choices
+
     def has_delete_permission(self, request, obj=None):
-        objects_with_domhndsh = 0
-        objects_with_subhndsh = 0
-        if obj is not None and obj.field == 'Handshape':
-            objects_with_domhndsh = Gloss.objects.filter(domhndsh=obj.machine_value).count()
-            objects_with_subhndsh = Gloss.objects.filter(subhndsh=obj.machine_value).count()
-            if objects_with_domhndsh > 0 or objects_with_subhndsh > 0:
-                return False
-        elif obj is not None and obj.field == 'FingerSelection':
-            # This is a reserved field, used for displaying the Finger Selection
-            # Do not allow deletion
+        if not obj:
+            print('ADMIN has_delete_permission obj is None')
+            # just return False if there is no object, prevent arbitrary deletion of field choices
             return False
 
-        # if it's not a Handshape, then do the BaseAdmin code
+        field_value = obj.__dict__.get('field', '')
+        field_machine_value = obj.__dict__.get('machine_value', 0)
+        if not field_machine_value:
+            print('ADMIN has_delete_permission: field ', field_value, ' has an empty machine value')
+
+        from signbank.tools import fields_with_choices_glosses, fields_with_choices_handshapes, \
+            fields_with_choices_definition, fields_with_choices_morphology_definition, \
+            fields_with_choices_other_media_type, fields_with_choices_morpheme_type
+
+        fields_with_choices_glosses = fields_with_choices_glosses()
+        if field_value in fields_with_choices_glosses.keys():
+            queries = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_glosses[field_value]]
+            query = queries.pop()
+            for item in queries:
+                query |= item
+            count_in_use = Gloss.objects.filter(query).count()
+            return not count_in_use
+
+        fields_with_choices_handshapes = fields_with_choices_handshapes()
+        if field_value in fields_with_choices_handshapes.keys():
+            queries_h = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_handshapes[field_value]]
+            query_h = queries_h.pop()
+            for item in queries_h:
+                query_h |= item
+            count_in_use = Handshape.objects.filter(query_h).count()
+            return not count_in_use
+
+        fields_with_choices_definition = fields_with_choices_definition()
+        if field_value in fields_with_choices_definition.keys():
+            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_definition[field_value]]
+            query_d = queries_d.pop()
+            for item in queries_d:
+                query_d |= item
+            count_in_use = Definition.objects.filter(query_d).count()
+            return not count_in_use
+
+        fields_with_choices_morphology_definition = fields_with_choices_morphology_definition()
+        if field_value in fields_with_choices_morphology_definition.keys():
+            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_morphology_definition[field_value]]
+            query_d = queries_d.pop()
+            for item in queries_d:
+                query_d |= item
+            count_in_use = MorphologyDefinition.objects.filter(query_d).count()
+            return not count_in_use
+
+        fields_with_choices_other_media_type = fields_with_choices_other_media_type()
+        if field_value in fields_with_choices_other_media_type.keys():
+            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_other_media_type[field_value]]
+            query_d = queries_d.pop()
+            for item in queries_d:
+                query_d |= item
+            count_in_use = OtherMedia.objects.filter(query_d).count()
+            return not count_in_use
+
+        fields_with_choices_morpheme_type = fields_with_choices_morpheme_type()
+        if field_value in fields_with_choices_morpheme_type.keys():
+            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_morpheme_type[field_value]]
+            query_d = queries_d.pop()
+            for item in queries_d:
+                query_d |= item
+            count_in_use = Morpheme.objects.filter(query_d).count()
+            return not count_in_use
+
+        # fall through: the fieldname is not used in Gloss, Handshape, Definition, MorphologyDefinition, OtherMedia, Morpheme
+        print('ADMIN, field choices, has_delete_permission: fall through on: ', field_value)
         opts = self.opts
         codename = get_permission_codename('delete', opts)
+        # note that this delete option only checks whether the user is allowed, not if there are other uses of the field
+        # this would be the case for fields that are in the model and used by other signbanks
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
 
     def has_change_permission(self, request, obj=None):
@@ -181,6 +254,7 @@ class FieldChoiceAdmin(VersionAdmin):
         if obj is not None and obj.field == 'FingerSelection':
             # This is a reserved field, used for displaying the Finger Selection
             # Do not allow deletion
+            # print('ADMIN has_change_permission is False for FingerSelection')
             return False
 
         opts = self.opts
@@ -188,20 +262,10 @@ class FieldChoiceAdmin(VersionAdmin):
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
 
     def delete_selected(self, request, queryset):
-
+        # this code is not called anymore for field choices
         for obj in queryset:
-            if obj.field == 'FingerSelection':
-                # FingerSelection is used for display in the code, do not allow deletion
-                messages.add_message(request, messages.ERROR, ("Deletion of FingerSelection fields is not allowed."))
-                pass
-            if obj.field == 'Handshape':
-                objects_with_domhndsh = Gloss.objects.filter(domhndsh=obj.machine_value).count()
-                objects_with_subhndsh = Gloss.objects.filter(subhndsh=obj.machine_value).count()
-                if objects_with_domhndsh > 0 or objects_with_subhndsh > 0:
-                    inuse_message = "Handshape " + obj.english_name + " is currently in use."
-                    messages.add_message(request, messages.ERROR, inuse_message)
-                    pass
-            obj.delete()
+            print('delete_selected not available for field choices, admin command ignored: ', obj)
+            pass
 
     delete_selected.short_description = "Delete selected field choices"
 
