@@ -891,6 +891,101 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
     return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
 
 
+def compare_valuedict_to_lemma(valuedict,lemma_id,my_datasets, nl,
+                                lemmaidglosstranslations, current_lemmaidglosstranslations,
+                               earlier_updates_same_csv, earlier_updates_lemmaidgloss):
+    """Takes a dict of key-value pairs, and compares them to a lemma"""
+
+    errors_found = []
+    differences = []
+
+    try:
+        lemma = LemmaIdgloss.objects.select_related().get(pk=lemma_id)
+    except ObjectDoesNotExist as e:
+
+        e = 'Could not find lemma for ID ' + str(lemma_id)
+        errors_found.append(e)
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+    if lemma_id in earlier_updates_same_csv:
+        e = 'Lemma ID (' + str(lemma_id) + ') found in multiple rows (Row ' + str(nl + 1) + ').'
+        errors_found.append(e)
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+    else:
+        earlier_updates_same_csv.append(lemma_id)
+
+    count_new_nonempty_translations = 0
+    count_existing_nonempty_translations = 0
+
+    if lemmaidglosstranslations \
+            and current_lemmaidglosstranslations != lemmaidglosstranslations:
+        for key1 in lemmaidglosstranslations.keys():
+            if lemmaidglosstranslations[key1]:
+                count_new_nonempty_translations += 1
+        for key2 in current_lemmaidglosstranslations.keys():
+            if current_lemmaidglosstranslations[key2]:
+                count_existing_nonempty_translations += 1
+        pass
+    else:
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+    if not count_new_nonempty_translations:
+        # somebody has modified the lemma translations so as to delete alll of them:
+        e = 'Row ' + str(nl + 1) + ': Lemma ID ' + str(lemma_id) + ' must have at least one translation.'
+        errors_found.append(e)
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+
+    #Create an overview of all fields, sorted by their human name
+    with override(LANGUAGE_CODE):
+
+        if lemma.dataset:
+            current_dataset = lemma.dataset.acronym
+        else:
+            # because of legacy code, the current dataset might not have been set
+            current_dataset = 'None'
+
+        #Go through all values in the value dict, looking for differences with the lemma
+        for human_key, new_human_value in valuedict.items():
+
+            new_human_value = new_human_value.strip()
+
+            if human_key == 'Lemma ID' or human_key == 'Dataset':
+                # these fields can't be updated
+                continue
+
+            lemma_idgloss_key_prefix = "Lemma ID Gloss ("
+            if human_key.startswith(lemma_idgloss_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name = human_key[len(lemma_idgloss_key_prefix):-1]
+                languages = Language.objects.filter(**{language_name_column:language_name})
+                if languages:
+                    language = languages[0]
+                    lemma_idglosses = lemma.lemmaidglosstranslation_set.filter(language=language)
+                    if lemma_idglosses:
+                        lemma_idgloss_string = lemma_idglosses[0].text
+                    else:
+                        # lemma not set
+                        lemma_idgloss_string = ''
+                    if lemma_idgloss_string != new_human_value:
+
+                        differences.append({'pk': lemma_id,
+                                            'dataset': current_dataset,
+                                            'machine_key': human_key,
+                                            'human_key': human_key,
+                                            'original_machine_value': lemma_idgloss_string,
+                                            'original_human_value': lemma_idgloss_string,
+                                            'new_machine_value': new_human_value,
+                                            'new_human_value': new_human_value})
+                continue
+
+            else:
+                # this case should be impossible! It's included for completeness of else otherwise case
+                print('Unknown lemma field encountered while comparing new to existing fields: ', human_key)
+
+    return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+
 def check_existence_dialect(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 

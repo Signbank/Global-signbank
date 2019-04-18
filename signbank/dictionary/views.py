@@ -1496,6 +1496,285 @@ def import_csv_update(request):
                                                         'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
+def import_csv_lemmas(request):
+    user = request.user
+    import guardian
+    user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
+    user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
+
+    selected_datasets = get_selected_datasets_for_user(user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    translation_languages_dict = {}
+    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
+    for dataset_object in user_datasets:
+        translation_languages_dict[dataset_object] = []
+
+        for language in dataset_object.translation_languages.all():
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_tuple = (language_name, language.language_code_2char)
+            translation_languages_dict[dataset_object].append(language_tuple)
+
+    seen_datasets = []
+    seen_dataset_names = []
+
+    # fatal errors are duplicate column headers, data in columns without headers
+    # column headers that do not correspond to database fields
+    # non-numerical lemma ids
+    # non-existent dataset or no permission for dataset
+    # attempt to update lemmas in multiple datasets in the same csv
+    # missing Dataset column
+    # missing Lemma required for the dataset
+
+    uploadform = signbank.dictionary.forms.CSVUploadForm
+    changes = []
+    error = []
+    earlier_updates_same_csv = []
+    earlier_updates_lemmaidgloss = {}
+
+    #Propose changes
+    if len(request.FILES) > 0:
+        fatal_error = False
+        csv_text = request.FILES['file'].read().decode('UTF-8')
+        csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
+        keys = {}   # in case something goes wrong in header row
+        for nl, line in enumerate(csv_lines):
+
+            #The first line contains the keys
+            if nl == 0:
+                keys = line.strip().split(',')
+                num_keys = len(keys)
+                continue
+            elif len(line) == 0:
+                continue
+
+            values = csv.reader([line]).__next__()
+            value_dict = {}
+
+            for nv,value in enumerate(values):
+
+                try:
+                    if keys[nv]:
+                        if keys[nv] in value_dict.keys():
+                            e = 'Duplicate header column found: ' + keys[nv]
+                            error.append(e)
+                            fatal_error = True
+                            break
+                        value_dict[keys[nv]] = value
+                    elif value:
+                        # empty column header
+                        e = 'Row '+str(nl + 1) + ': Extra data found in column without header: ' + value
+                        error.append(e)
+                        fatal_error = True
+                        break
+                except IndexError:
+                    e = 'Row '+str(nl + 1) + ': Index error in column: ' + str(nv)
+                    error.append(e)
+                    fatal_error = True
+                    break
+
+            if fatal_error:
+                break
+
+            if 'Lemma ID' in value_dict:
+                try:
+                    pk = int(value_dict['Lemma ID'])
+                except ValueError:
+                    e = 'Row '+str(nl + 1) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
+                    error.append(e)
+                    fatal_error = True
+            else:
+                e = 'Lemma ID required to update lemmas.'
+                error.append(e)
+                fatal_error = True
+
+            if fatal_error:
+                break
+
+            if 'Dataset' not in value_dict:
+                e1 = 'The Dataset column is required.'
+                error.append(e1)
+                break
+
+            # construct list of allowed columns
+            required_columns = ['Lemma ID', 'Dataset']
+
+            dataset_name = value_dict['Dataset'].strip()
+
+            # catch possible empty values for dataset, primarily for pretty printing error message
+            if dataset_name == '' or dataset_name == None or dataset_name == 0 or dataset_name == 'NULL':
+                e_dataset_empty = 'Row ' + str(nl + 1) + ': The Dataset is missing.'
+                error.append(e_dataset_empty)
+                break
+            if dataset_name not in seen_dataset_names:
+
+                try:
+                    dataset = Dataset.objects.get(acronym=dataset_name)
+                except:
+                    print('exception trying to get dataset object')
+                    # An error message should be returned here, the dataset does not exist
+                    e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    error.append(e_dataset_not_found)
+                    fatal_error = True
+                    break
+                if dataset_name not in user_datasets_names:
+                    e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                    error.append(e3)
+                    fatal_error = True
+                    break
+                if dataset not in selected_datasets:
+                    e3 = 'Row '+str(nl + 1) + ': Please select the dataset %s.' % value_dict['Dataset'].strip()
+                    error.append(e3)
+                    fatal_error = True
+                    break
+                if seen_datasets:
+                    # already seen a dataset
+                    if dataset in seen_datasets:
+                        pass
+                    else:
+                        # seen more than one dataset
+                        e3 = 'Row ' + str(nl + 1) + ': Seen more than one dataset: %s.' % value_dict['Dataset'].strip()
+                        error.append(e3)
+                        fatal_error = True
+                        break
+                else:
+                    seen_datasets.append(dataset)
+                    seen_dataset_names.append(dataset_name)
+                    # saw the first dataset
+
+            if fatal_error:
+                break
+            # The Lemma ID Gloss may already exist.
+            lemmaidglosstranslations = {}
+            contextual_error_messages_lemmaidglosstranslations = []
+            for language in dataset.translation_languages.all():
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                column_name = "Lemma ID Gloss (%s)" % language_name
+                required_columns.append(column_name)
+                if column_name in value_dict:
+                    lemma_idgloss_value = value_dict[column_name].strip()
+                    # also stores empty values
+                    lemmaidglosstranslations[language] = lemma_idgloss_value
+
+            # if we get to here, the Lemma ID, Dataset, and Lemma ID Gloss columns have been checked
+            # determine if any extra columns were found
+            for key in value_dict.keys():
+                if key not in required_columns:
+                    # too many columns found
+                    e = 'Extra column found: ' + key
+                    error.append(e)
+                    # use a Boolean to catch all extra columns
+                    fatal_error = True
+            if fatal_error:
+                break
+
+            # # updating lemmas, propose changes (make dict)
+            try:
+                lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
+            except ObjectDoesNotExist as e:
+
+                e = 'Row '+ str(nl + 1) + ': Could not find lemma for Lemma ID '+str(pk)
+                error.append(e)
+                continue
+            #
+            if lemma.dataset.acronym != dataset_name:
+                e1 = 'Row '+ str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Lemma ID (' \
+                                                    + str(pk) + ').'
+                error.append(e1)
+                # ignore the rest of the row
+                continue
+            # # dataset is the same
+
+            # If there are changes in the LemmaIdglossTranslation, the changes should refer to another LemmaIdgloss
+            current_lemmaidglosstranslations = {}
+            for language in lemma.dataset.translation_languages.all():
+                try:
+                    lemma_translation = LemmaIdglossTranslation.objects.get(language=language, lemma=lemma)
+                    current_lemmaidglosstranslations[language] = lemma_translation.text
+                except:
+                    current_lemmaidglosstranslations[language] = ''
+
+            try:
+                (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
+                            compare_valuedict_to_lemma(value_dict,lemma.id,user_datasets_names, nl,
+                                                       lemmaidglosstranslations, current_lemmaidglosstranslations,
+                                                       earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+                changes += changes_found
+
+                if len(errors_found):
+                    # more than one error found
+                    errors_found_string = '\n'.join(errors_found)
+                    error.append(errors_found_string)
+
+            except MachineValueNotFoundError as e:
+
+                e_string = str(e)
+                error.append(e_string)
+        stage = 1
+
+    #Do changes
+    elif len(request.POST) > 0:
+
+        for key, new_value in request.POST.items():
+
+            try:
+                pk, fieldname = key.split('.')
+
+            #In case there's no dot, this is not a value we set in the proposed changes
+            except ValueError:
+                # when the database token csrfmiddlewaretoken is passed, there is no dot
+                continue
+
+            lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
+
+            with override(settings.LANGUAGE_CODE):
+
+                # when we do the changes, it has already been confirmed
+                # that changes to the translations ensure that there is at least one translation
+                lemma_idgloss_key_prefix = "Lemma ID Gloss ("
+                if fieldname.startswith(lemma_idgloss_key_prefix):
+                    language_name = fieldname[len(lemma_idgloss_key_prefix):-1]
+
+                    # compare new value to existing value
+                    language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                    languages = Language.objects.filter(**{language_name_column:language_name})
+                    if languages:
+                        language = languages[0]
+                        lemma_idglosses = lemma.lemmaidglosstranslation_set.filter(language=language)
+                        if lemma_idglosses:
+                            # update the lemma translation
+                            lemma_translation = lemma_idglosses.first()
+                            if new_value:
+                                setattr(lemma_translation,'text',new_value)
+                                lemma_translation.save()
+                            else:
+                                # setting a translation to empty deletes the translation
+                                # in the previous stage when proposing changes we have already checked to prevent all translations from being deleted
+                                lemma_translation.delete()
+                        elif new_value:
+                            # this is a new lemma translation for the language
+                            lemma_translation = LemmaIdglossTranslation(lemma=lemma, language=language)
+                            setattr(lemma_translation, 'text', new_value)
+                            lemma_translation.save()
+                        # else:
+                            # this case should not occur, there is no translation for the language and the user wants to make an empty one
+                            # print('Lemma ', str(lemma.pk), ': No existing translation for language (', language_name, ') and no new value: ', new_value)
+
+
+        stage = 2
+
+    #Show uploadform
+    else:
+
+        stage = 0
+
+    return render(request,'dictionary/import_csv_update_lemmas.html',{'form':uploadform,'stage':stage,'changes':changes,
+                                                        'error':error,
+                                                        'dataset_languages':dataset_languages,
+                                                        'selected_datasets':selected_datasets,
+                                                        'translation_languages_dict': translation_languages_dict,
+                                                        'seen_datasets': seen_datasets,
+                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
 
 
 def switch_to_language(request,language):
