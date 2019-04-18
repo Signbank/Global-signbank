@@ -4102,6 +4102,7 @@ def create_lemma_for_gloss(request, glossid):
     dataset_languages = dataset.translation_languages.all()
     form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
     for item, value in request.POST.items():
+        value = value.strip()
         if item.startswith(form.lemma_create_field_prefix):
             language_code_2char = item[len(form.lemma_create_field_prefix):]
             language = Language.objects.get(language_code_2char=language_code_2char)
@@ -4170,6 +4171,7 @@ class LemmaUpdateView(UpdateView):
         form = LemmaUpdateForm(request.POST, instance=instance)
 
         for item, value in request.POST.items():
+            value = value.strip()
             if item.startswith(form.lemma_update_field_prefix):
                 if value != '':
                     language_code_2char = item[len(form.lemma_update_field_prefix):]
