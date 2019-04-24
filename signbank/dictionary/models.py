@@ -162,6 +162,7 @@ class Definition(models.Model):
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
     role = models.CharField(_("Type"), blank=True, null=True, choices=build_choice_list("NoteType"),max_length=5)
+    role.field_choice_category = 'NoteType'
     count = models.IntegerField()
     published = models.BooleanField(default=True)
 
@@ -240,14 +241,23 @@ class Handshape(models.Model):
     dutch_name = models.CharField(_("Dutch name"), max_length=50)
     chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
     hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"), max_length=5)
+    hsNumSel.field_choice_category = 'Quantity'
     hsFingSel = models.CharField(_("Finger selection"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
+    hsFingSel.field_choice_category = 'FingerSelection'
     hsFingSel2 = models.CharField(_("Finger selection 2"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
+    hsFingSel2.field_choice_category = 'FingerSelection'
     hsFingConf = models.CharField(_("Finger configuration"), blank=True, null=True, choices=build_choice_list("JointConfiguration"), max_length=5)
+    hsFingConf.field_choice_category = 'JointConfiguration'
     hsFingConf2 = models.CharField(_("Finger configuration 2"), blank=True, null=True, choices=build_choice_list("JointConfiguration"), max_length=5)
+    hsFingConf2.field_choice_category = 'JointConfiguration'
     hsAperture = models.CharField(_("Aperture"), blank=True, null=True, choices=build_choice_list("Aperture"), max_length=5)
+    hsAperture.field_choice_category = 'Aperture'
     hsThumb = models.CharField(_("Thumb"), blank=True, null=True, choices=build_choice_list("Thumb"), max_length=5)
+    hsThumb.field_choice_category = 'Thumb'
     hsSpread = models.CharField(_("Spreading"), blank=True,  null=True, choices=build_choice_list("Spreading"), max_length=5)
+    hsSpread.field_choice_category = 'Spreading'
     hsFingUnsel = models.CharField(_("Unselected fingers"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
+    hsFingUnsel.field_choice_category = 'FingerSelection'
     fsT = models.NullBooleanField(_("T"), null=True, default=False)
     fsI = models.NullBooleanField(_("I"), null=True, default=False)
     fsM = models.NullBooleanField(_("M"), null=True, default=False)
@@ -478,11 +488,14 @@ class Gloss(models.Model):
 
     # Phonology fields
     handedness = models.CharField(_("Handedness"), blank=True,  null=True, choices=build_choice_list("Handedness"), max_length=5)
+    handedness.field_choice_category = 'Handedness'
     weakdrop = models.NullBooleanField(_("Weak Drop"), null=True, blank=True)
     weakprop = models.NullBooleanField(_("Weak Prop"), null=True, blank=True)
 
     domhndsh = models.CharField(_("Strong Hand"), blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
+    domhndsh.field_choice_category = 'Handshape'
     subhndsh = models.CharField(_("Weak Hand"), null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
+    subhndsh.field_choice_category = 'Handshape'
 
     # Support for handshape etymology
     domhndsh_number = models.NullBooleanField(_("Strong hand number"), null=True, blank=True)
@@ -491,17 +504,24 @@ class Gloss(models.Model):
     subhndsh_letter = models.NullBooleanField(_("Weak hand letter"), null=True, blank=True)
 
     final_domhndsh = models.CharField(_("Final Dominant Handshape"), blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
+    final_domhndsh.field_choice_category = 'Handshape'
     final_subhndsh = models.CharField(_("Final Subordinate Handshape"), null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
- 
+    final_subhndsh.field_choice_category = 'Handshape'
+
     locprim = models.CharField(_("Location"), choices=build_choice_list("Location"), null=True, blank=True,max_length=20)
+    locprim.field_choice_category = 'Location'
     final_loc = models.IntegerField(_("Final Primary Location"), choices=build_choice_list("Location"), null=True, blank=True)
+    final_loc.field_choice_category = 'Location'
     locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=50)
 
     locsecond = models.IntegerField(_("Secondary Location"), choices=build_choice_list("Location"), null=True, blank=True)
-    
+    locsecond.field_choice_category = 'Location'
+
     initial_secondary_loc = models.CharField(_("Initial Subordinate Location"), choices=build_choice_list("MinorLocation"), max_length=20, null=True, blank=True)
+    initial_secondary_loc.field_choice_category = 'MinorLocation'
     final_secondary_loc = models.CharField(_("Final Subordinate Location"), choices=build_choice_list("MinorLocation"), max_length=20, null=True, blank=True)
-    
+    final_secondary_loc.field_choice_category = 'MinorLocation'
+
     initial_palm_orientation = models.CharField(_("Initial Palm Orientation"), max_length=20, null=True, blank=True)
     final_palm_orientation = models.CharField(_("Final Palm Orientation"), max_length=20, null=True, blank=True)
   
@@ -509,7 +529,9 @@ class Gloss(models.Model):
     final_relative_orientation = models.CharField(_("Final Interacting Dominant Hand Part"), null=True, max_length=20, blank=True)
 
     domSF = models.CharField("Dominant hand - Selected Fingers", choices=build_choice_list("DominantHandSelectedFingers"), null=True, blank=True, max_length=5)
+    domSF.field_choice_category = 'DominantHandSelectedFingers'
     domFlex = models.CharField("Dominant hand - Flexion", choices=build_choice_list("DominantHandFlexion"), null=True, blank=True, max_length=5)
+    domFlex.field_choice_category = 'DominantHandFlexion'
     oriChAbd = models.NullBooleanField(_("Abduction change"), null=True, blank=True)
     oriChFlex = models.NullBooleanField(_("Flexion change"), null=True, blank=True)
 
@@ -538,24 +560,35 @@ class Gloss(models.Model):
     StemSN = models.IntegerField(null=True, blank=True) 
 
     relatArtic = models.CharField(_("Relation between Articulators"), choices=build_choice_list("RelatArtic"), null=True, blank=True, max_length=5)
+    relatArtic.field_choice_category = 'RelatArtic'
 
     absOriPalm = models.CharField(_("Absolute Orientation: Palm"), choices=build_choice_list("AbsOriPalm"), null=True, blank=True, max_length=5)
+    absOriPalm.field_choice_category = 'AbsOriPalm'
     absOriFing = models.CharField(_("Absolute Orientation: Fingers"), choices=build_choice_list("AbsOriFing"), null=True, blank=True, max_length=5)
+    absOriFing.field_choice_category = 'AbsOriFing'
 
     relOriMov = models.CharField(_("Relative Orientation: Movement"), choices=build_choice_list("RelOriMov"), null=True, blank=True, max_length=5)
+    relOriMov.field_choice_category = 'RelOriMov'
     relOriLoc = models.CharField(_("Relative Orientation: Location"), choices=build_choice_list("RelOriLoc"), null=True, blank=True, max_length=5)
+    relOriLoc.field_choice_category = 'RelOriLoc'
 
     oriCh = models.CharField(_("Orientation Change"),choices=build_choice_list("OriChange"), null=True, blank=True, max_length=5)
+    oriCh.field_choice_category = 'OriChange'
 
     handCh = models.CharField(_("Handshape Change"), choices=build_choice_list("HandshapeChange"), null=True, blank=True, max_length=5)
+    handCh.field_choice_category = 'HandshapeChange'
 
     repeat = models.NullBooleanField(_("Repeated Movement"), null=True, default=False)
     altern = models.NullBooleanField(_("Alternating Movement"), null=True, default=False)
 
     movSh = models.CharField(_("Movement Shape"), choices=build_choice_list("MovementShape"), null=True, blank=True, max_length=5)
+    movSh.field_choice_category = 'MovementShape'
     movDir = models.CharField(_("Movement Direction"), choices=build_choice_list("MovementDir"), null=True, blank=True, max_length=5)
+    movDir.field_choice_category = 'MovementDir'
     movMan = models.CharField(_("Movement Manner"), choices=build_choice_list("MovementMan"), null=True, blank=True, max_length=5)
+    movMan.field_choice_category = 'MovementMan'
     contType = models.CharField(_("Contact Type"), choices=build_choice_list("ContactType"), null=True, blank=True, max_length=5)
+    contType.field_choice_category = 'ContactType'
 
     phonOth = models.TextField(_("Phonology Other"), null=True, blank=True)
 
@@ -564,6 +597,7 @@ class Gloss(models.Model):
     phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True,)
 
     locPrimLH = models.CharField(_("Placement Active Articulator LH"), choices=build_choice_list("Location"), null=True, blank=True, max_length=5)
+    locPrimLH.field_choice_category = 'Location'
     locFocSite = models.CharField(_("Placement Focal Site RH"), null=True, blank=True, max_length=5)
     locFocSiteLH = models.CharField(_("Placement Focal site LH"), null=True, blank=True, max_length=5)
     initArtOri = models.CharField(_("Orientation RH (initial)"), null=True, blank=True, max_length=5)
@@ -575,15 +609,22 @@ class Gloss(models.Model):
 
     iconImg = models.CharField(_("Iconic Image"), max_length=50, blank=True)
     iconType = models.CharField(_("Type of iconicity"), choices=build_choice_list("iconicity"), null=True, blank=True, max_length=5)
+    iconType.field_choice_category = 'iconicity'
 
     namEnt = models.CharField(_("Named Entity"), choices=build_choice_list("NamedEntity"), null=True, blank=True, max_length=5)
+    namEnt.field_choice_category = 'NamedEntity'
     semField = models.CharField(_("Semantic Field"), choices=build_choice_list("SemField"), null=True, blank=True, max_length=5)
+    semField.field_choice_category = 'SemField'
 
     wordClass = models.CharField(_("Word class"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
+    wordClass.field_choice_category = 'WordClass'
     wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
+    wordClass2.field_choice_category = 'WordClass'
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50, blank=True)
+    derivHist.field_choice_category = 'MovementShape'
     lexCatNotes = models.CharField(_("Lexical category notes"),null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
+    valence.field_choice_category = 'Valence'
     concConcSet = models.CharField(_("Conception Concept Set"), null=True, blank=True, max_length=300)
 
     #Frequency fields
@@ -1871,6 +1912,7 @@ class MorphologyDefinition(models.Model):
 
     parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses")
     role = models.CharField(max_length=5,choices=build_choice_list('MorphologyType'))
+    role.field_choice_category = 'MorphologyType'
     morpheme = models.ForeignKey(Gloss,related_name="morphemes")
 
     def __str__(self):
@@ -1882,6 +1924,7 @@ class Morpheme(Gloss):
     # Fields that are specific for morphemes, and not so much for 'sign-words' (=Gloss) as a whole
     # (1) optional morpheme-type field (not to be confused with MorphologyType from MorphologyDefinition)
     mrpType = models.CharField(_("Has morpheme type"), max_length=5,blank=True,  null=True, choices=build_choice_list('MorphemeType'))
+    mrpType.field_choice_category = 'MorphemeType'
 
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
@@ -1957,6 +2000,7 @@ class OtherMedia(models.Model):
 
     parent_gloss = models.ForeignKey(Gloss)
     type = models.CharField(max_length=5,choices=build_choice_list('OtherMediaType'))
+    type.field_choice_category = 'OtherMediaType'
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
 

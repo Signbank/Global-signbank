@@ -174,7 +174,7 @@ class FieldChoiceAdmin(VersionAdmin):
 
     def has_delete_permission(self, request, obj=None):
         if not obj:
-            print('ADMIN has_delete_permission obj is None')
+            # print('ADMIN has_delete_permission obj is None')
             # just return False if there is no object, prevent arbitrary deletion of field choices
             return False
 

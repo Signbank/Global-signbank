@@ -1217,24 +1217,27 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices.keys():
             # get the first choice for the field
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for fieldname in fields_with_choices[fieldchoice]:
-                setattr(new_gloss, fieldname, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for fieldname in fields_with_choices[fieldchoice]:
+                    setattr(new_gloss, fieldname, field_choice_in_use.machine_value)
         new_gloss.save()
 
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no glosses with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
 
     def test_delete_fieldchoice_handshape(self):
@@ -1267,22 +1270,24 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices_handshapes.keys():
             # get the first choice for the field
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for fieldname in fields_with_choices_handshapes[fieldchoice]:
-                setattr(new_handshape, fieldname, field_choice_in_use.machine_value)
-            # for FingerSelection, set the Boolean fields of the fingers
-            if fieldchoice == 'FingerSelection':
-                new_handshape.set_fingerSelection_display()
-                new_handshape.set_fingerSelection2_display()
-                new_handshape.set_unselectedFingers_display()
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for fieldname in fields_with_choices_handshapes[fieldchoice]:
+                    setattr(new_handshape, fieldname, field_choice_in_use.machine_value)
+                # for FingerSelection, set the Boolean fields of the fingers
+                if fieldchoice == 'FingerSelection':
+                    new_handshape.set_fingerSelection_display()
+                    new_handshape.set_fingerSelection2_display()
+                    new_handshape.set_unselectedFingers_display()
         new_handshape.save()
 
         print('TEST: new handshape created: ', new_handshape.__dict__)
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices_handshapes.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no glosses with that choice
@@ -1343,9 +1348,10 @@ class FieldChoiceTests(TestCase):
         # set the role to the first choice
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for field in fields_with_choices[fieldchoice]:
-                setattr(new_definition, field, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    setattr(new_definition, field, field_choice_in_use.machine_value)
         new_definition.save()
 
         print('TEST new definition created: ', new_definition.__dict__)
@@ -1363,20 +1369,22 @@ class FieldChoiceTests(TestCase):
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (in use)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no notes with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (not used)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_morphology_definition(self):
 
@@ -1428,9 +1436,10 @@ class FieldChoiceTests(TestCase):
         # set the morphology definition role to the first choice
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for field in fields_with_choices[fieldchoice]:
-                setattr(new_morphology_definition, field, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    setattr(new_morphology_definition, field, field_choice_in_use.machine_value)
         new_morphology_definition.save()
 
         print('TEST new morphology definition created: ', new_morphology_definition.__dict__)
@@ -1448,20 +1457,22 @@ class FieldChoiceTests(TestCase):
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (in use)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no notes with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (not used)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_othermediatype(self):
 
@@ -1502,9 +1513,10 @@ class FieldChoiceTests(TestCase):
         # set the other media type to the first choice
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for field in fields_with_choices[fieldchoice]:
-                setattr(new_othermedia, field, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    setattr(new_othermedia, field, field_choice_in_use.machine_value)
         new_othermedia.save()
 
         print('TEST new othermedia created: ', new_othermedia.__dict__)
@@ -1522,20 +1534,22 @@ class FieldChoiceTests(TestCase):
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (in use)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no notes with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (not used)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_morpheme_type(self):
 
@@ -1543,7 +1557,7 @@ class FieldChoiceTests(TestCase):
 
         from signbank.tools import fields_with_choices_morpheme_type
         fields_with_choices = fields_with_choices_morpheme_type()
-
+        print('fields with choices morpheme type: ', fields_with_choices)
         # create a gloss with and without field choices
 
         # set the test dataset
@@ -1574,10 +1588,12 @@ class FieldChoiceTests(TestCase):
         # set the morpheme type to the first choice
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for field in fields_with_choices[fieldchoice]:
-                setattr(new_gloss, field, field_choice_in_use.machine_value)
-                setattr(new_morpheme, field, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    print('field: ', field)
+                    setattr(new_gloss, field, field_choice_in_use.machine_value)
+                    setattr(new_morpheme, field, field_choice_in_use.machine_value)
         new_gloss.save()
         new_morpheme.save()
 
@@ -1596,20 +1612,22 @@ class FieldChoiceTests(TestCase):
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (in use)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no notes with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (not used)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
 
 # Helper function to retrieve contents of json-encoded message
