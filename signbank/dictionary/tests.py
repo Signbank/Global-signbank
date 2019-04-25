@@ -276,32 +276,15 @@ class ECVsNonEmptyTests(TestCase):
             filetree = ElementTree.parse(location_ecv_files + os.sep + filename)
             filetreeroot = filetree.getroot()
             entry_nodes = filetreeroot.findall("./CONTROLLED_VOCABULARY/CV_ENTRY_ML")
+            # get the dataset using filter (returns a list)
+            try:
+                dataset_of_filename = Dataset.objects.get(acronym__iexact=fname)
+            except:
+                print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
             if not len(entry_nodes):
                 # no glosses in the ecv
-                # get the dataset using filter (returns a list)
-                dataset_of_filename = Dataset.objects.filter(acronym__iexact=fname)
-                if dataset_of_filename:
-                    # dataset of file exists
-
-                    # # choice 1:
-                    # # check whether there are glosses in the dataset
-                    # # the following code checks whether the dataset is actually empty
-                    # dataset = dataset_of_filename[0]
-                    # # the following looks at the count of glosses in the (test) database
-                    # # this will be empty if the test database is empty
-                    # count_glosses_dataset = dataset.count_glosses()
-                    # if count_glosses_dataset:
-                    #     print('EMPTY ECV ', filename)
-                    #     found_errors = True
-
-                    # choice 2:
-                    # use this code to avoid counting the glosses in the dataset and simply report
-                    print('EMPTY ECV ', filename)
-                    found_errors = True
-                else:
-                    # dataset of file does not exist, it might be old
-                    print('EMPTY ECV, DATASET NOT FOUND: ', filename)
-                    found_errors = True
+                print('EMPTY ECV FILE FOUND: ', filename)
+                found_errors = True
 
         self.assertEqual(found_errors, False)
 
@@ -318,9 +301,9 @@ class ImportExportTests(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
 
-    def test_DatasetListView_ECV_export_permission_change_dataset(self):
+    def test_DatasetListView_ECV_export_empty_dataset(self):
 
-        print('Test DatasetListView export_ecv with permission change_dataset')
+        print('Test DatasetListView export_ecv with empty dataset')
 
         dataset_name = settings.DEFAULT_DATASET_ACRONYM
         print('Test Dataset is: ', dataset_name)
@@ -342,9 +325,67 @@ class ImportExportTests(TestCase):
         decoded_cookies = decode_messages(loaded_cookies)
         json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
         json_message = json_decoded_cookies[0]
-        print('Message: ', json_message)
+        print('Message ONE: ', json_message)
+
+        # the Dataset is Empty at this point, so export is not offered.
+
+        self.assertEqual(str(json_message), 'The dataset ' + dataset_name + ' is empty, export ECV is not available.')
+
+
+    def test_DatasetListView_ECV_export_permission_change_dataset(self):
+
+        print('Test DatasetListView export_ecv with permission change_dataset')
+
+        dataset_name = settings.DEFAULT_DATASET_ACRONYM
+        print('Test Dataset is: ', dataset_name)
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(acronym=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User has permmission to change dataset.')
+
+        client = Client()
+
+        logged_in = client.login(username='test-user', password='test-user')
+
+        # create a gloss and put it in the dataset so we can export it.
+        # this has many steps
+
+        # Create a lemma first
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # fill in the annotation translations for the new gloss
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss'
+            annotationIdgloss.save()
+
+        url = '/datasets/available?dataset_name=' + dataset_name + '&export_ecv=ECV'
+
+        response = client.get(url)
+
+        loaded_cookies = response.cookies.get('messages').value
+        decoded_cookies = decode_messages(loaded_cookies)
+        json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
+        json_message = json_decoded_cookies[0]
+        print('Message TWO: ', json_message)
 
         self.assertEqual(str(json_message), 'ECV ' + dataset_name + ' successfully updated.')
+
 
     def test_DatasetListView_ECV_export_no_permission_change_dataset(self):
 
