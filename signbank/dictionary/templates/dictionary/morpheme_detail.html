@@ -4,10 +4,19 @@
 {% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 
+{% block bootstrap3_title %}
+{% blocktrans %}Morpheme for {{ morpheme }}{% endblocktrans %}
+{% endblock %}
+
 {% load guardian_tags %}
 
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <style>
+        #panel-expand-collapse-btn-group.affix {
+            position:fixed;
+        }
+    </style>
 {% endblock %}
 
 {% block extrajs %}
@@ -95,9 +104,8 @@
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
     
      <script type='text/javascript'>
-        $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
-        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').outerHeight() + $('#signinfo').outerHeight())});
-
+        $('#searchresults').css({'top': Math.round($('#signbank-bar').height() + 10)});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
      </script>
 
 {% endblock %}
