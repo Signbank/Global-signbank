@@ -8,7 +8,11 @@
 {# Translators: Page title #}
 {% block bootstrap3_title %}
 {% if translation %}
-{% blocktrans %}Sign for {{ translation }}{% endblocktrans %}
+{% if gloss_or_morpheme == 'morpheme' %}
+{% blocktrans %}Morpheme for {{ gloss }}{% endblocktrans %}
+{% else %}
+{% blocktrans %}Sign for {{ gloss }}{% endblocktrans %}
+{% endif %}
 {% else %}{{ gloss.idgloss }}{% endif %}
 {% endblock %}
 
@@ -48,14 +52,16 @@
         {% if perms.dictionary.search_gloss %}
         <ul class='nav nav-tabs'>
             <li class="nav-item">
-                <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+                <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}.html">{% trans "Public View" %}</a>
             </li>
             <li class="nav-item">
-                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}">{% trans "Detail View" %}</a>
             </li>
+            {% if gloss_or_morpheme == 'gloss' %}
             <li class="nav-item">
                 <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
             </li>
+            {% endif %}
         </ul>
         <br>
         {% endif %}

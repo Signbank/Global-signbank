@@ -176,6 +176,7 @@ def word(request, keyword, n):
                               {'translation': trans.translation.text.encode('utf-8'),
                                'viewname': 'words',
                                'definitions': trans.gloss.definitions(),
+                               'gloss_or_morpheme': 'gloss',
                                'allkwds': allkwds,
                                'n': n,
                                'total': total,
@@ -279,6 +280,7 @@ def gloss(request, glossid):
     return render(request,"dictionary/word.html",
                               {'translation': trans,
                                'definitions': gloss.definitions(),
+                               'gloss_or_morpheme': 'gloss',
                                'allkwds': allkwds,
                                'dialect_image': map_image_for_dialects(gloss.dialect.all()),
                                'lastmatch': lastmatch,
@@ -297,6 +299,103 @@ def gloss(request, glossid):
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
+
+def morpheme(request, glossid):
+    # this is public view of a morpheme
+
+    if 'feedbackmessage' in request.GET:
+        feedbackmessage = request.GET['feedbackmessage']
+    else:
+        feedbackmessage = False
+
+    # we should only be able to get a single gloss, but since the URL
+    # pattern could be spoofed, we might get zero or many
+    # so we filter first and raise a 404 if we don't get one
+    try:
+        morpheme = Morpheme.objects.get(id=glossid)
+    except ObjectDoesNotExist:
+        raise Http404
+
+    if not(request.user.has_perm('dictionary.search_gloss') or morpheme.inWeb):
+        return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
+
+    allkwds = morpheme.translation_set.all()
+    if len(allkwds) == 0:
+        trans = None
+    else:
+        trans = allkwds[0]
+
+    videourl = morpheme.get_video_url()
+    if not os.path.exists(os.path.join(settings.MEDIA_ROOT, videourl)):
+        videourl = None
+
+    if morpheme.sn != None:
+        if request.user.has_perm('dictionary.search_gloss'):
+            glosscount = Morpheme.objects.count()
+            glossposn = Morpheme.objects.filter(sn__lt=morpheme.sn).count()+1
+        else:
+            glosscount = Morpheme.objects.filter(inWeb__exact=True).count()
+            glossposn = Morpheme.objects.filter(inWeb__exact=True, sn__lt=morpheme.sn).count()+1
+    else:
+        glosscount = 0
+        glossposn = 0
+
+    # navigation gives us the next and previous signs
+    nav = morpheme.navigation(request.user.has_perm('dictionary.search_gloss'))
+
+    # the gloss update form for staff
+    update_form = None
+
+    if request.user.has_perm('dictionary.search_gloss'):
+        update_form = GlossModelForm(instance=morpheme)
+        video_form = VideoUploadForGlossForm(initial={'gloss_id': morpheme.pk,
+                                                      'redirect': request.get_full_path()})
+    else:
+        update_form = None
+        video_form = None
+
+
+    # Put annotation_idgloss per language in the context
+    annotation_idgloss = {}
+    if morpheme.dataset:
+        for language in morpheme.dataset.translation_languages.all():
+            annotation_idgloss[language] = morpheme.annotationidglosstranslation_set.filter(language=language)
+    else:
+        language = Language.objects.get(id=get_default_language_id())
+        annotation_idgloss[language] = morpheme.annotationidglosstranslation_set.filter(language=language)
+
+
+    # get the last match keyword if there is one passed along as a form variable
+    if 'lastmatch' in request.GET:
+        lastmatch = request.GET['lastmatch']
+        print('lastmatch: ', lastmatch)
+        if lastmatch == "None":
+            # this looks weird, comparing to None in quotes
+            lastmatch = False
+    else:
+        lastmatch = False
+
+    return render(request,"dictionary/word.html",
+                              {'translation': trans,
+                               'definitions': morpheme.definitions(),
+                               'gloss_or_morpheme': 'morpheme',
+                               'allkwds': allkwds,
+                               'dialect_image': map_image_for_dialects(morpheme.dialect.all()),
+                               'lastmatch': lastmatch,
+                               'videofile': videourl,
+                               'viewname': word,
+                               'feedback': None,
+                               'gloss': morpheme,
+                               'glosscount': glosscount,
+                               'glossposn': glossposn,
+                               'navigation': nav,
+                               'update_form': update_form,
+                               'videoform': video_form,
+                               'tagform': TagUpdateForm(),
+                               'feedbackmessage': feedbackmessage,
+                               'annotation_idgloss': annotation_idgloss,
+                               'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
+                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 
 @login_required_config

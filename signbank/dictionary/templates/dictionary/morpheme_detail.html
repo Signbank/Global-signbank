@@ -143,16 +143,18 @@
         {% endif %}
     </div>
 
-    <div class='btn-group' style="background-color:white;border:0;padding-top:3px;">
 
-    <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}.html">{% trans "Public View" %}</a>
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}.html">{% trans "Public View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}">{% trans "Detail View" %}</a>
+        </li>
+    </ul>
 
-        {% if perms.dictionary.change_morpheme %}
-        <button id='delete_morpheme_btn' class='btn btn-default navbar-btn' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
-        {% endif %}
-
-    </div>
-
+    {% get_obj_perms request.user for morpheme.lemma.dataset as "dataset_perms" %}
+    {% if "change_dataset" in dataset_perms %}
     {% if perms.dictionary.change_morpheme %}
     <div class='pull-right' style="margin-right:15px;margin-top:3px;">
 
@@ -162,6 +164,7 @@
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
          
     </div>
+    {% endif %}
     {% endif %}
 </div>
 
@@ -187,7 +190,7 @@
     
     </div>
 
-    <div>
+    <div style="overflow:hidden;">
         {% if morpheme.get_image_path %}
             <img id="imageframe" src="{{protected_media_url}}{{morpheme.get_image_path}}" style="height:259px;width:auto;">
         {% endif %}
@@ -256,12 +259,23 @@
     </div>
     {% endif %}
 
+    {% if "change_dataset" in dataset_perms %}
+    {% if perms.dictionary.change_morpheme %}
+    <div class="editform">
+        <fieldset>
+         <legend>{% trans "Delete Morpheme" %}</legend>
+         <button id='delete_morpheme_btn' class='btn btn-danger' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
+        </fieldset>
+    </div>
+    {% endif %}
+    {% endif %}
 
-  {% include "dictionary/morphemetags.html" %}
+                {% include "dictionary/morphemetags.html" %}
 
 </div>
 
-    <div class='panel-group' id="definition">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;">
+
 
         <table class='table table-condensed'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>

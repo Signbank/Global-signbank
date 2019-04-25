@@ -27,6 +27,7 @@ urlpatterns = [
 
     # and and alternate view for direct display of a gloss
     url(r'gloss/(?P<glossid>\d+).html$', signbank.dictionary.views.gloss, name='public_gloss'),
+    url(r'morpheme/(?P<glossid>\d+).html$', signbank.dictionary.views.morpheme, name='public_morpheme'),
 
     url(r'^search/$', signbank.dictionary.views.search, name="search"),
     url(r'^search_morpheme/$', signbank.dictionary.views.search_morpheme, name="search_morpheme"),
