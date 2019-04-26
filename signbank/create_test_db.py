@@ -19,7 +19,7 @@ def make_db_small(filename):
 if __name__ == '__main__':
 
     #Static settings
-    WRITABLE_FOLDER = '/scratch2/www/signbank/writable/database/'
+    WRITABLE_FOLDER = '/var/www/signbank/live/writable/database/'
     SOURCE_DB = WRITABLE_FOLDER+'signbank.db'
     TEST_DB_FILENAME = WRITABLE_FOLDER+'test-signbank.db'
     SMALL = True
