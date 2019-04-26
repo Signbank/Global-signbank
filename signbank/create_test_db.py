@@ -9,7 +9,9 @@ def make_db_small(filename):
     for table in ['reversion_version', 'reversion_revision', 'django_session',
                   'dictionary_gloss', 'dictionary_translation',
                   'dictionary_annotationidglosstranslation', 'dictionary_keyword',
-                  'dictionary_relation']:
+                  'dictionary_relation', 'dictionary_definition', 'dictionary_othermedia',
+                  'dictionary_morphologydefinition', 'dictionary_morpheme',
+                  'dictionary_simultaneousmorphologydefinition']:
         c.execute('DELETE FROM ' + table + ';')
 
     c.execute('VACUUM;')
