@@ -3846,7 +3846,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
     try:
         minimalpairs_objects = this_gloss.minimal_pairs_dict()
     except:
-        minimalpairs_objects = []
+        minimalpairs_objects = {}
 
     translation_focus_gloss = ""
     translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
