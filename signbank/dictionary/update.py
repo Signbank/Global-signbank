@@ -1038,7 +1038,8 @@ def update_definition(request, gloss, field, value):
     elif what == 'definitionrole':
         defn.role = value
         defn.save()
-        newvalue = defn.get_role_display()
+        choice_list = FieldChoice.objects.filter(field__iexact='NoteType')
+        newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
