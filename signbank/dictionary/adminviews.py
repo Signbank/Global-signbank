@@ -3302,6 +3302,21 @@ class DatasetDetailView(DetailView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        nr_of_glosses = 0
+        nr_of_public_glosses = 0
+
+        # This code is slowing things down
+
+        for gloss in Gloss.objects.all():
+
+            nr_of_glosses += 1
+
+            if gloss.inWeb:
+                nr_of_public_glosses += 1
+
+        context['nr_of_glosses'] = nr_of_glosses
+        context['nr_of_public_glosses'] = nr_of_public_glosses
+
         return context
 
     def render_to_response(self, context):
