@@ -91,6 +91,23 @@
              {% endfor %}
              </td>
         </tr>
+            {% if notes_groupedby_role.items %}
+            <tr id="notes">
+                <th>{% blocktrans %}Note(s){% endblocktrans %}</th>
+                <td>
+                    <table>
+                    {% for role_id, note_list in notes_groupedby_role.items %}
+                        {% for def in note_list %}
+                            {% if def.published %}
+                                <tr><th id='definitionrole_{{def.id}}'>{{role_id.1}}</th></tr>
+                                <tr><td id='definition_{{def.id}}'>{{def.text}}</td></tr>
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                    </table>
+                </td>
+            </tr>
+            {% endif %}
         </table>
         </div>
         <div class='col-md-6'>

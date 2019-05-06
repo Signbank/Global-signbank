@@ -266,6 +266,18 @@ def gloss(request, glossid):
         language = Language.objects.get(id=get_default_language_id())
         annotation_idgloss[language] = gloss.annotationidglosstranslation_set.filter(language=language)
 
+    # Regroup notes
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+    notes = gloss.definition_set.all()
+    notes_groupedby_role = {}
+    for note in notes:
+        # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
+        translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices,
+                                                                       request.LANGUAGE_CODE)
+        role_id = (note.role, translated_note_role)
+        if role_id not in notes_groupedby_role:
+            notes_groupedby_role[role_id] = []
+        notes_groupedby_role[role_id].append(note)
 
     # get the last match keyword if there is one passed along as a form variable
     if 'lastmatch' in request.GET:
@@ -282,6 +294,7 @@ def gloss(request, glossid):
                                'definitions': gloss.definitions(),
                                'gloss_or_morpheme': 'gloss',
                                'allkwds': allkwds,
+                               'notes_groupedby_role': notes_groupedby_role,
                                'dialect_image': map_image_for_dialects(gloss.dialect.all()),
                                'lastmatch': lastmatch,
                                'videofile': videourl,
