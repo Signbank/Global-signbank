@@ -3,7 +3,7 @@ from sqlite3 import connect
 from shutil import copyfile, move
 
 def make_db_small(filename):
-    conn = connect(filename)
+    conn = connect(filename,isolation_level=None)
     c = conn.cursor()
 
     for table in ['reversion_version', 'reversion_revision', 'django_session',
@@ -11,10 +11,10 @@ def make_db_small(filename):
                   'dictionary_annotationidglosstranslation', 'dictionary_keyword',
                   'dictionary_relation', 'dictionary_definition', 'dictionary_othermedia',
                   'dictionary_morphologydefinition', 'dictionary_morpheme',
-                  'dictionary_simultaneousmorphologydefinition']:
+                  'dictionary_simultaneousmorphologydefinition', 'dictionary_lemmaidgloss', 'dictionary_lemmaidglosstranslation']:
         c.execute('DELETE FROM ' + table + ';')
 
-    c.execute('VACUUM;')
+    c.execute('VACUUM')
     conn.commit()
     conn.close()
 

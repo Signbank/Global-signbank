@@ -497,8 +497,9 @@ class ImportExportTests(TestCase):
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 1 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
-        response = client.post(reverse_lazy('import_csv_update'), form_data)
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
         self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
 
         # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
@@ -509,9 +510,13 @@ class ImportExportTests(TestCase):
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 2 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
-        response = client.post(reverse_lazy('import_csv_update'), form_data)
-        self.assertContains(response, 'Changes are live.')
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+        self.assertContains(response, 'No changes were found.')
+
+        count_dataset_translation_languages = test_dataset.translation_languages.all().count()
+        print('Number of translation languages for the test dataset: ', count_dataset_translation_languages)
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         form_data = {'update_or_create': 'update'}
@@ -524,16 +529,19 @@ class ImportExportTests(TestCase):
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 3 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
         response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
-        # for item in response.context['request'].POST.items():
-        #     print('response item: ', item)
-        # all_messages = list(response.context['messages'])
-        # for m in all_messages:
-        #     print('response message: ', m.message)
-        self.assertContains(response, 'Import CSV Update')
+        if count_dataset_translation_languages > 1:
+            print('More than one translation language, attempt to update a lemma translation')
+            self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+        else:
+            print('Only one translation language, no changes found')
+            self.assertContains(response, 'No changes were found.')
+
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
+
         form_data = {'update_or_create': 'update'}
         for index, language in enumerate(test_dataset.translation_languages.all()):
             if index == 0:
@@ -544,9 +552,17 @@ class ImportExportTests(TestCase):
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 4 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
         response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
-        self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+
+        if count_dataset_translation_languages > 1:
+            print('More than one translation language, attempt to update a lemma translation')
+            self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+        else:
+            print('Only one translation language, no changes found')
+            self.assertContains(response, 'No changes were found.')
+
 
     def test_Import_csv_new_gloss_for_lemma(self):
         """
@@ -581,6 +597,7 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
+        print('Form data test 1 of test_Import_csv_new_gloss_for_lemma: \n', form_data)
         response = client.post(reverse_lazy('import_csv_create'), form_data)
         self.assertContains(response, 'Changes are live.')
 
@@ -595,8 +612,12 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
+        print('Form data test 2 of test_Import_csv_new_gloss_for_lemma: \n', form_data)
         response = client.post(reverse_lazy('import_csv_create'), form_data)
         self.assertContains(response, 'Changes are live.')
+
+        count_dataset_translation_languages = test_dataset.translation_languages.all().count()
+        print('Number of translation languages for the test dataset: ', count_dataset_translation_languages)
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_annotation_translation_index = 3
@@ -613,14 +634,15 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
+        print('Form data test 3 of test_Import_csv_new_gloss_for_lemma: \n', form_data)
         response = client.post(reverse_lazy('import_csv_create'), form_data, follow=True)
-        # for item in response.context['request'].POST.items():
-        #     print('response item: ', item)
-        # all_messages = list(response.context['messages'])
-        # for m in all_messages:
-        #     print('response message: ', m.message)
-        self.assertContains(response, "the combination of Lemma ID Gloss translations should either refer")
 
+        if count_dataset_translation_languages > 1:
+            print('More than one translation language, attempt to update to combination of existing and new lemma translations')
+            self.assertContains(response, "the combination of Lemma ID Gloss translations should either refer")
+        else:
+            print('Only one translation language, only the annotation translation is changed.')
+            self.assertContains(response, 'Changes are live.')
 
 class VideoTests(TestCase):
 
