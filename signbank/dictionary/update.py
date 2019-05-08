@@ -1175,8 +1175,7 @@ def add_relationtoforeignsign(request):
 
 def add_definition(request, glossid):
     """Add a new definition for this gloss"""
-    
-    
+
     thisgloss = get_object_or_404(Gloss, id=glossid)
     
     if request.method == "POST":
@@ -1186,10 +1185,9 @@ def add_definition(request, glossid):
             
             published = form.cleaned_data['published']
             count = form.cleaned_data['count']
-            role = form.cleaned_data['role']
+            role = form.cleaned_data['note']
             text = form.cleaned_data['text']
             
-            # create definition, default to not published
             defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
             defn.save()
 
