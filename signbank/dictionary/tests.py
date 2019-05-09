@@ -75,13 +75,42 @@ class BasicCRUDTests(TestCase):
         changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
         self.assertEqual(changed_gloss.handedness, '6')
 
+        # set up keyword search parameter for default language
+        default_language = Language.objects.get(id=get_default_language_id())
+        keyword_search_field_prefix = "keywords_"
+        keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
+
         #We can even add and remove stuff to the keyword table
+
+        # to start with, both tables are empty in the test database
         self.assertEqual(Keyword.objects.all().count(), 0)
         self.assertEqual(Translation.objects.all().count(), 0)
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'keywords_nl','value':'a, b, c, d, e'})
+
+        # add five keywords to the translations of this gloss
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c, d, e'})
+
+        all_keywords = Keyword.objects.all()
+        for k in all_keywords:
+            print('test_CRUD update1 keyword: ', k)
+        all_translations = Translation.objects.all()
+        for t in all_translations:
+            print('test_CRUD update1 gloss translation: ', t)
+
         self.assertEqual(Keyword.objects.all().count(), 5)
         self.assertEqual(Translation.objects.all().count(), 5)
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'keywords_nl','value':'a, b, c'})
+
+        # update the gloss to only have three of the translations
+        # the keyword table still has the same data, but only three translations are associated with the gloss
+
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c'})
+
+        all_keywords = Keyword.objects.all()
+        for k in all_keywords:
+            print('test_CRUD update2 keyword: ', k)
+        all_translations = Translation.objects.all()
+        for t in all_translations:
+            print('test_CRUD update2 gloss translation: ', t)
+
         self.assertEqual(Keyword.objects.all().count(), 5)
         self.assertEqual(Translation.objects.all().count(), 3)
 
@@ -152,7 +181,6 @@ class BasicCRUDTests(TestCase):
 
         #Create the glosses
         dataset_name = settings.DEFAULT_DATASET
-        dataset_name = 'ASL'
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
