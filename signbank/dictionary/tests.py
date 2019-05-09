@@ -294,9 +294,9 @@ class BasicQueryTests(TestCase):
         new_lemma.save()
 
         # Create a lemma idgloss translation
-        language = Language.objects.get(id=get_default_language_id())
+        default_language = Language.objects.get(id=get_default_language_id())
         new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
-                                                              lemma=new_lemma, language=language)
+                                                              lemma=new_lemma, language=default_language)
         new_lemmaidglosstranslation.save()
 
         # #Create the gloss
@@ -311,16 +311,14 @@ class BasicQueryTests(TestCase):
             annotationIdgloss.text = 'thisisatemporarytestgloss'
             annotationIdgloss.save()
 
+        # set the language for glosssearch field name
+        gloss_search_field_prefix = "glosssearch_"
+        glosssearch_field_name = gloss_search_field_prefix + default_language.language_code_2char
+
         #Search
-        # response = client.get('/signs/search/?handedness=4')
-        # response = client.get('/signs/search/?handedness=4', follow=True)
-        response = client.get('/signs/search/?handedness=4&glosssearch_nl=test', follow=True)
+        response = client.get('/signs/search/?handedness=4&'+glosssearch_field_name+'=test', follow=True)
         self.assertEqual(len(response.context['object_list']), 1)
 
-        #print(response)
-        #print(response.context.keys())
-        # print(response.context['object_list'],response.context['glosscount'])
-        #print(response.context['selected_datasets'])
 
 class ECVsNonEmptyTests(TestCase):
 
@@ -513,12 +511,12 @@ class ImportExportTests(TestCase):
         assign_perm('dictionary.export_csv', self.user)
         print('User has permmission to export csv.')
 
-        response = client.get('/signs/search/', {"search_type": "sign", "glosssearch_nl": "wesseltest6", "format": "CSV"})
+        # set the language for glosssearch field name
+        default_language = Language.objects.get(id=get_default_language_id())
+        gloss_search_field_prefix = "glosssearch_"
+        glosssearch_field_name = gloss_search_field_prefix + default_language.language_code_2char
 
-        # print(str(response['Content-Type']))
-        # print(str(response.status_code))
-        # print(str(response.wsgi_request))
-        # print("Export csv: {}".format(response.content))
+        response = client.get('/signs/search/', {"search_type": "sign", glosssearch_field_name : "wesseltest6", "format": "CSV"})
 
         self.assertEqual(response['Content-Type'], "text/csv")
         self.assertContains(response, b'Signbank ID,')
