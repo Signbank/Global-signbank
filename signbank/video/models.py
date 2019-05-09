@@ -411,22 +411,30 @@ class GlossVideo(models.Model):
 
 
 @receiver(models.signals.post_save, sender=Dataset)
-def process_dataset_acronym_change(sender, instance, **kwargs):
+def process_dataset_changes(sender, instance, **kwargs):
     # If the acronym has been changed, change all GlossVideos
-    # and move all video/poster files accordingly.
+    # and rename directories.
     dataset = instance
-    if dataset.acronym != dataset._original_acronym:
+    if dataset.acronym != dataset._initial['acronym']:
         # Move all media
         glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
         for glossvideo in glossvideos:
             glossvideo.move_video(move_files_on_disk=False)
 
         # Rename dirs
-        glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset._original_acronym)
+        glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset._initial['acronym'])
         glossvideo_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset.acronym)
         os.rename(glossvideo_path_original, glossvideo_path_new)
 
-        glossimage_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset._original_acronym)
+        glossimage_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset._initial['acronym'])
         glossimage_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset.acronym)
         os.rename(glossimage_path_original, glossimage_path_new)
+
+    # If the default language has been changed, change all GlossVideos
+    # and move all video/poster files accordingly.
+    if dataset.default_language != dataset._initial['default_language']:
+        # Move all media
+        glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
+        for glossvideo in glossvideos:
+            glossvideo.move_video(move_files_on_disk=True)
 

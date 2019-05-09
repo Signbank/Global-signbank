@@ -8,6 +8,7 @@ from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
+from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist
 import tagging
 import re
@@ -1948,7 +1949,7 @@ class Dataset(models.Model):
         super().__init__(*args, **kwargs)
 
         # Keep original acronym for changes to GlossVideos
-        self._original_acronym = self.acronym
+        self._initial = model_to_dict(self, fields=['acronym', 'default_language'])
 
     def __str__(self):
         return self.acronym
