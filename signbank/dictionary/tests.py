@@ -1,12 +1,16 @@
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm
+from signbank.dictionary.models import *
 from signbank.settings.base import WRITABLE_FOLDER
 
 from django.contrib.auth.models import User, Permission, Group
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 import json
 from django.test import Client
 from django.contrib.messages.storage.cookie import MessageDecoder
+from django.contrib import messages
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.contrib.messages.storage.cookie import CookieStorage
 
 from guardian.shortcuts import assign_perm
 
@@ -33,7 +37,7 @@ class BasicCRUDTests(TestCase):
         #self.assertGreater(total_nr_of_glosses,0) #Verify that the database is not empty
 
         # Create the glosses
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -82,7 +86,7 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(Translation.objects.all().count(), 3)
 
         #Throwing stuff away with the update functionality
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'handedness','value':'confirmed',
+        client.post(settings.PREFIX_URL + '/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'handedness','value':'confirmed',
                                                                    'field':'deletegloss'})
         found = 0
         for gloss in Gloss.objects.filter(handedness=4):
@@ -103,7 +107,7 @@ class BasicCRUDTests(TestCase):
         self.assertContains(response, 'href="/logout.html">Logout')
 
         # Get the test dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Construct the Create Gloss form data
@@ -147,7 +151,7 @@ class BasicCRUDTests(TestCase):
         assign_perm('dictionary.search_gloss', self.user)
 
         #Create the glosses
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -206,7 +210,7 @@ class BasicQueryTests(TestCase):
         client.login(username='test-user', password='test-user')
 
         #Get a dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
@@ -215,9 +219,20 @@ class BasicQueryTests(TestCase):
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
 
+        # Create a lemma in order to store the dataset with the new gloss
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
         # #Create the gloss
         new_gloss = Gloss()
         new_gloss.handedness = 4
+        new_gloss.lemma = new_lemma
         new_gloss.save()
         for language in test_dataset.translation_languages.all():
             annotationIdgloss = AnnotationIdglossTranslation()
@@ -230,11 +245,48 @@ class BasicQueryTests(TestCase):
         # response = client.get('/signs/search/?handedness=4')
         # response = client.get('/signs/search/?handedness=4', follow=True)
         response = client.get('/signs/search/?handedness=4&glosssearch_nl=test', follow=True)
+        self.assertEqual(len(response.context['object_list']), 1)
 
         #print(response)
         #print(response.context.keys())
-        #print(response.context['object_list'],response.context['glosscount'])
+        # print(response.context['object_list'],response.context['glosscount'])
         #print(response.context['selected_datasets'])
+
+class ECVsNonEmptyTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+
+    def test_ECV_files_nonempty(self):
+
+        # test to see if there are glosses in all ecv files
+        # note: only the files in the ecv folder are checked for non-emptiness
+        # it is not checked whether there is an ecv file for all datasets
+        # ecv files for non-existing datasets are reported if empty
+
+        location_ecv_files = ECV_FOLDER
+        found_errors = False
+
+        from xml.etree import ElementTree
+
+        for filename in os.listdir(location_ecv_files):
+            fname, ext = os.path.splitext(os.path.basename(filename))
+            filetree = ElementTree.parse(location_ecv_files + os.sep + filename)
+            filetreeroot = filetree.getroot()
+            entry_nodes = filetreeroot.findall("./CONTROLLED_VOCABULARY/CV_ENTRY_ML")
+            # get the dataset using filter (returns a list)
+            try:
+                dataset_of_filename = Dataset.objects.get(acronym__iexact=fname)
+            except:
+                print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
+            if not len(entry_nodes):
+                # no glosses in the ecv
+                print('EMPTY ECV FILE FOUND: ', filename)
+                found_errors = True
+
+        self.assertEqual(found_errors, False)
 
 class ImportExportTests(TestCase):
 
@@ -249,15 +301,15 @@ class ImportExportTests(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
 
-    def test_DatasetListView_ECV_export_permission_change_dataset(self):
+    def test_DatasetListView_ECV_export_empty_dataset(self):
 
-        print('Test DatasetListView export_ecv with permission change_dataset')
+        print('Test DatasetListView export_ecv with empty dataset')
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET_ACRONYM
         print('Test Dataset is: ', dataset_name)
 
         # Give the test user permission to change a dataset
-        test_dataset = Dataset.objects.get(name=dataset_name)
+        test_dataset = Dataset.objects.get(acronym=dataset_name)
         assign_perm('change_dataset', self.user, test_dataset)
         print('User has permmission to change dataset.')
 
@@ -273,15 +325,73 @@ class ImportExportTests(TestCase):
         decoded_cookies = decode_messages(loaded_cookies)
         json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
         json_message = json_decoded_cookies[0]
-        print('Message: ', json_message)
+        print('Message ONE: ', json_message)
+
+        # the Dataset is Empty at this point, so export is not offered.
+
+        self.assertEqual(str(json_message), 'The dataset ' + dataset_name + ' is empty, export ECV is not available.')
+
+
+    def test_DatasetListView_ECV_export_permission_change_dataset(self):
+
+        print('Test DatasetListView export_ecv with permission change_dataset')
+
+        dataset_name = settings.DEFAULT_DATASET_ACRONYM
+        print('Test Dataset is: ', dataset_name)
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(acronym=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User has permmission to change dataset.')
+
+        client = Client()
+
+        logged_in = client.login(username='test-user', password='test-user')
+
+        # create a gloss and put it in the dataset so we can export it.
+        # this has many steps
+
+        # Create a lemma first
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # fill in the annotation translations for the new gloss
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss'
+            annotationIdgloss.save()
+
+        url = '/datasets/available?dataset_name=' + dataset_name + '&export_ecv=ECV'
+
+        response = client.get(url)
+
+        loaded_cookies = response.cookies.get('messages').value
+        decoded_cookies = decode_messages(loaded_cookies)
+        json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
+        json_message = json_decoded_cookies[0]
+        print('Message TWO: ', json_message)
 
         self.assertEqual(str(json_message), 'ECV ' + dataset_name + ' successfully updated.')
+
 
     def test_DatasetListView_ECV_export_no_permission_change_dataset(self):
 
         print('Test DatasetListView export_ecv without permission')
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET_ACRONYM
         print('Test Dataset is: ', dataset_name)
 
         client = Client()
@@ -304,7 +414,7 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv anonymous user not logged in')
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET_ACRONYM
         print('Test Dataset is: ', dataset_name)
 
         client = Client()
@@ -322,7 +432,7 @@ class ImportExportTests(TestCase):
         logged_in = client.login(username=self.user.username, password='test-user')
         print(str(logged_in))
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         print('Test Dataset is: ', dataset_name)
 
         # Give the test user permission to change a dataset
@@ -354,7 +464,7 @@ class ImportExportTests(TestCase):
         logged_in = client.login(username=self.user.username, password='test-user')
         print(str(logged_in))
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         print('Test Dataset is: ', dataset_name)
 
         # Give the test user permission to change a dataset
@@ -383,23 +493,30 @@ class ImportExportTests(TestCase):
         test_translation_index = 2
         form_data = {'update_or_create': 'update'}
         for language in test_dataset.translation_languages.all():
-            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language.name_en)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 1 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
-        self.assertContains(response, 'Changes are live.')
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+        self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
 
         # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_translation_index = 1
         form_data = {'update_or_create': 'update'}
         for language in test_dataset.translation_languages.all():
-            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language.name_en)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 2 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
-        self.assertContains(response, 'Changes are live.')
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+        self.assertContains(response, 'No changes were found.')
+
+        count_dataset_translation_languages = test_dataset.translation_languages.all().count()
+        print('Number of translation languages for the test dataset: ', count_dataset_translation_languages)
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         form_data = {'update_or_create': 'update'}
@@ -408,28 +525,44 @@ class ImportExportTests(TestCase):
                 test_translation_index = 1
             else:
                 test_translation_index = 2
-            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language.name_en)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 3 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
-        self.assertContains(response, "The following lemma idgloss translations refer to several lemma idglosses "
-                                     "instead of 0 or 1: ")
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+        if count_dataset_translation_languages > 1:
+            print('More than one translation language, attempt to update a lemma translation')
+            self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+        else:
+            print('Only one translation language, no changes found')
+            self.assertContains(response, 'No changes were found.')
+
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
+
         form_data = {'update_or_create': 'update'}
         for index, language in enumerate(test_dataset.translation_languages.all()):
             if index == 0:
                 test_translation_index = 1
             else:
                 test_translation_index = 3
-            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language.name_en)
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 4 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
-        self.assertContains(response, "The following lemma idgloss translations do only partially refer to a lemma "
-                                 "idgloss: ")
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+
+        if count_dataset_translation_languages > 1:
+            print('More than one translation language, attempt to update a lemma translation')
+            self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+        else:
+            print('Only one translation language, no changes found')
+            self.assertContains(response, 'No changes were found.')
+
 
     def test_Import_csv_new_gloss_for_lemma(self):
         """
@@ -440,7 +573,7 @@ class ImportExportTests(TestCase):
         logged_in = client.login(username=self.user.username, password='test-user')
         print(str(logged_in))
 
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         print('Test Dataset is: ', dataset_name)
 
         # Give the test user permission to change a dataset
@@ -455,7 +588,7 @@ class ImportExportTests(TestCase):
         # Prepare form data for making A NEW LemmaIdgloss + LemmaIdglossTranslations
         test_lemma_translation_index = 1
         test_annotation_translation_index = 1
-        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): dataset_name}
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): test_dataset.acronym}
         for language in test_dataset.translation_languages.all():
             form_name = '{}.lemma_id_gloss_{}'.format(gloss_id, language.language_code_2char)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
@@ -464,12 +597,13 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
+        print('Form data test 1 of test_Import_csv_new_gloss_for_lemma: \n', form_data)
+        response = client.post(reverse_lazy('import_csv_create'), form_data)
         self.assertContains(response, 'Changes are live.')
 
         # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_annotation_translation_index = 2
-        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): dataset_name}
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): test_dataset.acronym}
         for language in test_dataset.translation_languages.all():
             form_name = '{}.lemma_id_gloss_{}'.format(gloss_id, language.language_code_2char)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
@@ -478,12 +612,16 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
+        print('Form data test 2 of test_Import_csv_new_gloss_for_lemma: \n', form_data)
+        response = client.post(reverse_lazy('import_csv_create'), form_data)
         self.assertContains(response, 'Changes are live.')
+
+        count_dataset_translation_languages = test_dataset.translation_languages.all().count()
+        print('Number of translation languages for the test dataset: ', count_dataset_translation_languages)
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_annotation_translation_index = 3
-        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): dataset_name}
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): test_dataset.acronym}
         for index, language in enumerate(test_dataset.translation_languages.all()):
             if index == 0:
                 test_lemma_translation_index = 1
@@ -496,11 +634,15 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
-        response = client.post(reverse_lazy('import_csv'), form_data)
-        self.assertContains(response, "To create glosses in dataset {}, the combination of Lemma ID "
-                                      "Gloss translations should either refer to an existing Lemma ID Gloss or make "
-                                      "up a completely new Lemma ID gloss.".format(dataset_name))
+        print('Form data test 3 of test_Import_csv_new_gloss_for_lemma: \n', form_data)
+        response = client.post(reverse_lazy('import_csv_create'), form_data, follow=True)
 
+        if count_dataset_translation_languages > 1:
+            print('More than one translation language, attempt to update to combination of existing and new lemma translations')
+            self.assertContains(response, "the combination of Lemma ID Gloss translations should either refer")
+        else:
+            print('Only one translation language, only the annotation translation is changed.')
+            self.assertContains(response, 'Changes are live.')
 
 class VideoTests(TestCase):
 
@@ -512,12 +654,16 @@ class VideoTests(TestCase):
 
     def test_create_and_delete_video(self):
 
+        client = Client()
+
+        logged_in = client.login(username='test-user', password='test-user')
+
         NAME = 'thisisatemporarytestlemmaidglosstranslation'
 
         # Create the glosses
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        default_language = test_dataset.translation_languages.first()
+        default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
         test_dataset.default_language = default_language
         test_dataset.save()
 
@@ -540,31 +686,127 @@ class VideoTests(TestCase):
         client.login(username='test-user', password='test-user')
 
         video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
-
         #We expect no video before
         response = client.get(video_url)
-        self.assertEqual(response.status_code,302)
+        # print("Video url first test: {}".format(video_url))
+        # print("Video upload response first test: {}".format(response))
+        if response.status_code == 200:
+            print('The test video already exists in the archive: ', video_url)
+            self.assertEqual(response.status_code,200)
+        else:
+            print('The test video does not exist in the archive: ', video_url)
+            self.assertEqual(response.status_code,302)
 
-        #Upload the video
-        videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
-        client.post('/video/upload/',{'gloss_id':new_gloss.pk, 'videofile': videofile,'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'})
+            #Upload the video
+            print('Proceding with video upload tests...')
+            videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
+            response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
+                                                     'videofile': videofile,
+                                                     'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
+            print("Post video response upload: {}".format(response))
+            self.assertEqual(response.status_code,200)
 
         #We expect a video now
-        response = client.get(video_url)
-        print("Video url: {}".format(video_url))
-        print("Video upload response: {}".format(response))
+        response = client.get(video_url, follow=True)
+        # print("Video url second test: {}".format(video_url))
+        # print("Video upload response second test: {}".format(response))
         self.assertEqual(response.status_code,200)
 
         #You can't see it if you log out
         client.logout()
+        print('User has logged out.')
+        print('Attempt to see video.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
         #Remove the video
         client.login(username='test-user',password='test-user')
-        client.post('/video/delete/'+str(new_gloss.pk))
+        print('User has logged in.')
+        print('Delete the uploaded video.')
+        response = client.post('/video/delete/'+str(new_gloss.pk))
+        print("Post delete video response: {}".format(response))
 
         #We expect no video anymore
+        print('Attempt to see video.')
+        response = client.get(video_url)
+        self.assertEqual(response.status_code,302)
+
+    def test_create_and_delete_utf8_video(self):
+
+        client = Client()
+
+        logged_in = client.login(username='test-user', password='test-user')
+
+        NAME = 'thisisatémporarytéstlemmä'
+
+        # Create the glosses
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
+        test_dataset.default_language = default_language
+        test_dataset.save()
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text=NAME,
+                                                              lemma=new_lemma, language=default_language)
+        new_lemmaidglosstranslation.save()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.handedness = 4
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
+        video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
+        #We expect no video before
+        response = client.get(video_url)
+        # print("Video url first test: {}".format(video_url))
+        # print("Video upload response first test: {}".format(response))
+        if response.status_code == 200:
+            print('The test video already exists in the archive: ', video_url)
+            self.assertEqual(response.status_code,200)
+        else:
+            print('The test video does not exist in the archive: ', video_url)
+            self.assertEqual(response.status_code,302)
+
+            #Upload the video
+            print('Proceding with video upload tests...')
+            videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
+            response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
+                                                     'videofile': videofile,
+                                                     'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
+            print("Post video response upload: {}".format(response))
+            self.assertEqual(response.status_code,200)
+
+        #We expect a video now
+        response = client.get(video_url, follow=True)
+        # print("Video url second test: {}".format(video_url))
+        # print("Video upload response second test: {}".format(response))
+        self.assertEqual(response.status_code,200)
+
+        #You can't see it if you log out
+        client.logout()
+        print('User has logged out.')
+        print('Attempt to see video.')
+        response = client.get(video_url)
+        self.assertEqual(response.status_code,401)
+
+        #Remove the video
+        client.login(username='test-user',password='test-user')
+        print('User has logged in.')
+        print('Delete the uploaded video.')
+        response = client.post('/video/delete/'+str(new_gloss.pk))
+        print("Post delete video response: {}".format(response))
+
+        #We expect no video anymore
+        print('Attempt to see video.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
 
@@ -581,7 +823,7 @@ class AjaxTests(TestCase):
         NAME = 'thisisatemporarytestgloss'
 
         #Create the dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         #Create a lemma
@@ -627,7 +869,7 @@ class FrontEndTests(TestCase):
         NAME = 'thisisatemporarytestgloss'
 
         #Create the dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
 
         #Create lemma
@@ -734,7 +976,7 @@ class ManageDatasetTests(TestCase):
         ANNOTATION_PREFIX = 'thisisatemporarytestannotation'
 
         # Create the dataset
-        dataset_name = DEFAULT_DATASET
+        dataset_name = settings.DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -974,7 +1216,481 @@ class ManageDatasetTests(TestCase):
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
-                                                            language.name, self.test_dataset.name))
+                                                            language.name, self.test_dataset.acronym))
+
+
+class FieldChoiceTests(TestCase):
+
+    from reversion.admin import VersionAdmin
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        self.user.save()
+
+        from signbank.dictionary.admin import FieldChoiceAdmin
+
+        self.factory = RequestFactory()
+
+        self.fieldchoice_admin = FieldChoiceAdmin(model=FieldChoice, admin_site=signbank)
+        self.fieldchoice_admin.save_model(obj=FieldChoice(), request=None, form=None, change=None)
+
+    def test_delete_fieldchoice_gloss(self):
+
+        from signbank.tools import fields_with_choices_glosses
+        fields_with_choices = fields_with_choices_glosses()
+
+        # create a gloss with and without field choices
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # now set all the choice fields of the gloss to the first choice of FieldChoice
+        # it doesn't matter exactly which one, as long as the same one is used to check existence later
+        from signbank.dictionary.models import FieldChoice
+
+        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request.user = self.user
+
+        # give the test user permission to delete field choices
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            for fc in field_options:
+                assign_perm('delete_fieldchoice', self.user, fc)
+        self.user.save()
+
+        for fieldchoice in fields_with_choices.keys():
+            # get the first choice for the field
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for fieldname in fields_with_choices[fieldchoice]:
+                    setattr(new_gloss, fieldname, field_choice_in_use.machine_value)
+        new_gloss.save()
+
+        # make sure the field choice can't be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+
+        # now do the same with the second choice
+        # this time, there are no glosses with that choice
+        # the test makes sure it can be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+
+
+    def test_delete_fieldchoice_handshape(self):
+
+        from signbank.tools import fields_with_choices_handshapes
+        fields_with_choices_handshapes = fields_with_choices_handshapes()
+
+        #Create the handshape
+        new_handshape = Handshape(english_name="thisisatemporarytesthandshape",
+                                  dutch_name="thisisatemporarytesthandshape", chinese_name="thisisatemporarytesthandshape")
+        new_handshape.save()
+
+        new_handshape.machine_value = new_handshape.pk
+        new_handshape.save()
+
+        # now set all the choice fields of the gloss to the first choice of FieldChoice
+        # it doesn't matter exactly which one, as long as the same one is used to check existence later
+        from signbank.dictionary.models import FieldChoice
+
+        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request.user = self.user
+
+        # give the test user permission to delete field choices
+        for fieldchoice in fields_with_choices_handshapes.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            for fc in field_options:
+                assign_perm('delete_fieldchoice', self.user, fc)
+        self.user.save()
+
+        for fieldchoice in fields_with_choices_handshapes.keys():
+            # get the first choice for the field
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for fieldname in fields_with_choices_handshapes[fieldchoice]:
+                    setattr(new_handshape, fieldname, field_choice_in_use.machine_value)
+                # for FingerSelection, set the Boolean fields of the fingers
+                if fieldchoice == 'FingerSelection':
+                    new_handshape.set_fingerSelection_display()
+                    new_handshape.set_fingerSelection2_display()
+                    new_handshape.set_unselectedFingers_display()
+        new_handshape.save()
+
+        print('TEST: new handshape created: ', new_handshape.__dict__)
+        # make sure the field choice can't be deleted in admin
+        for fieldchoice in fields_with_choices_handshapes.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+
+        # now do the same with the second choice
+        # this time, there are no glosses with that choice
+        # the test makes sure it can be deleted in admin
+        for field_value in fields_with_choices_handshapes.keys():
+
+            field_options = FieldChoice.objects.filter(field=field_value)
+            for opt in field_options:
+                if field_value in ['FingerSelection']:
+                    print('TEST: test whether has_change_permission is False for FingerSelection choice ', opt.english_name)
+                    self.assertEqual(self.fieldchoice_admin.has_change_permission(request=request, obj=opt), False)
+                queries_h = [Q(**{ field_name : opt.machine_value }) for field_name in fields_with_choices_handshapes[field_value]]
+                query_h = queries_h.pop()
+                for item in queries_h:
+                    query_h |= item
+                field_is_in_use = Handshape.objects.filter(query_h).count()
+                if field_is_in_use > 0:
+                    print('TEST: test whether has_delete_permission is False for ', field_value, ' choice ', str(opt.english_name), ' (in use)')
+                    self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=opt), False)
+                else:
+                    print('TEST: test whether has_delete_permission is True for ', field_value, ' choice ', str(opt.english_name), ' (not used)')
+                    self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=opt), True)
+
+    def test_delete_fieldchoice_definition(self):
+
+        # delete fieldchoice for NoteType
+
+        from signbank.tools import fields_with_choices_definition
+        fields_with_choices = fields_with_choices_definition()
+
+        # create a gloss with and without field choices
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # now set all the choice field of the role to the first choice of FieldChoice
+        from signbank.dictionary.models import FieldChoice
+
+        #Create a definition
+        new_definition = Definition(gloss=new_gloss, text="thisisatemporarytestnote", count=1, published=True)
+
+        # set the role to the first choice
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    setattr(new_definition, field, field_choice_in_use.machine_value)
+        new_definition.save()
+
+        print('TEST new definition created: ', new_definition.__dict__)
+
+        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request.user = self.user
+
+        # # give the test user permission to delete field choices
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            for fc in field_options:
+                assign_perm('delete_fieldchoice', self.user, fc)
+        self.user.save()
+
+        # make sure the field choice can't be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+
+        # now do the same with the second choice
+        # this time, there are no notes with that choice
+        # the test makes sure it can be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+
+    def test_delete_fieldchoice_morphology_definition(self):
+
+        # delete fieldchoice for OtherMediaType
+
+        from signbank.tools import fields_with_choices_morphology_definition
+        fields_with_choices = fields_with_choices_morphology_definition()
+
+        # create a gloss with and without field choices
+        # a second gloss is created to be the morpheme of the new morphology definition
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create two lemmas
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        new_lemma2 = LemmaIdgloss(dataset=test_dataset)
+        new_lemma2.save()
+
+        # Create a two lemma idgloss translations
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        # Create a lemma idgloss translation
+        new_lemmaidglosstranslation2 = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation2",
+                                                              lemma=new_lemma2, language=language)
+        new_lemmaidglosstranslation2.save()
+
+        #Create two glosses
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        new_gloss2 = Gloss()
+        new_gloss2.lemma = new_lemma2
+        new_gloss2.save()
+
+        # now set all the choice field of the role to the first choice of FieldChoice
+        from signbank.dictionary.models import FieldChoice
+
+        #Create a definition
+        new_morphology_definition = MorphologyDefinition(parent_gloss=new_gloss, morpheme=new_gloss2)
+
+        # set the morphology definition role to the first choice
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    setattr(new_morphology_definition, field, field_choice_in_use.machine_value)
+        new_morphology_definition.save()
+
+        print('TEST new morphology definition created: ', new_morphology_definition.__dict__)
+
+        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request.user = self.user
+
+        # # give the test user permission to delete field choices
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            for fc in field_options:
+                assign_perm('delete_fieldchoice', self.user, fc)
+        self.user.save()
+
+        # make sure the field choice can't be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+
+        # now do the same with the second choice
+        # this time, there are no notes with that choice
+        # the test makes sure it can be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+
+    def test_delete_fieldchoice_othermediatype(self):
+
+        # delete fieldchoice for OtherMediaType
+
+        from signbank.tools import fields_with_choices_other_media_type
+        fields_with_choices = fields_with_choices_other_media_type()
+
+        # create a gloss with and without field choices
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # now set all the choice field of the role to the first choice of FieldChoice
+        from signbank.dictionary.models import FieldChoice
+
+        #Create a definition
+        new_othermedia = OtherMedia(parent_gloss=new_gloss,
+                                    alternative_gloss="thisisatemporaryalternativegloss",
+                                    path=str(new_gloss.id)+'/'+new_gloss.idgloss+'.mp4')
+
+        # set the other media type to the first choice
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    setattr(new_othermedia, field, field_choice_in_use.machine_value)
+        new_othermedia.save()
+
+        print('TEST new othermedia created: ', new_othermedia.__dict__)
+
+        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request.user = self.user
+
+        # # give the test user permission to delete field choices
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            for fc in field_options:
+                assign_perm('delete_fieldchoice', self.user, fc)
+        self.user.save()
+
+        # make sure the field choice can't be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+
+        # now do the same with the second choice
+        # this time, there are no notes with that choice
+        # the test makes sure it can be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+
+    def test_delete_fieldchoice_morpheme_type(self):
+
+        # delete fieldchoice for OtherMediaType
+
+        from signbank.tools import fields_with_choices_morpheme_type
+        fields_with_choices = fields_with_choices_morpheme_type()
+        print('fields with choices morpheme type: ', fields_with_choices)
+        # create a gloss with and without field choices
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # create a morpheme object for the gloss
+        new_morpheme = Morpheme(gloss_ptr_id=new_gloss.id)
+
+        # now set all the choice field of the role to the first choice of FieldChoice
+        from signbank.dictionary.models import FieldChoice
+
+        # set the morpheme type to the first choice
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    print('field: ', field)
+                    setattr(new_gloss, field, field_choice_in_use.machine_value)
+                    setattr(new_morpheme, field, field_choice_in_use.machine_value)
+        new_gloss.save()
+        new_morpheme.save()
+
+        print('TEST new morpheme created: ', new_morpheme.__dict__)
+
+        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request.user = self.user
+
+        # # give the test user permission to delete field choices
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            for fc in field_options:
+                assign_perm('delete_fieldchoice', self.user, fc)
+        self.user.save()
+
+        # make sure the field choice can't be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+
+        # now do the same with the second choice
+        # this time, there are no notes with that choice
+        # the test makes sure it can be deleted in admin
+        for fieldchoice in fields_with_choices.keys():
+            field_options = FieldChoice.objects.filter(field=fieldchoice)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
 
 # Helper function to retrieve contents of json-encoded message

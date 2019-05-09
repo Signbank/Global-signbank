@@ -30,19 +30,19 @@ choice_list_table = dict()
 def build_choice_list(field):
 
     choice_list = []
+    try:
+        field_choices = FieldChoice.objects.filter(field__exact=field)
+    except:
+        field_choices = []
 
     # Get choices for a certain field in FieldChoices, append machine_value and english_name
-    try:
-        for choice in FieldChoice.objects.filter(field__iexact=field):
-            choice_list.append((str(choice.machine_value),choice.english_name))
+    for choice in field_choices:
+        choice_list.append((str(choice.machine_value),choice.english_name))
 
-        choice_list = sorted(choice_list,key=lambda x: x[1])
+    choice_list = sorted(choice_list,key=lambda x: x[1])
+    built_choice_list = [('0','-'),('1','N/A')] + choice_list
 
-        return [('0','-'),('1','N/A')] + choice_list
-
-    # Enter this exception if for example the db has no data yet (without this it is impossible to migrate)
-    except:
-        pass
+    return built_choice_list
 
 def build_choice_list2(field):
     # this table is filled later in the code
@@ -71,7 +71,10 @@ class Translation(models.Model):
     index = models.IntegerField("Index")
     
     def __str__(self):
-        return self.gloss.idgloss + '-' + self.translation.text
+        if self.translation and self.translation.text:
+            return self.gloss.idgloss + ' (' + self.translation.text + ')'
+        else:
+            return self.gloss.idgloss
 
     def get_absolute_url(self):
         """Return a URL for a view of this translation."""
@@ -158,7 +161,8 @@ class Definition(models.Model):
         
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
-    role = models.CharField("Type",max_length=20, choices=build_choice_list('NoteType'))
+    role = models.CharField(_("Type"), blank=True, null=True, choices=build_choice_list("NoteType"),max_length=5)
+    role.field_choice_category = 'NoteType'
     count = models.IntegerField()
     published = models.BooleanField(default=True)
 
@@ -237,14 +241,23 @@ class Handshape(models.Model):
     dutch_name = models.CharField(_("Dutch name"), max_length=50)
     chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
     hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"), max_length=5)
+    hsNumSel.field_choice_category = 'Quantity'
     hsFingSel = models.CharField(_("Finger selection"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
+    hsFingSel.field_choice_category = 'FingerSelection'
     hsFingSel2 = models.CharField(_("Finger selection 2"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
+    hsFingSel2.field_choice_category = 'FingerSelection'
     hsFingConf = models.CharField(_("Finger configuration"), blank=True, null=True, choices=build_choice_list("JointConfiguration"), max_length=5)
+    hsFingConf.field_choice_category = 'JointConfiguration'
     hsFingConf2 = models.CharField(_("Finger configuration 2"), blank=True, null=True, choices=build_choice_list("JointConfiguration"), max_length=5)
+    hsFingConf2.field_choice_category = 'JointConfiguration'
     hsAperture = models.CharField(_("Aperture"), blank=True, null=True, choices=build_choice_list("Aperture"), max_length=5)
+    hsAperture.field_choice_category = 'Aperture'
     hsThumb = models.CharField(_("Thumb"), blank=True, null=True, choices=build_choice_list("Thumb"), max_length=5)
+    hsThumb.field_choice_category = 'Thumb'
     hsSpread = models.CharField(_("Spreading"), blank=True,  null=True, choices=build_choice_list("Spreading"), max_length=5)
+    hsSpread.field_choice_category = 'Spreading'
     hsFingUnsel = models.CharField(_("Unselected fingers"), blank=True, null=True, choices=build_choice_list("FingerSelection"), max_length=5)
+    hsFingUnsel.field_choice_category = 'FingerSelection'
     fsT = models.NullBooleanField(_("T"), null=True, default=False)
     fsI = models.NullBooleanField(_("I"), null=True, default=False)
     fsM = models.NullBooleanField(_("M"), null=True, default=False)
@@ -309,6 +322,25 @@ class Handshape(models.Model):
             selection += 'P'
         return selection
 
+    def set_fingerSelection_display(self):
+        # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel
+        try:
+            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection', machine_value=self.hsFingSel)
+        except:
+            print('set_fingerSelection failed for: ', self)
+            return
+        if not fieldSelectionMatch:
+            # no finger selection
+            return
+        # get the pattern, only one match is returned, in a list because of filter
+        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        self.fsT = 'T' in fingerSelectionPattern
+        self.fsI = 'I' in fingerSelectionPattern
+        self.fsM = 'M' in fingerSelectionPattern
+        self.fsR = 'R' in fingerSelectionPattern
+        self.fsP = 'P' in fingerSelectionPattern
+        return
+
     def get_fingerSelection2_display(self):
 
         selection = ''
@@ -324,6 +356,25 @@ class Handshape(models.Model):
             selection += 'P'
         return selection
 
+    def set_fingerSelection2_display(self):
+        # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel2
+        try:
+            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection', machine_value=self.hsFingSel2)
+        except:
+            print('set_fingerSelection2 failed for: ', self)
+            return
+        if not fieldSelectionMatch:
+            # no finger selection
+            return
+        # get the pattern, only one match is returned, in a list because of filter
+        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        self.fs2T = 'T' in fingerSelectionPattern
+        self.fs2I = 'I' in fingerSelectionPattern
+        self.fs2M = 'M' in fingerSelectionPattern
+        self.fs2R = 'R' in fingerSelectionPattern
+        self.fs2P = 'P' in fingerSelectionPattern
+        return
+
     def get_unselectedFingers_display(self):
 
         selection = ''
@@ -338,6 +389,25 @@ class Handshape(models.Model):
         if self.ufP:
             selection += 'P'
         return selection
+
+    def set_unselectedFingers_display(self):
+        # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingUnsel
+        try:
+            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection', machine_value=self.hsFingUnsel)
+        except:
+            print('set_unselectedFingers failed for: ', self)
+            return
+        if not fieldSelectionMatch:
+            # no finger selection
+            return
+        # get the pattern, only one match is returned, in a list because of filter
+        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        self.ufT = 'T' in fingerSelectionPattern
+        self.ufI = 'I' in fingerSelectionPattern
+        self.ufM = 'M' in fingerSelectionPattern
+        self.ufR = 'R' in fingerSelectionPattern
+        self.ufP = 'P' in fingerSelectionPattern
+        return
 
     def count_selected_fingers(self):
 
@@ -418,11 +488,14 @@ class Gloss(models.Model):
 
     # Phonology fields
     handedness = models.CharField(_("Handedness"), blank=True,  null=True, choices=build_choice_list("Handedness"), max_length=5)
+    handedness.field_choice_category = 'Handedness'
     weakdrop = models.NullBooleanField(_("Weak Drop"), null=True, blank=True)
     weakprop = models.NullBooleanField(_("Weak Prop"), null=True, blank=True)
 
     domhndsh = models.CharField(_("Strong Hand"), blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
+    domhndsh.field_choice_category = 'Handshape'
     subhndsh = models.CharField(_("Weak Hand"), null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
+    subhndsh.field_choice_category = 'Handshape'
 
     # Support for handshape etymology
     domhndsh_number = models.NullBooleanField(_("Strong hand number"), null=True, blank=True)
@@ -431,17 +504,24 @@ class Gloss(models.Model):
     subhndsh_letter = models.NullBooleanField(_("Weak hand letter"), null=True, blank=True)
 
     final_domhndsh = models.CharField(_("Final Dominant Handshape"), blank=True,  null=True, choices=build_choice_list("Handshape"), max_length=5)
+    final_domhndsh.field_choice_category = 'Handshape'
     final_subhndsh = models.CharField(_("Final Subordinate Handshape"), null=True, choices=build_choice_list("Handshape"), blank=True, max_length=5)
- 
+    final_subhndsh.field_choice_category = 'Handshape'
+
     locprim = models.CharField(_("Location"), choices=build_choice_list("Location"), null=True, blank=True,max_length=20)
+    locprim.field_choice_category = 'Location'
     final_loc = models.IntegerField(_("Final Primary Location"), choices=build_choice_list("Location"), null=True, blank=True)
+    final_loc.field_choice_category = 'Location'
     locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=50)
 
     locsecond = models.IntegerField(_("Secondary Location"), choices=build_choice_list("Location"), null=True, blank=True)
-    
+    locsecond.field_choice_category = 'Location'
+
     initial_secondary_loc = models.CharField(_("Initial Subordinate Location"), choices=build_choice_list("MinorLocation"), max_length=20, null=True, blank=True)
+    initial_secondary_loc.field_choice_category = 'MinorLocation'
     final_secondary_loc = models.CharField(_("Final Subordinate Location"), choices=build_choice_list("MinorLocation"), max_length=20, null=True, blank=True)
-    
+    final_secondary_loc.field_choice_category = 'MinorLocation'
+
     initial_palm_orientation = models.CharField(_("Initial Palm Orientation"), max_length=20, null=True, blank=True)
     final_palm_orientation = models.CharField(_("Final Palm Orientation"), max_length=20, null=True, blank=True)
   
@@ -449,7 +529,9 @@ class Gloss(models.Model):
     final_relative_orientation = models.CharField(_("Final Interacting Dominant Hand Part"), null=True, max_length=20, blank=True)
 
     domSF = models.CharField("Dominant hand - Selected Fingers", choices=build_choice_list("DominantHandSelectedFingers"), null=True, blank=True, max_length=5)
+    domSF.field_choice_category = 'DominantHandSelectedFingers'
     domFlex = models.CharField("Dominant hand - Flexion", choices=build_choice_list("DominantHandFlexion"), null=True, blank=True, max_length=5)
+    domFlex.field_choice_category = 'DominantHandFlexion'
     oriChAbd = models.NullBooleanField(_("Abduction change"), null=True, blank=True)
     oriChFlex = models.NullBooleanField(_("Flexion change"), null=True, blank=True)
 
@@ -478,24 +560,35 @@ class Gloss(models.Model):
     StemSN = models.IntegerField(null=True, blank=True) 
 
     relatArtic = models.CharField(_("Relation between Articulators"), choices=build_choice_list("RelatArtic"), null=True, blank=True, max_length=5)
+    relatArtic.field_choice_category = 'RelatArtic'
 
     absOriPalm = models.CharField(_("Absolute Orientation: Palm"), choices=build_choice_list("AbsOriPalm"), null=True, blank=True, max_length=5)
+    absOriPalm.field_choice_category = 'AbsOriPalm'
     absOriFing = models.CharField(_("Absolute Orientation: Fingers"), choices=build_choice_list("AbsOriFing"), null=True, blank=True, max_length=5)
+    absOriFing.field_choice_category = 'AbsOriFing'
 
     relOriMov = models.CharField(_("Relative Orientation: Movement"), choices=build_choice_list("RelOriMov"), null=True, blank=True, max_length=5)
+    relOriMov.field_choice_category = 'RelOriMov'
     relOriLoc = models.CharField(_("Relative Orientation: Location"), choices=build_choice_list("RelOriLoc"), null=True, blank=True, max_length=5)
+    relOriLoc.field_choice_category = 'RelOriLoc'
 
     oriCh = models.CharField(_("Orientation Change"),choices=build_choice_list("OriChange"), null=True, blank=True, max_length=5)
+    oriCh.field_choice_category = 'OriChange'
 
     handCh = models.CharField(_("Handshape Change"), choices=build_choice_list("HandshapeChange"), null=True, blank=True, max_length=5)
+    handCh.field_choice_category = 'HandshapeChange'
 
     repeat = models.NullBooleanField(_("Repeated Movement"), null=True, default=False)
     altern = models.NullBooleanField(_("Alternating Movement"), null=True, default=False)
 
     movSh = models.CharField(_("Movement Shape"), choices=build_choice_list("MovementShape"), null=True, blank=True, max_length=5)
+    movSh.field_choice_category = 'MovementShape'
     movDir = models.CharField(_("Movement Direction"), choices=build_choice_list("MovementDir"), null=True, blank=True, max_length=5)
+    movDir.field_choice_category = 'MovementDir'
     movMan = models.CharField(_("Movement Manner"), choices=build_choice_list("MovementMan"), null=True, blank=True, max_length=5)
+    movMan.field_choice_category = 'MovementMan'
     contType = models.CharField(_("Contact Type"), choices=build_choice_list("ContactType"), null=True, blank=True, max_length=5)
+    contType.field_choice_category = 'ContactType'
 
     phonOth = models.TextField(_("Phonology Other"), null=True, blank=True)
 
@@ -504,6 +597,7 @@ class Gloss(models.Model):
     phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True,)
 
     locPrimLH = models.CharField(_("Placement Active Articulator LH"), choices=build_choice_list("Location"), null=True, blank=True, max_length=5)
+    locPrimLH.field_choice_category = 'Location'
     locFocSite = models.CharField(_("Placement Focal Site RH"), null=True, blank=True, max_length=5)
     locFocSiteLH = models.CharField(_("Placement Focal site LH"), null=True, blank=True, max_length=5)
     initArtOri = models.CharField(_("Orientation RH (initial)"), null=True, blank=True, max_length=5)
@@ -515,15 +609,22 @@ class Gloss(models.Model):
 
     iconImg = models.CharField(_("Iconic Image"), max_length=50, blank=True)
     iconType = models.CharField(_("Type of iconicity"), choices=build_choice_list("iconicity"), null=True, blank=True, max_length=5)
+    iconType.field_choice_category = 'iconicity'
 
     namEnt = models.CharField(_("Named Entity"), choices=build_choice_list("NamedEntity"), null=True, blank=True, max_length=5)
+    namEnt.field_choice_category = 'NamedEntity'
     semField = models.CharField(_("Semantic Field"), choices=build_choice_list("SemField"), null=True, blank=True, max_length=5)
+    semField.field_choice_category = 'SemField'
 
     wordClass = models.CharField(_("Word class"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
+    wordClass.field_choice_category = 'WordClass'
     wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5, choices=build_choice_list('WordClass'))
+    wordClass2.field_choice_category = 'WordClass'
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50, blank=True)
+    derivHist.field_choice_category = 'MovementShape'
     lexCatNotes = models.CharField(_("Lexical category notes"),null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
+    valence.field_choice_category = 'Valence'
     concConcSet = models.CharField(_("Conception Concept Set"), null=True, blank=True, max_length=300)
 
     #Frequency fields
@@ -1300,22 +1401,38 @@ class Gloss(models.Model):
 
     def get_image_path(self,check_existance=True):
         """Returns the path within the writable and static folder"""
-
+        check_existance = True
         foldername = self.idgloss[:2]+'/'
         filename_without_extension = self.idgloss+'-'+str(self.pk)
 
         dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername
 
+        if not os.path.exists(dir_path):
+            # folder for gloss image storage not found, hence no image
+            return None
         if check_existance:
-            try:
-                for filename in os.listdir(dir_path):
-                    if not re.match(r'.*_\d+$', filename):
-                        existing_file_without_extension = os.path.splitext(filename)[0]
-                        if filename_without_extension == existing_file_without_extension:
-                            return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename
-            except OSError:
-                return None
+            files = [f for f in os.listdir(dir_path.encode('utf-8'))]
+            for filename in files:
+                unicode_filename = filename.decode('utf-8')
+
+                if not re.match(b'.*_\d+$', filename):
+                    existing_file_without_extension = os.path.splitext(filename)[0]
+                    unicode_existing_file_without_extension = existing_file_without_extension.decode('utf-8')
+                    if filename_without_extension == unicode_existing_file_without_extension:
+                        path_to_image = settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+ unicode_filename
+                        return path_to_image
+                    else:
+                        # try quoted filename
+                        import urllib.parse
+                        quoted_filename = urllib.parse.quote(self.idgloss, safe='')
+                        quoted_filename_without_extension = quoted_filename +'-'+str(self.pk)
+                        if quoted_filename_without_extension == unicode_existing_file_without_extension:
+                            path_to_image = settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + unicode_filename
+                            return path_to_image
+
         else:
+            # check existence has been set to true at the start of the method, this is not executed
+            # note that this returns a filename without an extension, that looks wrong
             return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename_without_extension
 
 
@@ -1341,13 +1458,26 @@ class Gloss(models.Model):
         """Return the video object for this gloss or None if no video available"""
 
         video_path = self.get_video_path()
-
-        if os.path.isfile(settings.WRITABLE_FOLDER+'/'+video_path):
+        filepath = settings.WRITABLE_FOLDER+'/'+video_path
+        if os.path.exists(filepath.encode('utf-8')):
             return video_path
         else:
-            return ''
+            # construct quoted filename path to catch special characters
+            import urllib.parse
+            unquoted_filename = urllib.parse.quote(self.idgloss)
+            foldername = self.idgloss[:2]
 
-        
+            if len(foldername) == 1:
+                foldername += '-'
+
+            videopath = 'glossvideo/'+foldername+'/'+unquoted_filename+'-'+str(self.pk)+'.mp4'
+            filepath = settings.WRITABLE_FOLDER+'/'+videopath
+            if os.path.exists(filepath.encode('utf-8')):
+                return videopath
+            else:
+                return ''
+
+
     def count_videos(self):
         """Return a count of the number of videos as indicated in the database"""
 
@@ -1490,7 +1620,7 @@ class Gloss(models.Model):
 
         d = dict()
         for s in Dataset.objects.all():
-            d[s.name] = s.name
+            d[s.acronym] = s.acronym
 
         return json.dumps(d)
 
@@ -1609,15 +1739,17 @@ def fieldname_to_category(fieldname):
 
     if fieldname in ['domhndsh','subhndsh','final_domdndsh','final_subhndsh']:
         field_category = 'Handshape'
-    elif fieldname in ['locprim','locPrimLH','final_loc','loc_second']:
+    elif fieldname in ['handedness']:
+        field_category = 'Handedness'
+    elif fieldname in ['locprim','locPrimLH','final_loc','loc_second', 'locsecond']:
         field_category = 'Location'
     elif fieldname in ['initial_secondary_loc','final_secondary_loc']:
     	field_category = 'MinorLocation'
     elif fieldname == 'handCh':
-        field_category = 'handshapeChange'
+        field_category = 'HandshapeChange'
     elif fieldname == 'oriCh':
-        field_category = 'oriChange'
-    elif fieldname == 'movSh':
+        field_category = 'OriChange'
+    elif fieldname in ['movSh', 'derivHist']:
         field_category = 'MovementShape'
     elif fieldname == 'movDir':
         field_category = 'MovementDir'
@@ -1653,6 +1785,23 @@ def fieldname_to_category(fieldname):
         field_category = 'Thumb'
     elif fieldname == 'hsSpread':
         field_category = 'Spreading'
+    elif fieldname == 'relatArtic':
+        field_category = 'RelatArtic'
+    elif fieldname == 'absOriPalm':
+        field_category = 'AbsOriPalm'
+    elif fieldname == 'absOriFing':
+        field_category = 'AbsOriFing'
+    elif fieldname == 'relOriMov':
+        field_category = 'RelOriMov'
+    elif fieldname == 'relOriLoc':
+        field_category = 'RelOriLoc'
+    elif fieldname == 'valence':
+        field_category = 'Valence'
+    elif fieldname == 'role':
+        print('fieldname_to_category invoked for field role')
+        field_category = 'NoteType'  # also 'MorphologyType'
+    elif fieldname == 'type':
+        field_category = 'OtherMediaType'
     else:
         field_category = fieldname
 
@@ -1680,6 +1829,7 @@ def fieldname_to_kind(fieldname):
     return field_kind
 
 def generate_translated_choice_list_table():
+    #Result of the line below is a list in this format {'en-us':'english'}
     codes_to_adjectives = dict([(language.lower().replace('_','-'),adjective) for language, adjective in settings.LANGUAGES])
 
     temp_translated_choice_lists_table = dict()
@@ -1761,6 +1911,7 @@ class MorphologyDefinition(models.Model):
 
     parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses")
     role = models.CharField(max_length=5,choices=build_choice_list('MorphologyType'))
+    role.field_choice_category = 'MorphologyType'
     morpheme = models.ForeignKey(Gloss,related_name="morphemes")
 
     def __str__(self):
@@ -1772,6 +1923,7 @@ class Morpheme(Gloss):
     # Fields that are specific for morphemes, and not so much for 'sign-words' (=Gloss) as a whole
     # (1) optional morpheme-type field (not to be confused with MorphologyType from MorphologyDefinition)
     mrpType = models.CharField(_("Has morpheme type"), max_length=5,blank=True,  null=True, choices=build_choice_list('MorphemeType'))
+    mrpType.field_choice_category = 'MorphemeType'
 
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
@@ -1847,6 +1999,7 @@ class OtherMedia(models.Model):
 
     parent_gloss = models.ForeignKey(Gloss)
     type = models.CharField(max_length=5,choices=build_choice_list('OtherMediaType'))
+    type.field_choice_category = 'OtherMediaType'
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
 
@@ -1866,10 +2019,11 @@ class Dataset(models.Model):
                                                         "This is different than the software code license.")
     copyright = models.TextField(blank=True, help_text="Copyright. Content license."
                                                         "This is different than the software code license.")
+    reference = models.TextField(blank=True, help_text="")
     acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
-    exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices")
+    exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
 
     class Meta:
         permissions = (
@@ -1877,24 +2031,24 @@ class Dataset(models.Model):
         )
 
     def __str__(self):
-        return self.name
+        return self.acronym
 
     def generate_short_name(self):
 
         CHARACTER_THRESHOLD = 15
 
-        if len(self.name) <= CHARACTER_THRESHOLD:
-            return self.name
+        if len(self.acronym) <= CHARACTER_THRESHOLD:
+            return self.acronym
         else:
 
             #Cut off last word
-            if len(self.name.split()) > 1:
-                result = ' '.join(self.name.split()[:-1])
+            if len(self.acronym.split()) > 1:
+                result = ' '.join(self.acronym.split()[:-1])
 
                 if len(result) <= CHARACTER_THRESHOLD:
                     return result
             else:
-                result = self.name
+                result = self.acronym
 
             return result[:CHARACTER_THRESHOLD]
 
@@ -2099,7 +2253,7 @@ class AnnotationIdglossTranslation(models.Model):
                 (len(glosses_with_same_text) == 1 and glosses_with_same_text[0] == self)
                    or glosses_with_same_text is None or len(glosses_with_same_text) == 0):
                 msg = "The annotation idgloss translation text '%s' is not unique within dataset '%s' for gloss '%s'." \
-                      % (self.text, dataset.name, self.gloss.id)
+                      % (self.text, dataset.acronym, self.gloss.id)
                 raise ValidationError(msg)
 
         super(AnnotationIdglossTranslation, self).save(*args, **kwargs)
@@ -2110,11 +2264,17 @@ class LemmaIdgloss(models.Model):
                                 help_text=_("Dataset a lemma is part of"), null=True)
 
     class Meta:
-        ordering = ['dataset__name']
+        ordering = ['dataset__acronym']
 
     def __str__(self):
-        return ", ".join(["%s: %s" % (translation.language, translation.text)
-                          for translation in self.lemmaidglosstranslation_set.all()])
+        translations = []
+        for translation in self.lemmaidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations)
+
 
 class LemmaIdglossTranslation(models.Model):
     """A Lemma ID Gloss"""
@@ -2149,7 +2309,7 @@ class LemmaIdglossTranslation(models.Model):
                 (len(lemmas_with_same_text) == 1 and lemmas_with_same_text[0] == self.lemma)
                    or lemmas_with_same_text is None or len(lemmas_with_same_text) == 0):
                 msg = "The lemma idgloss translation text '%s' is not unique within dataset '%s' for lemma '%s'." \
-                      % (self.text, dataset.name, self.lemma.id)
+                      % (self.text, dataset.acronym, self.lemma.id)
                 raise ValidationError(msg)
 
         super(LemmaIdglossTranslation, self).save(*args, **kwargs)

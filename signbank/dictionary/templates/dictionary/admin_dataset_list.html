@@ -16,6 +16,7 @@
 <table class='table table-condensed'>
     <thead>
       <tr>
+          <th style="width:150px;">{% trans "Dataset Acronym" %}</th>
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
           <th style="width:80px;">{% trans "View Dataset" %}</th>
           <th style="width:80px;">{% trans "Change Dataset" %}</th>
@@ -30,8 +31,9 @@
       {% for dataset in object_list %}
         <tr>
             <td>
-                <a href="{{PREFIX_URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
+                <a href="{{PREFIX_URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.acronym }}</a>
             </td>
+            <td>{{ dataset.name }}</td>
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
                 {% if "view_dataset" in dataset_perms %}
@@ -58,7 +60,7 @@
 
                 <form name='request_view_dataset_form' id='request_view_dataset_form' method='get'>
                     <div class="hidden">
-                        <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                        <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.acronym}}' >
                     </div>
                     <div class='btn-group'>
                         <label>{% trans "Motivation" %}</label>
@@ -88,10 +90,10 @@
             </td>
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
-                {% if "change_dataset" in dataset_perms %}
+                {% if "change_dataset" in dataset_perms and dataset.lemmaidgloss__gloss__count %}
                 <form name='export_ecv_form' id='export_ecv_form' method='get'>
                     <div class="hidden">
-                        <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                        <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.acronym}}' >
                     </div>
                     <div class='btn-group'>
                         <button id='export_ecv' class='btn btn-primary' type='submit' name='export_ecv' value='ECV'>{% trans "ECV" %}</button>

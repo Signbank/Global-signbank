@@ -26,6 +26,7 @@
     var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
     var csrf_token = '{{csrf_token}}';
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
+    var gloss_fields_to_populate = {{ gloss_fields_to_populate|safe }}
 
      $(document).ready(function(){
 
@@ -104,6 +105,11 @@
             width: 'resolve'
          });
          $('#id_dialects').val(null).trigger('change');
+
+         // Empty menu_bar_search_mirror
+         $("#adminsearch :input").change(function() {
+            $("#menu_bar_search_mirror").val("");
+         });
 });
 
 
@@ -288,6 +294,9 @@
                     <input name='search_type' class='form-control' value='{{search_type}}'>
                 </div>
                 <div>
+                    <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{ menu_bar_search }}"/>
+                </div>
+                <div>
                     <table class='table' id='searchfields'>
                         {% for dataset_lang in dataset_languages %}
 
@@ -298,7 +307,7 @@
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                                     {{search_field.label}}
                                 </label>
-                                <input name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                                <input id='glosssearch_{{ dataset_lang.language_code_2char }}' name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                                 </div>
                             </td>
                             {% endwith %}
@@ -638,7 +647,7 @@
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         {% trans "Datasets:" %}
-        {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}.{% endif %}
         {% endfor %}
         {% endif %}
     </div>
@@ -669,8 +678,8 @@
                                  dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
                          {% for dataset in selected_datasets %}
                          <option value="{{ dataset.id }}"
-                                 {% if add_gloss_form.last_used_dataset == dataset.name %}selected{% endif %}
-                                 dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.name }}</option>
+                                 {% if add_gloss_form.last_used_dataset == dataset.acronym %}selected{% endif %}
+                                 dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.acronym }}</option>
                          {% endfor %}
                      </select></td>
                      {% else %}
@@ -732,11 +741,19 @@
           {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
           <th></th>
            {% for dataset_lang in dataset_languages %}
-          <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+          <th>{% trans "Annotation ID Gloss" %}
+              {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+                ({{ dataset_lang.name }})
+              {% endif %}
+          </th>
           {% endfor %}
 
           {% for dataset_lang in dataset_languages %}
-          <th>{% trans "Lemma ID gloss" %} ({{ dataset_lang.name }})</th>
+          <th>{% trans "Lemma ID gloss" %}
+              {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+                ({{ dataset_lang.name }})
+              {% endif %}
+          </th>
           {% endfor %}
 
            <th>{% trans "Translation equivalents" %}</th>
@@ -819,13 +836,13 @@
                 <tr>
             {% endif %}
 
-        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.acronym }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}
 
           <div class="thumbnail_container">
           <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
 
-            <div {% if page_obj.paginator.count < DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES %} class="hover-shows-video" {% endif%} >
+            <div {% if page_obj.paginator.count < DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES %} class="hover-shows-video" {% endif %} >
                 <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}">
 
               {% if page_obj.paginator.count < DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES %}
@@ -834,8 +851,9 @@
 
             </div>
 
-          </a>{% endif %}
+          </a>
           </div>
+          {% endif %}
       </td>
 
       {% for dataset_lang in dataset_languages %}
@@ -1044,7 +1062,7 @@
       {% for gloss in lemma.list %}
         <tr>
         <td></td>
-        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.name }}</td>{% endif %}
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.acronym }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}<div class="thumbnail_container">
           <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></div></a>{% endif %}
       </td>

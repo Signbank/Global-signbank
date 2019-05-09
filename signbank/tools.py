@@ -67,12 +67,15 @@ class MachineValueNotFoundError(Exception):
 
 table_column_name_lemma_id_gloss_translations = {}
 for language in Language.objects.all():
-    
     lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
-
     table_column_name_lemma_id_gloss_translations[language.language_code_2char] = lemmaidgloss_comumn_name
 
 def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss):
+
+    # print('row ', str(row_nr+1), ' create gloss from valuedict, valuedict: ', valuedict)
+    # print('row ', str(row_nr+1), ' create gloss from valuedict, earlier_creation_same_csv: ', earlier_creation_same_csv)
+    # print('row ', str(row_nr+1), 'create gloss from valuedict, earlier_creation_annotationidgloss: ', earlier_creation_annotationidgloss)
+    # print('row ', str(row_nr+1), 'create gloss from valuedict, earlier_creation_lemmaidgloss: ', earlier_creation_lemmaidgloss)
 
     errors_found = []
     new_gloss = []
@@ -81,47 +84,62 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
 
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
-
+        empty_lemma_translation = False
         existing_glosses = {}
         existing_lemmas = {}
+        existing_lemmas_list = []
+        new_lemmas = {}
         lemmaidglosstranslations = {}
         annotationidglosstranslations = {}
-        lemmas_in_dataset = dataset.lemmaidgloss_set.all()
+        translation_languages = dataset.translation_languages.all()
+        for language in translation_languages:
 
-        for language in dataset.translation_languages.all():
-            other_lemmas_for_language = LemmaIdglossTranslation.objects.filter(lemma__in=lemmas_in_dataset, language_id=language.id)
-
-            lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % language.name_en
+            lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
+            # print('column name: ', lemmaidgloss_comumn_name)
+            # print('value dict: ', valuedict)
             if lemmaidgloss_comumn_name in valuedict:
                 lemmaidglosstranslation_text = valuedict[lemmaidgloss_comumn_name].strip()
+                # print('lemma translation text: ', lemmaidglosstranslation_text)
                 lemmaidglosstranslations[language.language_code_2char] = lemmaidglosstranslation_text
 
-                lemmas_with_same_text = []
-                for lem in other_lemmas_for_language:
-                    if lem.text == lemmaidglosstranslation_text:
-                        lemmas_with_same_text.append(lem)
-                    existing_lemmas[language.language_code_2char] = lemmas_with_same_text
+                lemmatranslation_for_this_text_language = LemmaIdglossTranslation.objects.filter(lemma__dataset=dataset,
+                                                                                   language=language, text__exact=lemmaidglosstranslation_text)
+                # print('OTHER LEMMAS FOR LANGUAGE ', language, ': ', other_lemmas_for_language)
+                if lemmatranslation_for_this_text_language:
+                    one_lemma = lemmatranslation_for_this_text_language[0].lemma
+                    existing_lemmas[language.language_code_2char] = one_lemma
+                    if not one_lemma in existing_lemmas_list:
+                        existing_lemmas_list.append(one_lemma)
+                    # print('saved one lemma')
+                elif not lemmaidglosstranslation_text:
+                    empty_lemma_translation = True
+                else:
+                    new_lemmas[language.language_code_2char] = lemmaidglosstranslation_text
 
-            column_name = "Annotation ID Gloss (%s)" % language.name_en
+            # print('row ', str(row_nr+1), ' existing lemmas: ', existing_lemmas)
+            column_name = "Annotation ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
             if column_name in valuedict:
                 annotationidglosstranslation_text = valuedict[column_name].strip()
                 if annotationidglosstranslation_text:
                     annotationidglosstranslations[language.language_code_2char] = annotationidglosstranslation_text
-                    # The annotation idgloss translation text for a language must be unique within a dataset.
-                    lemmas_in_dataset = dataset.lemmaidgloss_set.all()
-                    glosses_with_same_text = []
-                    for lem in lemmas_in_dataset:
-                        glosses_with_text = lem.gloss_set.filter(
-                                                    annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
-                                                    annotationidglosstranslation__language=language)
-                        glosses_with_same_text += glosses_with_text
 
+                    # The annotation idgloss translation text for a language must be unique within a dataset.
+                    glosses_with_same_text = Gloss.objects.filter(lemma__dataset=dataset,
+                                                                  annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
+                                                                  annotationidglosstranslation__language=language)
                     if len(glosses_with_same_text) > 0:
                         existing_glosses[language.language_code_2char] = glosses_with_same_text
                 else:
                     error_string = 'Row ' + str(row_nr + 1) + ' has an empty ' + column_name
                     errors_found += [error_string]
-
+            else:
+                print('column name not in value dict: ', column_name)
+        # print('lemma translations: ', lemmaidglosstranslations)
+        # print('annotation translations: ', annotationidglosstranslations)
+        # print('existing glosses: ', existing_glosses)
+        # print('EXISTING LEMMAS: ', existing_lemmas)
+        # print('new gloss: ', new_gloss)
+        # print('already exists before if: ', already_exists)
         if existing_glosses:
             existing_gloss_set = set()
             for language_code_2char,glosses in existing_glosses.items():
@@ -133,33 +151,37 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
                         }
                         annotationidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
-                            annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % lang.name_en]
+                            language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                            annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % (language_name) ]
                             annotationidglosstranslation_dict[lang.language_code_2char] = annotationidglosstranslation_text
                         gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
 
                         lemmaidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
-                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % lang.name_en]
+                            language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
                             lemmaidglosstranslation_dict[lang.language_code_2char] = lemmaidglosstranslation_text
                         gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
-
+                        # print('gloss dict: ', gloss_dict)
                         already_exists.append(gloss_dict)
                         existing_gloss_set.add(gloss)
-
+            # print('already exists after loop: ', already_exists)
+            # print('existing gloss set: ', existing_gloss_set)
         else:
             gloss_dict = {'gloss_pk' : str(row_nr + 1), 'dataset': dataset }
             trans_languages = [ l for l in dataset.translation_languages.all() ]
             annotationidglosstranslation_dict = {}
             for language in trans_languages:
-                annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language.name_en]
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % (language_name) ]
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
 
                 if earlier_creation_annotationidgloss and \
                         language.language_code_2char in earlier_creation_annotationidgloss.keys() and \
                         annotationidglosstranslation_text in earlier_creation_annotationidgloss[language.language_code_2char]:
-                    error_string = 'Row ' + str(row_nr + 1) + ' contains a duplicate Annotation ID Gloss for '+ language.name_en +'.'
-
+                    error_string = 'Row ' + str(row_nr + 1) + ' contains a duplicate Annotation ID Gloss for '+ language_name +'.'
                     errors_found += [error_string]
+
                 if not earlier_creation_annotationidgloss or (
                         language.language_code_2char not in earlier_creation_annotationidgloss.keys()):
                     earlier_creation_annotationidgloss[language.language_code_2char] = []
@@ -169,44 +191,80 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
 
             lemmaidglosstranslation_dict = {}
             for language in trans_languages:
-                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language.name_en]
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
                 lemmaidglosstranslation_dict[language.language_code_2char] = lemmaidglosstranslation_text
 
+                # if earlier_creation_lemmaidgloss and \
+                #         language.language_code_2char in earlier_creation_lemmaidgloss.keys() and \
+                #         lemmaidglosstranslation_text in earlier_creation_lemmaidgloss[language.language_code_2char]:
+                #     error_string = 'Row ' + str(row_nr + 1) + ' contains a duplicate Annotation ID Gloss for '+ language_name +'.'
+                #     errors_found += [error_string]
+
+                # if not earlier_creation_lemmaidgloss or (
+                #         language.language_code_2char not in earlier_creation_lemmaidgloss.keys()):
+                #     earlier_creation_lemmaidgloss[language.language_code_2char] = []
+                # earlier_creation_lemmaidgloss[language.language_code_2char].append(lemmaidglosstranslation_text)
+
+
             gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
-
+            # print('gloss dict inside of else: ', gloss_dict)
             new_gloss.append(gloss_dict)
+        # print('already exists: ', already_exists)
+        if len(existing_lemmas_list) > 0:
+            # print('************************************')
+            # print('existing lemmas list: ', existing_lemmas_list)
+            # print('existing lemmas dict: ', existing_lemmas)
+            # print('new lemmas dict: ', new_lemmas)
+            # print('lemmaidglosstranslations: ', lemmaidglosstranslations)
+            if len(existing_lemmas_list) > 1:
+                print('TOOLS more than one existing lemma in row ', str(row_nr+1))
+            elif empty_lemma_translation:
+                print('TOOLS exactly one lemma matches, but one of the translations in the csv is empty')
+            if len(new_lemmas.keys()) and len(existing_lemmas.keys()):
+                print('TOOLS existing and new lemmas in row ', str(row_nr+1))
+            # for (lang, lemmatrans) in lemmaidglosstranslations:
+            #     for
+        # print('earlier_creation_lemmaidgloss: ', earlier_creation_lemmaidgloss)
 
-        range_of_earlier_lemmaidgloss_creation = [ v for (i,v) in earlier_creation_lemmaidgloss.items() ]
-
-        if range_of_earlier_lemmaidgloss_creation and lemmaidglosstranslations not in range_of_earlier_lemmaidgloss_creation:
-            for (row, lemma_dict) in earlier_creation_lemmaidgloss.items():
-
-                for (k,t) in lemma_dict.items():
-                    if lemmaidglosstranslations[k] == t:
-                        # found the partially matched row
-                        this_column_name = table_column_name_lemma_id_gloss_translations[k]
-
-                        error_string = 'Row ' + str(row_nr + 1) + ': Same value as Row ' + str(row) + ' for ' + this_column_name
-                        errors_found += [error_string]
-                        lemma_dict_keys = lemma_dict.keys()
-                        for other_k in lemma_dict_keys:
-                            other_column_name = table_column_name_lemma_id_gloss_translations[other_k]
-                            if lemmaidglosstranslations[other_k] != lemma_dict[other_k]:
-
-                                error_string = 'Row ' + str(row_nr + 1) + ': Different value than Row ' + str(row) + ' for ' + other_column_name
-                                errors_found += [error_string]
+        # print('existing gloss set: ', existing_gloss_set)
+        # print('new gloss after appending gloss_dict: ', new_gloss)
+        # range_of_earlier_lemmaidgloss_creation = [ v for (i,v) in earlier_creation_lemmaidgloss.items() ]
+        #
+        # if range_of_earlier_lemmaidgloss_creation and lemmaidglosstranslations not in range_of_earlier_lemmaidgloss_creation:
+        #     for (row, lemma_dict) in earlier_creation_lemmaidgloss.items():
+        #
+        #         for (k,t) in lemma_dict.items():
+        #             if lemmaidglosstranslations[k] == t:
+        #                 # found the partially matched row
+        #                 this_column_name = table_column_name_lemma_id_gloss_translations[k]
+        #
+        #                 error_string = 'Row ' + str(row_nr + 1) + ': Same value as Row ' + str(row) + ' for ' + this_column_name
+        #                 errors_found += [error_string]
+        #                 lemma_dict_keys = lemma_dict.keys()
+        #                 for other_k in lemma_dict_keys:
+        #                     other_column_name = table_column_name_lemma_id_gloss_translations[other_k]
+        #                     if lemmaidglosstranslations[other_k] != lemma_dict[other_k]:
+        #
+        #                         error_string = 'Row ' + str(row_nr + 1) + ': Different value than Row ' + str(row) + ' for ' + other_column_name
+        #                         errors_found += [error_string]
+        # if already_exists:
+        #     print('gloss already exists, new gloss is: ', new_gloss)
+        #     error_string = 'Row ' + str(row_nr + 1) + ' is a gloss that already exists.'
+        #     errors_found += [error_string]
         range_of_earlier_creation = [ v for (i,v) in earlier_creation_same_csv.items() ]
         if earlier_creation_same_csv and new_gloss in range_of_earlier_creation:
             error_string = 'Row ' + str(row_nr + 1) + ' is a duplicate gloss creation.'
-
             errors_found += [error_string]
 
     # save the parameters for the new gloss under the row number
     # make sure this gloss isn't being created twice
-    if len(errors_found) == 0:
+    if len(errors_found) == 0 and len(already_exists) == 0:
+        # print('no errors found, add new gloss to earlier creation, add lemma to earlier creation: ', lemmaidglosstranslations)
         earlier_creation_same_csv[str(row_nr+1)] = new_gloss
         earlier_creation_lemmaidgloss[str(row_nr+1)] = lemmaidglosstranslations
-
+    # else:
+    #     print('errors found: ', errors_found)
     return (new_gloss, already_exists, errors_found, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss)
 
 def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updates_same_csv, earlier_updates_lemmaidgloss):
@@ -268,7 +326,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
         # print('fields: ', columnheaders)
 
         if gloss.dataset:
-            current_dataset = gloss.dataset.name
+            current_dataset = gloss.dataset.acronym
         else:
             # because of legacy code, the current dataset might not have been set
             current_dataset = 'None'
@@ -292,8 +350,9 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             annotation_idgloss_key_prefix = "Annotation ID Gloss ("
             if human_key.startswith(annotation_idgloss_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(annotation_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(name_en=language_name)
+                languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
                     language = languages[0]
                     annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
@@ -326,33 +385,43 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             lemma_idgloss_key_prefix = "Lemma ID Gloss ("
             if human_key.startswith(lemma_idgloss_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(lemma_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(name_en=language_name)
+                languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
                     language = languages[0]
                     lemma_idglosses = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
-                    # print('lemma idglosses ', lemma_idglosses)
                     if lemma_idglosses:
                         lemma_idgloss_string = lemma_idglosses[0].text
                     else:
                         # lemma not set
                         lemma_idgloss_string = ''
                     if lemma_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
-                        differences.append({'pk': gloss_id,
-                                            'dataset': current_dataset,
-                                            'annotationidglosstranslation': default_annotationidglosstranslation,
-                                            'machine_key': human_key,
-                                            'human_key': human_key,
-                                            'original_machine_value': lemma_idgloss_string,
-                                            'original_human_value': lemma_idgloss_string,
-                                            'new_machine_value': new_human_value,
-                                            'new_human_value': new_human_value})
+                        error_string = 'ERROR: Attempt to update Lemma ID Gloss translations: ' + human_key
+                        errors_found += [error_string]
+                        # differences.append({'pk': gloss_id,
+                        #                     'dataset': current_dataset,
+                        #                     'annotationidglosstranslation': default_annotationidglosstranslation,
+                        #                     'machine_key': human_key,
+                        #                     'human_key': human_key,
+                        #                     'original_machine_value': lemma_idgloss_string,
+                        #                     'original_human_value': lemma_idgloss_string,
+                        #                     'new_machine_value': new_human_value,
+                        #                     'new_human_value': new_human_value})
                 continue
 
-            elif human_key == 'Keywords':
-
-                current_keyword_string = str(', '.join([str(translation.translation.text)+":"+translation.language.language_code_2char
-                                                       for translation in gloss.translation_set.all()]))
+            keywords_key_prefix = "Keywords ("
+            if human_key.startswith(keywords_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name = human_key[len(keywords_key_prefix):-1]
+                languages = Language.objects.filter(**{language_name_column:language_name})
+                if languages:
+                    language = languages[0]
+                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language)]
+                    current_keyword_string = ", ".join(translations)
+                else:
+                    error_string = 'ERROR: Non-existant language specified for Keywords column: ' + human_key
+                    errors_found += [error_string]
 
                 if current_keyword_string != new_human_value and new_human_value != 'None' and new_human_value != '':
                     differences.append({'pk':gloss_id,
@@ -818,6 +887,101 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                                     'original_human_value':original_human_value,
                                     'new_machine_value':new_machine_value,
                                     'new_human_value':new_human_value})
+
+    return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+
+def compare_valuedict_to_lemma(valuedict,lemma_id,my_datasets, nl,
+                                lemmaidglosstranslations, current_lemmaidglosstranslations,
+                               earlier_updates_same_csv, earlier_updates_lemmaidgloss):
+    """Takes a dict of key-value pairs, and compares them to a lemma"""
+
+    errors_found = []
+    differences = []
+
+    try:
+        lemma = LemmaIdgloss.objects.select_related().get(pk=lemma_id)
+    except ObjectDoesNotExist as e:
+
+        e = 'Could not find lemma for ID ' + str(lemma_id)
+        errors_found.append(e)
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+    if lemma_id in earlier_updates_same_csv:
+        e = 'Lemma ID (' + str(lemma_id) + ') found in multiple rows (Row ' + str(nl + 1) + ').'
+        errors_found.append(e)
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+    else:
+        earlier_updates_same_csv.append(lemma_id)
+
+    count_new_nonempty_translations = 0
+    count_existing_nonempty_translations = 0
+
+    if lemmaidglosstranslations \
+            and current_lemmaidglosstranslations != lemmaidglosstranslations:
+        for key1 in lemmaidglosstranslations.keys():
+            if lemmaidglosstranslations[key1]:
+                count_new_nonempty_translations += 1
+        for key2 in current_lemmaidglosstranslations.keys():
+            if current_lemmaidglosstranslations[key2]:
+                count_existing_nonempty_translations += 1
+        pass
+    else:
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+    if not count_new_nonempty_translations:
+        # somebody has modified the lemma translations so as to delete alll of them:
+        e = 'Row ' + str(nl + 1) + ': Lemma ID ' + str(lemma_id) + ' must have at least one translation.'
+        errors_found.append(e)
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+
+    #Create an overview of all fields, sorted by their human name
+    with override(LANGUAGE_CODE):
+
+        if lemma.dataset:
+            current_dataset = lemma.dataset.acronym
+        else:
+            # because of legacy code, the current dataset might not have been set
+            current_dataset = 'None'
+
+        #Go through all values in the value dict, looking for differences with the lemma
+        for human_key, new_human_value in valuedict.items():
+
+            new_human_value = new_human_value.strip()
+
+            if human_key == 'Lemma ID' or human_key == 'Dataset':
+                # these fields can't be updated
+                continue
+
+            lemma_idgloss_key_prefix = "Lemma ID Gloss ("
+            if human_key.startswith(lemma_idgloss_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name = human_key[len(lemma_idgloss_key_prefix):-1]
+                languages = Language.objects.filter(**{language_name_column:language_name})
+                if languages:
+                    language = languages[0]
+                    lemma_idglosses = lemma.lemmaidglosstranslation_set.filter(language=language)
+                    if lemma_idglosses:
+                        lemma_idgloss_string = lemma_idglosses[0].text
+                    else:
+                        # lemma not set
+                        lemma_idgloss_string = ''
+                    if lemma_idgloss_string != new_human_value:
+
+                        differences.append({'pk': lemma_id,
+                                            'dataset': current_dataset,
+                                            'machine_key': human_key,
+                                            'human_key': human_key,
+                                            'original_machine_value': lemma_idgloss_string,
+                                            'original_human_value': lemma_idgloss_string,
+                                            'new_machine_value': new_human_value,
+                                            'new_human_value': new_human_value})
+                continue
+
+            else:
+                # this case should be impossible! It's included for completeness of else otherwise case
+                print('Unknown lemma field encountered while comparing new to existing fields: ', human_key)
 
     return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
 
@@ -1305,11 +1469,13 @@ def get_deleted_gloss_or_media_data(item_type,since_timestamp):
 def generate_still_image(gloss_prefix, vfile_location, vfile_name):
     try:
         from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
+        # local copy for debugging purposes
+        # from signbank.video.extractMiddleFrame import MiddleFrameExtracter
         from signbank.settings.server_specific import FFMPEG_PROGRAM, TMP_DIR
         from signbank.settings.base import GLOSS_IMAGE_DIRECTORY
 
         # Extract frames (incl. middle)
-        extracter = MiddleFrameExtracter([vfile_location+vfile_name], TMP_DIR + os.sep + "signbank-extractMiddleFrame",
+        extracter = MiddleFrameExtracter([vfile_location+os.sep+vfile_name], TMP_DIR + os.sep + "signbank-extractMiddleFrame",
                                          FFMPEG_PROGRAM, True)
         output_dirs = extracter.run()
 
@@ -1343,7 +1509,7 @@ def get_selected_datasets_for_user(user):
         if public_datasets:
             selected_datasets = public_datasets
         else:
-            selected_datasets = [ Dataset.objects.get(name=DEFAULT_DATASET) ]
+            selected_datasets = [ Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM) ]
         return selected_datasets
 
 
@@ -1404,26 +1570,167 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import datetime as DT
 
+
+def fields_with_choices_glosses():
+    # return a dict that maps the field choice categories to the fields of Gloss that have the category
+
+    fields_dict = {}
+
+    from signbank.dictionary.models import Gloss
+    for field in Gloss._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
+
+            except AttributeError:
+                print('fields_with_choices_glosses AttributeError on field ', field.name)
+                continue
+    return fields_dict
+
+def fields_with_choices_handshapes():
+    # return a dict that maps the field choice categories to the fields of Handshape that have the category
+
+    fields_dict = {}
+
+    from signbank.dictionary.models import Handshape
+    for field in Handshape._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
+
+            except AttributeError:
+                print('fields_with_choices_handshapes AttributeError on field ', field.name)
+                continue
+    return fields_dict
+
+def fields_with_choices_definition():
+    # return a dict that maps the field choice categories to the fields of Definition that have the category
+
+    fields_dict = {}
+
+    from signbank.dictionary.models import Definition
+    for field in Definition._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
+
+            except AttributeError:
+                print('fields_with_choices_definition AttributeError on field ', field.name)
+                continue
+    return fields_dict
+
+def fields_with_choices_morphology_definition():
+    # return a dict that maps the field choice categories to the fields of MorphologyDefinition that have the category
+
+    fields_dict = {}
+
+    from signbank.dictionary.models import MorphologyDefinition
+    for field in MorphologyDefinition._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
+
+            except AttributeError:
+                print('fields_with_choices_morphology_definition AttributeError on field ', field.name)
+                continue
+    return fields_dict
+
+def fields_with_choices_other_media_type():
+    # return a dict that maps the field choice categories to the fields of OtherMediaType that have the category
+
+    fields_dict = {}
+
+    from signbank.dictionary.models import OtherMedia
+    for field in OtherMedia._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
+
+            except AttributeError:
+                print('fields_with_choices_other_media_type AttributeError on field ', field.name)
+                continue
+    return fields_dict
+
+def fields_with_choices_morpheme_type():
+    # return a dict that maps the field choice categories to the fields of MorphemeType that have the category
+
+    fields_dict = {}
+
+    from signbank.dictionary.models import Morpheme
+    for field in Morpheme._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
+
+            except AttributeError:
+                print('fields_with_choices_morpheme_type AttributeError on field ', field.name)
+                continue
+    return fields_dict
+
 def write_ecv_files_for_all_datasets():
 
     all_dataset_objects = Dataset.objects.all()
 
     for ds in all_dataset_objects:
-        ecv_filename = write_ecv_file_for_dataset(ds.name)
+        ecv_filename = write_ecv_file_for_dataset(ds.acronym)
         print('Saved ECV for Dataset ', ds.name, ' to file: ', ecv_filename)
 
     return True
 
 
 def write_ecv_file_for_dataset(dataset_name):
-    dataset_id = Dataset.objects.get(name=dataset_name)
+    dataset_id = Dataset.objects.get(acronym=dataset_name)
 
     query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(lemma__dataset=dataset_id)
+
+    sOrder = 'annotationidglosstranslation__text'
+    if dataset_id.default_language:
+        lang_attr_name = dataset_id.default_language.language_code_2char
+    else:
+        lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+    sort_language = 'annotationidglosstranslation__language__language_code_2char'
+    qs_empty = query_dataset.filter(**{sOrder + '__isnull': True})
+    qs_letters = query_dataset.filter(**{sOrder + '__regex': r'^[a-zA-Z]'}, **{sort_language: lang_attr_name})
+    qs_special = query_dataset.filter(**{sOrder + '__regex': r'^[^a-zA-Z]'}, **{sort_language: lang_attr_name})
+
+    ordered = list(qs_letters.order_by(sOrder))
+    ordered += list(qs_special.order_by(sOrder))
+    ordered += list(qs_empty)
 
     context = {
         'CV_ID': ECV_SETTINGS['CV_ID'] if 'CV_ID' in ECV_SETTINGS else "",
         'date': str(DT.date.today()) + 'T' + str(DT.datetime.now().time()),
-        'glosses': query_dataset,
+        'glosses': ordered,
         'dataset': dataset_id,
         'languages': dataset_id.translation_languages.all(),
         'resource_url': URL + PREFIX_URL + '/dictionary/gloss/'
@@ -1561,7 +1868,7 @@ def write_csv_for_handshapes(handshapelistview, csvwriter):
 
 def get_users_who_can_view_dataset(dataset_name):
 
-    dataset = Dataset.objects.get(name=dataset_name)
+    dataset = Dataset.objects.get(acronym=dataset_name)
 
     all_users = User.objects.all()
 

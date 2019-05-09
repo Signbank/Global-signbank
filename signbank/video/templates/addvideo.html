@@ -7,7 +7,7 @@
 {% block content %}
 
 
-<form action="/video/upload/" method="post" enctype="multipart/form-data">
+<form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
 {% csrf_token %}
 {{form}}
 <input type='submit' value='submit'/>

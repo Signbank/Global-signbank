@@ -3,7 +3,6 @@ Forms and validation code for user registration.
 
 """
 
-
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
@@ -12,6 +11,7 @@ from signbank.settings.server_specific import *
 from django.utils.safestring import mark_safe
 from django.utils.functional import lazy
 from django.utils import six
+from django.db.utils import OperationalError
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
@@ -66,9 +66,16 @@ class RegistrationForm(forms.Form):
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
 
-        dataset_choices = [ (ds.name, ds.name) for ds in Dataset.objects.filter(is_public='1') ]
-        if not dataset_choices:
-            dataset_choices = [(ds.name, ds.name) for ds in Dataset.objects.filter(name=DEFAULT_DATASET)]
+        try:
+            dataset_choices = [ (ds.name, ds.name) for ds in Dataset.objects.filter(is_public='1') ]
+
+            if not dataset_choices:
+                dataset_choices = [(ds.name, ds.name) for ds in Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)]
+
+        #This process can fail during migrations of the Dataset model
+        except OperationalError:
+            dataset_choices = []
+
         dataset = forms.TypedMultipleChoiceField(label=_(u'Requested Datasets'),
                                                   choices=dataset_choices,
                                                   required=False, widget=Select2)

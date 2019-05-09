@@ -15,7 +15,8 @@
 <table class='table table-condensed'>
     <thead>
       <tr>
-          <th width="1%">{% trans "Selected" %}</th>
+          <th width="5%">{% trans "Selected" %}</th>
+          <th width="10%">{% trans "Dataset Acronym" %}</th>
           <th>{% trans "Dataset Name" %}</th>
       </tr>
     </thead>
@@ -26,8 +27,9 @@
             <tr>
                 <td><input type="checkbox" name="dataset_{{ dataset.name }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
                 <td>
-                    <a href="{{PREFIX_URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.name }}</a>
+                    <a href="{{PREFIX_URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.acronym }}</a>
                 </td>
+                <td>{{ dataset.name }}</td>
             </tr>
             {% endif %}
       {% endfor %}

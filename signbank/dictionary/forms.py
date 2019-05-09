@@ -418,12 +418,12 @@ class MorphemeSearchForm(forms.ModelForm):
                                                         required=False, widget=Select2)
 
 class DefinitionForm(forms.ModelForm):
-    role = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),
+    note = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),
                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     class Meta:
         model = Definition
-        fields = ('published','count', 'role', 'text')
+        fields = ('published','count', 'text')
         
 class RelationForm(forms.ModelForm):
     
@@ -520,12 +520,13 @@ class DatasetUpdateForm(forms.ModelForm):
     description = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Description'}))
     copyright = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Copyright'}))
     conditions_of_use = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Conditions of use'}))
+    reference = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Reference'}))
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Dataset
-        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'owners', 'is_public', 'default_language']
+        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'reference', 'owners', 'is_public', 'default_language']
 
     def __init__(self, *args, **kwargs):
         languages = kwargs.pop('languages')

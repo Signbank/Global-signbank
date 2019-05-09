@@ -97,15 +97,18 @@ def order_queryset_by_sort_order(get, qs):
         return qs
 
     # Set the default sort order
-    sOrder = 'lemma__lemmaidglosstranslation__text'  # Default sort order if nothing is specified
+    default_sort_order = True
+    sOrder = 'annotationidglosstranslation__text'  # Default sort order if nothing is specified
     # See if the form contains any sort-order information
     if ('sortOrder' in get and get['sortOrder'] != ''):
         # Take the user-indicated sort order
         sOrder = get['sortOrder']
+        default_sort_order = False
 
     # The ordering method depends on the kind of field:
     # (1) text fields are ordered straightforwardly
     # (2) fields made from a choice_list need special treatment
+
     if (sOrder.endswith('handedness')):
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness")
     elif (sOrder.endswith('domhndsh') or sOrder.endswith('subhndsh')):
@@ -124,13 +127,19 @@ def order_queryset_by_sort_order(get, qs):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
             bReversed = True
-        qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'})
-        qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'})
+        if default_sort_order:
+            lang_attr_name = DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+            sort_language = 'annotationidglosstranslation__language__language_code_2char'
+            qs_empty = qs.filter(**{sOrder+'__isnull': True})
+            qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'}, **{sort_language:lang_attr_name})
+            qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'}, **{sort_language:lang_attr_name})
 
-        sort_key = sOrder[:sOrder.find('__')]
-        ordered = list(qs_letters.order_by(sort_key))
-        ordered += list(qs_special.order_by(sort_key))
-
+            sort_key = sOrder
+            ordered = list(set(qs_letters.order_by(sort_key)))
+            ordered += list(set(qs_special.order_by(sort_key)))
+            ordered += list(set(qs_empty))
+        else:
+            ordered = qs
         if bReversed:
             ordered.reverse()
 
@@ -148,7 +157,7 @@ class GlossListView(ListView):
     view_type = 'gloss_list'
     web_search = False
     show_all = False
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
 
     def get_context_data(self, **kwargs):
@@ -158,6 +167,9 @@ class GlossListView(ListView):
         # Retrieve the search_type,so that we know whether the search should be restricted to Gloss or not
         if 'search_type' in self.request.GET:
             self.search_type = self.request.GET['search_type']
+
+        if 'search' in self.request.GET:
+            context['menu_bar_search'] = self.request.GET['search']
 
         # self.request.session['search_type'] = self.search_type
 
@@ -218,6 +230,19 @@ class GlossListView(ListView):
         context['search_type'] = self.search_type
         context['view_type'] = self.view_type
         context['web_search'] = self.web_search
+
+        # If the menu bar search form was used, populate the search form with the query string
+        # for all languages for which results were found.
+        if 'search' in self.request.GET and self.request.GET['search'] != '':
+            val = self.request.GET['search']
+            context['gloss_fields_to_populate'] = json.dumps([
+                language[0] for language in
+                AnnotationIdglossTranslation.objects.filter(text__iregex=val,
+                                                            gloss__lemma__dataset__in=selected_datasets)
+                    .values_list('language__language_code_2char').distinct()
+            ])
+        else:
+            context['gloss_fields_to_populate'] = json.dumps([])
 
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
@@ -381,20 +406,22 @@ class GlossListView(ListView):
         lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                           for language in dataset_languages]
 
+        keyword_fields = ["Keywords" + " (" + getattr(language, lang_attr_name) + ")"
+                                               for language in dataset_languages]
         writer = csv.writer(response)
 
         with override(LANGUAGE_CODE):
-            header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
+            header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+                                                    + keyword_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
-        for extra_column in ['SignLanguages','Dialects','Keywords','Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
+        for extra_column in ['SignLanguages','Dialects', 'Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
                              'Relations to other signs','Relations to foreign signs', 'Tags', 'Notes']:
             header.append(extra_column)
 
         writer.writerow(header)
 
         for gloss in self.get_queryset():
-            
-            row = [str(gloss.pk), gloss.lemma.dataset.name]
+            row = [str(gloss.pk), gloss.lemma.dataset.acronym]
 
             for language in dataset_languages:
                 lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
@@ -410,6 +437,16 @@ class GlossListView(ListView):
                 else:
                     row.append("")
 
+            # Keywords per language
+            for language in dataset_languages:
+                # translations = gloss.annotationidglosstranslation_set.filter(language=language)
+                translations = [t.translation.text for t in gloss.translation_set.filter(language=language)]
+
+                if translations:
+                    row.append(", ".join(translations))
+                else:
+                    row.append("")
+
             for f in fields:
 
                 #Try the value of the choicelist
@@ -420,13 +457,22 @@ class GlossListView(ListView):
                 except AttributeError:
                     value = getattr(gloss,f.name)
 
-                    if f.name == 'weakdrop' or f.name == 'weakprop':
-                        if value == None:
-                            value = 'Neutral'
+                # for csv export, the text fields need quotes around them to stop e.g., semicolons from spliting the data into multiple columns
 
-                    # This was disabled with the move to Python 3... might not be needed anymore?
-                    # if isinstance(value,unicode):
-                    #     value = str(value.encode('ascii','xmlcharrefreplace'))
+                fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+
+                char_fields_not_null = [f.name for f in Gloss._meta.fields
+                                        if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+
+                if f.name in char_fields_not_null and value:
+                    value = str(value)
+                if f.name == 'weakdrop' or f.name == 'weakprop':
+                    if value == None:
+                        value = 'Neutral'
+
+                # This was disabled with the move to Python 3... might not be needed anymore?
+                # if isinstance(value,unicode):
+                #     value = str(value.encode('ascii','xmlcharrefreplace'))
 
                 if not isinstance(value,str):
                     value = str(value)
@@ -444,10 +490,6 @@ class GlossListView(ListView):
             # get dialects
             dialects = [dialect.name for dialect in gloss.dialect.all()]
             row.append(", ".join(dialects))
-
-            # get translations (keywords)
-            trans = [t.translation.text + ":" + t.language.language_code_2char for t in gloss.translation_set.all()]
-            row.append(", ".join(trans))
 
             # get morphology
             # Sequential Morphology
@@ -725,6 +767,7 @@ class GlossListView(ListView):
             qs = qs & tqs
 
         qs = qs.distinct()
+        # print("COUNT: {}".format(qs.count()))
 
         if 'nottags' in get and get['nottags'] != '':
             vals = get.getlist('nottags')
@@ -996,7 +1039,7 @@ class GlossDetailView(DetailView):
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
         if gl.dataset:
             self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.name
+            self.last_used_dataset = gl.dataset.acronym
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
@@ -1277,7 +1320,7 @@ class GlossDetailView(DetailView):
                 qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = {}
                 for dataset in qs:
-                    dataset_choices[dataset.name] = dataset.name
+                    dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
@@ -1540,7 +1583,7 @@ class MorphemeListView(ListView):
 
     model = Morpheme
     search_type = 'morpheme'
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
     template_name = 'dictionary/admin_morpheme_list.html'
     paginate_by = 500
@@ -1731,6 +1774,37 @@ class MorphemeListView(ListView):
                 if val != '':
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
+
+
+        # these fields are for ASL searching
+        if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
+            val = get['initial_relative_orientation']
+            qs = qs.filter(initial_relative_orientation__exact=val)
+
+        if 'final_relative_orientation' in get and get['final_relative_orientation'] != '':
+            val = get['final_relative_orientation']
+            qs = qs.filter(final_relative_orientation__exact=val)
+
+        if 'initial_palm_orientation' in get and get['initial_palm_orientation'] != '':
+            val = get['initial_palm_orientation']
+            qs = qs.filter(initial_palm_orientation__exact=val)
+
+        if 'final_palm_orientation' in get and get['final_palm_orientation'] != '':
+            val = get['final_palm_orientation']
+            qs = qs.filter(final_palm_orientation__exact=val)
+
+        if 'initial_secondary_loc' in get and get['initial_secondary_loc'] != '':
+            val = get['initial_secondary_loc']
+            qs = qs.filter(initial_secondary_loc__exact=val)
+
+        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
+            val = get['final_secondary_loc']
+            qs = qs.filter(final_secondary_loc__exact=val)
+
+        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
+            val = get['final_secondary_loc']
+            qs = qs.filter(final_secondary_loc__exact=val)
+
 
         if 'defsearch' in get and get['defsearch'] != '':
 
@@ -2633,7 +2707,7 @@ class HandshapeListView(ListView):
 class DatasetListView(ListView):
     model = Dataset
     # set the default dataset, this should not be empty
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
 
 
     def get_context_data(self, **kwargs):
@@ -2763,7 +2837,7 @@ class DatasetListView(ListView):
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         try:
-            dataset_object = Dataset.objects.get(name=self.dataset_name)
+            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
         except:
             messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
@@ -2775,6 +2849,12 @@ class DatasetListView(ListView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # make sure the dataset is non-empty, don't create an empty ecv file
+        dataset_count = dataset_object.count_glosses()
+        if not dataset_count:
+            messages.add_message(self.request, messages.INFO, ('The dataset '+self.dataset_name+' is empty, export ECV is not available.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         # if we get to here, the user is authenticated and has permission to export the dataset
@@ -2793,7 +2873,7 @@ class DatasetListView(ListView):
         # Then check what kind of stuff we want
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
-        # otherwise the default dataset_name DEFAULT_DATASET is used
+        # otherwise the default dataset_name DEFAULT_DATASET_ACRONYM is used
 
         setattr(self.request, 'dataset_name', self.dataset_name)
 
@@ -2826,7 +2906,7 @@ class DatasetManagerView(ListView):
     template_name = 'dictionary/admin_dataset_manager.html'
 
     # set the default dataset, this should not be empty
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
 
 
     def get_context_data(self, **kwargs):
@@ -2958,15 +3038,15 @@ class DatasetManagerView(ListView):
                 dataset_object.save()
                 messages.add_message(self.request, messages.INFO,
                                      ('The default language of {} is set to {}.'
-                                      .format(dataset_object.name, language.name)))
+                                      .format(dataset_object.acronym, language.name)))
             else:
                 messages.add_message(self.request, messages.INFO,
                                      ('{} is not in the set of languages of dataset {}.'
-                                      .format(language.name, dataset_object.name)))
+                                      .format(language.name, dataset_object.acronym)))
         except:
             messages.add_message(self.request, messages.ERROR,
                                  ('Something went wrong setting the default language for '
-                                  + dataset_object.name))
+                                  + dataset_object.acronym))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     def render_to_add_user_response(self, context):
@@ -2984,7 +3064,7 @@ class DatasetManagerView(ListView):
         username = user_object.username
 
         # user has permission to modify dataset permissions for other users
-        manage_identifier = 'dataset_' + dataset_object.name.replace(' ','')
+        manage_identifier = 'dataset_' + dataset_object.acronym.replace(' ','')
 
         from guardian.shortcuts import assign_perm, remove_perm
         if 'add_view_perm' in self.request.GET:
@@ -3056,7 +3136,7 @@ class DatasetManagerView(ListView):
                                      ') does not have view permission for this dataset. Please grant view permission first.'))
 
                 # open Manage View Dataset pane instead of Manage Change Dataset
-                manage_identifier = 'dataset_' + dataset_object.name.replace(' ', '')
+                manage_identifier = 'dataset_' + dataset_object.acronym.replace(' ', '')
                 manage_identifier += '_manage_view'
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
             try:
@@ -3135,7 +3215,7 @@ class DatasetManagerView(ListView):
         # Then check what kind of stuff we want
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
-        # otherwise the default dataset_name DEFAULT_DATASET is used
+        # otherwise the default dataset_name DEFAULT_DATASET_ACRONYM is used
 
         setattr(self.request, 'dataset_name', self.dataset_name)
 
@@ -3180,7 +3260,7 @@ class DatasetDetailView(DetailView):
     template_name = 'dictionary/dataset_detail.html'
 
     # set the default dataset, this should not be empty
-    dataset_name = DEFAULT_DATASET
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
 
     #Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
@@ -3220,6 +3300,21 @@ class DatasetDetailView(DetailView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        nr_of_glosses = 0
+        nr_of_public_glosses = 0
+
+        # This code is slowing things down
+
+        for gloss in Gloss.objects.all():
+
+            nr_of_glosses += 1
+
+            if gloss.inWeb:
+                nr_of_public_glosses += 1
+
+        context['nr_of_glosses'] = nr_of_glosses
+        context['nr_of_public_glosses'] = nr_of_public_glosses
 
         return context
 
@@ -3290,6 +3385,13 @@ class DatasetDetailView(DetailView):
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/detail/' + str(dataset_object.id))
 
 def dataset_field_choices_view(request):
+
+    # check that the user is logged in
+    if request.user.is_authenticated():
+        pass
+    else:
+        messages.add_message(request, messages.ERROR, ('Please login to use this functionality.'))
+        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
     context = {}
     context['field_choices'] = sorted(FieldChoice.objects.all(),key=lambda x: (x.field,x.english_name))
@@ -3480,7 +3582,7 @@ class MorphemeDetailView(DetailView):
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
         if gl.dataset:
             self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.name
+            self.last_used_dataset = gl.dataset.acronym
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
@@ -3574,7 +3676,7 @@ class MorphemeDetailView(DetailView):
                 qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = dict()
                 for dataset in qs:
-                    dataset_choices[dataset.name] = dataset.name
+                    dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -3706,8 +3808,9 @@ def lemma_ajax_complete(request, dataset_id, q):
     """Return a list of users matching the search term
     as a JSON structure suitable for typeahead."""
 
-    lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id, lemmaidglosstranslation__text__icontains=q)
-    lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in lemmas]
+    lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id, lemmaidglosstranslation__text__icontains=q)\
+        .order_by('lemmaidglosstranslation__text')
+    lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in set(lemmas)]
 
     return HttpResponse(json.dumps(lemmas_dict), {'content-type': 'application/json'})
 
@@ -3757,7 +3860,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
     try:
         minimalpairs_objects = this_gloss.minimal_pairs_dict()
     except:
-        minimalpairs_objects = []
+        minimalpairs_objects = {}
 
     translation_focus_gloss = ""
     translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
@@ -3914,7 +4017,7 @@ class LemmaListView(ListView):
         writer.writerow(header)
 
         for lemma in self.get_queryset():
-            row = [str(lemma.pk), lemma.dataset.name]
+            row = [str(lemma.pk), lemma.dataset.acronym]
 
             for language in dataset_languages:
                 lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
@@ -4013,6 +4116,7 @@ def create_lemma_for_gloss(request, glossid):
     dataset_languages = dataset.translation_languages.all()
     form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
     for item, value in request.POST.items():
+        value = value.strip()
         if item.startswith(form.lemma_create_field_prefix):
             language_code_2char = item[len(form.lemma_create_field_prefix):]
             language = Language.objects.get(language_code_2char=language_code_2char)
@@ -4081,6 +4185,7 @@ class LemmaUpdateView(UpdateView):
         form = LemmaUpdateForm(request.POST, instance=instance)
 
         for item, value in request.POST.items():
+            value = value.strip()
             if item.startswith(form.lemma_update_field_prefix):
                 if value != '':
                     language_code_2char = item[len(form.lemma_update_field_prefix):]

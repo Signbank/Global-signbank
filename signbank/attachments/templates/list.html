@@ -1,6 +1,10 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
 
-{% extends "baselayout.html" %}
-
+{% load guardian_tags %}
 
 {% block content %}
 
@@ -10,9 +14,10 @@
     The files are listed below once uploaded and can be referenced by their URL
     in any page.  The URL is listed after the file link below.</p>
 
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
 
 
-        <form enctype="multipart/form-data" method="post" action="/attachments/upload/">
+        <form enctype="multipart/form-data" method="post" action="{{PREFIX_URL}}/attachments/upload/">
          {% csrf_token %}
             <fieldset id="attachmentform">
                 <legend>Upload File</legend>
@@ -24,10 +29,14 @@
             </fieldset>
         </form>
 
-        <ul>
+        {% if object_list %}
+        <h4>{% trans "File attachments:" %}</h4>
+
+        <table>
+            <tr><th style="width:300px">{% trans "File link" %}</th><th>{% trans "URL" %}</th></tr>
         {% for o in object_list %}
-          <li><a href="{{o.file.url}}">{{o.description}}</a> URL: {{o.file.url}}</li>
+            <tr><td><a href="{{protected_media_url}}{{o.get_filename}}">{{o.description}}</a></td><td>{{protected_media_url}}{{o.get_filename}}</td></tr>
         {% endfor %}
-        </ul>
-        
+        </table>
+        {% endif %}
 {% endblock %}

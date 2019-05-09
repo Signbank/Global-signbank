@@ -43,6 +43,8 @@ SEPARATE_ENGLISH_IDGLOSS_FIELD = True
 
 DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en'}
 
+DEFAULT_LANGUAGE_HEADER_COLUMN = {'English': 'name_en'}
+
 FIELDS = {}
 
 FIELDS['main'] = ['useInstr','wordClass']
@@ -61,12 +63,6 @@ FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
                        'hsSpread', 'hsFingUnsel', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                        'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
-
-# The multiple select fields should be pull-down lists in the templates
-MULTIPLE_SELECT_GLOSS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'relatArtic',
-                             'relOriMov', 'relOriLoc', 'oriCh', 'handCh',
-                             'movSh', 'movDir', 'contType', 'namEnt', 'semField', 'wordClass']
-MULTIPLE_SELECT_MORPHEME_FIELDS = ['namEnt', 'semField', 'wordClass', 'mrpType']
 
 MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
@@ -105,6 +101,7 @@ ECV_SETTINGS = {
 
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
+FEEDBANK_VIDEO_DIRECTORY = 'comments'
 CROP_GLOSS_IMAGES = True
 HANDSHAPE_IMAGE_DIRECTORY = 'handshapeimage'
 OTHER_MEDIA_DIRECTORY = WRITABLE_FOLDER+'othermedia/'
@@ -117,7 +114,9 @@ SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 SHOW_MORPHEME_SEARCH = True
 SHOW_DATASET_INTERFACE_OPTIONS = True
 SHOW_LETTER_NUMBER_PHONOLOGY = True
-DEFAULT_DATASET = 'NGT'
+DEFAULT_DATASET = 'Nederlandse Gebarentaal'
+DEFAULT_DATASET_ACRONYM = 'NGT'
+DEFAULT_DATASET_LANGUAGE_ID = 1
 
 CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'
 CNGT_METADATA_LOCATION = ROOT+'CNGT_MetadataEnglish_OtherResearchers.csv'

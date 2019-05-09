@@ -6,7 +6,15 @@
 {% load guardian_tags %}
 
 {# Translators: Page title #}
-{% block pagetitle %}{% blocktrans %}Sign for {{ translation }}{% endblocktrans %} {% endblock %}
+{% block bootstrap3_title %}
+{% if translation %}
+{% if gloss_or_morpheme == 'morpheme' %}
+{% blocktrans %}Morpheme for {{ gloss }}{% endblocktrans %}
+{% else %}
+{% blocktrans %}Sign for {{ gloss }}{% endblocktrans %}
+{% endif %}
+{% else %}{{ gloss.idgloss }}{% endif %}
+{% endblock %}
 
 
 {% block jqueryready %}
@@ -34,71 +42,26 @@
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
-<!-- Disabled to check if this is really needed
 
 <div id="searchresults" class='navbar navbar-default' style="border:0;">
 
 </div>
 
     <div id="signinfo" class='navbar navbar-default navbar-collapse'>
-    
-        <div class='btn-group'>
-            {% if SIGN_NAVIGATION %}
-        
-                {% if navigation.prev %}
-                {# Translators: Navigation  #}
-                <a class='btn navbar-btn btn-default' href="{{PREFIX_URL}}/dictionary/gloss/{{navigation.prev.idgloss}}.html?lastmatch={{lastmatch}}">&laquo; <span class='hidden-xs'>{% blocktrans %}Previous Sign{% endblocktrans %}</span></a>
-           
-                {% endif %}
-                {# Translators: Sign x of n(signs) #}
-                <button class='btn navbar-btn'>{% blocktrans %}Sign {{glossposn}} of {{glosscount}} <span class='hidden-xs'>in the dictionary{% endblocktrans %}</span></button>
-            
-                {% if navigation.next %}
-                {# Translators: Navigation #}
-                <a class="btn navbar-btn btn-default"
-                   href="{{PREFIX_URL}}/dictionary/gloss/{{navigation.next.idgloss}}.html?lastmatch={{lastmatch}}"><span class='hidden-xs'>{% blocktrans %}Next Sign{% endblocktrans %}</span> &raquo;</a>
-                {% endif %}
-             {% else %}
-           
-             {% endif %}
-        </div>
-   
-   
-            {% ifequal viewname "words" %}
-            <div class='pull-right'>
-            {# Translators: Navbar text #}
-            <span class='navbar-text'>{% blocktrans %}Matches for the word <em>{{ translation|safe }}{% endblocktrans %}</em></span>
-            <div class='btn-group'>
-            {% for i in matches %}
-                {% ifequal i n %}
-                <button type='button' class='btn btn-primary navbar-btn'>{{i}}</button>
-                {% else %}
-                <a type='button' class='btn btn-default navbar-btn' href="{{translation|safe}}-{{i}}.html">{{i}}</a>
-                {% endifequal %}
-            {% endfor %}
-            </div>
-            {% else %}
-                {% if lastmatch %}
-                {# Translators: Navigation  #}
-                <a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/words/{{lastmatch}}.html">{% blocktrans %}Return to Matches{% endblocktrans %}</a>
-                {% endif %}
-            </div>
-            {% endifequal %}
-
--->
-
 
         {% if perms.dictionary.search_gloss %}
         <ul class='nav nav-tabs'>
             <li class="nav-item">
-                <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+                <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}.html">{% trans "Public View" %}</a>
             </li>
             <li class="nav-item">
-                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}">{% trans "Detail View" %}</a>
             </li>
+            {% if gloss_or_morpheme == 'gloss' %}
             <li class="nav-item">
                 <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
             </li>
+            {% endif %}
         </ul>
         <br>
         {% endif %}
@@ -118,6 +81,33 @@
                 <td id='annotation_idgloss_{{ lang.language_code_2char }}'>{{ annotation_idgloss_translations.0.text|safe }}</td>
             </tr>
             {% endfor %}
+
+        <tr id="keywords">
+            {# Translators: Keywords #}
+            <th>{% blocktrans %}Translation equivalents{% endblocktrans %}</th>
+            <td>
+             {% for kwd in allkwds %}
+               {% ifequal translation kwd.translation.text %}<strong>{{ kwd.translation.text|safe }}</strong>{% else %}{{ kwd.translation.text|safe }}{% endifequal %}{% if not forloop.last %},{% endif %}
+             {% endfor %}
+             </td>
+        </tr>
+            {% if notes_groupedby_role.items %}
+            <tr id="notes">
+                <th>{% blocktrans %}Note(s){% endblocktrans %}</th>
+                <td>
+                    <table>
+                    {% for role_id, note_list in notes_groupedby_role.items %}
+                        {% for def in note_list %}
+                            {% if def.published %}
+                                <tr><th id='definitionrole_{{def.id}}'>{{role_id.1}}</th></tr>
+                                <tr><td id='definition_{{def.id}}'>{{def.text}}</td></tr>
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                    </table>
+                </td>
+            </tr>
+            {% endif %}
         </table>
         </div>
         <div class='col-md-6'>
@@ -134,17 +124,7 @@
                     </div>
                 {% endif %}
             </div>
-        
-        
-            <div id="keywords">
-                {# Translators: Keywords #}
-                 <p><strong>{% blocktrans %}Translation equivalents:{% endblocktrans %}</strong>
-                 {% for kwd in allkwds %}
-                   {% ifequal translation kwd.translation.text %}<strong>{{ kwd.translation.text|safe }}</strong>{% else %}{{ kwd.translation.text|safe }}{% endifequal %}{% if not forloop.last %},{% endif %}
-                 {% endfor %}
-                 </p>
-            </div>
-            
+
             {% if gloss.dialect.all %}
             <div>
                 {# Translators: Header4 #}

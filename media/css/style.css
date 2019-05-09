@@ -443,6 +443,15 @@ body {
   object-fit: cover;
 }
 
+.thumbnail_handshape
+{
+  height:115px;
+  margin: auto;
+  padding: 0px;
+  max-width: auto;
+  object-fit: cover;
+}
+
 .cropped_thumbnail
 {
   margin: -4px -50px -8px -50px
@@ -654,7 +663,7 @@ tr.rotated th {
 .exclude-field-choices
 {
     overflow-y: auto;
-    height: 600px;
+    height: 64vh;
 }
 
 .exclude-field-choices th

@@ -365,7 +365,12 @@ def update_gloss(request, glossid):
                     value = (value.lower() in [_('Yes').lower(),'true',True,1])
 
             # special value of 'notset' or -1 means remove the value
-            if (value == 'notset' or value == -1 or value == '') and field not in ['phonetVar', 'mouthG', 'mouthing', 'phonOth']:
+            fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+
+            char_fields_not_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+
+            if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
@@ -1035,7 +1040,8 @@ def update_definition(request, gloss, field, value):
     elif what == 'definitionrole':
         defn.role = value
         defn.save()
-        newvalue = defn.get_role_display()
+        choice_list = FieldChoice.objects.filter(field__iexact='NoteType')
+        newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -1171,8 +1177,7 @@ def add_relationtoforeignsign(request):
 
 def add_definition(request, glossid):
     """Add a new definition for this gloss"""
-    
-    
+
     thisgloss = get_object_or_404(Gloss, id=glossid)
     
     if request.method == "POST":
@@ -1182,10 +1187,9 @@ def add_definition(request, glossid):
             
             published = form.cleaned_data['published']
             count = form.cleaned_data['count']
-            role = form.cleaned_data['role']
+            role = form.cleaned_data['note']
             text = form.cleaned_data['text']
             
-            # create definition, default to not published
             defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
             defn.save()
 
@@ -1754,7 +1758,12 @@ def update_morpheme(request, morphemeid):
                 value = (value == 'Yes')
 
             # special value of 'notset' or -1 means remove the value
-            if value == 'notset' or value == -1 or value == '':
+            fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+
+            char_fields_not_null = [f.name for f in Morpheme._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+
+            if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
                 morpheme.__setattr__(field, None)
                 morpheme.save()
                 newvalue = ''
@@ -1963,6 +1972,11 @@ def update_dataset(request, datasetid):
             dataset.save()
             return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         elif field == 'copyright':
+                original_value = getattr(dataset, field)
+                setattr(dataset, field, value)
+                dataset.save()
+                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+        elif field == 'reference':
                 original_value = getattr(dataset, field)
                 setattr(dataset, field, value)
                 dataset.save()

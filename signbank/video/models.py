@@ -233,12 +233,30 @@ class GlossVideo(models.Model):
         # print tmploc
         shutil.move(tmploc, self.videofile.path)
 
+    def small_video(self):
+        """Return the URL of the poster image for this video"""
+
+        # generate the poster image if needed
+        path = self.videofile.path
+        filename = os.path.basename(path)
+        fname, fext = os.path.splitext(filename)
+        small_filename = fname + '_small' + fext
+        folder = os.path.dirname(self.videofile.path)
+        small_video_path = os.path.join(folder, small_filename)
+        if os.path.exists(small_video_path):
+            return small_video_path
+        else:
+            return None
+
     def delete_files(self):
         """Delete the files associated with this object"""
 
+        small_video_path = self.small_video()
         try:
             os.unlink(self.videofile.path)
             poster_path = self.poster_path(create=False)
+            if small_video_path:
+                os.unlink(small_video_path)
             if poster_path:
                 os.unlink(poster_path)
         except:
@@ -275,7 +293,7 @@ class GlossVideo(models.Model):
                 (newname, bak) = os.path.splitext(self.videofile.name)
                 if bak != '.bak':
                     # hmm, something bad happened
-                    raise Http500()
+                    raise Exception('Unknown suffix on stored video file. Expected .bak')
                 self.version -= 1
         else:
             # find a name for the backup, a filename that isn't used already
@@ -296,6 +314,8 @@ class GlossVideo(models.Model):
 
 
     def __str__(self):
+        # this coercion to a string type sometimes causes special characters in the filename to be a problem
+        # code has been introduced elsewhere to make sure paths are the correct encoding
         return self.videofile.name
 
 
