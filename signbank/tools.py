@@ -1371,7 +1371,7 @@ def get_deleted_gloss_or_media_data(item_type,since_timestamp):
     return result
 
 
-def generate_still_image(gloss_prefix, vfile_location, vfile_name):
+def generate_still_image(video):
     try:
         from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
         # local copy for debugging purposes
@@ -1380,24 +1380,27 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
         from signbank.settings.base import GLOSS_IMAGE_DIRECTORY
 
         # Extract frames (incl. middle)
-        extracter = MiddleFrameExtracter([vfile_location+os.sep+vfile_name], TMP_DIR + os.sep + "signbank-extractMiddleFrame",
-                                         FFMPEG_PROGRAM, True)
+        extracter = MiddleFrameExtracter([os.path.join(WRITABLE_FOLDER, str(video.videofile))],
+                                         os.path.join(TMP_DIR, "signbank-ExtractMiddleFrame"), FFMPEG_PROGRAM, True)
         output_dirs = extracter.run()
 
         # Copy video still to the correct location
+        vfile_name = os.path.basename(str(video.videofile))
+        still_goal_location = os.path.join(WRITABLE_FOLDER,
+                                           str(video.videofile).replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
+        destination = os.path.dirname(still_goal_location)
         for dir in output_dirs:
             for filename in os.listdir(dir):
                 if filename.replace('.png', '.mp4') == vfile_name:
-                    destination = WRITABLE_FOLDER + GLOSS_IMAGE_DIRECTORY + os.sep + gloss_prefix
-                    still_goal_location = destination + os.sep + filename
                     if not os.path.isdir(destination):
                         os.makedirs(destination, 0o770)
-                    shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
+                    shutil.copy(os.path.join(dir, filename), destination)
             shutil.rmtree(dir)
+        print("Generating still images succes!")
     except ImportError as i:
         print("Error resizing video: ", i)
     except IOError as io:
-        print(io.message)
+        print("IOError: ", io)
 
 
 def get_selected_datasets_for_user(user):

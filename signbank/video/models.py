@@ -10,6 +10,7 @@ from signbank.video.convertvideo import extract_frame, convert_video, ffmpeg
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
+from signbank.settings.base import WRITABLE_FOLDER, FFMPEG_PROGRAM
 # from django.contrib.auth.models import User
 from datetime import datetime
 
@@ -112,17 +113,17 @@ class GlossVideoStorage(FileSystemStorage):
         super(GlossVideoStorage, self).__init__(location, base_url)
 
 
-    def get_valid_name(self, name):
-        """Generate a valid name, we use directories named for the
-        first two digits in the filename to partition the videos"""
-
-        (targetdir, basename) = os.path.split(name)
-        
-        path = os.path.join(str(basename)[:2], str(basename))
-
-        result = os.path.join(targetdir, path)
-
-        return result
+    # def get_valid_name(self, name):
+    #     """Generate a valid name, we use directories named for the
+    #     first two digits in the filename to partition the videos"""
+    #
+    #     (targetdir, basename) = os.path.split(name)
+    #
+    #     path = os.path.join(str(basename)[:2], str(basename))
+    #
+    #     result = os.path.join(targetdir, path)
+    #
+    #     return result
 
 
 storage = GlossVideoStorage()
@@ -164,10 +165,47 @@ class GlossVideoHistory(models.Model):
         ordering = ['datestamp']
 
 
+def get_video_file_path(instance, filename):
+    """
+    Return the full path for storing an uploaded video
+    :param instance: A GlossVideo instance
+    :param filename: the original file name
+    :return: 
+    """
+
+    idgloss = instance.gloss.idgloss
+
+    def get_two_letter_dir():
+        foldername = idgloss[:2]
+
+        if len(foldername) == 1:
+            foldername += '-'
+
+        return foldername
+
+    base_dir = settings.WRITABLE_FOLDER
+    video_dir = settings.GLOSS_VIDEO_DIRECTORY
+    dataset_dir = instance.gloss.lemma.dataset.acronym
+    two_letter_dir = get_two_letter_dir()
+    filename = idgloss + '-' + str(instance.gloss.id) + '.mp4'
+
+    path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
+    print("CONSTRUCTED PATH: ", path)
+    return path
+
+
+def get_path_with_small(path):
+    path_no_extension, extension = os.path.splitext(path)
+    if not path_no_extension.endswith('_small'):
+        return path_no_extension + '_small' + extension
+    else:
+        return path
+
+
 class GlossVideo(models.Model):
     """A video that represents a particular idgloss"""
 
-    videofile = models.FileField("video file", upload_to=settings.GLOSS_VIDEO_DIRECTORY, storage=storage)
+    videofile = models.FileField("video file", upload_to=get_video_file_path, storage=storage)
 
     gloss = models.ForeignKey(Gloss)
 
@@ -235,18 +273,29 @@ class GlossVideo(models.Model):
 
     def small_video(self):
         """Return the URL of the poster image for this video"""
-
-        # generate the poster image if needed
-        path = self.videofile.path
-        filename = os.path.basename(path)
-        fname, fext = os.path.splitext(filename)
-        small_filename = fname + '_small' + fext
-        folder = os.path.dirname(self.videofile.path)
-        small_video_path = os.path.join(folder, small_filename)
+        small_video_path = get_path_with_small(self.videofile.path)
         if os.path.exists(small_video_path):
             return small_video_path
         else:
             return None
+
+    def make_small_video(self):
+        from CNGT_scripts.python.resizeVideos import VideoResizer
+
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(self.videofile))
+        try:
+            resizer = VideoResizer([video_file_full_path], FFMPEG_PROGRAM, 180, 0, 0)
+            resizer.run()
+        except:
+            print("Error resizing video: ", video_file_full_path)
+
+    def make_poster_image(self):
+        from signbank.tools import generate_still_image
+        try:
+            generate_still_image(self)
+        except:
+            import sys
+            print('Error generating still image', sys.exc_info())
 
     def delete_files(self):
         """Delete the files associated with this object"""
@@ -318,6 +367,56 @@ class GlossVideo(models.Model):
         # code has been introduced elsewhere to make sure paths are the correct encoding
         return self.videofile.name
 
+    def move_video(self, move_files_on_disk=True):
+        """
+        Calculates the new path, moves the video file to the new path and updates the videofile field
+        :return: 
+        """
+        old_path = str(str(self.videofile))
+        new_path = get_video_file_path(self, "")
+        if old_path != new_path:
+            if move_files_on_disk:
+                source = os.path.join(settings.WRITABLE_FOLDER, old_path)
+                destination = os.path.join(settings.WRITABLE_FOLDER, new_path)
+                if os.path.exists(source):
+                    destination_dir = os.path.dirname(destination)
+                    if not os.path.exists(destination_dir):
+                        os.makedirs(destination_dir)
+                    if os.path.isdir(destination_dir):
+                        shutil.move(source, destination)
+
+                # Small video
+                (source_no_extension, ext) = os.path.splitext(source)
+                source_small = get_path_with_small(source)  #source_no_extension + '_small' + ext
+                (destination_no_extension, ext) = os.path.splitext(destination)
+                destination_small = get_path_with_small(destination)  #destination_no_extension + '_small' + ext
+                print("source_small", source_small)
+                if os.path.exists(source_small):
+                    shutil.move(source_small, destination_small)
+
+                # Image
+                source_image = source_no_extension.replace(settings.GLOSS_VIDEO_DIRECTORY, settings.GLOSS_IMAGE_DIRECTORY)\
+                               + '.png'
+                destination_image = destination_no_extension.replace(settings.GLOSS_VIDEO_DIRECTORY, settings.GLOSS_IMAGE_DIRECTORY)\
+                               + '.png'
+                if os.path.exists(source_image):
+                    destination_image_dir = os.path.dirname(destination_image)
+                    if not os.path.exists(destination_image_dir):
+                        os.makedirs(destination_image_dir)
+                    if os.path.isdir(destination_image_dir):
+                        shutil.move(source_image, destination_image)
+
+            self.videofile.name = new_path
+            self.save()
 
 
+# @receiver(models.signals.post_delete, sender=GlossVideo)
+# def auto_delete_file_on_delete(sender, instance, **kwargs):
+#     """
+#     Deletes file from filesystem
+#     when corresponding `GlossVideo` object is deleted.
+#     """
+#     if instance.videofile:
+#         if os.path.isfile(instance.videofile.path):
+#             os.remove(instance.videofile.path)
 

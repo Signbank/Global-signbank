@@ -8,6 +8,7 @@ from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 import tagging
 import re
 import copy
@@ -22,6 +23,7 @@ from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGU
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 
 import signbank.settings
+
 
 # this variable is set later in the code, it needs to be declared before it is used
 choice_list_table = dict()
@@ -1360,83 +1362,40 @@ class Gloss(models.Model):
 
     def get_image_path(self,check_existance=True):
         """Returns the path within the writable and static folder"""
-        check_existance = True
-        foldername = self.idgloss[:2]+'/'
-        filename_without_extension = self.idgloss+'-'+str(self.pk)
-
-        dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername
-
-        if not os.path.exists(dir_path):
-            # folder for gloss image storage not found, hence no image
-            return None
-        if check_existance:
-            files = [f for f in os.listdir(dir_path.encode('utf-8'))]
-            for filename in files:
-                unicode_filename = filename.decode('utf-8')
-
-                if not re.match(b'.*_\d+$', filename):
-                    existing_file_without_extension = os.path.splitext(filename)[0]
-                    unicode_existing_file_without_extension = existing_file_without_extension.decode('utf-8')
-                    if filename_without_extension == unicode_existing_file_without_extension:
-                        path_to_image = settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+ unicode_filename
-                        return path_to_image
-                    else:
-                        # try quoted filename
-                        import urllib.parse
-                        quoted_filename = urllib.parse.quote(self.idgloss, safe='')
-                        quoted_filename_without_extension = quoted_filename +'-'+str(self.pk)
-                        if quoted_filename_without_extension == unicode_existing_file_without_extension:
-                            path_to_image = settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + unicode_filename
-                            return path_to_image
-
+        glossvideo = self.glossvideo_set.get(version=0)
+        if glossvideo:
+            videofile_path = str(glossvideo.videofile)
+            videofile_path_without_extension, extension = os.path.splitext(videofile_path)
+            imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + ".png"
+            return imagefile_path
         else:
-            # check existence has been set to true at the start of the method, this is not executed
-            # note that this returns a filename without an extension, that looks wrong
-            return settings.GLOSS_IMAGE_DIRECTORY+'/'+foldername+'/'+filename_without_extension
-
+            return ''
 
     def get_video_path(self):
-
-        foldername = self.idgloss[:2]
-
-        if len(foldername) == 1:
-            foldername += '-'
-
-        return 'glossvideo/'+foldername+'/'+self.idgloss+'-'+str(self.pk)+'.mp4'
+        try:
+            glossvideo = self.glossvideo_set.get(version=0)
+            return str(glossvideo.videofile)
+        except ObjectDoesNotExist:
+            return ''
 
     def get_video_path_prefix(self):
-
-        foldername = self.idgloss[:2]
-
-        if len(foldername) == 1:
-            foldername += '-'
-
-        return 'glossvideo/'+foldername+'/'+self.idgloss+'-'+str(self.pk)
-
+        try:
+            glossvideo = self.glossvideo_set.get(version=0)
+            prefix, extension = os.path.splitext(str(glossvideo))
+            return prefix
+        except ObjectDoesNotExist:
+            return ''
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
         video_path = self.get_video_path()
-        filepath = settings.WRITABLE_FOLDER+'/'+video_path
+        filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+        print("PATH: {}".format(filepath))
         if os.path.exists(filepath.encode('utf-8')):
             return video_path
         else:
-            # construct quoted filename path to catch special characters
-            import urllib.parse
-            unquoted_filename = urllib.parse.quote(self.idgloss)
-            foldername = self.idgloss[:2]
-
-            if len(foldername) == 1:
-                foldername += '-'
-
-            videopath = 'glossvideo/'+foldername+'/'+unquoted_filename+'-'+str(self.pk)+'.mp4'
-            filepath = settings.WRITABLE_FOLDER+'/'+videopath
-            if os.path.exists(filepath.encode('utf-8')):
-                return videopath
-            else:
-                return ''
-
+            return ''
 
     def count_videos(self):
         """Return a count of the number of videos as indicated in the database"""
@@ -1446,11 +1405,7 @@ class Gloss(models.Model):
 
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
-
-        # return '/home/wessel/signbank/signbank/video/testmedia/AANBELLEN-320kbits.mp4'
-
         video_url_or_empty_string = self.get_video()
-
         return video_url_or_empty_string
 
     def has_video(self):
@@ -1961,6 +1916,8 @@ class OtherMedia(models.Model):
     path = models.CharField(max_length=100)
 
 
+
+
 class Dataset(models.Model):
     """A dataset, can be public/private and can be of only one SignLanguage"""
     name = models.CharField(unique=True, blank=False, null=False, max_length=60)
@@ -1987,8 +1944,37 @@ class Dataset(models.Model):
             ('view_dataset', _('View dataset')),
         )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Keep original acronym for changes to GlossVideos
+        self._original_acronym = self.acronym
+
     def __str__(self):
         return self.acronym
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        super().save(force_insert=False, force_update=False, using=None, update_fields=None)
+
+        # If the acronym has been changed, change all GlossVideos
+        # and move all video/poster files accordingly.
+        from signbank.video.models import GlossVideo
+        if self.acronym != self._original_acronym:
+            # Move all media
+            glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=self)
+            for glossvideo in glossvideos:
+                glossvideo.move_video(move_files_on_disk=False)
+
+            # Rename dirs
+            from signbank.settings.server_specific import WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, \
+                GLOSS_IMAGE_DIRECTORY
+            glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, self._original_acronym)
+            glossvideo_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, self.acronym)
+            os.rename(glossvideo_path_original, glossvideo_path_new)
+
+            glossimage_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, self._original_acronym)
+            glossimage_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, self.acronym)
+            os.rename(glossimage_path_original, glossimage_path_new)
 
     def generate_short_name(self):
 
