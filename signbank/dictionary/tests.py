@@ -152,6 +152,7 @@ class BasicCRUDTests(TestCase):
 
         #Create the glosses
         dataset_name = settings.DEFAULT_DATASET
+        dataset_name = 'ASL'
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -159,28 +160,64 @@ class BasicCRUDTests(TestCase):
         new_lemma.save()
 
         # Create a lemma idgloss translation
-        language = Language.objects.get(id=get_default_language_id())
+        default_language = Language.objects.get(id=get_default_language_id())
         new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
-                                                              lemma=new_lemma, language=language)
+                                                              lemma=new_lemma, language=default_language)
         new_lemmaidglosstranslation.save()
 
-        new_gloss = Gloss()
-        new_gloss.handedness = 4
-        new_gloss.lemma = new_lemma
-        new_gloss.save()
+
+
 
         new_gloss = Gloss()
         new_gloss.handedness = 4
         new_gloss.lemma = new_lemma
         new_gloss.save()
+
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '1'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
+
+        new_gloss = Gloss()
+        new_gloss.handedness = 4
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '2'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
 
         new_gloss = Gloss()
         new_gloss.handedness = 5
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '3'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
+
+        all_glosses = Gloss.objects.all()
+        for ag in all_glosses:
+            try:
+                print('testSearchForGlosses created gloss: ', ag.annotationidglosstranslation_set.get(language=default_language).text)
+            except:
+                print('testSearchForGlosses created gloss has empty annotation translation')
         #Search
-        response = client.get('/signs/search/',{'handedness':4})
+        response = client.get('/signs/search/',{'handedness[]':4})
         self.assertEqual(len(response.context['object_list']), 0) #Nothing without dataset permission
 
         assign_perm('view_dataset', self.user, test_dataset)
@@ -188,6 +225,11 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(len(response.context['object_list']), 2)
 
         response = client.get('/signs/search/',{'handedness[]':5})
+        for gl in response.context['object_list']:
+            try:
+                print('testSearchForGlosses response 3: ', gl.annotationidglosstranslation_set.get(language=default_language).text)
+            except:
+                print('testSearchForGlosses response 3: returned gloss has empty annotation translation')
         self.assertEqual(len(response.context['object_list']), 1)
 
 #Deprecated?
