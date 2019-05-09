@@ -10,7 +10,7 @@ from signbank.video.convertvideo import extract_frame, convert_video, ffmpeg
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
-from signbank.settings.base import WRITABLE_FOLDER, FFMPEG_PROGRAM
+from signbank.settings.base import WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, FFMPEG_PROGRAM
 # from django.contrib.auth.models import User
 from datetime import datetime
 
@@ -410,13 +410,23 @@ class GlossVideo(models.Model):
             self.save()
 
 
-# @receiver(models.signals.post_delete, sender=GlossVideo)
-# def auto_delete_file_on_delete(sender, instance, **kwargs):
-#     """
-#     Deletes file from filesystem
-#     when corresponding `GlossVideo` object is deleted.
-#     """
-#     if instance.videofile:
-#         if os.path.isfile(instance.videofile.path):
-#             os.remove(instance.videofile.path)
+@receiver(models.signals.post_save, sender=Dataset)
+def process_dataset_acronym_change(sender, instance, **kwargs):
+    # If the acronym has been changed, change all GlossVideos
+    # and move all video/poster files accordingly.
+    dataset = instance
+    if dataset.acronym != dataset._original_acronym:
+        # Move all media
+        glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
+        for glossvideo in glossvideos:
+            glossvideo.move_video(move_files_on_disk=False)
+
+        # Rename dirs
+        glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset._original_acronym)
+        glossvideo_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset.acronym)
+        os.rename(glossvideo_path_original, glossvideo_path_new)
+
+        glossimage_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset._original_acronym)
+        glossimage_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset.acronym)
+        os.rename(glossimage_path_original, glossimage_path_new)
 

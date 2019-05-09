@@ -1953,29 +1953,6 @@ class Dataset(models.Model):
     def __str__(self):
         return self.acronym
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        super().save(force_insert=False, force_update=False, using=None, update_fields=None)
-
-        # If the acronym has been changed, change all GlossVideos
-        # and move all video/poster files accordingly.
-        from signbank.video.models import GlossVideo
-        if self.acronym != self._original_acronym:
-            # Move all media
-            glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=self)
-            for glossvideo in glossvideos:
-                glossvideo.move_video(move_files_on_disk=False)
-
-            # Rename dirs
-            from signbank.settings.server_specific import WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, \
-                GLOSS_IMAGE_DIRECTORY
-            glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, self._original_acronym)
-            glossvideo_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, self.acronym)
-            os.rename(glossvideo_path_original, glossvideo_path_new)
-
-            glossimage_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, self._original_acronym)
-            glossimage_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, self.acronym)
-            os.rename(glossimage_path_original, glossimage_path_new)
-
     def generate_short_name(self):
 
         CHARACTER_THRESHOLD = 15
