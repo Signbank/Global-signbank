@@ -132,7 +132,6 @@ def addvideo(request):
             else:
                 print('error with small video destination inside of video/views.py:addvideo')
 
-            os.chmod(goal_location,644)
             return redirect(redirect_url)
 
     # if we can't process the form, just redirect back to the
