@@ -165,11 +165,12 @@ class GlossVideoHistory(models.Model):
         ordering = ['datestamp']
 
 
-def get_video_file_path(instance, filename):
+def get_video_file_path(instance, filename, version=0):
     """
     Return the full path for storing an uploaded video
     :param instance: A GlossVideo instance
     :param filename: the original file name
+    :param version: the version to determine the number of .bak extensions
     :return: 
     """
 
@@ -183,14 +184,12 @@ def get_video_file_path(instance, filename):
 
         return foldername
 
-    base_dir = settings.WRITABLE_FOLDER
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
     dataset_dir = instance.gloss.lemma.dataset.acronym
     two_letter_dir = get_two_letter_dir()
-    filename = idgloss + '-' + str(instance.gloss.id) + '.mp4'
+    filename = idgloss + '-' + str(instance.gloss.id) + '.mp4' + (version * ".bak")
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
-    print("CONSTRUCTED PATH: ", path)
     return path
 
 
@@ -319,7 +318,6 @@ class GlossVideo(models.Model):
         url = self.get_absolute_url()
         return url.replace(settings.MEDIA_URL, settings.MEDIA_MOBILE_URL)
 
-
     def reversion(self, revert=False):
         """We have a new version of this video so increase
         the version count here and rename the video
@@ -328,7 +326,6 @@ class GlossVideo(models.Model):
         unless revert=True, in which case we go the other
         way and decrease the version number, if version=0
         we delete ourselves"""
-
 
         if revert:
             print("REVERT VIDEO", self.videofile.name, self.version)
@@ -373,7 +370,7 @@ class GlossVideo(models.Model):
         :return: 
         """
         old_path = str(str(self.videofile))
-        new_path = get_video_file_path(self, "")
+        new_path = get_video_file_path(self, "", self.version)
         if old_path != new_path:
             if move_files_on_disk:
                 source = os.path.join(settings.WRITABLE_FOLDER, old_path)
@@ -412,6 +409,13 @@ class GlossVideo(models.Model):
 
 @receiver(models.signals.post_save, sender=Dataset)
 def process_dataset_changes(sender, instance, **kwargs):
+    """
+    Makes changes to GlossVideos if a Dataset has been changed.
+    :param sender: 
+    :param instance: 
+    :param kwargs: 
+    :return: 
+    """
     # If the acronym has been changed, change all GlossVideos
     # and rename directories.
     dataset = instance
@@ -438,3 +442,18 @@ def process_dataset_changes(sender, instance, **kwargs):
         for glossvideo in glossvideos:
             glossvideo.move_video(move_files_on_disk=True)
 
+
+@receiver(models.signals.post_save, sender=LemmaIdglossTranslation)
+def process_lemmaidglosstranslation_changes(sender, instance, **kwargs):
+    """
+    Makes changes to GlossVideos if a LemmaIdglossTranslation has been changed.
+    :param sender: 
+    :param instance: 
+    :param kwargs: 
+    :return: 
+    """
+    lemmaidglosstranslation = instance
+    print("LemmaIdglossTranslation", lemmaidglosstranslation)
+    glossvideos = GlossVideo.objects.filter(gloss__lemma__lemmaidglosstranslation=lemmaidglosstranslation)
+    for glossvideo in glossvideos:
+        glossvideo.move_video(move_files_on_disk=True)
