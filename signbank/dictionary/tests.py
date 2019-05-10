@@ -412,6 +412,11 @@ class ImportExportTests(TestCase):
         assign_perm('change_dataset', self.user, test_dataset)
         print('User has permmission to change dataset.')
 
+        test_dataset_acronym = 'temp_' + dataset_name
+
+        test_dataset.acronym = test_dataset_acronym
+        test_dataset.save()
+        print('Test dataset name changed to: ', test_dataset_acronym)
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
@@ -442,7 +447,7 @@ class ImportExportTests(TestCase):
             annotationIdgloss.text = 'thisisatemporarytestgloss'
             annotationIdgloss.save()
 
-        url = '/datasets/available?dataset_name=' + dataset_name + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_name=' + test_dataset_acronym + '&export_ecv=ECV'
 
         response = client.get(url)
 
@@ -452,8 +457,18 @@ class ImportExportTests(TestCase):
         json_message = json_decoded_cookies[0]
         print('Message TWO: ', json_message)
 
-        self.assertEqual(str(json_message), 'ECV ' + dataset_name + ' successfully updated.')
+        self.assertEqual(str(json_message), 'ECV ' + test_dataset_acronym + ' successfully updated.')
 
+        # cleanup
+        test_dataset.acronym = dataset_name
+        test_dataset.save()
+
+        location_ecv_files = ECV_FOLDER
+        for filename in os.listdir(location_ecv_files):
+            if filename == test_dataset_acronym.lower() + '.ecv':
+                filename_path = os.path.join(location_ecv_files,filename)
+                os.remove(filename_path)
+                print('Temp ecv file removed.')
 
     def test_DatasetListView_ECV_export_no_permission_change_dataset(self):
 
