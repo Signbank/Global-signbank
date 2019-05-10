@@ -6,6 +6,9 @@ DATABASES = {'default':
                 {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME': WRITABLE_FOLDER+'database/signbank.db',
+                    'TEST': {
+                        'NAME': WRITABLE_FOLDER+'database/test-signbank.db',
+                    }
                 }
             }
 
@@ -19,6 +22,7 @@ COUNTRY_NAME = "United States of America"
 SIGNBANK_VERSION_CODE = 'ASL'
 URL = 'https://aslsignbank.haskins.yale.edu/'
 ALLOWED_HOSTS = ['spinup-000691.yu.yale.edu','10.5.34.251','aslsignbank.haskins.yale.edu']
+PREFIX_URL = ''
 
 LANGUAGES = (
   ('en_US', 'American English'),
@@ -27,6 +31,7 @@ LANGUAGES = (
 LANGUAGE_CODE = "en-us"
 
 DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en_US'}
+DEFAULT_LANGUAGE_HEADER_COLUMN = {'English': 'name'}
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = False
 
@@ -41,6 +46,10 @@ FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconT
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
+FIELDS['handshape'] = []
+
+MINIMAL_PAIRS_FIELDS = []
+
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
 ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {
@@ -52,7 +61,7 @@ ECV_SETTINGS = {
         {
             'id': 'eng',
             'description': 'ASL Signbank lexicon',
-            'annotation_idgloss_fieldname': 'annotationidglosstranslation_en',
+            'annotation_idgloss_fieldname': 'annotationidglosstranslation_en_US',
             'attributes': {
                 'LANG_DEF': 'http://cdb.iso.org/lg/CDB-00138502-001',
                 'LANG_ID': 'eng',
@@ -65,7 +74,9 @@ ECV_SETTINGS = {
 
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
+FEEDBANK_VIDEO_DIRECTORY = ''
 CROP_GLOSS_IMAGES = False
+HANDSHAPE_IMAGE_DIRECTORY = ''
 OTHER_MEDIA_DIRECTORY = WRITABLE_FOLDER+'othermedia/'
 WSGI_FILE = ROOT+'signbank/wsgi.py'
 IMAGES_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_images/'
@@ -76,6 +87,9 @@ SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
 SHOW_MORPHEME_SEARCH = False
 SHOW_DATASET_INTERFACE_OPTIONS = False
 SHOW_LETTER_NUMBER_PHONOLOGY = False
+DEFAULT_DATASET = 'ASL'
+DEFAULT_DATASET_ACRONYM = 'ASL'
+DEFAULT_DATASET_LANGUAGE_ID = 1
 
 EAF_FILES_LOCATION = ''
 METADATA_LOCATION = ''
@@ -102,3 +116,5 @@ SPEED_UP_RETRIEVING_ALL_SIGNS =	False
 
 import datetime
 RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=7)
+DEFAULT_DATASET_PK = 2
+

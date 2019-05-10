@@ -1893,9 +1893,9 @@ def update_cngt_counts(folder_index=None):
 
     folder_paths = []
 
-    for foldername in os.listdir(settings.CNGT_EAF_FILES_LOCATION):
+    for foldername in os.listdir(settings.EAF_FILES_LOCATION):
         if '.xml' not in foldername:
-            folder_paths.append(settings.CNGT_EAF_FILES_LOCATION+foldername+'/')
+            folder_paths.append(settings.EAF_FILES_LOCATION+foldername+'/')
 
     if folder_index != None:
         folder_paths = [folder_paths[int(folder_index)]]
@@ -1905,7 +1905,7 @@ def update_cngt_counts(folder_index=None):
     for folder_path in folder_paths:
         eaf_file_paths += [folder_path + f for f in os.listdir(folder_path)]
 
-    sign_counter = SignCounter(settings.CNGT_METADATA_LOCATION,
+    sign_counter = SignCounter(settings.METADATA_LOCATION,
                                eaf_file_paths,
                                settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT)
 

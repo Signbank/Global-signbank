@@ -1776,6 +1776,64 @@ class FieldChoiceTests(TestCase):
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
 
+class testSettings(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.save()
+
+    def test_Settings(self):
+
+        full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
+        filename_global = os.path.join(full_root_path, 'global_sb_new_aj.py')
+        global_settings_strings = []
+        with open(filename_global, 'r') as f:
+            for line in f:
+                if '#' in line:
+                    line = line.split('#')
+                    string_before_hash = line[0]
+                    line = string_before_hash.strip()
+                if '=' in line:
+                    definition_list = line.split('=')
+                    right_hand_side = definition_list[1]
+                    right_hand_side = right_hand_side.strip()
+                    if right_hand_side.startswith('lambda'):
+                        # this is a function definition
+                        # this is a bit of a hack because a function is used in the global settings
+                        continue
+                    definition = definition_list[0]
+                    definition = definition.strip()
+                    global_settings_strings.append(definition)
+        # print('Global settings: ', global_settings_strings)
+
+
+        full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
+        filename_asl = os.path.join(full_root_path, 'asl_yale.py')
+        asl_settings_strings = []
+        with open(filename_asl, 'r') as f:
+            for line in f:
+                if '#' in line:
+                    line = line.split('#')
+                    string_before_hash = line[0]
+                    line = string_before_hash.strip()
+                if '=' in line:
+                    definition_list = line.split('=')
+                    definition = definition_list[0]
+                    definition = definition.strip()
+                    asl_settings_strings.append(definition)
+        # print('ASL settings: ', asl_settings_strings)
+
+        for setting_global in global_settings_strings:
+            if setting_global not in asl_settings_strings:
+                print('Global setting not in ASL settings: ', setting_global)
+
+        for setting_asl in asl_settings_strings:
+            if setting_asl not in global_settings_strings:
+                print('ASL setting not in Global settings: ', setting_asl)
+
+
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):
     if not data:

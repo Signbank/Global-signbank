@@ -46,7 +46,6 @@ class PageVideoInline(admin.TabularInline):
 
 class PageAdmin(SummernoteModelAdmin):
     form = PageForm
-    #print("SHOW_ENGLISH_ONLY: " + str(server_specific.SHOW_ENGLISH_ONLY))
     if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
         fieldsets = (
             (None, {'fields': (

@@ -1,6 +1,3 @@
-import socket
-hostname = socket.gethostname()
-
 ROOT = '/var/www/signbank/live/'
 
 BASE_DIR = ROOT+'repo/'
@@ -66,7 +63,6 @@ FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
 
 MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
-MINIMAL_PAIRS_COUNT = len(MINIMAL_PAIRS_FIELDS)
 
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 ECV_FOLDER = WRITABLE_FOLDER+'ecv'
@@ -118,8 +114,8 @@ DEFAULT_DATASET = 'Nederlandse Gebarentaal'
 DEFAULT_DATASET_ACRONYM = 'NGT'
 DEFAULT_DATASET_LANGUAGE_ID = 1
 
-CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'
-CNGT_METADATA_LOCATION = ROOT+'CNGT_MetadataEnglish_OtherResearchers.csv'
+EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'
+METADATA_LOCATION = ROOT+'CNGT_MetadataEnglish_OtherResearchers.csv'
 
 FFMPEG_PROGRAM = "avconv"
 TMP_DIR = "/tmp"
@@ -127,6 +123,8 @@ TMP_DIR = "/tmp"
 API_FIELDS = [
     'idgloss',
 ]
+
+SHOW_ENGLISH_ONLY = False
 
 # This is a short mapping between 2 and 3 letter language code
 # This needs more complete solution (perhaps a library),
@@ -141,3 +139,4 @@ SPEED_UP_RETRIEVING_ALL_SIGNS =	True
 
 import datetime
 RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=90)
+DEFAULT_DATASET_PK = 5
