@@ -3873,6 +3873,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             translation_focus_gloss = translations_this_gloss[0].text
 
     result = []
+    # print('mp ajax for gloss ', str(gloss_id), ' minimal pairs objects: ', minimalpairs_objects)
     for minimalpairs_object, minimal_pairs_dict in minimalpairs_objects.items():
         other_gloss_dict = dict()
         other_gloss_dict['id'] = str(minimalpairs_object.id)
@@ -3899,7 +3900,8 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                 else:
                     focus_gloss_value = '-'
             elif field_kind == 'check':
-                if focus_gloss_choice == 'True':
+                # the value is a Boolean or it might not be set
+                if focus_gloss_choice == 'True' or focus_gloss_choice:
                     focus_gloss_value = _('Yes')
                 elif focus_gloss_choice == 'Neutral' and field in ['weakdrop', 'weakprop']:
                     focus_gloss_value = _('Neutral')
@@ -3920,7 +3922,8 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                 else:
                     other_gloss_value = '-'
             elif field_kind == 'check':
-                if other_gloss_choice == 'True':
+                # the value is a Boolean or it might not be set
+                if other_gloss_choice == 'True' or other_gloss_choice:
                     other_gloss_value = _('Yes')
                 elif other_gloss_choice == 'Neutral' and field in ['weakdrop', 'weakprop']:
                     other_gloss_value = _('Neutral')
@@ -3946,6 +3949,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
         result.append(other_gloss_dict)
 
+    # print('mp ajax for gloss ', str(gloss_id), ' result: ', result)
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
