@@ -760,11 +760,13 @@
            <th>{% trans "Strong hand" %}</th>
            <th>{% trans "Weak hand" %}</th>
            <th>{% trans "Location" %}</th>
+           {% if not user.is_anonymous %}
            <th style="width:255px;">{% trans "Tags" %}</th>
+           {% endif %}
       </tr>
       <!-- EK: this second header row contains clickable sort-order buttons -->
       <tr>
-          <th></th>
+          {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th></th>{% endif %}
           <th></th>
           {% for dataset_lang in dataset_languages %}
           {% with "annotationidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
@@ -824,6 +826,7 @@
     </thead>
     <tbody>
     {% for gloss in object_list %}
+            {% if not user.is_anonymous %}
             {% tags_for_object gloss as tag_list %}
             {% if tag_list|wrong_sign %}
                 <tr class="danger">
@@ -834,7 +837,7 @@
             {% else %}
                 <tr>
             {% endif %}
-
+            {% endif %}
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.acronym }}</td>{% endif %}
       <td>{%if gloss.get_image_path != None %}
 
@@ -961,10 +964,11 @@
 
             {% endwith %}
 
+            {% if not user.is_anonymous %}
             {% load underscore_to_space %}
             {% tags_for_object gloss as tag_list %}
             <td>{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
-
+            {% endif %}
         </tr>
     {% endfor %}
   </tbody>
