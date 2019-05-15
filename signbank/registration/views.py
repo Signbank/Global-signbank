@@ -237,4 +237,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         'error_message': error_message})
 mylogin = never_cache(mylogin)
 
+def users_without_dataset(request):
 
+    from signbank.tools import get_users_without_dataset
+    return render (request, 'users_without_dataset.html', {'users_without_dataset':get_users_without_dataset()})

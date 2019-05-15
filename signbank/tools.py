@@ -1513,6 +1513,32 @@ def get_selected_datasets_for_user(user):
         return selected_datasets
 
 
+def get_users_without_dataset():
+
+    users_with_no_dataset = []
+
+    for user in User.objects.all():
+        if user.is_active and len(get_objects_for_user(user, 'view_dataset', Dataset)) == 0:
+            users_with_no_dataset.append(user)
+
+    return users_with_no_dataset
+
+def mail_users_without_dataset_to_address(address):
+
+    from django.core.mail import send_mail
+
+    users_without_dataset = get_users_without_dataset()
+
+    if len(users_without_dataset) == 0:
+        return
+
+    text = 'Active Signbank users without dataset access\n\n'
+    text += '\n'.join([user.first_name + ' ' + user.last_name + ' (' + user.email + ')' for user in users_without_dataset])
+
+    text += '\n See '+settings.URL+'accounts/users_without_dataset/'
+
+    send_mail('Active Signbank users without dataset access',text, settings.DEFAULT_FROM_EMAIL,[address])
+
 def gloss_from_identifier(value):
     """Given an id of the form "idgloss (pk)" return the
     relevant gloss or None if none is found
