@@ -3965,7 +3965,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 class LemmaListView(ListView):
     model = LemmaIdgloss
     template_name = 'dictionary/admin_lemma_list.html'
-    paginate_by = 10
+    paginate_by = 100
 
     def get_queryset(self, **kwargs):
         queryset = super(LemmaListView, self).get_queryset(**kwargs)

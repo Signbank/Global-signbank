@@ -5,6 +5,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_protect
+from signbank.dictionary.models import Language, Dataset
 
 DEFAULT_TEMPLATE = 'pages/default.html'
 
@@ -27,7 +28,6 @@ def page(request, url='/'):
     # here I've removed the requirement that the page be for this site
     # - this won't work if we ever have more than one site here
     # which isn't planned
-    
     # deal with the lack of a root page
     try:
         f = Page.objects.get(url__exact=url)
@@ -70,5 +70,14 @@ def page(request, url='/'):
         f.title = mark_safe(f.title)
         f.content = mark_safe(f.content)
 
-    response = HttpResponse(t.render({'page': f},request))
+    from signbank.tools import get_selected_datasets_for_user
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    response = HttpResponse(t.render({'page': f,
+                                      'dataset_languages': dataset_languages,
+                                      'selected_datasets': selected_datasets,
+                                      'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
+                                      },request))
     return response

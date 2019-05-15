@@ -1905,9 +1905,9 @@ def switch_to_language(request,language):
 def recently_added_glosses(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 
     try:
-        from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
         recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
         recent_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
                           creationDate__range=[recently_added_signs_since_date, DT.datetime.now()]).order_by(
@@ -1916,6 +1916,7 @@ def recently_added_glosses(request):
                       {'glosses': recent_glosses,
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
+                        'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     except:
@@ -1923,6 +1924,7 @@ def recently_added_glosses(request):
                       {'glosses':Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
+                        'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
@@ -1935,6 +1937,7 @@ def proposed_new_signs(request):
                   {'glosses': proposed_or_new_signs,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
+                   'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
