@@ -165,6 +165,22 @@ class GlossVideoHistory(models.Model):
         ordering = ['datestamp']
 
 
+#### VIDEO PATH ####
+#
+# The path of a video is constructed by
+# 1. the acronym of the corresponding dataset
+# 2. the first 2 characters of the idgloss
+# 3. the idgloss (which is the lemmaidglosstranslation of the dataset default language)
+#
+# That means that if the dataset acronym, the dataset default language or the lemmaidgloss for the
+# dataset default language is changed, the video path should also be changed.
+#
+# This is done by:
+# * The video path: get_video_file_path(...)
+# * Changes to the dataset, acronym of default language: process_dataset_changes(...)
+# * Changes to the lemmaidglosstranslations: process_lemmaidglosstranslation_changes(...)
+
+
 def get_video_file_path(instance, filename, version=0):
     """
     Return the full path for storing an uploaded video
@@ -387,7 +403,6 @@ class GlossVideo(models.Model):
                 source_small = get_path_with_small(source)  #source_no_extension + '_small' + ext
                 (destination_no_extension, ext) = os.path.splitext(destination)
                 destination_small = get_path_with_small(destination)  #destination_no_extension + '_small' + ext
-                print("source_small", source_small)
                 if os.path.exists(source_small):
                     shutil.move(source_small, destination_small)
 

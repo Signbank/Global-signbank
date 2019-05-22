@@ -622,7 +622,7 @@ class VideoTests(TestCase):
         client = Client()
         client.login(username='test-user', password='test-user')
 
-        video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
+        video_url = '/dictionary/protected_media/glossvideo/'+test_dataset.acronym+'/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
         #We expect no video before
         response = client.get(video_url)
         # print("Video url first test: {}".format(video_url))
@@ -701,7 +701,7 @@ class VideoTests(TestCase):
         client = Client()
         client.login(username='test-user', password='test-user')
 
-        video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
+        video_url = '/dictionary/protected_media/glossvideo/'+test_dataset.acronym+'/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
         #We expect no video before
         response = client.get(video_url)
         # print("Video url first test: {}".format(video_url))
