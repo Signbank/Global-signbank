@@ -1179,7 +1179,7 @@ class GlossDetailView(DetailView):
 
             human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
-            path = settings.URL+'dictionary/protected_media/othermedia/'+other_media.path
+            path = 'dictionary/protected_media/othermedia/'+other_media.path
             if '/' in other_media.path:
                 other_media_filename = other_media.path.split('/')[1]
             else:

@@ -1392,7 +1392,7 @@
                     {% else %}
                     <td></td>
                     {% endif %}
-                    <td><a download="{{ file_name }}" href="{{ path }}">Download</a></td>
+                    <td><a download="{{ file_name }}" href="{{ URL }}{{ PREFIX_URL }}{{ path }}">Download</a></td>
                     <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
                     <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
