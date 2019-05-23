@@ -192,17 +192,9 @@ def get_video_file_path(instance, filename, version=0):
 
     idgloss = instance.gloss.idgloss
 
-    def get_two_letter_dir():
-        foldername = idgloss[:2]
-
-        if len(foldername) == 1:
-            foldername += '-'
-
-        return foldername
-
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
     dataset_dir = instance.gloss.lemma.dataset.acronym
-    two_letter_dir = get_two_letter_dir()
+    two_letter_dir = signbank.tools.get_two_letter_dir(idgloss)
     filename = idgloss + '-' + str(instance.gloss.id) + '.mp4' + (version * ".bak")
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)

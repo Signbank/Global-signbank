@@ -365,10 +365,8 @@ def import_media(request,video):
 
     if video:
         import_folder = settings.VIDEOS_TO_IMPORT_FOLDER
-        goal_directory = settings.GLOSS_VIDEO_DIRECTORY
     else:
         import_folder = settings.IMAGES_TO_IMPORT_FOLDER
-        goal_directory = settings.GLOSS_IMAGE_DIRECTORY
 
     print("Import folder: %s" % import_folder)
 
@@ -415,8 +413,8 @@ def import_media(request,video):
                 default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
 
                 if not video:
-                    overwritten, was_allowed = save_media(lang3code_folder_path,lang3code_folder_name,
-                                                          settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
+                    overwritten, was_allowed = save_media(lang3code_folder_path, lang3code_folder_name,
+                                                          GLOSS_IMAGE_DIRECTORY, gloss, extension)
 
                     if not was_allowed:
                         errors.append('Failed to move media file for '+default_annotationidgloss+
@@ -2231,8 +2229,13 @@ def add_image(request):
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing image for this sign
-            goal_path =  settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
-            goal_location_str = goal_path + gloss.idgloss + '-' + str(gloss.pk) + extension
+            goal_path = os.path.join(
+                WRITABLE_FOLDER,
+                GLOSS_IMAGE_DIRECTORY,
+                gloss.lemma.dataset.acronym,
+                signbank.tools.get_two_letter_dir(gloss.idgloss)
+            )
+            goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
             #First make the dir if needed
             try:

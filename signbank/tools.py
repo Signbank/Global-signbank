@@ -18,6 +18,16 @@ from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
 
+
+def get_two_letter_dir(idgloss):
+    foldername = idgloss[:2]
+
+    if len(foldername) == 1:
+        foldername += '-'
+
+    return foldername
+
+
 def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
         
     #Add a dot before the extension if needed
@@ -33,7 +43,12 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
         annotation_id = annotationidglosstranslations[0].text
     pk = str(gloss.pk)
-    destination_folder = goal_folder+annotation_id[:2]+'/'
+    destination_folder = os.path.join(
+        WRITABLE_FOLDER,
+        goal_folder,
+        gloss.lemma.dataset.acronym,
+        get_two_letter_dir(gloss.idgloss)
+    )
 
     #Create the necessary subfolder if needed
     if not os.path.isdir(destination_folder):
@@ -41,7 +56,7 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
 
     #Move the file
     source = source_folder+annotation_id+extension
-    goal = destination_folder+annotation_id+'-'+pk+extension
+    goal = os.path.join(destination_folder, annotation_id+'-'+pk+extension)
 
     if os.path.isfile(goal):
         overwritten = True
@@ -54,7 +69,10 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
     except IOError:
         was_allowed = False
 
-    os.remove(source)
+    try:
+        os.remove(source)
+    except OSError:
+        pass
 
     return overwritten,was_allowed
 
