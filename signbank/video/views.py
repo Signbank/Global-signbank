@@ -9,18 +9,10 @@ from signbank.video.forms import VideoUploadForm, VideoUploadForGlossForm
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
 import os
-import re
-import glob
-import shutil
 
 from signbank.dictionary.models import Gloss, DeletedGlossOrMedia
-from signbank.settings.base import GLOSS_VIDEO_DIRECTORY, WRITABLE_FOLDER
-from signbank.settings.server_specific import FFMPEG_PROGRAM
-
+from signbank.settings.base import WRITABLE_FOLDER
 from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
-
-from CNGT_scripts.python.resizeVideos import VideoResizer
-from signbank.tools import generate_still_image
 
 
 def addvideo(request):

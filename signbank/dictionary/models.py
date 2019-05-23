@@ -10,7 +10,6 @@ from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist
-from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
 from django.core.files import File
 import tagging
 import re
@@ -1448,6 +1447,9 @@ class Gloss(models.Model):
             old_backup = old_video_path + '_' + str(backup_index)
 
     def add_video(self, user, videofile):
+        # Preventing circular import
+        from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
+
         # Backup the existing video objects stored in the database
         existing_videos = GlossVideo.objects.filter(gloss=self)
         for video_object in existing_videos:
