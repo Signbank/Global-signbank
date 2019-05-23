@@ -96,8 +96,6 @@ urlpatterns = [
 
     url(r'^summernote/', include(django_summernote.urls)),
 
-    url(r'^test/(?P<videofile>.*)$', TemplateView.as_view(template_name="test.html")),
-
     url(r'reload_signbank/$',signbank.tools.reload_signbank),
 
     url(r'^datasets/available', login_required(DatasetListView.as_view()), name='admin_dataset_view'),
