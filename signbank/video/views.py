@@ -39,7 +39,7 @@ def addvideo(request):
             gloss = get_object_or_404(Gloss, pk=gloss_id)
 
             # Backup the existing video objects stored in the database
-            existing_videos = GlossVideo.objects.filter(gloss=gloss, version=0)
+            existing_videos = GlossVideo.objects.filter(gloss=gloss)
             for video_object in existing_videos:
                 video_object.reversion(revert=False)
 

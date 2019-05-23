@@ -345,35 +345,36 @@ class GlossVideo(models.Model):
 
         if revert:
             print("REVERT VIDEO", self.videofile.name, self.version)
-            if self.version==0:
+            if self.version == 0:
                 print("DELETE VIDEO VIA REVERSION", self.videofile.name)
                 self.delete_files()
                 self.delete()
                 return
             else:
-                # remove .bak from filename and decrement the version
-                (newname, bak) = os.path.splitext(self.videofile.name)
-                if bak != '.bak':
-                    # hmm, something bad happened
-                    raise Exception('Unknown suffix on stored video file. Expected .bak')
+                if self.version == 1:
+                    # remove .bak from filename and decrement the version
+                    (newname, bak) = os.path.splitext(self.videofile.name)
+                    if bak != '.bak' + str(self.id):
+                        # hmm, something bad happened
+                        raise Exception('Unknown suffix on stored video file. Expected .bak')
+                    os.rename(os.path.join(storage.location, self.videofile.name),
+                              os.path.join(storage.location, newname))
+                    self.videofile.name = newname
                 self.version -= 1
+                self.save()
         else:
-            # find a name for the backup, a filename that isn't used already
-            newname = self.videofile.name
-            while os.path.exists(os.path.join(storage.location, newname)):
-                self.version += 1
-                newname = newname + ".bak"
+            if self.version == 0:
+                # find a name for the backup, a filename that isn't used already
+                newname = self.videofile.name + ".bak" + str(self.id)
+                os.rename(os.path.join(storage.location, self.videofile.name), os.path.join(storage.location, newname))
+                self.videofile.name = newname
+            self.version += 1
+            self.save()
 
-        # now do the renaming
-        
-        os.rename(os.path.join(storage.location, self.videofile.name), os.path.join(storage.location, newname))
         # also remove the post image if present, it will be regenerated
         poster = self.poster_path(create=False)
         if poster != None:
             os.unlink(poster)
-        self.videofile.name = newname
-        self.save()
-
 
     def __str__(self):
         # this coercion to a string type sometimes causes special characters in the filename to be a problem

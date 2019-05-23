@@ -27,6 +27,7 @@ from signbank.dictionary.update import update_keywords, update_signlanguage, upd
     update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
+from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
 
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import *
@@ -360,6 +361,7 @@ def import_media(request,video):
     out = '<p>Imported</p><ul>'
     overwritten_files = '<p>Of these files, these were overwritten</p><ul>'
     errors = []
+    print("video: ", video)
 
     if video:
         import_folder = settings.VIDEOS_TO_IMPORT_FOLDER
@@ -412,43 +414,45 @@ def import_media(request,video):
 
                 default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
 
-                overwritten, was_allowed = save_media(lang3code_folder_path,lang3code_folder_name,
-                                                      settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
+                if not video:
+                    overwritten, was_allowed = save_media(lang3code_folder_path,lang3code_folder_name,
+                                                          settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
 
-                if not was_allowed:
-                    errors.append('Failed to move media file for '+default_annotationidgloss+
-                                  '. Either the source could not be read or the destination could not be written.')
-                    continue
+                    if not was_allowed:
+                        errors.append('Failed to move media file for '+default_annotationidgloss+
+                                      '. Either the source could not be read or the destination could not be written.')
+                        continue
 
-                out += '<li>'+filename+'</li>'
+                    out += '<li>'+filename+'</li>'
 
-                # If it is a video also extract a still image and generate a thumbnail version
-                if video:
-                    annotation_id = default_annotationidgloss
-                    destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
-                    video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
-                    video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
+                else:
+                    video_file_path = os.path.join(lang3code_folder_path, filename)
+                    vfile = File(open(video_file_path, 'rb'))
+                    overwritten = False
 
+                    # Backup the existing video objects stored in the database
+                    existing_videos = GlossVideo.objects.filter(gloss=gloss)
+                    for video_object in existing_videos:
+                        video_object.reversion(revert=False)
+
+                    # Create a new GlossVideo object
+                    video = GlossVideo(gloss=gloss)
+                    video.videofile.save(get_video_file_path(video, filename), vfile)
+                    video.save()
+                    vfile.close()
                     try:
-                        print("Trying to resize video " + destination_folder+video_filename)
-                        from CNGT_scripts.python.resizeVideos import VideoResizer
-                        from signbank.settings.server_specific import FFMPEG_PROGRAM
-                        resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
-                        resizer.run()
-                    except ImportError as i:
-                        print(i)
-                    except IOError as io:
-                        print(io)
+                        os.remove(video_file_path)
+                    except OSError as oserror:
+                        errors.append("OSError: {}".format(oserror))
 
-                    # Issue #255: generate still image
-                    try:
-                        print("Trying to generate still images for " + destination_folder+video_filename)
-                        from signbank.tools import generate_still_image
-                        generate_still_image(annotation_id[:2],
-                                             destination_folder,
-                                             video_filename)
-                    except ImportError as i:
-                        print(i.message)
+                    video.make_small_video()
+                    video.make_poster_image()
+
+                    # Create a GlossVideoHistory object
+                    video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
+                    glossvideohistory = GlossVideoHistory(action="upload", gloss=gloss, actor=request.user,
+                                                          uploadfile=vfile, goal_location=video_file_full_path)
+                    glossvideohistory.save()
 
                 if overwritten:
                     overwritten_files += '<li>'+filename+'</li>'
