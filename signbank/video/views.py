@@ -38,22 +38,7 @@ def addvideo(request):
             # Get the gloss
             gloss = get_object_or_404(Gloss, pk=gloss_id)
 
-            # Backup the existing video objects stored in the database
-            existing_videos = GlossVideo.objects.filter(gloss=gloss)
-            for video_object in existing_videos:
-                video_object.reversion(revert=False)
-
-            # Create a new GlossVideo object
-            video = GlossVideo(videofile=vfile, gloss=gloss)
-            video.save()
-            video.make_small_video()
-            video.make_poster_image()
-
-            # Create a GlossVideoHistory object
-            video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
-            glossvideohistory = GlossVideoHistory(action="upload", gloss=gloss, actor=request.user,
-                                          uploadfile=vfile, goal_location=video_file_full_path)
-            glossvideohistory.save()
+            gloss.add_video(request.user, vfile)
 
             return redirect(redirect_url)
 

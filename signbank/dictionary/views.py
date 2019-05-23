@@ -428,31 +428,15 @@ def import_media(request,video):
                 else:
                     video_file_path = os.path.join(lang3code_folder_path, filename)
                     vfile = File(open(video_file_path, 'rb'))
-                    overwritten = False
-
-                    # Backup the existing video objects stored in the database
-                    existing_videos = GlossVideo.objects.filter(gloss=gloss)
-                    for video_object in existing_videos:
-                        video_object.reversion(revert=False)
-
-                    # Create a new GlossVideo object
-                    video = GlossVideo(gloss=gloss)
-                    video.videofile.save(get_video_file_path(video, filename), vfile)
-                    video.save()
+                    video = gloss.add_video(request.user, vfile)
                     vfile.close()
+
                     try:
                         os.remove(video_file_path)
                     except OSError as oserror:
                         errors.append("OSError: {}".format(oserror))
 
-                    video.make_small_video()
-                    video.make_poster_image()
-
-                    # Create a GlossVideoHistory object
-                    video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
-                    glossvideohistory = GlossVideoHistory(action="upload", gloss=gloss, actor=request.user,
-                                                          uploadfile=vfile, goal_location=video_file_full_path)
-                    glossvideohistory.save()
+                    overwritten = False
 
                 if overwritten:
                     overwritten_files += '<li>'+filename+'</li>'

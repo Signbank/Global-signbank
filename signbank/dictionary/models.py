@@ -10,6 +10,8 @@ from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist
+from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
+from django.core.files import File
 import tagging
 import re
 import copy
@@ -20,7 +22,7 @@ import json
 from collections import OrderedDict, Counter
 from datetime import datetime, date
 
-from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
+from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE, WRITABLE_FOLDER
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 
 import signbank.settings
@@ -1444,6 +1446,30 @@ class Gloss(models.Model):
             shutil.move(old_backup, new_backup)
             backup_index += 1
             old_backup = old_video_path + '_' + str(backup_index)
+
+    def add_video(self, user, videofile):
+        # Backup the existing video objects stored in the database
+        existing_videos = GlossVideo.objects.filter(gloss=self)
+        for video_object in existing_videos:
+            video_object.reversion(revert=False)
+
+        # Create a new GlossVideo object
+        if isinstance(videofile, File):
+            video = GlossVideo(gloss=self)
+            video.videofile.save(get_video_file_path(video, ''), videofile)
+        else:
+            video = GlossVideo(videofile=videofile, gloss=self)
+        video.save()
+        video.make_small_video()
+        video.make_poster_image()
+
+        # Create a GlossVideoHistory object
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
+        glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+                                              uploadfile=videofile, goal_location=video_file_full_path)
+        glossvideohistory.save()
+
+        return video
 
     def published_definitions(self):
         """Return a query set of just the published definitions for this gloss
