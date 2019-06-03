@@ -2538,9 +2538,11 @@ def get_unused_videos(request):
     videos_where_pk_does_match_idgloss = []
     videos_with_unusual_file_names = []
 
-    for dir_name in os.listdir(settings.WRITABLE_FOLDER+settings.GLOSS_VIDEO_DIRECTORY):
+    gloss_video_dir = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY)
 
-        dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_VIDEO_DIRECTORY+'/'+dir_name+'/'
+    for dir_name in os.listdir(gloss_video_dir):
+
+        dir_path = os.path.join(gloss_video_dir, dir_name)
 
         for file_name in os.listdir(dir_path):
 
@@ -2549,14 +2551,14 @@ def get_unused_videos(request):
                 pk = int(items[-1])
                 idgloss = '-'.join(items[:-1])
             except ValueError:
-                videos_with_unusual_file_names.append(file_name)
+                videos_with_unusual_file_names.append(os.path.join(dir_name, file_name))
                 continue
 
             try:
                 if Gloss.objects.get(pk=pk).idgloss != idgloss:
-                    videos_where_pk_does_match_idgloss.append(file_name)
+                    videos_where_pk_does_match_idgloss.append(os.path.join(dir_name, file_name))
             except ObjectDoesNotExist:
-                videos_with_unused_pk.append(file_name)
+                videos_with_unused_pk.append(os.path.join(dir_name, file_name))
                 continue
 
     result = '<p>For these videos, the pk does not match the idgloss:</p><ul>'
