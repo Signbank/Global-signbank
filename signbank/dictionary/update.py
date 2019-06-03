@@ -303,13 +303,8 @@ def update_gloss(request, glossid):
                 dataset = gloss.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
                 if dataset == lemma.dataset:
-                    old_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
                     gloss.lemma = lemma
                     gloss.save()
-                    new_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
-
-                    # Rename video
-                    gloss.rename_video(old_video_path, new_video_path)
                 else:
                     messages.add_message(messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
             except ObjectDoesNotExist:
@@ -1719,13 +1714,8 @@ def update_morpheme(request, morphemeid):
                 dataset = morpheme.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
                 if dataset == lemma.dataset:
-                    old_video_path = settings.MEDIA_ROOT + morpheme.get_video_path()
                     morpheme.lemma = lemma
                     morpheme.save()
-                    new_video_path = settings.MEDIA_ROOT + morpheme.get_video_path()
-
-                    # Rename video
-                    morpheme.rename_video(old_video_path, new_video_path)
                 else:
                     messages.add_message(messages.ERROR, _("The dataset of the morpheme is not the same as that of the lemma."))
             except ObjectDoesNotExist:

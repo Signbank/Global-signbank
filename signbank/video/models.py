@@ -471,6 +471,22 @@ def process_lemmaidglosstranslation_changes(sender, instance, **kwargs):
         glossvideo.move_video(move_files_on_disk=True)
 
 
+@receiver(models.signals.post_save, sender=Gloss)
+@receiver(models.signals.post_save, sender=Morpheme)
+def process_gloss_changes(sender, instance, **kwargs):
+    """
+    Makes changes to GlossVideos if a Gloss.lemma has changed
+    :param sender: 
+    :param instance: 
+    :param kwargs: 
+    :return: 
+    """
+    gloss = instance
+    glossvideos = GlossVideo.objects.filter(gloss=gloss)
+    for glossvideo in glossvideos:
+        glossvideo.move_video(move_files_on_disk=True)
+
+
 @receiver(models.signals.pre_delete, sender=GlossVideo)
 def delete_files(sender, instance, **kwargs):
     """
