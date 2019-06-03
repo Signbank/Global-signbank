@@ -1,0 +1,21 @@
+{% extends "baselayout.html" %}
+
+{% block script %}
+
+{% endblock %}
+
+{% block content %}
+
+<h1>Unused video files and other unlinked files</h1>
+
+<p><i>Number of unused video files: {{ file_not_in_glossvideo_object|length }}</i></p>
+
+{% if file_not_in_glossvideo_object %}
+    <table class="table">
+        {% for file in file_not_in_glossvideo_object %}
+            <tr><td>{{ file }}</td></tr>
+        {% endfor %}
+    </table>
+{% endif %}
+
+{% endblock %}
