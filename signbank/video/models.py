@@ -218,7 +218,7 @@ class GlossVideo(models.Model):
 
     videofile = models.FileField("video file", upload_to=get_video_file_path, storage=storage)
 
-    gloss = models.ForeignKey(Gloss)
+    gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
 
     ## video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
@@ -469,3 +469,15 @@ def process_lemmaidglosstranslation_changes(sender, instance, **kwargs):
     glossvideos = GlossVideo.objects.filter(gloss__lemma__lemmaidglosstranslation=lemmaidglosstranslation)
     for glossvideo in glossvideos:
         glossvideo.move_video(move_files_on_disk=True)
+
+
+@receiver(models.signals.pre_delete, sender=GlossVideo)
+def delete_files(sender, instance, **kwargs):
+    """
+    Deletes all associated files when the GlossVideo instance is deleted.
+    :param sender: 
+    :param instance: 
+    :param kwargs: 
+    :return: 
+    """
+    instance.delete_files()
