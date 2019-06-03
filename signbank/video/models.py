@@ -201,12 +201,16 @@ def get_video_file_path(instance, filename, version=0):
     return path
 
 
-def get_path_with_small(path):
+small_appendix = '_small'
+
+
+def add_small_appendix(path, reverse=False):
     path_no_extension, extension = os.path.splitext(path)
-    if not path_no_extension.endswith('_small'):
-        return path_no_extension + '_small' + extension
-    else:
-        return path
+    if reverse and path_no_extension.endswith(small_appendix):
+            return path_no_extension[:-len(small_appendix)] + extension
+    elif not reverse and not path_no_extension.endswith(small_appendix):
+            return path_no_extension + small_appendix + extension
+    return path
 
 
 class GlossVideo(models.Model):
@@ -280,7 +284,7 @@ class GlossVideo(models.Model):
 
     def small_video(self):
         """Return the URL of the poster image for this video"""
-        small_video_path = get_path_with_small(self.videofile.path)
+        small_video_path = add_small_appendix(self.videofile.path)
         if os.path.exists(small_video_path):
             return small_video_path
         else:
@@ -393,9 +397,9 @@ class GlossVideo(models.Model):
 
                 # Small video
                 (source_no_extension, ext) = os.path.splitext(source)
-                source_small = get_path_with_small(source)  #source_no_extension + '_small' + ext
+                source_small = add_small_appendix(source)
                 (destination_no_extension, ext) = os.path.splitext(destination)
-                destination_small = get_path_with_small(destination)  #destination_no_extension + '_small' + ext
+                destination_small = add_small_appendix(destination)
                 if os.path.exists(source_small):
                     shutil.move(source_small, destination_small)
 

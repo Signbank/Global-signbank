@@ -13,6 +13,7 @@ from django.utils.http import urlquote
 from collections import OrderedDict
 from django.contrib import messages
 from django.core.files import File
+from pathlib import Path
 
 import os
 import shutil
@@ -27,7 +28,7 @@ from signbank.dictionary.update import update_keywords, update_signlanguage, upd
     update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
-from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
+from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import *
@@ -2532,48 +2533,27 @@ def configure_handshapes(request):
 
         return HttpResponse(output_string)
 
+
 def get_unused_videos(request):
-
-    videos_with_unused_pk = []
-    videos_where_pk_does_match_idgloss = []
-    videos_with_unusual_file_names = []
-
+    file_not_in_glossvideo_object = []
     gloss_video_dir = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY)
+    all_files = [str(file) for file in Path(gloss_video_dir).glob('**/*') if file.is_file()]
 
-    for dir_name in os.listdir(gloss_video_dir):
+    for file in all_files:
+        full_file_path = file
+        file = file[len(settings.WRITABLE_FOLDER):]
+        if file.startswith('/'):
+            file = file[1:]
+        if small_appendix in file:
+            file = add_small_appendix(file, reverse=True)
 
-        dir_path = os.path.join(gloss_video_dir, dir_name)
+        gloss_videos = GlossVideo.objects.filter(videofile=file)
+        if not gloss_videos:
+            file_not_in_glossvideo_object.append(full_file_path)
 
-        for file_name in os.listdir(dir_path):
+    return render(request, "dictionary/unused_videos.html",
+                  {'file_not_in_glossvideo_object': file_not_in_glossvideo_object})
 
-            try:
-                items = file_name.replace('.mp4','').split('-')
-                pk = int(items[-1])
-                idgloss = '-'.join(items[:-1])
-            except ValueError:
-                videos_with_unusual_file_names.append(os.path.join(dir_name, file_name))
-                continue
-
-            try:
-                if Gloss.objects.get(pk=pk).idgloss != idgloss:
-                    videos_where_pk_does_match_idgloss.append(os.path.join(dir_name, file_name))
-            except ObjectDoesNotExist:
-                videos_with_unused_pk.append(os.path.join(dir_name, file_name))
-                continue
-
-    result = '<p>For these videos, the pk does not match the idgloss:</p><ul>'
-    result += ''.join(['<li>'+video+'</li>' for video in videos_where_pk_does_match_idgloss])
-    result += '</ul></p>'
-
-    result += '<p>These videos have unusual file names:</p><ul>'
-    result += ''.join(['<li>'+video+'</li>' for video in videos_with_unusual_file_names])
-    result += '</ul></p>'
-
-    result += '<p>These videos have unused pks:</p><ul>'
-    result += ''.join(['<li>'+video+'</li>' for video in videos_with_unused_pk])
-    result += '</ul></p>'
-
-    return HttpResponse(result)
 
 def list_all_fieldchoice_names(request):
 
