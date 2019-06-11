@@ -96,6 +96,16 @@ def order_queryset_by_sort_order(get, qs):
         qs = qs.annotate(**{sOrderAsc: Subquery(lemmaidglosstranslation.values('text')[:1])}).order_by(sOrder)
         return qs
 
+    def order_queryset_by_translation(qs, sOrder):
+        language_code_2char = sOrder[-2:]
+        sOrderAsc = sOrder
+        if (sOrder[0:1] == '-'):
+            # A starting '-' sign means: descending order
+            sOrderAsc = sOrder[1:]
+        translations = Translation.objects.filter(gloss=OuterRef('pk'), language__language_code_2char__iexact=language_code_2char)
+        qs = qs.annotate(**{sOrderAsc: Subquery(translations.values('translation__text')[:1])}).order_by(sOrder)
+        return qs
+
     # Set the default sort order
     default_sort_order = True
     sOrder = 'annotationidglosstranslation__text'  # Default sort order if nothing is specified
@@ -108,7 +118,6 @@ def order_queryset_by_sort_order(get, qs):
     # The ordering method depends on the kind of field:
     # (1) text fields are ordered straightforwardly
     # (2) fields made from a choice_list need special treatment
-
     if (sOrder.endswith('handedness')):
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness")
     elif (sOrder.endswith('domhndsh') or sOrder.endswith('subhndsh')):
@@ -119,6 +128,8 @@ def order_queryset_by_sort_order(get, qs):
         ordered = order_queryset_by_annotationidglosstranslation(qs, sOrder)
     elif "lemmaidglosstranslation_order_" in sOrder:
         ordered = order_queryset_by_lemmaidglosstranslation(qs, sOrder)
+    elif "translation_" in sOrder:
+        ordered = order_queryset_by_translation(qs, sOrder)
     else:
         # Use straightforward ordering on field [sOrder]
 
@@ -127,17 +138,18 @@ def order_queryset_by_sort_order(get, qs):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
             bReversed = True
+        language_code_2char = sOrder[-2:]
         if default_sort_order:
             lang_attr_name = DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-            sort_language = 'annotationidglosstranslation__language__language_code_2char'
+            sort_language = 'annotationidglosstranslation__language__' + language_code_2char
             qs_empty = qs.filter(**{sOrder+'__isnull': True})
-            qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'}, **{sort_language:lang_attr_name})
-            qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'}, **{sort_language:lang_attr_name})
+            qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
+            qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name})
 
             sort_key = sOrder
-            ordered = list(set(qs_letters.order_by(sort_key)))
-            ordered += list(set(qs_special.order_by(sort_key)))
-            ordered += list(set(qs_empty))
+            ordered = list(qs_letters.order_by(sort_key))
+            ordered += list(qs_special.order_by(sort_key))
+            ordered += list(qs_empty)
         else:
             ordered = qs
         if bReversed:
@@ -256,6 +268,11 @@ class GlossListView(ListView):
         else:
             context['SHOW_MORPHEME_SEARCH'] = False
 
+        if hasattr(settings, 'GLOSS_LIST_DISPLAY_HEADER') and self.request.user.is_authenticated():
+            context['GLOSS_LIST_DISPLAY_HEADER'] = settings.GLOSS_LIST_DISPLAY_HEADER
+        else:
+            context['GLOSS_LIST_DISPLAY_HEADER'] = ''
+
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and len(field.choices) > 0]
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
@@ -310,8 +327,6 @@ class GlossListView(ListView):
         except KeyError:
             context['show_all'] = False
 
-        context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
-
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
@@ -323,6 +338,28 @@ class GlossListView(ListView):
         else:
             context['glosscount'] = Gloss.objects.select_related('lemma').select_related('dataset').filter(lemma__dataset__in=selected_datasets).count()  # Count the glosses + morphemes
 
+
+        context['page_number'] = context['page_obj'].number
+
+        context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
+
+        if 'paginate_by' in self.request.GET:
+            context['paginate_by'] = int(self.request.GET.get('paginate_by'))
+            self.request.session['paginate_by'] = context['paginate_by']
+        else:
+            if 'paginate_by' in self.request.session.keys():
+                # restore any previous paginate setting for toggling between Lemma View and Gloss List View
+                # the session variable is needed when you return to the List View after looking at the Lemma View
+                context['paginate_by'] = self.request.session['paginate_by']
+            else:
+                context['paginate_by'] = self.paginate_by
+
+        column_headers = []
+        for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+            field_label = Gloss._meta.get_field(fieldname).verbose_name
+            column_headers.append(field_label)
+        context['column_headers'] = column_headers
+
         return context
 
 
@@ -330,7 +367,30 @@ class GlossListView(ListView):
         """
         Paginate by specified value in querystring, or use default class property value.
         """
-        return self.request.GET.get('paginate_by', self.paginate_by)
+        # Toelichting (Information about coding):
+        # Django generates a new context when one toggles to Lemma View.
+        # Lemma View uses a regroup on the object list and also uses the default paginate_by in self.
+        # If the user resets the paginate_by in Gloss List, this setup (session variable
+        # that's only retrieved for Gloss View) handles returning to the previous paginate_by.
+        # Because the Lemma View is sparsely populated, if the default pagination isn't used,
+        # there are pages without contents, since only Lemma's with more than one gloss are shown.
+        # We're essentially remembering the previous paginate_by for when the user
+        # toggles back to Gloss View after List View
+
+        if 'paginate_by' in self.request.GET:
+            paginate_by = int(self.request.GET.get('paginate_by'))
+            self.request.session['paginate_by'] = paginate_by
+        else:
+            if self.view_type == 'lemma_groups':
+                paginate_by = self.paginate_by
+            elif 'paginate_by' in self.request.session.keys():
+                # restore any previous paginate setting for toggling between Lemma View and Gloss List View
+                # the session variable is needed when you return to the List View after looking at the Lemma View
+                paginate_by = self.request.session['paginate_by']
+            else:
+                paginate_by = self.paginate_by
+
+        return paginate_by
 
 
     def render_to_response(self, context):
@@ -577,7 +637,7 @@ class GlossListView(ListView):
                 show_all = True
         except (KeyError,TypeError):
             show_all = False
-
+        # show_all = True
         #Then check what kind of stuff we want
         if 'search_type' in get:
             self.search_type = get['search_type']
@@ -3713,7 +3773,10 @@ def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
 
-    datasetid = request.session['datasetid']
+    if 'datasetid' in request.session.keys():
+        datasetid = request.session['datasetid']
+    else:
+        datasetid = get_default_language_id()
     dataset_id = Dataset.objects.get(id=datasetid)
 
     query = Q(lemma__lemmaidglosstranslation__text__istartswith=prefix) | \
@@ -3965,6 +4028,139 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                                                                      'focus_gloss_translation': translation_focus_gloss,
                                                                      'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS,
                                                                      'minimal_pairs_dict' : result })
+
+def glosslist_ajax_complete(request, gloss_id):
+
+    language_code = request.LANGUAGE_CODE
+    user = request.user
+
+    is_anonymous = user.is_authenticated()
+
+    if language_code == "zh-hans":
+        language_code = "zh"
+
+    this_gloss = Gloss.objects.get(id=gloss_id)
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        SHOW_DATASET_INTERFACE_OPTIONS = False
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    # Put translations (keywords) per language in the context
+    translations_per_language = {}
+    for language in dataset_languages:
+        translations_per_language[language] = this_gloss.translation_set.filter(language=language)
+
+    column_values = []
+    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+
+        machine_value = getattr(this_gloss,fieldname)
+
+        fieldchoice_category = fieldname_to_category(fieldname)
+        if fieldchoice_category == 'Handshape':
+            choice_list = Handshape.objects.all()
+        else:
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+        human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
+        if human_value:
+            column_values.append(human_value)
+        else:
+            column_values.append('-')
+
+    return render(request, 'dictionary/gloss_row.html', { 'focus_gloss': this_gloss,
+                                                          'dataset_languages': dataset_languages,
+                                                          'translations_per_language': translations_per_language,
+                                                          'column_values': column_values,
+                                                          'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
+
+def glosslistheader_ajax(request):
+
+    language_code = request.LANGUAGE_CODE
+    user = request.user
+
+    is_anonymous = user.is_authenticated()
+    if language_code == "zh-hans":
+        language_code = "zh"
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        SHOW_DATASET_INTERFACE_OPTIONS = False
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    column_headers = []
+    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+
+        field_label = Gloss._meta.get_field(fieldname).verbose_name
+        column_headers.append(field_label)
+
+    sortOrder = ''
+
+    if 'HTTP_REFERER' in request.META.keys():
+        sortOrderURL = request.META['HTTP_REFERER']
+        sortOrderParameters = sortOrderURL.split('/?sortOrder=')
+        if len(sortOrderParameters) > 1:
+            sortOrder = sortOrderParameters[1].split('&')[0]
+
+    return render(request, 'dictionary/glosslist_headerrow.html', { 'dataset_languages': dataset_languages,
+                                                                    'column_headers': column_headers,
+                                                                    'sortOrder': str(sortOrder),
+                                                                    'GLOSS_LIST_DISPLAY_FIELDS' : settings.GLOSS_LIST_DISPLAY_FIELDS,
+                                                                    'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
+
+def lemmaglosslist_ajax_complete(request, gloss_id):
+
+    language_code = request.LANGUAGE_CODE
+    user = request.user
+
+    is_anonymous = user.is_authenticated()
+
+    if language_code == "zh-hans":
+        language_code = "zh"
+
+    this_gloss = Gloss.objects.get(id=gloss_id)
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        SHOW_DATASET_INTERFACE_OPTIONS = False
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    # Put translations (keywords) per language in the context
+    translations_per_language = {}
+    for language in dataset_languages:
+        translations_per_language[language] = this_gloss.translation_set.filter(language=language)
+
+    column_values = []
+    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+
+        machine_value = getattr(this_gloss,fieldname)
+
+        fieldchoice_category = fieldname_to_category(fieldname)
+        if fieldchoice_category == 'Handshape':
+            choice_list = Handshape.objects.all()
+        else:
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+        human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
+        if human_value:
+            column_values.append(human_value)
+        else:
+            column_values.append('-')
+
+    return render(request, 'dictionary/lemma_gloss_row.html', { 'focus_gloss': this_gloss,
+                                                          'dataset_languages': dataset_languages,
+                                                          'translations_per_language': translations_per_language,
+                                                          'column_values': column_values,
+                                                          'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 
 class LemmaListView(ListView):
     model = LemmaIdgloss
