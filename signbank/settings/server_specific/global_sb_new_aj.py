@@ -64,6 +64,8 @@ FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
 MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
                       'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
 
+GLOSS_LIST_DISPLAY_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim']
+
 ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
 ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {

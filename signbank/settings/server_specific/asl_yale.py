@@ -50,6 +50,8 @@ FIELDS['handshape'] = []
 
 MINIMAL_PAIRS_FIELDS = []
 
+GLOSS_LIST_DISPLAY_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprimLH']
+
 ECV_FILE = WRITABLE_FOLDER+'ecv/asl.ecv'
 ECV_FOLDER = WRITABLE_FOLDER+'ecv'
 ECV_SETTINGS = {
