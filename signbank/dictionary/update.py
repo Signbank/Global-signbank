@@ -370,46 +370,9 @@ def update_gloss(request, glossid):
 
             #Regular field updating
             else:
-                #Remember the old video path if you're changing the name
-                if field == 'idgloss':
-                    old_video_path = gloss.get_video_path()
-                    old_image_path = gloss.get_image_path()
-
-                    try:
-                        old_extension = old_image_path.split('.')[-1]
-                    except AttributeError:
-                        old_extension = ''
 
                 setattr(gloss,field,value)
                 gloss.save()
-
-                #Update the video location if you're changing the name
-                if field == 'idgloss':
-                    new_video_path = gloss.get_video_path()
-                    new_image_path = gloss.get_image_path(check_existance=False)
-
-                    try:
-                        shutil.move(settings.MEDIA_ROOT+'/'+old_video_path,settings.MEDIA_ROOT+'/'+new_video_path)
-
-                    #You don't have to do this if there's no video
-                    except IOError:
-                        pass
-
-                    try:
-                        shutil.move(settings.MEDIA_ROOT+'/'+old_image_path,settings.MEDIA_ROOT+'/'+new_image_path+'.'+old_extension)
-
-                    #You don't have to do this if there's no image
-                    except (IOError,TypeError):
-                        pass
-
-                if field == 'idgloss':
-                    # new value has already been saved to gloss
-                    lemma_group_string = gloss.idgloss
-                    other_glosses_in_lemma_group = Gloss.objects.filter(idgloss__iexact=lemma_group_string).count()
-                    if other_glosses_in_lemma_group > 1:
-                        lemma_gloss_group = True
-                    else:
-                        lemma_gloss_group = False
 
                 #If the value is not a Boolean, return the new value
                 if not isinstance(value,bool):
