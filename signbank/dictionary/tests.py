@@ -1786,52 +1786,50 @@ class testSettings(TestCase):
 
     def test_Settings(self):
 
+        from os.path import isfile, join
         full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
-        filename_global = os.path.join(full_root_path, 'global_sb_new_aj.py')
-        global_settings_strings = []
-        with open(filename_global, 'r') as f:
-            for line in f:
-                if '#' in line:
-                    line = line.split('#')
-                    string_before_hash = line[0]
-                    line = string_before_hash.strip()
-                if '=' in line:
-                    definition_list = line.split('=')
-                    right_hand_side = definition_list[1]
-                    right_hand_side = right_hand_side.strip()
-                    if right_hand_side.startswith('lambda'):
-                        # this is a function definition
-                        # this is a bit of a hack because a function is used in the global settings
-                        continue
-                    definition = definition_list[0]
-                    definition = definition.strip()
-                    global_settings_strings.append(definition)
-        # print('Global settings: ', global_settings_strings)
+        all_settings = [ f for f in os.listdir(full_root_path) if isfile(join(full_root_path, f))
+                                    and f.endswith('.py') and f != '__init__.py' and f != 'server_specific.py']
+        all_settings_strings = {}
+        for next_file in all_settings:
+            all_settings_strings[next_file] = []
+            next_file_path = os.path.join(full_root_path, next_file)
+            with open(next_file_path, 'r') as f:
+                for line in f:
+                    if '#' in line:
+                        line = line.split('#')
+                        string_before_hash = line[0]
+                        line = string_before_hash.strip()
+                    if '=' in line:
+                        definition_list = line.split('=')
+                        right_hand_side = definition_list[1]
+                        right_hand_side = right_hand_side.strip()
+                        if right_hand_side.startswith('lambda'):
+                            # this is a function definition
+                            # this is a bit of a hack because a function is used in the global settings
+                            continue
+                        definition = definition_list[0]
+                        definition = definition.strip()
+                        all_settings_strings[next_file].append(definition)
 
+        comparison_table_first_not_in_second = {}
+        for first_file in all_settings:
+            if not first_file in comparison_table_first_not_in_second.keys():
+                comparison_table_first_not_in_second[first_file] = {}
+            for second_file in all_settings:
+                if first_file != second_file:
+                    comparison_table_first_not_in_second[first_file][second_file] = []
+                    for setting_first_file in all_settings_strings[first_file]:
+                        if setting_first_file not in all_settings_strings[second_file]:
+                            comparison_table_first_not_in_second[first_file][second_file].append(setting_first_file)
 
-        full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
-        filename_asl = os.path.join(full_root_path, 'asl_yale.py')
-        asl_settings_strings = []
-        with open(filename_asl, 'r') as f:
-            for line in f:
-                if '#' in line:
-                    line = line.split('#')
-                    string_before_hash = line[0]
-                    line = string_before_hash.strip()
-                if '=' in line:
-                    definition_list = line.split('=')
-                    definition = definition_list[0]
-                    definition = definition.strip()
-                    asl_settings_strings.append(definition)
-        # print('ASL settings: ', asl_settings_strings)
-
-        for setting_global in global_settings_strings:
-            if setting_global not in asl_settings_strings:
-                print('Global setting not in ASL settings: ', setting_global)
-
-        for setting_asl in asl_settings_strings:
-            if setting_asl not in global_settings_strings:
-                print('ASL setting not in Global settings: ', setting_asl)
+        for first_file in all_settings:
+            for second_file in all_settings:
+                if first_file != second_file:
+                    if comparison_table_first_not_in_second[first_file][second_file]:
+                        print('Settings ', first_file, ' not in  ', second_file, ': ', comparison_table_first_not_in_second[first_file][second_file])
+                    else:
+                        print('Settings ', first_file, ' also in ', second_file)
 
 
 # Helper function to retrieve contents of json-encoded message
