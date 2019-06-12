@@ -1722,25 +1722,8 @@ def update_morpheme(request, morphemeid):
 
             # Regular field updating
             else:
-
-                # Remember the old video path if you're changing the name
-                if field == 'idgloss':
-                    old_video_path = morpheme.get_video_path()
-
                 morpheme.__setattr__(field, value)
                 morpheme.save()
-
-                # Update the video location if you're changing the name
-                if field == 'idgloss':
-                    new_video_path = morpheme.get_video_path()
-
-                    try:
-                        shutil.move(settings.MEDIA_ROOT + '/' + old_video_path,
-                                    settings.MEDIA_ROOT + '/' + new_video_path)
-
-                    # You don't have to do this if there's no video
-                    except IOError:
-                        pass
 
                 # If the value is not a Boolean, return the new value
                 if not isinstance(value, bool):
