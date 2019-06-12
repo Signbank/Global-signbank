@@ -177,10 +177,6 @@ class MorphemeCreateForm(forms.ModelForm):
 
         return morpheme
 
-class VideoUpdateForm(forms.Form):
-    """Form to allow update of the video for a sign"""
-    videofile = VideoUploadToFLVField()
-
 
 class TagUpdateForm(forms.Form):
     """Form to add a new tag to a gloss"""
