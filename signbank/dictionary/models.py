@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core.files import File
 import tagging
 import re
@@ -1379,6 +1379,10 @@ class Gloss(models.Model):
             return str(glossvideo.videofile)
         except ObjectDoesNotExist:
             return ''
+        except MultipleObjectsReturned:
+            # Just return the first
+            glossvideos = self.glossvideo_set.filter(version=0)
+            return str(glossvideos[0].videofile)
 
     def get_video_path_prefix(self):
         try:

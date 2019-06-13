@@ -342,7 +342,7 @@ def missing_video_view(request):
 
     glosses = missing_video_list()
 
-    return render_to_response("dictionary/missingvideo.html",
+    return render(request, "dictionary/missingvideo.html",
                               {'glosses': glosses})
 
 def import_media(request,video):

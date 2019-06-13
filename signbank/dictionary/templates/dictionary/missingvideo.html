@@ -4,8 +4,7 @@
  
  <ul>
  {% for gloss in glosses %}
-   <li><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.idgloss}}.html">{{gloss.idgloss}}</a>
-      -- <a href="{{ STATIC_URL }}{{gloss.get_video_url}}">{{gloss.get_video_url}}</a></li>
+   <li><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{{gloss.idgloss}}</a> ({{ gloss.lemma.dataset }})</li>
  {% endfor %}
  </ul>
 {% endblock %}
