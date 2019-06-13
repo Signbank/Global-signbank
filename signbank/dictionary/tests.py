@@ -1831,6 +1831,102 @@ class testSettings(TestCase):
                     else:
                         print('Settings ', first_file, ' also in ', second_file)
 
+class MinimalPairsTests(TestCase):
+
+    # This test exists because a bug had previously been found with the display of the repeat phonology field
+    # This is a Boolean field that should be either True or False (default not set)
+    # This should be displayed as Yes or No
+
+    # This test currently only checks the 'repeat' phonology field
+    # because that's where the bug was found
+
+    def setUp(self):
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.save()
+
+        self.client = Client()
+
+    def test_analysis_minimalpairs(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create three lemmas
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        new_lemma2 = LemmaIdgloss(dataset=test_dataset)
+        new_lemma2.save()
+
+        new_lemma3 = LemmaIdgloss(dataset=test_dataset)
+        new_lemma3.save()
+
+        # Create three lemma idgloss translations
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        new_lemmaidglosstranslation2 = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation2",
+                                                              lemma=new_lemma2, language=language)
+        new_lemmaidglosstranslation2.save()
+
+        new_lemmaidglosstranslation3 = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation3",
+                                                              lemma=new_lemma3, language=language)
+        new_lemmaidglosstranslation3.save()
+
+        #Create three glosses that are identical except for phonology field 'repeat'
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.handedness = 2
+        new_gloss.domhndsh = 62
+        new_gloss.locprim = 7
+        new_gloss.repeat = True
+        new_gloss.save()
+
+        new_gloss2 = Gloss()
+        new_gloss2.lemma = new_lemma2
+        new_gloss2.handedness = 2
+        new_gloss2.domhndsh = 62
+        new_gloss2.locprim = 7
+        new_gloss2.repeat = False
+        new_gloss2.save()
+
+        # gloss 3 doesn't set the repeat value, it's left as whatever the default is
+        new_gloss3 = Gloss()
+        new_gloss3.lemma = new_lemma3
+        new_gloss3.handedness = 2
+        new_gloss3.domhndsh = 62
+        new_gloss3.locprim = 7
+        new_gloss3.save()
+
+        self.client.login(username='test-user', password='test-user')
+
+        assign_perm('view_dataset', self.user, test_dataset)
+        response = self.client.get('/analysis/minimalpairs/', follow=True)
+
+        objects_on_page = response.__dict__['context_data']['objects_on_page']
+
+        # check that all objects retrieved by minimal pairs are also displayed
+        # objects_on_page is a list of object ids
+        # check for these rows
+        for obj in objects_on_page:
+            pattern_gloss = 'focusgloss_' + str(obj)
+            self.assertContains(response, pattern_gloss)
+
+        # now fetch the table row contents for each object, using the ajax call of the template
+        # check that the repeat phonology field is correctly displayed as Yes and No for True and False
+        for obj in objects_on_page:
+            response_row = self.client.get('/dictionary/ajax/minimalpairs/' + str(obj) + '/')
+            obj_gloss = Gloss.objects.get(pk=obj)
+
+            if obj_gloss.repeat:
+                self.assertContains(response_row, 'Yes')
+            else:
+                self.assertContains(response_row, 'No')
+
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):
