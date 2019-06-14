@@ -1865,7 +1865,7 @@ class MinimalPairsTests(TestCase):
 
         # Create three lemma idgloss translations
         language = Language.objects.get(id=get_default_language_id())
-        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation1",
                                                               lemma=new_lemma, language=language)
         new_lemmaidglosstranslation.save()
 
@@ -1902,6 +1902,39 @@ class MinimalPairsTests(TestCase):
         new_gloss3.locprim = 7
         new_gloss3.save()
 
+        # the annotation id gloss is one of the fields returned by the ajax call for minimal pairs
+        # for this reason annotations are created so information is present for the test
+
+        # make some annotations for new gloss
+        test_annotation_translation_index = '1'
+        for language in test_dataset.translation_languages.all():
+            language_code_2char = language.language_code_2char
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + test_annotation_translation_index
+            annotationIdgloss.save()
+
+        # make some annotations for new gloss 2
+        test_annotation_translation_index = '2'
+        for language in test_dataset.translation_languages.all():
+            language_code_2char = language.language_code_2char
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss2
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + test_annotation_translation_index
+            annotationIdgloss.save()
+
+        # make some annotations for new gloss 3
+        test_annotation_translation_index = '3'
+        for language in test_dataset.translation_languages.all():
+            language_code_2char = language.language_code_2char
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss3
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + test_annotation_translation_index
+            annotationIdgloss.save()
+
         self.client.login(username='test-user', password='test-user')
 
         assign_perm('view_dataset', self.user, test_dataset)
@@ -1920,12 +1953,21 @@ class MinimalPairsTests(TestCase):
         # check that the repeat phonology field is correctly displayed as Yes and No for True and False
         for obj in objects_on_page:
             response_row = self.client.get('/dictionary/ajax/minimalpairs/' + str(obj) + '/')
-            obj_gloss = Gloss.objects.get(pk=obj)
+            minimal_pairs_dict = response_row.context['minimal_pairs_dict']
+            for minimalpair in minimal_pairs_dict:
 
-            if obj_gloss.repeat:
-                self.assertContains(response_row, 'Yes')
-            else:
-                self.assertContains(response_row, 'No')
+                # check that there is a row for this minimal pair in the html
+                other_gloss_id = str(minimalpair['other_gloss'].id)
+                pattern_cell = 'cell_' + str(obj) + '_' + other_gloss_id
+                self.assertContains(response_row, pattern_cell)
+
+                # check that the field 'repeat' has different values in the table
+                # we make use of the fact that the values in the minimal_pairs_dict returned by the ajax call are used
+                field = minimalpair['field']
+                focus_gloss_value = minimalpair['focus_gloss_value']
+                other_gloss_value = minimalpair['other_gloss_value']
+                self.assertEqual(field, 'repeat')
+                self.assertNotEqual(focus_gloss_value, other_gloss_value)
 
 
 # Helper function to retrieve contents of json-encoded message
