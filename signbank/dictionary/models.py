@@ -1509,7 +1509,8 @@ class Gloss(models.Model):
         new_dir = os.path.dirname(new_video_path)
         if not os.path.isdir(new_dir):
             os.mkdir(new_dir)
-        shutil.move(old_video_path, new_video_path)
+        if os.path.exists(old_video_path):
+            shutil.move(old_video_path, new_video_path)
 
         # _small video file
         old_video_file, extension = os.path.splitext(old_video_path)
