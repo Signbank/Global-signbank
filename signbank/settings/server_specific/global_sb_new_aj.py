@@ -7,8 +7,8 @@ SIGNBANK_VERSION_CODE = 'global'
 URL = 'https://signbank.science.ru.nl/'
 ALLOWED_HOSTS = ['signbank.science.ru.nl','signbank.cls.ru.nl','new.signbank.science.ru.nl']
 
-EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'
-METADATA_LOCATION = ROOT+'CNGT_MetadataEnglish_OtherResearchers.csv'
+EAF_FILES_LOCATION = 'corpus-ngt/eaf/'
+METADATA_LOCATION = 'CNGT_MetadataEnglish_OtherResearchers.csv'
 
 LANGUAGES = (
   ('en', gettext('English')),

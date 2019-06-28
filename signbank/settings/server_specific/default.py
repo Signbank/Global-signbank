@@ -2,20 +2,20 @@
 ROOT = '/var/www/signbank/live/'
 
 #Where the code is (where you did git clone)
-BASE_DIR = ROOT+'repo/'
+BASE_DIR = 'repo/'
 
 #Where Signbank can store things like images and videos
-WRITABLE_FOLDER = ROOT+'writable/'
+WRITABLE_FOLDER = 'writable/'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
 FEEDBANK_VIDEO_DIRECTORY = 'comments'
 HANDSHAPE_IMAGE_DIRECTORY = 'handshapeimage'
-OTHER_MEDIA_DIRECTORY = WRITABLE_FOLDER+'othermedia/'
-IMAGES_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_images/'
-VIDEOS_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_videos/'
-OTHER_MEDIA_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_other_media/'
-SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
-EAF_FILES_LOCATION = WRITABLE_FOLDER+'eaf/'
+OTHER_MEDIA_DIRECTORY = 'othermedia/'
+IMAGES_TO_IMPORT_FOLDER = 'import_images/'
+VIDEOS_TO_IMPORT_FOLDER = 'import_videos/'
+OTHER_MEDIA_TO_IMPORT_FOLDER = 'import_other_media/'
+SIGNBANK_PACKAGES_FOLDER = 'packages/'
+EAF_FILES_LOCATION = 'eaf/'
 
 #Tmp folder to use
 TMP_DIR = '/tmp'
@@ -24,15 +24,15 @@ TMP_DIR = '/tmp'
 DATABASES = {'default':
                 {
                     'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME': WRITABLE_FOLDER+'database/signbank.db',
+                    'NAME': 'database/signbank.db',
                     'TEST': {
-                        'NAME': WRITABLE_FOLDER+'database/test-signbank.db',
+                        'NAME': 'database/test-signbank.db',
                     }
                 }
             }
 
 #Where to store various kinds of metadata not in a table
-METADATA_LOCATION = ROOT+'metadata.csv'
+METADATA_LOCATION = 'metadata.csv'
 
 #Video software to use to get the middle frame
 FFMPEG_PROGRAM = "avconv"
@@ -109,8 +109,8 @@ MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic'
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
 
 #Where the ECV files are
-ECV_FOLDER = WRITABLE_FOLDER+'ecv/'
-ECV_FILE = ECV_FOLDER+'myecv.ecv'
+ECV_FOLDER = 'ecv/'
+ECV_FILE = 'myecv.ecv'
 
 #What do you want to include in the ECV file?
 ECV_SETTINGS = {
@@ -136,7 +136,7 @@ ECV_SETTINGS = {
 CROP_GLOSS_IMAGES = True
 
 #Where the WSGI files lives
-WSGI_FILE = ROOT+'lib/python2.7/site-packages/signbank/wsgi.py'
+WSGI_FILE = 'lib/python2.7/site-packages/signbank/wsgi.py'
 
 #Whether the morpheme functionality should be present in the interface
 SHOW_MORPHEME_SEARCH = True
