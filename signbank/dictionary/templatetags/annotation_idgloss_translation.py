@@ -17,6 +17,14 @@ def get_annotation_idgloss_translation(gloss, language):
     return ''
 
 @register.filter
+def get_annotation_idgloss_translation_no_default(gloss, language):
+    annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+    if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:
+        return annotationidglosstranslations[0].text
+    else:
+        return ''
+
+@register.filter
 def get_default_annotation_idgloss_translation(gloss):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
     return default_annotationidglosstranslation
