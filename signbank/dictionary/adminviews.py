@@ -4050,9 +4050,9 @@ def glosslist_ajax_complete(request, gloss_id):
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     # Put translations (keywords) per language in the context
-    translations_per_language = {}
+    translations_per_language = []
     for language in dataset_languages:
-        translations_per_language[language] = this_gloss.translation_set.filter(language=language)
+        translations_per_language.append((language,this_gloss.translation_set.filter(language=language)))
 
     column_values = []
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:

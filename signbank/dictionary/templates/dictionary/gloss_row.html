@@ -62,7 +62,7 @@
     {% endwith %}
     {% endfor %}
 
-    {% for lang, translations in translations_per_language.items %}
+    {% for lang, translations in translations_per_language %}
     <td>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
     {% endfor %}
 
