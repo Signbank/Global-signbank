@@ -89,7 +89,7 @@ class GlossAdmin(VersionAdmin):
 
     idgloss_fields = ['lemma']
 
-    fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('dataset', 'signlanguage', 'dialect')}, ),
+    fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('signlanguage', 'dialect')}, ),
                  ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate','alternative_id'),
                                        'classes': ('collapse',)}, ),
                  ('Phonology', {'fields': FIELDS['phonology'], 'classes': ('collapse',)}, ),
@@ -100,11 +100,11 @@ class GlossAdmin(VersionAdmin):
     save_on_top = True
     save_as = True
 
-    list_display = ['lemma','dataset']
+    list_display = ['lemma']
 
     list_display += ['morph', 'sense', 'sn']
     search_fields = ['^lemma__lemmaidglosstranslation__text', '=sn']
-    list_filter = ['lemma__dataset', 'signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
+    list_filter = ['signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
     inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 
     history_latest_first = True
