@@ -1834,11 +1834,21 @@ class testSettings(TestCase):
 class MinimalPairsTests(TestCase):
 
     # This test exists because a bug had previously been found with the display of the repeat phonology field
-    # This is a Boolean field that should be either True or False (default not set)
+    # repeat is a Boolean field that should be either True or False (the default if not set)
     # This should be displayed as Yes or No
 
-    # This test currently only checks the 'repeat' phonology field
-    # because that's where the bug was found
+    # MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+    #                         'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
+
+    # This test currently checks minimal pairs involving the following phonology fields,
+    # based on type of the field:
+
+    # handedness
+    # domhndsh
+    # subhndsh
+    # locprim
+    # repeat, altern
+    # handCh
 
     def setUp(self):
         # a new test user is created for use during the tests
@@ -1853,92 +1863,94 @@ class MinimalPairsTests(TestCase):
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
-        # Create three lemmas
-        new_lemma = LemmaIdgloss(dataset=test_dataset)
-        new_lemma.save()
-
-        new_lemma2 = LemmaIdgloss(dataset=test_dataset)
-        new_lemma2.save()
-
-        new_lemma3 = LemmaIdgloss(dataset=test_dataset)
-        new_lemma3.save()
-
-        # Create three lemma idgloss translations
+        # Create 10 lemmas for use in testing
         language = Language.objects.get(id=get_default_language_id())
-        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation1",
-                                                              lemma=new_lemma, language=language)
-        new_lemmaidglosstranslation.save()
+        lemmas = {}
+        for lemma_id in range(1,15):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
 
-        new_lemmaidglosstranslation2 = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation2",
-                                                              lemma=new_lemma2, language=language)
-        new_lemmaidglosstranslation2.save()
+        # print('created lemmas: ', lemmas)
 
-        new_lemmaidglosstranslation3 = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation3",
-                                                              lemma=new_lemma3, language=language)
-        new_lemmaidglosstranslation3.save()
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
 
-        #Create three glosses that are identical except for phonology field 'repeat'
-        new_gloss = Gloss()
-        new_gloss.lemma = new_lemma
-        new_gloss.handedness = 2
-        new_gloss.domhndsh = 62
-        new_gloss.locprim = 7
-        new_gloss.repeat = True
-        new_gloss.save()
+        # Create 10 glosses that start out being the same
+        glosses = {}
+        for gloss_id in range(1,15):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : str(test_handshape1.machine_value),
+                'locprim': 7,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
 
-        new_gloss2 = Gloss()
-        new_gloss2.lemma = new_lemma2
-        new_gloss2.handedness = 2
-        new_gloss2.domhndsh = 62
-        new_gloss2.locprim = 7
-        new_gloss2.repeat = False
-        new_gloss2.save()
+        # print('created glosses: ', glosses)
 
-        # gloss 3 doesn't set the repeat value, it's left as whatever the default is
-        new_gloss3 = Gloss()
-        new_gloss3.lemma = new_lemma3
-        new_gloss3.handedness = 2
-        new_gloss3.domhndsh = 62
-        new_gloss3.locprim = 7
-        new_gloss3.save()
+        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
 
-        # the annotation id gloss is one of the fields returned by the ajax call for minimal pairs
-        # for this reason annotations are created so information is present for the test
+        glosses[2].locprim = 8
+        glosses[2].save()
 
-        # make some annotations for new gloss
-        test_annotation_translation_index = '1'
-        for language in test_dataset.translation_languages.all():
-            language_code_2char = language.language_code_2char
-            annotationIdgloss = AnnotationIdglossTranslation()
-            annotationIdgloss.gloss = new_gloss
-            annotationIdgloss.language = language
-            annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + test_annotation_translation_index
-            annotationIdgloss.save()
+        glosses[3].repeat = True
+        glosses[3].save()
 
-        # make some annotations for new gloss 2
-        test_annotation_translation_index = '2'
-        for language in test_dataset.translation_languages.all():
-            language_code_2char = language.language_code_2char
-            annotationIdgloss = AnnotationIdglossTranslation()
-            annotationIdgloss.gloss = new_gloss2
-            annotationIdgloss.language = language
-            annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + test_annotation_translation_index
-            annotationIdgloss.save()
+        glosses[4].handedness = 4
+        glosses[4].save()
 
-        # make some annotations for new gloss 3
-        test_annotation_translation_index = '3'
-        for language in test_dataset.translation_languages.all():
-            language_code_2char = language.language_code_2char
-            annotationIdgloss = AnnotationIdglossTranslation()
-            annotationIdgloss.gloss = new_gloss3
-            annotationIdgloss.language = language
-            annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + test_annotation_translation_index
-            annotationIdgloss.save()
+        glosses[5].domhndsh_letter = True
+        glosses[5].save()
+
+        glosses[6].weakdrop = True
+        glosses[6].save()
+
+        glosses[7].weakdrop = False
+        glosses[7].save()
+
+        glosses[8].altern = True
+        glosses[8].save()
+
+        glosses[9].handCh = 7
+        glosses[9].save()
+
+        glosses[10].domhndsh = str(test_handshape2.machine_value)
+        glosses[10].domhndsh_letter = True
+        glosses[10].save()
+
+        glosses[11].handedness = 4
+        glosses[11].weakdrop = False
+        glosses[11].save()
+
+        glosses[12].handedness = 4
+        glosses[12].weakdrop = True
+        glosses[12].save()
+
+        glosses[13].handedness = 4
+        glosses[13].save()
+
+        glosses[14].domhndsh = str(test_handshape2.machine_value)
+        glosses[14].domhndsh_letter = False
+        glosses[14].save()
 
         self.client.login(username='test-user', password='test-user')
 
         assign_perm('view_dataset', self.user, test_dataset)
-        response = self.client.get('/analysis/minimalpairs/', follow=True)
+        response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
 
         objects_on_page = response.__dict__['context_data']['objects_on_page']
 
@@ -1954,19 +1966,26 @@ class MinimalPairsTests(TestCase):
         for obj in objects_on_page:
             response_row = self.client.get('/dictionary/ajax/minimalpairs/' + str(obj) + '/')
             minimal_pairs_dict = response_row.context['minimal_pairs_dict']
-            for minimalpair in minimal_pairs_dict:
 
+            # uncomment print statement to see what the minimal pairs are
+            # print('minimal pairs ', response_row.context['focus_gloss_translation'])
+
+            for minimalpair in minimal_pairs_dict:
                 # check that there is a row for this minimal pair in the html
                 other_gloss_id = str(minimalpair['other_gloss'].id)
                 pattern_cell = 'cell_' + str(obj) + '_' + other_gloss_id
                 self.assertContains(response_row, pattern_cell)
-
                 # check that the field 'repeat' has different values in the table
                 # we make use of the fact that the values in the minimal_pairs_dict returned by the ajax call are used
                 field = minimalpair['field']
                 focus_gloss_value = minimalpair['focus_gloss_value']
                 other_gloss_value = minimalpair['other_gloss_value']
-                self.assertEqual(field, 'repeat')
+                other_gloss_idgloss = minimalpair['other_gloss_idgloss']
+
+                # uncomment print statement to see what the minimal pairs are
+                # print('                                  ', other_gloss_idgloss, '     ', field, '     ', focus_gloss_value, '   ', other_gloss_value)
+
+                # this test makes sure that when minimal pair rows are displayed that the values differ in the display
                 self.assertNotEqual(focus_gloss_value, other_gloss_value)
 
 

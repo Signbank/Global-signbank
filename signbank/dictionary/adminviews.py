@@ -2344,6 +2344,8 @@ class MinimalPairsListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        context['translated_choice_lists_table'] = generate_translated_choice_list_table()
+
         field_names = []
         for field in FIELDS['phonology']:
             # the following fields are not considered for minimal pairs
@@ -3921,6 +3923,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
+    # print('********************** ajax minimal pairs on gloss ', str(gloss_id))
     try:
         minimalpairs_objects = this_gloss.minimal_pairs_dict()
     except:
@@ -3936,23 +3939,21 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             translation_focus_gloss = translations_this_gloss[0].text
 
     result = []
-    # print('mp ajax for gloss ', str(gloss_id), ' minimal pairs objects: ', minimalpairs_objects)
     for minimalpairs_object, minimal_pairs_dict in minimalpairs_objects.items():
+
         other_gloss_dict = dict()
         other_gloss_dict['id'] = str(minimalpairs_object.id)
         other_gloss_dict['other_gloss'] = minimalpairs_object
 
         for field, values in minimal_pairs_dict.items():
-            # print('values: ', values)
             other_gloss_dict['field'] = field
             other_gloss_dict['field_display'] = values[0]
             other_gloss_dict['field_category'] = values[1]
-            # print('field: ', field, ', choice: ', values[2])
-            # print('translated_choice_lists_table: ', translated_choice_lists_table[field])
+
+            from signbank.dictionary.models import translated_choice_lists_table
             focus_gloss_choice = values[2]
             other_gloss_choice = values[3]
             field_kind = values[4]
-            # print('other gloss ', minimalpairs_object.id, ', field ', field, ': kind and choices: ', field_kind, ', ', focus_gloss_choice, ', ', other_gloss_choice)
             if field_kind == 'list':
                 if focus_gloss_choice:
                     try:
@@ -3964,7 +3965,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                     focus_gloss_value = '-'
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
-                if focus_gloss_choice == 'True' or focus_gloss_choice:
+                if focus_gloss_choice == 'True' or focus_gloss_choice == True:
                     focus_gloss_value = _('Yes')
                 elif focus_gloss_choice == 'Neutral' and field in ['weakdrop', 'weakprop']:
                     focus_gloss_value = _('Neutral')
@@ -3973,7 +3974,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             else:
                 # translate Boolean fields
                 focus_gloss_value = focus_gloss_choice
-            # print('focus gloss choice: ', focus_gloss_value)
             other_gloss_dict['focus_gloss_value'] = focus_gloss_value
             if field_kind == 'list':
                 if other_gloss_choice:
@@ -3986,7 +3986,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                     other_gloss_value = '-'
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
-                if other_gloss_choice == 'True' or other_gloss_choice:
+                if other_gloss_choice == 'True' or other_gloss_choice == True:
                     other_gloss_value = _('Yes')
                 elif other_gloss_choice == 'Neutral' and field in ['weakdrop', 'weakprop']:
                     other_gloss_value = _('Neutral')
@@ -3994,7 +3994,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                     other_gloss_value = _('No')
             else:
                 other_gloss_value = other_gloss_choice
-            # print('other gloss choice: ', other_gloss_value)
             other_gloss_dict['other_gloss_value'] = other_gloss_value
             other_gloss_dict['field_kind'] = field_kind
 
@@ -4012,7 +4011,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
         result.append(other_gloss_dict)
 
-    # print('mp ajax for gloss ', str(gloss_id), ' result: ', result)
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
