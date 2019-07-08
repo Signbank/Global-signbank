@@ -11,10 +11,22 @@ def get_annotation_idgloss_translation(gloss, language):
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
     if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:
         return annotationidglosstranslations[0].text
-    translations = gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
-    if translations:
-        return translations[0].text
+
+    #This is a fallback to the English translation, but we rather want nothing, see #583
+
+    #translations = gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
+    #if translations:
+    #    return translations[0].text
+
     return ''
+
+@register.filter
+def get_annotation_idgloss_translation_no_default(gloss, language):
+    annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+    if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:
+        return annotationidglosstranslations[0].text
+    else:
+        return ''
 
 @register.filter
 def get_default_annotation_idgloss_translation(gloss):

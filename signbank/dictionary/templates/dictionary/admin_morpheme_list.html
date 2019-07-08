@@ -741,7 +741,7 @@ function set_signlanguages_dialects() {
                 <tr>
             {% endif %}
 
-      <td>{%if morpheme.get_image_path != None %}<div class="thumbnail_container"><img class="thumbnail" src="{{STATIC_URL}}{{morpheme.get_image_path}}"></div>{% endif %}</td>
+      <td>{%if morpheme.get_image_path != None %}<div class="thumbnail_container"><img class="thumbnail" src="{{protected_media_url}}{{morpheme.get_image_path}}"></div>{% endif %}</td>
 
       {% for dataset_lang in dataset_languages %}
         {% with morpheme.gloss_ptr|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}

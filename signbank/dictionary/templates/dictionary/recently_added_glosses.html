@@ -6,8 +6,15 @@
 {% load tagging_tags %}
 {% load wrong_sign %}
 
+{% block bootstrap3_title %}
+{% blocktrans %}Recently added signs{% endblocktrans %}
+{% endblock %}
+
 {% block content %}
 
+<h3>{% trans "Recently added signs" %}</h3>
+
+    {% if glosses %}
     <table class="table table-condensed">
         <tr>
             {%if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
@@ -57,4 +64,7 @@
         {% endfor %}
     </table>
 
+    {% else %}
+    {% trans "No recently added signs for the selected datasets" %} ({{number_of_days}} {% trans "days" %})
+    {% endif %}
 {% endblock %}

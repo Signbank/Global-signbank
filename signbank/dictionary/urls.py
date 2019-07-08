@@ -27,6 +27,7 @@ urlpatterns = [
 
     # and and alternate view for direct display of a gloss
     url(r'gloss/(?P<glossid>\d+).html$', signbank.dictionary.views.gloss, name='public_gloss'),
+    url(r'morpheme/(?P<glossid>\d+).html$', signbank.dictionary.views.morpheme, name='public_morpheme'),
 
     url(r'^search/$', signbank.dictionary.views.search, name="search"),
     url(r'^search_morpheme/$', signbank.dictionary.views.search_morpheme, name="search_morpheme"),
@@ -64,6 +65,9 @@ urlpatterns = [
     url(r'^ajax/lemma/(?P<dataset_id>.*)/(?P<q>.*)$', signbank.dictionary.adminviews.lemma_ajax_complete, name='lemma_complete'),
     url(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete, name='homonyms_ajax_complete'),
     url(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete, name='minimalpairs_ajax_complete'),
+    url(r'^ajax/glossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.glosslist_ajax_complete, name='glosslist_ajax_complete'),
+    url(r'^ajax/glosslistheader/$', signbank.dictionary.adminviews.glosslistheader_ajax, name='glosslistheader_ajax'),
+    url(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.lemmaglosslist_ajax_complete, name='lemmaglosslist_ajax_complete'),
     url(r'^ajax/choice_lists/$', signbank.dictionary.views.choice_lists,name='choice_lists'),
 
     url(r'^missingvideo.html$', signbank.dictionary.views.missing_video_view),

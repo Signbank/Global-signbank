@@ -1,0 +1,141 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}Signbank: Import CSV Update Lemmas{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{PREFIX_URL}}/static/js/bootstrap-filestyle.min.js"> </script>
+    <script type='text/javascript'>
+
+     $(document).ready(function(){
+
+
+        $('.collapsetoggle').click(function() {
+            if ($(this).text() == 'Show') {
+                $(this).text('Hide');
+            } else {
+                $(this).text('Show');
+            }
+        });
+
+        $('[data-toggle="tooltip"]').tooltip();
+
+    });
+   </script>
+{% endblock %}
+
+
+{% block content %}
+<h3>{% trans "Import CSV Update Lemmas" %}</h3>
+
+{% if stage == 0 %}
+
+    <div>{% blocktrans %}Upload your changed CSV here:{% endblocktrans %}</div>
+
+    <form action="" method="post" enctype="multipart/form-data" role="form">
+        {% csrf_token %}
+        <div class="form-group">
+            <div class="row">
+                <div class="col-sm-1">
+                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom"
+                          data-html="true"
+                          title="CSV files should have min. three columns,
+                          the first being the ID number of the lemma (obtained through CSV export),
+                          the second column the acronym of its dataset,
+                          the third column the value that needs to be put in the field. Make sure the header row is cf. the CSV export,
+                          indicating the fields you want to make changes to."></span>
+                </div>
+                <div class="col-sm-10">
+                    <input type="file" required="" name="file" class="filestyle" data-icon="false" data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
+                </div>
+                <div class="col-sm-1">
+                    <input class="btn btn-primary" type="submit" value="{% blocktrans %}Submit{% endblocktrans %}" />
+                </div>
+            </div>
+        </div>
+    </form>
+
+{% elif stage == 1 %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+
+        {% if error %}
+
+            <ul>
+            {% for e in error %}
+                <li>{{ e | linebreaks }}</li>
+            {% endfor %}
+            </ul>
+
+        {% else %}
+
+            {% if changes %}
+            <div>{% blocktrans %}The following changes were detected:{% endblocktrans %}</div>
+        <br>
+        <table class="table table-striped">
+            <tr>
+                <th style="width:10em; text-align:left;">{% trans "Dataset" %}</th>
+                <th style="width:25em; text-align:left;">{% trans "Lemma ID" %}</th>
+                <th style="width:20em; text-align:left;">{% trans "Field" %}</th>
+                <th style="width:30em; text-align:left;">{% trans "Old value" %}</th>
+                <th style="width:40em; text-align:left;">{% trans "New value" %}</th>
+            </tr>
+            {% for change in changes %}
+            <!--The following check is necessary to account for None and False values, which are not empty -->
+                {% if change.original_human_value == change.original_machine_value and change.new_human_value == change.new_machine_value %}
+                    {% if change.original_human_value %}
+                    {% blocktrans with dataset=change.dataset pk=change.pk human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+            <tr><td>{{ dataset }}</td><td>{{pk}}</td><td><em>{{ human_key }}</em></td>
+                <td>{{ original_human_value }}</td><td>{{new_human_value}}</td></tr>
+                    {% endblocktrans %}
+                    {% else %}
+                    {% blocktrans with dataset=change.dataset pk=change.pk human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+
+            <tr><td>{{ dataset }}</td><td>{{pk}}</td><td><em>{{ human_key }}</em></td><td>&nbsp;</td><td>{{new_human_value}}</td></tr>
+                    {% endblocktrans %}
+                    {% endif %}
+                {% else %}
+                    {% blocktrans with dataset=change.dataset pk=change.pk human_key=change.human_key original_human_value=change.original_human_value original_machine_value=change.original_machine_value new_human_value=change.new_human_value new_machine_value=change.new_machine_value %}
+
+            <tr><td>{{ dataset }}</td><td>{{pk}}</td><td><em>{{ human_key }}</em></td><td>{{ original_human_value }}</td>
+                                <td>{{new_human_value}}</td></tr>
+                    {% endblocktrans %}
+                {% endif %}
+            <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
+            <input type="hidden" name="update_or_create" value="update">
+            {% endfor %}
+        </table>
+
+            <input type="submit" value="{% blocktrans %}Make changes{% endblocktrans %}" />
+
+            {% else %}
+            <div>{% blocktrans %}No changes were found.{% endblocktrans %}</div>
+            {% endif %}
+        {% endif %}
+
+    </form>
+
+{% elif stage == 2 %}
+
+    {% if error %}
+
+        <ul>
+        {% for e in error %}
+            <li>{{ e | linebreaks }}</li>
+        {% endfor %}
+        </ul>
+
+    {% else %}
+
+    <p>{% blocktrans %}Changes are live.{% endblocktrans %}</p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

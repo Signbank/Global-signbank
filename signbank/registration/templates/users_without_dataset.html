@@ -1,0 +1,13 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<table>
+{% for user in users_without_dataset %}
+    <tr><td>{{user.first_name}} {{user.last_name}}</td><td>{{user.email}}</td></tr>
+{% endfor %}
+</table>
+
+
+{% endblock %}

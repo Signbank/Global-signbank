@@ -261,7 +261,7 @@ class GlossSearchForm(forms.ModelForm):
     createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     gloss_search_field_prefix = "glosssearch_"
-    keyword_search_field_prefix = "keyword_"
+    keyword_search_field_prefix = "keywords_"
     lemma_search_field_prefix = "lemma_"
 
     class Meta:
@@ -415,12 +415,12 @@ class MorphemeSearchForm(forms.ModelForm):
                                                         required=False, widget=Select2)
 
 class DefinitionForm(forms.ModelForm):
-    role = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),
+    note = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),
                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     class Meta:
         model = Definition
-        fields = ('published','count', 'role', 'text')
+        fields = ('published','count', 'text')
         
 class RelationForm(forms.ModelForm):
     

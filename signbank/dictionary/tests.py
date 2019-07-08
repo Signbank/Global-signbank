@@ -75,13 +75,42 @@ class BasicCRUDTests(TestCase):
         changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
         self.assertEqual(changed_gloss.handedness, '6')
 
+        # set up keyword search parameter for default language
+        default_language = Language.objects.get(id=get_default_language_id())
+        keyword_search_field_prefix = "keywords_"
+        keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
+
         #We can even add and remove stuff to the keyword table
+
+        # to start with, both tables are empty in the test database
         self.assertEqual(Keyword.objects.all().count(), 0)
         self.assertEqual(Translation.objects.all().count(), 0)
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'keywords_nl','value':'a, b, c, d, e'})
+
+        # add five keywords to the translations of this gloss
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c, d, e'})
+
+        all_keywords = Keyword.objects.all()
+        for k in all_keywords:
+            print('test_CRUD update1 keyword: ', k)
+        all_translations = Translation.objects.all()
+        for t in all_translations:
+            print('test_CRUD update1 gloss translation: ', t)
+
         self.assertEqual(Keyword.objects.all().count(), 5)
         self.assertEqual(Translation.objects.all().count(), 5)
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'keywords_nl','value':'a, b, c'})
+
+        # update the gloss to only have three of the translations
+        # the keyword table still has the same data, but only three translations are associated with the gloss
+
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c'})
+
+        all_keywords = Keyword.objects.all()
+        for k in all_keywords:
+            print('test_CRUD update2 keyword: ', k)
+        all_translations = Translation.objects.all()
+        for t in all_translations:
+            print('test_CRUD update2 gloss translation: ', t)
+
         self.assertEqual(Keyword.objects.all().count(), 5)
         self.assertEqual(Translation.objects.all().count(), 3)
 
@@ -159,28 +188,64 @@ class BasicCRUDTests(TestCase):
         new_lemma.save()
 
         # Create a lemma idgloss translation
-        language = Language.objects.get(id=get_default_language_id())
+        default_language = Language.objects.get(id=get_default_language_id())
         new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
-                                                              lemma=new_lemma, language=language)
+                                                              lemma=new_lemma, language=default_language)
         new_lemmaidglosstranslation.save()
 
-        new_gloss = Gloss()
-        new_gloss.handedness = 4
-        new_gloss.lemma = new_lemma
-        new_gloss.save()
+
+
 
         new_gloss = Gloss()
         new_gloss.handedness = 4
         new_gloss.lemma = new_lemma
         new_gloss.save()
+
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '1'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
+
+        new_gloss = Gloss()
+        new_gloss.handedness = 4
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '2'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
 
         new_gloss = Gloss()
         new_gloss.handedness = 5
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '3'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
+
+        all_glosses = Gloss.objects.all()
+        for ag in all_glosses:
+            try:
+                print('testSearchForGlosses created gloss: ', ag.annotationidglosstranslation_set.get(language=default_language).text)
+            except:
+                print('testSearchForGlosses created gloss has empty annotation translation')
         #Search
-        response = client.get('/signs/search/',{'handedness':4})
+        response = client.get('/signs/search/',{'handedness[]':4})
         self.assertEqual(len(response.context['object_list']), 0) #Nothing without dataset permission
 
         assign_perm('view_dataset', self.user, test_dataset)
@@ -188,6 +253,11 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(len(response.context['object_list']), 2)
 
         response = client.get('/signs/search/',{'handedness[]':5})
+        for gl in response.context['object_list']:
+            try:
+                print('testSearchForGlosses response 3: ', gl.annotationidglosstranslation_set.get(language=default_language).text)
+            except:
+                print('testSearchForGlosses response 3: returned gloss has empty annotation translation')
         self.assertEqual(len(response.context['object_list']), 1)
 
 #Deprecated?
@@ -224,9 +294,9 @@ class BasicQueryTests(TestCase):
         new_lemma.save()
 
         # Create a lemma idgloss translation
-        language = Language.objects.get(id=get_default_language_id())
+        default_language = Language.objects.get(id=get_default_language_id())
         new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
-                                                              lemma=new_lemma, language=language)
+                                                              lemma=new_lemma, language=default_language)
         new_lemmaidglosstranslation.save()
 
         # #Create the gloss
@@ -241,16 +311,14 @@ class BasicQueryTests(TestCase):
             annotationIdgloss.text = 'thisisatemporarytestgloss'
             annotationIdgloss.save()
 
+        # set the language for glosssearch field name
+        gloss_search_field_prefix = "glosssearch_"
+        glosssearch_field_name = gloss_search_field_prefix + default_language.language_code_2char
+
         #Search
-        # response = client.get('/signs/search/?handedness=4')
-        # response = client.get('/signs/search/?handedness=4', follow=True)
-        response = client.get('/signs/search/?handedness=4&glosssearch_nl=test', follow=True)
+        response = client.get('/signs/search/?handedness=4&'+glosssearch_field_name+'=test', follow=True)
         self.assertEqual(len(response.context['object_list']), 1)
 
-        #print(response)
-        #print(response.context.keys())
-        # print(response.context['object_list'],response.context['glosscount'])
-        #print(response.context['selected_datasets'])
 
 class ECVsNonEmptyTests(TestCase):
 
@@ -276,32 +344,15 @@ class ECVsNonEmptyTests(TestCase):
             filetree = ElementTree.parse(location_ecv_files + os.sep + filename)
             filetreeroot = filetree.getroot()
             entry_nodes = filetreeroot.findall("./CONTROLLED_VOCABULARY/CV_ENTRY_ML")
+            # get the dataset using filter (returns a list)
+            try:
+                dataset_of_filename = Dataset.objects.get(acronym__iexact=fname)
+            except:
+                print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
             if not len(entry_nodes):
                 # no glosses in the ecv
-                # get the dataset using filter (returns a list)
-                dataset_of_filename = Dataset.objects.filter(acronym__iexact=fname)
-                if dataset_of_filename:
-                    # dataset of file exists
-
-                    # # choice 1:
-                    # # check whether there are glosses in the dataset
-                    # # the following code checks whether the dataset is actually empty
-                    # dataset = dataset_of_filename[0]
-                    # # the following looks at the count of glosses in the (test) database
-                    # # this will be empty if the test database is empty
-                    # count_glosses_dataset = dataset.count_glosses()
-                    # if count_glosses_dataset:
-                    #     print('EMPTY ECV ', filename)
-                    #     found_errors = True
-
-                    # choice 2:
-                    # use this code to avoid counting the glosses in the dataset and simply report
-                    print('EMPTY ECV ', filename)
-                    found_errors = True
-                else:
-                    # dataset of file does not exist, it might be old
-                    print('EMPTY ECV, DATASET NOT FOUND: ', filename)
-                    found_errors = True
+                print('EMPTY ECV FILE FOUND: ', filename)
+                found_errors = True
 
         self.assertEqual(found_errors, False)
 
@@ -318,9 +369,9 @@ class ImportExportTests(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
 
-    def test_DatasetListView_ECV_export_permission_change_dataset(self):
+    def test_DatasetListView_ECV_export_empty_dataset(self):
 
-        print('Test DatasetListView export_ecv with permission change_dataset')
+        print('Test DatasetListView export_ecv with empty dataset')
 
         dataset_name = settings.DEFAULT_DATASET_ACRONYM
         print('Test Dataset is: ', dataset_name)
@@ -342,9 +393,82 @@ class ImportExportTests(TestCase):
         decoded_cookies = decode_messages(loaded_cookies)
         json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
         json_message = json_decoded_cookies[0]
-        print('Message: ', json_message)
+        print('Message ONE: ', json_message)
 
-        self.assertEqual(str(json_message), 'ECV ' + dataset_name + ' successfully updated.')
+        # the Dataset is Empty at this point, so export is not offered.
+
+        self.assertEqual(str(json_message), 'The dataset ' + dataset_name + ' is empty, export ECV is not available.')
+
+
+    def test_DatasetListView_ECV_export_permission_change_dataset(self):
+
+        print('Test DatasetListView export_ecv with permission change_dataset')
+
+        dataset_name = settings.DEFAULT_DATASET_ACRONYM
+        print('Test Dataset is: ', dataset_name)
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(acronym=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User has permmission to change dataset.')
+
+        test_dataset_acronym = 'temp_' + dataset_name
+
+        test_dataset.acronym = test_dataset_acronym
+        test_dataset.save()
+        print('Test dataset name changed to: ', test_dataset_acronym)
+        client = Client()
+
+        logged_in = client.login(username='test-user', password='test-user')
+
+        # create a gloss and put it in the dataset so we can export it.
+        # this has many steps
+
+        # Create a lemma first
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # fill in the annotation translations for the new gloss
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss'
+            annotationIdgloss.save()
+
+        url = '/datasets/available?dataset_name=' + test_dataset_acronym + '&export_ecv=ECV'
+
+        response = client.get(url)
+
+        loaded_cookies = response.cookies.get('messages').value
+        decoded_cookies = decode_messages(loaded_cookies)
+        json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
+        json_message = json_decoded_cookies[0]
+        print('Message TWO: ', json_message)
+
+        self.assertEqual(str(json_message), 'ECV ' + test_dataset_acronym + ' successfully updated.')
+
+        # cleanup
+        test_dataset.acronym = dataset_name
+        test_dataset.save()
+
+        location_ecv_files = ECV_FOLDER
+        for filename in os.listdir(location_ecv_files):
+            if filename == test_dataset_acronym.lower() + '.ecv':
+                filename_path = os.path.join(location_ecv_files,filename)
+                os.remove(filename_path)
+                print('Temp ecv file removed.')
 
     def test_DatasetListView_ECV_export_no_permission_change_dataset(self):
 
@@ -402,12 +526,12 @@ class ImportExportTests(TestCase):
         assign_perm('dictionary.export_csv', self.user)
         print('User has permmission to export csv.')
 
-        response = client.get('/signs/search/', {"search_type": "sign", "glosssearch_nl": "wesseltest6", "format": "CSV"})
+        # set the language for glosssearch field name
+        default_language = Language.objects.get(id=get_default_language_id())
+        gloss_search_field_prefix = "glosssearch_"
+        glosssearch_field_name = gloss_search_field_prefix + default_language.language_code_2char
 
-        # print(str(response['Content-Type']))
-        # print(str(response.status_code))
-        # print(str(response.wsgi_request))
-        # print("Export csv: {}".format(response.content))
+        response = client.get('/signs/search/', {"search_type": "sign", glosssearch_field_name : "wesseltest6", "format": "CSV"})
 
         self.assertEqual(response['Content-Type'], "text/csv")
         self.assertContains(response, b'Signbank ID,')
@@ -456,8 +580,9 @@ class ImportExportTests(TestCase):
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 1 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
-        response = client.post(reverse_lazy('import_csv_update'), form_data)
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
         self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
 
         # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
@@ -468,9 +593,13 @@ class ImportExportTests(TestCase):
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 2 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
-        response = client.post(reverse_lazy('import_csv_update'), form_data)
-        self.assertContains(response, 'Changes are live.')
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+        self.assertContains(response, 'No changes were found.')
+
+        count_dataset_translation_languages = test_dataset.translation_languages.all().count()
+        print('Number of translation languages for the test dataset: ', count_dataset_translation_languages)
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         form_data = {'update_or_create': 'update'}
@@ -483,16 +612,19 @@ class ImportExportTests(TestCase):
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 3 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
         response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
-        # for item in response.context['request'].POST.items():
-        #     print('response item: ', item)
-        # all_messages = list(response.context['messages'])
-        # for m in all_messages:
-        #     print('response message: ', m.message)
-        self.assertContains(response, 'Import CSV Update')
+        if count_dataset_translation_languages > 1:
+            print('More than one translation language, attempt to update a lemma translation')
+            self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+        else:
+            print('Only one translation language, no changes found')
+            self.assertContains(response, 'No changes were found.')
+
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
+
         form_data = {'update_or_create': 'update'}
         for index, language in enumerate(test_dataset.translation_languages.all()):
             if index == 0:
@@ -503,9 +635,17 @@ class ImportExportTests(TestCase):
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
+        print('Form data test 4 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
         response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
-        self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+
+        if count_dataset_translation_languages > 1:
+            print('More than one translation language, attempt to update a lemma translation')
+            self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+        else:
+            print('Only one translation language, no changes found')
+            self.assertContains(response, 'No changes were found.')
+
 
     def test_Import_csv_new_gloss_for_lemma(self):
         """
@@ -540,6 +680,7 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
+        print('Form data test 1 of test_Import_csv_new_gloss_for_lemma: \n', form_data)
         response = client.post(reverse_lazy('import_csv_create'), form_data)
         self.assertContains(response, 'Changes are live.')
 
@@ -554,8 +695,12 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
+        print('Form data test 2 of test_Import_csv_new_gloss_for_lemma: \n', form_data)
         response = client.post(reverse_lazy('import_csv_create'), form_data)
         self.assertContains(response, 'Changes are live.')
+
+        count_dataset_translation_languages = test_dataset.translation_languages.all().count()
+        print('Number of translation languages for the test dataset: ', count_dataset_translation_languages)
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_annotation_translation_index = 3
@@ -572,14 +717,15 @@ class ImportExportTests(TestCase):
             form_data[form_name] = '{}{}_{}'.format(annotation_idgloss_translation_prefix, language.language_code_2char,
                                                     test_annotation_translation_index)
 
+        print('Form data test 3 of test_Import_csv_new_gloss_for_lemma: \n', form_data)
         response = client.post(reverse_lazy('import_csv_create'), form_data, follow=True)
-        # for item in response.context['request'].POST.items():
-        #     print('response item: ', item)
-        # all_messages = list(response.context['messages'])
-        # for m in all_messages:
-        #     print('response message: ', m.message)
-        self.assertContains(response, "the combination of Lemma ID Gloss translations should either refer")
 
+        if count_dataset_translation_languages > 1:
+            print('More than one translation language, attempt to update to combination of existing and new lemma translations')
+            self.assertContains(response, "the combination of Lemma ID Gloss translations should either refer")
+        else:
+            print('Only one translation language, only the annotation translation is changed.')
+            self.assertContains(response, 'Changes are live.')
 
 class VideoTests(TestCase):
 
@@ -1226,24 +1372,27 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices.keys():
             # get the first choice for the field
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for fieldname in fields_with_choices[fieldchoice]:
-                setattr(new_gloss, fieldname, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for fieldname in fields_with_choices[fieldchoice]:
+                    setattr(new_gloss, fieldname, field_choice_in_use.machine_value)
         new_gloss.save()
 
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no glosses with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
 
     def test_delete_fieldchoice_handshape(self):
@@ -1276,22 +1425,24 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices_handshapes.keys():
             # get the first choice for the field
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for fieldname in fields_with_choices_handshapes[fieldchoice]:
-                setattr(new_handshape, fieldname, field_choice_in_use.machine_value)
-            # for FingerSelection, set the Boolean fields of the fingers
-            if fieldchoice == 'FingerSelection':
-                new_handshape.set_fingerSelection_display()
-                new_handshape.set_fingerSelection2_display()
-                new_handshape.set_unselectedFingers_display()
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for fieldname in fields_with_choices_handshapes[fieldchoice]:
+                    setattr(new_handshape, fieldname, field_choice_in_use.machine_value)
+                # for FingerSelection, set the Boolean fields of the fingers
+                if fieldchoice == 'FingerSelection':
+                    new_handshape.set_fingerSelection_display()
+                    new_handshape.set_fingerSelection2_display()
+                    new_handshape.set_unselectedFingers_display()
         new_handshape.save()
 
         print('TEST: new handshape created: ', new_handshape.__dict__)
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices_handshapes.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no glosses with that choice
@@ -1352,9 +1503,10 @@ class FieldChoiceTests(TestCase):
         # set the role to the first choice
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for field in fields_with_choices[fieldchoice]:
-                setattr(new_definition, field, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    setattr(new_definition, field, field_choice_in_use.machine_value)
         new_definition.save()
 
         print('TEST new definition created: ', new_definition.__dict__)
@@ -1372,20 +1524,22 @@ class FieldChoiceTests(TestCase):
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (in use)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no notes with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (not used)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_morphology_definition(self):
 
@@ -1437,9 +1591,10 @@ class FieldChoiceTests(TestCase):
         # set the morphology definition role to the first choice
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for field in fields_with_choices[fieldchoice]:
-                setattr(new_morphology_definition, field, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    setattr(new_morphology_definition, field, field_choice_in_use.machine_value)
         new_morphology_definition.save()
 
         print('TEST new morphology definition created: ', new_morphology_definition.__dict__)
@@ -1457,20 +1612,22 @@ class FieldChoiceTests(TestCase):
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (in use)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no notes with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (not used)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_othermediatype(self):
 
@@ -1511,9 +1668,10 @@ class FieldChoiceTests(TestCase):
         # set the other media type to the first choice
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for field in fields_with_choices[fieldchoice]:
-                setattr(new_othermedia, field, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    setattr(new_othermedia, field, field_choice_in_use.machine_value)
         new_othermedia.save()
 
         print('TEST new othermedia created: ', new_othermedia.__dict__)
@@ -1531,20 +1689,22 @@ class FieldChoiceTests(TestCase):
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (in use)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no notes with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (not used)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_morpheme_type(self):
 
@@ -1552,7 +1712,7 @@ class FieldChoiceTests(TestCase):
 
         from signbank.tools import fields_with_choices_morpheme_type
         fields_with_choices = fields_with_choices_morpheme_type()
-
+        print('fields with choices morpheme type: ', fields_with_choices)
         # create a gloss with and without field choices
 
         # set the test dataset
@@ -1583,10 +1743,12 @@ class FieldChoiceTests(TestCase):
         # set the morpheme type to the first choice
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            for field in fields_with_choices[fieldchoice]:
-                setattr(new_gloss, field, field_choice_in_use.machine_value)
-                setattr(new_morpheme, field, field_choice_in_use.machine_value)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                for field in fields_with_choices[fieldchoice]:
+                    print('field: ', field)
+                    setattr(new_gloss, field, field_choice_in_use.machine_value)
+                    setattr(new_morpheme, field, field_choice_in_use.machine_value)
         new_gloss.save()
         new_morpheme.save()
 
@@ -1605,20 +1767,235 @@ class FieldChoiceTests(TestCase):
         # make sure the field choice can't be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options.first()
-            print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (in use)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+            if field_options:
+                field_choice_in_use = field_options.first()
+                print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (in use)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
         # this time, there are no notes with that choice
         # the test makes sure it can be deleted in admin
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
-            field_choice_in_use = field_options[2]
-            print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                  str(field_choice_in_use.english_name), ' (not used)')
-            self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+            if field_options:
+                field_choice_in_use = field_options[2]
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                      str(field_choice_in_use.english_name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+
+
+class testSettings(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.save()
+
+    def test_Settings(self):
+
+        from os.path import isfile, join
+        full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
+        all_settings = [ f for f in os.listdir(full_root_path) if isfile(join(full_root_path, f))
+                                    and f.endswith('.py') and f != '__init__.py' and f != 'server_specific.py']
+        all_settings_strings = {}
+        for next_file in all_settings:
+            all_settings_strings[next_file] = []
+            next_file_path = os.path.join(full_root_path, next_file)
+            with open(next_file_path, 'r') as f:
+                for line in f:
+                    if '#' in line:
+                        line = line.split('#')
+                        string_before_hash = line[0]
+                        line = string_before_hash.strip()
+                    if '=' in line:
+                        definition_list = line.split('=')
+                        right_hand_side = definition_list[1]
+                        right_hand_side = right_hand_side.strip()
+                        if right_hand_side.startswith('lambda'):
+                            # this is a function definition
+                            # this is a bit of a hack because a function is used in the global settings
+                            continue
+                        definition = definition_list[0]
+                        definition = definition.strip()
+                        all_settings_strings[next_file].append(definition)
+
+        comparison_table_first_not_in_second = {}
+        for first_file in all_settings:
+            if not first_file in comparison_table_first_not_in_second.keys():
+                comparison_table_first_not_in_second[first_file] = {}
+            for second_file in all_settings:
+                if first_file != second_file:
+                    comparison_table_first_not_in_second[first_file][second_file] = []
+                    for setting_first_file in all_settings_strings[first_file]:
+                        if setting_first_file not in all_settings_strings[second_file]:
+                            comparison_table_first_not_in_second[first_file][second_file].append(setting_first_file)
+
+        for first_file in all_settings:
+            for second_file in all_settings:
+                if first_file != second_file:
+                    if comparison_table_first_not_in_second[first_file][second_file]:
+                        print('Settings ', first_file, ' not in  ', second_file, ': ', comparison_table_first_not_in_second[first_file][second_file])
+                    else:
+                        print('Settings ', first_file, ' also in ', second_file)
+
+class MinimalPairsTests(TestCase):
+
+    # This test exists because a bug had previously been found with the display of the repeat phonology field
+    # repeat is a Boolean field that should be either True or False (the default if not set)
+    # This should be displayed as Yes or No
+
+    # MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+    #                         'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
+
+    # This test currently checks minimal pairs involving the following phonology fields,
+    # based on type of the field:
+
+    # handedness
+    # domhndsh
+    # subhndsh
+    # locprim
+    # repeat, altern
+    # handCh
+
+    def setUp(self):
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.save()
+
+        self.client = Client()
+
+    def test_analysis_minimalpairs(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create 10 lemmas for use in testing
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,15):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        # print('created lemmas: ', lemmas)
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        # Create 10 glosses that start out being the same
+        glosses = {}
+        for gloss_id in range(1,15):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : str(test_handshape1.machine_value),
+                'locprim': 7,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        # print('created glosses: ', glosses)
+
+        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
+
+        glosses[2].locprim = 8
+        glosses[2].save()
+
+        glosses[3].repeat = True
+        glosses[3].save()
+
+        glosses[4].handedness = 4
+        glosses[4].save()
+
+        glosses[5].domhndsh_letter = True
+        glosses[5].save()
+
+        glosses[6].weakdrop = True
+        glosses[6].save()
+
+        glosses[7].weakdrop = False
+        glosses[7].save()
+
+        glosses[8].altern = True
+        glosses[8].save()
+
+        glosses[9].handCh = 7
+        glosses[9].save()
+
+        glosses[10].domhndsh = str(test_handshape2.machine_value)
+        glosses[10].domhndsh_letter = True
+        glosses[10].save()
+
+        glosses[11].handedness = 4
+        glosses[11].weakdrop = False
+        glosses[11].save()
+
+        glosses[12].handedness = 4
+        glosses[12].weakdrop = True
+        glosses[12].save()
+
+        glosses[13].handedness = 4
+        glosses[13].save()
+
+        glosses[14].domhndsh = str(test_handshape2.machine_value)
+        glosses[14].domhndsh_letter = False
+        glosses[14].save()
+
+        self.client.login(username='test-user', password='test-user')
+
+        assign_perm('view_dataset', self.user, test_dataset)
+        response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
+
+        objects_on_page = response.__dict__['context_data']['objects_on_page']
+
+        # check that all objects retrieved by minimal pairs are also displayed
+        # objects_on_page is a list of object ids
+        # check for these rows
+        for obj in objects_on_page:
+            pattern_gloss = 'focusgloss_' + str(obj)
+            self.assertContains(response, pattern_gloss)
+
+        # now fetch the table row contents for each object, using the ajax call of the template
+        # check that the repeat phonology field is correctly displayed as Yes and No for True and False
+        for obj in objects_on_page:
+            response_row = self.client.get('/dictionary/ajax/minimalpairs/' + str(obj) + '/')
+            minimal_pairs_dict = response_row.context['minimal_pairs_dict']
+
+            # uncomment print statement to see what the minimal pairs are
+            # print('minimal pairs ', response_row.context['focus_gloss_translation'])
+
+            for minimalpair in minimal_pairs_dict:
+                # check that there is a row for this minimal pair in the html
+                other_gloss_id = str(minimalpair['other_gloss'].id)
+                pattern_cell = 'cell_' + str(obj) + '_' + other_gloss_id
+                self.assertContains(response_row, pattern_cell)
+                # check that the field 'repeat' has different values in the table
+                # we make use of the fact that the values in the minimal_pairs_dict returned by the ajax call are used
+                field = minimalpair['field']
+                focus_gloss_value = minimalpair['focus_gloss_value']
+                other_gloss_value = minimalpair['other_gloss_value']
+                other_gloss_idgloss = minimalpair['other_gloss_idgloss']
+
+                # uncomment print statement to see what the minimal pairs are
+                # print('                                  ', other_gloss_idgloss, '     ', field, '     ', focus_gloss_value, '   ', other_gloss_value)
+
+                # this test makes sure that when minimal pair rows are displayed that the values differ in the display
+                self.assertNotEqual(focus_gloss_value, other_gloss_value)
 
 
 # Helper function to retrieve contents of json-encoded message

@@ -909,6 +909,101 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
     return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
 
 
+def compare_valuedict_to_lemma(valuedict,lemma_id,my_datasets, nl,
+                                lemmaidglosstranslations, current_lemmaidglosstranslations,
+                               earlier_updates_same_csv, earlier_updates_lemmaidgloss):
+    """Takes a dict of key-value pairs, and compares them to a lemma"""
+
+    errors_found = []
+    differences = []
+
+    try:
+        lemma = LemmaIdgloss.objects.select_related().get(pk=lemma_id)
+    except ObjectDoesNotExist as e:
+
+        e = 'Could not find lemma for ID ' + str(lemma_id)
+        errors_found.append(e)
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+    if lemma_id in earlier_updates_same_csv:
+        e = 'Lemma ID (' + str(lemma_id) + ') found in multiple rows (Row ' + str(nl + 1) + ').'
+        errors_found.append(e)
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+    else:
+        earlier_updates_same_csv.append(lemma_id)
+
+    count_new_nonempty_translations = 0
+    count_existing_nonempty_translations = 0
+
+    if lemmaidglosstranslations \
+            and current_lemmaidglosstranslations != lemmaidglosstranslations:
+        for key1 in lemmaidglosstranslations.keys():
+            if lemmaidglosstranslations[key1]:
+                count_new_nonempty_translations += 1
+        for key2 in current_lemmaidglosstranslations.keys():
+            if current_lemmaidglosstranslations[key2]:
+                count_existing_nonempty_translations += 1
+        pass
+    else:
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+    if not count_new_nonempty_translations:
+        # somebody has modified the lemma translations so as to delete alll of them:
+        e = 'Row ' + str(nl + 1) + ': Lemma ID ' + str(lemma_id) + ' must have at least one translation.'
+        errors_found.append(e)
+        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+
+    #Create an overview of all fields, sorted by their human name
+    with override(LANGUAGE_CODE):
+
+        if lemma.dataset:
+            current_dataset = lemma.dataset.acronym
+        else:
+            # because of legacy code, the current dataset might not have been set
+            current_dataset = 'None'
+
+        #Go through all values in the value dict, looking for differences with the lemma
+        for human_key, new_human_value in valuedict.items():
+
+            new_human_value = new_human_value.strip()
+
+            if human_key == 'Lemma ID' or human_key == 'Dataset':
+                # these fields can't be updated
+                continue
+
+            lemma_idgloss_key_prefix = "Lemma ID Gloss ("
+            if human_key.startswith(lemma_idgloss_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name = human_key[len(lemma_idgloss_key_prefix):-1]
+                languages = Language.objects.filter(**{language_name_column:language_name})
+                if languages:
+                    language = languages[0]
+                    lemma_idglosses = lemma.lemmaidglosstranslation_set.filter(language=language)
+                    if lemma_idglosses:
+                        lemma_idgloss_string = lemma_idglosses[0].text
+                    else:
+                        # lemma not set
+                        lemma_idgloss_string = ''
+                    if lemma_idgloss_string != new_human_value:
+
+                        differences.append({'pk': lemma_id,
+                                            'dataset': current_dataset,
+                                            'machine_key': human_key,
+                                            'human_key': human_key,
+                                            'original_machine_value': lemma_idgloss_string,
+                                            'original_human_value': lemma_idgloss_string,
+                                            'new_machine_value': new_human_value,
+                                            'new_human_value': new_human_value})
+                continue
+
+            else:
+                # this case should be impossible! It's included for completeness of else otherwise case
+                print('Unknown lemma field encountered while comparing new to existing fields: ', human_key)
+
+    return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+
+
 def check_existence_dialect(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
@@ -1439,6 +1534,16 @@ def get_selected_datasets_for_user(user):
         return selected_datasets
 
 
+def get_users_without_dataset():
+
+    users_with_no_dataset = []
+
+    for user in User.objects.all():
+        if user.is_active and len(get_objects_for_user(user, 'view_dataset', Dataset)) == 0:
+            users_with_no_dataset.append(user)
+
+    return users_with_no_dataset
+
 def gloss_from_identifier(value):
     """Given an id of the form "idgloss (pk)" return the
     relevant gloss or None if none is found
@@ -1497,97 +1602,130 @@ from xml.dom import minidom
 import datetime as DT
 
 
-def lookup_field_choice_category(choicelist):
-
-    # this is a helper function used by the functions that follow
-    # the functions that call this function retrieve a choicelist from the _meta information
-    # and want to see which field choice category it belongs to
-
-    all_field_choices = FieldChoice.objects.all().order_by('english_name')
-    all_field_categories = [ field.field for field in all_field_choices ]
-
-    for fc in all_field_categories:
-
-        choice_list = build_choice_list(fc)
-
-        # compare the choicelist parameter to this method to the one built by build_choice_list based on the category
-        # in order to figure out which category the parameter choicelist has
-        if choice_list == choicelist:
-            return fc
-    return ''
-
 def fields_with_choices_glosses():
     # return a dict that maps the field choice categories to the fields of Gloss that have the category
-    fields_with_choices = [field for field in Gloss._meta.fields if len(field.choices) > 0]
 
     fields_dict = {}
 
-    for field in fields_with_choices:
-        field_category = lookup_field_choice_category(field.choices)
+    from signbank.dictionary.models import Gloss
+    for field in Gloss._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
 
-        if field_category:
-            if field_category in fields_dict.keys():
-                fields_dict[field_category].append(field.name)
-            else:
-                fields_dict[field_category] = [field.name]
+            except AttributeError:
+                print('fields_with_choices_glosses AttributeError on field ', field.name)
+                continue
     return fields_dict
 
 def fields_with_choices_handshapes():
     # return a dict that maps the field choice categories to the fields of Handshape that have the category
-    # e.g., FingerSelection maps to a list of Handshape fields ['fing
-
-    fields_with_choices = [field for field in Handshape._meta.fields if len(field.choices) > 0]
 
     fields_dict = {}
 
-    for field in fields_with_choices:
-        field_category = lookup_field_choice_category(field.choices)
+    from signbank.dictionary.models import Handshape
+    for field in Handshape._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
 
-        if field_category:
-            if field_category in fields_dict.keys():
-                fields_dict[field_category].append(field.name)
-            else:
-                fields_dict[field_category] = [field.name]
+            except AttributeError:
+                print('fields_with_choices_handshapes AttributeError on field ', field.name)
+                continue
     return fields_dict
 
 def fields_with_choices_definition():
     # return a dict that maps the field choice categories to the fields of Definition that have the category
-    # this is implemented as a constant return value
 
     fields_dict = {}
 
-    fields_dict['NoteType'] = ['role']
+    from signbank.dictionary.models import Definition
+    for field in Definition._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
 
+            except AttributeError:
+                print('fields_with_choices_definition AttributeError on field ', field.name)
+                continue
     return fields_dict
 
 def fields_with_choices_morphology_definition():
     # return a dict that maps the field choice categories to the fields of MorphologyDefinition that have the category
-    # this is implemented as a constant return value
 
     fields_dict = {}
 
-    fields_dict['MorphologyType'] = ['role']
+    from signbank.dictionary.models import MorphologyDefinition
+    for field in MorphologyDefinition._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
 
+            except AttributeError:
+                print('fields_with_choices_morphology_definition AttributeError on field ', field.name)
+                continue
     return fields_dict
 
 def fields_with_choices_other_media_type():
     # return a dict that maps the field choice categories to the fields of OtherMediaType that have the category
-    # this is implemented as a constant return value
 
     fields_dict = {}
 
-    fields_dict['OtherMediaType'] = ['type']
+    from signbank.dictionary.models import OtherMedia
+    for field in OtherMedia._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
 
+            except AttributeError:
+                print('fields_with_choices_other_media_type AttributeError on field ', field.name)
+                continue
     return fields_dict
 
 def fields_with_choices_morpheme_type():
     # return a dict that maps the field choice categories to the fields of MorphemeType that have the category
-    # this is implemented as a constant return value
 
     fields_dict = {}
 
-    fields_dict['MorphemeType'] = ['mrpType']
+    from signbank.dictionary.models import Morpheme
+    for field in Morpheme._meta.fields:
+        if field.choices:
+            # field has choices
+            try:
+                field_category = field.field_choice_category
+                if field_category in fields_dict.keys():
+                    fields_dict[field_category].append(field.name)
+                else:
+                    fields_dict[field_category] = [field.name]
 
+            except AttributeError:
+                print('fields_with_choices_morpheme_type AttributeError on field ', field.name)
+                continue
     return fields_dict
 
 def write_ecv_files_for_all_datasets():
@@ -1613,8 +1751,8 @@ def write_ecv_file_for_dataset(dataset_name):
         lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
     sort_language = 'annotationidglosstranslation__language__language_code_2char'
     qs_empty = query_dataset.filter(**{sOrder + '__isnull': True})
-    qs_letters = query_dataset.filter(**{sOrder + '__regex': r'^[a-zA-Z]'}, **{sort_language: lang_attr_name})
-    qs_special = query_dataset.filter(**{sOrder + '__regex': r'^[^a-zA-Z]'}, **{sort_language: lang_attr_name})
+    qs_letters = query_dataset.filter(**{sOrder + '__regex': r'^[a-zA-Z]', sort_language: lang_attr_name})
+    qs_special = query_dataset.filter(**{sOrder + '__regex': r'^[^a-zA-Z]', sort_language: lang_attr_name})
 
     ordered = list(qs_letters.order_by(sOrder))
     ordered += list(qs_special.order_by(sOrder))
@@ -1786,9 +1924,9 @@ def update_cngt_counts(folder_index=None):
 
     folder_paths = []
 
-    for foldername in os.listdir(settings.CNGT_EAF_FILES_LOCATION):
+    for foldername in os.listdir(settings.EAF_FILES_LOCATION):
         if '.xml' not in foldername:
-            folder_paths.append(settings.CNGT_EAF_FILES_LOCATION+foldername+'/')
+            folder_paths.append(settings.EAF_FILES_LOCATION+foldername+'/')
 
     if folder_index != None:
         folder_paths = [folder_paths[int(folder_index)]]
@@ -1798,7 +1936,7 @@ def update_cngt_counts(folder_index=None):
     for folder_path in folder_paths:
         eaf_file_paths += [folder_path + f for f in os.listdir(folder_path)]
 
-    sign_counter = SignCounter(settings.CNGT_METADATA_LOCATION,
+    sign_counter = SignCounter(settings.METADATA_LOCATION,
                                eaf_file_paths,
                                settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT)
 
