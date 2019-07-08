@@ -112,18 +112,8 @@ class GlossVideoStorage(FileSystemStorage):
     def __init__(self, location=settings.MEDIA_ROOT, base_url=settings.MEDIA_URL):
         super(GlossVideoStorage, self).__init__(location, base_url)
 
-
-    # def get_valid_name(self, name):
-    #     """Generate a valid name, we use directories named for the
-    #     first two digits in the filename to partition the videos"""
-    #
-    #     (targetdir, basename) = os.path.split(name)
-    #
-    #     path = os.path.join(str(basename)[:2], str(basename))
-    #
-    #     result = os.path.join(targetdir, path)
-    #
-    #     return result
+    def get_valid_name(self, name):
+        return name
 
 
 storage = GlossVideoStorage()
@@ -198,6 +188,9 @@ def get_video_file_path(instance, filename, version=0):
     filename = idgloss + '-' + str(instance.gloss.id) + '.mp4' + (version * ".bak")
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
+    if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+        from django.utils.encoding import escape_uri_path
+        path = escape_uri_path(path)
     return path
 
 

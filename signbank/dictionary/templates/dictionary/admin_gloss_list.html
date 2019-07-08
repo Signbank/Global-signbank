@@ -836,16 +836,16 @@
             {% endif %}
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{{ gloss.dataset.acronym }}</td>{% endif %}
-      <td>{%if gloss.get_image_path != None %}
+      <td>{%if gloss.get_image_url != None %}
 
           <div class="thumbnail_container">
           <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
 
             <div {% if page_obj.paginator.count < DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES %} class="hover-shows-video" {% endif %} >
-                <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}">
+                <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_url}}">
 
               {% if page_obj.paginator.count < DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES %}
-                <video id="videoplayer" class="thumbnail-video" src="{{protected_media_url}}{{gloss.get_video_path}}"  type="video/mp4" muted="muted"></video>
+                <video id="videoplayer" class="thumbnail-video" src="{{protected_media_url}}{{gloss.get_video_url}}"  type="video/mp4" muted="muted"></video>
               {% endif %}
 
             </div>

@@ -674,7 +674,7 @@ class VideoTests(TestCase):
 
         logged_in = client.login(username='test-user', password='test-user')
 
-        NAME = 'thisisatémporarytéstlemmä'
+        NAME = 'XXtéstlemmä  ~山脉 %20'  # %20 is an url encoded space
 
         # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
@@ -702,6 +702,15 @@ class VideoTests(TestCase):
         client.login(username='test-user', password='test-user')
 
         video_url = '/dictionary/protected_media/glossvideo/'+test_dataset.acronym+'/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
+
+        if settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+            # If the file name is escaped, the url should be escaped twice:
+            # the file may contain percent encodings,
+            # so in the path the percent should be encoded
+            from django.utils.encoding import escape_uri_path
+            video_url = escape_uri_path(video_url)
+        video_url = video_url.replace('%', '%25')
+
         #We expect no video before
         response = client.get(video_url)
         # print("Video url first test: {}".format(video_url))
@@ -724,8 +733,8 @@ class VideoTests(TestCase):
 
         #We expect a video now
         response = client.get(video_url, follow=True)
-        # print("Video url second test: {}".format(video_url))
-        # print("Video upload response second test: {}".format(response))
+        print("Video url second test: {}".format(video_url))
+        print("Video upload response second test: {}".format(response))
         self.assertEqual(response.status_code,200)
 
         #You can't see it if you log out

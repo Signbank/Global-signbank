@@ -1,7 +1,8 @@
 from django.db.models import Q
 from django.db import models, OperationalError
 from django.conf import settings
-from django.http import Http404 
+from django.http import Http404
+from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete
@@ -1373,6 +1374,9 @@ class Gloss(models.Model):
         else:
             return ''
 
+    def get_image_url(self):
+        return escape_uri_path(self.get_image_path())
+
     def get_video_path(self):
         try:
             glossvideo = self.glossvideo_set.get(version=0)
@@ -1411,7 +1415,8 @@ class Gloss(models.Model):
 
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
-        video_url_or_empty_string = self.get_video()
+        video_url_or_empty_string = escape_uri_path(self.get_video())
+
         return video_url_or_empty_string
 
     def has_video(self):
