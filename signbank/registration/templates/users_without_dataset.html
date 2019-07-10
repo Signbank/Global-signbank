@@ -2,12 +2,24 @@
 {% load i18n %}
 
 {% block content %}
+{% if alert_success != None %}
+<div class="alert alert-success">Gave access to users: {{ alert_success }}</div>
+{% endif %}
 
-<table>
+<h2>All users without datasets</h2>
+<p> Check the boxes and click submit to give them access to the main dataset ({{ main_dataset_name }}).</p>
+
+<form method="post">
+
+{% csrf_token %}
+
+<table class="table">
+    <tr><td></td><th>Name</th><th>Email</th></tr>
 {% for user in users_without_dataset %}
-    <tr><td>{{user.first_name}} {{user.last_name}}</td><td>{{user.email}}</td></tr>
+    <tr><td><input type="checkbox" name="user_{{user.pk}}"></td><td>{{user.first_name}} {{user.last_name}}</td><td>{{user.email}}</td></tr>
 {% endfor %}
 </table>
-
+<input type="submit">
+</form>
 
 {% endblock %}
