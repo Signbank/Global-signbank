@@ -109,12 +109,12 @@ def order_queryset_by_sort_order(get, qs):
     # Set the default sort order
     default_sort_order = True
     sOrder = 'annotationidglosstranslation__text'  # Default sort order if nothing is specified
+
     # See if the form contains any sort-order information
     if ('sortOrder' in get and get['sortOrder'] != ''):
         # Take the user-indicated sort order
         sOrder = get['sortOrder']
         default_sort_order = False
-
     # The ordering method depends on the kind of field:
     # (1) text fields are ordered straightforwardly
     # (2) fields made from a choice_list need special treatment
@@ -128,7 +128,7 @@ def order_queryset_by_sort_order(get, qs):
         ordered = order_queryset_by_annotationidglosstranslation(qs, sOrder)
     elif "lemmaidglosstranslation_order_" in sOrder:
         ordered = order_queryset_by_lemmaidglosstranslation(qs, sOrder)
-    elif "translation_" in sOrder:
+    elif sOrder.startswith("translation_") or sOrder.startswith("-translation_"):
         ordered = order_queryset_by_translation(qs, sOrder)
     else:
         # Use straightforward ordering on field [sOrder]
@@ -138,10 +138,9 @@ def order_queryset_by_sort_order(get, qs):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
             bReversed = True
-        language_code_2char = sOrder[-2:]
         if default_sort_order:
-            lang_attr_name = DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-            sort_language = 'annotationidglosstranslation__language__' + language_code_2char
+            lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+            sort_language = 'annotationidglosstranslation__language__language_code_2char'
             qs_empty = qs.filter(**{sOrder+'__isnull': True})
             qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
             qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name})
