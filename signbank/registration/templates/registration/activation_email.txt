@@ -1,12 +1,12 @@
  
-Someone, hopefully you, requested a new account at {{site.name}}
+Someone, hopefully you, requested a new account at {{ signbank_name }}
 using this email address. If it was you, and you'd like to confirm your request,
 click the link below or copy and paste it into your web browser's address bar:
  
-https://{{site}}/accounts/activate/{{ activation_key }}/
+{{url}}accounts/activate/{{ activation_key }}/
 
 If you didn't request this, you don't need to do anything; you won't 
 receive any more email from us, and the request will expire automatically
 in two days.
 
-{{site.name}} Webmaster
+The {{signbank_name}} team
