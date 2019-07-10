@@ -1929,11 +1929,20 @@ def generate_translated_choice_list_table():
                         except AttributeError:
                             # in case the language name is empty for the field choice
                             human_value = getattr(c, 'english_name')
+                        except:
+                            # this should not happen, it seems the english_name field was removed from the model
+                            # probably a default setting is needed
+                            print('There is no field english_name in the FieldChoice table.')
+                            human_value = ''
                         translations_for_choice[l_name] = human_value
                     field_translated_choice_list[choices_machine_value] = translations_for_choice
                 #
                 temp_translated_choice_lists_table[f.name] = field_translated_choice_list
-    # print('generated translated choice list table: ', temp_translated_choice_lists_table)
+            else:
+                if f.name in FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']:
+                    # if there are no choices for fields we expect choices for, print something to the log
+                    temp_translated_choice_lists_table[f.name] = field_translated_choice_list
+                    print('There are no choices for ', f_category, ' in the FieldChoice table of the database.')
 
     return temp_translated_choice_lists_table
 
