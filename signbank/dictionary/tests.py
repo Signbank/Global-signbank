@@ -1790,6 +1790,9 @@ class testSettings(TestCase):
         full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
         all_settings = [ f for f in os.listdir(full_root_path) if isfile(join(full_root_path, f))
                                     and f.endswith('.py') and f != '__init__.py' and f != 'server_specific.py']
+        print('Checking settings files: ', all_settings)
+        # check that one of the files is the default file
+        self.assertIn('default.py', all_settings)
         all_settings_strings = {}
         for next_file in all_settings:
             all_settings_strings[next_file] = []
@@ -1825,11 +1828,10 @@ class testSettings(TestCase):
 
         for first_file in all_settings:
             for second_file in all_settings:
-                if first_file != second_file:
-                    if comparison_table_first_not_in_second[first_file][second_file]:
-                        print('Settings ', first_file, ' not in  ', second_file, ': ', comparison_table_first_not_in_second[first_file][second_file])
-                    else:
-                        print('Settings ', first_file, ' also in ', second_file)
+                # the default.py file is part of the installation (should this filename be a setting?)
+                # check that other settings files do not contain settings that are not in the default settings file
+                if first_file != second_file and second_file == 'default.py':
+                    self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
 
 class MinimalPairsTests(TestCase):
 
