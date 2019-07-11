@@ -23,7 +23,7 @@ def parse_range(rng):
 
 
 def parse_range_list(rngs):
-    return sorted(set(chain(*[parse_range(rng) for rng in rngs.split(',')])))
+    return sorted(set(chain(*[parse_range(rng) for rng in rngs.split(',') if rng])))
 
 
 class Command(BaseCommand):
