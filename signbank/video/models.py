@@ -183,7 +183,10 @@ def get_video_file_path(instance, filename, version=0):
     idgloss = instance.gloss.idgloss
 
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
-    dataset_dir = instance.gloss.lemma.dataset.acronym
+    try:
+        dataset_dir = instance.gloss.lemma.dataset.acronym
+    except:
+        dataset_dir = ""
     two_letter_dir = signbank.tools.get_two_letter_dir(idgloss)
     filename = idgloss + '-' + str(instance.gloss.id) + '.mp4' + (version * ".bak")
 
