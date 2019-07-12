@@ -1990,6 +1990,170 @@ class MinimalPairsTests(TestCase):
                 # this test makes sure that when minimal pair rows are displayed that the values differ in the display
                 self.assertNotEqual(focus_gloss_value, other_gloss_value)
 
+    def test_emptyvalues_minimalpairs(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create 10 lemmas for use in testing
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,15):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        # print('created lemmas: ', lemmas)
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        # Create 10 glosses that start out being the same
+        glosses = {}
+        for gloss_id in range(1,15):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : test_handshape1.machine_value,
+                'locprim': 7,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        # print('created glosses: ', glosses)
+
+        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
+
+        # pretend locprim hasn't been assigned
+        glosses[2].locprim = None
+        glosses[2].save()
+
+        glosses[3].locprim = ''
+        glosses[3].save()
+
+        glosses[4].locprim = '-'
+        glosses[4].save()
+
+        # this is an errorneous None value
+        glosses[5].locprim = 'None'
+        glosses[5].save()
+        error_none_gloss_5 = 'ERROR_None'
+
+        glosses[6].locprim = 337
+        glosses[6].save()
+        error_337_gloss_6 = 'ERROR_337'
+
+        glosses[7].locprim = 0
+        glosses[7].save()
+
+        glosses[8].locprim = '0'
+        glosses[8].save()
+
+        # gloss 9 has an empty handedness, it has no minimal pairs
+        glosses[9].handedness = None
+        glosses[9].save()
+
+        glosses[10].domhndsh = test_handshape2.machine_value
+        glosses[10].domhndsh_letter = True
+        glosses[10].save()
+
+        glosses[11].handedness = 4
+        glosses[11].weakdrop = False
+        glosses[11].save()
+
+        glosses[12].handedness = 4
+        glosses[12].weakdrop = True
+        glosses[12].save()
+
+        glosses[13].domhndsh = test_handshape2.machine_value
+        glosses[13].handedness = 4
+        glosses[13].save()
+
+        glosses[14].domhndsh = test_handshape2.machine_value
+        glosses[14].handedness = 4
+        glosses[14].subhndsh = test_handshape2.machine_value
+        glosses[14].save()
+
+        glosses_to_ids = {}
+
+        for gloss_id in range(1,15):
+            glosses_to_ids[str(glosses[gloss_id].id)] = str(gloss_id)
+
+        self.client.login(username='test-user', password='test-user')
+
+        assign_perm('view_dataset', self.user, test_dataset)
+        response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
+
+        objects_on_page = response.__dict__['context_data']['objects_on_page']
+
+        # check that all objects retrieved by minimal pairs are also displayed
+        # objects_on_page is a list of object ids
+        # check for these rows
+        for obj in objects_on_page:
+            pattern_gloss = 'focusgloss_' + str(obj)
+            self.assertContains(response, pattern_gloss)
+
+        # now fetch the table row contents for each object, using the ajax call of the template
+        # check that the repeat phonology field is correctly displayed as Yes and No for True and False
+        for obj in objects_on_page:
+            response_row = self.client.get('/dictionary/ajax/minimalpairs/' + str(obj) + '/')
+            minimal_pairs_dict = response_row.context['minimal_pairs_dict']
+
+            if str(obj) == str(glosses[9].id):
+                # make sure no minimal pairs for this gloss, since handedness is empty
+                self.assertEqual(minimal_pairs_dict, [])
+                continue
+
+            # uncomment print statement to see what the minimal pairs are
+            # print('minimal pairs for ', response_row.context['focus_gloss_translation'], ' (glosses[', glosses_to_ids[str(obj)], '])')
+
+            for minimalpair in minimal_pairs_dict:
+                # check that there is a row for this minimal pair in the html
+                other_gloss_id = str(minimalpair['other_gloss'].id)
+                pattern_cell = 'cell_' + str(obj) + '_' + other_gloss_id
+                self.assertContains(response_row, pattern_cell)
+                # check that the field 'repeat' has different values in the table
+                # we make use of the fact that the values in the minimal_pairs_dict returned by the ajax call are used
+                field = minimalpair['field']
+                focus_gloss_value = minimalpair['focus_gloss_value']
+                other_gloss_value = minimalpair['other_gloss_value']
+                other_gloss_idgloss = minimalpair['other_gloss_idgloss']
+
+                # uncomment print statement to see what the minimal pairs are
+                # print('          ', other_gloss_idgloss, ' (glosses[', glosses_to_ids[other_gloss_id], ']) ', field, '     ', focus_gloss_value, '     ', other_gloss_value)
+
+                # this test makes sure that when minimal pair rows are displayed that the values differ in the display
+                self.assertNotEqual(focus_gloss_value, other_gloss_value)
+
+                if str(obj) == str(glosses[5].id):
+                    # gloss 5 contains an erroneous None value
+                    self.assertEqual(focus_gloss_value, error_none_gloss_5)
+                    continue
+                if other_gloss_id == str(glosses[5].id):
+                    # gloss 5 contains an erroneous None value
+                    self.assertEqual(other_gloss_value, error_none_gloss_5)
+                    continue
+                if str(obj) == str(glosses[6].id):
+                    # gloss 6 contains an erroneous locprim value
+                    self.assertEqual(focus_gloss_value, error_337_gloss_6)
+                    continue
+                if other_gloss_id == str(glosses[6].id):
+                    # gloss 6 contains an erroneous locprim value
+                    self.assertEqual(other_gloss_value, error_337_gloss_6)
+                    continue
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):

@@ -3922,7 +3922,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
-    # print('********************** ajax minimal pairs on gloss ', str(gloss_id))
     try:
         minimalpairs_objects = this_gloss.minimal_pairs_dict()
     except:
@@ -3936,7 +3935,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
         if translations_this_gloss is not None and len(translations_this_gloss) > 0:
             translation_focus_gloss = translations_this_gloss[0].text
-
     result = []
     for minimalpairs_object, minimal_pairs_dict in minimalpairs_objects.items():
 
@@ -3945,6 +3943,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         other_gloss_dict['other_gloss'] = minimalpairs_object
 
         for field, values in minimal_pairs_dict.items():
+
             other_gloss_dict['field'] = field
             other_gloss_dict['field_display'] = values[0]
             other_gloss_dict['field_category'] = values[1]
@@ -3952,14 +3951,24 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             from signbank.dictionary.models import translated_choice_lists_table
             focus_gloss_choice = values[2]
             other_gloss_choice = values[3]
+
+            if focus_gloss_choice:
+                pass
+            else:
+                focus_gloss_choice = ''
+            if other_gloss_choice:
+                pass
+            else:
+                other_gloss_choice = ''
+
             field_kind = values[4]
             if field_kind == 'list':
                 if focus_gloss_choice:
+
                     try:
                         focus_gloss_value = translated_choice_lists_table[field][int(focus_gloss_choice)][language_code]
                     except:
                         focus_gloss_value = 'ERROR_' + focus_gloss_choice
-                        print('Error for gloss ', minimalpairs_object.id, ' on stored choice (field: ', field, ', choice: ', focus_gloss_choice, ')')
                 else:
                     focus_gloss_value = '-'
             elif field_kind == 'check':
@@ -3976,11 +3985,11 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             other_gloss_dict['focus_gloss_value'] = focus_gloss_value
             if field_kind == 'list':
                 if other_gloss_choice:
+
                     try:
                         other_gloss_value = translated_choice_lists_table[field][int(other_gloss_choice)][language_code]
                     except:
                         other_gloss_value = 'ERROR_' + other_gloss_choice
-                        print('Error for gloss ', minimalpairs_object.id, ' on stored choice (field: ', field, ', choice: ', other_gloss_choice, ')')
                 else:
                     other_gloss_value = '-'
             elif field_kind == 'check':
@@ -3996,7 +4005,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             other_gloss_dict['other_gloss_value'] = other_gloss_value
             other_gloss_dict['field_kind'] = field_kind
 
-        # print('min pairs other gloss dict: ', other_gloss_dict)
         translation = ""
         translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
         if translations is not None and len(translations) > 0:
@@ -4007,7 +4015,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                 translation = translations[0].text
 
         other_gloss_dict['other_gloss_idgloss'] = translation
-
         result.append(other_gloss_dict)
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
