@@ -727,11 +727,14 @@ class Gloss(models.Model):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
 
     def get_fields_dict(self):
-        # this function might be obsolete
+
         fields = {}
         for field in Gloss._meta.fields:
             if field.name in settings.API_FIELDS:
-                category = fieldname_to_category(field.name)
+                try:
+                    category = field.field_choice_category
+                except:
+                    category = field.name
                 if category != field.name:
                     if not category in fields:
                         fields[category] = {}
