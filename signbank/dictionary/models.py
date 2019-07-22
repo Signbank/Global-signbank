@@ -1679,32 +1679,6 @@ class Gloss(models.Model):
 
         return d
 
-    def get_choice_lists(self):
-        """Return JSON for the location choice list"""
-
-        choice_lists = {}
-
-        # Start with your own choice lists
-        for fieldname in ['handedness', 'locprim', 'domhndsh', 'subhndsh',
-                          'relatArtic', 'absOriFing', 'relOriMov',
-                          'relOriLoc', 'handCh', 'repeat', 'altern', 'movSh',
-                          'movDir', 'movMan', 'contType', 'namEnt', 'oriCh', 'semField']:
-            # Get the list of choices for this field
-            li = self._meta.get_field(fieldname).choices
-
-            # Sort the list
-            sorted_li = sorted(li, key=lambda x: x[1])
-
-            # Put it in another format
-            reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
-            choice_lists[fieldname] = OrderedDict(reformatted_li)
-
-        # Choice lists for other models
-        choice_lists['morphology_role'] = [human_value for machine_value, human_value in
-                                           build_choice_list('MorphologyType')]
-
-        return json.dumps(choice_lists)
-
 
 # register Gloss for tags
 try:
