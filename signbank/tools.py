@@ -1403,10 +1403,11 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, d
     static_urls = {}
 
     for subfolder_name in os.listdir(full_root_path):
-        if os.path.isdir(full_root_path+subfolder_name):
-            for filename in os.listdir(full_root_path+subfolder_name):
-
-                if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
+        full_path = os.path.join(full_root_path, subfolder_name)
+        if os.path.isdir(full_path):
+            for filename in os.listdir(full_path):
+                full_filename = os.path.join(full_path, filename)
+                if os.path.getmtime(full_filename) > since_timestamp:
                     res = re.search(r'(.+)\.[^\.]*', filename)
 
                     try:
@@ -1414,9 +1415,7 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, d
                         re_result = re.match(r'.*\-(\d+)', gloss_id)
 
                         if dataset is None or int(re_result.group(1)) in dataset_gloss_ids:
-                            static_urls[gloss_id] = reverse('dictionary:protected_media',
-                                                            args=['']) + root_folder + '/' + quote(
-                                subfolder_name) + '/' + quote(filename)
+                            static_urls[gloss_id] = reverse('dictionary:protected_media', args=['']) + full_filename
                     except AttributeError:
                         continue
 
