@@ -378,20 +378,21 @@ def update_gloss(request, glossid):
                 #Remember the old video path if you're changing the name
                 if field == 'idgloss':
                     old_video_path = gloss.get_video_path()
-                    old_image_path = gloss.get_image_path()
+                    old_image_path = gloss.image_path_exists()
 
                     try:
                         old_extension = old_image_path.split('.')[-1]
                     except AttributeError:
                         old_extension = ''
 
+                # Alert: Note that if field is idgloss, the following code updates it
                 setattr(gloss,field,value)
                 gloss.save()
 
                 #Update the video location if you're changing the name
                 if field == 'idgloss':
                     new_video_path = gloss.get_video_path()
-                    new_image_path = gloss.get_image_path(check_existance=False)
+                    new_image_path_prefix = gloss.get_image_path_prefix()
 
                     try:
                         shutil.move(settings.MEDIA_ROOT+'/'+old_video_path,settings.MEDIA_ROOT+'/'+new_video_path)
@@ -401,7 +402,7 @@ def update_gloss(request, glossid):
                         pass
 
                     try:
-                        shutil.move(settings.MEDIA_ROOT+'/'+old_image_path,settings.MEDIA_ROOT+'/'+new_image_path+'.'+old_extension)
+                        shutil.move(settings.MEDIA_ROOT+'/'+old_image_path,settings.MEDIA_ROOT+'/'+new_image_path_prefix+'.'+old_extension)
 
                     #You don't have to do this if there's no image
                     except (IOError,TypeError):

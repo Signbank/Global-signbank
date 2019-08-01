@@ -13,7 +13,7 @@ import glob
 import shutil
 
 from signbank.dictionary.models import Gloss, DeletedGlossOrMedia
-from signbank.settings.base import GLOSS_VIDEO_DIRECTORY, WRITABLE_FOLDER
+from signbank.settings.base import GLOSS_VIDEO_DIRECTORY, WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY
 from signbank.settings.server_specific import FFMPEG_PROGRAM
 
 from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
@@ -41,28 +41,26 @@ def addvideo(request):
 
             redirect_url = form.cleaned_data['redirect']
 
-            # deal with any existing video for this sign
-
-            dir_path = os.path.join(WRITABLE_FOLDER.encode('utf-8'), GLOSS_VIDEO_DIRECTORY.encode('utf-8'))
+            dir_path = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY)
             sub_dir = gloss.idgloss[:2]
-            import urllib.parse
-            quoted_filename = gloss.idgloss  #urllib.parse.quote(gloss.idgloss, safe='')
-            filename = quoted_filename + '-' + str(gloss.pk) + '.mp4'
-            path = os.path.join(dir_path, sub_dir.encode('utf-8'), filename.encode('utf-8'))
+            if len(sub_dir) == 1:
+                sub_dir += '-'
 
-            goal_folder = os.path.join(dir_path, sub_dir.encode('utf-8'))
+            goal_folder = os.path.join(dir_path, sub_dir)
             exists_goal_folder = os.path.exists(goal_folder)
 
             goal_filename = gloss.idgloss + '-' + str(gloss.pk) + '.mp4'
-            goal_location_str = os.path.join(goal_folder, goal_filename.encode('utf-8'))
+            goal_location_str = os.path.join(goal_folder, goal_filename)
 
             # test for other video files for this gloss.pk with a different filename, such as version or old idgloss
             if exists_goal_folder:
-
                 files = [f for f in os.listdir(goal_folder)]
                 try:
                     for filename in files:
-                        unicode_filename = filename.decode('utf-8')
+                        try:
+                            unicode_filename = filename.decode('utf-8')
+                        except:
+                            unicode_filename = filename
 
                         if re.match('.*\-'+str(gloss.pk)+'(\.|_).*', unicode_filename):
                             file_to_remove = os.path.join(goal_folder,filename)
@@ -79,58 +77,36 @@ def addvideo(request):
 
             video_links_count = GlossVideo.objects.filter(gloss=gloss).count()
             video_links_objects = GlossVideo.objects.filter(gloss=gloss)
-
             if video_links_count > 0:
                 # delete the old video object links stored in the database
                 for video_object in video_links_objects:
                     video_object.delete()
             # make a new GlossVideo object for the new file, quote the name to account for special characters in the database
-            import urllib.parse
+            # import urllib.parse
             quoted_filename = vfile.name  #urllib.parse.quote(vfile.name, safe='')
             vfile.name = quoted_filename
             video = GlossVideo(videofile=vfile, gloss=gloss)
             video.save()
 
             quoted_base_filename = os.path.basename(vfile.name)
-            fname, fext = os.path.splitext(quoted_base_filename)
-            filename_small = fname + '_small' + fext
-            goal_folder_small = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, sub_dir)
-            goal_location_small = os.path.join(goal_folder_small, filename_small)
             goal_location_resize = WRITABLE_FOLDER + GLOSS_VIDEO_DIRECTORY + '/' + sub_dir + '/' + quoted_base_filename
-            #Make sure the rights of the new file are okay
-            if os.path.exists(path):
-                try:
-                    os.chmod(path,0o664)
-                except:
-                    print('system error changing video location rights: ', path)
-            else:
-                print('error with video destination inside of video/views.py:addvideo')
 
             log_entry = GlossVideoHistory(action="upload", gloss=gloss, actor=request.user,
                                           uploadfile=vfile, goal_location=goal_location_str)
             log_entry.save()
 
-            # Issue #197: convert to thumbnail
             try:
                 from CNGT_scripts.python.resizeVideos import VideoResizer
-                # local copy for debugging purposes
-                # from signbank.video.resizeVideos import VideoResizer
                 resizer = VideoResizer([goal_location_resize], FFMPEG_PROGRAM, 180, 0, 0)
                 resizer.run()
             except:
-                print("Error resizing video: ", path)
+                print("**********Error resizing video: ", goal_location_resize)
 
-            # Issue #214: generate still image
             try:
                 from signbank.tools import generate_still_image
-                generate_still_image(sub_dir, goal_folder_small, filename_small)
+                generate_still_image(sub_dir, goal_folder, quoted_base_filename)
             except:
-                print('Error generating still image')
-
-            if os.path.exists(goal_location_small):
-                os.chmod(goal_location_small,0o664)
-            else:
-                print('error with small video destination inside of video/views.py:addvideo')
+                print('*********Error generating still image')
 
             return redirect(redirect_url)
 
@@ -174,8 +150,15 @@ def deletevideo(request, videoid):
         quoted_path = os.path.join(fpath, quoted_filename + '.mp4')
 
         filename_small = quoted_filename + '_small' + '.mp4'
-        gloss_video_path_small = os.path.join(WRITABLE_FOLDER, filename_small)
+        quoted_path_small = os.path.join(fpath, filename_small)
+
+        gloss_video_path_small = os.path.join(WRITABLE_FOLDER, quoted_path_small)
         gloss_video_path = os.path.join(WRITABLE_FOLDER, quoted_path)
+
+        print('attempt to delete video files manually')
+        print('gloss video path: ', gloss_video_path)
+        print('gloss video path small: ', gloss_video_path_small)
+
         #Extra check: if the file is still there, delete it manually
         if os.path.exists(gloss_video_path):
             os.remove(gloss_video_path)

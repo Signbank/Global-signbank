@@ -302,8 +302,8 @@
     </div>
 
     <div>
-        {% if gloss.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_path}}" style="height:259px;width:auto;">
+        {% if gloss.image_path_exists %}
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.image_path_exists}}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 

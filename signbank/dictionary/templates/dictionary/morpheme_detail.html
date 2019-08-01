@@ -191,8 +191,8 @@
     </div>
 
     <div style="overflow:hidden;">
-        {% if morpheme.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{morpheme.get_image_path}}" style="height:259px;width:auto;">
+        {% if morpheme.image_path_exists %}
+            <img id="imageframe" src="{{protected_media_url}}{{morpheme.image_path_exists}}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 

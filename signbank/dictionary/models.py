@@ -1434,9 +1434,11 @@ class Gloss(models.Model):
 
         return (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms)
 
-    def get_image_path(self, check_existance=True):
-        """Returns the path within the writable and static folder"""
-        check_existance = True
+    def image_path_exists(self):
+        """Checks existence of the path within the writable and static folder"""
+        #  If the expected directory or file does not exist, returns None
+        # Used as a test in the templates
+
         foldername = self.idgloss[:2] + '/'
         filename_without_extension = self.idgloss + '-' + str(self.pk)
 
@@ -1445,30 +1447,48 @@ class Gloss(models.Model):
         if not os.path.exists(dir_path):
             # folder for gloss image storage not found, hence no image
             return None
-        if check_existance:
-            files = [f for f in os.listdir(dir_path.encode('utf-8'))]
-            for filename in files:
-                unicode_filename = filename.decode('utf-8')
+        files = [f for f in os.listdir(dir_path.encode('utf-8'))]
+        for filename in files:
+            unicode_filename = filename.decode('utf-8')
 
-                if not re.match(b'.*_\d+$', filename):
-                    existing_file_without_extension = os.path.splitext(filename)[0]
-                    unicode_existing_file_without_extension = existing_file_without_extension.decode('utf-8')
-                    if filename_without_extension == unicode_existing_file_without_extension:
+            if not re.match(b'.*_\d+$', filename):
+                existing_file_without_extension = os.path.splitext(filename)[0]
+                unicode_existing_file_without_extension = existing_file_without_extension.decode('utf-8')
+                if filename_without_extension == unicode_existing_file_without_extension:
+                    path_to_image = settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + unicode_filename
+                    return path_to_image
+                else:
+                    # try quoted filename
+                    import urllib.parse
+                    quoted_filename = urllib.parse.quote(self.idgloss, safe='')
+                    quoted_filename_without_extension = quoted_filename + '-' + str(self.pk)
+                    if quoted_filename_without_extension == unicode_existing_file_without_extension:
                         path_to_image = settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + unicode_filename
                         return path_to_image
-                    else:
-                        # try quoted filename
-                        import urllib.parse
-                        quoted_filename = urllib.parse.quote(self.idgloss, safe='')
-                        quoted_filename_without_extension = quoted_filename + '-' + str(self.pk)
-                        if quoted_filename_without_extension == unicode_existing_file_without_extension:
-                            path_to_image = settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + unicode_filename
-                            return path_to_image
+        # no matching image file found for this gloss
+        return None
 
-        else:
-            # check existence has been set to true at the start of the method, this is not executed
-            # note that this returns a filename without an extension, that looks wrong
-            return settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + filename_without_extension
+    def get_image_path(self):
+        """Returns the path within the writable and static folder"""
+        # does not check existence of file, merely constructs path
+
+        foldername = self.idgloss[:2]
+
+        if len(foldername) == 1:
+            foldername += '-'
+
+        return settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + self.idgloss + '-' + str(self.pk) + '.png'
+
+    def get_image_path_prefix(self):
+        """Returns the path within the writable and static folder"""
+        # does not check existence of file, merely constructs path
+
+        foldername = self.idgloss[:2]
+
+        if len(foldername) == 1:
+            foldername += '-'
+
+        return settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + self.idgloss + '-' + str(self.pk)
 
     def get_video_path(self):
 
@@ -1477,7 +1497,7 @@ class Gloss(models.Model):
         if len(foldername) == 1:
             foldername += '-'
 
-        return 'glossvideo/' + foldername + '/' + self.idgloss + '-' + str(self.pk) + '.mp4'
+        return settings.GLOSS_VIDEO_DIRECTORY + '/' + foldername + '/' + self.idgloss + '-' + str(self.pk) + '.mp4'
 
     def get_video_path_prefix(self):
 
@@ -1486,7 +1506,7 @@ class Gloss(models.Model):
         if len(foldername) == 1:
             foldername += '-'
 
-        return 'glossvideo/' + foldername + '/' + self.idgloss + '-' + str(self.pk)
+        return settings.GLOSS_VIDEO_DIRECTORY + '/' + foldername + '/' + self.idgloss + '-' + str(self.pk)
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
