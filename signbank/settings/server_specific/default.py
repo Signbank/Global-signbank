@@ -116,6 +116,8 @@ ECV_FILE = 'myecv.ecv'
 ECV_SETTINGS = {
     'include_phonology_and_frequencies': True,
 
+    'description_fields' : ['handedness', 'tokNo'],
+
     # The order of languages matters as the first will
     # be treated as default by ELAN
     'languages': [

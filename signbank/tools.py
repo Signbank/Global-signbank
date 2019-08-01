@@ -1757,13 +1757,16 @@ def write_ecv_file_for_dataset(dataset_name):
 def get_ecv_descripion_for_gloss(gloss, lang, include_phonology_and_frequencies=False):
     desc = ""
     if include_phonology_and_frequencies:
-        description_fields = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir',
-                              'movSh', 'tokNo',
-                              'tokNoSgnr']
+        try:
+            fields_data = [(field.name, field.field_choice_category, field.choices) for field in Gloss._meta.fields if field.name in ECV_SETTINGS['description_fields'] ]
+        except:
+            print('get_ecv_descripion_for_gloss error getting field_choice_category, set to empty list. Check models.py for choice list declarations.')
+            fields_data = []
 
-        for f in description_fields:
-            if f in FIELDS['phonology']:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldname_to_category(f))
+        for (f, fieldchoice_category, field_choices, field_choices) in fields_data:
+
+            if len(field_choices) > 0:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 machine_value = getattr(gloss, f)
                 value = machine_value_to_translated_human_value(machine_value, choice_list, lang)
                 if value is None:
@@ -1771,6 +1774,9 @@ def get_ecv_descripion_for_gloss(gloss, lang, include_phonology_and_frequencies=
             else:
                 value = get_value_for_ecv(gloss, f)
 
+            # potential error: this pretty printing assumes a particular ordering of the fields
+            # parens might not match if sorted otherwise
+            # these fields seem to be hard coded
             if f == 'handedness':
                 desc = value
             elif f == 'domhndsh':

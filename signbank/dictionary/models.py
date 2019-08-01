@@ -763,25 +763,6 @@ class Gloss(models.Model):
 
         return fields
 
-    @property
-    def get_phonology_display(self):
-        fields = []
-        for field in FIELDS['phonology']:
-            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter']:
-                # Get and save the choice list for this field
-                fieldchoice_category = fieldname_to_category(field)
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                field_value = getattr(self, field)
-                human_value = machine_value_to_translated_human_value(field_value, choice_list, LANGUAGE_CODE)
-                if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                    human_value = '   '
-                else:
-                    human_value = str(human_value)
-                fields = fields + [(field, human_value)]
-
-        return fields
-
     def navigation(self, is_staff):
         """Return a gloss navigation structure that can be used to
         generate next/previous links from within a template page"""
@@ -1870,7 +1851,11 @@ def generate_translated_choice_list_table():
         if f.choices:
             # print('inside if, field ', f.name)
             #         # if there are choices for the field, get the human values from the FieldChoice table
-            f_category = fieldname_to_category(f.name)
+            try:
+                f_category = f.field_choice_category
+            except AttributeError:
+                print('generate_translated_choice_list_table AttributeError on field ', f.name, '. Missing field_choice_category.')
+                continue
 
             if f_category == 'Handshape':
                 choice_list = Handshape.objects.all()

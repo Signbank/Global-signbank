@@ -745,9 +745,13 @@ def add_new_morpheme(request):
         oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=None)
 
     # Get and save the choice list for this field
-    field_category = fieldname_to_category('mrpType')
-    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-
+    try:
+        field_mrpType = Gloss._meta.get_field('mrpType')
+        field_category = field_mrpType.field_choice_category
+        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+    except:
+        print('add_new_morpheme request: error getting field category for mrpType, set to empty list. Check models.py for attribute field_choice_category.')
+        choice_list = []
     if len(choice_list) > 0:
         ordered_dict = choicelist_queryset_to_translated_dict(choice_list, request.LANGUAGE_CODE)
         oChoiceLists['mrpType'] = ordered_dict
@@ -2533,9 +2537,6 @@ def show_unassigned_glosses(request):
 
 def choice_lists(request):
 
-    FIELDS_TO_EXCLUDE = ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter']
-
     selected_datasets = get_selected_datasets_for_user(request.user)
     all_choice_lists = {}
 
@@ -2546,13 +2547,16 @@ def choice_lists(request):
 
     # Translate the machine values to human values in the correct language, and save the choice lists along the way
     for topic in ['main', 'phonology', 'semantics', 'frequency']:
-        for field in FIELDS[topic]:
 
-            if field in FIELDS_TO_EXCLUDE:
-                continue
+        try:
+            fields_with_choices = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in FIELDS[topic] and len(field.choices) > 0]
+        except:
+            print('choice_lists error getting field_choice_category, set to empty list. Check models.py for choice list declarations.')
+            fields_with_choices = []
+
+        for (field, fieldchoice_category) in fields_with_choices:
 
             # Get and save the choice list for this field
-            fieldchoice_category = fieldname_to_category(field)
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             if len(choice_list) > 0:
