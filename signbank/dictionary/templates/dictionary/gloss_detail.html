@@ -137,6 +137,33 @@
         console.log("Added field choices");
     });
 
+    //Keyboard shortcuts
+    document.onkeydown = checkKey;
+
+    function checkKey(e)
+    {
+        e = e || window.event;
+
+        if (e.keyCode == '80')
+        {
+            // p key
+            toggle_edit();
+            $('#phonology').collapse('show');
+        }
+        else if (e.keyCode == '77')
+        {
+            // m key
+            toggle_edit();
+            $('#morphology').collapse('show');
+        }
+        else if (e.keyCode == '83')
+        {
+            // s key
+            toggle_edit();
+            $('#semantics').collapse('show');
+        }
+    }
+
     </script>
 
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
