@@ -728,19 +728,22 @@ class Gloss(models.Model):
 
     def get_fields_dict(self):
 
+        try:
+            fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category, field.choices) for field in Gloss._meta.fields if field.name in settings.API_FIELDS ]
+        except:
+            print('get_fields_dict error getting field_choice_category or verbose_name, set to empty list. Check models.py for choice list declarations.')
+            fields_data = []
         fields = {}
-        for field in Gloss._meta.fields:
-            if field.name in settings.API_FIELDS:
-                try:
-                    category = field.field_choice_category
-                except:
-                    category = field.name
-                if category != field.name:
-                    if not category in fields:
-                        fields[category] = {}
-                    fields[category][field.verbose_name.title()] = str(getattr(self, field.name))
-                else:
-                    fields[field.verbose_name.title()] = str(getattr(self, field.name))
+        for (f, field_verbose_name, fieldchoice_category, field_choices) in fields_data:
+            if len(field_choices) > 0:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                machine_value = str(getattr(self, f))
+                field_value = machine_value_to_translated_human_value(machine_value, choice_list, settings.LANGUAGE_CODE)
+                if field_value is None:
+                    field_value = ' '
+            else:
+                field_value = str(getattr(self, f))
+            fields[field_verbose_name] = field_value
 
         # Annotation Idgloss translations
         if self.dataset:
@@ -759,7 +762,7 @@ class Gloss(models.Model):
         #
         fields["Parent glosses"] = ", ".join([x.__str__() for x in self.parent_glosses.all()])
 
-        fields["Link"] = signbank.settings.base.URL + '/dictionary/gloss/' + str(self.pk)
+        fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
 
         return fields
 

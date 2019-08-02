@@ -260,6 +260,67 @@ class BasicCRUDTests(TestCase):
                 print('testSearchForGlosses response 3: returned gloss has empty annotation translation')
         self.assertEqual(len(response.context['object_list']), 1)
 
+    def test_package_function(self):
+        #Create a client and log in
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
+        #Get a dataset
+        dataset_name = settings.DEFAULT_DATASET
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('dictionary.search_gloss', self.user)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        self.user.save()
+
+        # Create a lemma in order to store the dataset with the new gloss
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        default_language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=default_language)
+        new_lemmaidglosstranslation.save()
+
+        # #Create the gloss
+        new_gloss = Gloss()
+        # to test the package functionality of phonology fields, add some to settings.API_FIELDS
+        # for this test, the local settings file has added these two fields
+        # they are visible in the result if they appear in API_FIELDS
+        new_gloss.handedness = 4
+        new_gloss.locprim = 8
+
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss'
+            annotationIdgloss.save()
+
+        # set up keyword search parameter for default language
+        keyword_search_field_prefix = "keywords_"
+        keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
+
+        # keywords: this is merely part of the setup for the test
+        # add five keywords to the translations of this gloss
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c, d, e'})
+
+        changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
+
+        # this calculates the data retrieved by get_gloss_data for packages
+        # it shows the format/display of the returned gloss fields
+        # note that the value of the phonology fields are numerical rather than human readable
+        result = changed_gloss.get_fields_dict()
+        print('test_package_function: settings.API_FIELDS: ', settings.API_FIELDS)
+        print('test_package_function: get_fields_dict: ', result)
+
 #Deprecated?
 class BasicQueryTests(TestCase):
 
