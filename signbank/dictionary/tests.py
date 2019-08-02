@@ -740,6 +740,7 @@ class VideoTests(TestCase):
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
+        print(str(logged_in))
 
         NAME = 'thisisatemporarytestlemmaidglosstranslation'
 
@@ -749,6 +750,9 @@ class VideoTests(TestCase):
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
         test_dataset.default_language = default_language
         test_dataset.save()
+
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User granted permmission to change dataset.')
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
@@ -771,8 +775,6 @@ class VideoTests(TestCase):
         video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
         #We expect no video before
         response = client.get(video_url)
-        # print("Video url first test: {}".format(video_url))
-        # print("Video upload response first test: {}".format(response))
         if response.status_code == 200:
             print('The test video already exists in the archive: ', video_url)
             self.assertEqual(response.status_code,200)
@@ -781,36 +783,32 @@ class VideoTests(TestCase):
             self.assertEqual(response.status_code,302)
 
             #Upload the video
-            print('Proceding with video upload tests...')
+            print('Uploading the test video.')
             videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
             response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
                                                      'videofile': videofile,
                                                      'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
-            print("Post video response upload: {}".format(response))
             self.assertEqual(response.status_code,200)
 
         #We expect a video now
         response = client.get(video_url, follow=True)
-        # print("Video url second test: {}".format(video_url))
-        # print("Video upload response second test: {}".format(response))
         self.assertEqual(response.status_code,200)
 
         #You can't see it if you log out
         client.logout()
         print('User has logged out.')
-        print('Attempt to see video.')
+        print('Attempt to see video. Must log in.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
         #Remove the video
         client.login(username='test-user',password='test-user')
-        print('User has logged in.')
+        print('User has logged back in.')
         print('Delete the uploaded video.')
         response = client.post('/video/delete/'+str(new_gloss.pk))
-        print("Post delete video response: {}".format(response))
 
         #We expect no video anymore
-        print('Attempt to see video.')
+        print('Attempt to see video. It is not found.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
 
@@ -828,6 +826,9 @@ class VideoTests(TestCase):
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
         test_dataset.default_language = default_language
         test_dataset.save()
+
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User granted permmission to change dataset.')
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
@@ -847,49 +848,44 @@ class VideoTests(TestCase):
         client = Client()
         client.login(username='test-user', password='test-user')
 
-        video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
+        video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+new_gloss.idgloss+'-'+str(new_gloss.pk)+'.mp4'
+
         #We expect no video before
         response = client.get(video_url)
-        # print("Video url first test: {}".format(video_url))
-        # print("Video upload response first test: {}".format(response))
         if response.status_code == 200:
-            print('The test video already exists in the archive: ', video_url)
+            print('The test video already exists in the archive: ', video_url, ' (', type(video_url), ')')
             self.assertEqual(response.status_code,200)
         else:
-            print('The test video does not exist in the archive: ', video_url)
+            print('The test video does not exist in the archive: ', video_url, ' (', type(video_url), ')')
             self.assertEqual(response.status_code,302)
 
             #Upload the video
-            print('Proceding with video upload tests...')
             videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
+
             response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
                                                      'videofile': videofile,
                                                      'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
-            print("Post video response upload: {}".format(response))
             self.assertEqual(response.status_code,200)
 
         #We expect a video now
         response = client.get(video_url, follow=True)
-        # print("Video url second test: {}".format(video_url))
-        # print("Video upload response second test: {}".format(response))
         self.assertEqual(response.status_code,200)
 
         #You can't see it if you log out
         client.logout()
         print('User has logged out.')
-        print('Attempt to see video.')
+        print('Attempt to see video. Must log in.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
         #Remove the video
         client.login(username='test-user',password='test-user')
-        print('User has logged in.')
+        print('User has logged back in.')
         print('Delete the uploaded video.')
         response = client.post('/video/delete/'+str(new_gloss.pk))
-        print("Post delete video response: {}".format(response))
 
         #We expect no video anymore
-        print('Attempt to see video.')
+        print('Attempt to see video. It is not found.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
 
