@@ -2138,19 +2138,21 @@ class HandshapeDetailView(DetailView):
     def get(self, request, *args, **kwargs):
 
         match_machine_value = int(kwargs['pk'])
-
         try:
+            # GET A HANDSHAPE OBJECT WITH THE REQUESTED MACHINE VALUE
+            # see if Handshape object exists for this machine_value
             self.object = self.get_object()
-        except Http404:
 
+        except:
+            # SEE IF THERE IS A FIELDCHOICE FOR THIS HANDSHAPE MACHINE VALUE
             # check to see if this handshape has been created but not yet viewed
             # if that is the case, create a new handshape object and view that,
             # otherwise return an error
-
             handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
             handshape_not_created = 1
 
             for o in handshapes:
+                # look for this handshape machine value inside of FieldChoice Handshapes
                 if o.machine_value == match_machine_value: # only one match
                     new_id = o.machine_value
                     new_machine_value = o.machine_value
@@ -2164,9 +2166,23 @@ class HandshapeDetailView(DetailView):
                     handshape_not_created = 0
                     self.object = new_handshape
                     break
-
             if handshape_not_created:
+                # The handshape machine value does not exist as a Handshape
                 return HttpResponse('<p>Handshape not configured.</p>')
+
+        try:
+            # THE HANDSHAPE OBJECT EXISTS, MAKE SURE IT'S IN FIELDCHOICES
+            handshape_for_this_object = FieldChoice.objects.get(field__iexact='Handshape', machine_value=match_machine_value)
+        except:
+            print('Configure Handshape ', match_machine_value, ' in FieldChoice table.')
+            # the handshape object with the machine value has been either fetched or created and stored in self.object
+            this_handshape = self.object
+            this_field_choice = FieldChoice(machine_value=this_handshape.machine_value,
+                                            field='Handshape',
+                                            english_name=this_handshape.english_name,
+                                            dutch_name=this_handshape.dutch_name,
+                                            chinese_name=this_handshape.chinese_name)
+            this_field_choice.save()
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -2267,7 +2283,6 @@ class HandshapeDetailView(DetailView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
         return context
 
 
