@@ -45,17 +45,6 @@ def build_choice_list(field):
     return built_choice_list
 
 
-def build_choice_list2(field):
-    # this table is filled later in the code
-    global choice_list_table
-
-    try:
-        choices_for_field = choice_list_table[field]
-    except:
-        choices_for_field = []
-    return choices_for_field
-
-
 def get_default_language_id():
     language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
     if language is not None:
