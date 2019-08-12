@@ -50,17 +50,6 @@ def build_choice_list(field):
     return built_choice_list
 
 
-def build_choice_list2(field):
-    # this table is filled later in the code
-    global choice_list_table
-
-    try:
-        choices_for_field = choice_list_table[field]
-    except:
-        choices_for_field = []
-    return choices_for_field
-
-
 def get_default_language_id():
     language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
     if language is not None:
@@ -732,17 +721,23 @@ class Gloss(models.Model):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
 
     def get_fields_dict(self):
-        # this function might be obsolete
+
+        try:
+            fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category, field.choices) for field in Gloss._meta.fields if field.name in settings.API_FIELDS ]
+        except:
+            print('get_fields_dict error getting field_choice_category or verbose_name, set to empty list. Check models.py for choice list declarations.')
+            fields_data = []
         fields = {}
-        for field in Gloss._meta.fields:
-            if field.name in settings.API_FIELDS:
-                category = fieldname_to_category(field.name)
-                if category != field.name:
-                    if not category in fields:
-                        fields[category] = {}
-                    fields[category][field.verbose_name.title()] = str(getattr(self, field.name))
-                else:
-                    fields[field.verbose_name.title()] = str(getattr(self, field.name))
+        for (f, field_verbose_name, fieldchoice_category, field_choices) in fields_data:
+            if len(field_choices) > 0:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                machine_value = str(getattr(self, f))
+                field_value = machine_value_to_translated_human_value(machine_value, choice_list, settings.LANGUAGE_CODE)
+                if field_value is None:
+                    field_value = ' '
+            else:
+                field_value = str(getattr(self, f))
+            fields[field_verbose_name] = field_value
 
         # Annotation Idgloss translations
         if self.dataset:
@@ -761,26 +756,7 @@ class Gloss(models.Model):
         #
         fields["Parent glosses"] = ", ".join([x.__str__() for x in self.parent_glosses.all()])
 
-        fields["Link"] = signbank.settings.base.URL + '/dictionary/gloss/' + str(self.pk)
-
-        return fields
-
-    @property
-    def get_phonology_display(self):
-        fields = []
-        for field in FIELDS['phonology']:
-            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter']:
-                # Get and save the choice list for this field
-                fieldchoice_category = fieldname_to_category(field)
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                field_value = getattr(self, field)
-                human_value = machine_value_to_translated_human_value(field_value, choice_list, LANGUAGE_CODE)
-                if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                    human_value = '   '
-                else:
-                    human_value = str(human_value)
-                fields = fields + [(field, human_value)]
+        fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
 
         return fields
 
@@ -1172,13 +1148,14 @@ class Gloss(models.Model):
 
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
                 if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                    phonology_dict[field] = str(machine_value)
+                    phonology_dict[field] = machine_value
                 else:
                     phonology_dict[field] = None
             else:
-                phonology_dict[field] = str(machine_value)
+                phonology_dict[field] = machine_value
 
         return phonology_dict
+
 
     def minimalpairs_objects(self):
 
@@ -1190,20 +1167,10 @@ class Gloss(models.Model):
 
         phonology_for_gloss = self.phonology_matrix_minimalpairs()
 
-        handedness_of_this_gloss = phonology_for_gloss['handedness']
-        domhndsh_of_this_gloss = phonology_for_gloss['domhndsh']
-        subhndsh_of_this_gloss = phonology_for_gloss['subhndsh']
-        handCh_of_this_gloss = phonology_for_gloss['handCh']
-        relatArtic_of_this_gloss = phonology_for_gloss['relatArtic']
-        locprim_of_this_gloss = phonology_for_gloss['locprim']
-        relOriMov_of_this_gloss = phonology_for_gloss['relOriMov']
-        relOriLoc_of_this_gloss = phonology_for_gloss['relOriLoc']
-        oriCh_of_this_gloss = phonology_for_gloss['oriCh']
-        contType_of_this_gloss = phonology_for_gloss['contType']
-        movSh_of_this_gloss = phonology_for_gloss['movSh']
-        movDir_of_this_gloss = phonology_for_gloss['movDir']
-        repeat_of_this_gloss = phonology_for_gloss['repeat']
-        altern_of_this_gloss = phonology_for_gloss['altern']
+        if 'handedness' in phonology_for_gloss.keys():
+            handedness_of_this_gloss = phonology_for_gloss['handedness']
+        else:
+            handedness_of_this_gloss = None
 
         minimalpairs_objects_list = []
 
@@ -1214,121 +1181,75 @@ class Gloss(models.Model):
         except:
             handedness_X = ''
 
-        # there are lots of different values for undefined
+        # there are lots of different values for undefined, this handles legacy values
         if (handedness_of_this_gloss == 'None' or handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
                 handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
             return minimalpairs_objects_list
 
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
-        minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(id=self.id).filter(q) #.filter(id__in=[2,756,3808])
+        minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(id=self.id).filter(q)
 
-        from django.db.models import F, Value, When, Case, NullBooleanField
+        from django.db.models import When, Case, NullBooleanField, IntegerField
+        gloss_fields = {}
+        for f in Gloss._meta.fields:
+            gloss_fields[f.name] = f
+        for field in settings.MINIMAL_PAIRS_FIELDS:
+            value_of_this_field = phonology_for_gloss.get(field)
+            gloss_field = gloss_fields[field]
 
-        if handedness_of_this_gloss:
-            # print('handedness of gloss (true): ', handedness_of_this_gloss)
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_handedness=Case(When(handedness__exact=handedness_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            # print('handedness of gloss (false): ', handedness_of_this_gloss)
+            if gloss_field.choices:
+                # field is a choice list
+                if value_of_this_field != None:
+                    different_field = 'different_' + field
+                    field_compare = field + '__exact'
 
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_handedness=Case(When(handedness__isnull=True, then=0), default=1, output_field=NullBooleanField()))
+                    different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
+                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
-        if domhndsh_of_this_gloss:
-            # print('domhndsh of gloss (true): ', domhndsh_of_this_gloss)
+                else:
+                    different_field = 'different_' + field
+                    field_compare = field + '__exact'
+                    field_isnull = field + '__isnull'
+                    # due to legacy data, possible empty_values are: None, '', '0', 'None', ' ', '-'
+                    different_case = Case(When(**{ field_compare : '' , 'then' : 0 }),
+                                          When(**{field_isnull: True, 'then': 0}),
+                                          When(**{field_compare: 0, 'then': 0}),
+                                          When(**{field_compare: '0', 'then': 0}),
+                                          When(**{field_compare: '-', 'then': 0}),
+                                          When(**{field_compare: ' ', 'then': 0}),
+                                          When(**{field_compare: 'None', 'then': 0}),
+                                          default=1, output_field=IntegerField())
+                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_domhndsh=Case(When(domhndsh__exact=domhndsh_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            # print('domhndsh of gloss (false): ', domhndsh_of_this_gloss)
+            else:
+                # field is a Boolean
+                different_field = 'different_' + field
+                field_compare = field + '__exact'
+                if value_of_this_field == 'True':
+                    different_case = Case(When(**{ field_compare : True , 'then' : 0 }), default=1, output_field=IntegerField())
 
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_domhndsh=Case(When(domhndsh__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
+                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
-        if subhndsh_of_this_gloss:
-            # print('subhndsh of gloss (true): ', subhndsh_of_this_gloss)
+                else:
+                    # Boolean values might be empty, so compare to True and invert
+                    different_case = Case(When(**{ field_compare : True , 'then': 1 }), default=0, output_field=IntegerField())
 
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_subhndsh=Case(When(subhndsh__exact=subhndsh_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            # print('subhndsh of gloss (false): ', subhndsh_of_this_gloss)
+                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_subhndsh=Case(When(subhndsh__in=[None, '', '0'], then=0),
-                                                                                               default=0, output_field=NullBooleanField()))
+        # construct extra filter to check that the number of different fields is exactly 1
+        extra_comparison = ' + '.join('different_'+field for field in settings.MINIMAL_PAIRS_FIELDS)
+        extra_comparison = '(' + extra_comparison + ') = 1'
+        extra_comparison = [ extra_comparison ]
 
-        if handCh_of_this_gloss:
-            # print('handCh of gloss (true): ', handCh_of_this_gloss)
-
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_handCh=Case(When(handCh__exact=handCh_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            # print('handCh of gloss (false): ', handCh_of_this_gloss)
-
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_handCh=Case(When(handCh__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
-
-        if relatArtic_of_this_gloss:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_relatArtic=Case(When(relatArtic__exact=relatArtic_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_relatArtic=Case(When(relatArtic__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
-
-        if locprim_of_this_gloss:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_locprim=Case(When(locprim__exact=locprim_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_locprim=Case(When(locprim__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
-
-        if relOriMov_of_this_gloss:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_relOriMov=Case(When(relOriMov__exact=relOriMov_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_relOriMov=Case(When(relOriMov__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
-
-        if relOriLoc_of_this_gloss:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_relOriLoc=Case(When(relOriLoc__exact=relOriLoc_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_relOriLoc=Case(When(relOriLoc__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
-
-
-        if oriCh_of_this_gloss:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_oriCh=Case(When(oriCh__exact=oriCh_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_oriCh=Case(When(oriCh__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
-
-        if contType_of_this_gloss:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_contType=Case(When(contType__exact=contType_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_contType=Case(When(contType__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
-
-        if movSh_of_this_gloss:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_movSh=Case(When(movSh__exact=movSh_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_movSh=Case(When(movSh__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
-
-        if movDir_of_this_gloss:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_movDir=Case(When(movDir__exact=movDir_of_this_gloss, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_movDir=Case(When(movDir__in=[None, '', '0'], then=0), default=0, output_field=NullBooleanField()))
-
-
-        if repeat_of_this_gloss == 'True':
-            # print('repeat of gloss (true): ', repeat_of_this_gloss)
-
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_repeat=Case(When(repeat__exact=True, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            # print('repeat of gloss (false): ', repeat_of_this_gloss)
-
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_repeat=Case(When(repeat__exact=True, then=1), default=0, output_field=NullBooleanField()))
-
-        if altern_of_this_gloss == 'True':
-            # print('altern of gloss (true): ', altern_of_this_gloss)
-
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_altern=Case(When(altern__exact=True, then=0), default=1, output_field=NullBooleanField()))
-        else:
-            # print('altern of gloss (false): ', altern_of_this_gloss)
-
-            minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(different_altern=Case(When(altern__exact=True, then=1), default=0, output_field=NullBooleanField()))
-
-        minimal_pairs_fields_qs = minimal_pairs_fields_qs.values('id', 'different_handedness', 'different_domhndsh', 'different_subhndsh', 'different_handCh', 'different_relatArtic', 'different_locprim', 'different_relOriMov', 'different_relOriLoc', 'different_oriCh', 'different_contType', 'different_movSh', 'different_movDir', 'different_repeat', 'different_altern')
-
-        minimal_pairs_fields_qs = minimal_pairs_fields_qs.extra(where=["(different_handedness + different_domhndsh + different_subhndsh + different_handCh + different_relatArtic + different_locprim + different_relOriMov + different_relOriLoc + different_oriCh + different_contType + different_movSh + different_movDir + different_repeat + different_altern) = 1"])
+        minimal_pairs_fields_qs = minimal_pairs_fields_qs.extra(where= extra_comparison )
 
         for o in minimal_pairs_fields_qs:
-            next_gloss = Gloss.objects.get(pk=o['id'])
+            # return only the minimal pairs glosses, without the annotations
+            # since these were previously reduced to values for computation, fetch the objects
+            next_gloss = Gloss.objects.get(pk=o.__dict__['id'])
             minimalpairs_objects_list.append(next_gloss)
-        #
+
         return minimalpairs_objects_list
 
 
@@ -1354,9 +1275,9 @@ class Gloss(models.Model):
         if (len(nep) < 2):
             return minimal_pairs_fields
 
-        wmp = self.minimalpairs_objects()
+        mpos =  self.minimalpairs_objects()
 
-        for o in wmp:
+        for o in mpos:
             different_fields = dict()
             onep = o.non_empty_phonology()
             phonology_for_other_gloss = o.phonology_matrix_minimalpairs()
@@ -1698,32 +1619,6 @@ class Gloss(models.Model):
 
         return d
 
-    def get_choice_lists(self):
-        """Return JSON for the location choice list"""
-
-        choice_lists = {}
-
-        # Start with your own choice lists
-        for fieldname in ['handedness', 'locprim', 'domhndsh', 'subhndsh',
-                          'relatArtic', 'absOriFing', 'relOriMov',
-                          'relOriLoc', 'handCh', 'repeat', 'altern', 'movSh',
-                          'movDir', 'movMan', 'contType', 'namEnt', 'oriCh', 'semField']:
-            # Get the list of choices for this field
-            li = self._meta.get_field(fieldname).choices
-
-            # Sort the list
-            sorted_li = sorted(li, key=lambda x: x[1])
-
-            # Put it in another format
-            reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
-            choice_lists[fieldname] = OrderedDict(reformatted_li)
-
-        # Choice lists for other models
-        choice_lists['morphology_role'] = [human_value for machine_value, human_value in
-                                           build_choice_list('MorphologyType')]
-
-        return json.dumps(choice_lists)
-
 
 # register Gloss for tags
 try:
@@ -1912,7 +1807,11 @@ def generate_translated_choice_list_table():
         if f.choices:
             # print('inside if, field ', f.name)
             #         # if there are choices for the field, get the human values from the FieldChoice table
-            f_category = fieldname_to_category(f.name)
+            try:
+                f_category = f.field_choice_category
+            except AttributeError:
+                print('generate_translated_choice_list_table AttributeError on field ', f.name, '. Missing field_choice_category.')
+                continue
 
             if f_category == 'Handshape':
                 choice_list = Handshape.objects.all()
@@ -1948,11 +1847,20 @@ def generate_translated_choice_list_table():
                         except AttributeError:
                             # in case the language name is empty for the field choice
                             human_value = getattr(c, 'english_name')
+                        except:
+                            # this should not happen, it seems the english_name field was removed from the model
+                            # probably a default setting is needed
+                            print('There is no field english_name in the FieldChoice table.')
+                            human_value = ''
                         translations_for_choice[l_name] = human_value
                     field_translated_choice_list[choices_machine_value] = translations_for_choice
                 #
                 temp_translated_choice_lists_table[f.name] = field_translated_choice_list
-    # print('generated translated choice list table: ', temp_translated_choice_lists_table)
+            else:
+                if f.name in FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']:
+                    # if there are no choices for fields we expect choices for, print something to the log
+                    temp_translated_choice_lists_table[f.name] = field_translated_choice_list
+                    print('There are no choices for ', f_category, ' in the FieldChoice table of the database.')
 
     return temp_translated_choice_lists_table
 

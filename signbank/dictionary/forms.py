@@ -5,7 +5,7 @@ from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
                                         MorphologyDefinition, build_choice_list, OtherMedia, Handshape, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
-                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, fieldname_to_category
+                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
@@ -306,10 +306,13 @@ class GlossSearchForm(forms.ModelForm):
 
         field_language = language_code
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and len(field.choices) > 0]
-        for fieldname in multiple_select_gloss_fields:
+        try:
+            multiple_select_gloss_fields = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+        except:
+            print('GlossSearchForm error getting multiple_select_gloss_fields, set to empty list. Check models.py for choice list declarations.')
+            multiple_select_gloss_fields = []
+        for (fieldname, field_category) in multiple_select_gloss_fields:
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
-            field_category = fieldname_to_category(fieldname)
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = [('0','---------')] + choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
@@ -404,10 +407,13 @@ class MorphemeSearchForm(forms.ModelForm):
 
         field_language = language_code
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
-        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and len(field.choices) > 0]
-        for fieldname in multiple_select_morpheme_fields:
+        try:
+            multiple_select_morpheme_fields = [(field.name, field.field_choice_category) for field in Morpheme._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+        except:
+            print('MorphemeSearchForm error getting multiple_select_morpheme_fields, set to empty list. Check models.py for choice list declarations.')
+            multiple_select_morpheme_fields = []
+        for (fieldname, field_category) in multiple_select_morpheme_fields:
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
-            field_category = fieldname_to_category(fieldname)
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = [('0','---------')] + choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,

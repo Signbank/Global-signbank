@@ -1421,10 +1421,11 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, d
     static_urls = {}
 
     for subfolder_name in os.listdir(full_root_path):
-        if os.path.isdir(full_root_path+subfolder_name):
-            for filename in os.listdir(full_root_path+subfolder_name):
-
-                if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
+        full_path = os.path.join(full_root_path, subfolder_name)
+        if os.path.isdir(full_path):
+            for filename in os.listdir(full_path):
+                full_filename = os.path.join(full_path, filename)
+                if os.path.getmtime(full_filename) > since_timestamp:
                     res = re.search(r'(.+)\.[^\.]*', filename)
 
                     try:
@@ -1432,9 +1433,7 @@ def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, d
                         re_result = re.match(r'.*\-(\d+)', gloss_id)
 
                         if dataset is None or int(re_result.group(1)) in dataset_gloss_ids:
-                            static_urls[gloss_id] = reverse('dictionary:protected_media',
-                                                            args=['']) + root_folder + '/' + quote(
-                                subfolder_name) + '/' + quote(filename)
+                            static_urls[gloss_id] = reverse('dictionary:protected_media', args=['']) + full_filename
                     except AttributeError:
                         continue
 
@@ -1779,13 +1778,16 @@ def write_ecv_file_for_dataset(dataset_name):
 def get_ecv_descripion_for_gloss(gloss, lang, include_phonology_and_frequencies=False):
     desc = ""
     if include_phonology_and_frequencies:
-        description_fields = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir',
-                              'movSh', 'tokNo',
-                              'tokNoSgnr']
+        try:
+            fields_data = [(field.name, field.field_choice_category, field.choices) for field in Gloss._meta.fields if field.name in ECV_SETTINGS['description_fields'] ]
+        except:
+            print('get_ecv_descripion_for_gloss error getting field_choice_category, set to empty list. Check models.py for choice list declarations.')
+            fields_data = []
 
-        for f in description_fields:
-            if f in FIELDS['phonology']:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldname_to_category(f))
+        for (f, fieldchoice_category, field_choices, field_choices) in fields_data:
+
+            if len(field_choices) > 0:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 machine_value = getattr(gloss, f)
                 value = machine_value_to_translated_human_value(machine_value, choice_list, lang)
                 if value is None:
@@ -1793,6 +1795,9 @@ def get_ecv_descripion_for_gloss(gloss, lang, include_phonology_and_frequencies=
             else:
                 value = get_value_for_ecv(gloss, f)
 
+            # potential error: this pretty printing assumes a particular ordering of the fields
+            # parens might not match if sorted otherwise
+            # these fields seem to be hard coded
             if f == 'handedness':
                 desc = value
             elif f == 'domhndsh':

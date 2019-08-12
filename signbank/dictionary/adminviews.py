@@ -109,12 +109,12 @@ def order_queryset_by_sort_order(get, qs):
     # Set the default sort order
     default_sort_order = True
     sOrder = 'annotationidglosstranslation__text'  # Default sort order if nothing is specified
+
     # See if the form contains any sort-order information
     if ('sortOrder' in get and get['sortOrder'] != ''):
         # Take the user-indicated sort order
         sOrder = get['sortOrder']
         default_sort_order = False
-
     # The ordering method depends on the kind of field:
     # (1) text fields are ordered straightforwardly
     # (2) fields made from a choice_list need special treatment
@@ -128,7 +128,7 @@ def order_queryset_by_sort_order(get, qs):
         ordered = order_queryset_by_annotationidglosstranslation(qs, sOrder)
     elif "lemmaidglosstranslation_order_" in sOrder:
         ordered = order_queryset_by_lemmaidglosstranslation(qs, sOrder)
-    elif "translation_" in sOrder:
+    elif sOrder.startswith("translation_") or sOrder.startswith("-translation_"):
         ordered = order_queryset_by_translation(qs, sOrder)
     else:
         # Use straightforward ordering on field [sOrder]
@@ -138,10 +138,9 @@ def order_queryset_by_sort_order(get, qs):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
             bReversed = True
-        language_code_2char = sOrder[-2:]
         if default_sort_order:
-            lang_attr_name = DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-            sort_language = 'annotationidglosstranslation__language__' + language_code_2char
+            lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+            sort_language = 'annotationidglosstranslation__language__language_code_2char'
             qs_empty = qs.filter(**{sOrder+'__isnull': True})
             qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
             qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name})
@@ -2139,19 +2138,21 @@ class HandshapeDetailView(DetailView):
     def get(self, request, *args, **kwargs):
 
         match_machine_value = int(kwargs['pk'])
-
         try:
+            # GET A HANDSHAPE OBJECT WITH THE REQUESTED MACHINE VALUE
+            # see if Handshape object exists for this machine_value
             self.object = self.get_object()
-        except Http404:
 
+        except:
+            # SEE IF THERE IS A FIELDCHOICE FOR THIS HANDSHAPE MACHINE VALUE
             # check to see if this handshape has been created but not yet viewed
             # if that is the case, create a new handshape object and view that,
             # otherwise return an error
-
             handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
             handshape_not_created = 1
 
             for o in handshapes:
+                # look for this handshape machine value inside of FieldChoice Handshapes
                 if o.machine_value == match_machine_value: # only one match
                     new_id = o.machine_value
                     new_machine_value = o.machine_value
@@ -2165,9 +2166,23 @@ class HandshapeDetailView(DetailView):
                     handshape_not_created = 0
                     self.object = new_handshape
                     break
-
             if handshape_not_created:
+                # The handshape machine value does not exist as a Handshape
                 return HttpResponse('<p>Handshape not configured.</p>')
+
+        try:
+            # THE HANDSHAPE OBJECT EXISTS, MAKE SURE IT'S IN FIELDCHOICES
+            handshape_for_this_object = FieldChoice.objects.get(field__iexact='Handshape', machine_value=match_machine_value)
+        except:
+            print('Configure Handshape ', match_machine_value, ' in FieldChoice table.')
+            # the handshape object with the machine value has been either fetched or created and stored in self.object
+            this_handshape = self.object
+            this_field_choice = FieldChoice(machine_value=this_handshape.machine_value,
+                                            field='Handshape',
+                                            english_name=this_handshape.english_name,
+                                            dutch_name=this_handshape.dutch_name,
+                                            chinese_name=this_handshape.chinese_name)
+            this_field_choice.save()
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -2234,29 +2249,31 @@ class HandshapeDetailView(DetailView):
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
         # Check the type of the current search results
+        if 'search_results' in self.request.session.keys():
+            if self.request.session['search_results'] and len(self.request.session['search_results']) > 0:
+                if 'gloss' in self.request.session['search_results'][0].keys():
+                    self.request.session['search_results'] = None
 
-        if self.request.session['search_results'] and len(self.request.session['search_results']) > 0:
-            if 'gloss' in self.request.session['search_results'][0].keys():
-                self.request.session['search_results'] = None
+            # if there are no current handshape search results in the current session, display all of them in the navigation bar
+            if self.request.session['search_type'] != 'handshape' or self.request.session['search_results'] == None:
 
-        # if there are no current handshape search results in the current session, display all of them in the navigation bar
-        if self.request.session['search_type'] != 'handshape' or self.request.session['search_results'] == None:
+                self.request.session['search_type'] = self.search_type
 
-            self.request.session['search_type'] = self.search_type
+                qs = Handshape.objects.all().order_by('machine_value')
 
-            qs = Handshape.objects.all().order_by('machine_value')
+                items = []
 
-            items = []
+                for item in qs:
+                    if self.request.LANGUAGE_CODE == 'nl':
+                        items.append(dict(id=item.machine_value, handshape=item.dutch_name))
+                    elif self.request.LANGUAGE_CODE == 'zh-hans':
+                        items.append(dict(id=item.machine_value, handshape=item.chinese_name))
+                    else:
+                        items.append(dict(id=item.machine_value, handshape=item.english_name))
 
-            for item in qs:
-                if self.request.LANGUAGE_CODE == 'nl':
-                    items.append(dict(id=item.machine_value, handshape=item.dutch_name))
-                elif self.request.LANGUAGE_CODE == 'zh-hans':
-                    items.append(dict(id=item.machine_value, handshape=item.chinese_name))
-                else:
-                    items.append(dict(id=item.machine_value, handshape=item.english_name))
-
-            self.request.session['search_results'] = items
+                self.request.session['search_results'] = items
+        else:
+            self.request.session['search_results'] = None
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -2266,7 +2283,6 @@ class HandshapeDetailView(DetailView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
         return context
 
 
@@ -3923,7 +3939,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
-    # print('********************** ajax minimal pairs on gloss ', str(gloss_id))
     try:
         minimalpairs_objects = this_gloss.minimal_pairs_dict()
     except:
@@ -3937,7 +3952,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
         if translations_this_gloss is not None and len(translations_this_gloss) > 0:
             translation_focus_gloss = translations_this_gloss[0].text
-
     result = []
     for minimalpairs_object, minimal_pairs_dict in minimalpairs_objects.items():
 
@@ -3946,6 +3960,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         other_gloss_dict['other_gloss'] = minimalpairs_object
 
         for field, values in minimal_pairs_dict.items():
+
             other_gloss_dict['field'] = field
             other_gloss_dict['field_display'] = values[0]
             other_gloss_dict['field_category'] = values[1]
@@ -3953,14 +3968,24 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             from signbank.dictionary.models import translated_choice_lists_table
             focus_gloss_choice = values[2]
             other_gloss_choice = values[3]
+
+            if focus_gloss_choice:
+                pass
+            else:
+                focus_gloss_choice = ''
+            if other_gloss_choice:
+                pass
+            else:
+                other_gloss_choice = ''
+
             field_kind = values[4]
             if field_kind == 'list':
                 if focus_gloss_choice:
+
                     try:
                         focus_gloss_value = translated_choice_lists_table[field][int(focus_gloss_choice)][language_code]
                     except:
                         focus_gloss_value = 'ERROR_' + focus_gloss_choice
-                        print('Error for gloss ', minimalpairs_object.id, ' on stored choice (field: ', field, ', choice: ', focus_gloss_choice, ')')
                 else:
                     focus_gloss_value = '-'
             elif field_kind == 'check':
@@ -3977,11 +4002,11 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             other_gloss_dict['focus_gloss_value'] = focus_gloss_value
             if field_kind == 'list':
                 if other_gloss_choice:
+
                     try:
                         other_gloss_value = translated_choice_lists_table[field][int(other_gloss_choice)][language_code]
                     except:
                         other_gloss_value = 'ERROR_' + other_gloss_choice
-                        print('Error for gloss ', minimalpairs_object.id, ' on stored choice (field: ', field, ', choice: ', other_gloss_choice, ')')
                 else:
                     other_gloss_value = '-'
             elif field_kind == 'check':
@@ -3997,7 +4022,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             other_gloss_dict['other_gloss_value'] = other_gloss_value
             other_gloss_dict['field_kind'] = field_kind
 
-        # print('min pairs other gloss dict: ', other_gloss_dict)
         translation = ""
         translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
         if translations is not None and len(translations) > 0:
@@ -4008,7 +4032,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                 translation = translations[0].text
 
         other_gloss_dict['other_gloss_idgloss'] = translation
-
         result.append(other_gloss_dict)
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):

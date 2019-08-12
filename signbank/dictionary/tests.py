@@ -260,6 +260,67 @@ class BasicCRUDTests(TestCase):
                 print('testSearchForGlosses response 3: returned gloss has empty annotation translation')
         self.assertEqual(len(response.context['object_list']), 1)
 
+    def test_package_function(self):
+        #Create a client and log in
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
+        #Get a dataset
+        dataset_name = settings.DEFAULT_DATASET
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('dictionary.search_gloss', self.user)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        self.user.save()
+
+        # Create a lemma in order to store the dataset with the new gloss
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        default_language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=default_language)
+        new_lemmaidglosstranslation.save()
+
+        # #Create the gloss
+        new_gloss = Gloss()
+        # to test the package functionality of phonology fields, add some to settings.API_FIELDS
+        # for this test, the local settings file has added these two fields
+        # they are visible in the result if they appear in API_FIELDS
+        new_gloss.handedness = 4
+        new_gloss.locprim = 8
+
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss'
+            annotationIdgloss.save()
+
+        # set up keyword search parameter for default language
+        keyword_search_field_prefix = "keywords_"
+        keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
+
+        # keywords: this is merely part of the setup for the test
+        # add five keywords to the translations of this gloss
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c, d, e'})
+
+        changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
+
+        # this calculates the data retrieved by get_gloss_data for packages
+        # it shows the format/display of the returned gloss fields
+        # note that the value of the phonology fields are numerical rather than human readable
+        result = changed_gloss.get_fields_dict()
+        print('test_package_function: settings.API_FIELDS: ', settings.API_FIELDS)
+        print('test_package_function: get_fields_dict: ', result)
+
 #Deprecated?
 class BasicQueryTests(TestCase):
 
@@ -740,6 +801,7 @@ class VideoTests(TestCase):
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
+        print(str(logged_in))
 
         NAME = 'thisisatemporarytestlemmaidglosstranslation'
 
@@ -749,6 +811,9 @@ class VideoTests(TestCase):
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
         test_dataset.default_language = default_language
         test_dataset.save()
+
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User granted permmission to change dataset.')
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
@@ -771,8 +836,6 @@ class VideoTests(TestCase):
         video_url = '/dictionary/protected_media/glossvideo/'+test_dataset.acronym+'/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
         #We expect no video before
         response = client.get(video_url)
-        # print("Video url first test: {}".format(video_url))
-        # print("Video upload response first test: {}".format(response))
         if response.status_code == 200:
             print('The test video already exists in the archive: ', video_url)
             self.assertEqual(response.status_code,200)
@@ -781,36 +844,32 @@ class VideoTests(TestCase):
             self.assertEqual(response.status_code,302)
 
             #Upload the video
-            print('Proceding with video upload tests...')
+            print('Uploading the test video.')
             videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
             response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
                                                      'videofile': videofile,
                                                      'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
-            print("Post video response upload: {}".format(response))
             self.assertEqual(response.status_code,200)
 
         #We expect a video now
         response = client.get(video_url, follow=True)
-        # print("Video url second test: {}".format(video_url))
-        # print("Video upload response second test: {}".format(response))
         self.assertEqual(response.status_code,200)
 
         #You can't see it if you log out
         client.logout()
         print('User has logged out.')
-        print('Attempt to see video.')
+        print('Attempt to see video. Must log in.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
         #Remove the video
         client.login(username='test-user',password='test-user')
-        print('User has logged in.')
+        print('User has logged back in.')
         print('Delete the uploaded video.')
         response = client.post('/video/delete/'+str(new_gloss.pk))
-        print("Post delete video response: {}".format(response))
 
         #We expect no video anymore
-        print('Attempt to see video.')
+        print('Attempt to see video. It is not found.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
 
@@ -828,6 +887,9 @@ class VideoTests(TestCase):
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
         test_dataset.default_language = default_language
         test_dataset.save()
+
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User granted permmission to change dataset.')
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
@@ -859,22 +921,19 @@ class VideoTests(TestCase):
 
         #We expect no video before
         response = client.get(video_url)
-        # print("Video url first test: {}".format(video_url))
-        # print("Video upload response first test: {}".format(response))
         if response.status_code == 200:
-            print('The test video already exists in the archive: ', video_url)
+            print('The test video already exists in the archive: ', video_url, ' (', type(video_url), ')')
             self.assertEqual(response.status_code,200)
         else:
-            print('The test video does not exist in the archive: ', video_url)
+            print('The test video does not exist in the archive: ', video_url, ' (', type(video_url), ')')
             self.assertEqual(response.status_code,302)
 
             #Upload the video
-            print('Proceding with video upload tests...')
             videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
+
             response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
                                                      'videofile': videofile,
                                                      'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
-            print("Post video response upload: {}".format(response))
             self.assertEqual(response.status_code,200)
 
         #We expect a video now
@@ -886,19 +945,18 @@ class VideoTests(TestCase):
         #You can't see it if you log out
         client.logout()
         print('User has logged out.')
-        print('Attempt to see video.')
+        print('Attempt to see video. Must log in.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
         #Remove the video
         client.login(username='test-user',password='test-user')
-        print('User has logged in.')
+        print('User has logged back in.')
         print('Delete the uploaded video.')
         response = client.post('/video/delete/'+str(new_gloss.pk))
-        print("Post delete video response: {}".format(response))
 
         #We expect no video anymore
-        print('Attempt to see video.')
+        print('Attempt to see video. It is not found.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
 
@@ -1309,6 +1367,136 @@ class ManageDatasetTests(TestCase):
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
                                                             language.name, self.test_dataset.acronym))
+
+
+class HandshapeTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        assign_perm('dictionary.search_gloss', self.user)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        self.user.save()
+
+    def create_handshape(self):
+
+        new_machine_value = 588
+        new_english_name = 'thisisanewtesthandshape_en'
+        new_dutch_name = 'thisisanewtesthandshape_nl'
+
+        new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name)
+        new_handshape.save()
+
+        print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.english_name, new_handshape.dutch_name)
+
+        return new_handshape
+
+    def test_create_handshape(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
+        # assign_perm('dictionary.search_gloss', self.user)
+        # assign_perm('dictionary.add_gloss', self.user)
+        # assign_perm('dictionary.change_gloss', self.user)
+
+        self.client.login(username='test-user', password='test-user')
+
+        #Add info of the dataset to the session (normally done in the detail view)
+        self.client.session['datasetid'] = test_dataset.pk
+        self.client.session['search_results'] = None
+        self.client.session.save()
+
+        # new_machine_value = 588
+        # new_english_name = 'thisisanewtesthandshape_en'
+        # new_dutch_name = 'thisisanewtesthandshape_nl'
+        #
+        # new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name)
+        # new_handshape.save()
+        #
+        # print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.english_name, new_handshape.dutch_name)
+
+        new_handshape = self.create_handshape()
+        #We can now request a detail view
+        print('Test HandshapeDetailView for new handshape.')
+        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+        self.assertEqual(response.status_code,200)
+
+        # Querying the new handshape puts it into FieldChoice
+        field_choices_handshapes = FieldChoice.objects.filter(field='Handshape')
+        machine_values_of_field_choices_handshapes = [ h.machine_value for h in field_choices_handshapes]
+        print('Test that the new handshape is in FieldChoice for Handshape')
+        self.assertIn(new_handshape.machine_value, machine_values_of_field_choices_handshapes)
+
+    def test_handshape_choices(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
+
+        # Create 10 lemmas for use in testing
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,4):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        # print('created lemmas: ', lemmas)
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        # Create 10 glosses that start out being the same
+        glosses = {}
+        for gloss_id in range(1,4):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : str(test_handshape1.machine_value),
+                'subhndsh': str(test_handshape2.machine_value),
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        # print('created glosses: ', glosses)
+
+        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
+
+        self.client.login(username='test-user', password='test-user')
+
+        new_handshape = self.create_handshape()
+        #We can now request a detail view
+        print('Test HandshapeDetailView for new handshape.')
+        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+        self.assertEqual(response.status_code,200)
+
+        # Find out if the new handshape appears in the Field Choice menus
+        print("Update a gloss to use the new handshape, using the choice list")
+        self.client.post('/dictionary/update/gloss/'+str(glosses[1].pk),{'id':'domhndsh','value':'_588'})
+
+        changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
+        print('Confirm the gloss was updated to the new handshape.')
+        self.assertEqual(changed_gloss.domhndsh, '588')
 
 
 class FieldChoiceTests(TestCase):
@@ -1799,6 +1987,9 @@ class testSettings(TestCase):
         full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
         all_settings = [ f for f in os.listdir(full_root_path) if isfile(join(full_root_path, f))
                                     and f.endswith('.py') and f != '__init__.py' and f != 'server_specific.py']
+        print('Checking settings files: ', all_settings)
+        # check that one of the files is the default file
+        self.assertIn('default.py', all_settings)
         all_settings_strings = {}
         for next_file in all_settings:
             all_settings_strings[next_file] = []
@@ -1834,11 +2025,10 @@ class testSettings(TestCase):
 
         for first_file in all_settings:
             for second_file in all_settings:
-                if first_file != second_file:
-                    if comparison_table_first_not_in_second[first_file][second_file]:
-                        print('Settings ', first_file, ' not in  ', second_file, ': ', comparison_table_first_not_in_second[first_file][second_file])
-                    else:
-                        print('Settings ', first_file, ' also in ', second_file)
+                # the default.py file is part of the installation (should this filename be a setting?)
+                # check that other settings files do not contain settings that are not in the default settings file
+                if first_file != second_file and second_file == 'default.py':
+                    self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
 
 class MinimalPairsTests(TestCase):
 
@@ -1997,6 +2187,170 @@ class MinimalPairsTests(TestCase):
                 # this test makes sure that when minimal pair rows are displayed that the values differ in the display
                 self.assertNotEqual(focus_gloss_value, other_gloss_value)
 
+    def test_emptyvalues_minimalpairs(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create 10 lemmas for use in testing
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,15):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        # print('created lemmas: ', lemmas)
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        # Create 10 glosses that start out being the same
+        glosses = {}
+        for gloss_id in range(1,15):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : test_handshape1.machine_value,
+                'locprim': 7,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        # print('created glosses: ', glosses)
+
+        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
+
+        # pretend locprim hasn't been assigned
+        glosses[2].locprim = None
+        glosses[2].save()
+
+        glosses[3].locprim = ''
+        glosses[3].save()
+
+        glosses[4].locprim = '-'
+        glosses[4].save()
+
+        # this is an errorneous None value
+        glosses[5].locprim = 'None'
+        glosses[5].save()
+        error_none_gloss_5 = 'ERROR_None'
+
+        glosses[6].locprim = 337
+        glosses[6].save()
+        error_337_gloss_6 = 'ERROR_337'
+
+        glosses[7].locprim = 0
+        glosses[7].save()
+
+        glosses[8].locprim = '0'
+        glosses[8].save()
+
+        # gloss 9 has an empty handedness, it has no minimal pairs
+        glosses[9].handedness = None
+        glosses[9].save()
+
+        glosses[10].domhndsh = test_handshape2.machine_value
+        glosses[10].domhndsh_letter = True
+        glosses[10].save()
+
+        glosses[11].handedness = 4
+        glosses[11].weakdrop = False
+        glosses[11].save()
+
+        glosses[12].handedness = 4
+        glosses[12].weakdrop = True
+        glosses[12].save()
+
+        glosses[13].domhndsh = test_handshape2.machine_value
+        glosses[13].handedness = 4
+        glosses[13].save()
+
+        glosses[14].domhndsh = test_handshape2.machine_value
+        glosses[14].handedness = 4
+        glosses[14].subhndsh = test_handshape2.machine_value
+        glosses[14].save()
+
+        glosses_to_ids = {}
+
+        for gloss_id in range(1,15):
+            glosses_to_ids[str(glosses[gloss_id].id)] = str(gloss_id)
+
+        self.client.login(username='test-user', password='test-user')
+
+        assign_perm('view_dataset', self.user, test_dataset)
+        response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
+
+        objects_on_page = response.__dict__['context_data']['objects_on_page']
+
+        # check that all objects retrieved by minimal pairs are also displayed
+        # objects_on_page is a list of object ids
+        # check for these rows
+        for obj in objects_on_page:
+            pattern_gloss = 'focusgloss_' + str(obj)
+            self.assertContains(response, pattern_gloss)
+
+        # now fetch the table row contents for each object, using the ajax call of the template
+        # check that the repeat phonology field is correctly displayed as Yes and No for True and False
+        for obj in objects_on_page:
+            response_row = self.client.get('/dictionary/ajax/minimalpairs/' + str(obj) + '/')
+            minimal_pairs_dict = response_row.context['minimal_pairs_dict']
+
+            if str(obj) == str(glosses[9].id):
+                # make sure no minimal pairs for this gloss, since handedness is empty
+                self.assertEqual(minimal_pairs_dict, [])
+                continue
+
+            # uncomment print statement to see what the minimal pairs are
+            # print('minimal pairs for ', response_row.context['focus_gloss_translation'], ' (glosses[', glosses_to_ids[str(obj)], '])')
+
+            for minimalpair in minimal_pairs_dict:
+                # check that there is a row for this minimal pair in the html
+                other_gloss_id = str(minimalpair['other_gloss'].id)
+                pattern_cell = 'cell_' + str(obj) + '_' + other_gloss_id
+                self.assertContains(response_row, pattern_cell)
+                # check that the field 'repeat' has different values in the table
+                # we make use of the fact that the values in the minimal_pairs_dict returned by the ajax call are used
+                field = minimalpair['field']
+                focus_gloss_value = minimalpair['focus_gloss_value']
+                other_gloss_value = minimalpair['other_gloss_value']
+                other_gloss_idgloss = minimalpair['other_gloss_idgloss']
+
+                # uncomment print statement to see what the minimal pairs are
+                # print('          ', other_gloss_idgloss, ' (glosses[', glosses_to_ids[other_gloss_id], ']) ', field, '     ', focus_gloss_value, '     ', other_gloss_value)
+
+                # this test makes sure that when minimal pair rows are displayed that the values differ in the display
+                self.assertNotEqual(focus_gloss_value, other_gloss_value)
+
+                if str(obj) == str(glosses[5].id):
+                    # gloss 5 contains an erroneous None value
+                    self.assertEqual(focus_gloss_value, error_none_gloss_5)
+                    continue
+                if other_gloss_id == str(glosses[5].id):
+                    # gloss 5 contains an erroneous None value
+                    self.assertEqual(other_gloss_value, error_none_gloss_5)
+                    continue
+                if str(obj) == str(glosses[6].id):
+                    # gloss 6 contains an erroneous locprim value
+                    self.assertEqual(focus_gloss_value, error_337_gloss_6)
+                    continue
+                if other_gloss_id == str(glosses[6].id):
+                    # gloss 6 contains an erroneous locprim value
+                    self.assertEqual(other_gloss_value, error_337_gloss_6)
+                    continue
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):

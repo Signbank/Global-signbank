@@ -371,13 +371,15 @@ def update_gloss(request, glossid):
             #Regular field updating
             else:
 
+                # Alert: Note that if field is idgloss, the following code updates it
                 setattr(gloss,field,value)
                 gloss.save()
 
                 #If the value is not a Boolean, return the new value
                 if not isinstance(value,bool):
-
-                    field_category = fieldname_to_category(field)
+                    # if we get to here, field is a valid field of Gloss
+                    # field is a choice list and has a field_choice_category
+                    field_category = [f.field_choice_category for f in Gloss._meta.fields if f.name == field].pop()
 
                     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                     newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
@@ -1306,7 +1308,8 @@ def update_handshape(request, handshapeid):
             newvalue = value
 
             if not isinstance(value, bool):
-                field_category = fieldname_to_category(field)
+                # field is a choice list and has a field_choice_category
+                field_category = [f.field_choice_category for f in Handshape._meta.fields if f.name == field].pop()
                 choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                 newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
 
@@ -1726,7 +1729,8 @@ def update_morpheme(request, morphemeid):
 
                 # If the value is not a Boolean, return the new value
                 if not isinstance(value, bool):
-                    field_category = fieldname_to_category(field)
+                    # field is a choice list and has a field_choice_category
+                    field_category = [f.field_choice_category for f in Morpheme._meta.fields if f.name == field].pop()
                     choice_list = FieldChoice.objects.filter(field__iexact=field_category)
                     newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
                     category_value = 'phonology'
