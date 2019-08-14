@@ -1,5 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
+from django.db import OperationalError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
@@ -22,6 +23,14 @@ from easy_select2.widgets import Select2, Select2Multiple
 CATEGORY_CHOICES = (('all', 'All Signs'),
                     ('semantic:health', 'Only Health Related Signs'),
                     ('semantic:education', 'Only Education Related Signs'))
+
+#See if there are any tags there, but don't crash if there isn't even a table
+try:
+    tag_choices = [(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()]
+    not_tag_choices = [(tag.name, tag.name) for tag in Tag.objects.all()]
+except OperationalError:
+    tag_choices = []
+    not_tag_choices = []
 
 class UserSignSearchForm(forms.Form):
 
@@ -181,12 +190,11 @@ class VideoUpdateForm(forms.Form):
     """Form to allow update of the video for a sign"""
     videofile = VideoUploadToFLVField()
 
-
 class TagUpdateForm(forms.Form):
     """Form to add a new tag to a gloss"""
 
     tag = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), 
-                            choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
+                            choices=tag_choices)
     delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
 
 YESNOCHOICES = (("unspecified", "Unspecified" ), ('yes', 'Yes'), ('no', 'No'))
@@ -219,8 +227,8 @@ class GlossSearchForm(forms.ModelForm):
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))
-    tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
-    nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
+    tags = forms.MultipleChoiceField(choices=tag_choices)
+    nottags = forms.MultipleChoiceField(choices=not_tag_choices)
     keyword = forms.CharField(label=_(u'Translations'))
     hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=YESNOCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
@@ -331,8 +339,8 @@ class MorphemeSearchForm(forms.ModelForm):
     sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))
     lemmaGloss = forms.CharField(label=_("Lemma Gloss"))
-    tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_', ' ')) for tag in Tag.objects.all()])
-    nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
+    tags = forms.MultipleChoiceField(choices=tag_choices)
+    nottags = forms.MultipleChoiceField(choices=not_tag_choices)
     keyword = forms.CharField(label=_(u'Translations'))
     hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=YESNOCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)

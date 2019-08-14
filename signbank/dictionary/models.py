@@ -30,8 +30,10 @@ choice_list_table = dict()
 def build_choice_list(field):
 
     choice_list = []
+
+    #See if there are any field choices there, but don't crash if there isn't even a table
     try:
-        field_choices = FieldChoice.objects.filter(field__exact=field)
+        field_choices = list(FieldChoice.objects.filter(field__exact=field))
     except:
         field_choices = []
 
@@ -1869,10 +1871,14 @@ def generate_translated_choice_list_table():
                 print('generate_translated_choice_list_table AttributeError on field ', f.name, '. Missing field_choice_category.')
                 continue
 
-            if f_category == 'Handshape':
-                choice_list = Handshape.objects.all()
-            else:
-                choice_list = FieldChoice.objects.filter(field__iexact=f_category)
+            #Tro to get the choice list, but don't crash if the table is not there (yet)
+            try:
+                if f_category == 'Handshape':
+                    choice_list = list(Handshape.objects.all())
+                else:
+                    choice_list = list(FieldChoice.objects.filter(field__iexact=f_category))
+            except OperationalError:
+                choice_list = []
 
             # print('after getting choice_list: ', choice_list)
             field_translated_choice_list = dict()
