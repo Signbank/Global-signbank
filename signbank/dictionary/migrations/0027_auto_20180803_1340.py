@@ -12,10 +12,27 @@ class Migration(migrations.Migration):
         ('dictionary', '0026_auto_20180802_0936'),
     ]
 
+    def insert_dataset(apps,schema_editor):
+        from signbank.dictionary.models import Language, SignLanguage
+
+        Dataset =  apps.get_model('dictionary','Dataset')
+        Language = apps.get_model('dictionary','Language')
+        SignLanguage = apps.get_model('dictionary','SignLanguage')
+
+        l = Language.objects.get(pk=1)
+
+        sl = SignLanguage(name="Default Sign Language")
+        sl.save()
+
+        d = Dataset(name="Your dataset",description="Default dataset",
+            signlanguage=sl,acronym='YDS',default_language=l)            
+        d.save()
+
     operations = [
         migrations.AddField(
             model_name='dataset',
             name='default_language',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='datasets_with_default_language', to='dictionary.Language'),
         ),
+        migrations.RunPython(insert_dataset)
     ]
