@@ -20,6 +20,9 @@ ECV_FILE = ECV_FOLDER+'ngt.ecv'
 ECV_SETTINGS = {
     'include_phonology_and_frequencies': True,
 
+    'description_fields': ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir', 'movSh',
+                           'tokNo', 'tokNoSgnr'],
+    
     # The order of languages matters as the first will
     # be treated as default by ELAN
     'languages': [
