@@ -22,7 +22,7 @@ ECV_SETTINGS = {
 
     'description_fields': ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir', 'movSh',
                            'tokNo', 'tokNoSgnr'],
-    
+
     # The order of languages matters as the first will
     # be treated as default by ELAN
     'languages': [
