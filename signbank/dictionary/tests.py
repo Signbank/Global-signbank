@@ -1,3 +1,5 @@
+from itertools import zip_longest
+
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm
 from signbank.dictionary.models import *
@@ -11,6 +13,7 @@ from django.contrib.messages.storage.cookie import MessageDecoder
 from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages.storage.cookie import CookieStorage
+from itertools import *
 
 from guardian.shortcuts import assign_perm
 
@@ -1961,6 +1964,62 @@ class FieldChoiceTests(TestCase):
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
                       str(field_choice_in_use.english_name), ' (not used)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+
+class testFrequencyAnalysis(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.save()
+
+        self.client = Client()
+
+
+    def test_frequency_sorting(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        language = Language.objects.get(id=get_default_language_id())
+        language_code = language.language_code_2char
+
+        codes_to_adjectives = dict(settings.LANGUAGES)
+
+        if language_code not in codes_to_adjectives.keys():
+            adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+        else:
+            adjective = codes_to_adjectives[language_code].lower()
+
+        frequency_dict = test_dataset.generate_frequency_dict(language_code)
+        frequency_dict_keys = frequency_dict.keys()
+
+        fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category, field.choices)
+                                                for field in Gloss._meta.fields if field.choices and (field.name in FIELDS['phonology'] + FIELDS['semantics']) ]
+        fields_data_keys = [ f_name for (f_name,v_verbose,c_category,l_choices) in fields_data]
+
+        self.assertNotEqual(len(fields_data),0)
+        self.assertEqual(len(frequency_dict_keys), len(fields_data_keys))
+
+        ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
+        for (f, field_verbose_name, fieldchoice_category, field_choices) in ordered_fields_data:
+
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+
+            if len(choice_list) > 0:
+                translated_choices = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False, shortlist=False)
+            else:
+                translated_choices = []
+            frequency_choices_f = frequency_dict[f]
+
+            self.assertEqual(len(translated_choices), len(frequency_choices_f))
+
+            frequency_choices_f_keys = [ k for k in frequency_choices_f.keys() ]
+            translated_choices_keys = [ k for (k,v) in translated_choices ]
+
+            # Make sure the sorted field choices are in the same order
+            self.assertEqual(translated_choices_keys, frequency_choices_f_keys)
 
 
 class testSettings(TestCase):

@@ -2144,7 +2144,7 @@ class Dataset(models.Model):
         codes_to_adjectives = dict(settings.LANGUAGES)
 
         if language_code not in codes_to_adjectives.keys():
-            adjective = 'english'
+            adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
         else:
             adjective = codes_to_adjectives[language_code].lower()
 
@@ -2159,12 +2159,13 @@ class Dataset(models.Model):
         # The choice list will be sorted on the translated verbose name
         choice_lists = dict()
         for (f, field_verbose_name, fieldchoice_category, field_choices) in fields_data:
-            if fieldchoice_category == 'Handshape':
-                choice_list = Handshape.objects.order_by(adjective + '_name')
-            else:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(
-                    adjective + '_name')
+            # if fieldchoice_category == 'Handshape':
+            #     choice_list = Handshape.objects.order_by(adjective + '_name')
+            # else:
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+            # Legacy: At this point, there could be duplicate machine values for a particular fieldchoice category
             if len(choice_list) > 0:
+                # ordered = False means return a list instead of an OrderedDict
                 choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False)
 
         # Sort the data by the translated verbose name field
@@ -2176,16 +2177,16 @@ class Dataset(models.Model):
 
             # Note: a second choice_list is created here in exactly the same way as above.
             # It contains Handshape and FieldChoice objects, which are used in the function choicelist_queryset_to_machine_value_dict
-            if fieldchoice_category == 'Handshape':
-                choice_list = Handshape.objects.order_by(adjective + '_name')
-            else:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(
-                    adjective + '_name')
+            # if fieldchoice_category == 'Handshape':
+            #     choice_list = Handshape.objects.order_by(adjective + '_name')
+            # else:
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
 
             # We now basically construct a duplicate of the choice_lists dict, but with the machine values instead of the labels
             # The machine value is what is stored as the value of the field in the Gloss objects
             # We take the count of the machine value in the Gloss objects
 
+            # ordered = True means return an OrderedDict instead of a list
             choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list, ordered=True)
 
             # get dictionary of translated field choices CHOICE_LISTS for this field in sorted order (as per the language code)

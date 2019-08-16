@@ -4,24 +4,32 @@ import signbank.settings.base as settings
 
 def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
 
+    # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
+    # Or the queryset is a set of Handshape objects
+    # Other functions that call this function expect either a list or an OrderedDict that maps machine values to human values
+    # Make sure the machine values are unique by only using the first human value
+
     codes_to_adjectives = dict(settings.LANGUAGES)
 
     if language_code not in codes_to_adjectives.keys():
-        adjective = 'english'
+        adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
     else:
         adjective = codes_to_adjectives[language_code].lower()
 
+    temp_mapping_dict = {}
     raw_choice_list = []
-
-    try:
-        for choice in queryset:
-            if choices_to_exclude == None or choice not in choices_to_exclude:
-                raw_choice_list.append((id_prefix + str(choice.machine_value), getattr(choice, adjective + '_name')))
-
-    except AttributeError:
-        for choice in queryset:
-            if choices_to_exclude == None or choice not in choices_to_exclude:
-                raw_choice_list.append((id_prefix+str(choice.machine_value),getattr(choice,'english_name')))
+    machine_values_seen = []
+    for choice in queryset:
+        human_value = getattr(choice, adjective + '_name')
+        if choice.machine_value in machine_values_seen:
+            previously_seen_human_value = temp_mapping_dict[choice.machine_value]
+            print('Duplicate machine value for FieldChoice ', choice.field, ' (', choice.machine_value, ') ', human_value, ', ', previously_seen_human_value)
+            # don't append to raw_choice_list
+            continue
+        temp_mapping_dict[choice.machine_value] = human_value
+        if choices_to_exclude == None or choice not in choices_to_exclude:
+            machine_values_seen.append(choice.machine_value)
+            raw_choice_list.append((id_prefix + str(choice.machine_value), getattr(choice, adjective + '_name')))
 
     if ordered:
 
@@ -33,7 +41,6 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
             sorted_choice_list.move_to_end(id_prefix+'1', last=False)
             sorted_choice_list.update({id_prefix+'0':'-'})
             sorted_choice_list.move_to_end(id_prefix+'0', last=False)
-
         return sorted_choice_list
     else:
 
@@ -50,7 +57,7 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
     codes_to_adjectives = dict(settings.LANGUAGES)
 
     if language_code not in codes_to_adjectives.keys():
-        adjective = 'english'
+        adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
     else:
         adjective = codes_to_adjectives[language_code].lower()
 
@@ -63,10 +70,7 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
         try:
             selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
 
-            try:
-                human_value = getattr(selected_field_choice, adjective + '_name')
-            except AttributeError:
-                human_value = getattr(selected_field_choice, 'english_name')
+            human_value = getattr(selected_field_choice, adjective + '_name')
 
         except (IndexError, ValueError):
             human_value = machine_value
@@ -74,8 +78,22 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
     return human_value
 
 def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=False):
+    # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
+    # Or the queryset is a set of Handshape objects
+    # Other functions that call this function expect either a list or an OrderedDict that maps machine values to machine values
+    # Make sure the machine values are unique by only using the first human value
 
-    raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,'machine_value')) for choice in queryset]
+    queryset_no_dupes = []
+    machine_values_seen = []
+    for choice in queryset:
+        if choice.machine_value in machine_values_seen:
+            print('Duplicate machine value for FieldChoice ', choice.field, ' (', choice.machine_value, ')')
+            # don't append to queryset_no_dupes
+            continue
+        machine_values_seen.append(choice.machine_value)
+        queryset_no_dupes.append(choice)
+
+    raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,'machine_value')) for choice in queryset_no_dupes]
 
     sorted_choice_list = [(id_prefix+'0',0),(id_prefix+'1',1)]+sorted(raw_choice_list,key = lambda x: x[1])
 
