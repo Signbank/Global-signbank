@@ -1975,6 +1975,95 @@ class testFrequencyAnalysis(TestCase):
 
         self.client = Client()
 
+    def test_analysis_frequency(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,10):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        glosses = {}
+        for gloss_id in range(1,10):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : str(test_handshape1.machine_value),
+                'subhndsh': str(test_handshape2.machine_value),
+                'locprim': 5,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        glosses[2].locprim = 8
+        glosses[2].save()
+
+        glosses[3].handedness = 4
+        glosses[3].save()
+
+        glosses[4].handCh = 7
+        glosses[4].save()
+
+        glosses[5].domhndsh = str(test_handshape2.machine_value)
+        glosses[5].save()
+
+        glosses[6].handedness = 5
+        glosses[6].save()
+
+        glosses[7].domhndsh = str(test_handshape2.machine_value)
+        glosses[7].save()
+
+        glosses[8].namEnt = 16
+        glosses[8].save()
+
+        glosses[9].handedness = 6
+        glosses[9].save()
+
+        self.client.login(username='test-user', password='test-user')
+
+        assign_perm('view_dataset', self.user, test_dataset)
+
+        response = self.client.get('/analysis/frequencies/', follow=True)
+        self.assertEqual(response.status_code,200)
+
+        table_code = str(test_dataset.id) + '_results_'
+
+        frequency_dict = test_dataset.generate_frequency_dict(language.language_code_2char)
+
+        for fieldname in frequency_dict.keys():
+            self.assertContains(response, table_code + fieldname)
+
+        table_code_empty_prefix = str(test_dataset.id) + '_field_'
+        table_code_empty_suffix = '_empty_frequency'
+
+        for (k,d) in frequency_dict.items():
+
+            for (c,v) in d.items():
+                if v:
+                    print('Frequency analysis field ', k, ', choice ', c, ' (', v, ' results)')
+                    self.assertNotContains(response, table_code_empty_prefix + k + '_' + c + table_code_empty_suffix)
+                else:
+                    self.assertContains(response, table_code_empty_prefix + k + '_' + c + table_code_empty_suffix)
+
 
     def test_frequency_sorting(self):
 
