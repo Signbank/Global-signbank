@@ -58,7 +58,7 @@ PREFIX_URL = ''
 
 #The interface languages supported by your installation
 gettext = lambda s: s
-LANGUAGES = (('en', gettext('English')))
+LANGUAGES = [('en', gettext('English'))]
 
 #The main interface language
 LANGUAGE_CODE = "en"
@@ -68,6 +68,9 @@ DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en'}
 
 #The language column on which to sort in the list view
 DEFAULT_LANGUAGE_HEADER_COLUMN = {'English': 'name_en'}
+
+# The default column prefix for the human readable FieldChoice name, used for display of Field Choices
+FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE = 'english'
 
 #Hide other interface languages
 SHOW_ENGLISH_ONLY = False

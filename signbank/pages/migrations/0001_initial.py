@@ -14,6 +14,18 @@ class Migration(migrations.Migration):
         ('auth', '0007_alter_validators_add_error_messages'),
     ]
 
+    def insert_basic_pages(apps,schema_editor):
+        Page = apps.get_model('pages','Page')
+
+        homepage = Page(url='/',title='Home',publish=True)
+        homepage.save()        
+
+        gloss_page = Page(url='/signs/',title='Signs',publish=True)
+        gloss_page.save()
+
+        add_gloss_page = Page(url='/signs/add/',title='Add new gloss',publish=True,parent=gloss_page)
+        add_gloss_page.save()        
+
     operations = [
         migrations.CreateModel(
             name='Page',
@@ -48,4 +60,5 @@ class Migration(migrations.Migration):
                 ('page', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='pages.Page')),
             ],
         ),
+        migrations.RunPython(insert_basic_pages)
     ]

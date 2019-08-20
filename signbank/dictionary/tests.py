@@ -1,3 +1,5 @@
+from itertools import zip_longest
+
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm
 from signbank.dictionary.models import *
@@ -11,6 +13,7 @@ from django.contrib.messages.storage.cookie import MessageDecoder
 from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages.storage.cookie import CookieStorage
+from itertools import *
 
 from guardian.shortcuts import assign_perm
 
@@ -1971,6 +1974,151 @@ class FieldChoiceTests(TestCase):
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
                       str(field_choice_in_use.english_name), ' (not used)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+
+class testFrequencyAnalysis(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.save()
+
+        self.client = Client()
+
+    def test_analysis_frequency(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,10):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        glosses = {}
+        for gloss_id in range(1,10):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : str(test_handshape1.machine_value),
+                'subhndsh': str(test_handshape2.machine_value),
+                'locprim': 5,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        glosses[2].locprim = 8
+        glosses[2].save()
+
+        glosses[3].handedness = 4
+        glosses[3].save()
+
+        glosses[4].handCh = 7
+        glosses[4].save()
+
+        glosses[5].domhndsh = str(test_handshape2.machine_value)
+        glosses[5].save()
+
+        glosses[6].handedness = 5
+        glosses[6].save()
+
+        glosses[7].domhndsh = str(test_handshape2.machine_value)
+        glosses[7].save()
+
+        glosses[8].namEnt = 16
+        glosses[8].save()
+
+        glosses[9].handedness = 6
+        glosses[9].save()
+
+        self.client.login(username='test-user', password='test-user')
+
+        assign_perm('view_dataset', self.user, test_dataset)
+
+        response = self.client.get('/analysis/frequencies/', follow=True)
+        self.assertEqual(response.status_code,200)
+
+        table_code = str(test_dataset.id) + '_results_'
+
+        frequency_dict = test_dataset.generate_frequency_dict(language.language_code_2char)
+
+        for fieldname in frequency_dict.keys():
+            self.assertContains(response, table_code + fieldname)
+
+        table_code_empty_prefix = str(test_dataset.id) + '_field_'
+        table_code_empty_suffix = '_empty_frequency'
+
+        for (k,d) in frequency_dict.items():
+
+            for (c,v) in d.items():
+                if v:
+                    print('Frequency analysis field ', k, ', choice ', c, ' (', v, ' results)')
+                    self.assertNotContains(response, table_code_empty_prefix + k + '_' + c + table_code_empty_suffix)
+                else:
+                    self.assertContains(response, table_code_empty_prefix + k + '_' + c + table_code_empty_suffix)
+
+
+    def test_frequency_sorting(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        language = Language.objects.get(id=get_default_language_id())
+        language_code = language.language_code_2char
+
+        codes_to_adjectives = dict(settings.LANGUAGES)
+
+        if language_code not in codes_to_adjectives.keys():
+            adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+        else:
+            adjective = codes_to_adjectives[language_code].lower()
+
+        frequency_dict = test_dataset.generate_frequency_dict(language_code)
+        frequency_dict_keys = frequency_dict.keys()
+
+        fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category, field.choices)
+                                                for field in Gloss._meta.fields if field.choices and (field.name in FIELDS['phonology'] + FIELDS['semantics']) ]
+        fields_data_keys = [ f_name for (f_name,v_verbose,c_category,l_choices) in fields_data]
+
+        self.assertNotEqual(len(fields_data),0)
+        self.assertEqual(len(frequency_dict_keys), len(fields_data_keys))
+
+        ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
+        for (f, field_verbose_name, fieldchoice_category, field_choices) in ordered_fields_data:
+
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+
+            if len(choice_list) > 0:
+                translated_choices = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False, shortlist=False)
+            else:
+                translated_choices = []
+            frequency_choices_f = frequency_dict[f]
+
+            self.assertEqual(len(translated_choices), len(frequency_choices_f))
+
+            frequency_choices_f_keys = [ k for k in frequency_choices_f.keys() ]
+            translated_choices_keys = [ k for (k,v) in translated_choices ]
+
+            # Make sure the sorted field choices are in the same order
+            self.assertEqual(translated_choices_keys, frequency_choices_f_keys)
 
 
 class testSettings(TestCase):

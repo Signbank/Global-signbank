@@ -35,8 +35,10 @@ choice_list_table = dict()
 def build_choice_list(field):
 
     choice_list = []
+
+    #See if there are any field choices there, but don't crash if there isn't even a table
     try:
-        field_choices = FieldChoice.objects.filter(field__exact=field)
+        field_choices = list(FieldChoice.objects.filter(field__exact=field))
     except:
         field_choices = []
 
@@ -1813,10 +1815,14 @@ def generate_translated_choice_list_table():
                 print('generate_translated_choice_list_table AttributeError on field ', f.name, '. Missing field_choice_category.')
                 continue
 
-            if f_category == 'Handshape':
-                choice_list = Handshape.objects.all()
-            else:
-                choice_list = FieldChoice.objects.filter(field__iexact=f_category)
+            #Tro to get the choice list, but don't crash if the table is not there (yet)
+            try:
+                if f_category == 'Handshape':
+                    choice_list = list(Handshape.objects.all())
+                else:
+                    choice_list = list(FieldChoice.objects.filter(field__iexact=f_category))
+            except OperationalError:
+                choice_list = []
 
             # print('after getting choice_list: ', choice_list)
             field_translated_choice_list = dict()
@@ -2090,74 +2096,75 @@ class Dataset(models.Model):
         codes_to_adjectives = dict(settings.LANGUAGES)
 
         if language_code not in codes_to_adjectives.keys():
-            adjective = 'english'
+            adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
         else:
             adjective = codes_to_adjectives[language_code].lower()
 
         # sort the phonology fields based on field label in the designated language
-        field_labels = dict()
-        for field in FIELDS['phonology'] + FIELDS['semantics']:
-            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter', 'iconImg']:
-                field_label = Gloss._meta.get_field(field).verbose_name
-                field_labels[field] = field_label.encode('utf-8').decode()
-        field_labels = OrderedDict(sorted(field_labels.items(), key=lambda x: x[1]))
+        try:
+            fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category, field.choices) for field in Gloss._meta.fields if field.choices and field.name in FIELDS['phonology'] + FIELDS['semantics'] ]
+        except:
+            print('generate_frequency_dict error getting field_choice_category, set to empty list. Check models.py for choice list declarations.')
+            fields_data = []
 
+        # CHOICE_LISTS dictionary, maps from field name to pairs of ( _ machine value , translated verbose name )
+        # The choice list will be sorted on the translated verbose name
         choice_lists = dict()
-        for field, label in field_labels.items():
-            # Get and save the choice list for this field
-            fieldchoice_category = fieldname_to_category(field)
-            if fieldchoice_category == 'Handshape':
-                choice_list = Handshape.objects.order_by(adjective + '_name')
-            else:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(
-                    adjective + '_name')
-
+        for (f, field_verbose_name, fieldchoice_category, field_choices) in fields_data:
+            # if fieldchoice_category == 'Handshape':
+            #     choice_list = Handshape.objects.order_by(adjective + '_name')
+            # else:
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+            # Legacy: At this point, there could be duplicate machine values for a particular fieldchoice category
             if len(choice_list) > 0:
-                choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False)
+                # ordered = False means return a list instead of an OrderedDict
+                choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False)
+
+        # Sort the data by the translated verbose name field
+        ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
 
         frequency_lists_phonology_fields = OrderedDict()
-        for field, label in field_labels.items():
+        # To generate the correct order, iterate over the ordered fields data, which is ordered by translated verbose name
+        for (f, field_verbose_name, fieldchoice_category, field_choices) in ordered_fields_data:
 
-            # don't use handshape values in FieldChoice table
-            fieldchoice_category = fieldname_to_category(field)
-            if fieldchoice_category == 'Handshape':
-                choice_list = Handshape.objects.order_by(adjective + '_name')
-            else:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(
-                    adjective + '_name')
+            # Note: a second choice_list is created here in exactly the same way as above.
+            # It contains Handshape and FieldChoice objects, which are used in the function choicelist_queryset_to_machine_value_dict
+            # if fieldchoice_category == 'Handshape':
+            #     choice_list = Handshape.objects.order_by(adjective + '_name')
+            # else:
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
 
-            if len(choice_list) > 0:
-                # we now basically construct a duplicate of the choice_lists table, but with the machine values instead of the labels
-                # the machine value is stored as the value of the field in the Gloss objects
-                # we take the count of the machine value in the Gloss objects
+            # We now basically construct a duplicate of the choice_lists dict, but with the machine values instead of the labels
+            # The machine value is what is stored as the value of the field in the Gloss objects
+            # We take the count of the machine value in the Gloss objects
 
-                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list, ordered=True)
+            # ordered = True means return an OrderedDict instead of a list
+            choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list, ordered=True)
 
-                # get dictionary of translated field choices for this field in sorted order (as per the language code)
-                sorted_field_choices = copy.deepcopy(choice_lists[field])
+            # get dictionary of translated field choices CHOICE_LISTS for this field in sorted order (as per the language code)
+            sorted_field_choices = copy.deepcopy(choice_lists[f])
 
-                # because we're dealing with multiple languages and we want the fields to be sorted for the language
-                # we maintain the order of the fields established for the choice_lists table of field choice names
-                choice_list_frequencies = OrderedDict()
-                for choice, label in sorted_field_choices:
+            # Because we're dealing with multiple languages and we want the fields to be sorted for the language,
+            # we maintain the order of the fields established for the choice_lists dict of field choice names
+            choice_list_frequencies = OrderedDict()
+            for choice, label in sorted_field_choices:
 
-                    machine_value = choice_list_machine_values[choice]
-                    # empty values can be either 0 or else null
-                    # the raw query is constructed for this case separately from the case for actual values
-                    if machine_value == 0:
-                        choice_list_frequencies[choice] = Gloss.objects.filter(Q(lemma__dataset=self),
-                                                                               Q(**{field + '__isnull': True}) |
-                                                                               Q(**{field: 0})).count()
-                    else:
-                        variable_column = field
-                        search_filter = 'exact'
-                        filter = variable_column + '__' + search_filter
-                        choice_list_frequencies[choice] = Gloss.objects.filter(lemma__dataset=self.id).filter(
-                            **{filter: machine_value}).count()
+                machine_value = choice_list_machine_values[choice]
+                # empty values can be either 0 or else null
+                # the raw query is constructed for this case separately from the case for actual values
+                if machine_value == 0:
+                    choice_list_frequencies[choice] = Gloss.objects.filter(Q(lemma__dataset=self),
+                                                                           Q(**{f + '__isnull': True}) |
+                                                                           Q(**{f: 0})).count()
+                else:
+                    variable_column = f
+                    search_filter = 'exact'
+                    filter = variable_column + '__' + search_filter
+                    choice_list_frequencies[choice] = Gloss.objects.filter(lemma__dataset=self.id).filter(
+                        **{filter: machine_value}).count()
 
                 # the new frequencies for this field are added using the update method to insure the order is maintained
-                frequency_lists_phonology_fields.update({field: copy.deepcopy(choice_list_frequencies)})
+                frequency_lists_phonology_fields.update({f: copy.deepcopy(choice_list_frequencies)})
 
         return frequency_lists_phonology_fields
 

@@ -11,6 +11,12 @@ class Migration(migrations.Migration):
         ('dictionary', '0008_auto_20170720_1217'),
     ]
 
+    def insert_language(apps,schema_editor):
+        Language = apps.get_model('dictionary','language')
+        l = Language(name="English",name_en="English",language_code_2char="en",
+                    language_code_3char="eng",description="Default English")
+        l.save()
+
     operations = [
         migrations.CreateModel(
             name='Language',
@@ -28,4 +34,6 @@ class Migration(migrations.Migration):
                 'ordering': ['name'],
             },
         ),
+        migrations.RunPython(insert_language),
     ]
+
