@@ -1677,6 +1677,9 @@ class Gloss(models.Model):
 
         return d
 
+    def tags(self):
+        from tagging.models import Tag
+        return Tag.objects.get_for_object(self)
 
 # register Gloss for tags
 try:
