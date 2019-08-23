@@ -421,10 +421,14 @@ def update_gloss(request, glossid):
                 if not isinstance(value,bool):
                     # if we get to here, field is a valid field of Gloss
                     # field is a choice list and has a field_choice_category
-                    field_category = [f.field_choice_category for f in Gloss._meta.fields if f.name == field].pop()
 
-                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                    newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                    try:
+                        field_category = [f.field_choice_category for f in Gloss._meta.fields if f.name == field].pop()
+
+                        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                        newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                    except AttributeError:
+                        newvalue = value
 
                 if field_category in FIELDS['phonology']:
 
