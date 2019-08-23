@@ -2372,3 +2372,17 @@ class LemmaIdglossTranslation(models.Model):
                 raise ValidationError(msg)
 
         super(LemmaIdglossTranslation, self).save(*args, **kwargs)
+
+class GlossRevision(models.Model):
+
+    gloss = models.ForeignKey("Gloss")
+    user = models.ForeignKey(User)
+    time = models.DateTimeField()
+    field_name = models.CharField(max_length=100)
+    old_value = models.CharField(blank=True, max_length=100)
+    new_value = models.CharField(blank=True, max_length=100)
+
+    def __str__(self):
+
+        #return str(self.user)
+        return str(self.user) + " changed " + str(self.field_name) + " to " + str(self.new_value)

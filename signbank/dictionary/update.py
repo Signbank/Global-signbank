@@ -442,6 +442,10 @@ def update_gloss(request, glossid):
         if original_value == None:
             original_value = ''
 
+        #Remember this change for the history books
+        revision = GlossRevision(old_value=original_value,new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now())
+        revision.save()
+
         # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
         return HttpResponse(
             str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group),
