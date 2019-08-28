@@ -114,6 +114,10 @@ class HandshapeAdmin(VersionAdmin):
 
     list_display = ['machine_value', 'english_name', 'dutch_name']
 
+class GlossRevisionAdmin(VersionAdmin):
+
+    model = GlossRevision
+
 class RegistrationProfileAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'activation_key_expired', )
     search_fields = ('user__username', 'user__first_name', )
@@ -310,6 +314,7 @@ admin.site.register(SimultaneousMorphologyDefinition)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 admin.site.register(Handshape, HandshapeAdmin)
+admin.site.register(GlossRevision,GlossRevisionAdmin)
 
 admin.site.register(UserProfile)
 admin.site.register(Language, LanguageAdmin)

@@ -3793,9 +3793,9 @@ def gloss_ajax_complete(request, prefix):
 
     if 'datasetid' in request.session.keys():
         datasetid = request.session['datasetid']
+        dataset_id = Dataset.objects.get(id=datasetid)
     else:
-        datasetid = get_default_language_id()
-    dataset_id = Dataset.objects.get(id=datasetid)
+        dataset_id = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
 
     query = Q(lemma__lemmaidglosstranslation__text__istartswith=prefix) | \
             Q(annotationidglosstranslation__text__istartswith=prefix) | \
