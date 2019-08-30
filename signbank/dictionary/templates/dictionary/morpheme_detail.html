@@ -52,7 +52,8 @@
     {% else %}
     var dataset_choices = {};
     {% endif %}
-    var gloss_dataset_id = {{ morpheme.lemma.dataset_id}}
+    var gloss_dataset_id = {{ morpheme.lemma.dataset_id}};
+    var gloss_default_language_code = '{{morpheme.lemma.dataset.default_language.language_code_2char}}';
     var mrptype_choices = {{morpheme.mrptype_choices|safe}};
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 

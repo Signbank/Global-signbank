@@ -726,27 +726,24 @@ def search_morpheme(request):
 
 def add_new_morpheme(request):
 
-    oContext = {}
-
-    # Add essential information to the context
-    oChoiceLists = {}
-    oContext['choice_lists'] = oChoiceLists
+    context = {}
+    choicelists = {}
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-    oContext['dataset_languages'] = dataset_languages
+    context['dataset_languages'] = dataset_languages
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        oContext['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
-        oContext['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
     if 'last_used_dataset' in request.session.keys():
-        oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
+        context['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
     else:
-        oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=None)
+        context['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=None)
 
-    # Get and save the choice list for this field
+    # Get and save the choice list for mrpType
     try:
-        field_mrpType = Gloss._meta.get_field('mrpType')
+        field_mrpType = Morpheme._meta.get_field('mrpType')
         field_category = field_mrpType.field_choice_category
         choice_list = FieldChoice.objects.filter(field__iexact=field_category)
     except:
@@ -754,17 +751,13 @@ def add_new_morpheme(request):
         choice_list = []
     if len(choice_list) > 0:
         ordered_dict = choicelist_queryset_to_translated_dict(choice_list, request.LANGUAGE_CODE)
-        oChoiceLists['mrpType'] = ordered_dict
-        oContext['choice_lists'] = oChoiceLists
+        choicelists['mrpType'] = ordered_dict
 
-    oContext['choice_lists'] = json.dumps(oContext['choice_lists'])
+    context['choice_lists'] = json.dumps(choicelists)
 
-    oContext['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+    context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
-    # Continue
-    oBack = render(request,'dictionary/add_morpheme.html', oContext)
-    return oBack
-
+    return render(request,'dictionary/add_morpheme.html',context)
 
 
 

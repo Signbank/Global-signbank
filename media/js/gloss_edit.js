@@ -593,7 +593,7 @@ $.editable.addInputType('morphtypeahead', {
 var lemma_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/%QUERY'
+      remote: url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/'+gloss_default_language_code+'/%QUERY'
     });
 
 lemma_bloodhound.initialize();

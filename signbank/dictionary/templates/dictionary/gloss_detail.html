@@ -26,7 +26,7 @@
 
     <script type='text/javascript'>
     var url = '{{ PREFIX_URL }}'
-
+    var language_code = '{{ LANGUAGE_CODE }}';
     var edit_mode_str = '{% trans "Edit" %}'
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
     var delete_this_gloss_str = '{% trans "Delete this gloss" %}'
@@ -51,7 +51,8 @@
     {% else %}
     var dataset_choices = {};
     {% endif %}
-    var gloss_dataset_id = {{ gloss.lemma.dataset_id}}
+    var gloss_dataset_id = {{ gloss.lemma.dataset_id}};
+    var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 

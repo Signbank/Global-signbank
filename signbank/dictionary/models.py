@@ -1981,7 +1981,7 @@ class Morpheme(Gloss):
         # The idgloss field is no longer correct
         # We won't use this method in the interface but leave it for debugging purposes
 
-        return "%s" % (self.idgloss)
+        return self.idgloss
 
     def admin_next_morpheme(self):
         """next morpheme in the admin view, shortcut for next_dictionary_morpheme with staff=True"""
@@ -2324,8 +2324,9 @@ class LemmaIdgloss(models.Model):
 
     def __str__(self):
         translations = []
+        count_dataset_languages = self.dataset.translation_languages.all().count()
         for translation in self.lemmaidglosstranslation_set.all():
-            if settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
                 translations.append("{}: {}".format(translation.language, translation.text))
             else:
                 translations.append("{}".format(translation.text))

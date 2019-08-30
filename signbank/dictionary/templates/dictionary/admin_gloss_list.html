@@ -12,6 +12,8 @@
 {% block extrajs %}
 <script type="text/javascript">
     var url = '{{PREFIX_URL}}';
+    var language_code = '{{ LANGUAGE_CODE }}';
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
 </script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
@@ -45,7 +47,7 @@ $(document).ready(function() {
          set_annotationidglosslanguages();
 
          $('#id_dataset').change(function() {
-            console.log("Dataset changed");
+<!--            console.log("Dataset changed");-->
             set_annotationidglosslanguages();
          });
      }
@@ -313,6 +315,17 @@ function ready_videos(el) {
     });
 }
 
+/**
+ * set the lemma language for the chosen dataset
+ */
+function do_set_lemma_language(el) {
+  var dataset_language_id = $(el).attr('value');
+<!--  console.log('lemma_language');-->
+<!--  console.log(dataset_language_id);-->
+  $("#selected_lemma_language").attr('value',dataset_language_id);
+  language_code = dataset_language_id;
+  set_lemma_language();
+}
 </script>
 
 <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
@@ -733,20 +746,39 @@ function ready_videos(el) {
                  <tr>
                      {% if SHOW_DATASET_INTERFACE_OPTIONS %}
                      <td><select id="id_dataset" name="dataset" required="">
-                         <option value="" {% if add_gloss_form.last_used_dataset == None %}selected{% endif %}
+                         <option value=""
                                  dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
-                         {% for dataset in selected_datasets %}
-                         <option value="{{ dataset.id }}"
-                                 {% if add_gloss_form.last_used_dataset == dataset.acronym %}selected{% endif %}
-                                 dataset_languages="{% for dataset_lang in dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ dataset.acronym }}</option>
+                         {% for s_dataset in selected_datasets %}
+                         <option value="{{ s_dataset.id }}"
+                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
                          {% endfor %}
                      </select></td>
                      {% else %}
-                     <div style="display: hidden"><select id="id_dataset" name="dataset"></select></div>
-                     <script type='text/javascript'>gloss_dataset_id = {{ selected_datasets.0.id }}</script>
+                     <div style="display: hidden"><select id="id_dataset" name="dataset">
+                         <option value="{{ selected_datasets.0.id }}"
+                                 dataset_languages="{% for dataset_lang in selected_datasets.0.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ selected_datasets.0.acronym }}</option>
+                     </select></div>
+                     <script type='text/javascript'>
+                     gloss_dataset_id = {{ selected_datasets.0.id }};
+                     language_code = '{{selected_datasets.0.default_language.language_code_2char}}';
+<!--                     console.log('admin_gloss_list template, show dataset interface options false, language code is: '+language_code);-->
+                     </script>
                      {% endif %}
                      <td>
                          <div id="lemma_select">
+
+                             <label for="id_lemma_language_select">
+                             <span id="selected_lemma_language" value="">
+                             {% for dataset_lang in dataset_languages %}
+                                 <input id="lemma_language_{{ dataset_lang.language_code_2char }}"
+                                        type="radio" name="lemma_language" onclick="do_set_lemma_language(this)"
+                                        value="{{ dataset_lang.language_code_2char }}"/>
+                                 <label id="lemma_language_label_{{ dataset_lang.language_code_2char }}">{{dataset_lang.name}}</label>
+                             {% endfor %}
+                             </span>
+                             </label>
+                             <span id="lemma_language_buffer">&nbsp;<br></span>
+
                              <!-- Input of the type ahead -->
                              <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
@@ -755,7 +787,7 @@ function ready_videos(el) {
                          </div>
                          <div id="lemma_add">
                             {% for dataset_lang in dataset_languages %}
-                             <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</span>
+                             <label id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</label>
                             <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
                                    name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
                                    maxlength="30" type="text"/>

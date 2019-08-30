@@ -3794,32 +3794,36 @@ def gloss_ajax_complete(request, prefix):
     if 'datasetid' in request.session.keys():
         datasetid = request.session['datasetid']
     else:
-        datasetid = get_default_language_id()
-    dataset_id = Dataset.objects.get(id=datasetid)
-
-    query = Q(lemma__lemmaidglosstranslation__text__istartswith=prefix) | \
-            Q(annotationidglosstranslation__text__istartswith=prefix) | \
-            Q(sn__startswith=prefix)
-    qs = Gloss.objects.filter(query).distinct()
+        datasetid = settings.DEFAULT_DATASET_PK
+    dataset = Dataset.objects.get(id=datasetid)
+    default_language = dataset.default_language
 
     from signbank.tools import convert_language_code_to_2char
-    language_code = convert_language_code_to_2char(request.LANGUAGE_CODE)
+    try:
+        language_code = convert_language_code_to_2char(request.LANGUAGE_CODE)
+    except:
+        language_code = default_language.language_code_2char
+    language = Language.objects.get(language_code_2char=language_code)
+
+    # language is not empty
+    # the following query only retrieves annotations for the language that match the prefix
+    query = Q(annotationidglosstranslation__text__istartswith=prefix,
+              annotationidglosstranslation__language=language)
+    qs = Gloss.objects.filter(query).distinct()
 
     result = []
     for g in qs:
-        if g.dataset == dataset_id:
-            default_annotationidglosstranslation = ""
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=language_code)
-            if annotationidglosstranslation:
+        if g.dataset == dataset:
+            try:
+                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=language)
                 default_annotationidglosstranslation = annotationidglosstranslation.text
-            else:
-                annotationidglosstranslation = g.annotationidglosstranslation_set.get(
-                    language__language_code_2char='en')
-                if annotationidglosstranslation:
-                    default_annotationidglosstranslation = annotationidglosstranslation.text
-            result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn, 'pk': "%s" % (g.id)})
+            except:
+                continue
+            result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % (g.id)})
 
-    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+    sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
+
+    return HttpResponse(json.dumps(sorted_result), {'content-type': 'application/json'})
 
 def handshape_ajax_complete(request, prefix):
     """Return a list of handshapes matching the search term
@@ -3886,15 +3890,44 @@ def user_ajax_complete(request, prefix):
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
 
-def lemma_ajax_complete(request, dataset_id, q):
-    """Return a list of users matching the search term
-    as a JSON structure suitable for typeahead."""
+def lemma_ajax_complete(request, dataset_id, language_code, q):
 
-    lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id, lemmaidglosstranslation__text__icontains=q)\
+    # check that the user is logged in
+    if request.user.is_authenticated():
+        pass
+    else:
+        messages.add_message(request, messages.ERROR, ('Please login to use this functionality.'))
+        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+
+    # the following code allows for specifying a language for the dataset in the add_gloss.html template
+
+    # print('inside lemma ajax complete language code: ', language_code)
+
+    from signbank.tools import convert_language_code_to_2char
+    language_code = convert_language_code_to_2char(language_code)
+
+    dataset = Dataset.objects.get(id=dataset_id)
+    try:
+        language_id = Language.objects.get(language_code_2char=language_code).id
+    except:
+        language_id = dataset.default_language.id
+    lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id,
+                                         lemmaidglosstranslation__language_id=language_id,
+                                         lemmaidglosstranslation__text__istartswith=q)\
         .order_by('lemmaidglosstranslation__text')
-    lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in set(lemmas)]
+    # lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in set(lemmas)]
 
-    return HttpResponse(json.dumps(lemmas_dict), {'content-type': 'application/json'})
+    lemmas_dict_list = []
+    for lemma in set(lemmas):
+        trans_dict = {}
+        for translation in lemma.lemmaidglosstranslation_set.all():
+            if translation.language.id == language_id:
+                trans_dict['pk'] = lemma.pk
+                trans_dict['lemma'] = translation.text
+                lemmas_dict_list.append(trans_dict)
+    sorted_lemmas_dict = sorted(lemmas_dict_list, key=lambda x : (x['lemma'], len(x['lemma'])))
+    # print('sorted lemmas dict: ', sorted_lemmas_dict)
+    return HttpResponse(json.dumps(sorted_lemmas_dict), {'content-type': 'application/json'})
 
 def homonyms_ajax_complete(request, gloss_id):
 
