@@ -53,12 +53,20 @@ function toggleAddLemma() {
             $(this).prop('required', false);
         });
     } else {
-        console.log(select_or_new_lemma_value);
-        console.log(languages.join());
-        for(var id in languages) {
-            $("[id*='" + lemma_create_field_prefix + languages[id] + "']").prop('required', true);
-        }
-    }
-
+        var number_of_languages = languages.length;
+        if (number_of_languages > 1) {
+            for(var id in languages) {
+                var this_language_code = languages[id];
+                $("[id*='lemmacreate__header_" + this_language_code + "']").show();
+                $("[id*='lemmacreate_" + this_language_code + "']").show();
+                $("[id*='lemmacreate_" + this_language_code + "']").prop('required', true);
+            }
+        } else {
+            // there is only one language available (either for the Signbank or for the Dataset)
+            // make this language be checked, although not visible in the template
+            $("[id*='lemmacreate_" + languages + "']").show();
+            $("[id*='lemmacreate_" + languages + "']").prop('required', true);
+        };
+    };
     return false;
 }
