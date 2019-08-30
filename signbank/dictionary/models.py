@@ -2,12 +2,16 @@ from django.db.models import Q
 from django.db import models, OperationalError
 from django.conf import settings
 from django.http import Http404
+from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
+from django.forms.models import model_to_dict
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.files import File
 import tagging
 import re
 import copy
@@ -18,10 +22,11 @@ import json
 from collections import OrderedDict, Counter
 from datetime import datetime, date
 
-from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE
+from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE, WRITABLE_FOLDER
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 
 import signbank.settings
+
 
 # this variable is set later in the code, it needs to be declared before it is used
 choice_list_table = dict()
@@ -660,9 +665,9 @@ class Gloss(models.Model):
     wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5,
                                   choices=build_choice_list('WordClass'))
     wordClass2.field_choice_category = 'WordClass'
-    derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50,
+    derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("derivHist"), max_length=50,
                                  blank=True)
-    derivHist.field_choice_category = 'MovementShape'
+    derivHist.field_choice_category = 'derivHist'
     lexCatNotes = models.CharField(_("Lexical category notes"), null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
     valence.field_choice_category = 'Valence'
@@ -1428,102 +1433,49 @@ class Gloss(models.Model):
 
         return (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms)
 
-    def image_path_exists(self):
-        """Checks existence of the path within the writable and static folder"""
-        #  If the expected directory or file does not exist, returns None
-        # Used as a test in the templates
-
-        foldername = self.idgloss[:2] + '/'
-        filename_without_extension = self.idgloss + '-' + str(self.pk)
-
-        dir_path = settings.WRITABLE_FOLDER + settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername
-
-        if not os.path.exists(dir_path):
-            # folder for gloss image storage not found, hence no image
-            return None
-        files = [f for f in os.listdir(dir_path.encode('utf-8'))]
-        for filename in files:
-            unicode_filename = filename.decode('utf-8')
-
-            if not re.match(b'.*_\d+$', filename):
-                existing_file_without_extension = os.path.splitext(filename)[0]
-                unicode_existing_file_without_extension = existing_file_without_extension.decode('utf-8')
-                if filename_without_extension == unicode_existing_file_without_extension:
-                    path_to_image = settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + unicode_filename
-                    return path_to_image
-                else:
-                    # try quoted filename
-                    import urllib.parse
-                    quoted_filename = urllib.parse.quote(self.idgloss, safe='')
-                    quoted_filename_without_extension = quoted_filename + '-' + str(self.pk)
-                    if quoted_filename_without_extension == unicode_existing_file_without_extension:
-                        path_to_image = settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + unicode_filename
-                        return path_to_image
-        # no matching image file found for this gloss
-        return None
-
-    def get_image_path(self):
+    def get_image_path(self, check_existance=True):
         """Returns the path within the writable and static folder"""
-        # does not check existence of file, merely constructs path
+        glossvideo = self.glossvideo_set.get(version=0)
+        if glossvideo:
+            videofile_path = str(glossvideo.videofile)
+            videofile_path_without_extension, extension = os.path.splitext(videofile_path)
+            imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + ".png"
+            return imagefile_path
+        else:
+            return ''
 
-        foldername = self.idgloss[:2]
-
-        if len(foldername) == 1:
-            foldername += '-'
-
-        return settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + self.idgloss + '-' + str(self.pk) + '.png'
-
-    def get_image_path_prefix(self):
-        """Returns the path within the writable and static folder"""
-        # does not check existence of file, merely constructs path
-
-        foldername = self.idgloss[:2]
-
-        if len(foldername) == 1:
-            foldername += '-'
-
-        return settings.GLOSS_IMAGE_DIRECTORY + '/' + foldername + '/' + self.idgloss + '-' + str(self.pk)
+    def get_image_url(self):
+        return escape_uri_path(self.get_image_path())
 
     def get_video_path(self):
-
-        foldername = self.idgloss[:2]
-
-        if len(foldername) == 1:
-            foldername += '-'
-
-        return settings.GLOSS_VIDEO_DIRECTORY + '/' + foldername + '/' + self.idgloss + '-' + str(self.pk) + '.mp4'
+        try:
+            glossvideo = self.glossvideo_set.get(version=0)
+            return str(glossvideo.videofile)
+        except ObjectDoesNotExist:
+            return ''
+        except MultipleObjectsReturned:
+            # Just return the first
+            glossvideos = self.glossvideo_set.filter(version=0)
+            return str(glossvideos[0].videofile)
 
     def get_video_path_prefix(self):
-
-        foldername = self.idgloss[:2]
-
-        if len(foldername) == 1:
-            foldername += '-'
-
-        return settings.GLOSS_VIDEO_DIRECTORY + '/' + foldername + '/' + self.idgloss + '-' + str(self.pk)
+        try:
+            glossvideo = self.glossvideo_set.get(version=0)
+            prefix, extension = os.path.splitext(str(glossvideo))
+            return prefix
+        except ObjectDoesNotExist:
+            return ''
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
         video_path = self.get_video_path()
-        filepath = settings.WRITABLE_FOLDER + '/' + video_path
+        filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+        print("PATH: {}".format(filepath))
         if os.path.exists(filepath.encode('utf-8')):
             return video_path
         else:
-            # construct quoted filename path to catch special characters
-            import urllib.parse
-            unquoted_filename = urllib.parse.quote(self.idgloss)
-            foldername = self.idgloss[:2]
-
-            if len(foldername) == 1:
-                foldername += '-'
-
-            videopath = 'glossvideo/' + foldername + '/' + unquoted_filename + '-' + str(self.pk) + '.mp4'
-            filepath = settings.WRITABLE_FOLDER + '/' + videopath
-            if os.path.exists(filepath.encode('utf-8')):
-                return videopath
-            else:
-                return ''
+            return ''
 
     def count_videos(self):
         """Return a count of the number of videos as indicated in the database"""
@@ -1532,10 +1484,7 @@ class Gloss(models.Model):
 
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
-
-        # return '/home/wessel/signbank/signbank/video/testmedia/AANBELLEN-320kbits.mp4'
-
-        video_url_or_empty_string = self.get_video()
+        video_url_or_empty_string = escape_uri_path(self.get_video())
 
         return video_url_or_empty_string
 
@@ -1544,37 +1493,32 @@ class Gloss(models.Model):
 
         return self.get_video() not in ['', None]
 
-    def rename_video(self, old_video_path, new_video_path):
-        """
-        Renames the video files for this gloss.
-        :param old_video_path:
-        :param new_video_path:
-        :return:
-        """
-        new_dir = os.path.dirname(new_video_path)
-        if not os.path.isdir(new_dir):
-            os.mkdir(new_dir)
-        if os.path.exists(old_video_path):
-            shutil.move(old_video_path, new_video_path)
+    def add_video(self, user, videofile):
+        # Preventing circular import
+        from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
 
-        # _small video file
-        old_video_file, extension = os.path.splitext(old_video_path)
-        old_video_path_small = old_video_file + '_small' + extension
-        print(old_video_path_small)
-        if os.path.exists(old_video_path_small):
-            new_video_file, extension = os.path.splitext(new_video_path)
-            new_video_path_small = new_video_file + '_small' + extension
-            print(new_video_path_small)
-            shutil.move(old_video_path_small, new_video_path_small)
+        # Backup the existing video objects stored in the database
+        existing_videos = GlossVideo.objects.filter(gloss=self)
+        for video_object in existing_videos:
+            video_object.reversion(revert=False)
 
-        # backups
-        backup_index = 1
-        old_backup = old_video_path + '_' + str(backup_index)
-        while os.path.exists(old_backup):
-            new_backup = new_video_path + '_' + str(backup_index)
-            shutil.move(old_backup, new_backup)
-            backup_index += 1
-            old_backup = old_video_path + '_' + str(backup_index)
+        # Create a new GlossVideo object
+        if isinstance(videofile, File):
+            video = GlossVideo(gloss=self)
+            video.videofile.save(get_video_file_path(video, ''), videofile)
+        else:
+            video = GlossVideo(videofile=videofile, gloss=self)
+        video.save()
+        video.make_small_video()
+        video.make_poster_image()
+
+        # Create a GlossVideoHistory object
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
+        glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+                                              uploadfile=videofile, goal_location=video_file_full_path)
+        glossvideohistory.save()
+
+        return video
 
     def published_definitions(self):
         """Return a query set of just the published definitions for this gloss
@@ -1677,6 +1621,9 @@ class Gloss(models.Model):
 
         return d
 
+    def tags(self):
+        from tagging.models import Tag
+        return Tag.objects.get_for_object(self)
 
 # register Gloss for tags
 try:
@@ -1773,8 +1720,10 @@ def fieldname_to_category(fieldname):
         field_category = 'HandshapeChange'
     elif fieldname == 'oriCh':
         field_category = 'OriChange'
-    elif fieldname in ['movSh', 'derivHist']:
+    elif fieldname == 'movSh':
         field_category = 'MovementShape'
+    elif fieldname == 'derivHist':
+        field_category = 'derivHist'
     elif fieldname == 'movDir':
         field_category = 'MovementDir'
     elif fieldname == 'movMan':
@@ -2053,6 +2002,8 @@ class OtherMedia(models.Model):
     path = models.CharField(max_length=100)
 
 
+
+
 class Dataset(models.Model):
     """A dataset, can be public/private and can be of only one SignLanguage"""
     name = models.CharField(unique=True, blank=False, null=False, max_length=60)
@@ -2078,6 +2029,12 @@ class Dataset(models.Model):
         permissions = (
             ('view_dataset', _('View dataset')),
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Keep original acronym for changes to GlossVideos
+        self._initial = model_to_dict(self, fields=['acronym', 'default_language'])
 
     def __str__(self):
         return self.acronym
@@ -2370,3 +2327,17 @@ class LemmaIdglossTranslation(models.Model):
                 raise ValidationError(msg)
 
         super(LemmaIdglossTranslation, self).save(*args, **kwargs)
+
+class GlossRevision(models.Model):
+
+    gloss = models.ForeignKey("Gloss")
+    user = models.ForeignKey(User)
+    time = models.DateTimeField()
+    field_name = models.CharField(max_length=100)
+    old_value = models.CharField(blank=True, max_length=100)
+    new_value = models.CharField(blank=True, max_length=100)
+
+    def __str__(self):
+
+        #return str(self.user)
+        return str(self.user) + " changed " + str(self.field_name) + " to " + str(self.new_value)

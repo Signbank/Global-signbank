@@ -1238,7 +1238,7 @@ class GlossDetailView(DetailView):
 
             human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
-            path = settings.URL+'dictionary/protected_media/othermedia/'+other_media.path
+            path = 'dictionary/protected_media/othermedia/'+other_media.path
             if '/' in other_media.path:
                 other_media_filename = other_media.path.split('/')[1]
             else:
@@ -4385,15 +4385,10 @@ def create_lemma_for_gloss(request, glossid):
 
     if form.is_valid():
         try:
-            old_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
             with atomic():
                 lemma = form.save()
                 gloss.lemma = lemma
                 gloss.save()
-            new_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
-
-            # Rename video
-            gloss.rename_video(old_video_path, new_video_path)
         except ValidationError as ve:
             messages.add_message(request, messages.ERROR, ve.message)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

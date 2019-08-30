@@ -186,9 +186,6 @@ class MorphemeCreateForm(forms.ModelForm):
 
         return morpheme
 
-class VideoUpdateForm(forms.Form):
-    """Form to allow update of the video for a sign"""
-    videofile = VideoUploadToFLVField()
 
 class TagUpdateForm(forms.Form):
     """Form to add a new tag to a gloss"""
@@ -524,7 +521,7 @@ class CSVUploadForm(forms.Form):
     file = forms.FileField()
 
 class ImageUploadForGlossForm(forms.Form):
-    """Form for video upload for a particular gloss"""
+    """Form for image upload for a particular gloss"""
 
     imagefile = forms.FileField(label="Upload Image")
     gloss_id = forms.CharField(widget=forms.HiddenInput)
@@ -626,7 +623,7 @@ class HandshapeSearchForm(forms.ModelForm):
 
 
 class ImageUploadForHandshapeForm(forms.Form):
-    """Form for video upload for a particular gloss"""
+    """Form for image upload for a particular gloss"""
 
     imagefile = forms.FileField(label="Upload Image")
     handshape_id = forms.CharField(widget=forms.HiddenInput)

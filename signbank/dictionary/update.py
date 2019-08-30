@@ -303,13 +303,8 @@ def update_gloss(request, glossid):
                 dataset = gloss.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
                 if dataset == lemma.dataset:
-                    old_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
                     gloss.lemma = lemma
                     gloss.save()
-                    new_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
-
-                    # Rename video
-                    gloss.rename_video(old_video_path, new_video_path)
                 else:
                     messages.add_message(messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
             except ObjectDoesNotExist:
@@ -375,56 +370,23 @@ def update_gloss(request, glossid):
 
             #Regular field updating
             else:
-                #Remember the old video path if you're changing the name
-                if field == 'idgloss':
-                    old_video_path = gloss.get_video_path()
-                    old_image_path = gloss.image_path_exists()
-
-                    try:
-                        old_extension = old_image_path.split('.')[-1]
-                    except AttributeError:
-                        old_extension = ''
 
                 # Alert: Note that if field is idgloss, the following code updates it
                 setattr(gloss,field,value)
                 gloss.save()
 
-                #Update the video location if you're changing the name
-                if field == 'idgloss':
-                    new_video_path = gloss.get_video_path()
-                    new_image_path_prefix = gloss.get_image_path_prefix()
-
-                    try:
-                        shutil.move(settings.MEDIA_ROOT+'/'+old_video_path,settings.MEDIA_ROOT+'/'+new_video_path)
-
-                    #You don't have to do this if there's no video
-                    except IOError:
-                        pass
-
-                    try:
-                        shutil.move(settings.MEDIA_ROOT+'/'+old_image_path,settings.MEDIA_ROOT+'/'+new_image_path_prefix+'.'+old_extension)
-
-                    #You don't have to do this if there's no image
-                    except (IOError,TypeError):
-                        pass
-
-                if field == 'idgloss':
-                    # new value has already been saved to gloss
-                    lemma_group_string = gloss.idgloss
-                    other_glosses_in_lemma_group = Gloss.objects.filter(idgloss__iexact=lemma_group_string).count()
-                    if other_glosses_in_lemma_group > 1:
-                        lemma_gloss_group = True
-                    else:
-                        lemma_gloss_group = False
-
                 #If the value is not a Boolean, return the new value
                 if not isinstance(value,bool):
                     # if we get to here, field is a valid field of Gloss
                     # field is a choice list and has a field_choice_category
-                    field_category = [f.field_choice_category for f in Gloss._meta.fields if f.name == field].pop()
 
-                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                    newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                    try:
+                        field_category = [f.field_choice_category for f in Gloss._meta.fields if f.name == field].pop()
+
+                        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                        newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                    except AttributeError:
+                        newvalue = value
 
                 if field_category in FIELDS['phonology']:
 
@@ -437,6 +399,10 @@ def update_gloss(request, glossid):
         #This is because you cannot concat none to a string in py3
         if original_value == None:
             original_value = ''
+
+        #Remember this change for the history books
+        revision = GlossRevision(old_value=original_value,new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now())
+        revision.save()
 
         # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
         return HttpResponse(
@@ -1721,13 +1687,8 @@ def update_morpheme(request, morphemeid):
                 dataset = morpheme.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
                 if dataset == lemma.dataset:
-                    old_video_path = settings.MEDIA_ROOT + morpheme.get_video_path()
                     morpheme.lemma = lemma
                     morpheme.save()
-                    new_video_path = settings.MEDIA_ROOT + morpheme.get_video_path()
-
-                    # Rename video
-                    morpheme.rename_video(old_video_path, new_video_path)
                 else:
                     messages.add_message(messages.ERROR, _("The dataset of the morpheme is not the same as that of the lemma."))
             except ObjectDoesNotExist:
@@ -1771,25 +1732,8 @@ def update_morpheme(request, morphemeid):
 
             # Regular field updating
             else:
-
-                # Remember the old video path if you're changing the name
-                if field == 'idgloss':
-                    old_video_path = morpheme.get_video_path()
-
                 morpheme.__setattr__(field, value)
                 morpheme.save()
-
-                # Update the video location if you're changing the name
-                if field == 'idgloss':
-                    new_video_path = morpheme.get_video_path()
-
-                    try:
-                        shutil.move(settings.MEDIA_ROOT + '/' + old_video_path,
-                                    settings.MEDIA_ROOT + '/' + new_video_path)
-
-                    # You don't have to do this if there's no video
-                    except IOError:
-                        pass
 
                 # If the value is not a Boolean, return the new value
                 if not isinstance(value, bool):

@@ -19,6 +19,16 @@ from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
 
+
+def get_two_letter_dir(idgloss):
+    foldername = idgloss[:2]
+
+    if len(foldername) == 1:
+        foldername += '-'
+
+    return foldername
+
+
 def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
         
     #Add a dot before the extension if needed
@@ -34,7 +44,12 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
         annotation_id = annotationidglosstranslations[0].text
     pk = str(gloss.pk)
-    destination_folder = goal_folder+annotation_id[:2]+'/'
+    destination_folder = os.path.join(
+        WRITABLE_FOLDER,
+        goal_folder,
+        gloss.lemma.dataset.acronym,
+        get_two_letter_dir(gloss.idgloss)
+    )
 
     #Create the necessary subfolder if needed
     if not os.path.isdir(destination_folder):
@@ -42,7 +57,7 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
 
     #Move the file
     source = source_folder+annotation_id+extension
-    goal = destination_folder+annotation_id+'-'+pk+extension
+    goal = os.path.join(destination_folder, annotation_id+'-'+pk+extension)
 
     if os.path.isfile(goal):
         overwritten = True
@@ -55,7 +70,10 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
     except IOError:
         was_allowed = False
 
-    os.remove(source)
+    try:
+        os.remove(source)
+    except OSError:
+        pass
 
     return overwritten,was_allowed
 
@@ -1478,7 +1496,7 @@ def get_deleted_gloss_or_media_data(item_type,since_timestamp):
     return result
 
 
-def generate_still_image(gloss_prefix, vfile_location, vfile_name):
+def generate_still_image(video):
     try:
         from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
         # local copy for debugging purposes
@@ -1487,24 +1505,27 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
         from signbank.settings.base import GLOSS_IMAGE_DIRECTORY
 
         # Extract frames (incl. middle)
-        extracter = MiddleFrameExtracter([vfile_location+os.sep+vfile_name], TMP_DIR + os.sep + "signbank-extractMiddleFrame",
-                                         FFMPEG_PROGRAM, True)
+        extracter = MiddleFrameExtracter([os.path.join(WRITABLE_FOLDER, str(video.videofile))],
+                                         os.path.join(TMP_DIR, "signbank-ExtractMiddleFrame"), FFMPEG_PROGRAM, True)
         output_dirs = extracter.run()
 
         # Copy video still to the correct location
+        vfile_name = os.path.basename(str(video.videofile))
+        still_goal_location = os.path.join(WRITABLE_FOLDER,
+                                           str(video.videofile).replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
+        destination = os.path.dirname(still_goal_location)
         for dir in output_dirs:
             for filename in os.listdir(dir):
                 if filename.replace('.png', '.mp4') == vfile_name:
-                    destination = WRITABLE_FOLDER + GLOSS_IMAGE_DIRECTORY + os.sep + gloss_prefix
-                    still_goal_location = destination + os.sep + filename
                     if not os.path.isdir(destination):
                         os.makedirs(destination, 0o770)
-                    shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
+                    shutil.copy(os.path.join(dir, filename), destination)
             shutil.rmtree(dir)
+        print("Generating still images succes!")
     except ImportError as i:
         print("Error resizing video: ", i)
     except IOError as io:
-        print(io.message)
+        print("IOError: ", io)
 
 
 def get_selected_datasets_for_user(user):

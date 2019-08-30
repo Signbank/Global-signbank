@@ -13,6 +13,7 @@ from django.utils.http import urlquote
 from collections import OrderedDict
 from django.contrib import messages
 from django.core.files import File
+from pathlib import Path
 
 import os
 import shutil
@@ -27,6 +28,7 @@ from signbank.dictionary.update import update_keywords, update_signlanguage, upd
     update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
+from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import *
@@ -452,7 +454,7 @@ def missing_video_view(request):
 
     glosses = missing_video_list()
 
-    return render_to_response("dictionary/missingvideo.html",
+    return render(request, "dictionary/missingvideo.html",
                               {'glosses': glosses})
 
 def import_media(request,video):
@@ -472,13 +474,12 @@ def import_media(request,video):
     out = '<p>Imported</p><ul>'
     overwritten_files = '<p>Of these files, these were overwritten</p><ul>'
     errors = []
+    print("video: ", video)
 
     if video:
         import_folder = settings.VIDEOS_TO_IMPORT_FOLDER
-        goal_directory = settings.GLOSS_VIDEO_DIRECTORY
     else:
         import_folder = settings.IMAGES_TO_IMPORT_FOLDER
-        goal_directory = settings.GLOSS_IMAGE_DIRECTORY
 
     print("Import folder: %s" % import_folder)
 
@@ -524,43 +525,29 @@ def import_media(request,video):
 
                 default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
 
-                overwritten, was_allowed = save_media(lang3code_folder_path,lang3code_folder_name,
-                                                      settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
+                if not video:
+                    overwritten, was_allowed = save_media(lang3code_folder_path, lang3code_folder_name,
+                                                          GLOSS_IMAGE_DIRECTORY, gloss, extension)
 
-                if not was_allowed:
-                    errors.append('Failed to move media file for '+default_annotationidgloss+
-                                  '. Either the source could not be read or the destination could not be written.')
-                    continue
+                    if not was_allowed:
+                        errors.append('Failed to move media file for '+default_annotationidgloss+
+                                      '. Either the source could not be read or the destination could not be written.')
+                        continue
 
-                out += '<li>'+filename+'</li>'
+                    out += '<li>'+filename+'</li>'
 
-                # If it is a video also extract a still image and generate a thumbnail version
-                if video:
-                    annotation_id = default_annotationidgloss
-                    destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
-                    video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
-                    video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
+                else:
+                    video_file_path = os.path.join(lang3code_folder_path, filename)
+                    vfile = File(open(video_file_path, 'rb'))
+                    video = gloss.add_video(request.user, vfile)
+                    vfile.close()
 
                     try:
-                        print("Trying to resize video " + destination_folder+video_filename)
-                        from CNGT_scripts.python.resizeVideos import VideoResizer
-                        from signbank.settings.server_specific import FFMPEG_PROGRAM
-                        resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
-                        resizer.run()
-                    except ImportError as i:
-                        print(i)
-                    except IOError as io:
-                        print(io)
+                        os.remove(video_file_path)
+                    except OSError as oserror:
+                        errors.append("OSError: {}".format(oserror))
 
-                    # Issue #255: generate still image
-                    try:
-                        print("Trying to generate still images for " + destination_folder+video_filename)
-                        from signbank.tools import generate_still_image
-                        generate_still_image(annotation_id[:2],
-                                             destination_folder,
-                                             video_filename)
-                    except ImportError as i:
-                        print(i.message)
+                    overwritten = False
 
                 if overwritten:
                     overwritten_files += '<li>'+filename+'</li>'
@@ -1986,8 +1973,13 @@ def add_image(request):
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing image for this sign
-            goal_path =  settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
-            goal_location_str = goal_path + gloss.idgloss + '-' + str(gloss.pk) + extension
+            goal_path = os.path.join(
+                WRITABLE_FOLDER,
+                GLOSS_IMAGE_DIRECTORY,
+                gloss.lemma.dataset.acronym,
+                signbank.tools.get_two_letter_dir(gloss.idgloss)
+            )
+            goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
             #First make the dir if needed
             try:
@@ -2284,46 +2276,27 @@ def configure_handshapes(request):
 
         return HttpResponse(output_string)
 
+
 def get_unused_videos(request):
+    file_not_in_glossvideo_object = []
+    gloss_video_dir = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY)
+    all_files = [str(file) for file in Path(gloss_video_dir).glob('**/*') if file.is_file()]
 
-    videos_with_unused_pk = []
-    videos_where_pk_does_match_idgloss = []
-    videos_with_unusual_file_names = []
+    for file in all_files:
+        full_file_path = file
+        file = file[len(settings.WRITABLE_FOLDER):]
+        if file.startswith('/'):
+            file = file[1:]
+        if small_appendix in file:
+            file = add_small_appendix(file, reverse=True)
 
-    for dir_name in os.listdir(settings.WRITABLE_FOLDER+settings.GLOSS_VIDEO_DIRECTORY):
+        gloss_videos = GlossVideo.objects.filter(videofile=file)
+        if not gloss_videos:
+            file_not_in_glossvideo_object.append(full_file_path)
 
-        dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_VIDEO_DIRECTORY+'/'+dir_name+'/'
+    return render(request, "dictionary/unused_videos.html",
+                  {'file_not_in_glossvideo_object': file_not_in_glossvideo_object})
 
-        for file_name in os.listdir(dir_path):
-
-            try:
-                items = file_name.replace('.mp4','').split('-')
-                pk = int(items[-1])
-                idgloss = '-'.join(items[:-1])
-            except ValueError:
-                videos_with_unusual_file_names.append(file_name)
-                continue
-
-            try:
-                if Gloss.objects.get(pk=pk).idgloss != idgloss:
-                    videos_where_pk_does_match_idgloss.append(file_name)
-            except ObjectDoesNotExist:
-                videos_with_unused_pk.append(file_name)
-                continue
-
-    result = '<p>For these videos, the pk does not match the idgloss:</p><ul>'
-    result += ''.join(['<li>'+video+'</li>' for video in videos_where_pk_does_match_idgloss])
-    result += '</ul></p>'
-
-    result += '<p>These videos have unusual file names:</p><ul>'
-    result += ''.join(['<li>'+video+'</li>' for video in videos_with_unusual_file_names])
-    result += '</ul></p>'
-
-    result += '<p>These videos have unused pks:</p><ul>'
-    result += ''.join(['<li>'+video+'</li>' for video in videos_with_unused_pk])
-    result += '</ul></p>'
-
-    return HttpResponse(result)
 
 def list_all_fieldchoice_names(request):
 

@@ -316,7 +316,7 @@
      <!-- {{ gloss.get_video }} -->
 
         <div id="player">
-          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video}}" controls type="video/mp4" autoplay muted></video>
+          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls type="video/mp4" autoplay muted></video>
         </div>
         <div id="replay"></div>
 
@@ -330,8 +330,8 @@
     </div>
 
     <div>
-        {% if gloss.image_path_exists %}
-            <img id="imageframe" src="{{protected_media_url}}{{gloss.image_path_exists}}" style="height:259px;width:auto;">
+        {% if gloss.get_image_path %}
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 
@@ -429,7 +429,6 @@
             <tr {%if gloss.dialect.all|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
 
-                <!--<td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{lemma_group_url}}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>-->
                 <td><span id="lemma">{{ gloss.lemma }}
                         {% if lemma_group %}
                             <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
@@ -1419,7 +1418,7 @@
                     {% else %}
                     <td></td>
                     {% endif %}
-                    <td><a download="{{ file_name }}" href="{{ path }}">Download</a></td>
+                    <td><a download="{{ file_name }}" href="{{ URL }}{{ PREFIX_URL }}{{ path }}">Download</a></td>
                     <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
                     <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
