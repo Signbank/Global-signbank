@@ -665,9 +665,9 @@ class Gloss(models.Model):
     wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5,
                                   choices=build_choice_list('WordClass'))
     wordClass2.field_choice_category = 'WordClass'
-    derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("MovementShape"), max_length=50,
+    derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("derivHist"), max_length=50,
                                  blank=True)
-    derivHist.field_choice_category = 'MovementShape'
+    derivHist.field_choice_category = 'derivHist'
     lexCatNotes = models.CharField(_("Lexical category notes"), null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
     valence.field_choice_category = 'Valence'
@@ -1720,8 +1720,10 @@ def fieldname_to_category(fieldname):
         field_category = 'HandshapeChange'
     elif fieldname == 'oriCh':
         field_category = 'OriChange'
-    elif fieldname in ['movSh', 'derivHist']:
+    elif fieldname == 'movSh':
         field_category = 'MovementShape'
+    elif fieldname == 'derivHist':
+        field_category = 'derivHist'
     elif fieldname == 'movDir':
         field_category = 'MovementDir'
     elif fieldname == 'movMan':
