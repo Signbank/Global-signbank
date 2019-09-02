@@ -427,7 +427,7 @@ def process_dataset_changes(sender, instance, **kwargs):
     # If the acronym has been changed, change all GlossVideos
     # and rename directories.
     dataset = instance
-    if dataset.acronym != dataset._initial['acronym']:
+    if dataset._initial['acronym'] and dataset.acronym != dataset._initial['acronym']:
         # Move all media
         glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
         for glossvideo in glossvideos:
@@ -444,7 +444,7 @@ def process_dataset_changes(sender, instance, **kwargs):
 
     # If the default language has been changed, change all GlossVideos
     # and move all video/poster files accordingly.
-    if dataset.default_language != dataset._initial['default_language']:
+    if dataset._initial['default_language'] and dataset.default_language != dataset._initial['default_language']:
         # Move all media
         glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
         for glossvideo in glossvideos:
