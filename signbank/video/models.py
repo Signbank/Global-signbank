@@ -492,4 +492,5 @@ def delete_files(sender, instance, **kwargs):
     :param kwargs: 
     :return: 
     """
-    instance.delete_files()
+    if settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE:
+        instance.delete_files()
