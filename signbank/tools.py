@@ -1792,12 +1792,15 @@ def get_ecv_descripion_for_gloss(gloss, lang, include_phonology_and_frequencies=
     desc = ""
     if include_phonology_and_frequencies:
         try:
-            fields_data = [(field.name, field.field_choice_category, field.choices) for field in Gloss._meta.fields if field.name in ECV_SETTINGS['description_fields'] ]
+            fields_data = [(field.name, field.field_choice_category, field.choices)
+                           for field in Gloss._meta.fields
+                           if field.name in ECV_SETTINGS['description_fields']
+                           and hasattr(field, 'field_choice_category')]
         except:
             print('get_ecv_descripion_for_gloss error getting field_choice_category, set to empty list. Check models.py for choice list declarations.')
             fields_data = []
 
-        for (f, fieldchoice_category, field_choices, field_choices) in fields_data:
+        for (f, fieldchoice_category, field_choices) in fields_data:
 
             if len(field_choices) > 0:
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
