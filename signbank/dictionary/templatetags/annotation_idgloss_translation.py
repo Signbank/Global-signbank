@@ -156,6 +156,6 @@ def get_gloss_description(gloss, language_code_2char):
     :param language_code_2char: 
     :return: 
     """
-    from signbank.tools import get_ecv_descripion_for_gloss
+    from signbank.tools import get_ecv_description_for_gloss
     from signbank.settings.base import ECV_SETTINGS
-    return get_ecv_descripion_for_gloss(gloss, language_code_2char, ECV_SETTINGS['include_phonology_and_frequencies'])
+    return get_ecv_description_for_gloss(gloss, language_code_2char, ECV_SETTINGS['include_phonology_and_frequencies'])
