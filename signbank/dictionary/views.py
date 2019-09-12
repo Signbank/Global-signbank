@@ -646,7 +646,38 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    return render(request,'dictionary/try.html',{})
+    from collections import Counter
+
+    encountered_lemmata = []
+    lemmata_nr_of_glosses = {}
+    lemmata_frequency = {}
+
+    dataset = Dataset.objects.get(pk=5)
+
+    for gloss in Gloss.objects.filter(lemma__dataset=5):
+
+        if gloss.lemma == None:
+            continue
+
+        translations = [translation.text for translation in LemmaIdglossTranslation.objects.filter(lemma = gloss.lemma)]
+        name = ','.join(translations)
+
+        if gloss.lemma not in encountered_lemmata:
+            encountered_lemmata.append(gloss.lemma)
+            lemmata_nr_of_glosses[name] = 0
+            lemmata_frequency[name] = 0
+
+        lemmata_nr_of_glosses[name] += 1
+
+        try:
+            lemmata_frequency[name] += gloss.tokNo
+        except TypeError:
+            pass
+
+    interesting_lemmata = [(name,lemmata_frequency[name]) for name, freq in lemmata_nr_of_glosses.items() if freq > 1]
+    interesting_lemmata.sort(key=lambda x: x[1], reverse=True)
+
+    return HttpResponse(str(interesting_lemmata))
 
 def import_authors(request):
 

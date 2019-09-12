@@ -172,3 +172,6 @@ RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=90)
 
 #Experimental feature to make the list view faster
 SPEED_UP_RETRIEVING_ALL_SIGNS =	True
+
+#Delete the video and image files when a GlossVideo instance is deleted
+DELETE_FILES_ON_GLOSSVIDEO_DELETE = False
