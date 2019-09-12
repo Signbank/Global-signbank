@@ -2533,6 +2533,243 @@ class FrequencyListView(ListView):
             # User is not authenticated
             return None
 
+
+class GlossFrequencyView(DetailView):
+
+    model = Gloss
+    context_object_name = 'gloss'
+    last_used_dataset = None
+    pk_url_kwarg = 'gloss_id'
+
+    template_name = "dictionary/gloss_frequency.html"
+
+    def get_context_data(self, **kwargs):
+
+        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
+        from signbank.tools import convert_language_code_to_2char
+        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
+        default_language = Language.objects.get(id=get_default_language_id())
+        default_language_code = default_language.language_code_2char
+        try:
+            interface_language = Language.objects.get(language_code_2char=language_code)
+        except:
+            interface_language = default_language
+
+        # Call the base implementation first to get a context
+        context = super(GlossFrequencyView, self).get_context_data(**kwargs)
+
+        #Pass info about which fields we want to see
+        gl = context['gloss']
+        labels = gl.field_labels()
+
+        # set a session variable to be able to pass the gloss's id to the ajax_complete method
+        # the last_used_dataset name is updated to that of this gloss
+        # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
+        if gl.dataset:
+            self.request.session['datasetid'] = gl.dataset.id
+            self.last_used_dataset = gl.dataset.acronym
+        else:
+            self.request.session['datasetid'] = get_default_language_id()
+
+        self.request.session['last_used_dataset'] = self.last_used_dataset
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        context['dataset_ids'] = [ ds.id for ds in selected_datasets]
+        context['dataset_names'] = [ds.acronym for ds in selected_datasets]
+
+        context['frequency_regions'] = settings.FREQUENCY_REGIONS
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            context['dataset_choices'] = {}
+            user = self.request.user
+            if user.is_authenticated():
+                qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
+                dataset_choices = {}
+                for dataset in qs:
+                    dataset_choices[dataset.acronym] = dataset.acronym
+                context['dataset_choices'] = json.dumps(dataset_choices)
+
+        context['data_datasets'] = gl.data_datasets()
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        if hasattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY'):
+            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = settings.SHOW_LETTER_NUMBER_PHONOLOGY
+        else:
+            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
+
+        # Put annotation_idgloss per language in the context
+        context['annotation_idgloss'] = {}
+        if gl.dataset:
+            for language in gl.dataset.translation_languages.all():
+                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
+        else:
+            language = Language.objects.get(id=get_default_language_id())
+            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
+        print('annotation idgloss per panguage: ', context['annotation_idgloss'])
+
+        if interface_language in context['annotation_idgloss'].keys():
+            gloss_idgloss = context['annotation_idgloss'][interface_language]
+        else:
+            gloss_idgloss = context['annotation_idgloss'][default_language]
+        print('gloss idgloss: ', gloss_idgloss.text)
+        context['gloss_idgloss'] = gloss_idgloss.text
+
+        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
+
+        return context
+
+
+class LemmaFrequencyView(DetailView):
+
+    model = Gloss
+    context_object_name = 'gloss'
+    last_used_dataset = None
+    pk_url_kwarg = 'gloss_id'
+
+    template_name = "dictionary/lemma_frequency.html"
+
+    def get_context_data(self, **kwargs):
+
+        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
+        from signbank.tools import convert_language_code_to_2char
+        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
+        default_language = Language.objects.get(id=get_default_language_id())
+        default_language_code = default_language.language_code_2char
+        try:
+            interface_language = Language.objects.get(language_code_2char=language_code)
+        except:
+            interface_language = default_language
+
+        # Call the base implementation first to get a context
+        context = super(LemmaFrequencyView, self).get_context_data(**kwargs)
+
+        #Pass info about which fields we want to see
+        gl = context['gloss']
+        labels = gl.field_labels()
+
+        # set a session variable to be able to pass the gloss's id to the ajax_complete method
+        # the last_used_dataset name is updated to that of this gloss
+        # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
+        if gl.dataset:
+            self.request.session['datasetid'] = gl.dataset.id
+            self.last_used_dataset = gl.dataset.acronym
+        else:
+            self.request.session['datasetid'] = get_default_language_id()
+
+        self.request.session['last_used_dataset'] = self.last_used_dataset
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        context['dataset_ids'] = [ ds.id for ds in selected_datasets]
+        context['dataset_names'] = [ds.acronym for ds in selected_datasets]
+
+        context['frequency_regions'] = settings.FREQUENCY_REGIONS
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            context['dataset_choices'] = {}
+            user = self.request.user
+            if user.is_authenticated():
+                qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
+                dataset_choices = {}
+                for dataset in qs:
+                    dataset_choices[dataset.acronym] = dataset.acronym
+                context['dataset_choices'] = json.dumps(dataset_choices)
+
+        context['data_datasets'] = gl.data_datasets()
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        if hasattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY'):
+            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = settings.SHOW_LETTER_NUMBER_PHONOLOGY
+        else:
+            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
+
+        # Put annotation_idgloss per language in the context
+        context['annotation_idgloss'] = {}
+        if gl.dataset:
+            for language in gl.dataset.translation_languages.all():
+                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
+        else:
+            language = Language.objects.get(id=get_default_language_id())
+            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
+        print('annotation idgloss per panguage: ', context['annotation_idgloss'])
+
+        if interface_language in context['annotation_idgloss'].keys():
+            gloss_idgloss = context['annotation_idgloss'][interface_language]
+        else:
+            gloss_idgloss = context['annotation_idgloss'][default_language]
+        print('gloss idgloss: ', gloss_idgloss.text)
+        context['gloss_idgloss'] = gloss_idgloss.text
+
+        lemma_group_count = 0
+        try:
+            lemma_group_count = gl.lemma.gloss_set.count()
+            if lemma_group_count > 1:
+                context['lemma_group'] = True
+                lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
+                for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
+                    lang_code_2char = lemmaidglosstranslation.language.language_code_2char
+                    lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
+                from urllib.parse import urlencode
+                url_query = urlencode(lemma_group_url_params)
+                url_query = ("?" + url_query) if url_query else ''
+                context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
+            else:
+                context['lemma_group'] = False
+                context['lemma_group_url'] = ''
+        except:
+            print("lemma_group_count: except")
+            context['lemma_group'] = False
+            context['lemma_group_url'] = ''
+
+        lemma_group_glosses = gl.lemma.gloss_set.all()
+        glosses_in_lemma_group = []
+
+        data_lemmas = []
+        if lemma_group_glosses:
+            for gl_lem in lemma_group_glosses:
+                data_lemmas_dict = {}
+                lemma_dict = {}
+                if gl_lem.dataset:
+                    for language in gl_lem.dataset.translation_languages.all():
+                        lemma_dict[language.language_code_2char] = gl_lem.annotationidglosstranslation_set.filter(language=language)
+                else:
+                    language = Language.objects.get(id=get_default_language_id())
+                    lemma_dict[language.language_code_2char] = gl_lem.annotationidglosstranslation_set.filter(language=language)
+                if language_code in lemma_dict.keys():
+                    gl_lem_display = lemma_dict[language_code][0].text
+                else:
+                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    gl_lem_display = lemma_dict[default_language_code][0].text
+
+                glosses_in_lemma_group.append((gl_lem,gl_lem_display))
+                data_lemmas_dict['label'] = gl_lem_display
+                gl_lem_data_datasets_dict = gl_lem.data_datasets()
+                # The first entry of the dictionary is Occurrences
+                data_lemmas_dict['data'] = gl_lem_data_datasets_dict[0]['data']
+                data_lemmas.append(data_lemmas_dict)
+
+        context['data_lemmas'] = json.dumps(data_lemmas)
+
+        context['glosses_in_lemma_group'] = glosses_in_lemma_group
+
+        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
+
+        return context
+
+
 class HandshapeListView(ListView):
 
     model = Handshape

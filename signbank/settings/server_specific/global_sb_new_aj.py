@@ -53,3 +53,32 @@ DEFAULT_DATASET = 'Nederlandse Gebarentaal'
 DEFAULT_DATASET_ACRONYM = 'NGT'
 DEFAULT_DATASET_LANGUAGE_ID = 1
 DEFAULT_DATASET_PK = 5
+
+FREQUENCY_CATEGORIES = ['Occurences', 'Signers']
+
+FREQUENCY_REGIONS = ['Amsterdam', 'Voorburg', 'Rotterdam', 'Gestel', 'Groningen', 'Other']
+
+# The above two are what Signbank Global has as hard-coded frequency fields, taken apart to show the types
+# Below they are coded into a table
+# This data structure is used to generate data for charts to display the existing frequency data
+# For use in GlossFrequencyView and LemmaFrequencyView (development) templates
+FREQUENCY_FIELDS = {}
+FREQUENCY_FIELDS['Amsterdam'] = {}
+FREQUENCY_FIELDS['Voorburg'] = {}
+FREQUENCY_FIELDS['Rotterdam'] = {}
+FREQUENCY_FIELDS['Gestel'] = {}
+FREQUENCY_FIELDS['Groningen'] = {}
+FREQUENCY_FIELDS['Other'] = {}
+
+FREQUENCY_FIELDS['Amsterdam']['Occurences'] = 'tokNoA'
+FREQUENCY_FIELDS['Amsterdam']['Signers'] = 'tokNoSgnrA'
+FREQUENCY_FIELDS['Voorburg']['Occurences'] = 'tokNoV'
+FREQUENCY_FIELDS['Voorburg']['Signers'] = 'tokNoSgnrV'
+FREQUENCY_FIELDS['Rotterdam']['Occurences'] = 'tokNoR'
+FREQUENCY_FIELDS['Rotterdam']['Signers'] = 'tokNoSgnrR'
+FREQUENCY_FIELDS['Gestel']['Occurences'] = 'tokNoGe'
+FREQUENCY_FIELDS['Gestel']['Signers'] = 'tokNoSgnrGe'
+FREQUENCY_FIELDS['Groningen']['Occurences'] = 'tokNoGr'
+FREQUENCY_FIELDS['Groningen']['Signers'] = 'tokNoSgnrGr'
+FREQUENCY_FIELDS['Other']['Occurences'] = 'tokNoO'
+FREQUENCY_FIELDS['Other']['Signers'] = 'tokNoSgnrO'

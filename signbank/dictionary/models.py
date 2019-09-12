@@ -832,6 +832,23 @@ class Gloss(models.Model):
 
         return glosses_with_same_lemma_group
 
+    def data_datasets(self):
+        # for use in displaying frequency for a gloss in chart format in the frequency templates
+        # the frequency fields are put into a dictionary structure
+        data_datasets = []
+        for c in settings.FREQUENCY_CATEGORIES:
+            dataset_dict = {}
+            dataset_dict['label'] = c
+            dataset_dict['data'] = []
+            for r in settings.FREQUENCY_REGIONS:
+                field_r_c = settings.FREQUENCY_FIELDS[r][c]
+                k_value = getattr(self, field_r_c)
+                if k_value == None:
+                    k_value = 0
+                dataset_dict['data'].append(k_value)
+            data_datasets.append(dataset_dict)
+        return data_datasets
+
     def homophones(self):
         """Return the set of homophones for this gloss ordered by sense number"""
 
@@ -1471,7 +1488,6 @@ class Gloss(models.Model):
 
         video_path = self.get_video_path()
         filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
-        print("PATH: {}".format(filepath))
         if os.path.exists(filepath.encode('utf-8')):
             return video_path
         else:

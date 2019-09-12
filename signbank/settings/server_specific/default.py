@@ -104,6 +104,11 @@ FIELDS['handshape'] = ['hsNumSel','hsFingSel','hsFingSel2','hsFingConf','hsFingC
                        'hsFingUnsel','fsT','fsI','fsM','fsR','fsP','fs2T','fs2I','fs2M','fs2R','fs2P','ufT','ufI','ufM',
                        'ufR','ufP']
 
+# Use these fields in the server specific settings to specify frequency fields, if available
+FREQUENCY_CATEGORIES = []
+FREQUENCY_REGIONS = []
+FREQUENCY_FIELDS = {}
+
 #Use these fields to figure out which glosses are minimal pairs
 MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','relOriMov','relOriLoc',
                         'oriCh','contType','movSh','movDir','repeat','altern']

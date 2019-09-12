@@ -672,3 +672,8 @@ tr.rotated th {
     top: 0px;
     background-color: white;
 }
+
+canvas{
+    width:auto !important;
+    height:auto !important;
+}
