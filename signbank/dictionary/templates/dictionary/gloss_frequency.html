@@ -1,0 +1,97 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Gloss Frequency{% endblock %}
+{% load stylesheet %}
+
+{% block extrahead %}
+{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<script type='text/javascript'>
+var frequency_regions = {{frequency_regions|safe}};
+var data_datasets = {{data_datasets|safe}};
+var gloss_idgloss = '{{gloss_idgloss|safe}}';
+</script>
+
+<script type="text/javascript">
+var ctx = document.getElementById('myChart').getContext('2d');
+var chart = new Chart(ctx, {
+    type: 'horizontalBar',
+
+    data: {
+        labels: frequency_regions,
+        datasets: data_datasets
+    },
+});
+
+chart.options.scales.yAxes[0].ticks.fontSize = 16;
+chart.options.scales.yAxes[0].ticks.fontColor = 'Black';
+chart.options.scales.yAxes[0].ticks.precision = 0;
+chart.options.scales.xAxes[0].ticks.fontSize = 16;
+chart.options.scales.xAxes[0].ticks.fontColor = 'Black';
+chart.options.scales.xAxes[0].ticks.precision = 0;
+chart.options.legend.labels.fontSize = 16;
+chart.options.legend.labels.fontColor = 'Black';
+chart.data.datasets[0].backgroundColor = 'DarkGrey';
+chart.data.datasets[1].backgroundColor = 'LightGrey';
+chart.options.tooltips.titleFontSize = 16;
+chart.options.tooltips.bodyFontSize = 16;
+chart.update();
+</script>
+
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
+<table>
+    {% csrf_token %}
+
+    {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+    <tr>
+    <th style="width:20em;">{% trans "Dataset" %}</th>
+    <td style="width:12em;">{{gloss.lemma.dataset.acronym}}</td>
+    </tr>
+    {% endif %}
+
+
+    {% for dataset_lang in dataset_languages %}
+    <tr>
+    <th style="width:20em;">{% trans "Annotation ID Gloss" %} ({{ dataset_lang }})</th>
+    {% with gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+    <td>
+      {% ifnotequal annotationidglosstranslation "" %}
+
+        <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
+
+      {% endifnotequal %}
+    </td>
+    {% endwith %}
+    </tr>
+    {% endfor %}
+
+    {% for dataset_lang in dataset_languages %}
+    <tr>
+    <th style="width:20em;">{% trans "Lemma ID Gloss" %} ({{ dataset_lang }})</th>
+    {% with gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
+      <td>
+          <div>{{ lemmaidglosstranslation }}</div>
+      </td>
+    {% endwith %}
+    </tr>
+    {% endfor %}
+
+</tr>
+</table>
+</div>
+
+<canvas id="myChart"></canvas>
+
+{% endblock content %}
