@@ -724,14 +724,18 @@ class Gloss(models.Model):
 
     def get_fields_dict(self):
 
-        try:
-            fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category, field.choices) for field in Gloss._meta.fields if field.name in settings.API_FIELDS ]
-        except:
-            print('get_fields_dict error getting field_choice_category or verbose_name, set to empty list. Check models.py for choice list declarations.')
-            fields_data = []
+        fields_data = []
+        for field in Gloss._meta.fields:
+            if field.name in settings.API_FIELDS:
+                if hasattr(field, 'field_choice_category'):
+                    fc_category = field.field_choice_category
+                else:
+                    fc_category = None
+                fields_data.append((field.name, field.verbose_name.title(), fc_category))
+
         fields = {}
-        for (f, field_verbose_name, fieldchoice_category, field_choices) in fields_data:
-            if len(field_choices) > 0:
+        for (f, field_verbose_name, fieldchoice_category) in fields_data:
+            if fieldchoice_category:
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 machine_value = str(getattr(self, f))
                 field_value = machine_value_to_translated_human_value(machine_value, choice_list, settings.LANGUAGE_CODE)
