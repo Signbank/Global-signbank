@@ -2122,45 +2122,37 @@ class Dataset(models.Model):
             adjective = codes_to_adjectives[language_code].lower()
 
         # sort the phonology fields based on field label in the designated language
-        try:
-            fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category, field.choices) for field in Gloss._meta.fields if field.choices and field.name in FIELDS['phonology'] + FIELDS['semantics'] ]
-        except:
-            print('generate_frequency_dict error getting field_choice_category, set to empty list. Check models.py for choice list declarations.')
-            fields_data = []
+        fields_data = []
+        for field in Gloss._meta.fields:
+            if field.name in FIELDS['phonology'] + FIELDS['semantics']:
+                if hasattr(field, 'field_choice_category'):
+                    fc_category = field.field_choice_category
+                    fields_data.append((field.name, field.verbose_name.title(), fc_category))
 
         # CHOICE_LISTS dictionary, maps from field name to pairs of ( _ machine value , translated verbose name )
         # The choice list will be sorted on the translated verbose name
         choice_lists = dict()
-        for (f, field_verbose_name, fieldchoice_category, field_choices) in fields_data:
-            # if fieldchoice_category == 'Handshape':
-            #     choice_list = Handshape.objects.order_by(adjective + '_name')
-            # else:
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
-            # Legacy: At this point, there could be duplicate machine values for a particular fieldchoice category
-            if len(choice_list) > 0:
-                # ordered = False means return a list instead of an OrderedDict
-                choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False)
+        for (f, field_verbose_name, fieldchoice_category) in fields_data:
+            if fieldchoice_category:
+                choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+                # make a dictionary using the field name so we can look up the translated choices later
+                choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list_this_field, language_code, ordered=False)
 
         # Sort the data by the translated verbose name field
         ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
 
         frequency_lists_phonology_fields = OrderedDict()
         # To generate the correct order, iterate over the ordered fields data, which is ordered by translated verbose name
-        for (f, field_verbose_name, fieldchoice_category, field_choices) in ordered_fields_data:
+        for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
 
-            # Note: a second choice_list is created here in exactly the same way as above.
-            # It contains Handshape and FieldChoice objects, which are used in the function choicelist_queryset_to_machine_value_dict
-            # if fieldchoice_category == 'Handshape':
-            #     choice_list = Handshape.objects.order_by(adjective + '_name')
-            # else:
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+            choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
 
             # We now basically construct a duplicate of the choice_lists dict, but with the machine values instead of the labels
             # The machine value is what is stored as the value of the field in the Gloss objects
             # We take the count of the machine value in the Gloss objects
 
             # ordered = True means return an OrderedDict instead of a list
-            choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list, ordered=True)
+            choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list_this_field, ordered=True)
 
             # get dictionary of translated field choices CHOICE_LISTS for this field in sorted order (as per the language code)
             sorted_field_choices = copy.deepcopy(choice_lists[f])
