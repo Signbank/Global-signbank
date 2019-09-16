@@ -378,14 +378,16 @@ def update_gloss(request, glossid):
                 #If the value is not a Boolean, return the new value
                 if not isinstance(value,bool):
                     # if we get to here, field is a valid field of Gloss
-                    # field is a choice list and has a field_choice_category
+                    # field is a choice list and we need to get the translated human value
 
-                    try:
-                        field_category = [f.field_choice_category for f in Gloss._meta.fields if f.name == field].pop()
+                    changed_field = [ f for f in Gloss._meta.fields if f.name == field].pop()
 
+                    if hasattr(changed_field, 'field_choice_category'):
+                        field_category = getattr(changed_field, 'field_choice_category')
                         choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                        # if the choice_list happens to be empty, the following call results in value being assigned
                         newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
-                    except AttributeError:
+                    else:
                         newvalue = value
 
                 if field_category in FIELDS['phonology']:
@@ -1316,10 +1318,17 @@ def update_handshape(request, handshapeid):
             newvalue = value
 
             if not isinstance(value, bool):
-                # field is a choice list and has a field_choice_category
-                field_category = [f.field_choice_category for f in Handshape._meta.fields if f.name == field].pop()
-                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
+                # field is a choice list and we need to get the translated human value
+
+                changed_field = [f for f in Handshape._meta.fields if f.name == field].pop()
+
+                if hasattr(changed_field, 'field_choice_category'):
+                    field_category = getattr(changed_field, 'field_choice_category')
+                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                    # if the choice_list happens to be empty, the following call results in value being assigned
+                    newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
+                else:
+                    newvalue = value
 
         # Finger selections are saved as both boolean values per finger and as patterns that include the fingers
         # The patterns, such as TIM, are stored as choice lists in FieldChoice.
@@ -1722,6 +1731,10 @@ def update_morpheme(request, morphemeid):
             # special value of 'notset' or -1 means remove the value
             fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
 
+            if field in FIELDS['phonology']:
+                # this is used as part of the feedback to the interface, to alert the user to refresh the display
+                category_value = 'phonology'
+
             char_fields_not_null = [f.name for f in Morpheme._meta.fields
                                     if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
 
@@ -1737,11 +1750,17 @@ def update_morpheme(request, morphemeid):
 
                 # If the value is not a Boolean, return the new value
                 if not isinstance(value, bool):
-                    # field is a choice list and has a field_choice_category
-                    field_category = [f.field_choice_category for f in Morpheme._meta.fields if f.name == field].pop()
-                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                    newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
-                    category_value = 'phonology'
+                    # field is a choice list and we need to get the translated human value
+
+                    changed_field = [ f for f in Morpheme._meta.fields if f.name == field].pop()
+
+                    if hasattr(changed_field, 'field_choice_category'):
+                        field_category = getattr(changed_field, 'field_choice_category')
+                        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                        # if the choice_list happens to be empty, the following call results in value being assigned
+                        newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                    else:
+                        newvalue = value
 
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
 

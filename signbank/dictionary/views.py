@@ -2545,11 +2545,7 @@ def choice_lists(request):
     # Translate the machine values to human values in the correct language, and save the choice lists along the way
     for topic in ['main', 'phonology', 'semantics', 'frequency']:
 
-        try:
-            fields_with_choices = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in FIELDS[topic] and len(field.choices) > 0]
-        except:
-            print('choice_lists error getting field_choice_category, set to empty list. Check models.py for choice list declarations.')
-            fields_with_choices = []
+        fields_with_choices = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in FIELDS[topic] and hasattr(field, 'field_choice_category') ]
 
         for (field, fieldchoice_category) in fields_with_choices:
 
