@@ -109,6 +109,12 @@ FREQUENCY_CATEGORIES = []
 FREQUENCY_REGIONS = []
 FREQUENCY_FIELDS = {}
 
+# the following are used to avoid using fieldnames in the code
+# although these are all Boolean fields
+# it's not sufficient to identify per type because repeat and altern are also Booleans
+HANDSHAPE_ETYMOLOGY_FIELDS = ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number']
+HANDEDNESS_ARTICULATION_FIELDS = ['weakdrop','weakprop']
+
 #Use these fields to figure out which glosses are minimal pairs
 MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','relOriMov','relOriLoc',
                         'oriCh','contType','movSh','movDir','repeat','altern']

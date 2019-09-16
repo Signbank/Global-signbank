@@ -290,7 +290,7 @@ class GlossListView(ListView):
             for fieldname in settings.FIELDS[topic]:
 
                 # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand for purposes of nested dependencies in Search form
-                if fieldname not in ['weakprop', 'weakdrop', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                     field = search_form[fieldname]
                     label = field.label
                     context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
@@ -526,7 +526,7 @@ class GlossListView(ListView):
 
                 if f.name in char_fields_not_null and value:
                     value = str(value)
-                if f.name == 'weakdrop' or f.name == 'weakprop':
+                if f.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
                     if value == None:
                         value = 'Neutral'
 
@@ -1140,7 +1140,7 @@ class GlossDetailView(DetailView):
             for field in FIELDS[topic]:
 
                 # the following check will be used when querying is added, at the moment these don't appear in the phonology list
-                if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']:
+                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                     #Get and save the choice list for this field
                     fieldchoice_category = fieldname_to_category(field)
                     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
@@ -1704,7 +1704,7 @@ class MorphemeListView(ListView):
 
             for fieldname in settings.FIELDS[topic]:
 
-                if fieldname not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']:
+                if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                     field = search_form[fieldname]
                     label = field.label
 
@@ -2364,9 +2364,11 @@ class MinimalPairsListView(ListView):
 
         field_names = []
         for field in FIELDS['phonology']:
-            # the following fields are not considered for minimal pairs
-            if field not in ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar']:
-                field_names.append(field)
+            field_object = [f for f in Gloss._meta.fields if f.name == field].pop()
+            # don't consider text fields that are not choice lists
+            if (isinstance(field_object, models.CharField) and not hasattr(field_object, 'field_choice_category')) or isinstance(field_object, models.TextField):
+                continue
+            field_names.append(field)
 
         field_labels = dict()
         for field in field_names:
@@ -2442,8 +2444,7 @@ class FrequencyListView(ListView):
         # this is used for display in the template, by lookup
         field_labels = dict()
         for field in FIELDS['phonology']:
-            if field not in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter']:
+            if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                 field_kind = fieldname_to_kind(field)
                 if field_kind == 'list':
                     field_label = Gloss._meta.get_field(field).verbose_name
@@ -4262,7 +4263,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                 # the value is a Boolean or it might not be set
                 if focus_gloss_choice == 'True' or focus_gloss_choice == True:
                     focus_gloss_value = _('Yes')
-                elif focus_gloss_choice == 'Neutral' and field in ['weakdrop', 'weakprop']:
+                elif focus_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
                     focus_gloss_value = _('Neutral')
                 else:
                     focus_gloss_value = _('No')
@@ -4283,7 +4284,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                 # the value is a Boolean or it might not be set
                 if other_gloss_choice == 'True' or other_gloss_choice == True:
                     other_gloss_value = _('Yes')
-                elif other_gloss_choice == 'Neutral' and field in ['weakdrop', 'weakprop']:
+                elif other_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
                     other_gloss_value = _('Neutral')
                 else:
                     other_gloss_value = _('No')

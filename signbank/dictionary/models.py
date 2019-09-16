@@ -1037,8 +1037,7 @@ class Gloss(models.Model):
                     non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
 
 
-        for field in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                      'subhndsh_letter']:
+        for field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
             machine_value = getattr(self, field)
             label = fieldLabel[field]
             if machine_value is not None:
@@ -1089,8 +1088,7 @@ class Gloss(models.Model):
                 if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
                     non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
 
-        for field in ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                      'subhndsh_letter']:
+        for field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
             machine_value = getattr(self, field)
             label = fieldLabel[field]
             if machine_value is not None:
@@ -1111,11 +1109,11 @@ class Gloss(models.Model):
         for f in Gloss._meta.fields:
             gloss_fields[f.name] = f
         for field in FIELDS['phonology']:
-            if field in ['phonOth', 'mouthG', 'mouthing', 'phonetVar', 'locVirtObj']:
+            gloss_field = gloss_fields[field]
+            if (isinstance(gloss_field, models.CharField) and not hasattr(gloss_field, 'field_choice_category')) or isinstance(gloss_field, models.TextField):
                 continue
             phonology_dict[field] = None
             machine_value = getattr(self, field)
-            gloss_field = gloss_fields[field]
             if gloss_field.choices:
                 fieldchoice_category = gloss_field.field_choice_category
                 if fieldchoice_category == 'Handshape':
@@ -1129,7 +1127,7 @@ class Gloss(models.Model):
                 else:
                     phonology_dict[field] = None
             else:
-
+                # gloss_field is a Boolean
                 # TO DO: check these conversions to Strings instead of Booleans
 
                 if machine_value is not None:
@@ -1143,7 +1141,7 @@ class Gloss(models.Model):
                 else:
                     # machine value is None, for weakdrop and weakprop, this is Neutral
                     # value is Neutral
-                    if field in ['weakprop', 'weakdrop']:
+                    if field in settings.HANDEDNESS_ARTICULATION_FIELDS:
                         phonology_dict[field] = 'Neutral'
                     else:
                         phonology_dict[field] = 'False'
@@ -1336,8 +1334,6 @@ class Gloss(models.Model):
 
     # Homonyms
     # these are now defined in settings
-    # omit fields 'locVirtObj': 'Virual Object', 'phonOth': 'Phonology Other', 'mouthG': 'Mouth Gesture', 'mouthing': 'Mouthing', 'phonetVar': 'Phonetic Variation'
-    # add fields: 'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop'
 
     def homonym_objects(self):
 
@@ -1367,11 +1363,10 @@ class Gloss(models.Model):
 
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
-        for field in settings.MINIMAL_PAIRS_FIELDS + ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter',
-                                                      'subhndsh_number', 'weakdrop', 'weakprop']:
+        for field in settings.MINIMAL_PAIRS_FIELDS + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
 
             value_of_this_field = str(phonology_for_gloss.get(field))
-            if (value_of_this_field == 'False' and field in ['weakdrop', 'weakprop']):
+            if (value_of_this_field == 'False' and field in settings.HANDEDNESS_ARTICULATION_FIELDS):
                 # fields weakdrop and weakprop use 3-valued logic, False only matches False, not Null
                 comparison1 = field + '__exact'
                 q.add(Q(**{comparison1: False}), q.AND)

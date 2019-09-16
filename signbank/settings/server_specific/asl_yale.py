@@ -26,6 +26,9 @@ FIELDS['phonology'] = ['handedness','locPrimLH','initial_secondary_loc','final_s
 FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconType']
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
+HANDSHAPE_ETYMOLOGY_FIELDS = []
+HANDEDNESS_ARTICULATION_FIELDS = []
+
 ECV_FILE = 'ecv/asl.ecv'
 ECV_SETTINGS = {
     'CV_ID': 'ASL Signbank lexicon',

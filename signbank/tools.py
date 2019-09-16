@@ -830,7 +830,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             elif field.__class__.__name__ == 'NullBooleanField':
 
                 new_human_value_lower = new_human_value.lower()
-                if new_human_value_lower == 'neutral' and (field.name == 'weakprop' or field.name == 'weakdrop'):
+                if new_human_value_lower == 'neutral' and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
                     new_machine_value = None
                 elif new_human_value_lower in ['true', 'yes', '1']:
                     new_machine_value = True
@@ -844,7 +844,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     # Boolean expected
                     error_string = ''
                     # If the new value is empty, don't count this as a type error, error_string is generated conditionally
-                    if field.name == 'weakdrop' or field.name == 'weakprop':
+                    if field.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
                         if new_human_value != None and new_human_value != '' and new_human_value != 'None':
                             error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), value ' + str(new_human_value) + ' for ' + human_key + ' should be a Boolean or Neutral.'
                     else:
