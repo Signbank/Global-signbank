@@ -1065,7 +1065,6 @@ except OperationalError:
     note_role_choices = []
 
 all_notes = [ n.english_name for n in note_role_choices]
-all_notes = []
 
 all_notes_display = ', '.join(all_notes)
 # this is used to speedup matching updates to Notes
