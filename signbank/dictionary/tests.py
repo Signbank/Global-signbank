@@ -2094,15 +2094,15 @@ class testFrequencyAnalysis(TestCase):
         frequency_dict = test_dataset.generate_frequency_dict(language_code)
         frequency_dict_keys = frequency_dict.keys()
 
-        fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category, field.choices)
-                                                for field in Gloss._meta.fields if field.choices and (field.name in FIELDS['phonology'] + FIELDS['semantics']) ]
-        fields_data_keys = [ f_name for (f_name,v_verbose,c_category,l_choices) in fields_data]
+        fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category)
+                                                for field in Gloss._meta.fields if (field.name in FIELDS['phonology'] + FIELDS['semantics']) and hasattr(field, 'field_choice_category') ]
+        fields_data_keys = [ f_name for (f_name,v_verbose,c_category) in fields_data]
 
         self.assertNotEqual(len(fields_data),0)
         self.assertEqual(len(frequency_dict_keys), len(fields_data_keys))
 
         ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
-        for (f, field_verbose_name, fieldchoice_category, field_choices) in ordered_fields_data:
+        for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
 
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
 
