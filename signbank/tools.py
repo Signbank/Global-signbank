@@ -791,8 +791,9 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, '), new_human_value: (', new_human_value, ')')
 
             #Try to translate the value to machine values if needed
-            if len(field.choices) > 0:
-                human_to_machine_values = {human_value: machine_value for machine_value, human_value in field.choices}
+            if hasattr(field, 'field_choice_category'):
+                field_choices = build_choice_list(field.field_choice_category)
+                human_to_machine_values = {human_value: machine_value for machine_value, human_value in field_choices}
                 # print('Import CSV: human_to_machine_values: ', human_to_machine_values)
                 try:
                     # print('new human value: ', new_human_value)
@@ -868,10 +869,10 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 continue
 
             #Translate back the machine value from the gloss
-            try:
-                original_human_value = dict(field.choices)[original_machine_value]
-            except KeyError:
-
+            if hasattr(field, 'field_choice_category'):
+                field_choices = build_choice_list(field.field_choice_category)
+                original_human_value = dict(field_choices)[original_machine_value]
+            else:
                 original_human_value = original_machine_value
 
             #Remove any weird char
@@ -1620,18 +1621,13 @@ def fields_with_choices_glosses():
 
     from signbank.dictionary.models import Gloss
     for field in Gloss._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_glosses AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_handshapes():
@@ -1641,18 +1637,13 @@ def fields_with_choices_handshapes():
 
     from signbank.dictionary.models import Handshape
     for field in Handshape._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_handshapes AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_definition():
@@ -1662,18 +1653,13 @@ def fields_with_choices_definition():
 
     from signbank.dictionary.models import Definition
     for field in Definition._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_definition AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_morphology_definition():
@@ -1683,18 +1669,13 @@ def fields_with_choices_morphology_definition():
 
     from signbank.dictionary.models import MorphologyDefinition
     for field in MorphologyDefinition._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_morphology_definition AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_other_media_type():
@@ -1704,18 +1685,13 @@ def fields_with_choices_other_media_type():
 
     from signbank.dictionary.models import OtherMedia
     for field in OtherMedia._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_other_media_type AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_morpheme_type():
@@ -1725,18 +1701,13 @@ def fields_with_choices_morpheme_type():
 
     from signbank.dictionary.models import Morpheme
     for field in Morpheme._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_morpheme_type AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def write_ecv_files_for_all_datasets():

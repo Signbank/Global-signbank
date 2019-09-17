@@ -1114,7 +1114,7 @@ class Gloss(models.Model):
                 continue
             phonology_dict[field] = None
             machine_value = getattr(self, field)
-            if gloss_field.choices:
+            if hasattr(gloss_field, 'field_choice_category'):
                 fieldchoice_category = gloss_field.field_choice_category
                 if fieldchoice_category == 'Handshape':
                     choice_list = Handshape.objects.all()
@@ -1160,7 +1160,7 @@ class Gloss(models.Model):
             phonology_dict[field] = None
             machine_value = getattr(self, field)
             gloss_field = gloss_fields[field]
-            if gloss_field.choices:
+            if hasattr(gloss_field, 'field_choice_category'):
                 fieldchoice_category = gloss_field.field_choice_category
                 if fieldchoice_category == 'Handshape':
                     choice_list = Handshape.objects.all()
@@ -1219,7 +1219,7 @@ class Gloss(models.Model):
             value_of_this_field = phonology_for_gloss.get(field)
             gloss_field = gloss_fields[field]
 
-            if gloss_field.choices:
+            if hasattr(gloss_field, 'field_choice_category'):
                 # field is a choice list
                 if value_of_this_field != None:
                     different_field = 'different_' + field

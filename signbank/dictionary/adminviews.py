@@ -273,7 +273,7 @@ class GlossListView(ListView):
             context['GLOSS_LIST_DISPLAY_HEADER'] = ''
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
         if hasattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'):
@@ -763,7 +763,7 @@ class GlossListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
 
         for fieldnamemulti in multiple_select_gloss_fields:
 
@@ -784,7 +784,7 @@ class GlossListView(ListView):
 
                 field_obj = Gloss._meta.get_field(fieldname)
 
-                if type(field_obj) in [CharField,TextField] and len(field_obj.choices) == 0:
+                if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
                     key = fieldname + '__iregex'
                 else:
                     key = fieldname + '__exact'
@@ -1724,7 +1724,7 @@ class MorphemeListView(ListView):
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
-        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
         context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = multiple_select_morpheme_fields
 
         return context
@@ -1808,7 +1808,7 @@ class MorphemeListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
-        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and len(field.choices) > 0]
+        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
         for fieldnamemulti in multiple_select_morpheme_fields:
 
             fieldnamemultiVarname = fieldnamemulti + '[]'
