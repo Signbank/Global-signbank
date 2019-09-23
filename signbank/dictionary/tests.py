@@ -914,7 +914,7 @@ class VideoTests(TestCase):
 
         video_url = '/dictionary/protected_media/glossvideo/'+test_dataset.acronym+'/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
 
-        if settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+        if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
             # If the file name is escaped, the url should be escaped twice:
             # the file may contain percent encodings,
             # so in the path the percent should be encoded
