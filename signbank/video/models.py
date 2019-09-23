@@ -442,6 +442,9 @@ def process_dataset_changes(sender, instance, **kwargs):
         glossimage_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset.acronym)
         os.rename(glossimage_path_original, glossimage_path_new)
 
+        # Make sure that _initial reflect the database for the dataset object
+        dataset._initial['acronym'] = dataset.acronym
+
     # If the default language has been changed, change all GlossVideos
     # and move all video/poster files accordingly.
     if dataset._initial['default_language'] and dataset.default_language != dataset._initial['default_language']:
@@ -449,6 +452,9 @@ def process_dataset_changes(sender, instance, **kwargs):
         glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
         for glossvideo in glossvideos:
             glossvideo.move_video(move_files_on_disk=True)
+
+        # Make sure that _initial reflect the database for the dataset object
+        dataset._initial['default_language'] = dataset.default_language
 
 
 @receiver(models.signals.post_save, sender=LemmaIdglossTranslation)
