@@ -812,8 +812,6 @@ class VideoTests(TestCase):
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
-        test_dataset.default_language = default_language
-        test_dataset.save()
 
         assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
@@ -888,8 +886,6 @@ class VideoTests(TestCase):
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
-        test_dataset.default_language = default_language
-        test_dataset.save()
 
         assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
