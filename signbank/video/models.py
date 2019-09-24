@@ -46,7 +46,9 @@ class Video(models.Model):
         Return None if create=False and the file doesn't exist"""
 
         vidpath, ext = os.path.splitext(self.videofile.path)
-        poster_path = vidpath + ".jpg"
+        poster_path = vidpath + ".png"
+        # replace vidpath with imagepath!
+        poster_path = str(poster_path.replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
 
         if not os.path.exists(poster_path):
             if create:
@@ -66,7 +68,7 @@ class Video(models.Model):
 
         # splitext works on urls too!
         vidurl, ext = os.path.splitext(self.videofile.url)
-        poster_url = vidurl + ".jpg"
+        poster_url = vidurl + ".png"
 
         return poster_url
 
@@ -235,7 +237,9 @@ class GlossVideo(models.Model):
         Return None if create=False and the file doesn't exist"""
 
         vidpath, ext = os.path.splitext(self.videofile.path)
-        poster_path = vidpath + ".jpg"
+        poster_path = vidpath + ".png"
+        # replace vidpath with imagepath!
+        poster_path = str(poster_path.replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
 
         if not os.path.exists(poster_path):
             if create:
@@ -254,7 +258,7 @@ class GlossVideo(models.Model):
 
         # splitext works on urls too!
         vidurl, ext = os.path.splitext(self.videofile.url)
-        poster_url = vidurl + ".jpg"
+        poster_url = vidurl + ".png"
 
         return poster_url
 
@@ -436,11 +440,13 @@ def process_dataset_changes(sender, instance, **kwargs):
         # Rename dirs
         glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset._initial['acronym'])
         glossvideo_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset.acronym)
-        os.rename(glossvideo_path_original, glossvideo_path_new)
+        if os.path.exists(glossvideo_path_original):
+            os.rename(glossvideo_path_original, glossvideo_path_new)
 
         glossimage_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset._initial['acronym'])
         glossimage_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset.acronym)
-        os.rename(glossimage_path_original, glossimage_path_new)
+        if os.path.exists(glossimage_path_original):
+            os.rename(glossimage_path_original, glossimage_path_new)
 
         # Make sure that _initial reflect the database for the dataset object
         dataset._initial['acronym'] = dataset.acronym
