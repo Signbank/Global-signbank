@@ -60,19 +60,6 @@ class Video(models.Model):
         return poster_path
 
 
-    def poster_url(self):
-        """Return the URL of the poster image for this video"""
-
-        # generate the poster image if needed
-        path = self.poster_path()
-
-        # splitext works on urls too!
-        vidurl, ext = os.path.splitext(self.videofile.url)
-        poster_url = vidurl + ".png"
-
-        return poster_url
-
-
     def get_absolute_url(self):
         return self.videofile.url
 
@@ -249,18 +236,6 @@ class GlossVideo(models.Model):
                 return None
 
         return poster_path
-
-    def poster_url(self):
-        """Return the URL of the poster image for this video"""
-
-        # generate the poster image if needed
-        path = self.poster_path()
-
-        # splitext works on urls too!
-        vidurl, ext = os.path.splitext(self.videofile.url)
-        poster_url = vidurl + ".png"
-
-        return poster_url
 
     def get_absolute_url(self):
 

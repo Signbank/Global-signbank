@@ -91,43 +91,12 @@ def deletevideo(request, videoid):
     return redirect(url)
 
 
-def poster(request, videoid):
-    """Generate a still frame for a video (if needed) and
-    generate a redirect to the static server for this frame"""
-
-    video = get_object_or_404(GlossVideo, gloss_id=videoid)
-
-    return redirect(video.poster_url())
-
-
 def video(request, videoid):
     """Redirect to the video url for this videoid"""
 
     video = get_object_or_404(GlossVideo, gloss_id=videoid)
 
     return redirect(video)
-
-def iframe(request, videoid):
-    """Generate an iframe with a player for this video"""
-    
-    try:
-        gloss = Gloss.objects.get(pk=videoid)
-        glossvideo = gloss.get_video()
-        
-        videourl = glossvideo.get_absolute_url()
-                
-        posterurl = glossvideo.poster_url()
-    except:
-        gloss = None
-        glossvideo = None
-        videourl = None
-        posterurl = None
-
-
-    return render(request,"iframe.html",
-                              {'videourl': videourl,
-                               'posterurl': posterurl,
-                               'aspectRatio': settings.VIDEO_ASPECT_RATIO})
 
 
 def create_still_images(request):
