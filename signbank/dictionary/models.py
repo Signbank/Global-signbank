@@ -996,7 +996,6 @@ class Gloss(models.Model):
 
     def empty_non_empty_phonology(self):
 
-        choice_lists = []
         non_empty_phonology = []
         empty_phonology = []
 
@@ -1005,18 +1004,17 @@ class Gloss(models.Model):
             field_label = Gloss._meta.get_field(field).verbose_name
             fieldLabel[field] = field_label.encode('utf-8').decode()
 
-        for field in settings.MINIMAL_PAIRS_FIELDS:
+        gloss_fields = {}
+        for f in Gloss._meta.fields:
+            gloss_fields[f.name] = f
 
-            if field in ['repeat', 'altern']:
+        for field in settings.MINIMAL_PAIRS_FIELDS:
+            gloss_field = gloss_fields[field]
+            if isinstance(gloss_field, models.NullBooleanField):
                 machine_value = getattr(self, field)
                 label = fieldLabel[field]
-
-                if (machine_value):
-                    fieldchoice_category = fieldname_to_category(field)
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                    human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
-
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
+                if machine_value:
+                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
                 else:
                     empty_phonology = empty_phonology + [(field, str(label))]
             else:
@@ -1059,21 +1057,19 @@ class Gloss(models.Model):
             field_label = Gloss._meta.get_field(field).verbose_name
             fieldLabel[field] = field_label.encode('utf-8').decode()
 
+        gloss_fields = {}
+        for f in Gloss._meta.fields:
+            gloss_fields[f.name] = f
+
         non_empty_phonology = []
 
         for field in settings.MINIMAL_PAIRS_FIELDS:
-
-            if field in ['repeat', 'altern']:
+            gloss_field = gloss_fields[field]
+            if isinstance(gloss_field, models.NullBooleanField):
                 machine_value = getattr(self, field)
                 label = fieldLabel[field]
-
-                if (machine_value):
-                    fieldchoice_category = fieldname_to_category(field)
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                    human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
-
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
-
+                if machine_value:
+                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
             else:
                 fieldchoice_category = fieldname_to_category(field)
                 if fieldchoice_category == 'Handshape':
@@ -1102,6 +1098,8 @@ class Gloss(models.Model):
 
 
     def phonology_matrix_homonymns(self):
+        # this method uses string representations for Boolean values
+        # in order to distinguish between null values, False values, and Neutral values
 
         phonology_dict = dict()
 
@@ -1150,6 +1148,7 @@ class Gloss(models.Model):
 
     def phonology_matrix_minimalpairs(self):
         # this method only retrieves the fiels used for minimal pairs
+        # in contrast to the similar method of homonyms, this method leaves Boolean values in their machine value form
 
         phonology_dict = dict()
 
@@ -1247,7 +1246,7 @@ class Gloss(models.Model):
                 # field is a Boolean
                 different_field = 'different_' + field
                 field_compare = field + '__exact'
-                if value_of_this_field == 'True':
+                if value_of_this_field == True:
                     different_case = Case(When(**{ field_compare : True , 'then' : 0 }), default=1, output_field=IntegerField())
 
                     minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
