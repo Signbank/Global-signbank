@@ -11,6 +11,7 @@ from django.db.models.fields import NullBooleanField
 from tagging.models import TaggedItem, Tag
 import os, shutil, re
 from datetime import datetime
+from django.utils.timezone import get_current_timezone
 from django.contrib import messages
 
 from signbank.dictionary.models import *
@@ -403,7 +404,7 @@ def update_gloss(request, glossid):
             original_value = ''
 
         #Remember this change for the history books
-        revision = GlossRevision(old_value=original_value,new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now())
+        revision = GlossRevision(old_value=original_value,new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
         revision.save()
 
         # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
