@@ -181,3 +181,6 @@ SPEED_UP_RETRIEVING_ALL_SIGNS =	True
 
 #Delete the video and image files when a GlossVideo instance is deleted
 DELETE_FILES_ON_GLOSSVIDEO_DELETE = False
+
+#Whether the non ASCII characters in the path and filename of an uploaded video should be escaped
+ESCAPE_UPLOADED_VIDEO_FILE_PATH = False
