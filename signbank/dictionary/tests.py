@@ -2258,6 +2258,82 @@ class testSettings(TestCase):
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category)
                     self.assertGreater(len(fields_for_this_category),0)
 
+class RevisionHistoryTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        assign_perm('dictionary.can_publish', self.user)
+        self.user.save()
+
+    def test_field_types(self):
+
+        # Create a new lemma in the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        # Create a new gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        gloss_update_phonology_data = []
+        gloss_fields = settings.FIELDS['phonology']+settings.FIELDS['semantics']+settings.FIELDS['main']+['inWeb', 'isNew', 'excludeFromEcv']
+        gloss_fields_names = {f.name: f for f in Gloss._meta.fields}
+
+        # make a bunch of new field choices
+        for f in gloss_fields_names.keys():
+            if hasattr(gloss_fields_names[f], 'field_choice_category'):
+                fc_category = gloss_fields_names[f].field_choice_category
+                new_machine_value = 500
+                new_human_value = 'fieldchoice_' + fc_category + '_500'
+                this_field_choice = FieldChoice(machine_value=new_machine_value,
+                                                field=fc_category,
+                                                english_name=new_human_value,
+                                                dutch_name=new_human_value,
+                                                chinese_name=new_human_value)
+                this_field_choice.save()
+
+        for f in gloss_fields:
+            if hasattr(gloss_fields_names[f], 'field_choice_category'):
+                new_machine_value_string = '_500'
+                gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+            elif isinstance(gloss_fields_names[f], CharField) or isinstance(gloss_fields_names[f], TextField):
+                new_machine_value_string = f + '_string'
+                gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+            elif f in settings.HANDSHAPE_ETYMOLOGY_FIELDS:
+                new_machine_value_string = 'true'
+                gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+            elif f in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                new_machine_value_string = '2'
+                gloss_update_phonology_data.append({'id': f, 'value': new_machine_value_string})
+            elif isinstance(gloss_fields_names[f], NullBooleanField):
+                new_machine_value_string = 'true'
+                gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
+        for update_data in gloss_update_phonology_data:
+            client.post('/dictionary/update/gloss/' + str(new_gloss.pk), update_data)
+
+        all_revisions = GlossRevision.objects.filter(gloss=new_gloss.pk, user=self.user)
+        updated_fields = [ r.field_name for r in all_revisions ]
+
+        for f in gloss_fields:
+            self.assertTrue(f in updated_fields)
+
+
 class MinimalPairsTests(TestCase):
 
     # This test exists because a bug had previously been found with the display of the repeat phonology field

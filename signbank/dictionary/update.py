@@ -274,7 +274,6 @@ def update_gloss(request, glossid):
 
         elif field in 'isNew':
             # only modify if we have publish permission
-            print(_('yes'))
             gloss.isNew = value.lower() in [_('Yes').lower(),'true',True,1]
             gloss.save()
 
@@ -365,6 +364,7 @@ def update_gloss(request, glossid):
                                     if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
 
             if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
+                print('not set ', field)
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
@@ -404,6 +404,7 @@ def update_gloss(request, glossid):
             original_value = ''
 
         #Remember this change for the history books
+        # print('before saving revision field ', field, ', value is: ', value, '(', type(value), '), new value is: ', newvalue, '(', type(newvalue), ')')
         revision = GlossRevision(old_value=original_value,new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
         revision.save()
 
