@@ -1019,12 +1019,14 @@ class Gloss(models.Model):
                     empty_phonology = empty_phonology + [(field, str(label))]
             else:
                 # Get and save the choice list for this field
-                fieldchoice_category = fieldname_to_category(field)
-                if fieldchoice_category == 'Handshape':
-                    choice_list = Handshape.objects.all()
+                if hasattr(gloss_field, 'field_choice_category'):
+                    fieldchoice_category = gloss_field.field_choice_category
+                    if fieldchoice_category == 'Handshape':
+                        choice_list = Handshape.objects.all()
+                    else:
+                        choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 else:
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
+                    choice_list = []
                 # Take the human value in the language we are using
                 machine_value = getattr(self, field)
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
@@ -1071,12 +1073,14 @@ class Gloss(models.Model):
                 if machine_value:
                     non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
             else:
-                fieldchoice_category = fieldname_to_category(field)
-                if fieldchoice_category == 'Handshape':
-                    choice_list = Handshape.objects.all()
+                if hasattr(gloss_field, 'field_choice_category'):
+                    fieldchoice_category = gloss_field.field_choice_category
+                    if fieldchoice_category == 'Handshape':
+                        choice_list = Handshape.objects.all()
+                    else:
+                        choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 else:
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
+                    choice_list = []
                 machine_value = getattr(self, field)
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
                 label = fieldLabel[field]
@@ -1295,6 +1299,10 @@ class Gloss(models.Model):
         if (len(nep) < 2):
             return minimal_pairs_fields
 
+        gloss_fields = {}
+        for f in Gloss._meta.fields:
+            gloss_fields[f.name] = f
+
         mpos =  self.minimalpairs_objects()
 
         for o in mpos:
@@ -1303,7 +1311,11 @@ class Gloss(models.Model):
             phonology_for_other_gloss = o.phonology_matrix_minimalpairs()
 
             for f, n, v in onep:
-                fc = fieldname_to_category(f)
+                gloss_field = gloss_fields[f]
+                if hasattr(gloss_field, 'field_choice_category'):
+                    fc = gloss_field.field_choice_category
+                else:
+                    fc = f
                 # use the phonology matrix to account for Neutral values
                 self_value_f = phonology_for_this_gloss.get(f)
                 other_value_f = phonology_for_other_gloss.get(f)
@@ -1314,7 +1326,11 @@ class Gloss(models.Model):
 
             if (len(list(different_fields_keys)) == 0):
                 for sf, sn, sv in nep:
-                    sfc = fieldname_to_category(sf)
+                    s_gloss_field = gloss_fields[sf]
+                    if hasattr(s_gloss_field, 'field_choice_category'):
+                        sfc = s_gloss_field.field_choice_category
+                    else:
+                        sfc = sf
                     # need to look these up in nep
                     self_value_sf = phonology_for_this_gloss.get(sf)
                     other_value_sf = phonology_for_other_gloss.get(sf)
