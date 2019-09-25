@@ -448,7 +448,6 @@ def process_lemmaidglosstranslation_changes(sender, instance, **kwargs):
     :return: 
     """
     lemmaidglosstranslation = instance
-    print("LemmaIdglossTranslation", lemmaidglosstranslation)
     glossvideos = GlossVideo.objects.filter(gloss__lemma__lemmaidglosstranslation=lemmaidglosstranslation)
     for glossvideo in glossvideos:
         glossvideo.move_video(move_files_on_disk=True)
