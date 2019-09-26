@@ -1725,6 +1725,8 @@ def write_ecv_file_for_dataset(dataset_name):
     dataset_id = Dataset.objects.get(acronym=dataset_name)
 
     query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(lemma__dataset=dataset_id)
+    if not query_dataset:
+        return ''
 
     sOrder = 'annotationidglosstranslation__text'
     if dataset_id.default_language:

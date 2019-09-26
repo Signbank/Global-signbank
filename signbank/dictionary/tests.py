@@ -411,17 +411,16 @@ class ECVsNonEmptyTests(TestCase):
             # get the dataset using filter (returns a list)
             try:
                 dataset_of_filename = Dataset.objects.get(acronym__iexact=fname)
-                number_of_glosses = Gloss.objects.filter(lemma__dataset=dataset_of_filename).count()
-                if not len(entry_nodes) and number_of_glosses:
-                    # no glosses in the ecv
-                    print('EMPTY ECV FILE FOUND: ', filename)
-                    found_errors = True
-                elif len(entry_nodes) and not number_of_glosses:
-                    # no glosses in the ecv
-                    print('ENTRIES FOUND WHERE NO GLOSSES EXIST IN FILE FOUND: ', filename)
-                    found_errors = True
             except:
-                print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
+                try:
+                    fname_nounderscore = fname.replace("_"," ")
+                    dataset_of_filename = Dataset.objects.get(acronym__iexact=fname_nounderscore)
+                except:
+                    print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
+            if not len(entry_nodes):
+                # no glosses in the ecv
+                print('EMPTY ECV FILE FOUND: ', filename)
+                found_errors = True
 
         self.assertEqual(found_errors, False)
 
