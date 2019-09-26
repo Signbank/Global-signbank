@@ -228,7 +228,12 @@ class GlossListView(ListView):
         for field in fields_that_need_translated_options:
             try:
                 if isinstance(search_form.fields[field], TypedChoiceField):
-                    choices = FieldChoice.objects.filter(field__iexact=fieldname_to_category(field))
+                    gloss_field = search_form.fields[field]
+                    if hasattr(gloss_field, 'field_choice_category'):
+                        fieldchoice_category = gloss_field.field_choice_category
+                    else:
+                        fieldchoice_category = field
+                    choices = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                     translated_choices = [('','---------')]+choicelist_queryset_to_translated_dict(choices,self.request.LANGUAGE_CODE,
                                                                                 ordered=False,id_prefix='')
                     search_form.fields[field] = forms.ChoiceField(label=search_form.fields[field].label,
@@ -1133,6 +1138,10 @@ class GlossDetailView(DetailView):
         context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
         context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
 
+        gloss_fields = {}
+        for f in Gloss._meta.fields:
+            gloss_fields[f.name] = f
+
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['main','phonology','semantics','frequency']:
             context[topic+'_fields'] = []
@@ -1142,7 +1151,11 @@ class GlossDetailView(DetailView):
                 # the following check will be used when querying is added, at the moment these don't appear in the phonology list
                 if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                     #Get and save the choice list for this field
-                    fieldchoice_category = fieldname_to_category(field)
+                    gloss_field = gloss_fields[field]
+                    if hasattr(gloss_field, 'field_choice_category'):
+                        fieldchoice_category = gloss_field.field_choice_category
+                    else:
+                        fieldchoice_category = field
                     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
                     #Take the human value in the language we are using
@@ -1461,14 +1474,22 @@ class GlossRelationsDetailView(DetailView):
 
         context['choice_lists'] = {}
 
+        gloss_fields = {}
+        for f in Gloss._meta.fields:
+            gloss_fields[f.name] = f
+
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['main','phonology','semantics','frequency']:
             context[topic+'_fields'] = []
 
             for field in FIELDS[topic]:
-
+                gloss_field = gloss_fields[field]
                 #Get and save the choice list for this field
-                fieldchoice_category = fieldname_to_category(field)
+                if hasattr(gloss_field, 'field_choice_category'):
+                    fieldchoice_category = gloss_field.field_choice_category
+                else:
+                    fieldchoice_category = field
+
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
                 if len(choice_list) > 0:
@@ -1688,7 +1709,8 @@ class MorphemeListView(ListView):
 
         # make sure that the morpheme-type options are available to the listview
         oChoiceLists = {}
-        choice_list = FieldChoice.objects.filter(field__iexact = fieldname_to_category('mrpType'))
+        field_category = Morpheme._meta.get_field('mrpType').field_choice_category
+        choice_list = FieldChoice.objects.filter(field__iexact = field_category)
         if (len(choice_list) > 0):
             ordered_dict = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
             oChoiceLists['mrpType'] = ordered_dict
@@ -2212,10 +2234,18 @@ class HandshapeDetailView(DetailView):
         context['handshape_fields_FC2'] = []
         context['handshape_fields_UF'] = []
 
+        handshape_fields = {}
+        for f in Handshape._meta.fields:
+            handshape_fields[f.name] = f
+
         for field in FIELDS['handshape']:
 
-            #Get and save the choice list for this field
-            fieldchoice_category = fieldname_to_category(field)
+            handshape_field = handshape_fields[field]
+            # Get and save the choice list for this field
+            if hasattr(handshape_field, 'field_choice_category'):
+                fieldchoice_category = handshape_field.field_choice_category
+            else:
+                fieldchoice_category = field
 
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
 
@@ -2463,11 +2493,21 @@ class FrequencyListView(ListView):
         context['field_labels'] = field_labels
         context['field_labels_list'] = field_labels_list
 
+        gloss_fields = {}
+        for f in Gloss._meta.fields:
+            gloss_fields[f.name] = f
+
         # sort the field choices based on the designated language
         # this is used for display in the template, by lookup
         field_labels_choices = dict()
         for field, label in field_labels.items():
-            field_category = fieldname_to_category(field)
+            gloss_field = gloss_fields[field]
+            # Get and save the choice list for this field
+            if hasattr(gloss_field, 'field_choice_category'):
+                field_category = gloss_field.field_choice_category
+            else:
+                field_category = field
+
             field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
             field_labels_choices[field] = dict(translated_choices)
@@ -2491,7 +2531,12 @@ class FrequencyListView(ListView):
 
         field_labels_semantics_choices = dict()
         for field, label in field_labels_semantics.items():
-            field_category = fieldname_to_category(field)
+            gloss_field = gloss_fields[field]
+            # Get and save the choice list for this field
+            if hasattr(gloss_field, 'field_choice_category'):
+                field_category = gloss_field.field_choice_category
+            else:
+                field_category = field
             field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
             field_labels_semantics_choices[field] = dict(translated_choices)
@@ -2811,11 +2856,18 @@ class HandshapeListView(ListView):
 
         context['choice_lists'] = {}
 
+        handshape_fields = {}
+        for f in Handshape._meta.fields:
+            handshape_fields[f.name] = f
+
         for field in FIELDS['handshape']:
 
+            handshape_field = handshape_fields[field]
             # Get and save the choice list for this field
-            fieldchoice_category = fieldname_to_category(field)
-
+            if hasattr(handshape_field, 'field_choice_category'):
+                fieldchoice_category = handshape_field.field_choice_category
+            else:
+                fieldchoice_category = field
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
 
             if len(choice_list) > 0:
@@ -2867,11 +2919,18 @@ class HandshapeListView(ListView):
 
         choice_lists = {}
 
+        handshape_fields = {}
+        for f in Handshape._meta.fields:
+            handshape_fields[f.name] = f
+
         for field in FIELDS['handshape']:
 
+            handshape_field = handshape_fields[field]
             # Get and save the choice list for this field
-            fieldchoice_category = fieldname_to_category(field)
-
+            if hasattr(handshape_field, 'field_choice_category'):
+                fieldchoice_category = handshape_field.field_choice_category
+            else:
+                fieldchoice_category = field
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
 
             if len(choice_list) > 0:
@@ -3907,14 +3966,23 @@ class MorphemeDetailView(DetailView):
 
         context['choice_lists'] = {}
 
+        gloss_fields = {}
+        for f in Gloss._meta.fields:
+            gloss_fields[f.name] = f
+
         # Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['phonology', 'semantics', 'frequency']:
             context[topic + '_fields'] = []
 
             for field in FIELDS[topic]:
 
-                # Get and save the choice list for this field
-                field_category = fieldname_to_category(field)
+                gloss_field = gloss_fields[field]
+                #Get and save the choice list for this field
+                if hasattr(gloss_field, 'field_choice_category'):
+                    field_category = gloss_field.field_choice_category
+                else:
+                    field_category = field
+
                 choice_list = FieldChoice.objects.filter(field__iexact=field_category)
 
                 if len(choice_list) > 0:
@@ -4350,8 +4418,11 @@ def glosslist_ajax_complete(request, gloss_id):
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
 
         machine_value = getattr(this_gloss,fieldname)
-
-        fieldchoice_category = fieldname_to_category(fieldname)
+        gloss_field = Gloss._meta.get_field(fieldname)
+        if hasattr(gloss_field, 'field_choice_category'):
+            fieldchoice_category = gloss_field.field_choice_category
+        else:
+            fieldchoice_category = fieldname
         if fieldchoice_category == 'Handshape':
             choice_list = Handshape.objects.all()
         else:
@@ -4435,8 +4506,11 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
 
         machine_value = getattr(this_gloss,fieldname)
-
-        fieldchoice_category = fieldname_to_category(fieldname)
+        gloss_field = Gloss._meta.get_field(fieldname)
+        if hasattr(gloss_field, 'field_choice_category'):
+            fieldchoice_category = gloss_field.field_choice_category
+        else:
+            fieldchoice_category = fieldname
         if fieldchoice_category == 'Handshape':
             choice_list = Handshape.objects.all()
         else:
