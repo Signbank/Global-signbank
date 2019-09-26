@@ -442,7 +442,10 @@ class GlossListView(ListView):
         # if we get to here, the user is authenticated and has permission to export the dataset
         ecv_file = write_ecv_file_for_dataset(self.dataset_name)
 
-        messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_name + ' successfully updated.'))
+        if ecv_file:
+            messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_name + ' successfully updated.'))
+        else:
+            messages.add_message(self.request, messages.INFO, ('No ECV created for ' + self.dataset_name))
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
     # noinspection PyInterpreter,PyInterpreter
@@ -3236,7 +3239,10 @@ class DatasetListView(ListView):
         # if we get to here, the user is authenticated and has permission to export the dataset
         ecv_file = write_ecv_file_for_dataset(self.dataset_name)
 
-        messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_name + ' successfully updated.'))
+        if ecv_file:
+            messages.add_message(self.request, messages.INFO, ('ECV ' + self.dataset_name + ' successfully updated.'))
+        else:
+            messages.add_message(self.request, messages.INFO, ('No ECV created for ' + self.dataset_name))
         # return HttpResponse('ECV successfully updated.')
         return HttpResponseRedirect(reverse('admin_dataset_view'))
 
