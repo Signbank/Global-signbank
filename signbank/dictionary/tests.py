@@ -2257,6 +2257,22 @@ class testSettings(TestCase):
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category)
                     self.assertGreater(len(fields_for_this_category),0)
 
+    def test_duplicate_machine_values(self):
+
+        field_choice_objects = FieldChoice.objects.all()
+
+        grouped_by_field = dict()
+        for fco in field_choice_objects:
+            field = fco.field
+            if field not in grouped_by_field.keys():
+                grouped_by_field[field] = []
+            if fco.machine_value in grouped_by_field[field]:
+                matches_to_field = field_choice_objects.filter(field=field, machine_value=fco.machine_value)
+                matches_to_string = [ ( m.field, str(m.machine_value),m.english_name) for m in matches_to_field ]
+                print('Duplicate machine value for ', field, ': ', matches_to_string)
+            else:
+                grouped_by_field[field].append(fco.machine_value)
+
 class RevisionHistoryTests(TestCase):
 
     def setUp(self):

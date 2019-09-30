@@ -22,8 +22,6 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
     for choice in queryset:
         human_value = getattr(choice, adjective + '_name')
         if choice.machine_value in machine_values_seen:
-            previously_seen_human_value = temp_mapping_dict[choice.machine_value]
-            print('Duplicate machine value for FieldChoice ', choice.field, ' (', choice.machine_value, ') ', human_value, ', ', previously_seen_human_value)
             # don't append to raw_choice_list
             continue
         temp_mapping_dict[choice.machine_value] = human_value
@@ -87,7 +85,7 @@ def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=Fal
     machine_values_seen = []
     for choice in queryset:
         if choice.machine_value in machine_values_seen:
-            print('Duplicate machine value for FieldChoice ', choice.field, ' (', choice.machine_value, ')')
+            # print('Duplicate machine value for FieldChoice ', choice.field, ' (', choice.machine_value, ')')
             # don't append to queryset_no_dupes
             continue
         machine_values_seen.append(choice.machine_value)
