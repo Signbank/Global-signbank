@@ -1662,21 +1662,6 @@ except:
     pass
 
 
-def generate_fieldname_to_kind_table():
-    temp_field_to_kind_table = dict()
-    for f in Gloss._meta.fields:
-        temp_field_to_kind_table[f.name] = (f.get_internal_type(), f.choices)
-    for h in Handshape._meta.fields:
-        if h not in temp_field_to_kind_table.keys():
-            temp_field_to_kind_table[h.name] = (h.get_internal_type(), h.choices)
-        else:
-            print('generate fieldname to kind table found identical field in Handshape and Gloss: ', h.name)
-    return temp_field_to_kind_table
-
-
-fieldname_to_kind_table = generate_fieldname_to_kind_table()
-
-
 def generate_choice_list_table():
     temp_choice_list_table = dict()
     for f in Gloss._meta.fields:
@@ -1739,21 +1724,11 @@ VARIANT_ROLE_CHOICES = (('variant', 'Variant'))
 
 # this can be used for phonology and handshape fields
 def fieldname_to_kind(fieldname):
-    global fieldname_to_kind_table
 
-    try:
-        (field_type, choices) = fieldname_to_kind_table[fieldname]
-        if field_type == 'CharField' and choices:
-            field_kind = 'list'
-        elif field_type == 'TextField' or (field_type == 'CharField' and not choices):
-            field_kind = 'text'
-        elif field_type == 'NullBooleanField' or field_type == 'BooleanField':
-            field_kind = 'check'
-        else:
-            field_kind = field_type
-    except:
+    if fieldname in fieldname_to_kind_table.keys():
+        field_kind = fieldname_to_kind_table[fieldname]
+    else:
         print('fieldname not found in fieldname_to_kind_table: ', fieldname)
-
         field_kind = fieldname
 
     return field_kind
@@ -1929,6 +1904,56 @@ class Morpheme(Gloss):
 
         return json.dumps(OrderedDict(reformatted_li))
 
+
+def generate_fieldname_to_kind_table():
+    temp_field_to_kind_table = dict()
+    for f in Gloss._meta.fields:
+        f_internal_type = f.get_internal_type()
+        if f_internal_type in ['NullBooleanField', 'BooleanField']:
+            temp_field_to_kind_table[f.name] = 'check'
+        elif f_internal_type in ['CharField', 'TextField'] and not hasattr(f, 'field_choice_category'):
+            temp_field_to_kind_table[f.name] = 'text'
+        elif hasattr(f, 'field_choice_category'):
+            temp_field_to_kind_table[f.name] = 'list'
+        else:
+            temp_field_to_kind_table[f.name] = f_internal_type
+
+    for h in Handshape._meta.fields:
+        h_internal_type = h.get_internal_type()
+        if h.name not in temp_field_to_kind_table.keys():
+            if h_internal_type in ['NullBooleanField', 'BooleanField']:
+                temp_field_to_kind_table[h.name] = 'check'
+            elif h_internal_type in ['CharField', 'TextField'] and not hasattr(h, 'field_choice_category'):
+                temp_field_to_kind_table[h.name] = 'text'
+            elif hasattr(h, 'field_choice_category'):
+                temp_field_to_kind_table[h.name] = 'list'
+            else:
+                temp_field_to_kind_table[h.name] = h_internal_type
+        else:
+            # field h already appears in the table
+            if h_internal_type != temp_field_to_kind_table[h.name]:
+                # does this happen?
+                print('generate_fieldname_to_kind_table: identical fieldname in Gloss and Handshape with different kinds: ', h.name)
+    for d in Definition._meta.fields:
+        d_internal_type = d.get_internal_type()
+        if d.name not in temp_field_to_kind_table.keys():
+            if d_internal_type in ['NullBooleanField', 'BooleanField']:
+                temp_field_to_kind_table[d.name] = 'check'
+            elif d_internal_type in ['CharField', 'TextField'] and not hasattr(d, 'field_choice_category'):
+                temp_field_to_kind_table[d.name] = 'text'
+            elif hasattr(d, 'field_choice_category'):
+                temp_field_to_kind_table[d.name] = 'list'
+            else:
+                temp_field_to_kind_table[d.name] = d_internal_type
+        else:
+            # field h already appears in the table
+            if d_internal_type != temp_field_to_kind_table[d.name]:
+                # does this happen?
+                print('generate_fieldname_to_kind_table: identical fieldname in Gloss or Handshape and Definition with different kinds: ', d.name)
+    return temp_field_to_kind_table
+
+
+fieldname_to_kind_table = generate_fieldname_to_kind_table()
 
 class SimultaneousMorphologyDefinition(models.Model):
     parent_gloss = models.ForeignKey(Gloss, related_name='simultaneous_morphology')
