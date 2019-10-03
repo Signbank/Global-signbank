@@ -374,8 +374,9 @@ function do_set_lemma_language(el) {
         <div id='searchformwell' class='well search-results-collapsable'>
 
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
+                        <!-- this is empty as an initial value because the view python code sets it -->
                 <div class="hidden">
-                    <input name='sortOrder' class='form-control' value='lemma__lemmaidglosstranslation__text' >
+                    <input name='sortOrder' class='form-control' value='' >
                     <input name='search_type' class='form-control' value='{{search_type}}'>
                 </div>
                 <div>

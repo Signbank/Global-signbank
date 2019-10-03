@@ -58,23 +58,21 @@ def order_queryset_by_sort_order(get, qs):
         return sBack
 
     # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
-    def order_queryset_by_tuple_list(qs, sOrder, sListName):
+    def order_queryset_by_tuple_list(qs, sOrder, sListName, bReversed):
         """Order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]"""
 
         # Get a list of tuples for this sort-order
         tpList = build_choice_list(sListName)
         # Determine sort order: ascending is default
-        bReversed = False
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
-            bReversed = True
 
         # Order the list of tuples alphabetically
         # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
         tpList = sorted(tpList, key=operator.itemgetter(1))
         # Order by the string-values in the tuple list
-        return sorted(qs, key=lambda x: get_string_from_tuple_list(tpList, getattr(x, sOrder)), reverse=bReversed)
+        return sorted(qs, key=lambda x: ( getattr(x, sOrder) is None or bReversed, get_string_from_tuple_list(tpList, getattr(x, sOrder))), reverse=bReversed)
 
     def order_queryset_by_annotationidglosstranslation(qs, sOrder):
         language_code_2char = sOrder[-2:]
@@ -82,7 +80,7 @@ def order_queryset_by_sort_order(get, qs):
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
-        annotationidglosstranslation = AnnotationIdglossTranslation.objects.filter(gloss=OuterRef('pk'), language__language_code_2char__iexact=language_code_2char)
+        annotationidglosstranslation = AnnotationIdglossTranslation.objects.filter(gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char).distinct()
         qs = qs.annotate(**{sOrderAsc: Subquery(annotationidglosstranslation.values('text')[:1])}).order_by(sOrder)
         return qs
 
@@ -98,46 +96,52 @@ def order_queryset_by_sort_order(get, qs):
 
     def order_queryset_by_translation(qs, sOrder):
         language_code_2char = sOrder[-2:]
+        query_sort_parameter = 'translation__text'
         sOrderAsc = sOrder
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
-        translations = Translation.objects.filter(gloss=OuterRef('pk'), language__language_code_2char__iexact=language_code_2char)
+        translations = Translation.objects.filter(gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char).order_by(query_sort_parameter)
         qs = qs.annotate(**{sOrderAsc: Subquery(translations.values('translation__text')[:1])}).order_by(sOrder)
         return qs
 
     # Set the default sort order
     default_sort_order = True
-    sOrder = 'annotationidglosstranslation__text'  # Default sort order if nothing is specified
+    bReversed = False
+    bText = True
 
     # See if the form contains any sort-order information
     if ('sortOrder' in get and get['sortOrder'] != ''):
         # Take the user-indicated sort order
         sOrder = get['sortOrder']
         default_sort_order = False
+        if (sOrder[0:1] == '-'):
+            # A starting '-' sign means: descending order
+            bReversed = True
+    else:
+        # this is important for the query
+        sOrder = 'annotationidglosstranslation__text'  # Default sort order if nothing is specified
+
     # The ordering method depends on the kind of field:
     # (1) text fields are ordered straightforwardly
     # (2) fields made from a choice_list need special treatment
     if (sOrder.endswith('handedness')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness")
+        bText = False
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness", bReversed)
     elif (sOrder.endswith('domhndsh') or sOrder.endswith('subhndsh')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Handshape")
+        bText = False
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Handshape", bReversed)
     elif (sOrder.endswith('locprim')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Location")
-    elif "annotationidglosstranslation_order_" in sOrder:
+        bText = False
+        ordered = order_queryset_by_tuple_list(qs, sOrder, "Location", bReversed)
+    elif sOrder.startswith("annotationidglosstranslation_order_") or sOrder.startswith("-annotationidglosstranslation_order_"):
         ordered = order_queryset_by_annotationidglosstranslation(qs, sOrder)
-    elif "lemmaidglosstranslation_order_" in sOrder:
+    elif sOrder.startswith("lemmaidglosstranslation_order_") or sOrder.startswith("-lemmaidglosstranslation_order_"):
         ordered = order_queryset_by_lemmaidglosstranslation(qs, sOrder)
     elif sOrder.startswith("translation_") or sOrder.startswith("-translation_"):
         ordered = order_queryset_by_translation(qs, sOrder)
     else:
         # Use straightforward ordering on field [sOrder]
-
-        bReversed = False
-        if (sOrder[0:1] == '-'):
-            # A starting '-' sign means: descending order
-            sOrder = sOrder[1:]
-            bReversed = True
         if default_sort_order:
             lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
             sort_language = 'annotationidglosstranslation__language__language_code_2char'
@@ -151,8 +155,8 @@ def order_queryset_by_sort_order(get, qs):
             ordered += list(qs_empty)
         else:
             ordered = qs
-        if bReversed:
-            ordered.reverse()
+    if bReversed and bText:
+        ordered.reverse()
 
     # return the ordered list
     return ordered
@@ -508,7 +512,7 @@ class GlossListView(ListView):
             # Keywords per language
             for language in dataset_languages:
                 # translations = gloss.annotationidglosstranslation_set.filter(language=language)
-                translations = [t.translation.text for t in gloss.translation_set.filter(language=language)]
+                translations = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('translation__text')]
 
                 if translations:
                     row.append(", ".join(translations))
@@ -1310,10 +1314,10 @@ class GlossDetailView(DetailView):
         context['translations_per_language'] = {}
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
-                context['translations_per_language'][language] = gl.translation_set.filter(language=language)
+                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
         else:
             language = Language.objects.get(id=get_default_language_id())
-            context['translations_per_language'][language] = gl.translation_set.filter(language=language)
+            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
 
         simultaneous_morphology = []
         sim_morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
@@ -4052,10 +4056,10 @@ class MorphemeDetailView(DetailView):
         context['translations_per_language'] = {}
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
-                context['translations_per_language'][language] = gl.translation_set.filter(language=language)
+                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
         else:
             language = Language.objects.get(id=get_default_language_id())
-            context['translations_per_language'][language] = gl.translation_set.filter(language=language)
+            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
 
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
@@ -4418,7 +4422,7 @@ def glosslist_ajax_complete(request, gloss_id):
     # Put translations (keywords) per language in the context
     translations_per_language = []
     for language in dataset_languages:
-        translations_per_language.append((language,this_gloss.translation_set.filter(language=language)))
+        translations_per_language.append((language,this_gloss.translation_set.filter(language=language).order_by('translation__text')))
 
     column_values = []
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
@@ -4506,7 +4510,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     # Put translations (keywords) per language in the context
     translations_per_language = {}
     for language in dataset_languages:
-        translations_per_language[language] = this_gloss.translation_set.filter(language=language)
+        translations_per_language[language] = this_gloss.translation_set.filter(language=language).order_by('translation__text')
 
     column_values = []
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
