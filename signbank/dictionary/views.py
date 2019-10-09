@@ -334,7 +334,7 @@ def morpheme(request, glossid):
     if not(request.user.has_perm('dictionary.search_gloss') or morpheme.inWeb):
         return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
 
-    allkwds = morpheme.translation_set.all()
+    allkwds = morpheme.translation_set.all().order_by('translation__text')
     if len(allkwds) == 0:
         trans = None
     else:

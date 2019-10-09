@@ -1904,6 +1904,18 @@ class Morpheme(Gloss):
 
         return json.dumps(OrderedDict(reformatted_li))
 
+    def abstract_meaning(self):
+        # this is used for displaying morpheme keywords per language in the morpheme list view
+        abstract_meaning = []
+        if self.dataset:
+            for language in self.dataset.translation_languages.all():
+                translations = self.translation_set.filter(language=language).order_by('translation__text')
+                abstract_meaning.append((language, translations))
+        else:
+            language = Language.objects.get(id=get_default_language_id())
+            translations = self.translation_set.filter(language=language).order_by('translation__text')
+            abstract_meaning.append((language, translations))
+        return abstract_meaning
 
 def generate_fieldname_to_kind_table():
     temp_field_to_kind_table = dict()

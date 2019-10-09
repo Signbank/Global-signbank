@@ -1721,6 +1721,8 @@ class MorphemeListView(ListView):
         if (len(choice_list) > 0):
             ordered_dict = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
             oChoiceLists['mrpType'] = ordered_dict
+        else:
+            oChoiceLists['mrpType'] = {}
 
         # Make all choice lists available in the context (currently only mrpType)
         context['choice_lists'] = json.dumps(oChoiceLists)
@@ -3930,6 +3932,14 @@ class MorphemeDetailView(DetailView):
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION'] = settings.SIGN_NAVIGATION
 
+        # check for existence of strong hand and weak hand shapes
+        try:
+            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh)
+        except Handshape.DoesNotExist:
+            strong_hand_obj = None
+        context['StrongHand'] = self.object.domhndsh if strong_hand_obj else 0
+        context['WeakHand'] = self.object.subhndsh
+
         # Get the set of all the Gloss signs that point to me
         other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
         context['appears_in'] = []
@@ -3977,7 +3987,7 @@ class MorphemeDetailView(DetailView):
         context['choice_lists'] = {}
 
         gloss_fields = {}
-        for f in Gloss._meta.fields:
+        for f in Morpheme._meta.fields:
             gloss_fields[f.name] = f
 
         # Translate the machine values to human values in the correct language, and save the choice lists along the way
@@ -3986,26 +3996,23 @@ class MorphemeDetailView(DetailView):
 
             for field in FIELDS[topic]:
 
+                # Get and save the choice list for this field
                 gloss_field = gloss_fields[field]
-                #Get and save the choice list for this field
                 if hasattr(gloss_field, 'field_choice_category'):
-                    field_category = gloss_field.field_choice_category
+                    fieldchoice_category = gloss_field.field_choice_category
                 else:
-                    field_category = field
-
-                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                    fieldchoice_category = field
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
                 if len(choice_list) > 0:
-                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list,
-                                                                                                    self.request.LANGUAGE_CODE)
+                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
 
                 # Take the human value in the language we are using
                 machine_value = getattr(gl, field)
-                human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
+                human_value = machine_value_to_translated_human_value(machine_value, choice_list, self.request.LANGUAGE_CODE)
 
                 # And add the kind of field
                 kind = fieldname_to_kind(field)
-
                 context[topic + '_fields'].append([human_value, field, labels[field], kind])
 
         # Gather the OtherMedia

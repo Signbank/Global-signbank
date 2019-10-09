@@ -274,7 +274,7 @@ function do_set_lemma_language(el) {
 {{ form.media.css }}
 {{ form.media.js }}
 
-<form name='adminsearch' id='adminsearch' method='get' action='{{URL}}/morphemes/search'>
+<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/morphemes/search'>
 
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
@@ -695,9 +695,14 @@ function do_set_lemma_language(el) {
           {% for dataset_lang in dataset_languages %}
           <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
-
-           <th>{% trans "Abstract Meaning" %}</th>
            <th>{% trans "Morpheme type" %}</th>
+           {% for dataset_lang in dataset_languages %}
+           <th>{% trans "Abstract Meaning" %}
+              {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+                ({{ dataset_lang.name }})
+              {% endif %}
+           </th>
+          {% endfor %}
            <th>{% trans "Handedness" %}</th>
            <th>{% trans "Strong hand" %}</th>
            <th>{% trans "Weak hand" %}</th>
@@ -725,7 +730,27 @@ function do_set_lemma_language(el) {
            {% endwith %}
           {% endfor %}
 
-           {% with "translation handedness domhndsh subhndsh locprim" as head_fields %}
+            <th></th>
+
+           {% for dataset_lang in dataset_languages %}
+           {% with "translation_"|add:dataset_lang.language_code_2char as field %}
+           {% with minfield="-"|add:field %}
+           <th>
+             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+             </a>
+             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
+               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+             </a>
+             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
+               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
+             {% endif %}
+           </th>
+           {% endwith %}
+           {% endwith %}
+           {% endfor %}
+
+           {% with "handedness domhndsh subhndsh locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% with minfield="-"|add:field %}
            <th>
@@ -770,22 +795,16 @@ function do_set_lemma_language(el) {
       </td>
         {% endwith %}
       {% endfor %}
-      <td>
-      {% for translation in morpheme.translation_set.all %}
-                {% if forloop.last %}
-                {{ translation.translation }}
-                {% else%}
-                {{ translation.translation }},
-                {% endif %}
-
-      {% endfor %}
-      </td>
-    
             <td>{{ morpheme.get_mrpType_display }}</td>
-            <td>{{ morpheme.get_handedness_display }}</td>
-            <td>{{ morpheme.get_domhndsh_display }}</td>
-            <td>{{ morpheme.get_subhndsh_display }}</td>
-            <td>{{ morpheme.get_locprim_display }}</td>
+
+            {% for lang, translations in morpheme.abstract_meaning %}
+            <td>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            {% endfor %}
+
+            <td>{% if morpheme.handedness %}{{ morpheme.get_handedness_display }}{% else %}-{% endif %}</td>
+            <td>{% if morpheme.domhndsh %}{{ morpheme.get_domhndsh_display }}{% else %}-{% endif %}</td>
+            <td>{% if morpheme.subhndsh %}{{ morpheme.get_subhndsh_display }}{% else %}-{% endif %}</td>
+            <td>{% if morpheme.locprim %}{{ morpheme.get_locprim_display }}{% else %}-{% endif %}</td>
             {% load underscore_to_space %}
             <td>{% for tag in morpheme.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
             
