@@ -1496,16 +1496,6 @@ def add_morpheme(request):
                                      _("The given Lemma Idgloss ID is unknown."))
                 return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
 
-        # Check for 'change_dataset' permission
-        if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) and ('change_dataset' not in get_group_perms(request.user, dataset)):
-            messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
-            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
-        elif not dataset:
-            # Dataset is empty, this is an error
-            messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
-            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
-
-
         for item, value in request.POST.items():
             if item.startswith(form.morpheme_create_field_prefix):
                 language_code_2char = item[len(form.morpheme_create_field_prefix):]
