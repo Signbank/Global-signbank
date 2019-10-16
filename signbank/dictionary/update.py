@@ -404,8 +404,12 @@ def update_gloss(request, glossid):
             original_value = ''
 
         #Remember this change for the history books
-        # print('before saving revision field ', field, ', value is: ', value, '(', type(value), '), new value is: ', newvalue, '(', type(newvalue), ')')
-        revision = GlossRevision(old_value=original_value,new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
+        try:
+            original_human_value = machine_value_to_translated_human_value(original_value,choice_list,request.LANGUAGE_CODE)
+        except:
+            original_human_value = original_value
+
+        revision = GlossRevision(old_value=original_human_value, new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
         revision.save()
 
         # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
