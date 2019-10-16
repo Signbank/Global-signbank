@@ -2326,3 +2326,29 @@ class GlossRevision(models.Model):
 
         #return str(self.user)
         return str(self.user) + " changed " + str(self.field_name) + " to " + str(self.new_value)
+
+class Corpus(models.Model):
+
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    speakers_are_cross_referenced = models.BooleanField()
+
+class Document(models.Model):
+
+    corpus = models.ForeignKey("Corpus")
+    identifier = models.CharField(max_length=100)
+    creation_time = models.DateTimeField(blank=True)
+
+class Speaker(models.Model):
+
+    identifier = models.CharField(max_length=100)
+    gender = models.CharField(blank=True,choices=[('Male','m'),('Female','f')],max_length=1)
+    age = models.IntegerField(blank=True)
+    location = models.CharField(max_length=100)
+
+class GlossFrequency(models.Model):
+
+    speaker = models.ForeignKey("Speaker")
+    document = models.ForeignKey("Document")
+    gloss = models.ForeignKey("Gloss")
+    frequency = models.IntegerField()
