@@ -2585,3 +2585,10 @@ def choice_lists(request):
         FieldChoice.objects.filter(field__iexact='MorphemeType'),request.LANGUAGE_CODE)
 
     return HttpResponse(json.dumps(all_choice_lists), content_type='application/json')
+
+def gloss_revision_history(request,gloss_pk):
+
+    gloss = Gloss.objects.get(pk=gloss_pk)
+
+    return render(request, 'dictionary/gloss_revision_history.html',
+                  {'gloss': gloss, 'revisions':GlossRevision.objects.filter(gloss=gloss)})
