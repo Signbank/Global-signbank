@@ -9,14 +9,13 @@
 {% endblock %}
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 <script type='text/javascript'>
 var frequency_regions = {{frequency_regions|safe}};
 var data_datasets = {{data_datasets|safe}};
-var gloss_idgloss = '{{gloss_idgloss|safe}}';
 </script>
 
 <script type="text/javascript">
@@ -38,60 +37,107 @@ chart.options.scales.xAxes[0].ticks.fontColor = 'Black';
 chart.options.scales.xAxes[0].ticks.precision = 0;
 chart.options.legend.labels.fontSize = 16;
 chart.options.legend.labels.fontColor = 'Black';
+chart.options.legend.position = 'top';
 chart.data.datasets[0].backgroundColor = 'DarkGrey';
 chart.data.datasets[1].backgroundColor = 'LightGrey';
 chart.options.tooltips.titleFontSize = 16;
 chart.options.tooltips.bodyFontSize = 16;
+chart.options.title.display = false;
+chart.options.title.position = 'bottom';
+chart.options.title.fontSize = 20;
+chart.options.title.text = "Title of chart";
 chart.update();
 </script>
 
+<script type='text/javascript'>
+    // This script gets and inserts the users last searched items on the gloss page
+    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+    var req = $.ajax({
+        url: search_results_url,
+        dataType: "json",
+        context: document.body
+    })
+
+    req.done(function(json_data) {
+        for (var key in json_data) {
+            if (json_data.hasOwnProperty(key)) {
+                var a = document.createElement("a");
+                a.setAttribute("class", "search_result");
+                a.style["float"] = "none";
+                a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
+                a.id = json_data[key].id;
+                var linktext = document.createTextNode(json_data[key].gloss);
+                a.appendChild(linktext);
+                $( "#results-inline" ).append(a);
+            }
+        }
+
+        /* Determine the active button (if any), center the horizontal list according to the active button */
+        // Make sure that we are showing search results
+        if ($('#results-inline').length > 0) {
+            // Setting a button active according to which glosses page we are on. A.id should equal to gloss.id.
+            $('#results-inline #{{ gloss.id }}').addClass('active');
+            var scrollPanel = $('#searchresults');
+            var activeButton = $('#results-inline a.active');
+            // Make sure that activeButton exists
+            if (activeButton.length > 0) {
+                // Calculating the left offset position so that the button is centered
+                var leftOffset = activeButton.offset().left - scrollPanel.offset().left - (scrollPanel.width() / 2) + (activeButton.width() / 2);
+                // Scrolling to the active button
+                $('#searchresults').scrollLeft(leftOffset);
+            }
+            var signinfo = $('#signinfo');
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
+        }
+    });
+
+</script>
+
+<script type='text/javascript'>
+
+        $('#searchresults').css({'top': Math.round($('#signbank-bar').height() + 10)});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
+
+    </script>
 {% endblock %}
 
 {% block content %}
 
-<div id="definitionblock">
-    {% url 'dictionary:protected_media' '' as protected_media_url %}
-<table>
-    {% csrf_token %}
-
-    {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-    <tr>
-    <th style="width:20em;">{% trans "Dataset" %}</th>
-    <td style="width:12em;">{{gloss.lemma.dataset.acronym}}</td>
-    </tr>
+<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+    </div>
     {% endif %}
-
-
-    {% for dataset_lang in dataset_languages %}
-    <tr>
-    <th style="width:20em;">{% trans "Annotation ID Gloss" %} ({{ dataset_lang }})</th>
-    {% with gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
-    <td>
-      {% ifnotequal annotationidglosstranslation "" %}
-
-        <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
-
-      {% endifnotequal %}
-    </td>
-    {% endwith %}
-    </tr>
-    {% endfor %}
-
-    {% for dataset_lang in dataset_languages %}
-    <tr>
-    <th style="width:20em;">{% trans "Lemma ID Gloss" %} ({{ dataset_lang }})</th>
-    {% with gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
-      <td>
-          <div>{{ lemmaidglosstranslation }}</div>
-      </td>
-    {% endwith %}
-    </tr>
-    {% endfor %}
-
-</tr>
-</table>
 </div>
 
-<canvas id="myChart"></canvas>
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
 
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision history" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Frequency View" %}</a>
+        </li>
+    </ul>
+
+</div>
+
+
+<div id="definitionblock" style="z-index:0;padding-top: 100px;">
+
+        <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;">
+        <h4>{% trans "Regions" %}</h4>
+        <canvas id="myChart"></canvas>
+        </div>
+</div>
 {% endblock content %}
