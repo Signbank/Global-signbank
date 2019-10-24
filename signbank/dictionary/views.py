@@ -67,62 +67,6 @@ def index(request):
                                'query': ''})
 
 
-STATE_IMAGES = {'auslan_all': "images/maps/allstates.gif",
-                'auslan_nsw_act_qld': "images/maps/nsw-act-qld.gif",
-                'auslan_nsw': "images/maps/nsw.gif",
-                'auslan_nt':  "images/maps/nt.gif",
-                'auslan_qld': "images/maps/qld.gif",
-                'auslan_sa': "images/maps/sa.gif",
-                'auslan_tas': "images/maps/tas.gif",
-                'auslan_south': "images/maps/vic-wa-tas-sa-nt.gif",
-                'auslan_vic': "images/maps/vic.gif",
-                'auslan_wa': "images/maps/wa.gif",
-                }
-
-def map_image_for_dialects(dialects):
-    """Get the right map image for this dialect set
-
-
-    Relies on database contents, which is bad. This should
-    be in the database
-    """
-    # we only work for Auslan just now
-    dialects = dialects.filter(signlanguage__name__exact="Auslan")
-
-    if len(dialects) == 0:
-        return
-
-    # all states
-    if dialects.filter(name__exact="Australia Wide"):
-        return STATE_IMAGES['auslan_all']
-
-    if dialects.filter(name__exact="Southern Dialect"):
-        return STATE_IMAGES['auslan_south']
-
-    if dialects.filter(name__exact="Northern Dialect"):
-        return STATE_IMAGES['auslan_nsw_act_qld']
-
-    if dialects.filter(name__exact="New South Wales"):
-        return STATE_IMAGES['auslan_nsw']
-
-    if dialects.filter(name__exact="Queensland"):
-        return STATE_IMAGES['auslan_qld']
-
-    if dialects.filter(name__exact="Western Australia"):
-        return STATE_IMAGES['auslan_wa']
-
-    if dialects.filter(name__exact="South Australia"):
-        return STATE_IMAGES['auslan_sa']
-
-    if dialects.filter(name__exact="Tasmania"):
-        return STATE_IMAGES['auslan_tas']
-
-    if dialects.filter(name__exact="Victoria"):
-        return STATE_IMAGES['auslan_vic']
-
-    return None
-
-
 @login_required_config
 def word(request, keyword, n):
     """View of a single keyword that may have more than one sign"""
@@ -184,7 +128,6 @@ def word(request, keyword, n):
                                'total': total,
                                'matches': range(1, total+1),
                                'navigation': nav,
-                               'dialect_image': map_image_for_dialects(gloss.dialect.all()),
                                # lastmatch is a construction of the url for this word
                                # view that we use to pass to gloss pages
                                # could do with being a fn call to generate this name here and elsewhere
@@ -297,7 +240,6 @@ def gloss(request, glossid):
                                'gloss_or_morpheme': 'gloss',
                                'allkwds': allkwds,
                                'notes_groupedby_role': notes_groupedby_role,
-                               'dialect_image': map_image_for_dialects(gloss.dialect.all()),
                                'lastmatch': lastmatch,
                                'videofile': videourl,
                                'viewname': word,
@@ -395,7 +337,6 @@ def morpheme(request, glossid):
                                'definitions': morpheme.definitions(),
                                'gloss_or_morpheme': 'morpheme',
                                'allkwds': allkwds,
-                               'dialect_image': map_image_for_dialects(morpheme.dialect.all()),
                                'lastmatch': lastmatch,
                                'videofile': videourl,
                                'viewname': word,
