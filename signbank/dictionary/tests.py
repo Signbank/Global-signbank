@@ -3,7 +3,7 @@ from itertools import zip_longest
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm
 from signbank.dictionary.models import *
-from signbank.settings.base import WRITABLE_FOLDER
+from signbank.settings.base import *
 
 from django.contrib.auth.models import User, Permission, Group
 from django.test import TestCase, RequestFactory
@@ -2362,6 +2362,44 @@ class RevisionHistoryTests(TestCase):
 
         for f in gloss_fields:
             self.assertTrue(f in updated_fields)
+
+
+class CNGT_Tests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        assign_perm('dictionary.change_gloss', self.user)
+        self.user.save()
+
+    def test_metadata_file(self):
+        # this imports the Speaker data to the test database
+        from signbank.tools import import_corpus_speakers
+
+        import_corpus_speakers()
+
+        count_known_speakers = Speaker.objects.all().count()
+
+        # find out how many entries are in the meta data file
+        get_wc = "wc " + settings.METADATA_LOCATION
+
+        import subprocess
+        wc_output = subprocess.check_output(get_wc, shell=True)
+        wc_output_string = wc_output.decode("utf-8").strip()
+        wc_output_values = wc_output_string.split()
+        if wc_output_values:
+            number_of_entries = int(wc_output_values[0]) - 1
+        else:
+            number_of_entries = 0
+
+        self.assertEqual(count_known_speakers, number_of_entries)
+
+        # try to read file again, make sure no new entries are created
+        import_corpus_speakers()
+        count_known_speakers2 = Speaker.objects.all().count()
+        self.assertEqual(count_known_speakers2, number_of_entries)
 
 
 class MinimalPairsTests(TestCase):

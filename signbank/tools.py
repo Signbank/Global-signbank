@@ -2007,3 +2007,57 @@ def update_cngt_counts(folder_index=None):
 
     print('No glosses were found for these names',glosses_not_in_signbank)
     print('Updated glosses',updated_glosses)
+
+
+def import_corpus_speakers():
+    import csv
+
+    errors = []
+
+    #First do some checks
+    if not os.path.isfile(settings.METADATA_LOCATION):
+        if settings.METADATA_LOCATION:
+            errors.append('The required file ' + settings.METADATA_LOCATION + ' is not present')
+        else:
+            errors.append('The required setting METADATA_LOCATION for corpus speakers is not defined.')
+    else:
+
+        for n,row in enumerate(csv.reader(open(settings.METADATA_LOCATION), delimiter='\t')):
+
+            #Skip the header
+            if n == 0:
+                if row == ['Participant','Metadata region','Age at time of recording','Gender','Preference hand']:
+                    continue
+                else:
+                    errors.append('The header of '+ settings.METADATA_LOCATION + ' is not Participant,Metadata region,Age at time of recording,Gender,Preference hand')
+                    continue
+
+            #Create an other video for this
+            try:
+                participant, location, age, gender, hand = row
+            except:
+                errors.append('Line '+str(n)+' does not seem to have the correct amount of items')
+                continue
+
+            # we use this syntax because we process the fields one at a time
+            try:
+                speaker = Speaker.objects.get(identifier=participant)
+            except:
+                speaker = Speaker()
+                speaker.identifier = participant
+            speaker.location = location
+            gender_lower = gender.lower()
+            if gender_lower in ['female', 'f', 'v']:
+                speaker.gender = 'f'
+            elif gender_lower in ['male', 'm']:
+                speaker.gender = 'm'
+            else:
+                speaker.gender = None
+            try:
+                speaker.age = int(age)
+            except:
+                pass
+            # field Preference hand is ignored
+            speaker.save()
+
+
