@@ -138,34 +138,40 @@
         console.log("Added field choices");
     });
 
-/* This code interferes with the Ajax completion for typing in e.g., Lemmas
     //Keyboard shortcuts
     document.onkeydown = checkKey;
 
     function checkKey(e)
     {
+        // No shortcut if your typing
+        if (document.activeElement.tagName == 'INPUT') {return;}
+
         e = e || window.event;
 
-        if (e.keyCode == '80')
+        switch(e.key)
         {
-            // p key
-            toggle_edit();
-            $('#phonology').collapse('show');
+          case 'p':
+            element_id = 'phonology'
+            break;
+          case 'm':
+            element_id = 'morphology'
+            break;
+          case 's':
+            element_id = 'semantics'
+            break;
+          default:
+            element_id = null
         }
-        else if (e.keyCode == '77')
+
+        if (element_id != null)
         {
-            // m key
             toggle_edit();
-            $('#morphology').collapse('show');
+            $('#'+element_id).collapse('show');
+            $('#'+element_id)[0].scrollIntoView();
         }
-        else if (e.keyCode == '83')
-        {
-            // s key
-            toggle_edit();
-            $('#semantics').collapse('show');
-        }
+
     }
-*/
+
     </script>
 
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
