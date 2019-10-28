@@ -208,11 +208,11 @@ legend
     position: relative;
 }
 
-.hasTooltip span {
+.hasTooltip .isTooltip {
     display: none;
 }
 
-.hasTooltip:hover span {
+.hasTooltip:hover .isTooltip {
     display: block;
     background-color: black;
     border-radius: 5px;
@@ -223,5 +223,7 @@ legend
     top: 3em;
     left: 0px;
     max-width: 360px;
+    min-width: 300px;
     font-size: 12px;
+    z-index: 9999;
 }
