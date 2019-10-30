@@ -1423,35 +1423,6 @@ def reload_signbank(request=None):
         from django.shortcuts import render
         return render(request,'reload_signbank.html')
 
-def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, dataset=None):
-    dataset_gloss_ids = []
-    if dataset:
-        dataset_gloss_ids = Gloss.objects.filter(lemma__dataset=dataset).values_list('pk', flat=True)
-        print(str(dataset_gloss_ids))
-        print(str(4611 in dataset_gloss_ids))
-
-    full_root_path = signbank.settings.server_specific.WRITABLE_FOLDER+root_folder+'/'
-    static_urls = {}
-
-    for subfolder_name in os.listdir(full_root_path):
-        full_path = os.path.join(full_root_path, subfolder_name)
-        if os.path.isdir(full_path):
-            for filename in os.listdir(full_path):
-                full_filename = os.path.join(full_path, filename)
-                if os.path.getmtime(full_filename) > since_timestamp:
-                    res = re.search(r'(.+)\.[^\.]*', filename)
-
-                    try:
-                        gloss_id = res.group(1)
-                        re_result = re.match(r'.*\-(\d+)', gloss_id)
-
-                        if dataset is None or int(re_result.group(1)) in dataset_gloss_ids:
-                            static_urls[gloss_id] = reverse('dictionary:protected_media', args=['']) + full_filename
-                    except AttributeError:
-                        continue
-
-    return static_urls
-
 def get_gloss_data(since_timestamp=0, dataset=None):
     if dataset:
         glosses = Gloss.objects.filter(lemma__dataset=dataset)
