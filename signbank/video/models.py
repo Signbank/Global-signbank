@@ -236,6 +236,13 @@ class GlossVideo(models.Model):
                 return None
 
         return poster_path
+    
+    def poster_file(self):
+        vidpath, ext = os.path.splitext(self.videofile.name)
+        poster_file = vidpath + ".png"
+        # replace vidpath with imagepath!
+        poster_file = str(poster_file.replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
+        return poster_file
 
     def get_absolute_url(self):
 

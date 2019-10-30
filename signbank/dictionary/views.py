@@ -2361,9 +2361,10 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = 0
 
-    dataset = None
     if 'dataset_name' in request.GET:
         dataset = Dataset.objects.get(acronym=request.GET['dataset_name'])
+    else:
+        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
 
     video_folder_name = 'glossvideo'
@@ -2378,11 +2379,16 @@ def package(request):
     archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
 
-    video_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp, dataset)
-    image_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp, dataset)
-    # Filter out all backup files
-    video_urls = dict([(gloss_id, url) for (gloss_id, url) in video_urls.items() if not re.match('.*_\d+', url)])
-    image_urls = dict([(gloss_id, url) for (gloss_id, url) in image_urls.items() if not re.match('.*_\d+', url)])
+    video_urls = [{os.path.splitext(os.path.basename(gv.videofile.name))[0]:
+                       reverse('dictionary:protected_media', args=[gv.videofile.name])}
+                  for gv in GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
+                  if os.path.exists(str(gv.videofile.path))
+                     and os.path.getmtime(str(gv.videofile.path)) > since_timestamp]
+    image_urls = [{os.path.splitext(os.path.basename(gv.videofile.name))[0]:
+                       reverse('dictionary:protected_media', args=[gv.poster_file()])}
+                  for gv in GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
+                  if os.path.exists(str(gv.videofile.path))
+                     and os.path.getmtime(str(gv.videofile.path)) > since_timestamp]
 
     collected_data = {'video_urls':video_urls,
                       'image_urls':image_urls,
