@@ -236,6 +236,13 @@ class GlossVideo(models.Model):
                 return None
 
         return poster_path
+    
+    def poster_file(self):
+        vidpath, ext = os.path.splitext(self.videofile.name)
+        poster_file = vidpath + ".png"
+        # replace vidpath with imagepath!
+        poster_file = str(poster_file.replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
+        return poster_file
 
     def get_absolute_url(self):
 
@@ -257,10 +264,14 @@ class GlossVideo(models.Model):
         # print tmploc
         shutil.move(tmploc, self.videofile.path)
 
-    def small_video(self):
-        """Return the URL of the poster image for this video"""
+    def small_video(self, use_name=False):
+        """Return the URL of the small version for this video
+        :param use_name: whether videofile.name should be used instead of videofile.path
+        """
         small_video_path = add_small_appendix(self.videofile.path)
         if os.path.exists(small_video_path):
+            if use_name:
+                return add_small_appendix(self.videofile.name)
             return small_video_path
         else:
             return None
