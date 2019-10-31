@@ -831,17 +831,16 @@ def import_csv_create(request):
         delimiter = ','
 
         # the following code allows for specifying a column delimiter in the import_csv_create.html template
-        # if 'delimiter' in request.POST:
-        #     delimiter_radio = request.POST['delimiter']
-        #     print('radio is: ', delimiter_radio)
-        #     if delimiter_radio == 'tab':
-        #         delimiter = '\t'
-        #     elif delimiter_radio == 'comma':
-        #         delimiter = ','
-        #     elif delimiter_radio == 'semicolon':
-        #         delimiter = ';'
-        #     else:
-        #         print('unknown delimiter found during import_csv_create')
+        if 'delimiter' in request.POST:
+            delimiter_radio = request.POST['delimiter']
+            if delimiter_radio == 'tab':
+                delimiter = '\t'
+            elif delimiter_radio == 'comma':
+                delimiter = ','
+            elif delimiter_radio == 'semicolon':
+                delimiter = ';'
+            else:
+                print('Unknown delimiter found during import_csv_create: ', delimiter_radio)
 
         creation = []
         keys = {}   # in case something goes wrong in header row
