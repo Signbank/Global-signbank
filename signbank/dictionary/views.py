@@ -2380,7 +2380,7 @@ def package(request):
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
 
     video_urls = [{os.path.splitext(os.path.basename(gv.videofile.name))[0]:
-                       reverse('dictionary:protected_media', args=[gv.videofile.name])}
+                       reverse('dictionary:protected_media', args=[gv.small_video(use_name=True) or gv.videofile.name])}
                   for gv in GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
                   if os.path.exists(str(gv.videofile.path))
                      and os.path.getmtime(str(gv.videofile.path)) > since_timestamp]
