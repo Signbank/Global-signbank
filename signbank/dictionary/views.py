@@ -2307,6 +2307,29 @@ def configure_handshapes(request):
 
         return HttpResponse(output_string)
 
+def configure_speakers(request):
+
+    if request.user.has_perm('dictionary.change_gloss'):
+
+        import_corpus_speakers()
+
+        return HttpResponse('<p>Speakers have been configured.</p>')
+
+    else:
+
+        return HttpResponse('<p>You do not have permission to configure speakers.</p>')
+
+def configure_corpus_documents_ngt(request):
+
+    if request.user.has_perm('dictionary.change_gloss'):
+
+        configure_corpus_documents()
+
+        return HttpResponse('<p>Corpus NGT has been configured.</p>')
+
+    else:
+
+        return HttpResponse('<p>You do not have permission to configure the corpus NGT.</p>')
 
 def get_unused_videos(request):
     file_not_in_glossvideo_object = []

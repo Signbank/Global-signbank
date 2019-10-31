@@ -2060,4 +2060,121 @@ def import_corpus_speakers():
             # field Preference hand is ignored
             speaker.save()
 
+def configure_corpus_documents():
 
+    corpus_name = 'NGT'
+
+    # create a Corpus object if it does not exist
+    try:
+        corpus = Corpus.objects.get(name=corpus_name)
+    except:
+        corpus = Corpus()
+        corpus.name = corpus_name
+        corpus.description = 'Corpus NGT'
+        corpus.speakers_are_cross_referenced = True
+        corpus.save()
+
+    existing_documents = [ d.identifier for d in  Document.objects.all() ]
+
+    # create Document objects for the EAF files
+    folder_paths = []
+
+    for foldername in os.listdir(settings.EAF_FILES_LOCATION):
+        if '.xml' not in foldername:
+            folder_paths.append(settings.EAF_FILES_LOCATION + foldername + '/')
+
+    eaf_file_paths = []
+
+    for folder_path in folder_paths:
+        eaf_file_paths += [folder_path + f for f in os.listdir(folder_path)]
+
+    # get filenames out of paths to use as document identifiers
+
+    from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
+
+    document_identifiers = []
+    document_creation_dates = {}
+    for eaf_path in eaf_file_paths:
+        file_basename = os.path.basename(eaf_path)
+        basename = os.path.splitext(file_basename)[0]
+        if basename in document_identifiers:
+            print('configure_corpus_documents: Duplicate document identifier found: ', basename, '. No Document object created for file: ', eaf_path)
+        else:
+            document_identifiers += [basename]
+            document_creation_dates[basename] = get_creation_time(eaf_path)
+
+    for d in existing_documents:
+        if d in document_identifiers:
+            continue
+        else:
+            # document has been deleted, delete this document from the corpus
+            try:
+                d_obj = Document.objects.get(identifier=d)
+                d_obj.glossfrequency_set.all().delete()
+                d_obj.delete()
+            except:
+                print('configure_corpus_documents: Unknown error cleaning up corpus document ', d)
+                continue
+
+    document_objects = {}
+    # create Document objects if it does not exist
+    for document_id in document_identifiers:
+        try:
+            document = Document.objects.get(identifier=document_id)
+        except:
+            document = Document()
+            document.identifier = document_id
+            document.corpus = corpus
+            document.creation_time = document_creation_dates[document_id]
+            document.save()
+        # to speed up processing later, document objects are already looked up
+        document_objects[document_id] = document
+
+    speaker_objects = {}
+    for speaker in Speaker.objects.all():
+        speaker_objects[speaker.identifier] = speaker
+
+    from CNGT_scripts.python.signCounter import SignCounter
+
+    sign_counter = SignCounter(settings.METADATA_LOCATION,
+                               eaf_file_paths,
+                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT)
+
+    sign_counter.run()
+
+    # we get the frequencies from the sign_counter object, not from get_result as was done previously
+    try:
+        # this is inside a try to make sure the newest version of signCounter is used
+        frequencies_per_speaker = sign_counter.freqsPerPerson
+    except:
+        frequencies_per_speaker = {}
+
+    # dict person document gloss freq
+    glosses_not_in_signbank = []
+
+    for pers in frequencies_per_speaker.keys():
+        for doc in frequencies_per_speaker[pers].keys():
+            for gloss_id, cnt in frequencies_per_speaker[pers][doc].items():
+                # Collect the gloss needed
+                try:
+                    if gloss_id.startswith("gloss"):
+                        gloss_id = gloss_id[5:]
+                    gloss_id = int(gloss_id)
+                    gloss = Gloss.objects.get(id=gloss_id)
+                except (ObjectDoesNotExist, ValueError):
+                    if gloss_id != None:
+                        glosses_not_in_signbank.append(gloss_id)
+
+                    continue
+
+                try:
+                    gloss_frequency = GlossFrequency.objects.get(speaker=speaker_objects[pers], document=document_objects[doc], gloss=gloss)
+                except:
+                    gloss_frequency = GlossFrequency()
+                    gloss_frequency.speaker = speaker_objects[pers]
+                    gloss_frequency.document = document_objects[doc]
+                    gloss_frequency.gloss = gloss
+                gloss_frequency.frequency = int(cnt)
+                gloss_frequency.save()
+
+    print('configure_corpus_documents: No glosses were found for these names: ', glosses_not_in_signbank)
