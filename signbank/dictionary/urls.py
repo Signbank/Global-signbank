@@ -82,6 +82,10 @@ urlpatterns = [
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.update_cngt_counts)),
     url(r'configure_handshapes/$',
         permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_handshapes)),
+    url(r'configure_speakers/$',
+        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_speakers)),
+    url(r'configure_corpus_documents_ngt/$',
+        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_corpus_documents_ngt)),
 
     url(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     url(r'all_field_choices.tsv/$',signbank.dictionary.views.list_all_fieldchoice_names),

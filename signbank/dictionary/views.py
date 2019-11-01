@@ -831,17 +831,16 @@ def import_csv_create(request):
         delimiter = ','
 
         # the following code allows for specifying a column delimiter in the import_csv_create.html template
-        # if 'delimiter' in request.POST:
-        #     delimiter_radio = request.POST['delimiter']
-        #     print('radio is: ', delimiter_radio)
-        #     if delimiter_radio == 'tab':
-        #         delimiter = '\t'
-        #     elif delimiter_radio == 'comma':
-        #         delimiter = ','
-        #     elif delimiter_radio == 'semicolon':
-        #         delimiter = ';'
-        #     else:
-        #         print('unknown delimiter found during import_csv_create')
+        if 'delimiter' in request.POST:
+            delimiter_radio = request.POST['delimiter']
+            if delimiter_radio == 'tab':
+                delimiter = '\t'
+            elif delimiter_radio == 'comma':
+                delimiter = ','
+            elif delimiter_radio == 'semicolon':
+                delimiter = ';'
+            else:
+                print('Unknown delimiter found during import_csv_create: ', delimiter_radio)
 
         creation = []
         keys = {}   # in case something goes wrong in header row
@@ -2307,6 +2306,29 @@ def configure_handshapes(request):
 
         return HttpResponse(output_string)
 
+def configure_speakers(request):
+
+    if request.user.has_perm('dictionary.change_gloss'):
+
+        import_corpus_speakers()
+
+        return HttpResponse('<p>Speakers have been configured.</p>')
+
+    else:
+
+        return HttpResponse('<p>You do not have permission to configure speakers.</p>')
+
+def configure_corpus_documents_ngt(request):
+
+    if request.user.has_perm('dictionary.change_gloss'):
+
+        configure_corpus_documents()
+
+        return HttpResponse('<p>Corpus NGT has been configured.</p>')
+
+    else:
+
+        return HttpResponse('<p>You do not have permission to configure the corpus NGT.</p>')
 
 def get_unused_videos(request):
     file_not_in_glossvideo_object = []
