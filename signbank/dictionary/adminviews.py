@@ -2649,6 +2649,54 @@ class GlossFrequencyView(DetailView):
 
         context['data_datasets'] = gl.data_datasets()
 
+        context['has_frequency_data'] = gl.has_frequency_data()
+
+        speakers_summary = gl.speaker_age_data()
+        speaker_age_data = []
+        for i in range(1, 100):
+            i_key = str(i)
+            if i_key in speakers_summary.keys():
+                i_value = speakers_summary[i_key]
+                speaker_age_data.append(i_value)
+            else:
+                speaker_age_data.append(0)
+
+        context['speaker_age_data'] = speaker_age_data
+
+        context['speaker_data'] = gl.speaker_data()
+
+        try:
+            variants = gl.pattern_variants()
+        except:
+            try:
+                variants = gl.has_variants()
+            except:
+                variants = []
+
+        context['variants'] = variants
+
+        variants_data = {}
+        for variant_of_gloss in variants:
+            variants_data[variant_of_gloss.idgloss] = variant_of_gloss.speaker_data()
+        context['variants_data'] = variants_data
+
+        variants_age_distribution_data = {}
+        for variant_of_gloss in variants:
+            variant_speaker_age_data_v = variant_of_gloss.speaker_age_data()
+
+            speaker_age_data_v = []
+            for i in range(1, 100):
+                i_key = str(i)
+                if i_key in variant_speaker_age_data_v.keys():
+                    i_value = variant_speaker_age_data_v[i_key]
+                    speaker_age_data_v.append(i_value)
+                else:
+                    speaker_age_data_v.append(0)
+
+            variants_age_distribution_data[variant_of_gloss.idgloss] = speaker_age_data_v
+
+        context['variants_age_distribution_data'] = variants_age_distribution_data
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:

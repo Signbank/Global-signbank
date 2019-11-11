@@ -14,8 +14,42 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 <script type='text/javascript'>
+var dataset_colors = [ 'LightBlue', 'Magenta', 'Green', 'OrangeRed', 'Salmon', 'Orange', 'Purple', 'Olive', 'DarkBlue', 'Yellow', 'Red',
+                        'HotPink', 'Blue', 'Khaki', 'Chartreuse', 'Coral', 'Brown', 'BlueViolet', 'DarkCyan', 'Aqua', 'DarkRed', 'DarkOrange',
+                        'DarkSeaGreen', 'DeepPink', 'Gold', 'Indigo' ];
+var variant_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9, 'K': 10,
+                        'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20,
+                        'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25 };
+
 var frequency_regions = {{frequency_regions|safe}};
 var data_datasets = {{data_datasets|safe}};
+var speaker_age_data = {{speaker_age_data|safe}};
+var speaker_data = {{speaker_data|safe}};
+var variants_data = {{variants_data|safe}};
+var variants_age_distribution_data = {{variants_age_distribution_data|safe}};
+var age_distribution_labels = [ '{{gloss.idgloss}}' ];
+var gloss_idgloss = '{{gloss.idgloss}}';
+
+var charcode_index = gloss_idgloss.length - 1;
+var variant_char = gloss_idgloss.charAt(charcode_index).toUpperCase();
+
+var datasets_age_distribution_list =
+    [ {
+            label: age_distribution_labels[0],
+            data: speaker_age_data,
+            backgroundColor: dataset_colors[variant_index[variant_char]]
+        } ];
+
+for (k in variants_age_distribution_data) {
+    var charcode_index = k.length - 1;
+    var variant_char = k.charAt(charcode_index).toUpperCase();
+    datasets_age_distribution_list.push( {
+                                            label: k,
+                                            data: variants_age_distribution_data[k],
+                                            backgroundColor: dataset_colors[variant_index[variant_char]] } );
+    age_distribution_labels.push(k[0]);
+};
+
 </script>
 
 <script type="text/javascript">
@@ -47,6 +81,146 @@ chart.options.title.position = 'bottom';
 chart.options.title.fontSize = 20;
 chart.options.title.text = "Title of chart";
 chart.update();
+
+var range_line = Array.from(Array(100), (x,i) => i);
+var cty = document.getElementById('speakerChart').getContext('2d');
+var speakerchart = new Chart(cty, {
+    type: 'bar',
+
+    data: {
+        labels: range_line,
+        datasets: datasets_age_distribution_list
+    },
+
+    options: {
+        showLines: true,
+        scales: {
+            xAxes: [{ stacked: true }],
+            yAxes: [{ stacked: true }]
+        }
+    }
+});
+
+speakerchart.options.scales.yAxes[0].ticks.precision = 0;
+speakerchart.options.scales.yAxes[0].ticks.fontSize = 18;
+
+speakerchart.options.scales.xAxes[0].ticks.precision = 0;
+speakerchart.options.scales.xAxes[0].ticks.fontSize = 18;
+
+speakerchart.options.legend.labels.fontSize = 18;
+speakerchart.update();
+
+var ctz = document.getElementById('genderChart').getContext('2d');
+var genderchart = new Chart(ctz, {
+    type: 'pie',
+
+    data: {
+        labels: ['female', 'male'],
+        datasets: [{
+            data: [ speaker_data['Female'], speaker_data['Male'] ],
+            backgroundColor: [ 'Chartreuse', 'DodgerBlue' ],
+            hoverBackgroundColor: [ 'GreenYellow', 'LightSkyBlue' ],
+            borderWidth: 0
+        }],
+    },
+
+    options: {
+        showLines: true,
+    }
+});
+
+genderchart.options.legend.labels.fontSize = 18;
+genderchart.options.title.display = true;
+genderchart.options.title.position = 'bottom';
+genderchart.options.title.fontSize = 20;
+genderchart.options.title.text = "Gender";
+genderchart.update();
+
+var ctw = document.getElementById('ageChart').getContext('2d');
+var agechart = new Chart(ctw, {
+    type: 'pie',
+
+    data: {
+        labels: ['< 25', '25 - 35', '36 - 65', '> 65'],
+        borderColor: "Black",
+        datasets: [{
+            data: [ speaker_data['< 25'], speaker_data['25 - 35'], speaker_data['36 - 65'], speaker_data['> 65'] ],
+            backgroundColor: [ 'Green', 'DarkOrchid', 'GoldenRod', 'OrangeRed' ],
+            hoverBackgroundColor: [ 'LightGreen', 'Orchid', 'Gold', 'PaleGoldenRod' ],
+            borderWidth: 0
+        }],
+    },
+
+    options: {
+        showLines: false,
+    }
+});
+
+agechart.options.legend.labels.fontSize = 18;
+agechart.options.title.display = true;
+agechart.options.title.position = 'bottom';
+agechart.options.title.fontSize = 20;
+agechart.options.title.text = "Age at time of recording";
+agechart.update();
+
+for (variant_key in variants_data) {
+    var ctk = document.getElementById('variantsGenderChart_'+variant_key).getContext('2d');
+    var variant_k_chart = new Chart(ctk, {
+        type: 'pie',
+
+        data: {
+            labels: ['female', 'male'],
+            datasets:
+            [{
+                data: [ variants_data[variant_key]['Female'], variants_data[variant_key]['Male'] ],
+                backgroundColor: [ 'Chartreuse', 'DodgerBlue' ],
+                hoverBackgroundColor: [ 'GreenYellow', 'LightSkyBlue' ],
+                borderWidth: 0
+            }],
+        },
+
+        options: {
+            title: {
+                display: true,
+                text: "Gender",
+                fontSize: 20,
+                position: "bottom"
+            },
+            showLines: true
+        }
+    });
+    variant_k_chart.options.legend.labels.fontSize = 18;
+    variant_k_chart.update();
+
+    var ctm = document.getElementById('variantsAgeChart_'+variant_key).getContext('2d');
+    var variant_m_chart = new Chart(ctm, {
+        type: 'pie',
+
+        data: {
+            labels: ['< 25', '25 - 35', '36 - 65', '> 65'],
+            datasets:
+            [{
+                data: [ variants_data[variant_key]['< 25'], variants_data[variant_key]['25 - 35'], variants_data[variant_key]['36 - 65'], variants_data[variant_key]['> 65'] ],
+                backgroundColor: [ 'Green', 'DarkOrchid', 'GoldenRod', 'OrangeRed' ],
+                hoverBackgroundColor: [ 'LightGreen', 'Orchid', 'Gold', 'PaleGoldenRod' ],
+                borderWidth: 0
+            }],
+        },
+
+        options: {
+            title: {
+                display: true,
+                text: "Age at time of recording",
+                fontSize: 20,
+                position: "bottom"
+            },
+            showLines: true
+        }
+    });
+    variant_m_chart.options.legend.labels.fontSize = 18;
+    variant_m_chart.update();
+};
+
 </script>
 
 <script type='text/javascript'>
@@ -134,10 +308,97 @@ chart.update();
 
 
 <div id="definitionblock" style="z-index:0;padding-top: 100px;">
-
+<hr>
         <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;">
-        <h4>{% trans "Regions" %}</h4>
-        <canvas id="myChart"></canvas>
+        {% if has_frequency_data %}
+
+            <div class='panel-heading'>
+                <div class='panel-title'>
+                    <a data-toggle='collapse' data-parent='#regionschart' data-target='#regions'>{% trans "Gloss Regions" %}</a>
+                </div>
+            </div>
+            <div id='regions' class='collapse'>
+                <div class="chart-container">
+                <canvas id="myChart"></canvas>
+                </div>
+            </div>
+            <hr>
+
+             <div class='panel-heading'>
+                <div class='panel-title'>
+                    <a data-toggle='collapse' data-parent='#ageschart' data-target='#ages'>
+                        {% if variants %}
+                            {% trans "Age Distribution Variants" %}
+                        {% else %}
+                            {% trans "Age Distribution" %}
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            <div id='ages' class='collapse'>
+                <div class="chart-container">
+                <canvas id="speakerChart"></canvas>
+                </div>
+            </div>
+            <hr>
+
+            <div class='panel-heading'>
+                <div class='panel-title'>
+                    <a data-toggle='collapse' data-parent='#speakerchart' data-target='#speaker'>{% trans "Gloss Speaker Data" %}</a>
+                </div>
+            </div>
+            <div id='speaker' class='collapse'>
+                <div style="width:10%;">
+                    <table style="height: 100px;">
+                        <tbody>
+                        <tr>
+                            <th class="align-middle">{{gloss.idgloss}}</th>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-container" style="float:left; width:50%;">
+                <canvas id="genderChart"></canvas>
+                </div>
+                <div class="chart-container" style="float:right; width:50%;">
+                <canvas id="ageChart"></canvas>
+                </div>
+            </div>
+
+            {% if variants %}
+            <hr>
+            <div class='panel-heading'>
+                <div class='panel-title'>
+                    <a data-toggle='collapse' data-parent='#variantschart' data-target='#variants'>{% trans "Variants Speaker Data" %}</a>
+                </div>
+            </div>
+
+            <div id='variants' class='collapse'>
+                {% for key, value in variants_data.items %}
+                <div style="width:10%;">
+                    <table style="height: 100px;">
+                        <tbody>
+                        <tr>
+                            <th class="align-middle">{{key}}</th>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-container" style="float:left; width:50%;">
+                <canvas id="variantsGenderChart_{{key}}"></canvas>
+                </div>
+                <div class="chart-container" style="float:right; width:50%;">
+                <canvas id="variantsAgeChart_{{key}}"></canvas>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        {% else %}
+        <p>{% trans "There is no frequency data available for this gloss." %}</p>
+        {% endif %}
         </div>
+    <hr>
+
 </div>
 {% endblock content %}

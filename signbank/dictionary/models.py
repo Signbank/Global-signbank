@@ -853,6 +853,62 @@ class Gloss(models.Model):
             data_datasets.append(dataset_dict)
         return data_datasets
 
+    def has_frequency_data(self):
+
+        glossfrequency_objects_count = self.glossfrequency_set.count()
+
+        return glossfrequency_objects_count
+
+    def speaker_data(self):
+
+        glossfrequency_objects = self.glossfrequency_set.all()
+
+        # this is a list with duplicates
+        speakers_with_gloss = [ gfo.speaker for gfo in glossfrequency_objects ]
+
+        speaker_data = {}
+        speaker_data['Male'] = 0
+        speaker_data['Female'] = 0
+        speaker_data['< 25'] = 0
+        speaker_data['25 - 35'] = 0
+        speaker_data['36 - 65'] = 0
+        speaker_data['> 65'] = 0
+
+        for speaker in speakers_with_gloss:
+            if speaker.gender == 'm':
+                speaker_data['Male'] += 1
+            elif speaker.gender == 'f':
+                speaker_data['Female'] += 1
+            speaker_age = speaker.age
+            if speaker_age < 25:
+                speaker_data['< 25'] += 1
+            elif speaker_age <= 35:
+                speaker_data['25 - 35'] += 1
+            elif speaker_age <= 65:
+                speaker_data['36 - 65'] += 1
+            elif speaker.age > 65:
+                speaker_data['> 65'] += 1
+
+        return speaker_data
+
+
+    def speaker_age_data(self):
+
+        glossfrequency_objects = self.glossfrequency_set.all()
+
+        # this is a list with duplicates
+        speakers_with_gloss = [ gfo.speaker for gfo in glossfrequency_objects ]
+
+        speaker_age_data = {}
+
+        for speaker in speakers_with_gloss:
+            speaker_age = str(speaker.age)
+            if speaker_age in speaker_age_data.keys():
+                speaker_age_data[speaker_age] += 1
+            else:
+                speaker_age_data[speaker_age] = 1
+        return speaker_age_data
+
     def homophones(self):
         """Return the set of homophones for this gloss ordered by sense number"""
 
@@ -934,17 +990,20 @@ class Gloss(models.Model):
         for this_sign_stem in this_sign_stems:
             this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
             queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
-                             dataset=self.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
-        query = queries.pop()
+                             lemma__dataset=self.lemma.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
+        if queries:
+            query = queries.pop()
         for q in queries:
             query |= q
 
         other_relations_of_sign = self.other_relations()
         other_relation_objects = [x.target for x in other_relations_of_sign]
 
-        pattern_variants = Gloss.objects.filter(query).exclude(idgloss=self).exclude(
-            idgloss__in=other_relation_objects)
-
+        if queries:
+            pattern_variants = Gloss.objects.filter(query).exclude(id=self.id).exclude(
+                id__in=other_relation_objects)
+        else:
+            pattern_variants = []
         return pattern_variants
 
     def other_relations(self):

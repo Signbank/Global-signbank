@@ -2645,10 +2645,60 @@ def gloss_frequency(request,gloss_pk):
     else:
         show_dataset_interface = False
 
+    speakers_summary = gloss.speaker_age_data()
+    speaker_age_data = []
+    for i in range(1, 100):
+        i_key = str(i)
+        if i_key in speakers_summary.keys():
+            i_value = speakers_summary[i_key]
+            speaker_age_data.append(i_value)
+        else:
+            speaker_age_data.append(0)
+
+    speaker_data = gloss.speaker_data()
+
+    # incorporates legacy relations
+    # a variant pattern is only a variant if there are no other relations between the focus gloss and other glosses under consideration
+    # variants might be explictly stored as relations to other glosses
+    # the has_variants method only catches explicitly stored variants
+    # the pattern variants method excludes glosses with explictly stored relations (including variant relations) to the focus gloss
+    # therefore we first try pattern variants
+    try:
+        variants = gloss.pattern_variants()
+    except:
+        try:
+            variants = gloss.has_variants()
+        except:
+            variants = []
+    variants_data = {}
+    for variant_of_gloss in variants:
+        variants_data[variant_of_gloss.idgloss] = variant_of_gloss.speaker_data()
+
+    variants_age_distribution_data = {}
+    for variant_of_gloss in variants:
+        variant_speaker_age_data_v = variant_of_gloss.speaker_age_data()
+
+        speaker_age_data_v = []
+        for i in range(1, 100):
+            i_key = str(i)
+            if i_key in variant_speaker_age_data_v.keys():
+                i_value = variant_speaker_age_data_v[i_key]
+                speaker_age_data_v.append(i_value)
+            else:
+                speaker_age_data_v.append(0)
+
+        variants_age_distribution_data[variant_of_gloss.idgloss] = speaker_age_data_v
+
     return render(request, 'dictionary/gloss_frequency.html',
                   {'gloss': gloss,
+                   'has_frequency_data': gloss.has_frequency_data(),
+                   'variants': variants,
+                   'variants_data': variants_data,
+                   'variants_age_distribution_data': variants_age_distribution_data,
                    'frequency_regions': settings.FREQUENCY_REGIONS,
                    'data_datasets': gloss.data_datasets(),
+                   'speaker_age_data': speaker_age_data,
+                   'speaker_data': speaker_data,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
