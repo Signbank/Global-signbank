@@ -2401,9 +2401,10 @@ class Document(models.Model):
 class Speaker(models.Model):
 
     identifier = models.CharField(max_length=100)
-    gender = models.CharField(blank=True,choices=[('Male','m'),('Female','f')],max_length=1)
+    gender = models.CharField(blank=True,choices=[('Male','m'),('Female','f'),('Other','o')],max_length=1)
     age = models.IntegerField(blank=True)
     location = models.CharField(max_length=100)
+    handedness = models.CharField(blank=True,choices=[('Right','r'),('Left','l'),('Ambidextrous','a')],max_length=1)
 
 class GlossFrequency(models.Model):
 
