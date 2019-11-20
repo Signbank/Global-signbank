@@ -2022,11 +2022,26 @@ def import_corpus_speakers():
                 speaker.gender = 'f'
             elif gender_lower in ['male', 'm']:
                 speaker.gender = 'm'
+            elif gender_lower in ['other', 'o']:
+                speaker.gender = 'o'
             else:
                 speaker.gender = None
+            hand_lower = hand.lower()
+            if hand_lower in ['right', 'r']:
+                speaker.handedness = 'r'
+            elif hand_lower in ['left', 'l']:
+                speaker.handedness = 'l'
+            elif hand_lower in ['ambidextrous', 'a', 'both']:
+                speaker.handedness = 'a'
+            elif hand_lower in ['unknown']:
+                speaker.handedness = ''
+            else:
+                speaker.handedness = ''
             try:
                 speaker.age = int(age)
             except:
+                # might need to do some checking here if other data has been found
+                errors.append('Line '+str(n)+' has an incorrect age format')
                 pass
             # field Preference hand is ignored
             speaker.save()
