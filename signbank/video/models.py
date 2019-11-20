@@ -198,10 +198,16 @@ def add_small_appendix(path, reverse=False):
     return path
 
 
+def validate_file_extension(value):
+    if value.file.content_type != 'video/mp4':
+        raise ValidationError(u'Error message')
+
+
 class GlossVideo(models.Model):
     """A video that represents a particular idgloss"""
 
-    videofile = models.FileField("video file", upload_to=get_video_file_path, storage=storage)
+    videofile = models.FileField("video file", upload_to=get_video_file_path, storage=storage,
+                                 validators=[validate_file_extension])
 
     gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
 
