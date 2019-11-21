@@ -784,7 +784,7 @@ function do_set_lemma_language(el) {
                 <tr>
             {% endif %}
 
-      <td>{%if morpheme.image_path_exists != None %}<div class="thumbnail_container"><img class="thumbnail" src="{{protected_media_url}}{{morpheme.image_path_exists}}"></div>{% endif %}</td>
+      <td>{%if morpheme.get_image_path %}<div class="thumbnail_container"><img class="thumbnail" src="{{protected_media_url}}{{morpheme.get_image_path}}"></div>{% endif %}</td>
 
       {% for dataset_lang in dataset_languages %}
         {% with morpheme.gloss_ptr|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
