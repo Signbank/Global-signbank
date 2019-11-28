@@ -2325,7 +2325,7 @@ class LemmaIdgloss(models.Model):
 
     def __str__(self):
         translations = []
-        count_dataset_languages = self.dataset.translation_languages.all().count()
+        count_dataset_languages = self.dataset.translation_languages.all().count() if self.dataset else 0
         for translation in self.lemmaidglosstranslation_set.all():
             if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
                 translations.append("{}: {}".format(translation.language, translation.text))
