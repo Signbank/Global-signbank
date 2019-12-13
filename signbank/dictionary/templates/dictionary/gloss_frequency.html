@@ -14,9 +14,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 <script type='text/javascript'>
-var dataset_colors = [ 'LightBlue', 'Magenta', 'Green', 'OrangeRed', 'Salmon', 'Orange', 'Purple', 'Olive', 'DarkBlue', 'Yellow', 'Red',
-                        'HotPink', 'Blue', 'Khaki', 'Chartreuse', 'Coral', 'Brown', 'BlueViolet', 'DarkCyan', 'Aqua', 'DarkRed', 'DarkOrange',
-                        'DarkSeaGreen', 'DeepPink', 'Gold', 'Indigo' ];
+var dataset_colors = [ '#C0C0C0', '#B8B8B8', '#A9A9A9', '#A0A0A0', '#909090', '#808080', '#707070', '#686868', '#585858', '#484848', '#383838',
+                        '#282828', '#181818', '#080808', '#BEBEBE', '#B0B0B0', '#A8A8A8', '#989898', '#888888', '#787878', '#696969', '#606060',
+                        '#505050', '#404040', '#303030', '#202020' ];
 var variant_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9, 'K': 10,
                         'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20,
                         'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25 };
@@ -118,8 +118,8 @@ var genderchart = new Chart(ctz, {
         labels: ['female', 'male'],
         datasets: [{
             data: [ speaker_data['Female'], speaker_data['Male'] ],
-            backgroundColor: [ 'Chartreuse', 'DodgerBlue' ],
-            hoverBackgroundColor: [ 'GreenYellow', 'LightSkyBlue' ],
+            backgroundColor: [ 'DarkGray', 'DimGray' ],
+            hoverBackgroundColor: [ 'Gainsboro', 'Gainsboro' ],
             borderWidth: 0
         }],
     },
@@ -145,8 +145,8 @@ var agechart = new Chart(ctw, {
         borderColor: "Black",
         datasets: [{
             data: [ speaker_data['< 25'], speaker_data['25 - 35'], speaker_data['36 - 65'], speaker_data['> 65'] ],
-            backgroundColor: [ 'Green', 'DarkOrchid', 'GoldenRod', 'OrangeRed' ],
-            hoverBackgroundColor: [ 'LightGreen', 'Orchid', 'Gold', 'PaleGoldenRod' ],
+            backgroundColor: [ 'Silver', 'DarkGray', 'Gray', 'DimGray' ],
+            hoverBackgroundColor: [ 'Black', 'Black', 'Black', 'Black' ],
             borderWidth: 0
         }],
     },
@@ -173,8 +173,8 @@ for (variant_key in variants_data) {
             datasets:
             [{
                 data: [ variants_data[variant_key]['Female'], variants_data[variant_key]['Male'] ],
-                backgroundColor: [ 'Chartreuse', 'DodgerBlue' ],
-                hoverBackgroundColor: [ 'GreenYellow', 'LightSkyBlue' ],
+                backgroundColor: [ 'DarkGray', 'DimGray' ],
+                hoverBackgroundColor: [ 'Gainsboro', 'Gainsboro' ],
                 borderWidth: 0
             }],
         },
@@ -201,8 +201,8 @@ for (variant_key in variants_data) {
             datasets:
             [{
                 data: [ variants_data[variant_key]['< 25'], variants_data[variant_key]['25 - 35'], variants_data[variant_key]['36 - 65'], variants_data[variant_key]['> 65'] ],
-                backgroundColor: [ 'Green', 'DarkOrchid', 'GoldenRod', 'OrangeRed' ],
-                hoverBackgroundColor: [ 'LightGreen', 'Orchid', 'Gold', 'PaleGoldenRod' ],
+                backgroundColor: [ 'Silver', 'DarkGray', 'Gray', 'DimGray' ],
+                hoverBackgroundColor: [ 'Black', 'Black', 'Black', 'Black' ],
                 borderWidth: 0
             }],
         },
@@ -395,7 +395,7 @@ for (variant_key in variants_data) {
             {% endif %}
 
         {% else %}
-        <p>{% trans "There is no frequency data available for this gloss." %}</p>
+        <p>{% trans "There is no frequency data available for this gloss in dataset" %} {{gloss.lemma.dataset}}</p>
         {% endif %}
         </div>
     <hr>
