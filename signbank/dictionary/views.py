@@ -2018,8 +2018,8 @@ def add_image(request):
                 pass
 
             #Remove previous video
-            if gloss.image_path_exists():
-                os.remove(settings.WRITABLE_FOLDER+gloss.image_path_exists())
+            if gloss.get_image_path():
+                os.remove(settings.WRITABLE_FOLDER+gloss.get_image_path())
 
             try:
                 f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
@@ -2054,7 +2054,7 @@ def delete_image(request, pk):
 
         # deal with any existing video for this sign
         gloss = get_object_or_404(Gloss, pk=pk)
-        image_path = gloss.image_path_exists()
+        image_path = gloss.get_image_path()
         full_image_path = settings.WRITABLE_FOLDER + os.sep + image_path
         default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
         if os.path.exists(full_image_path.encode('utf-8')):

@@ -131,11 +131,25 @@
         placement : 'bottom'
     });
 
-    //Fill choice_lists later
-    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{gloss.lemma.dataset}}").done( function (data)
+    //Fill choice_lists without frequencies now
+    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{gloss.lemma.dataset}}").done( function (data)
     {
         choice_lists = $.extend(data,{{other_media_field_choices | safe}});
         console.log("Added field choices");
+    });
+
+    //Fill choice_lists with frequencies later
+    $(document).ready(function() {
+        $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{gloss.lemma.dataset}}").done( function (data)
+        {
+            choice_lists = $.extend(data,{{other_media_field_choices | safe}});
+
+            // Reload the data in the lists
+            $('.edit_list').unbind('click');
+            configure_edit();
+
+            console.log("Added field choices");
+        });
     });
 
     //Keyboard shortcuts

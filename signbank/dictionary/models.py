@@ -1530,9 +1530,9 @@ class Gloss(models.Model):
             videofile_path = str(glossvideo.videofile)
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
             imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + ".png"
-            return imagefile_path
-        else:
-            return ''
+            if check_existance and os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
+                return imagefile_path
+        return ''
 
     def get_image_url(self):
         return escape_uri_path(self.get_image_path())
@@ -2325,7 +2325,7 @@ class LemmaIdgloss(models.Model):
 
     def __str__(self):
         translations = []
-        count_dataset_languages = self.dataset.translation_languages.all().count()
+        count_dataset_languages = self.dataset.translation_languages.all().count() if self.dataset else 0
         for translation in self.lemmaidglosstranslation_set.all():
             if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
                 translations.append("{}: {}".format(translation.language, translation.text))
