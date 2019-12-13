@@ -325,14 +325,17 @@ for (variant_key in variants_data) {
             <hr>
 
              <div class='panel-heading'>
-                <div class='panel-title'>
+                <div class='panel-title hasTooltip'>
                     <a data-toggle='collapse' data-parent='#ageschart' data-target='#ages'>
                         {% if variants %}
                             {% trans "Age Distribution Variants" %}
                         {% else %}
                             {% trans "Age Distribution" %}
                         {% endif %}
-                    </a>
+                    </a>{% if variants %}<div class="text-container">
+                                            <span class="isTooltip">Age distribution of variants can be toggled by clicking on the gloss identifiers.</span>
+                                        </div>
+                    {% endif %}
                 </div>
             </div>
             <div id='ages' class='collapse'>
