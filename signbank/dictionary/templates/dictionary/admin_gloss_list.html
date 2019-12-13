@@ -14,6 +14,7 @@
     var url = '{{PREFIX_URL}}';
     var language_code = '{{ LANGUAGE_CODE }}';
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
+    var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
 </script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
@@ -24,7 +25,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
-var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
 var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};
@@ -319,12 +319,14 @@ function ready_videos(el) {
  * set the lemma language for the chosen dataset
  */
 function do_set_lemma_language(el) {
-  var dataset_language_id = $(el).attr('value');
-<!--  console.log('lemma_language');-->
-<!--  console.log(dataset_language_id);-->
-  $("#selected_lemma_language").attr('value',dataset_language_id);
-  language_code = dataset_language_id;
-  set_lemma_language();
+  if (user_can_add_gloss) {
+      var dataset_language_id = $(el).attr('value');
+    <!--  console.log('lemma_language');-->
+    <!--  console.log(dataset_language_id);-->
+      $("#selected_lemma_language").attr('value',dataset_language_id);
+      language_code = dataset_language_id;
+      set_lemma_language();
+  }
 }
 </script>
 

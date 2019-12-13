@@ -12,6 +12,7 @@
     <script type="text/javascript">
         var url = '{{URL}}{{ PREFIX_URL }}';
         var language_code = '{{LANGUAGE_CODE}}';
+        var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
     </script>
 
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
@@ -46,10 +47,12 @@
      * set the lemma language for the chosen dataset
      */
     function do_set_lemma_language(el) {
-      var dataset_language_id = $(el).attr('value');
-      $("#selected_lemma_language").attr('value',dataset_language_id);
-      language_code = dataset_language_id;
-      set_lemma_language();
+      if (user_can_add_gloss) {
+          var dataset_language_id = $(el).attr('value');
+          $("#selected_lemma_language").attr('value',dataset_language_id);
+          language_code = dataset_language_id;
+          set_lemma_language();
+      }
     }
     </script>
 

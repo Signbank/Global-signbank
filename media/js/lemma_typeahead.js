@@ -46,13 +46,12 @@ $('.lemmatypeahead').on("input", function() {
     });
 
 $(document).ready(function() {
-    gloss_dataset_id = $('#id_dataset').find(":selected").attr('value');
 
-    if (gloss_dataset_id == null)
-    {
-        $('.lemmatypeahead').prop("disabled", true);
+    if (!user_can_add_gloss) {
         return;
     }
+    gloss_dataset_id = $('#id_dataset').find(":selected").attr('value');
+
     gloss_dataset_languages = $('#id_dataset').find(":selected").attr('dataset_languages');
     languages = gloss_dataset_languages.split(",");
 
