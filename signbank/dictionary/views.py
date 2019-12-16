@@ -2689,6 +2689,30 @@ def gloss_frequency(request,gloss_pk):
 
         variants_age_distribution_data[variant_of_gloss.idgloss] = speaker_age_data_v
 
+
+    speaker_per_variant_data = {}
+    speaker_per_variant_data['Female'] = {}
+    speaker_per_variant_data['Male'] = {}
+    speaker_per_variant_data['Female'][gloss.idgloss] = speaker_data['Female']
+    speaker_per_variant_data['Male'][gloss.idgloss] = speaker_data['Male']
+
+    for variant_of_gloss in variants:
+        speaker_per_variant_data['Female'][variant_of_gloss.idgloss] = variants_data[variant_of_gloss.idgloss]['Female']
+        speaker_per_variant_data['Male'][variant_of_gloss.idgloss] = variants_data[variant_of_gloss.idgloss]['Male']
+
+    variant_labels = [ gloss.idgloss ]
+    for variant_of_gloss in variants:
+        if variant_of_gloss.idgloss not in variant_labels:
+            variant_labels.append(variant_of_gloss.idgloss)
+
+    variant_female_data = []
+    for v_label in variant_labels:
+        variant_female_data.append(speaker_per_variant_data['Female'][v_label])
+
+    variant_male_data = []
+    for v_label in variant_labels:
+        variant_male_data.append(speaker_per_variant_data['Male'][v_label])
+
     return render(request, 'dictionary/gloss_frequency.html',
                   {'gloss': gloss,
                    'has_frequency_data': gloss.has_frequency_data(),
@@ -2699,6 +2723,10 @@ def gloss_frequency(request,gloss_pk):
                    'data_datasets': gloss.data_datasets(),
                    'speaker_age_data': speaker_age_data,
                    'speaker_data': speaker_data,
+                   'variant_labels' : variant_labels,
+                   'speaker_per_variant_data' : speaker_per_variant_data,
+                   'variant_female_data': variant_female_data,
+                   'variant_male_data': variant_male_data,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface

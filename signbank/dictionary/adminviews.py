@@ -2697,6 +2697,37 @@ class GlossFrequencyView(DetailView):
 
         context['variants_age_distribution_data'] = variants_age_distribution_data
 
+        speaker_per_variant_data = {}
+        speaker_per_variant_data['Female'] = {}
+        speaker_per_variant_data['Male'] = {}
+        speaker_per_variant_data['Female'][gl.idgloss] = context['speaker_data']['Female']
+        speaker_per_variant_data['Male'][gl.idgloss] = context['speaker_data']['Male']
+
+        for variant_of_gloss in variants:
+            speaker_per_variant_data['Female'][variant_of_gloss.idgloss] = context['variants_data'][variant_of_gloss.idgloss]['Female']
+            speaker_per_variant_data['Male'][variant_of_gloss.idgloss] = context['variants_data'][variant_of_gloss.idgloss]['Male']
+
+        context['speaker_per_variant_data'] = speaker_per_variant_data
+
+        variant_labels = [gl.idgloss]
+        for variant_of_gloss in variants:
+            if variant_of_gloss.idgloss not in variant_labels:
+                variant_labels.append(variant_of_gloss.idgloss)
+
+        context['variant_labels'] = variant_labels
+
+        variant_female_data = []
+        for v_label in variant_labels:
+            variant_female_data.append(speaker_per_variant_data['Female'][v_label])
+
+        context['variant_female_data'] = variant_female_data
+
+        variant_male_data = []
+        for v_label in variant_labels:
+            variant_male_data.append(speaker_per_variant_data['Male'][v_label])
+
+        context['variant_male_data'] = variant_male_data
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -2715,13 +2746,11 @@ class GlossFrequencyView(DetailView):
         else:
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
-        print('annotation idgloss per panguage: ', context['annotation_idgloss'])
 
         if interface_language in context['annotation_idgloss'].keys():
             gloss_idgloss = context['annotation_idgloss'][interface_language]
         else:
             gloss_idgloss = context['annotation_idgloss'][default_language]
-        print('gloss idgloss: ', gloss_idgloss.text)
         context['gloss_idgloss'] = gloss_idgloss.text
 
         context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
@@ -2813,7 +2842,6 @@ class LemmaFrequencyView(DetailView):
             gloss_idgloss = context['annotation_idgloss'][interface_language]
         else:
             gloss_idgloss = context['annotation_idgloss'][default_language]
-        print('gloss idgloss: ', gloss_idgloss.text)
         context['gloss_idgloss'] = gloss_idgloss.text
 
         lemma_group_count = 0

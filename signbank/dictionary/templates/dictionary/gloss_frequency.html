@@ -14,6 +14,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 <script type='text/javascript'>
+var happy_colors = [ 'LightBlue', 'Magenta', 'Green', 'OrangeRed', 'Salmon', 'Orange', 'Purple', 'Olive', 'DarkBlue', 'Yellow', 'Red',
+                        'HotPink', 'Blue', 'Khaki', 'Chartreuse', 'Coral', 'Brown', 'BlueViolet', 'DarkCyan', 'Aqua', 'DarkRed', 'DarkOrange',
+                        'DarkSeaGreen', 'DeepPink', 'Gold', 'Indigo' ];
 var dataset_colors = [ '#C0C0C0', '#B8B8B8', '#A9A9A9', '#A0A0A0', '#909090', '#808080', '#707070', '#686868', '#585858', '#484848', '#383838',
                         '#282828', '#181818', '#080808', '#BEBEBE', '#B0B0B0', '#A8A8A8', '#989898', '#888888', '#787878', '#696969', '#606060',
                         '#505050', '#404040', '#303030', '#202020' ];
@@ -29,6 +32,10 @@ var variants_data = {{variants_data|safe}};
 var variants_age_distribution_data = {{variants_age_distribution_data|safe}};
 var age_distribution_labels = [ '{{gloss.idgloss}}' ];
 var gloss_idgloss = '{{gloss.idgloss}}';
+var variant_labels = {{variant_labels|safe}};
+var speaker_per_variant_data = {{speaker_per_variant_data|safe}};
+var variant_female_data = {{variant_female_data|safe}};
+var variant_male_data = {{variant_male_data|safe}};
 
 var charcode_index = gloss_idgloss.length - 1;
 var variant_char = gloss_idgloss.charAt(charcode_index).toUpperCase();
@@ -50,6 +57,16 @@ for (k in variants_age_distribution_data) {
     age_distribution_labels.push(k[0]);
 };
 
+var variant_colors_list = [];
+for (k in variant_labels) {
+    variant_label = variant_labels[k];
+    var charcode_index = variant_label.length - 1;
+    var variant_char = variant_label.charAt(charcode_index).toUpperCase();
+<!--    var new_shade = dataset_colors[variant_index[variant_char]];-->
+<!--    new_shade = new_shade.substr(1,3);-->
+    variant_colors_list.push(happy_colors[variant_index[variant_char]]);
+};
+<!--console.log(variant_colors_list);-->
 </script>
 
 <script type="text/javascript">
@@ -170,6 +187,71 @@ agechart.options.title.position = 'left';
 agechart.options.title.fontSize = 20;
 agechart.options.title.text = "Age at time of recording";
 agechart.update();
+
+
+
+var ctgf = document.getElementById('glossvariantsFemaleChart').getContext('2d');
+var glossvariantsFemaleChart = new Chart(ctgf, {
+    type: 'pie',
+
+    data: {
+        labels: variant_labels,
+        datasets: [{
+            data: variant_female_data,
+            backgroundColor: variant_colors_list,
+            hoverBackgroundColor: 'Gainsboro',
+            borderWidth: 0
+        }],
+    },
+
+    options: {
+        legend: {
+            position: 'left',
+            align: 'start'
+        },
+        showLines: true,
+    }
+});
+
+glossvariantsFemaleChart.options.legend.labels.fontSize = 18;
+glossvariantsFemaleChart.options.title.display = true;
+glossvariantsFemaleChart.options.title.position = 'left';
+glossvariantsFemaleChart.options.title.fontSize = 20;
+glossvariantsFemaleChart.options.title.text = "Female";
+glossvariantsFemaleChart.update();
+
+
+var ctgm = document.getElementById('glossvariantsMaleChart').getContext('2d');
+var glossvariantsMaleChart = new Chart(ctgm, {
+    type: 'pie',
+
+    data: {
+        labels: variant_labels,
+        datasets: [{
+            data: variant_male_data,
+            backgroundColor: variant_colors_list,
+            hoverBackgroundColor: 'Gainsboro',
+            borderWidth: 0
+        }],
+    },
+
+    options: {
+        legend: {
+            position: 'left',
+            align: 'start'
+        },
+        showLines: true,
+    }
+});
+
+glossvariantsMaleChart.options.legend.labels.fontSize = 18;
+glossvariantsMaleChart.options.title.display = true;
+glossvariantsMaleChart.options.title.position = 'left';
+glossvariantsMaleChart.options.title.fontSize = 20;
+glossvariantsMaleChart.options.title.text = "Male";
+glossvariantsMaleChart.update();
+
+
 
 for (variant_key in variants_data) {
     var ctk = document.getElementById('variantsGenderChart_'+variant_key).getContext('2d');
@@ -385,6 +467,22 @@ for (variant_key in variants_data) {
             </div>
 
             {% if variants %}
+            <hr>
+            <div class='panel-heading'>
+                <div class='panel-title'>
+                    <a data-toggle='collapse' data-parent='#glossvariantschart' data-target='#glossvariants'>{% trans "Gloss Variants" %}</a>
+                </div>
+            </div>
+
+            <div id='glossvariants' class='collapse'>
+                <div class="chart-container" style="float:left; width:50%;">
+                <canvas id="glossvariantsFemaleChart"></canvas>
+                </div>
+                <div class="chart-container" style="float:right; width:50%;">
+                <canvas id="glossvariantsMaleChart"></canvas>
+                </div>
+            </div>
+
             <hr>
             <div class='panel-heading'>
                 <div class='panel-title'>
