@@ -125,13 +125,17 @@ var genderchart = new Chart(ctz, {
     },
 
     options: {
+        legend: {
+            position: 'left',
+            align: 'start'
+        },
         showLines: true,
     }
 });
 
 genderchart.options.legend.labels.fontSize = 18;
 genderchart.options.title.display = true;
-genderchart.options.title.position = 'bottom';
+genderchart.options.title.position = 'left';
 genderchart.options.title.fontSize = 20;
 genderchart.options.title.text = "Gender";
 genderchart.update();
@@ -152,13 +156,17 @@ var agechart = new Chart(ctw, {
     },
 
     options: {
+        legend: {
+            position: 'left',
+            align: 'start'
+        },
         showLines: false,
     }
 });
 
 agechart.options.legend.labels.fontSize = 18;
 agechart.options.title.display = true;
-agechart.options.title.position = 'bottom';
+agechart.options.title.position = 'left';
 agechart.options.title.fontSize = 20;
 agechart.options.title.text = "Age at time of recording";
 agechart.update();
@@ -184,7 +192,11 @@ for (variant_key in variants_data) {
                 display: true,
                 text: "Gender",
                 fontSize: 20,
-                position: "bottom"
+                position: "left"
+            },
+            legend: {
+                position: 'left',
+                align: 'start'
             },
             showLines: true
         }
@@ -212,7 +224,11 @@ for (variant_key in variants_data) {
                 display: true,
                 text: "Age at time of recording",
                 fontSize: 20,
-                position: "bottom"
+                position: "left"
+            },
+            legend: {
+                position: 'left',
+                align: 'start'
             },
             showLines: true
         }
