@@ -2731,3 +2731,55 @@ def gloss_frequency(request,gloss_pk):
                    'selected_datasets': selected_datasets,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
                    })
+
+def find_interesting_frequency_examples(request):
+
+    INTERESTING_FREQUENCY_THRESHOLD = 25
+
+    interesting_gloss_pks = []
+
+    debug_str = ''
+
+    for gloss in Gloss.objects.all():
+
+        speaker_data = gloss.speaker_data()
+
+        if speaker_data['Male'] > 0:
+            debug_str += str(speaker_data['Male']) + ' '
+
+        if speaker_data['Male'] + speaker_data['Female'] < INTERESTING_FREQUENCY_THRESHOLD:
+            continue
+
+        try:
+            variants = gloss.pattern_variants()
+        except:
+            try:
+                variants = gloss.has_variants()
+            except:
+                variants = []
+
+        if len(variants) == 0:
+            continue
+
+        found_interesting_variant = False
+
+        for variant in variants:
+
+            speaker_data = variant.speaker_data()
+
+            if speaker_data['Male'] + speaker_data['Female'] >= INTERESTING_FREQUENCY_THRESHOLD:
+                found_interesting_variant = True
+                break
+
+        if not found_interesting_variant:
+            continue
+
+        interesting_gloss_pks.append(gloss.pk)
+
+        if len(interesting_gloss_pks) > 100: #This prevents this code from running too long
+            break
+
+        if len(debug_str) > 1000:
+            break
+
+    return HttpResponse(' '.join(['<a href="/dictionary/gloss/'+str(i)+'">'+str(i)+'</a>' for i in interesting_gloss_pks]))
