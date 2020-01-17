@@ -2670,12 +2670,15 @@ def gloss_frequency(request,gloss_pk):
             variants = gloss.has_variants()
         except:
             variants = []
+    variant_keys = [ (gloss.idgloss, gloss) ] + [ (og.idgloss, og) for og in variants ]
+    sorted_variant_keys = sorted(list(set(variant_keys)), key=lambda tup: tup[0])
+    variant_objects = [ og for (og_idgloss, og) in sorted_variant_keys ]
     variants_data = {}
-    for variant_of_gloss in variants:
+    for variant_of_gloss in variant_objects:
         variants_data[variant_of_gloss.idgloss] = variant_of_gloss.speaker_data()
 
     variants_age_distribution_data = {}
-    for variant_of_gloss in variants:
+    for variant_of_gloss in variant_objects:
         variant_speaker_age_data_v = variant_of_gloss.speaker_age_data()
 
         speaker_age_data_v = []
@@ -2689,19 +2692,45 @@ def gloss_frequency(request,gloss_pk):
 
         variants_age_distribution_data[variant_of_gloss.idgloss] = speaker_age_data_v
 
+    variants_sex_distribution_data = {}
+    for variant_of_gloss in variant_objects:
+        variant_speaker_data_v = variant_of_gloss.speaker_data()
 
+        speaker_data_v = []
+        for i_key in ['Female', 'Male']:
+            if i_key in variant_speaker_data_v.keys():
+                i_value = variant_speaker_data_v[i_key]
+                speaker_data_v.append(i_value)
+            else:
+                speaker_data_v.append(0)
+
+        variants_sex_distribution_data[variant_of_gloss.idgloss] = speaker_data_v
+
+    variants_age_distribution_cat_data = {}
+    for variant_of_gloss in variant_objects:
+        variant_age_data_v = variant_of_gloss.speaker_data()
+
+        speaker_data_v = []
+        for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
+            if i_key in variant_age_data_v.keys():
+                i_value = variant_age_data_v[i_key]
+                speaker_data_v.append(i_value)
+            else:
+                speaker_data_v.append(0)
+
+        variants_age_distribution_cat_data[variant_of_gloss.idgloss] = speaker_data_v
     speaker_per_variant_data = {}
     speaker_per_variant_data['Female'] = {}
     speaker_per_variant_data['Male'] = {}
     speaker_per_variant_data['Female'][gloss.idgloss] = speaker_data['Female']
     speaker_per_variant_data['Male'][gloss.idgloss] = speaker_data['Male']
 
-    for variant_of_gloss in variants:
+    for variant_of_gloss in variant_objects:
         speaker_per_variant_data['Female'][variant_of_gloss.idgloss] = variants_data[variant_of_gloss.idgloss]['Female']
         speaker_per_variant_data['Male'][variant_of_gloss.idgloss] = variants_data[variant_of_gloss.idgloss]['Male']
 
-    variant_labels = [ gloss.idgloss ]
-    for variant_of_gloss in variants:
+    variant_labels = []
+    for variant_of_gloss in variant_objects:
         if variant_of_gloss.idgloss not in variant_labels:
             variant_labels.append(variant_of_gloss.idgloss)
 
@@ -2719,11 +2748,13 @@ def gloss_frequency(request,gloss_pk):
                    'variants': variants,
                    'variants_data': variants_data,
                    'variants_age_distribution_data': variants_age_distribution_data,
+                   'variants_age_distribution_cat_data': variants_age_distribution_cat_data,
                    'frequency_regions': settings.FREQUENCY_REGIONS,
                    'data_datasets': gloss.data_datasets(),
                    'speaker_age_data': speaker_age_data,
                    'speaker_data': speaker_data,
                    'variant_labels' : variant_labels,
+                   'variants_sex_distribution_data': variants_sex_distribution_data,
                    'speaker_per_variant_data' : speaker_per_variant_data,
                    'variant_female_data': variant_female_data,
                    'variant_male_data': variant_male_data,

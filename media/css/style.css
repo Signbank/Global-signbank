@@ -682,3 +682,14 @@ canvas{
     width: 1000px;
     height: auto;
 }
+
+.chart-short-container {
+    width: 600px;
+    height: 275px;
+}
+
+.chart-horizontal-single-bar-container {
+    width: 500px;
+    height: 50px;
+}
+

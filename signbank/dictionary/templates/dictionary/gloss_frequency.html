@@ -21,6 +21,7 @@ var dataset_colors = [ '#C0C0C0', '#B8B8B8', '#A9A9A9', '#A0A0A0', '#909090', '#
                         '#282828', '#181818', '#080808', '#BEBEBE', '#B0B0B0', '#A8A8A8', '#989898', '#888888', '#787878', '#696969', '#606060',
                         '#505050', '#404040', '#303030', '#202020' ];
 var signbank_colors = ['hsl(1, 62%, 45%)','hsl(130, 62%, 45%)','hsl(65, 62%, 45%)','hsl(195, 62%, 45%)','hsl(30, 62%, 45%)','hsl(230, 62%, 45%)',];
+var signbank_hover_colors = ['hsl(1, 62%, 35%)','hsl(130, 62%, 35%)','hsl(65, 62%, 35%)','hsl(195, 62%, 35%)','hsl(30, 62%, 35%)','hsl(230, 62%, 35%)',];
 
 var variant_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9, 'K': 10,
                         'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20,
@@ -30,34 +31,96 @@ var frequency_regions = {{frequency_regions|safe}};
 var data_datasets = {{data_datasets|safe}};
 var speaker_age_data = {{speaker_age_data|safe}};
 var speaker_data = {{speaker_data|safe}};
+console.log('speaker data: ', speaker_data);
 var variants_data = {{variants_data|safe}};
+console.log('variants_data: ', variants_data);
 var variants_age_distribution_data = {{variants_age_distribution_data|safe}};
+var variants_age_distribution_cat_data = {{variants_age_distribution_cat_data|safe}};
+console.log('variants age distr cat data: ', variants_age_distribution_cat_data);
 var age_distribution_labels = [ '{{gloss.idgloss}}' ];
 var gloss_idgloss = '{{gloss.idgloss}}';
 var variant_labels = {{variant_labels|safe}};
 var speaker_per_variant_data = {{speaker_per_variant_data|safe}};
+var variants_sex_distribution_data = {{variants_sex_distribution_data|safe}};
+console.log('var sex distr data: ', variants_sex_distribution_data);
+
+var variant_0_speaker_data = [ speaker_data['Female'], speaker_data['Male'] ];
+console.log('variant 0 speaker data: ', variant_0_speaker_data);
 var variant_female_data = {{variant_female_data|safe}};
 var variant_male_data = {{variant_male_data|safe}};
 
 var charcode_index = gloss_idgloss.length - 1;
 var variant_char = gloss_idgloss.charAt(charcode_index).toUpperCase();
 
-var datasets_age_distribution_list =
-    [ {
-            label: age_distribution_labels[0],
-            data: speaker_age_data,
-            backgroundColor: signbank_colors[variant_index[variant_char]]
-        } ];
+var age_distribution_labels = [];
+
+var datasets_age_distribution_list = [];
+
+var total_variants_age = [];
 
 for (k in variants_age_distribution_data) {
     var charcode_index = k.length - 1;
     var variant_char = k.charAt(charcode_index).toUpperCase();
+    k_total_age = 0;
+    for (i in variants_age_distribution_data[k]) {
+        k_total_age += variants_age_distribution_data[k][i];
+    };
+    total_variants_age[k] = k_total_age;
     datasets_age_distribution_list.push( {
                                             label: k,
                                             data: variants_age_distribution_data[k],
                                             backgroundColor: signbank_colors[variant_index[variant_char]] } );
     age_distribution_labels.push(k[0]);
 };
+
+
+var sex_distribution_labels = [];
+
+var variants_sex_distribution_list = [];
+
+var total_variants_sex = [];
+
+for (k in variants_sex_distribution_data) {
+    console.log('k: ', k);
+    console.log('k var sex distr: ', variants_sex_distribution_data[k]);
+    var charcode_index = k.length - 1;
+    var variant_char = k.charAt(charcode_index).toUpperCase();
+    k_total_sex = 0;
+    for (i in variants_sex_distribution_data[k]) {
+        k_total_sex += variants_sex_distribution_data[k][i];
+    };
+    total_variants_sex[k] = k_total_sex;
+    variants_sex_distribution_list.push( {
+                                            label: k,
+                                            data: variants_sex_distribution_data[k],
+                                            backgroundColor: signbank_colors[variant_index[variant_char]] } );
+    sex_distribution_labels.push(k[0]);
+};
+
+
+var age_distribution_labels = [];
+
+var variants_age_distribution_list = [];
+
+var total_variants_age = [];
+
+for (k in variants_age_distribution_cat_data) {
+    console.log('k: ', k);
+    console.log('k var age distr: ', variants_age_distribution_cat_data[k]);
+    var charcode_index = k.length - 1;
+    var variant_char = k.charAt(charcode_index).toUpperCase();
+    k_total_age = 0;
+    for (i in variants_age_distribution_cat_data[k]) {
+        k_total_age += variants_age_distribution_cat_data[k][i];
+    };
+    total_variants_age[k] = k_total_age;
+    variants_age_distribution_list.push( {
+                                            label: k,
+                                            data: variants_age_distribution_cat_data[k],
+                                            backgroundColor: signbank_colors[variant_index[variant_char]] } );
+    sex_distribution_labels.push(k[0]);
+};
+
 
 var variant_colors_list = [];
 for (k in variant_labels) {
@@ -129,24 +192,49 @@ speakerchart.options.scales.xAxes[0].ticks.fontSize = 18;
 speakerchart.options.legend.labels.fontSize = 18;
 speakerchart.update();
 
+
+var gender_labels = ['Female', 'Male'];
+var flattened_genders = [];
+for (idx in gender_labels) {
+    console.log('next gender label: ', gender_labels[idx]);
+    flattened_genders.push( {
+                            label: gender_labels[idx],
+                            data: [ speaker_data[gender_labels[idx]] ],
+                            hoverBackgroundColor: signbank_hover_colors[idx],
+                            backgroundColor: signbank_colors[idx],
+                            });
+};
+
 var ctz = document.getElementById('genderChart').getContext('2d');
 var genderchart = new Chart(ctz, {
-    type: 'pie',
+    type: 'horizontalBar',
 
     data: {
-        labels: ['female', 'male'],
-        datasets: [{
-            data: [ speaker_data['Female'], speaker_data['Male'] ],
-            backgroundColor: signbank_colors,
-            hoverBackgroundColor: [ 'Gainsboro', 'Gainsboro' ],
-            borderWidth: 0
-        }],
+        labels: [ gloss_idgloss ],
+        borderColor: "Black",
+        datasets: flattened_genders,
     },
 
     options: {
-        legend: {
-            position: 'left',
-            align: 'start'
+        tooltips: {
+            mode: 'point',
+            yAlign: 'top',
+            fontSize: 16,
+            titleFontSize: 16
+        },
+        scales: {
+            xAxes: [{ stacked: true,
+                        display: false,
+                          barThickness: 30,
+                           barDatasetSpacing: 1 }],
+            yAxes: [{ stacked: true,
+                        display: true,
+                        ticks: {
+                            fontSize: 20,
+                            fontStyle: 'bold'
+                        },
+                        barThickness: 30,
+            }]
         },
         showLines: true,
     }
@@ -154,170 +242,307 @@ var genderchart = new Chart(ctz, {
 
 genderchart.options.legend.labels.fontSize = 18;
 genderchart.options.title.display = true;
-genderchart.options.title.position = 'left';
-genderchart.options.title.fontSize = 20;
+genderchart.options.title.fontSize = 18;
 genderchart.options.title.text = "Gender";
 genderchart.update();
 
+var ages_labels = ['< 25', '25 - 35', '36 - 65', '> 65'];
+var flattened_ages = [];
+for (idx in ages_labels) {
+    console.log('next age label: ', ages_labels[idx]);
+    flattened_ages.push( {
+                            label: ages_labels[idx],
+                            data: [ speaker_data[ages_labels[idx]] ],
+                            hoverBackgroundColor: signbank_hover_colors[idx],
+                            backgroundColor: signbank_colors[idx],
+                            });
+};
+
 var ctw = document.getElementById('ageChart').getContext('2d');
 var agechart = new Chart(ctw, {
-    type: 'pie',
+    type: 'horizontalBar',
 
     data: {
-        labels: ['< 25', '25 - 35', '36 - 65', '> 65'],
+        labels: [ gloss_idgloss ],
         borderColor: "Black",
-        datasets: [{
-            data: [ speaker_data['< 25'], speaker_data['25 - 35'], speaker_data['36 - 65'], speaker_data['> 65'] ],
-            backgroundColor: signbank_colors,
-            hoverBackgroundColor: [ 'Black', 'Black', 'Black', 'Black' ],
-            borderWidth: 0
-        }],
+        datasets: flattened_ages,
     },
 
     options: {
-        legend: {
-            position: 'left',
-            align: 'start'
+        tooltips: {
+            mode: 'point',
+            yAlign: 'top',
+            fontSize: 16,
+            titleFontSize: 16
+        },
+        scales: {
+            xAxes: [{ stacked: true,
+                        display: false,
+                          barThickness: 30,
+                           barDatasetSpacing: 1 }],
+            yAxes: [{ stacked: true,
+                        display: false,
+                        barThickness: 30,
+            }]
         },
         showLines: false,
     }
 });
 
-agechart.options.legend.labels.fontSize = 18;
-agechart.options.title.display = true;
-agechart.options.title.position = 'left';
-agechart.options.title.fontSize = 20;
 agechart.options.title.text = "Age at time of recording";
+agechart.options.title.fontSize = 18;
+agechart.options.title.display = true;
+agechart.options.legend.labels.fontSize = 18;
 agechart.update();
 
-
-
-var ctgf = document.getElementById('glossvariantsFemaleChart').getContext('2d');
-var glossvariantsFemaleChart = new Chart(ctgf, {
-    type: 'pie',
+var ctgs = document.getElementById('glossvariantsSexChart').getContext('2d');
+var glossvariantsSexChart = new Chart(ctgs, {
+    type: 'horizontalBar',
 
     data: {
-        labels: variant_labels,
-        datasets: [{
-            data: variant_female_data,
-            backgroundColor: signbank_colors,
-            hoverBackgroundColor: 'Gainsboro',
-            borderWidth: 0
-        }],
+        datasets: variants_sex_distribution_list,
     },
 
     options: {
-        legend: {
-            position: 'left',
-            align: 'start'
+        layout: {
+            padding: {
+                top: 0
+            }
         },
-        showLines: true,
+        tooltips: {
+            enabled: true
+        },
+        scales: {
+            xAxes: [{ stacked: true,
+                        display: true,
+                        gridLines: {
+                        },
+                        labels: sex_distribution_labels,
+                          barThickness: 30,
+                          ticks: {
+                            display: false
+                          },
+                           barDatasetSpacing: 1 }],
+            yAxes: [{ stacked: true,
+                        gridLines: {
+                            display: false,
+                            zeroLineWidth: 0
+                        },
+                        display: true,
+                        type: 'category',
+                        barThickness: 30,
+                        barPercentage: 1,
+                        categoryPercentage: 1,
+                        labels: gender_labels,
+                          maxBarThickness: 30,
+                              ticks: { fontSize: 20,
+                                        beginAtZero: true,
+                                        fontStyle: 'bold' }
+            }]
+        },
+        showLines: false,
     }
 });
 
-glossvariantsFemaleChart.options.legend.labels.fontSize = 18;
-glossvariantsFemaleChart.options.title.display = true;
-glossvariantsFemaleChart.options.title.position = 'left';
-glossvariantsFemaleChart.options.title.fontSize = 20;
-glossvariantsFemaleChart.options.title.text = "Female";
-glossvariantsFemaleChart.update();
+glossvariantsSexChart.options.legend.labels.fontSize = 16;
+glossvariantsSexChart.options.legend.display = true;
+glossvariantsSexChart.options.legend.fullWidth = true;
+glossvariantsSexChart.options.legend.position = 'right';
+glossvariantsSexChart.options.legend.padding = 0;
+glossvariantsSexChart.options.title.display = false;
+glossvariantsSexChart.options.title.padding = 0;
+glossvariantsSexChart.update();
 
-
-var ctgm = document.getElementById('glossvariantsMaleChart').getContext('2d');
-var glossvariantsMaleChart = new Chart(ctgm, {
-    type: 'pie',
+var ctga = document.getElementById('glossvariantsAgeChart').getContext('2d');
+var glossvariantsAgeChart = new Chart(ctga, {
+    type: 'horizontalBar',
 
     data: {
-        labels: variant_labels,
-        datasets: [{
-            data: variant_male_data,
-            backgroundColor: signbank_colors,
-            hoverBackgroundColor: 'Gainsboro',
-            borderWidth: 0
-        }],
+        datasets: variants_age_distribution_list,
     },
 
     options: {
-        legend: {
-            position: 'left',
-            align: 'start'
+        layout: {
+            padding: {
+                top: 0
+            }
         },
-        showLines: true,
+        tooltips: {
+            enabled: true
+        },
+        scales: {
+            xAxes: [{ stacked: true,
+                        display: true,
+                        gridLines: {
+                        },
+                        labels: age_distribution_labels,
+                          barThickness: 30,
+                          ticks: {
+                            display: false
+                          },
+                           barDatasetSpacing: 1 }],
+            yAxes: [{ stacked: true,
+                        gridLines: {
+                            display: false,
+                            zeroLineWidth: 0
+                        },
+                        display: true,
+                        type: 'category',
+                        barThickness: 30,
+                        barPercentage: 1,
+                        categoryPercentage: 1,
+                        labels: ages_labels,
+                          maxBarThickness: 30,
+                              ticks: { fontSize: 20,
+                                        beginAtZero: true,
+                                        fontStyle: 'bold' }
+            }]
+        },
+        showLines: false,
     }
 });
 
-glossvariantsMaleChart.options.legend.labels.fontSize = 18;
-glossvariantsMaleChart.options.title.display = true;
-glossvariantsMaleChart.options.title.position = 'left';
-glossvariantsMaleChart.options.title.fontSize = 20;
-glossvariantsMaleChart.options.title.text = "Male";
-glossvariantsMaleChart.update();
+glossvariantsAgeChart.options.legend.labels.fontSize = 16;
+glossvariantsAgeChart.options.legend.display = true;
+glossvariantsAgeChart.options.legend.fullWidth = true;
+glossvariantsAgeChart.options.legend.position = 'right';
+glossvariantsAgeChart.options.legend.padding = 0;
+glossvariantsAgeChart.options.title.display = false;
+glossvariantsAgeChart.options.title.padding = 0;
+glossvariantsAgeChart.update();
 
 
 
 for (variant_key in variants_data) {
     var ctk = document.getElementById('variantsGenderChart_'+variant_key).getContext('2d');
-    var variant_k_chart = new Chart(ctk, {
-        type: 'pie',
 
+    var flattened_genders_vk = [];
+    for (idx in gender_labels) {
+        var data_gender_idx = variants_data[variant_key][gender_labels[idx]];
+        var total_gender_idx = total_variants_sex[ variant_key ];
+        flattened_genders_vk.push( {
+                                label: gender_labels[idx],
+                                data: [ total_gender_idx == 0 ? 0 : (data_gender_idx/total_gender_idx).toFixed(2) ],
+                                hoverBackgroundColor: signbank_hover_colors[idx],
+                                backgroundColor: signbank_colors[idx],
+                                });
+    };
+
+    var variant_k_chart = new Chart(ctk, {
+        type: 'horizontalBar',
+        responsive: true,
         data: {
-            labels: ['female', 'male'],
-            datasets:
-            [{
-                data: [ variants_data[variant_key]['Female'], variants_data[variant_key]['Male'] ],
-                backgroundColor: signbank_colors,
-                hoverBackgroundColor: [ 'Gainsboro', 'Gainsboro' ],
-                borderWidth: 0
-            }],
+            labels: [ variant_key ],
+            borderColor: "Black",
+            datasets: flattened_genders_vk,
         },
 
         options: {
-            title: {
-                display: true,
-                text: "Gender",
-                fontSize: 20,
-                position: "left"
-            },
             legend: {
-                position: 'left',
-                align: 'start'
+                display: false
+            },
+            tooltips: {
+                mode: 'point',
+                yAlign: 'center',
+                xAlight: 'center',
+                fontSize: 16,
+                titleFontSize: 16,
+            },
+            hover: {
+                mode: 'index',
+                intersect: true
+            },
+            layout: {
+                padding: {
+                    bottom: 10
+                }
+            },
+            scales: {
+                xAxes: [{ stacked: true,
+                            display: false,
+                              barThickness: 30,
+                              ticks: {
+                                display: false
+                              },
+                               barDatasetSpacing: 1 }],
+                yAxes: [{ stacked: true,
+                            display: true,
+                            barThickness: 30,
+                            barPercentage: 1,
+                              maxBarThickness: 30,
+                                  ticks: { fontSize: 20,
+                                            beginAtZero: true,
+                                            fontStyle: 'bold',
+                                            min: 0,
+                                             max: total_variants_sex[ variant_key ] }
+                }]
             },
             showLines: true
         }
     });
     variant_k_chart.options.legend.labels.fontSize = 18;
+    variant_k_chart.canvas.parentNode.style.height = '50px';
     variant_k_chart.update();
 
     var ctm = document.getElementById('variantsAgeChart_'+variant_key).getContext('2d');
+
+    var flattened_ages_vk_max = 0;
+
+    var flattened_ages_vk = [];
+    for (idx in ages_labels) {
+        var data_age_idx = variants_data[variant_key][ages_labels[idx]];
+        var total_age_idx = total_variants_age[ variant_key ];
+        flattened_ages_vk.push( {
+                                label: ages_labels[idx],
+                                data: [ total_age_idx == 0 ? 0 : (data_age_idx/total_age_idx).toFixed(2) ],
+                                hoverBackgroundColor: signbank_hover_colors[idx],
+                                backgroundColor: signbank_colors[idx],
+                                });
+    };
+
     var variant_m_chart = new Chart(ctm, {
-        type: 'pie',
-
+        type: 'horizontalBar',
+        responsive: true,
         data: {
-            labels: ['< 25', '25 - 35', '36 - 65', '> 65'],
-            datasets:
-            [{
-                data: [ variants_data[variant_key]['< 25'], variants_data[variant_key]['25 - 35'], variants_data[variant_key]['36 - 65'], variants_data[variant_key]['> 65'] ],
-                backgroundColor: signbank_colors,
-                hoverBackgroundColor: [ 'Black', 'Black', 'Black', 'Black' ],
-                borderWidth: 0
-            }],
+            labels: [ variant_key ],
+            borderColor: "Black",
+            datasets: flattened_ages_vk,
         },
-
         options: {
-            title: {
-                display: true,
-                text: "Age at time of recording",
-                fontSize: 20,
-                position: "left"
-            },
             legend: {
-                position: 'left',
-                align: 'start'
+                display: false
+            },
+            tooltips: {
+                mode: 'point',
+                yAlign: 'center',
+                xAlight: 'center',
+                fontSize: 16,
+                titleFontSize: 16
+            },
+            scales: {
+                xAxes: [{ stacked: true,
+                            display: false,
+                              barThickness: 30,
+                              ticks: {
+                                display: false
+                               },
+                               barDatasetSpacing: 1 }],
+                yAxes: [{ stacked: true,
+                            display: true,
+                            ticks: {
+                                fontSize: 20,
+                                fontStyle: 'bold',
+                                min: 0,
+                                max: total_variants_age[ variant_key ]
+                            },
+                            barThickness: 30,
+                }]
             },
             showLines: true
         }
     });
     variant_m_chart.options.legend.labels.fontSize = 18;
+    variant_m_chart.canvas.parentNode.style.height = '50px';
     variant_m_chart.update();
 };
 
@@ -477,37 +702,28 @@ for (variant_key in variants_data) {
             </div>
 
             <div id='glossvariants' class='collapse'>
-                <div class="chart-container" style="float:left; width:50%;">
-                <canvas id="glossvariantsFemaleChart"></canvas>
+                <div class="chart-short-container" style="float:left; width:50%;" >
+                <canvas id="glossvariantsSexChart"></canvas>
                 </div>
-                <div class="chart-container" style="float:right; width:50%;">
-                <canvas id="glossvariantsMaleChart"></canvas>
+                <div class="chart-short-container" style="float:right; width:50%;" >
+                <canvas id="glossvariantsAgeChart"></canvas>
                 </div>
             </div>
 
             <hr>
             <div class='panel-heading'>
                 <div class='panel-title'>
-                    <a data-toggle='collapse' data-parent='#variantschart' data-target='#variants'>{% trans "Variants Speaker Data" %}</a>
+                    <a data-toggle='collapse' data-parent='#variantschart' data-target='#variants'>{% trans "Variants" %}</a>
                 </div>
             </div>
 
             <div id='variants' class='collapse'>
                 {% for key, value in variants_data.items %}
-                <div style="width:10%;">
-                    <table style="height: 100px;">
-                        <tbody>
-                        <tr>
-                            <th class="align-middle">{{key}}</th>
-                        </tr>
-                        </tbody>
-                    </table>
+                <div class="chart-horizontal-single-bar-container" style="float:left; width:50%;">
+                <canvas id="variantsGenderChart_{{key}}" height="50"></canvas>
                 </div>
-                <div class="chart-container" style="float:left; width:50%;">
-                <canvas id="variantsGenderChart_{{key}}"></canvas>
-                </div>
-                <div class="chart-container" style="float:right; width:50%;">
-                <canvas id="variantsAgeChart_{{key}}"></canvas>
+                <div class="chart-horizontal-single-bar-container" style="float:right; width:50%;">
+                <canvas id="variantsAgeChart_{{key}}" height="50"></canvas>
                 </div>
                 {% endfor %}
             </div>
