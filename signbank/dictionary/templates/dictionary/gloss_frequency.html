@@ -175,12 +175,12 @@ var speakerchart = new Chart(cty, {
 });
 
 speakerchart.options.scales.yAxes[0].ticks.precision = 0;
-speakerchart.options.scales.yAxes[0].ticks.fontSize = 18;
+speakerchart.options.scales.yAxes[0].ticks.fontSize = 16;
 
 speakerchart.options.scales.xAxes[0].ticks.precision = 0;
-speakerchart.options.scales.xAxes[0].ticks.fontSize = 18;
+speakerchart.options.scales.xAxes[0].ticks.fontSize = 16;
 
-speakerchart.options.legend.labels.fontSize = 18;
+speakerchart.options.legend.labels.fontSize = 16;
 speakerchart.update();
 
 
@@ -221,7 +221,7 @@ var genderchart = new Chart(ctz, {
             yAxes: [{ stacked: true,
                         display: true,
                         ticks: {
-                            fontSize: 20,
+                            fontSize: 16,
                             fontStyle: 'bold'
                         },
                         barThickness: 30,
@@ -231,9 +231,9 @@ var genderchart = new Chart(ctz, {
     }
 });
 
-genderchart.options.legend.labels.fontSize = 18;
+genderchart.options.legend.labels.fontSize = 16;
 genderchart.options.title.display = true;
-genderchart.options.title.fontSize = 18;
+genderchart.options.title.fontSize = 16;
 genderchart.options.title.text = "Gender";
 genderchart.update();
 
@@ -272,7 +272,11 @@ var agechart = new Chart(ctw, {
                           barThickness: 30,
                            barDatasetSpacing: 1 }],
             yAxes: [{ stacked: true,
-                        display: false,
+                        display: true,
+                        ticks: {
+                            fontSize: 16,
+                            fontStyle: 'bold'
+                        },
                         barThickness: 30,
             }]
         },
@@ -281,9 +285,9 @@ var agechart = new Chart(ctw, {
 });
 
 agechart.options.title.text = "Age at time of recording";
-agechart.options.title.fontSize = 18;
+agechart.options.title.fontSize = 16;
 agechart.options.title.display = true;
-agechart.options.legend.labels.fontSize = 18;
+agechart.options.legend.labels.fontSize = 16;
 agechart.update();
 
 var ctgs = document.getElementById('glossvariantsSexChart').getContext('2d');
@@ -297,7 +301,8 @@ var glossvariantsSexChart = new Chart(ctgs, {
     options: {
         layout: {
             padding: {
-                top: 0
+                top: 0,
+                bottom: 30
             }
         },
         tooltips: {
@@ -326,7 +331,7 @@ var glossvariantsSexChart = new Chart(ctgs, {
                         categoryPercentage: 1,
                         labels: gender_labels,
                           maxBarThickness: 30,
-                              ticks: { fontSize: 20,
+                              ticks: { fontSize: 16,
                                         beginAtZero: true,
                                         fontStyle: 'bold' }
             }]
@@ -355,7 +360,8 @@ var glossvariantsAgeChart = new Chart(ctga, {
     options: {
         layout: {
             padding: {
-                top: 0
+                top: 0,
+                bottom: 30
             }
         },
         tooltips: {
@@ -384,7 +390,7 @@ var glossvariantsAgeChart = new Chart(ctga, {
                         categoryPercentage: 1,
                         labels: ages_labels,
                           maxBarThickness: 30,
-                              ticks: { fontSize: 20,
+                              ticks: { fontSize: 16,
                                         beginAtZero: true,
                                         fontStyle: 'bold' }
             }]
@@ -461,7 +467,7 @@ for (variant_key in variants_data) {
                             barThickness: 30,
                             barPercentage: 1,
                               maxBarThickness: 30,
-                                  ticks: { fontSize: 20,
+                                  ticks: { fontSize: 16,
                                             beginAtZero: true,
                                             fontStyle: 'bold',
                                             min: 0,
@@ -471,7 +477,7 @@ for (variant_key in variants_data) {
             showLines: true
         }
     });
-    variant_k_chart.options.legend.labels.fontSize = 18;
+    variant_k_chart.options.legend.labels.fontSize = 16;
     variant_k_chart.canvas.parentNode.style.height = '50px';
     variant_k_chart.update();
 
@@ -521,7 +527,7 @@ for (variant_key in variants_data) {
                 yAxes: [{ stacked: true,
                             display: true,
                             ticks: {
-                                fontSize: 20,
+                                fontSize: 16,
                                 fontStyle: 'bold',
                                 min: 0,
                                 max: total_variants_age[ variant_key ]
@@ -532,7 +538,7 @@ for (variant_key in variants_data) {
             showLines: true
         }
     });
-    variant_m_chart.options.legend.labels.fontSize = 18;
+    variant_m_chart.options.legend.labels.fontSize = 16;
     variant_m_chart.canvas.parentNode.style.height = '50px';
     variant_m_chart.update();
 };
@@ -667,20 +673,11 @@ for (variant_key in variants_data) {
                 </div>
             </div>
             <div id='speaker' class='collapse'>
-                <div style="width:10%;">
-                    <table style="height: 100px;">
-                        <tbody>
-                        <tr>
-                            <th class="align-middle">{{gloss.idgloss}}</th>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
                 <div class="chart-container" style="float:left; width:50%;">
-                <canvas id="genderChart"></canvas>
+                <canvas id="genderChart" height="85"></canvas>
                 </div>
                 <div class="chart-container" style="float:right; width:50%;">
-                <canvas id="ageChart"></canvas>
+                <canvas id="ageChart" height="85"></canvas>
                 </div>
             </div>
 
@@ -694,10 +691,10 @@ for (variant_key in variants_data) {
 
             <div id='glossvariants' class='collapse'>
                 <div class="chart-short-container" style="float:left; width:50%;" >
-                <canvas id="glossvariantsSexChart"></canvas>
+                <canvas id="glossvariantsSexChart" height="100"></canvas>
                 </div>
                 <div class="chart-short-container" style="float:right; width:50%;" >
-                <canvas id="glossvariantsAgeChart"></canvas>
+                <canvas id="glossvariantsAgeChart" height="100"></canvas>
                 </div>
             </div>
 

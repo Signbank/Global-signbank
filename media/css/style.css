@@ -684,8 +684,8 @@ canvas{
 }
 
 .chart-short-container {
-    width: 600px;
-    height: 275px;
+    width: auto;
+    height: auto;
 }
 
 .chart-horizontal-single-bar-container {
