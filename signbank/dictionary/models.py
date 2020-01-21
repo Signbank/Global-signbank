@@ -984,24 +984,30 @@ class Gloss(models.Model):
 
     def pattern_variants(self):
 
+        # this function is used in Frequency View
+        # the self object is included in the results
+
         # Build query
         this_sign_stems = self.get_stems()
+        this_sign_dataset = self.lemma.dataset
+        this_sign_language = self.lemma.dataset.default_language
         queries = []
         for this_sign_stem in this_sign_stems:
             this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
             queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
-                             lemma__dataset=self.lemma.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
-        if queries:
+                             lemma__dataset=this_sign_dataset, annotationidglosstranslation__language=this_sign_language))
+        if len(queries) > 1:
             query = queries.pop()
-        for q in queries:
-            query |= q
+            for q in queries:
+                query |= q
+        else:
+            query = queries[0]
 
         other_relations_of_sign = self.other_relations()
         other_relation_objects = [x.target for x in other_relations_of_sign]
 
         if queries:
-            pattern_variants = Gloss.objects.filter(query).exclude(id=self.id).exclude(
-                id__in=other_relation_objects)
+            pattern_variants = Gloss.objects.filter(query).exclude(id__in=other_relation_objects)
         else:
             pattern_variants = []
         return pattern_variants

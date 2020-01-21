@@ -2663,6 +2663,7 @@ def gloss_frequency(request,gloss_pk):
     # the has_variants method only catches explicitly stored variants
     # the pattern variants method excludes glosses with explictly stored relations (including variant relations) to the focus gloss
     # therefore we first try pattern variants
+
     try:
         variants = gloss.pattern_variants()
     except:
@@ -2719,6 +2720,7 @@ def gloss_frequency(request,gloss_pk):
                 speaker_data_v.append(0)
 
         variants_age_distribution_cat_data[variant_of_gloss.idgloss] = speaker_data_v
+
     speaker_per_variant_data = {}
     speaker_per_variant_data['Female'] = {}
     speaker_per_variant_data['Male'] = {}
