@@ -2671,15 +2671,20 @@ def gloss_frequency(request,gloss_pk):
             variants = gloss.has_variants()
         except:
             variants = []
-    variant_keys = [ (gloss.idgloss, gloss) ] + [ (og.idgloss, og) for og in variants ]
-    sorted_variant_keys = sorted(list(set(variant_keys)), key=lambda tup: tup[0])
-    variant_objects = [ og for (og_idgloss, og) in sorted_variant_keys ]
-    variants_data = {}
-    for variant_of_gloss in variant_objects:
-        variants_data[variant_of_gloss.idgloss] = variant_of_gloss.speaker_data()
+    print('variants: ', variants)
+    variants_with_keys = [ (og.idgloss, og) for og in variants ]
+    sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
+    variant_objects = [ og for (og_idgloss, og) in variants_with_keys ]
+    sorted_variant_keys = sorted( [ og_idgloss for (og_idgloss, og) in variants_with_keys] )
+    variants_data_quick_access = {}
+    variants_data = []
+    for (og_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+        variants_speaker_data = variant_of_gloss.speaker_data()
+        variants_data.append( (og_idgloss, variants_speaker_data ))
+        variants_data_quick_access[og_idgloss] = variants_speaker_data
 
     variants_age_distribution_data = {}
-    for variant_of_gloss in variant_objects:
+    for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
         variant_speaker_age_data_v = variant_of_gloss.speaker_age_data()
 
         speaker_age_data_v = []
@@ -2691,10 +2696,10 @@ def gloss_frequency(request,gloss_pk):
             else:
                 speaker_age_data_v.append(0)
 
-        variants_age_distribution_data[variant_of_gloss.idgloss] = speaker_age_data_v
+        variants_age_distribution_data[variant_idgloss] = speaker_age_data_v
 
     variants_sex_distribution_data = {}
-    for variant_of_gloss in variant_objects:
+    for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
         variant_speaker_data_v = variant_of_gloss.speaker_data()
 
         speaker_data_v = []
@@ -2705,10 +2710,10 @@ def gloss_frequency(request,gloss_pk):
             else:
                 speaker_data_v.append(0)
 
-        variants_sex_distribution_data[variant_of_gloss.idgloss] = speaker_data_v
+        variants_sex_distribution_data[variant_idgloss] = speaker_data_v
 
     variants_age_distribution_cat_data = {}
-    for variant_of_gloss in variant_objects:
+    for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
         variant_age_data_v = variant_of_gloss.speaker_data()
 
         speaker_data_v = []
@@ -2719,7 +2724,7 @@ def gloss_frequency(request,gloss_pk):
             else:
                 speaker_data_v.append(0)
 
-        variants_age_distribution_cat_data[variant_of_gloss.idgloss] = speaker_data_v
+        variants_age_distribution_cat_data[variant_idgloss] = speaker_data_v
 
     speaker_per_variant_data = {}
     speaker_per_variant_data['Female'] = {}
@@ -2728,13 +2733,13 @@ def gloss_frequency(request,gloss_pk):
     speaker_per_variant_data['Male'][gloss.idgloss] = speaker_data['Male']
 
     for variant_of_gloss in variant_objects:
-        speaker_per_variant_data['Female'][variant_of_gloss.idgloss] = variants_data[variant_of_gloss.idgloss]['Female']
-        speaker_per_variant_data['Male'][variant_of_gloss.idgloss] = variants_data[variant_of_gloss.idgloss]['Male']
+        speaker_per_variant_data['Female'][variant_of_gloss.idgloss] = variants_data_quick_access[variant_of_gloss.idgloss]['Female']
+        speaker_per_variant_data['Male'][variant_of_gloss.idgloss] = variants_data_quick_access[variant_of_gloss.idgloss]['Male']
 
     variant_labels = []
-    for variant_of_gloss in variant_objects:
-        if variant_of_gloss.idgloss not in variant_labels:
-            variant_labels.append(variant_of_gloss.idgloss)
+    for og_igloss in sorted_variant_keys:
+        if og_igloss not in variant_labels:
+            variant_labels.append(og_igloss)
 
     variant_female_data = []
     for v_label in variant_labels:
@@ -2749,6 +2754,7 @@ def gloss_frequency(request,gloss_pk):
                    'has_frequency_data': gloss.has_frequency_data(),
                    'variants': variants,
                    'variants_data': variants_data,
+                   'variants_data_quick_access': variants_data_quick_access,
                    'variants_age_distribution_data': variants_age_distribution_data,
                    'variants_age_distribution_cat_data': variants_age_distribution_cat_data,
                    'frequency_regions': settings.FREQUENCY_REGIONS,

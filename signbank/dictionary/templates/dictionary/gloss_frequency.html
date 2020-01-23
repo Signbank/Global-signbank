@@ -32,6 +32,7 @@ var data_datasets = {{data_datasets|safe}};
 var speaker_age_data = {{speaker_age_data|safe}};
 var speaker_data = {{speaker_data|safe}};
 var variants_data = {{variants_data|safe}};
+var variants_data_quick_access = {{variants_data_quick_access|safe}};
 var variants_age_distribution_data = {{variants_age_distribution_data|safe}};
 var variants_age_distribution_cat_data = {{variants_age_distribution_cat_data|safe}};
 var age_distribution_labels = [ '{{gloss.idgloss}}' ];
@@ -53,19 +54,20 @@ var datasets_age_distribution_list = [];
 
 var total_variants_age = [];
 
-for (k in variants_age_distribution_data) {
-    var charcode_index = k.length - 1;
-    var variant_char = k.charAt(charcode_index).toUpperCase();
+for (k in variant_labels) {
+    var variant_idgloss = variant_labels[k];
+    var charcode_index = variant_idgloss.length - 1;
+    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();
     var k_total_age = 0;
-    for (i in variants_age_distribution_data[k]) {
-        k_total_age += variants_age_distribution_data[k][i];
+    for (i in variants_age_distribution_data[variant_idgloss]) {
+        k_total_age += variants_age_distribution_data[variant_idgloss][i];
     };
-    total_variants_age[k] = k_total_age;
+    total_variants_age[variant_idgloss] = k_total_age;
     datasets_age_distribution_list.push( {
-                                            label: k,
-                                            data: variants_age_distribution_data[k],
+                                            label: variant_idgloss,
+                                            data: variants_age_distribution_data[variant_idgloss],
                                             backgroundColor: signbank_colors[variant_index[variant_char]] } );
-    age_distribution_labels.push(k[0]);
+    age_distribution_labels.push(variant_idgloss);
 };
 
 
@@ -75,19 +77,20 @@ var variants_sex_distribution_list = [];
 
 var total_variants_sex = [];
 
-for (k in variants_sex_distribution_data) {
-    var charcode_index = k.length - 1;
-    var variant_char = k.charAt(charcode_index).toUpperCase();
+for (k in variant_labels) {
+    var variant_idgloss = variant_labels[k];
+    var charcode_index = variant_idgloss.length - 1;
+    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();
     var k_total_sex = 0;
-    for (i in variants_sex_distribution_data[k]) {
-        k_total_sex += parseInt(variants_sex_distribution_data[k][i]);
+    for (i in variants_sex_distribution_data[variant_idgloss]) {
+        k_total_sex += parseInt(variants_sex_distribution_data[variant_idgloss][i]);
     };
-    total_variants_sex[k] = k_total_sex;
+    total_variants_sex[variant_idgloss] = k_total_sex;
     variants_sex_distribution_list.push( {
-                                            label: k,
-                                            data: variants_sex_distribution_data[k],
+                                            label: variant_idgloss,
+                                            data: variants_sex_distribution_data[variant_idgloss],
                                             backgroundColor: signbank_colors[variant_index[variant_char]] } );
-    sex_distribution_labels.push(k);
+    sex_distribution_labels.push(variant_idgloss);
 };
 
 var age_distribution_labels_cat = [];
@@ -96,19 +99,20 @@ var variants_age_distribution_list_cat = [];
 
 var total_variants_age_cat = [];
 
-for (k in variants_age_distribution_cat_data) {
-    var charcode_index = k.length - 1;
-    var variant_char = k.charAt(charcode_index).toUpperCase();
+for (k in variant_labels) {
+    var variant_idgloss = variant_labels[k];
+    var charcode_index = variant_idgloss.length - 1;
+    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();
     var k_total_age_cat = 0;
-    for (i in variants_age_distribution_cat_data[k]) {
-        k_total_age_cat += parseInt(variants_age_distribution_cat_data[k][i]);
+    for (i in variants_age_distribution_cat_data[variant_idgloss]) {
+        k_total_age_cat += parseInt(variants_age_distribution_cat_data[variant_idgloss][i]);
     };
-    total_variants_age_cat[k] = k_total_age_cat;
+    total_variants_age_cat[variant_idgloss] = k_total_age_cat;
     variants_age_distribution_list_cat.push( {
-                                            label: k,
-                                            data: variants_age_distribution_cat_data[k],
+                                            label: variant_idgloss,
+                                            data: variants_age_distribution_cat_data[variant_idgloss],
                                             backgroundColor: signbank_colors[variant_index[variant_char]] } );
-    age_distribution_labels_cat.push(k);
+    age_distribution_labels_cat.push(variant_idgloss);
 };
 
 </script>
@@ -404,12 +408,13 @@ glossvariantsAgeChart.options.title.padding = 0;
 glossvariantsAgeChart.update();
 
 
-for (variant_key in variants_data) {
+for (k in variant_labels) {
+    var variant_key = variant_labels[k];
     var ctk = document.getElementById('variantsGenderChart_'+variant_key).getContext('2d');
 
     var flattened_genders_vk = [];
     for (idx in gender_labels) {
-        var data_gender_idx = variants_data[variant_key][gender_labels[idx]];
+        var data_gender_idx = variants_data_quick_access[variant_key][gender_labels[idx]];
         var total_gender_idx = total_variants_sex[ variant_key ];
         var data_gender_idx_percentage = Math.round(total_gender_idx == 0 ? 0 : (data_gender_idx/total_gender_idx));
         flattened_genders_vk.push( {
@@ -487,14 +492,15 @@ for (variant_key in variants_data) {
     variant_k_chart.update();
 };
 
-for (variant_key in variants_data) {
+for (k in variant_labels) {
+    var variant_key = variant_labels[k];
     var ctm = document.getElementById('variantsAgeChart_'+variant_key).getContext('2d');
 
     var flattened_ages_vk_max = 0;
 
     var flattened_ages_vk = [];
     for (idx in ages_labels) {
-        var data_age_idx = variants_data[variant_key][ages_labels[idx]];
+        var data_age_idx = variants_data_quick_access[variant_key][ages_labels[idx]];
         var total_age_idx = total_variants_age[ variant_key ];
         flattened_ages_vk.push( {
                                 label: ages_labels[idx],
@@ -722,7 +728,7 @@ for (variant_key in variants_data) {
             </div>
 
             <div id='variants' class='collapse'>
-                {% for key, value in variants_data.items %}
+                {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container" style="float:left; width:50%;">
                 <canvas id="variantsGenderChart_{{key}}" height="50"></canvas>
                 </div>
