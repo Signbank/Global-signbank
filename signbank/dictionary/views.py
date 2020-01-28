@@ -2671,7 +2671,6 @@ def gloss_frequency(request,gloss_pk):
             variants = gloss.has_variants()
         except:
             variants = []
-    print('variants: ', variants)
     variants_with_keys = [ (og.idgloss, og) for og in variants ]
     sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
     variant_objects = [ og for (og_idgloss, og) in variants_with_keys ]
@@ -2699,32 +2698,62 @@ def gloss_frequency(request,gloss_pk):
         variants_age_distribution_data[variant_idgloss] = speaker_age_data_v
 
     variants_sex_distribution_data = {}
+    variants_sex_distribution_data_percentage = {}
+    variants_sex_distribution_data_totals = {}
+    variants_sex_distribution_data_totals['Female'] = 0
+    variants_sex_distribution_data_totals['Male'] = 0
+
+    for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+        for i_key in ['Female', 'Male']:
+            variants_sex_distribution_data_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
+
     for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
         variant_speaker_data_v = variant_of_gloss.speaker_data()
-
+        # total_speakers = variant_speaker_data_v['Total']
         speaker_data_v = []
+        speaker_data_p = []
         for i_key in ['Female', 'Male']:
-            if i_key in variant_speaker_data_v.keys():
+            total_gender_across_variants = variants_sex_distribution_data_totals[i_key]
+            if i_key in variant_speaker_data_v.keys() and total_gender_across_variants > 0:
                 i_value = variant_speaker_data_v[i_key]
                 speaker_data_v.append(i_value)
+                speaker_data_p.append(i_value/total_gender_across_variants)
             else:
                 speaker_data_v.append(0)
+                speaker_data_p.append(0)
 
         variants_sex_distribution_data[variant_idgloss] = speaker_data_v
+        variants_sex_distribution_data_percentage[variant_idgloss] = speaker_data_p
 
     variants_age_distribution_cat_data = {}
+    variants_age_distribution_cat_percentage = {}
+    variants_age_distribution_cat_totals = {}
+    variants_age_distribution_cat_totals['< 25'] = 0
+    variants_age_distribution_cat_totals['25 - 35'] = 0
+    variants_age_distribution_cat_totals['36 - 65'] = 0
+    variants_age_distribution_cat_totals['> 65'] = 0
+
+    for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+        for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
+            variants_age_distribution_cat_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
+
     for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
         variant_age_data_v = variant_of_gloss.speaker_data()
 
         speaker_data_v = []
+        speaker_data_p = []
         for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
-            if i_key in variant_age_data_v.keys():
+            total_age_across_variants = variants_age_distribution_cat_totals[i_key]
+            if i_key in variant_age_data_v.keys() and total_age_across_variants > 0:
                 i_value = variant_age_data_v[i_key]
                 speaker_data_v.append(i_value)
+                speaker_data_p.append(i_value/total_age_across_variants)
             else:
                 speaker_data_v.append(0)
+                speaker_data_p.append(0)
 
         variants_age_distribution_cat_data[variant_idgloss] = speaker_data_v
+        variants_age_distribution_cat_percentage[variant_idgloss] = speaker_data_p
 
     speaker_per_variant_data = {}
     speaker_per_variant_data['Female'] = {}
@@ -2757,12 +2786,14 @@ def gloss_frequency(request,gloss_pk):
                    'variants_data_quick_access': variants_data_quick_access,
                    'variants_age_distribution_data': variants_age_distribution_data,
                    'variants_age_distribution_cat_data': variants_age_distribution_cat_data,
+                   'variants_age_distribution_cat_percentage': variants_age_distribution_cat_percentage,
                    'frequency_regions': settings.FREQUENCY_REGIONS,
                    'data_datasets': gloss.data_datasets(),
                    'speaker_age_data': speaker_age_data,
                    'speaker_data': speaker_data,
                    'variant_labels' : variant_labels,
                    'variants_sex_distribution_data': variants_sex_distribution_data,
+                   'variants_sex_distribution_data_percentage': variants_sex_distribution_data_percentage,
                    'speaker_per_variant_data' : speaker_per_variant_data,
                    'variant_female_data': variant_female_data,
                    'variant_male_data': variant_male_data,

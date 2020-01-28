@@ -866,19 +866,28 @@ class Gloss(models.Model):
         # this is a list with duplicates
         speakers_with_gloss = [ gfo.speaker for gfo in glossfrequency_objects ]
 
+        # for the results, Other and Unknown Age are also tallied so that
+        # the total number of speakers for the gloss is the same for gender and age
+        # the interface needs this for showing percentages as well as raw data
+
         speaker_data = {}
         speaker_data['Male'] = 0
         speaker_data['Female'] = 0
+        speaker_data['Other'] = 0
         speaker_data['< 25'] = 0
         speaker_data['25 - 35'] = 0
         speaker_data['36 - 65'] = 0
         speaker_data['> 65'] = 0
+        speaker_data['Unknown Age'] = 0
+        speaker_data['Total'] = 0
 
         for speaker in speakers_with_gloss:
             if speaker.gender == 'm':
                 speaker_data['Male'] += 1
             elif speaker.gender == 'f':
                 speaker_data['Female'] += 1
+            else:
+                speaker_data['Other'] += 1
             speaker_age = speaker.age
             if speaker_age < 25:
                 speaker_data['< 25'] += 1
@@ -888,6 +897,9 @@ class Gloss(models.Model):
                 speaker_data['36 - 65'] += 1
             elif speaker.age > 65:
                 speaker_data['> 65'] += 1
+            else:
+                speaker_data['Unknown Age'] += 1
+            speaker_data['Total'] += 1
 
         return speaker_data
 

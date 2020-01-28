@@ -689,7 +689,7 @@ canvas{
 }
 
 .chart-horizontal-single-bar-container {
-    width: 500px;
+    width: auto;
     height: 50px;
 }
 
