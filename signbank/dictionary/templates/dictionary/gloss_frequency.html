@@ -219,7 +219,18 @@ var genderchart = new Chart(ctz, {
             yAlign: 'center',
             xAlign: 'center',
             fontSize: 14,
-            titleFontSize: 14
+            titleFontSize: 14,
+            callbacks: {
+                label: function(tooltipItem, data) {
+                    var value = data.datasets[0].data[tooltipItem.index] || 0;
+                    var label = data.labels[tooltipItem.index] || '';
+                    if (label) {
+                        label += ' : ';
+                    }
+                    label += Math.round(value * 100) + ' %';
+                    return label;
+                }
+            }
         },
         legend: {
             labels: {
@@ -280,7 +291,18 @@ var agechart = new Chart(ctw, {
             yAlign: 'center',
             xAlign: 'center',
             fontSize: 14,
-            titleFontSize: 14
+            titleFontSize: 14,
+            callbacks: {
+                label: function(tooltipItem, data) {
+                    var value = data.datasets[0].data[tooltipItem.index] || 0;
+                    var label = data.labels[tooltipItem.index] || '';
+                    if (label) {
+                        label += ' : ';
+                    }
+                    label += Math.round(value * 100) + ' %';
+                    return label;
+                }
+            }
         },
         legend: {
             labels: {
