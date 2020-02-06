@@ -33,18 +33,28 @@ var speaker_age_data = {{speaker_age_data|safe}};
 var speaker_data = {{speaker_data|safe}};
 var variants_data = {{variants_data|safe}};
 var variants_data_quick_access = {{variants_data_quick_access|safe}};
+<!--console.log('variants quick access: ', variants_data_quick_access);-->
 var variants_age_distribution_data = {{variants_age_distribution_data|safe}};
 var variants_age_distribution_cat_data = {{variants_age_distribution_cat_data|safe}};
+<!--console.log('variants_age_distribution_cat_data: ', variants_age_distribution_cat_data);-->
 var variants_age_distribution_cat_percentage = {{variants_age_distribution_cat_percentage|safe}};
+<!--console.log('variants_age_distribution_cat_percentage: ', variants_age_distribution_cat_percentage);-->
 var age_distribution_labels = [ '{{gloss.idgloss}}' ];
 var gloss_idgloss = '{{gloss.idgloss}}';
 var variant_labels = {{variant_labels|safe}};
 var speaker_per_variant_data = {{speaker_per_variant_data|safe}};
 var variants_sex_distribution_data = {{variants_sex_distribution_data|safe}};
+<!--console.log('variants_sex_distribution_data: ', variants_sex_distribution_data);-->
 var variants_sex_distribution_data_percentage = {{variants_sex_distribution_data_percentage|safe}};
+<!--console.log('variants_sex_distribution_data_percentage: ', variants_sex_distribution_data_percentage);-->
 var variant_0_speaker_data = [ speaker_data['Female'], speaker_data['Male'] ];
 var variant_female_data = {{variant_female_data|safe}};
 var variant_male_data = {{variant_male_data|safe}};
+var ages_labels = ['< 25', '25 - 35', '36 - 65', '> 65'];
+var gender_labels = ['Female', 'Male'];
+
+var display_percentage = true;
+var view_type = '{{view_type}}';
 
 var charcode_index = gloss_idgloss.length - 1;
 var variant_char = gloss_idgloss.charAt(charcode_index).toUpperCase();
@@ -71,6 +81,7 @@ for (k in variant_labels) {
     age_distribution_labels.push(variant_idgloss);
 };
 
+<!--console.log('total_variants_age: ', total_variants_age);-->
 
 var sex_distribution_labels = [];
 
@@ -83,13 +94,21 @@ for (k in variant_labels) {
     var charcode_index = variant_idgloss.length - 1;
     var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();
     var k_total_sex = 0;
-    for (i in variants_sex_distribution_data[variant_idgloss]) {
-        k_total_sex += parseInt(variants_sex_distribution_data[variant_idgloss][i]);
+    var gender_data_variant = [];
+    for (idx in gender_labels) {
+    // variants_sex_distribution_data[variant_idgloss]
+        gender_label = gender_labels[idx];
+        k_total_sex += parseInt(variants_sex_distribution_data[gender_label][variant_idgloss]);
+        gender_data_variant.push(variants_sex_distribution_data_percentage[gender_label][variant_idgloss]);
     };
     total_variants_sex[variant_idgloss] = k_total_sex;
+<!--    console.log('total variants sex: ', total_variants_sex);-->
+<!--    console.log('gender data variant: ', variant_idgloss, gender_data_variant);-->
     variants_sex_distribution_list.push( {
                                             label: variant_idgloss,
-                                            data: variants_sex_distribution_data_percentage[variant_idgloss],
+                                            data: gender_data_variant,
+<!--                                            xAxisID: variant_idgloss,-->
+                                            // variants_sex_distribution_data_percentage[variant_idgloss]
                                             barThickness: 25,
                                             barPercentage: 0.5,
                                             categoryPercentage: 1.0,
@@ -103,25 +122,46 @@ var variants_age_distribution_list_cat = [];
 
 var total_variants_age_cat = [];
 
+for (i in ages_labels) {
+    next_age_category = ages_labels[i];
+<!--    console.log('next age category: ', next_age_category);-->
+    var k_total_age_cat = 0;
+
+    for (k in variant_labels) {
+        var variant_idgloss = variant_labels[k];
+        variant_gloss_age_category = variants_age_distribution_cat_data[next_age_category][variant_idgloss];
+<!--        console.log('make variants_age_distribution_list_cat: ', variant_idgloss, variant_gloss_age_category);-->
+        k_total_age_cat += parseInt(variant_gloss_age_category);
+    };
+    total_variants_age_cat[next_age_category] = k_total_age_cat;
+};
+<!--console.log('total_variants_age_cat: ', total_variants_age_cat);-->
+
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
     var charcode_index = variant_idgloss.length - 1;
     var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();
-    var k_total_age_cat = 0;
-    for (i in variants_age_distribution_cat_data[variant_idgloss]) {
-        k_total_age_cat += parseInt(variants_age_distribution_cat_data[variant_idgloss][i]);
+
+    var variant_percentage_data = [];
+    for (i in ages_labels) {
+        var next_age_category = ages_labels[i];
+<!--        console.log('next age category: ', next_age_category);-->
+        var next_percentage = variants_age_distribution_cat_percentage[next_age_category][variant_idgloss];
+<!--        console.log('EEEEEEE make variants_age_distribution_list_cat: ', variant_idgloss, next_age_category, next_percentage);-->
+        variant_percentage_data.push(next_percentage);
     };
-    total_variants_age_cat[variant_idgloss] = k_total_age_cat;
+<!--    console.log('variant percentage cat data: ', variant_idgloss, variant_percentage_data);-->
     variants_age_distribution_list_cat.push( {
                                             label: variant_idgloss,
-                                            data: variants_age_distribution_cat_percentage[variant_idgloss],
+                                            data: variant_percentage_data,
                                             barThickness: 25,
                                             barPercentage: 0.5,
                                             categoryPercentage: 1.0,
                                             backgroundColor: signbank_colors[variant_index[variant_char]] } );
     age_distribution_labels_cat.push(variant_idgloss);
 };
-
+<!--console.log('age_distribution_labels_cat: ', age_distribution_labels_cat);-->
+<!--console.log('variants_age_distribution_list_cat: ', variants_age_distribution_list_cat);-->
 </script>
 
 <script type="text/javascript">
@@ -184,8 +224,15 @@ speakerchart.options.scales.xAxes[0].ticks.fontSize = 16;
 speakerchart.options.legend.labels.fontSize = 16;
 speakerchart.update();
 
+// these variables are used specifically to switch between percentage and raw values in the dataset
+// when the display toggle is invoked
+// note: it's not possible to use the variables in the "new Chart" declaration because
+// in that case, updating the charts causes side effects to the variables
 
-var gender_labels = ['Female', 'Male'];
+var gender_data_percentage = [ speaker_data['Female']/speaker_data['Total'] , speaker_data['Male']/speaker_data['Total'] ];
+var gender_data_raw = [ speaker_data['Female'] , speaker_data['Male'] ];
+
+
 var gloss_gender_data = [{
                             data: [ speaker_data['Female']/speaker_data['Total'] , speaker_data['Male']/speaker_data['Total'] ],
                             backgroundColor: [ signbank_colors[0], signbank_colors[1] ],
@@ -226,8 +273,12 @@ var genderchart = new Chart(ctz, {
                     var label = data.labels[tooltipItem.index] || '';
                     if (label) {
                         label += ' : ';
-                    }
-                    label += Math.round(value * 100) + ' %';
+                    };
+                    if (display_percentage) {
+                        label += Math.round(value * 100) + ' %';
+                    } else {
+                        label += value;
+                    };
                     return label;
                 }
             }
@@ -254,7 +305,15 @@ genderchart.options.title.align = 'start';
 genderchart.options.title.text = "Gender";
 genderchart.update();
 
-var ages_labels = ['< 25', '25 - 35', '36 - 65', '> 65'];
+var age_data_percentage = [ speaker_data['< 25']/speaker_data['Total'],
+                                    speaker_data['25 - 35']/speaker_data['Total'],
+                                    speaker_data['36 - 65']/speaker_data['Total'],
+                                    speaker_data['> 65']/speaker_data['Total'] ];
+var age_data_raw = [ speaker_data['< 25'],
+                                    speaker_data['25 - 35'],
+                                    speaker_data['36 - 65'],
+                                    speaker_data['> 65'] ];
+
 var gloss_age_data = [{
                             data: [ speaker_data['< 25']/speaker_data['Total'],
                                     speaker_data['25 - 35']/speaker_data['Total'],
@@ -298,8 +357,12 @@ var agechart = new Chart(ctw, {
                     var label = data.labels[tooltipItem.index] || '';
                     if (label) {
                         label += ' : ';
-                    }
-                    label += Math.round(value * 100) + ' %';
+                    };
+                    if (display_percentage) {
+                        label += Math.round(value * 100) + ' %';
+                    } else {
+                        label += value;
+                    };
                     return label;
                 }
             }
@@ -363,10 +426,15 @@ var glossvariantsSexChart = new Chart(ctgs, {
             callbacks: {
                 label: function(tooltipItem, data) {
                     var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                    var value = tooltipItem.xLabel;
                     if (label) {
                         label += ' : ';
-                    }
-                    label += Math.round(tooltipItem.xLabel * 100) + ' %';
+                    };
+                    if (display_percentage) {
+                        label += Math.round(value * 100) + ' %';
+                    } else {
+                        label += value;
+                    };
                     return label;
                 }
             },
@@ -404,6 +472,7 @@ var glossvariantsSexChart = new Chart(ctgs, {
 
 glossvariantsSexChart.options.title.display = false;
 glossvariantsSexChart.update();
+<!--console.log('glossvariantsSexChart created: ', glossvariantsSexChart.data);-->
 
 var ctga = document.getElementById('glossvariantsAgeChart').getContext('2d');
 var glossvariantsAgeChart = new Chart(ctga, {
@@ -428,10 +497,15 @@ var glossvariantsAgeChart = new Chart(ctga, {
             callbacks: {
                 label: function(tooltipItem, data) {
                     var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                    var value = tooltipItem.xLabel;
                     if (label) {
                         label += ' : ';
-                    }
-                    label += Math.round(tooltipItem.xLabel * 100) + ' %';
+                    };
+                    if (display_percentage) {
+                        label += Math.round(value * 100) + ' %';
+                    } else {
+                        label += value;
+                    };
                     return label;
                 }
             }
@@ -481,23 +555,28 @@ var glossvariantsAgeChart = new Chart(ctga, {
 glossvariantsAgeChart.options.title.display = false;
 glossvariantsAgeChart.update();
 
-var other_variant_gender_charts = [];
+var ids_variant_gender_charts = [];
 for (k in variant_labels) {
-    if (k > 0) {
-        var variant_key = variant_labels[k];
-        other_variant_gender_charts.push('variantsGenderChart_'+variant_key);
-    }
+    var variant_key = variant_labels[k];
+    ids_variant_gender_charts.push('variantsGenderChart_'+variant_key);
+};
+
+var ids_variant_age_charts = [];
+for (k in variant_labels) {
+    var variant_key = variant_labels[k];
+    ids_variant_age_charts.push('variantsAgeChart_'+variant_key);
 };
 
 var variants_gender_charts = [];
+var variants_age_charts = [];
 
 var defaultLegendClickHandler = Chart.defaults.global.legend.onClick;
 var newLegendClickHandler = function(e, legendItem) {
     var index = legendItem.datasetIndex;
     var chartlist = [ this.chart ];
     var chartlistmeta = [ this.chart.getDatasetMeta(index) ];
-    for (idx in other_variant_gender_charts) {
-        var next_chart = variants_gender_charts[other_variant_gender_charts[idx]];
+    for (idx in ids_variant_gender_charts) {
+        var next_chart = variants_gender_charts[ids_variant_gender_charts[idx]];
         chartlist.push(next_chart);
         var next_chart_meta = next_chart.getDatasetMeta(index);
         chartlistmeta.push( next_chart_meta );
@@ -523,12 +602,14 @@ var newLegendClickHandler = function(e, legendItem) {
 
 for (k in variant_labels) {
     var variant_key = variant_labels[k];
+<!--    console.log('loop variant_labels gender: ', variant_key);-->
     var canvasId = 'variantsGenderChart_'+variant_key;
     var ctk = document.getElementById('variantsGenderChart_'+variant_key).getContext('2d');
     var flattened_genders_vk = [];
     for (idx in gender_labels) {
         var data_gender_idx = variants_data_quick_access[variant_key][gender_labels[idx]];
         var total_gender_idx = total_variants_sex[ variant_key ];
+<!--        console.log('total gender idx: ', idx, data_gender_idx, total_gender_idx);-->
         var data_gender_idx_percentage = Math.round(total_gender_idx == 0 ? 0 : (data_gender_idx/total_gender_idx));
         flattened_genders_vk.push( {
                                 label: gender_labels[idx],
@@ -568,11 +649,16 @@ for (k in variant_labels) {
                 titleFontSize: 14,
                 callbacks: {
                     label: function(tooltipItem, data) {
+<!--                        console.log('tooltipitem: ', tooltipItem);-->
                         var label = data.datasets[tooltipItem.datasetIndex].label || '';
                         if (label) {
                             label += ' : ';
-                        }
-                        label += Math.round(tooltipItem.xLabel * 100) + ' %';
+                        };
+                        if (display_percentage) {
+                            label += Math.round(tooltipItem.xLabel * 100) + ' %';
+                        } else {
+                            label += tooltipItem.xLabel;
+                        };
                         return label;
                     }
                 }
@@ -585,8 +671,12 @@ for (k in variant_labels) {
                 xAxes: [{ stacked: true,
                             display: false,
                               ticks: {
-                                display: false
-                              }
+                                display: false,
+                                max: 1
+                              },
+                            afterFit: function(scaleInstance) {
+                                scaleInstance.width = 100;
+                            }
                 }],
                 yAxes: [{ stacked: true,
                             display: true,
@@ -595,14 +685,12 @@ for (k in variant_labels) {
                                 display: false
                             },
                             ticks: { fontSize: 14,
-                                     fontStyle: 'bold',
-                                     max: total_variants_sex[ variant_key ] }
+                                     fontStyle: 'bold' }
                 }]
             },
             showLines: true
         }
     });
-    variants_gender_charts[canvasId] = variant_k_chart;
 <!--    if (k == 0) {-->
 <!--        variant_k_chart.options.legend.labels.fontSize = 16;-->
 <!--        variant_k_chart.options.legend.display = true;-->
@@ -616,10 +704,15 @@ for (k in variant_labels) {
 
 <!--    variant_k_chart.canvas.parentNode.style.height = '50px';-->
     variant_k_chart.update();
+    console.log('variant gender chart created ', canvasId, variant_k_chart.data);
+    variants_gender_charts[canvasId] = variant_k_chart;
+
 };
 
 for (k in variant_labels) {
     var variant_key = variant_labels[k];
+<!--    console.log('loop variant_labels age: ', variant_key);-->
+    var canvasId = 'variantsAgeChart_'+variant_key;
     var ctm = document.getElementById('variantsAgeChart_'+variant_key).getContext('2d');
 
     var flattened_ages_vk_max = 0;
@@ -628,9 +721,11 @@ for (k in variant_labels) {
     for (idx in ages_labels) {
         var data_age_idx = variants_data_quick_access[variant_key][ages_labels[idx]];
         var total_age_idx = total_variants_age[ variant_key ];
+<!--        console.log('initialize chart ', variant_key, ' total age: ', total_age_idx, ', data age idx: ', data_age_idx);-->
+        var data_category_percentage = total_age_idx == 0 ? 0 : (data_age_idx/total_age_idx);
         flattened_ages_vk.push( {
                                 label: ages_labels[idx],
-                                data: [ total_age_idx == 0 ? 0 : (data_age_idx/total_age_idx) ],
+                                data: [ data_category_percentage ],
                                 hoverBackgroundColor: signbank_hover_colors[idx],
                                 backgroundColor: signbank_colors[idx],
                                 barThickness: 25,
@@ -638,6 +733,8 @@ for (k in variant_labels) {
                                 categoryPercentage: 0.25
                                 });
     };
+<!--    console.log('flattened ages vk: ', flattened_ages_vk);-->
+<!--    console.log('creation of chart ', canvasId, ': ', flattened_ages_vk);-->
     var variant_m_chart = new Chart(ctm, {
         type: 'horizontalBar',
         responsive: true,
@@ -660,8 +757,12 @@ for (k in variant_labels) {
                         var label = data.datasets[tooltipItem.datasetIndex].label || '';
                         if (label) {
                             label += ' : ';
-                        }
-                        label += Math.round(tooltipItem.xLabel * 100) + ' %';
+                        };
+                        if (display_percentage) {
+                            label += Math.round(tooltipItem.xLabel * 100) + ' %';
+                        } else {
+                            label += tooltipItem.xLabel;
+                        };
                         return label;
                     }
                 }
@@ -670,15 +771,18 @@ for (k in variant_labels) {
                 xAxes: [{ stacked: true,
                           display: false,
                           ticks: {
-                             display: false
-                          }
+                             display: false,
+                             max: 1
+                          },
+                        afterFit: function(scaleInstance) {
+                            scaleInstance.width = 100;
+                        }
                 }],
                 yAxes: [{ stacked: true,
                             display: true,
                             ticks: {
                                 fontSize: 16,
-                                fontStyle: 'bold',
-                                max: total_variants_age[ variant_key ]
+                                fontStyle: 'bold'
                             },
                             gridLines: {
                                 drawBorder: false,
@@ -689,6 +793,7 @@ for (k in variant_labels) {
             showLines: true
         }
     });
+
 <!--    if (k == 0) {-->
 <!--        variant_m_chart.options.legend.labels.fontSize = 16;-->
 <!--        variant_m_chart.options.legend.display = true;-->
@@ -699,6 +804,8 @@ for (k in variant_labels) {
 <!--        variant_m_chart.canvas.parentNode.style.height = '50px';-->
 <!--    };-->
     variant_m_chart.update();
+<!--    console.log('variant age chart created ', canvasId, variant_m_chart.data);-->
+    variants_age_charts[canvasId] = variant_m_chart;
 };
 
 </script>
@@ -752,6 +859,257 @@ for (k in variant_labels) {
         $('#searchresults').css({'top': Math.round($('#signbank-bar').height() + 10)});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
 
+/**
+ * toggle between percentage view and raw view
+ */
+function do_toggle_display(el) {
+  var sViewType = $(el).attr('value');
+  switch(sViewType) {
+    case "raw":
+        $(el).val('percentage');
+        $(el).html("Percentage View");
+        display_percentage = false;
+        genderchart.data.datasets[0].data.pop();
+        genderchart.data.datasets[0].data.pop();
+        gender_data_raw.forEach(function(element) {
+            genderchart.data.datasets[0].data.push(element);
+        });
+        gender_labels.forEach(function(lab) {
+            genderchart.data.labels.push(lab);
+        });
+        genderchart.data.labels.length = 2;
+        genderchart.update();
+
+        var total_sex_data = 0;
+        for (idv in variant_labels) {
+            var variant_idgloss = variant_labels[idv];
+            total_sex_data += total_variants_sex[ variant_idgloss ];
+        };
+
+        for (idx in ids_variant_gender_charts) {
+            var variant_idgloss = variant_labels[idx];
+            var next_gender_chart = variants_gender_charts[ids_variant_gender_charts[idx]];
+            console.log('next gender chart before update: ', variant_idgloss, next_gender_chart.data);
+
+            for (idy in gender_labels) {
+                var gender_category_label = gender_labels[idy];
+<!--                console.log('gender category: ', idy, gender_category_label);-->
+                var next_raw = variants_sex_distribution_data[gender_category_label][variant_idgloss];
+<!--                console.log('sex raw data: ', variant_idgloss, next_raw);-->
+                next_gender_chart.data.datasets[idy].data.pop();
+                next_gender_chart.data.datasets[idy].data.push(next_raw);
+            };
+            next_gender_chart.options.scales.xAxes[0].ticks.max = total_sex_data;
+            next_gender_chart.update();
+            console.log('next gender chart after update: ', variant_idgloss, next_gender_chart.data);
+        };
+
+<!--        console.log('glossvariantsSexChart before update: ', glossvariantsSexChart.data);-->
+        // glossvariantsSexChart one dataset per variant
+        // first pop off old data
+        var max_ticks = 0;
+        for (idx in variant_labels) {
+            var variant_idgloss = variant_labels[idx];
+            // pop off Female and Male data for each variant's dataset
+            glossvariantsSexChart.data.datasets[idx].data.pop();
+            glossvariantsSexChart.data.datasets[idx].data.pop();
+            max_ticks += total_variants_sex[variant_idgloss]
+        };
+<!--        console.log('max ticks: ', max_ticks);-->
+        for (idy in gender_labels) {
+            var gender_label = gender_labels[idy];
+            for (idx in variant_labels) {
+                var variant_idgloss = variant_labels[idx];
+<!--                console.log('total sex: ', gender_label, variant_idgloss, total_variants_sex[variant_idgloss]);-->
+                // push for each dataset the next sex data
+                var next_raw = variants_sex_distribution_data[gender_label][variant_idgloss];
+                glossvariantsSexChart.data.datasets[idx].data.push(next_raw);
+            };
+        };
+        glossvariantsSexChart.options.scales.xAxes[0].ticks.max = max_ticks;
+        glossvariantsSexChart.update();
+<!--        console.log('glossvariantsSexChart after update: ', glossvariantsSexChart.data);-->
+
+        agechart.data.datasets[0].data.pop();
+        agechart.data.datasets[0].data.pop();
+        agechart.data.datasets[0].data.pop();
+        agechart.data.datasets[0].data.pop();
+        age_data_raw.forEach(function(element) {
+            agechart.data.datasets[0].data.push(element);
+        });
+        ages_labels.forEach(function(lab) {
+            agechart.data.labels.push(lab);
+        });
+        agechart.data.labels.length = 4;
+        agechart.update();
+
+        var total_age_data = 0;
+        for (idv in variant_labels) {
+            var variant_idgloss = variant_labels[idv];
+            total_age_data += total_variants_age[ variant_idgloss ];
+        };
+        for (idx in ids_variant_age_charts) {
+            var variant_idgloss = variant_labels[idx];
+            var next_age_chart = variants_age_charts[ids_variant_age_charts[idx]];
+<!--            console.log('next age chart before update: ', variant_idgloss, next_age_chart.data);-->
+
+            for (idy in ages_labels) {
+                var age_category_label = ages_labels[idy];
+<!--                console.log('age category: ', idy, age_category_label);-->
+                var next_age_data_raw = variants_age_distribution_cat_data[age_category_label][variant_idgloss];
+<!--                console.log('age raw data: ', variant_idgloss, next_age_data_raw);-->
+                next_age_chart.data.datasets[idy].data.pop();
+                next_age_chart.data.datasets[idy].data.push(next_age_data_raw);
+            };
+            next_age_chart.options.scales.xAxes[0].ticks.max = total_age_data;
+            next_age_chart.update();
+<!--            console.log('next age chart after update: ', variant_idgloss, next_age_chart.data);-->
+        };
+
+<!--        console.log('glossvariantsAgeChart before update: ', glossvariantsAgeChart.data);-->
+        // glossvariantsAgeChart one dataset per variant
+        // first pop off old data
+        var max_ticks = 0;
+        for (idx in variant_labels) {
+            var variant_idgloss = variant_labels[idx];
+            // pop off age catetories data for each variant's dataset
+            glossvariantsAgeChart.data.datasets[idx].data.pop();
+            glossvariantsAgeChart.data.datasets[idx].data.pop();
+            glossvariantsAgeChart.data.datasets[idx].data.pop();
+            glossvariantsAgeChart.data.datasets[idx].data.pop();
+            max_ticks += total_variants_age[variant_idgloss]
+        };
+<!--        console.log('max ticks: ', max_ticks);-->
+        for (idy in ages_labels) {
+            var age_category_label = ages_labels[idy];
+            for (idx in variant_labels) {
+                var variant_idgloss = variant_labels[idx];
+                var next_raw = variants_age_distribution_cat_data[age_category_label][variant_idgloss];
+                glossvariantsAgeChart.data.datasets[idx].data.push(next_raw);
+            };
+        };
+//        total_variants_age_cat
+        glossvariantsAgeChart.options.scales.xAxes[0].ticks.max = max_ticks;
+        glossvariantsAgeChart.update();
+<!--        console.log('glossvariantsAgeChart after update: ', glossvariantsAgeChart.data);-->
+
+        break;
+    case "percentage":
+        $(el).val('raw');
+        $(el).html("Raw View");
+        display_percentage = true;
+        genderchart.data.datasets[0].data.pop();
+        genderchart.data.datasets[0].data.pop();
+        gender_data_percentage.forEach(function(element) {
+            genderchart.data.datasets[0].data.push(element.toString());
+        });
+        gender_labels.forEach(function(lab) {
+            genderchart.data.labels.push(lab);
+        });
+        genderchart.data.labels.length = 2;
+        genderchart.update();
+
+        for (idx in ids_variant_gender_charts) {
+            var variant_idgloss = variant_labels[idx];
+            var next_gender_chart = variants_gender_charts[ids_variant_gender_charts[idx]];
+            console.log('next gender chart before update perc: ', variant_idgloss, next_gender_chart.data);
+
+            for (idy in gender_labels) {
+                var gender_category_label = gender_labels[idy];
+                console.log('gender category: ', idy, gender_category_label);
+                var next_data = variants_sex_distribution_data[gender_category_label][variant_idgloss];
+                console.log('variants_sex_distribution_data_percentage, gender_category_label: ', variants_sex_distribution_data, gender_category_label);
+                console.log('next gender percentage data: ', variant_idgloss, gender_category_label, next_data);
+                var next_percentage = next_data / total_variants_sex[variant_idgloss];
+                next_gender_chart.data.datasets[idy].data.pop();
+                next_gender_chart.data.datasets[idy].data.push(next_percentage);
+            };
+            next_gender_chart.options.scales.xAxes[0].ticks.max = 1;
+            next_gender_chart.update();
+            console.log('next gender chart after update perc: ', variant_idgloss, next_gender_chart.data);
+        };
+
+<!--        console.log('glossvariantsSexChart before update perc: ', glossvariantsSexChart.data);-->
+        // glossvariantsSexChart one dataset per variant
+        // first pop off old data
+        for (idx in variant_labels) {
+            // pop off Female and Male data for each variant's dataset
+            glossvariantsSexChart.data.datasets[idx].data.pop();
+            glossvariantsSexChart.data.datasets[idx].data.pop();
+        };
+        for (idy in gender_labels) {
+            var gender_label = gender_labels[idy];
+            for (idx in variant_labels) {
+                var variant_idgloss = variant_labels[idx];
+                // push for each dataset the next sex data
+                var next_percentage = variants_sex_distribution_data_percentage[gender_label][variant_idgloss];
+                glossvariantsSexChart.data.datasets[idx].data.push(next_percentage);
+            };
+        };
+        glossvariantsSexChart.options.scales.xAxes[0].ticks.max = 1;
+        glossvariantsSexChart.update();
+<!--        console.log('glossvariantsSexChart after update percentage: ', glossvariantsSexChart.data);-->
+
+
+<!--        console.log('glossvariantsAgeChart before update perc: ', glossvariantsAgeChart.data);-->
+        // glossvariantsAgeChart one dataset per variant
+        // first pop off old data
+        for (idx in variant_labels) {
+            // pop off age catetories data for each variant's dataset
+            glossvariantsAgeChart.data.datasets[idx].data.pop();
+            glossvariantsAgeChart.data.datasets[idx].data.pop();
+            glossvariantsAgeChart.data.datasets[idx].data.pop();
+            glossvariantsAgeChart.data.datasets[idx].data.pop();
+        };
+        for (idy in ages_labels) {
+            var age_category_label = ages_labels[idy];
+            for (idx in variant_labels) {
+                var variant_idgloss = variant_labels[idx];
+                var next_percentage = variants_age_distribution_cat_percentage[age_category_label][variant_idgloss];
+                glossvariantsAgeChart.data.datasets[idx].data.push(next_percentage);
+            };
+        };
+        glossvariantsAgeChart.options.scales.xAxes[0].ticks.max = 1;
+        glossvariantsAgeChart.update();
+<!--        console.log('glossvariantsAgeChart after update perc: ', glossvariantsAgeChart.data);-->
+
+
+
+        agechart.data.datasets[0].data.pop();
+        agechart.data.datasets[0].data.pop();
+        agechart.data.datasets[0].data.pop();
+        agechart.data.datasets[0].data.pop();
+        age_data_percentage.forEach(function(element) {
+            agechart.data.datasets[0].data.push(element.toString());
+        });
+        ages_labels.forEach(function(lab) {
+            agechart.data.labels.push(lab);
+        });
+        agechart.data.labels.length = 4;
+        agechart.update();
+
+        for (idx in ids_variant_age_charts) {
+            var variant_idgloss = variant_labels[idx];
+            var next_age_chart = variants_age_charts[ids_variant_age_charts[idx]];
+<!--            console.log('next age chart before update: ', variant_idgloss, next_age_chart.data);-->
+
+            for (idy in ages_labels) {
+                var age_category_label = ages_labels[idy];
+<!--                console.log('age category: ', idy, age_category_label);-->
+                total_variant = total_variants_age[ variant_idgloss ];
+<!--                console.log('total variant ', variant_idgloss, total_variant);-->
+                var next_age_data_percentage = variants_age_distribution_cat_data[age_category_label][variant_idgloss] / total_variant;
+<!--                console.log('age percentage data: ', variant_idgloss, next_age_data_percentage);-->
+                next_age_chart.data.datasets[idy].data.pop();
+                next_age_chart.data.datasets[idy].data.push(next_age_data_percentage);
+            };
+            next_age_chart.options.scales.xAxes[0].ticks.max = 1;
+            next_age_chart.update();
+<!--            console.log('next age chart after update: ', variant_idgloss, next_age_chart.data);-->
+        };
+        break;
+  }
+}
     </script>
 {% endblock %}
 
@@ -830,6 +1188,9 @@ for (k in variant_labels) {
                 </div>
             </div>
             <div id='speaker' class='collapse'>
+                <div style="float:left; width:100%;">
+                    <button class="btn btn-primary" type="submit" name="view_type" onclick="do_toggle_display(this);" value='raw'/>{% trans "Raw View" %}</button>
+                </div>
                 <div class="chart-container" style="float:left; width:30%;">
                 <canvas id="genderChart" height="170"></canvas>
                 </div>
