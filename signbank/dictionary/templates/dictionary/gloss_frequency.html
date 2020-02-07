@@ -82,6 +82,7 @@ for (k in variant_labels) {
 };
 
 <!--console.log('total_variants_age: ', total_variants_age);-->
+<!--console.log('datasets_age_distribution_list: ', datasets_age_distribution_list);-->
 
 var sex_distribution_labels = [];
 
@@ -1194,35 +1195,47 @@ function do_toggle_display(el) {
                 <div class="chart-container" style="float:left; width:30%;">
                 <canvas id="genderChart" height="170"></canvas>
                 </div>
-                <div class="chart-container" style="float:left; width:30%;">
+                {% if variants %}
+                <div class="chart-container" style="float:left; width:30%;" >
+                {% else %}
+                <div class="chart-container" style="float:left; width:30%; display:none;" >
+                {% endif %}
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
                 <canvas id="variantsGenderChart_{{key}}" height="50"></canvas>
                 </div>
                 {% endfor %}
                 </div>
-
+                {% if variants %}
                 <div class="chart-short-container" style="float:left; width:40%;" >
+                {% else %}
+                <div class="chart-short-container" style="float:left; width:40%; display:none;" >
+                {% endif %}
                 <canvas id="glossvariantsSexChart" height="170"></canvas>
                 </div>
 
                 <div class="chart-container" style="float:left; width:30%;">
                 <canvas id="ageChart" height="170"></canvas>
                 </div>
-                <div class="chart-container" style="float:left; width:30%;">
+                {% if variants %}
+                <div class="chart-container" style="float:left; width:30%;" >
+                {% else %}
+                <div class="chart-container" style="float:left; width:30%; display:none;" >
+                {% endif %}
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
                 <canvas id="variantsAgeChart_{{key}}" height="50"></canvas>
                 </div>
                 {% endfor %}
                 </div>
-
+                {% if variants %}
                 <div class="chart-short-container" style="float:left; width:40%;" >
+                {% else %}
+                <div class="chart-short-container" style="float:left; width:40%; display:none;" >
+                {% endif %}
                 <canvas id="glossvariantsAgeChart" height="150"></canvas>
                 </div>
-
             </div>
-
         {% else %}
         <p>{% trans "There is no frequency data available for this gloss in dataset" %} {{gloss.lemma.dataset}}</p>
         {% endif %}
