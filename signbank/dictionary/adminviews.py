@@ -3789,7 +3789,7 @@ class DatasetDetailView(DetailView):
 
         # This code is slowing things down
 
-        for gloss in Gloss.objects.all():
+        for gloss in Gloss.objects.filter(lemma__dataset=dataset):
 
             nr_of_glosses += 1
 
