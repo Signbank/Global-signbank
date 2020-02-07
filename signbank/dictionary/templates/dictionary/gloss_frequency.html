@@ -27,6 +27,9 @@ var variant_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H
                         'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20,
                         'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25 };
 
+var gender_hover_colors = { 'Female': 'LightGray', 'Male': 'rgb(72,72,72)' };
+var gender_colors = { 'Female': 'Silver', 'Male': 'Gray' };
+
 var frequency_regions = {{frequency_regions|safe}};
 var data_datasets = {{data_datasets|safe}};
 var speaker_age_data = {{speaker_age_data|safe}};
@@ -236,8 +239,8 @@ var gender_data_raw = [ speaker_data['Female'] , speaker_data['Male'] ];
 
 var gloss_gender_data = [{
                             data: [ speaker_data['Female']/speaker_data['Total'] , speaker_data['Male']/speaker_data['Total'] ],
-                            backgroundColor: [ signbank_colors[0], signbank_colors[1] ],
-                            hoverBackgroundColor: [ signbank_hover_colors[0], signbank_hover_colors[1] ],
+                            backgroundColor: [ gender_colors['Female'], gender_colors['Male'] ],
+                            hoverBackgroundColor: [ gender_hover_colors['Female'], gender_hover_colors['Male'] ],
                             borderWidth: 0
                          }];
 
@@ -615,8 +618,8 @@ for (k in variant_labels) {
         flattened_genders_vk.push( {
                                 label: gender_labels[idx],
                                 data: [ total_gender_idx == 0 ? 0 : (data_gender_idx/total_gender_idx) ],
-                                hoverBackgroundColor: signbank_hover_colors[idx],
-                                backgroundColor: signbank_colors[idx],
+                                hoverBackgroundColor: gender_hover_colors[gender_labels[idx]],
+                                backgroundColor: gender_colors[gender_labels[idx]],
                                 barThickness: 25,
                                 maxBarThickness: 25,
                                 barPercentage: 0.5,
