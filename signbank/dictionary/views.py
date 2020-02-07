@@ -220,8 +220,19 @@ def gloss(request, glossid):
     except ObjectDoesNotExist:
         raise Http404
 
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
-        return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
+        return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.',
+                                                       'dataset_languages': dataset_languages,
+                                                       'selected_datasets': selected_datasets,
+                                                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
     allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
@@ -312,7 +323,10 @@ def gloss(request, glossid):
                                'feedbackmessage': feedbackmessage,
                                'annotation_idgloss': annotation_idgloss,
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
+                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': selected_datasets,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
 
 def morpheme(request, glossid):

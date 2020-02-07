@@ -1024,20 +1024,39 @@ class GlossDetailView(DetailView):
         dataset_of_requested_gloss = self.object.dataset
         datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
         selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            show_dataset_interface = False
+
         if request.user.is_authenticated():
             if dataset_of_requested_gloss not in selected_datasets:
                 return render(request, 'dictionary/warning.html',
                               {'warning': 'The gloss you are trying to view (' + str(
-                                  self.object.id) + ') is not in your selected datasets.'})
+                                  self.object.id) + ') is not in your selected datasets.',
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': selected_datasets,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
             if dataset_of_requested_gloss not in datasets_user_can_view:
                 if self.object.inWeb:
-                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
+                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk,
+                                                                                           'dataset_languages': dataset_languages,
+                                                                                           'selected_datasets': selected_datasets,
+                                                                                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface }))
                 else:
                     return render(request, 'dictionary/warning.html',
-                                  {'warning': 'The gloss you are trying to view ('+str(self.object.id)+') is not assigned to a dataset.'})
+                                  {'warning': 'The gloss you are trying to view ('+str(self.object.id)+') is not assigned to a dataset.',
+                                   'dataset_languages': dataset_languages,
+                                   'selected_datasets': selected_datasets,
+                                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         else:
             if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk,
+                                                                                           'dataset_languages': dataset_languages,
+                                                                                           'selected_datasets': selected_datasets,
+                                                                                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface }))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
@@ -4729,6 +4748,11 @@ class LemmaCreateView(CreateView):
             selected_datasets = get_selected_datasets_for_user(request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            show_dataset_interface = False
+
         form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
 
         for item, value in request.POST.items():
@@ -4741,7 +4765,10 @@ class LemmaCreateView(CreateView):
                     dataset=dataset)
                 if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
                     return render(request, 'dictionary/warning.html',
-                                  {'warning': language.name + " " + 'lemma ID Gloss not unique.'})
+                                  {'warning': language.name + " " + 'lemma ID Gloss not unique.',
+                                   'dataset_languages': dataset_languages,
+                                   'selected_datasets': selected_datasets,
+                                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
         if form.is_valid():
             try:
@@ -4751,15 +4778,16 @@ class LemmaCreateView(CreateView):
                 messages.add_message(request, messages.ERROR, ve.message)
                 return render(request, 'dictionary/add_lemma.html', {'add_lemma_form': LemmaCreateForm(request.POST, user=request.user),
                                                                      'dataset_languages': dataset_languages,
-                                                                     'selected_datasets': get_selected_datasets_for_user(request.user)})
+                                                                     'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
             # return HttpResponseRedirect(reverse('dictionary:admin_lemma_list', kwargs={'pk': lemma.id}))
             return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
         else:
             return render(request, 'dictionary/add_gloss.html', {'add_lemma_form': form,
                                                              'dataset_languages': dataset_languages,
-                                                             'selected_datasets': get_selected_datasets_for_user(
-                                                                 request.user)})
+                                                             'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
 
 def create_lemma_for_gloss(request, glossid):
