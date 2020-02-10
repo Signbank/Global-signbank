@@ -2678,6 +2678,8 @@ def gloss_frequency(request,gloss_pk):
     # the pattern variants method excludes glosses with explictly stored relations (including variant relations) to the focus gloss
     # therefore we first try pattern variants
 
+    # for the purposes of frequency charts in the template, the focus gloss is included in the variants
+    # this simplifies generating tables for variants inside of a loop in the javascript
     try:
         variants = gloss.pattern_variants()
     except:
@@ -2685,7 +2687,10 @@ def gloss_frequency(request,gloss_pk):
             variants = gloss.has_variants()
         except:
             variants = []
-    variants_with_keys = [ (og.idgloss, og) for og in variants ]
+    if gloss not in variants:
+        variants_with_keys = [ (og.idgloss, og) for og in variants ] + [ ( gloss.idgloss, gloss )]
+    else:
+        variants_with_keys = [ (og.idgloss, og) for og in variants ]
     sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
     variant_objects = [ og for (og_idgloss, og) in variants_with_keys ]
     sorted_variant_keys = sorted( [ og_idgloss for (og_idgloss, og) in variants_with_keys] )
