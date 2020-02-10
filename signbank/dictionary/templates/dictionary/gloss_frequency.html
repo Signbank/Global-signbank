@@ -131,11 +131,7 @@ for (k in variant_labels) {
     variants_sex_distribution_list.push( {
                                             label: variant_idgloss,
                                             data: gender_data_variant,
-<!--                                            xAxisID: variant_idgloss,-->
-                                            // variants_sex_distribution_data_percentage[variant_idgloss]
-                                            barThickness: 25,
-                                            barPercentage: 0.5,
-                                            categoryPercentage: 1.0,
+                                            barThickness: 20,
                                             backgroundColor: variant_colors[variant_index[variant_char]] } );
     sex_distribution_labels.push(variant_idgloss);
 };
@@ -178,9 +174,7 @@ for (k in variant_labels) {
     variants_age_distribution_list_cat.push( {
                                             label: variant_idgloss,
                                             data: variant_percentage_data,
-                                            barThickness: 25,
-                                            barPercentage: 0.5,
-                                            categoryPercentage: 1.0,
+                                            barThickness: 20,
                                             backgroundColor: variant_colors[variant_index[variant_char]] } );
     age_distribution_labels_cat.push(variant_idgloss);
 };
@@ -268,6 +262,7 @@ var ctz = document.getElementById('genderChart').getContext('2d');
 var genderchart = new Chart(ctz, {
     type: 'pie',
     responsive: true,
+    maintainAspectRation: false,
 
     data: {
         labels: gender_labels,
@@ -309,7 +304,7 @@ var genderchart = new Chart(ctz, {
         },
         legend: {
             labels: {
-                fontSize: 16,
+                fontSize: 14,
                 fontStyle: 'bold',
                 usePointStyle: true,
                 boxWidth: 10,
@@ -323,7 +318,7 @@ var genderchart = new Chart(ctz, {
 });
 
 genderchart.options.title.display = true;
-genderchart.options.title.fontSize = 20;
+genderchart.options.title.fontSize = 16;
 genderchart.options.title.position = 'left';
 genderchart.options.title.align = 'start';
 genderchart.options.title.text = "Gender";
@@ -352,6 +347,7 @@ var ctw = document.getElementById('ageChart').getContext('2d');
 var agechart = new Chart(ctw, {
     type: 'pie',
     responsive: true,
+    maintainAspectRation: false,
 
     data: {
         labels: ages_labels,
@@ -393,7 +389,7 @@ var agechart = new Chart(ctw, {
         },
         legend: {
             labels: {
-                fontSize: 16,
+                fontSize: 14,
                 fontStyle: 'bold',
                 usePointStyle: true,
                 boxWidth: 10,
@@ -407,7 +403,7 @@ var agechart = new Chart(ctw, {
 });
 
 agechart.options.title.display = true;
-agechart.options.title.fontSize = 20;
+agechart.options.title.fontSize = 16;
 agechart.options.title.position = 'left';
 agechart.options.title.align = 'start';
 agechart.options.title.text = "Age";
@@ -417,6 +413,7 @@ var ctgs = document.getElementById('glossvariantsSexChart').getContext('2d');
 var glossvariantsSexChart = new Chart(ctgs, {
     type: 'horizontalBar',
     maintainAspectRation: false,
+    responsive: true,
     barDatasetSpacing: 1,
     barValueSpacing: 1,
 
@@ -483,7 +480,7 @@ var glossvariantsSexChart = new Chart(ctgs, {
                             drawBorder: false,
                             display: false
                         },
-                        ticks: { fontSize: 16,
+                        ticks: { fontSize: 14,
                                  fontStyle: 'bold' },
                         afterFit: function(scaleInstance) {
                             scaleInstance.width = 100;
@@ -501,6 +498,8 @@ glossvariantsSexChart.update();
 var ctga = document.getElementById('glossvariantsAgeChart').getContext('2d');
 var glossvariantsAgeChart = new Chart(ctga, {
     type: 'horizontalBar',
+    maintainAspectRation: false,
+    responsive: true,
 
     data: {
         datasets: variants_age_distribution_list_cat,
@@ -565,7 +564,7 @@ var glossvariantsAgeChart = new Chart(ctga, {
                             drawBorder: false,
                             display: false
                         },
-                        ticks: { fontSize: 16,
+                        ticks: { fontSize: 14,
                                  fontStyle: 'bold' },
                         afterFit: function(scaleInstance) {
                             scaleInstance.width = 100;
@@ -640,16 +639,14 @@ for (k in variant_labels) {
                                 data: [ total_gender_idx == 0 ? 0 : (data_gender_idx/total_gender_idx) ],
                                 hoverBackgroundColor: gender_hover_colors[gender_labels[idx]],
                                 backgroundColor: gender_colors[gender_labels[idx]],
-                                barThickness: 25,
-                                maxBarThickness: 25,
-                                barPercentage: 0.5,
-                                categoryPercentage: 0.5
+                                barThickness: 20
                                 });
     };
 
     var variant_k_chart = new Chart(ctk, {
         type: 'horizontalBar',
         responsive: true,
+        maintainAspectRation: false,
         data: {
             labels: [ variant_key ],
             datasets: flattened_genders_vk,
@@ -658,12 +655,6 @@ for (k in variant_labels) {
         options: {
             legend: {
                 display: false
-            },
-            layout: {
-                padding: {
-                    right: 20,
-                    left: 0
-                }
             },
             tooltips: {
                 mode: 'point',
@@ -687,20 +678,13 @@ for (k in variant_labels) {
                     }
                 }
             },
-            hover: {
-                mode: 'index',
-                intersect: true
-            },
             scales: {
                 xAxes: [{ stacked: true,
                             display: false,
                               ticks: {
                                 display: false,
                                 max: 1
-                              },
-                            afterFit: function(scaleInstance) {
-                                scaleInstance.width = 100;
-                            }
+                              }
                 }],
                 yAxes: [{ stacked: true,
                             display: true,
@@ -752,9 +736,7 @@ for (k in variant_labels) {
                                 data: [ data_category_percentage ],
                                 hoverBackgroundColor: ages_hover_colors[idx],
                                 backgroundColor: ages_colors[idx],
-                                barThickness: 25,
-                                barPercentage: 1.0,
-                                categoryPercentage: 0.25
+                                barThickness: 20
                                 });
     };
 <!--    console.log('flattened ages vk: ', flattened_ages_vk);-->
@@ -762,6 +744,7 @@ for (k in variant_labels) {
     var variant_m_chart = new Chart(ctm, {
         type: 'horizontalBar',
         responsive: true,
+        maintainAspectRation: false,
         data: {
             labels: [ variant_key ],
             datasets: flattened_ages_vk,
@@ -774,8 +757,8 @@ for (k in variant_labels) {
                 mode: 'point',
                 yAlign: 'center',
                 xAlign: 'center',
-                fontSize: 16,
-                titleFontSize: 16,
+                fontSize: 14,
+                titleFontSize: 14,
                 callbacks: {
                     label: function(tooltipItem, data) {
                         var label = data.datasets[tooltipItem.datasetIndex].label || '';
@@ -797,15 +780,12 @@ for (k in variant_labels) {
                           ticks: {
                              display: false,
                              max: 1
-                          },
-                        afterFit: function(scaleInstance) {
-                            scaleInstance.width = 100;
-                        }
+                          }
                 }],
                 yAxes: [{ stacked: true,
                             display: true,
                             ticks: {
-                                fontSize: 16,
+                                fontSize: 14,
                                 fontStyle: 'bold'
                             },
                             gridLines: {
@@ -1040,7 +1020,7 @@ function do_toggle_display(el) {
 
             for (idy in gender_labels) {
                 var gender_category_label = gender_labels[idy];
-                console.log('gender category: ', idy, gender_category_label);
+<!--                console.log('gender category: ', idy, gender_category_label);-->
                 var next_data = variants_sex_distribution_data[gender_category_label][variant_idgloss];
 <!--                console.log('variants_sex_distribution_data_percentage, gender_category_label: ', variants_sex_distribution_data, gender_category_label);-->
 <!--                console.log('next gender percentage data: ', variant_idgloss, gender_category_label, next_data);-->
@@ -1211,7 +1191,7 @@ function do_toggle_display(el) {
                     <a data-toggle='collapse' data-parent='#speakerchart' data-target='#speaker'>{% trans "Speaker Data" %}</a>
                 </div>
             </div>
-            <div id='speaker' class='collapse'>
+            <div id='speaker' class='collapse in'>
                 <div style="float:left; width:100%;">
                     <button class="btn btn-primary" type="submit" name="view_type" onclick="do_toggle_display(this);" value='raw'/>{% trans "Raw View" %}</button>
                 </div>
@@ -1219,9 +1199,9 @@ function do_toggle_display(el) {
                 <canvas id="genderChart" height="170"></canvas>
                 </div>
                 {% if variants %}
-                <div class="chart-container" style="float:left; width:30%;" >
+                <div class="chart-multichart-enclosure-container" style="float:left; width:30%;" >
                 {% else %}
-                <div class="chart-container" style="float:left; width:30%; display:none;" >
+                <div class="chart-multichart-enclosure-container" style="float:left; width:30%; display:none;" >
                 {% endif %}
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
@@ -1241,9 +1221,9 @@ function do_toggle_display(el) {
                 <canvas id="ageChart" height="170"></canvas>
                 </div>
                 {% if variants %}
-                <div class="chart-container" style="float:left; width:30%;" >
+                <div class="chart-multichart-enclosure-container" style="float:left; width:30%;" >
                 {% else %}
-                <div class="chart-container" style="float:left; width:30%; display:none;" >
+                <div class="chart-multichart-enclosure-container" style="float:left; width:30%; display:none;" >
                 {% endif %}
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
