@@ -683,13 +683,22 @@ canvas{
     height: auto;
 }
 
+.chart-nested-container {
+    width: 400px;
+    height: auto;
+}
+
 .chart-short-container {
-    width: auto;
+    width: 400px;
     height: auto;
 }
 
 .chart-horizontal-single-bar-container {
-    width: auto;
+    width: 400px;
     height: 50px;
 }
 
+.chart-multichart-enclosure-container {
+    width: 400px;
+    height: auto;
+}
