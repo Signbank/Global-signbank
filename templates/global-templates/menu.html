@@ -26,7 +26,7 @@
                 {% load underscore_to_space %}
                 {% for ds,selected in viewable_datasets %}
                 <div class="ribbon {% if selected %}selected{% endif %}">
-                    {{ds.generate_short_name|underscore_to_space}}
+                    <a style="color:inherit; position: relative;" href="{{PREFIX_URL}}/datasets/detail/{{ds.id}}">{{ds.generate_short_name|underscore_to_space}}</a>
                 </div>
                 {% endfor %}
             </div>
