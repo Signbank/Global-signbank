@@ -31,21 +31,38 @@ var variant_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H
                         'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20,
                         'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25 };
 
-var variant_colors = [ 'hsl(0, 98%, 12%)', 'hsl(0, 80%, 27%)', 'hsl(0, 64%, 40%)', 'hsl(0, 40%, 51%)', 'hsl(0, 26%, 58%)', 'hsl(0, 34%, 68%)',
-                        'hsl(0, 98%, 12%)', 'hsl(0, 80%, 27%)', 'hsl(0, 64%, 40%)', 'hsl(0, 40%, 51%)', 'hsl(0, 26%, 58%)', 'hsl(0, 34%, 68%)',
+// shades of grey
+// if we get too many variants bright colours are shown
+var variant_colors = [ 'hsl(0, 0%, 10%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 70%)', 'hsl(0, 0%, 20%)', 'hsl(0, 0%, 50%)', 'hsl(0, 0%, 80%)',
+                        'hsl(0, 0%, 30%)', 'hsl(0, 0%, 60%)', 'hsl(0, 0%, 90%)', 'hsl(0, 0%, 5%)', 'hsl(0, 0%, 35%)', 'hsl(0, 0%, 65%)',
                         'Blue', 'Khaki', 'Chartreuse', 'Coral', 'Brown', 'BlueViolet', 'DarkCyan', 'Aqua', 'DarkRed', 'DarkOrange',
                         'DarkSeaGreen', 'DeepPink', 'Gold', 'Indigo' ];
 
+// shades of darkred
+// var variant_colors = [ 'hsl(0, 98%, 12%)', 'hsl(0, 80%, 27%)', 'hsl(0, 64%, 40%)', 'hsl(0, 40%, 51%)', 'hsl(0, 26%, 58%)', 'hsl(0, 34%, 68%)',
+//                         'hsl(0, 98%, 12%)', 'hsl(0, 80%, 27%)', 'hsl(0, 64%, 40%)', 'hsl(0, 40%, 51%)', 'hsl(0, 26%, 58%)', 'hsl(0, 34%, 68%)',
+//                        'Blue', 'Khaki', 'Chartreuse', 'Coral', 'Brown', 'BlueViolet', 'DarkCyan', 'Aqua', 'DarkRed', 'DarkOrange',
+//                         'DarkSeaGreen', 'DeepPink', 'Gold', 'Indigo' ];
+
 // different hover colors are used because the horizontal bar chars hover hovers over all the stacked values
 // otherwise the categories are no longer visible during the hover
-var gender_hover_colors = { 'Female': 'hsl(0,25%,83%)', 'Male': 'hsl(0,25%,28%)' };
-var gender_colors = { 'Female': 'hsl(0,18%,75%)', 'Male': 'hsl(0,18%,50%)' };
+// shades of darkred
+//var gender_hover_colors = { 'Female': 'hsl(0,25%,83%)', 'Male': 'hsl(0,25%,28%)' };
+//var gender_colors = { 'Female': 'hsl(0,18%,75%)', 'Male': 'hsl(0,18%,50%)' };
+// shades of grey
+var gender_hover_colors = { 'Female': 'hsl(0,0%,83%)', 'Male': 'hsl(0,0%,28%)' };
+var gender_colors = { 'Female': 'hsl(0,0%,75%)', 'Male': 'hsl(0,0%,50%)' };
 //var gender_hover_colors = { 'Female': 'LightGray', 'Male': 'rgb(72,72,72)' };
 //var gender_colors = { 'Female': 'Silver', 'Male': 'Gray' };
 //var gender_hover_colors = { 'Female': 'hsl(0,0%,83%)', 'Male': 'hsl(0,0%,28%)' };   // hsl of named greyscale
 //var gender_colors = { 'Female': 'hsl(0,0%,75%)', 'Male': 'hsl(0,0%,50%)' };       // hsl of named greyscale
-var ages_colors = [ 'hsl(0, 23%, 68%)', 'hsl(0, 28%, 58%)', 'hsl(0, 28%, 42%)', 'hsl(0, 25%, 27%)' ];
-var ages_hover_colors = [ 'hsl(0, 23%, 80%)', 'hsl(0, 34%, 62%)', 'hsl(0, 38%, 32%)', 'hsl(0, 28%, 11%)' ];
+
+// shades of darkred
+//var ages_colors = [ 'hsl(0, 23%, 68%)', 'hsl(0, 28%, 58%)', 'hsl(0, 28%, 42%)', 'hsl(0, 25%, 27%)' ];
+//var ages_hover_colors = [ 'hsl(0, 23%, 80%)', 'hsl(0, 34%, 62%)', 'hsl(0, 38%, 32%)', 'hsl(0, 28%, 11%)' ];
+// shades of grey
+var ages_colors = [ 'hsl(0, 0%, 80%)', 'hsl(0, 0%, 60%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 20%)' ];
+var ages_hover_colors = [ 'hsl(0, 0%, 70%)', 'hsl(0, 0%, 50%)', 'hsl(0, 0%, 30%)', 'hsl(0, 0%, 10%)' ];
 //var ages_colors = [ 'hsl(0, 53%, 68%)', 'hsl(0, 58%, 58%)', 'hsl(0, 54%, 42%)', 'hsl(0, 85%, 27%)' ];
 //var ages_hover_colors = [ 'hsl(0, 53%, 80%)', 'hsl(0, 38%, 52%)', 'hsl(0, 54%, 35%)', 'hsl(0, 85%, 15%)' ];
 
@@ -204,8 +221,8 @@ chart.options.scales.xAxes[0].ticks.precision = 0;
 chart.options.legend.labels.fontSize = 16;
 chart.options.legend.labels.fontColor = 'Black';
 chart.options.legend.position = 'top';
-chart.data.datasets[0].backgroundColor = variant_colors[0];
-chart.data.datasets[1].backgroundColor = variant_colors[1];
+chart.data.datasets[0].backgroundColor = ages_colors[0];
+chart.data.datasets[1].backgroundColor = ages_colors[3];
 chart.options.tooltips.titleFontSize = 16;
 chart.options.tooltips.bodyFontSize = 16;
 chart.options.title.display = false;
