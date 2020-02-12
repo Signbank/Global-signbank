@@ -93,8 +93,8 @@ var gender_labels = ['Female', 'Male'];
 var display_percentage = true;
 var view_type = '{{view_type}}';
 
-var charcode_index = gloss_idgloss.length - 1;
-var variant_char = gloss_idgloss.charAt(charcode_index).toUpperCase();
+<!--var charcode_index = gloss_idgloss.length - 1;-->
+<!--var variant_char = gloss_idgloss.charAt(charcode_index).toUpperCase();-->
 
 var age_distribution_labels = [];
 
@@ -104,8 +104,8 @@ var total_variants_age = [];
 
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
-    var charcode_index = variant_idgloss.length - 1;
-    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();
+<!--    var charcode_index = variant_idgloss.length - 1;-->
+<!--    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();-->
     var k_total_age = 0;
     for (i in variants_age_distribution_data[variant_idgloss]) {
         k_total_age += variants_age_distribution_data[variant_idgloss][i];
@@ -114,7 +114,7 @@ for (k in variant_labels) {
     datasets_age_distribution_list.push( {
                                             label: variant_idgloss,
                                             data: variants_age_distribution_data[variant_idgloss],
-                                            backgroundColor: variant_colors[variant_index[variant_char]] } );
+                                            backgroundColor: variant_colors[k] } );
     age_distribution_labels.push(variant_idgloss);
 };
 
@@ -129,8 +129,8 @@ var total_variants_sex = [];
 
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
-    var charcode_index = variant_idgloss.length - 1;
-    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();
+<!--    var charcode_index = variant_idgloss.length - 1;-->
+<!--    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();-->
     var k_total_sex = 0;
     var gender_data_variant = [];
     for (idx in gender_labels) {
@@ -146,7 +146,7 @@ for (k in variant_labels) {
                                             label: variant_idgloss,
                                             data: gender_data_variant,
                                             barThickness: 20,
-                                            backgroundColor: variant_colors[variant_index[variant_char]] } );
+                                            backgroundColor: variant_colors[k] } );
     sex_distribution_labels.push(variant_idgloss);
 };
 
@@ -173,8 +173,8 @@ for (i in ages_labels) {
 
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
-    var charcode_index = variant_idgloss.length - 1;
-    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();
+<!--    var charcode_index = variant_idgloss.length - 1;-->
+<!--    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();-->
 
     var variant_percentage_data = [];
     for (i in ages_labels) {
@@ -189,7 +189,7 @@ for (k in variant_labels) {
                                             label: variant_idgloss,
                                             data: variant_percentage_data,
                                             barThickness: 20,
-                                            backgroundColor: variant_colors[variant_index[variant_char]] } );
+                                            backgroundColor: variant_colors[k] } );
     age_distribution_labels_cat.push(variant_idgloss);
 };
 <!--console.log('age_distribution_labels_cat: ', age_distribution_labels_cat);-->
@@ -275,7 +275,7 @@ var gloss_gender_data = [{
 var ctz = document.getElementById('genderChart').getContext('2d');
 var genderchart = new Chart(ctz, {
     type: 'pie',
-    responsive: true,
+    responsive: false,
     maintainAspectRation: false,
 
     data: {
@@ -325,7 +325,7 @@ var genderchart = new Chart(ctz, {
                 padding: 10
             },
             fullWidth: true,
-            position: 'right',
+            position: 'left',
             align: 'middle'
         }
     }
@@ -333,6 +333,8 @@ var genderchart = new Chart(ctz, {
 
 genderchart.options.title.display = true;
 genderchart.options.title.fontSize = 16;
+genderchart.options.title.fontStyle = 'bold';
+genderchart.options.title.fontColor = 'black';
 genderchart.options.title.position = 'left';
 genderchart.options.title.align = 'start';
 genderchart.options.title.text = "Gender";
@@ -360,7 +362,7 @@ var gloss_age_data = [{
 var ctw = document.getElementById('ageChart').getContext('2d');
 var agechart = new Chart(ctw, {
     type: 'pie',
-    responsive: true,
+    responsive: false,
     maintainAspectRation: false,
 
     data: {
@@ -410,7 +412,7 @@ var agechart = new Chart(ctw, {
                 padding: 10
             },
             fullWidth: true,
-            position: 'right',
+            position: 'left',
             align: 'middle'
         }
     }
@@ -418,6 +420,8 @@ var agechart = new Chart(ctw, {
 
 agechart.options.title.display = true;
 agechart.options.title.fontSize = 16;
+agechart.options.title.fontStyle = 'bold';
+agechart.options.title.fontColor = 'black';
 agechart.options.title.position = 'left';
 agechart.options.title.align = 'start';
 agechart.options.title.text = "Age";
@@ -439,7 +443,8 @@ var glossvariantsSexChart = new Chart(ctgs, {
         layout: {
             padding: {
                 top: 0,
-                bottom: 120,
+                right: 0,
+                bottom: 100
             }
         },
         legend: {
@@ -1205,39 +1210,56 @@ function do_toggle_display(el) {
                     <a data-toggle='collapse' data-parent='#speakerchart' data-target='#speaker'>{% trans "Speaker Data" %}</a>
                 </div>
             </div>
-            <div id='speaker' class='collapse in'>
+            <div id='speaker' class='container-fluid collapse in'>
                 <div style="float:left; width:100%;">
                     <button class="btn btn-primary" type="submit" name="view_type" onclick="do_toggle_display(this);" value='raw'/>{% trans "Raw View" %}</button>
                 </div>
-                <div class="chart-container" style="float:left; width:30%;">
-                <canvas id="genderChart" height="170"></canvas>
+                <div class="row">
+<!--                    <div class="col-lg-12">-->
+                <div class="col-lg-3">
+                <div class="chart-container">
+                <canvas id="genderChart" width="400"></canvas>
                 </div>
+                </div>
+                <div class="col-lg-4">
                 {% if variants %}
-                <div class="chart-multichart-enclosure-container" style="float:left; width:30%;" >
+                <div class="chart-multichart-enclosure-container" >
                 {% else %}
-                <div class="chart-multichart-enclosure-container" style="float:left; width:30%; display:none;" >
+                <div class="chart-multichart-enclosure-container" style="display:none;" >
                 {% endif %}
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
-                <canvas id="variantsGenderChart_{{key}}" height="50"></canvas>
+                <canvas id="variantsGenderChart_{{key}}" height="50" width="400"></canvas>
                 </div>
                 {% endfor %}
                 </div>
+                </div>
+                <div class="col-lg-4" style="float:right;">
                 {% if variants %}
-                <div class="chart-short-container" style="float:left; width:40%;" >
+                <div class="chart-multichart-enclosure-container" style="float:right;" >
                 {% else %}
-                <div class="chart-short-container" style="float:left; width:40%; display:none;" >
+                <div class="chart-multichart-enclosure-container" style="float:right; display:none;" >
                 {% endif %}
-                <canvas id="glossvariantsSexChart" height="170"></canvas>
+                <div class="chart-short-container" style="float:right;">
+                <canvas id="glossvariantsSexChart" width="400" ></canvas>
                 </div>
-
-                <div class="chart-container" style="float:left; width:30%;">
-                <canvas id="ageChart" height="170"></canvas>
                 </div>
+                </div>
+                    <!--                </div>-->
+                </div>
+                <div class="clearfix"></div>
+                <div class="row">
+<!--                    <div class="col-lg-12">-->
+                <div class="col-lg-3">
+                <div class="chart-container" >
+                <canvas id="ageChart" width="400"></canvas>
+                </div>
+                </div>
+                <div class="col-lg-4">
                 {% if variants %}
-                <div class="chart-multichart-enclosure-container" style="float:left; width:30%;" >
+                <div class="chart-multichart-enclosure-container" >
                 {% else %}
-                <div class="chart-multichart-enclosure-container" style="float:left; width:30%; display:none;" >
+                <div class="chart-multichart-enclosure-container" style="display:none;" >
                 {% endif %}
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
@@ -1245,12 +1267,18 @@ function do_toggle_display(el) {
                 </div>
                 {% endfor %}
                 </div>
+                </div>
+                <div class="col-lg-4" style="float:right;">
                 {% if variants %}
-                <div class="chart-short-container" style="float:left; width:40%;" >
+                <div class="chart-multichart-enclosure-container" style="float:right;" >
                 {% else %}
-                <div class="chart-short-container" style="float:left; width:40%; display:none;" >
+                <div class="chart-multichart-enclosure-container" style="float:right; display:none;" >
                 {% endif %}
-                <canvas id="glossvariantsAgeChart" height="150"></canvas>
+                <div class="chart-short-container" style="float:right;">
+                <canvas id="glossvariantsAgeChart" width="600" ></canvas>
+                </div>
+                </div>
+                </div>
                 </div>
             </div>
         {% else %}

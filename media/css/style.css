@@ -679,18 +679,18 @@ canvas{
 }
 
 .chart-container {
-    width: 1000px;
+    width: auto;
     height: auto;
 }
 
 .chart-nested-container {
-    width: 400px;
+    width: auto;
     height: auto;
 }
 
 .chart-short-container {
-    width: 400px;
-    height: auto;
+    width: 600px;
+    height: 300px;
 }
 
 .chart-horizontal-single-bar-container {
@@ -699,6 +699,6 @@ canvas{
 }
 
 .chart-multichart-enclosure-container {
-    width: 400px;
+    width: auto;
     height: auto;
 }
