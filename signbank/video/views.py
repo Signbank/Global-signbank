@@ -46,7 +46,7 @@ def addvideo(request):
             dir_path = os.path.join(WRITABLE_FOLDER.encode('utf-8'), GLOSS_VIDEO_DIRECTORY.encode('utf-8'))
             sub_dir = gloss.idgloss[:2]
             import urllib.parse
-            quoted_filename = urllib.parse.quote(gloss.idgloss, safe='')
+            quoted_filename = gloss.idgloss #urllib.parse.quote(gloss.idgloss, safe='')
             filename = quoted_filename + '-' + str(gloss.pk) + '.mp4'
             path = os.path.join(dir_path, sub_dir.encode('utf-8'), filename.encode('utf-8'))
 
@@ -86,7 +86,7 @@ def addvideo(request):
                     video_object.delete()
             # make a new GlossVideo object for the new file, quote the name to account for special characters in the database
             import urllib.parse
-            quoted_filename = urllib.parse.quote(vfile.name, safe='')
+            quoted_filename = vfile.name #urllib.parse.quote(vfile.name, safe='')
             vfile.name = quoted_filename
             video = GlossVideo(videofile=vfile, gloss=gloss)
             video.save()
@@ -170,7 +170,7 @@ def deletevideo(request, videoid):
         fpath, fname = os.path.split(gloss.get_video_path())
 
         import urllib.parse
-        quoted_filename = urllib.parse.quote(gloss_basename)
+        quoted_filename = gloss_basename #urllib.parse.quote(gloss_basename)
         quoted_path = os.path.join(fpath, quoted_filename + '.mp4')
 
         filename_small = quoted_filename + '_small' + '.mp4'
