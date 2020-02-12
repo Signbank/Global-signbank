@@ -26,7 +26,7 @@
 
     <script type='text/javascript'>
     var url = '{{ PREFIX_URL }}'
-
+    var language_code = '{{ LANGUAGE_CODE }}';
     var edit_mode_str = '{% trans "Edit" %}'
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
     var delete_this_gloss_str = '{% trans "Delete this gloss" %}'
@@ -52,6 +52,8 @@
     {% endif %}
 
     var gloss_dataset_id = {{ gloss.lemma.dataset_id}}
+    var gloss_dataset_id = {{ gloss.lemma.dataset_id}};
+    var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
     var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
@@ -128,12 +130,60 @@
         placement : 'bottom'
     });
 
-    //Fill choice_lists later
-    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{gloss.lemma.dataset}}").done( function (data)
+    //Fill choice_lists without frequencies now
+    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{gloss.lemma.dataset}}").done( function (data)
     {
         choice_lists = $.extend(data,{{other_media_field_choices | safe}});
         console.log("Added field choices");
     });
+
+    //Fill choice_lists with frequencies later
+    $(document).ready(function() {
+        $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{gloss.lemma.dataset}}").done( function (data)
+        {
+            choice_lists = $.extend(data,{{other_media_field_choices | safe}});
+
+            // Reload the data in the lists
+            $('.edit_list').unbind('click');
+            configure_edit();
+
+            console.log("Added field choices");
+        });
+    });
+
+    //Keyboard shortcuts
+    document.onkeydown = checkKey;
+
+    function checkKey(e)
+    {
+        // No shortcut if your typing
+        if (document.activeElement.tagName == 'INPUT') {return;}
+
+        e = e || window.event;
+
+        switch(e.key)
+        {
+          case 'p':
+            element_id = 'phonology'
+            break;
+          case 'm':
+            element_id = 'morphology'
+            break;
+          case 's':
+            element_id = 'semantics'
+            break;
+          default:
+            element_id = null
+        }
+
+        if (element_id != null)
+        {
+            toggle_edit();
+            $('#'+element_id).collapse('show');
+            $('#'+element_id)[0].scrollIntoView();
+        }
+
+    }
 
     </script>
 
@@ -156,7 +206,7 @@
             });
         });
 
-        $('#searchresults').css({'top': Math.round($('#signbank-bar').height() + 10)});
+        $('#searchresults').css({'padding-top': 10});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
@@ -233,6 +283,12 @@
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
         </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/frequency">{% trans "Frequency View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision history" %}</a>
+        </li>
     </ul>
 
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
@@ -285,7 +341,7 @@
      <!-- {{ gloss.get_video }} -->
 
         <div id="player">
-          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video}}" controls type="video/mp4" autoplay muted></video>
+          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls type="video/mp4" autoplay muted></video>
         </div>
         <div id="replay"></div>
 
@@ -300,7 +356,7 @@
 
     <div>
         {% if gloss.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_path}}" style="height:259px;width:auto;">
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 
@@ -398,7 +454,6 @@
             <tr {%if gloss.dialect.all|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
 
-                <!--<td class='edit edit_text' id='idgloss'>{% if lemma_group %}<a href='{{lemma_group_url}}'>{% value gloss.idgloss %}</a>{% else %}{% value gloss.idgloss %}{% endif %}</td>-->
                 <td><span id="lemma">{{ gloss.lemma }}
                         {% if lemma_group %}
                             <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
@@ -1388,7 +1443,7 @@
                     {% else %}
                     <td></td>
                     {% endif %}
-                    <td><a download="{{ file_name }}" href="{{ path }}">Download</a></td>
+                    <td><a download="{{ file_name }}" href="{{ URL }}{{ PREFIX_URL }}{{ path }}">Download</a></td>
                     <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
                     <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>

@@ -11,10 +11,22 @@ def get_annotation_idgloss_translation(gloss, language):
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
     if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:
         return annotationidglosstranslations[0].text
-    translations = gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
-    if translations:
-        return translations[0].text
+
+    #This is a fallback to the English translation, but we rather want nothing, see #583
+
+    #translations = gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
+    #if translations:
+    #    return translations[0].text
+
     return ''
+
+@register.filter
+def get_annotation_idgloss_translation_no_default(gloss, language):
+    annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+    if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:
+        return annotationidglosstranslations[0].text
+    else:
+        return ''
 
 @register.filter
 def get_default_annotation_idgloss_translation(gloss):
@@ -144,6 +156,6 @@ def get_gloss_description(gloss, language_code_2char):
     :param language_code_2char: 
     :return: 
     """
-    from signbank.tools import get_ecv_descripion_for_gloss
+    from signbank.tools import get_ecv_description_for_gloss
     from signbank.settings.base import ECV_SETTINGS
-    return get_ecv_descripion_for_gloss(gloss, language_code_2char, ECV_SETTINGS['include_phonology_and_frequencies'])
+    return get_ecv_description_for_gloss(gloss, language_code_2char, ECV_SETTINGS['include_phonology_and_frequencies'])

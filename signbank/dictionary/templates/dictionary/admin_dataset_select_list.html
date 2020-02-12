@@ -17,7 +17,10 @@
       <tr>
           <th width="5%">{% trans "Selected" %}</th>
           <th width="10%">{% trans "Dataset Acronym" %}</th>
-          <th>{% trans "Dataset Name" %}</th>
+          <th width="15%">{% trans "Dataset Name" %}</th>
+          <th width="35%">{% trans "Description" %}</th>
+          <th width="35%">{% trans "Copyright" %}</th>
+
       </tr>
     </thead>
     <tbody>
@@ -30,6 +33,8 @@
                     <a href="{{PREFIX_URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.acronym }}</a>
                 </td>
                 <td>{{ dataset.name }}</td>
+                <td>{{ dataset.description }}</td>
+                <td>{{ dataset.copyright }}</td>
             </tr>
             {% endif %}
       {% endfor %}

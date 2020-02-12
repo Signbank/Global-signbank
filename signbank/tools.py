@@ -13,10 +13,21 @@ from django.utils.translation import override
 from signbank.dictionary.models import *
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import OperationalError
 from django.core.urlresolvers import reverse
 from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
+
+
+def get_two_letter_dir(idgloss):
+    foldername = idgloss[:2]
+
+    if len(foldername) == 1:
+        foldername += '-'
+
+    return foldername
+
 
 def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
         
@@ -33,7 +44,12 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
         annotation_id = annotationidglosstranslations[0].text
     pk = str(gloss.pk)
-    destination_folder = goal_folder+annotation_id[:2]+'/'
+    destination_folder = os.path.join(
+        WRITABLE_FOLDER,
+        goal_folder,
+        gloss.lemma.dataset.acronym,
+        get_two_letter_dir(gloss.idgloss)
+    )
 
     #Create the necessary subfolder if needed
     if not os.path.isdir(destination_folder):
@@ -41,7 +57,7 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
 
     #Move the file
     source = source_folder+annotation_id+extension
-    goal = destination_folder+annotation_id+'-'+pk+extension
+    goal = os.path.join(destination_folder, annotation_id+'-'+pk+extension)
 
     if os.path.isfile(goal):
         overwritten = True
@@ -54,7 +70,10 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
     except IOError:
         was_allowed = False
 
-    os.remove(source)
+    try:
+        os.remove(source)
+    except OSError:
+        pass
 
     return overwritten,was_allowed
 
@@ -66,9 +85,14 @@ class MachineValueNotFoundError(Exception):
     pass
 
 table_column_name_lemma_id_gloss_translations = {}
-for language in Language.objects.all():
-    lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
-    table_column_name_lemma_id_gloss_translations[language.language_code_2char] = lemmaidgloss_comumn_name
+
+#See if there are any languages there, but don't crash if there isn't even a table
+try:
+    for language in Language.objects.all():
+        lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
+        table_column_name_lemma_id_gloss_translations[language.language_code_2char] = lemmaidgloss_comumn_name
+except OperationalError:
+    pass
 
 def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss):
 
@@ -767,8 +791,9 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, '), new_human_value: (', new_human_value, ')')
 
             #Try to translate the value to machine values if needed
-            if len(field.choices) > 0:
-                human_to_machine_values = {human_value: machine_value for machine_value, human_value in field.choices}
+            if hasattr(field, 'field_choice_category'):
+                field_choices = build_choice_list(field.field_choice_category)
+                human_to_machine_values = {human_value: machine_value for machine_value, human_value in field_choices}
                 # print('Import CSV: human_to_machine_values: ', human_to_machine_values)
                 try:
                     # print('new human value: ', new_human_value)
@@ -806,7 +831,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             elif field.__class__.__name__ == 'NullBooleanField':
 
                 new_human_value_lower = new_human_value.lower()
-                if new_human_value_lower == 'neutral' and (field.name == 'weakprop' or field.name == 'weakdrop'):
+                if new_human_value_lower == 'neutral' and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
                     new_machine_value = None
                 elif new_human_value_lower in ['true', 'yes', '1']:
                     new_machine_value = True
@@ -820,7 +845,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     # Boolean expected
                     error_string = ''
                     # If the new value is empty, don't count this as a type error, error_string is generated conditionally
-                    if field.name == 'weakdrop' or field.name == 'weakprop':
+                    if field.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
                         if new_human_value != None and new_human_value != '' and new_human_value != 'None':
                             error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), value ' + str(new_human_value) + ' for ' + human_key + ' should be a Boolean or Neutral.'
                     else:
@@ -844,10 +869,10 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 continue
 
             #Translate back the machine value from the gloss
-            try:
-                original_human_value = dict(field.choices)[original_machine_value]
-            except KeyError:
-
+            if hasattr(field, 'field_choice_category'):
+                field_choices = build_choice_list(field.field_choice_category)
+                original_human_value = dict(field_choices)[original_machine_value]
+            else:
                 original_human_value = original_machine_value
 
             #Remove any weird char
@@ -1034,8 +1059,14 @@ def check_existance_signlanguage(gloss, values):
 
     return (found, not_found, errors)
 
-note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+#See if there are any note typefield choices there, but don't crash if there isn't even a table
+try:
+    note_role_choices = list(FieldChoice.objects.filter(field__iexact='NoteType'))
+except OperationalError:
+    note_role_choices = []
+
 all_notes = [ n.english_name for n in note_role_choices]
+
 all_notes_display = ', '.join(all_notes)
 # this is used to speedup matching updates to Notes
 # it allows the type of note to be in either English or Dutch in the CSV file
@@ -1392,36 +1423,6 @@ def reload_signbank(request=None):
         from django.shortcuts import render
         return render(request,'reload_signbank.html')
 
-def get_static_urls_of_files_in_writable_folder(root_folder,since_timestamp=0, dataset=None):
-    dataset_gloss_ids = []
-    if dataset:
-        dataset_gloss_ids = Gloss.objects.filter(lemma__dataset=dataset).values_list('pk', flat=True)
-        print(str(dataset_gloss_ids))
-        print(str(4611 in dataset_gloss_ids))
-
-    full_root_path = signbank.settings.server_specific.WRITABLE_FOLDER+root_folder+'/'
-    static_urls = {}
-
-    for subfolder_name in os.listdir(full_root_path):
-        if os.path.isdir(full_root_path+subfolder_name):
-            for filename in os.listdir(full_root_path+subfolder_name):
-
-                if os.path.getmtime(full_root_path+subfolder_name+'/'+filename) > since_timestamp:
-                    res = re.search(r'(.+)\.[^\.]*', filename)
-
-                    try:
-                        gloss_id = res.group(1)
-                        re_result = re.match(r'.*\-(\d+)', gloss_id)
-
-                        if dataset is None or int(re_result.group(1)) in dataset_gloss_ids:
-                            static_urls[gloss_id] = reverse('dictionary:protected_media',
-                                                            args=['']) + root_folder + '/' + quote(
-                                subfolder_name) + '/' + quote(filename)
-                    except AttributeError:
-                        continue
-
-    return static_urls
-
 def get_gloss_data(since_timestamp=0, dataset=None):
     if dataset:
         glosses = Gloss.objects.filter(lemma__dataset=dataset)
@@ -1466,7 +1467,7 @@ def get_deleted_gloss_or_media_data(item_type,since_timestamp):
     return result
 
 
-def generate_still_image(gloss_prefix, vfile_location, vfile_name):
+def generate_still_image(video):
     try:
         from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
         # local copy for debugging purposes
@@ -1475,24 +1476,27 @@ def generate_still_image(gloss_prefix, vfile_location, vfile_name):
         from signbank.settings.base import GLOSS_IMAGE_DIRECTORY
 
         # Extract frames (incl. middle)
-        extracter = MiddleFrameExtracter([vfile_location+os.sep+vfile_name], TMP_DIR + os.sep + "signbank-extractMiddleFrame",
-                                         FFMPEG_PROGRAM, True)
+        extracter = MiddleFrameExtracter([os.path.join(WRITABLE_FOLDER, str(video.videofile))],
+                                         os.path.join(TMP_DIR, "signbank-ExtractMiddleFrame"), FFMPEG_PROGRAM, True)
         output_dirs = extracter.run()
 
         # Copy video still to the correct location
+        vfile_name = os.path.basename(str(video.videofile))
+        still_goal_location = os.path.join(WRITABLE_FOLDER,
+                                           str(video.videofile).replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
+        destination = os.path.dirname(still_goal_location)
         for dir in output_dirs:
             for filename in os.listdir(dir):
                 if filename.replace('.png', '.mp4') == vfile_name:
-                    destination = WRITABLE_FOLDER + GLOSS_IMAGE_DIRECTORY + os.sep + gloss_prefix
-                    still_goal_location = destination + os.sep + filename
                     if not os.path.isdir(destination):
                         os.makedirs(destination, 0o770)
-                    shutil.copy(dir + os.sep + filename, destination + os.sep + filename)
+                    shutil.copy(os.path.join(dir, filename), destination)
             shutil.rmtree(dir)
+        print("Generating still images succes!")
     except ImportError as i:
         print("Error resizing video: ", i)
     except IOError as io:
-        print(io.message)
+        print("IOError: ", io)
 
 
 def get_selected_datasets_for_user(user):
@@ -1512,6 +1516,16 @@ def get_selected_datasets_for_user(user):
             selected_datasets = [ Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM) ]
         return selected_datasets
 
+
+def get_users_without_dataset():
+
+    users_with_no_dataset = []
+
+    for user in User.objects.all():
+        if user.is_active and len(get_objects_for_user(user, 'view_dataset', Dataset)) == 0:
+            users_with_no_dataset.append(user)
+
+    return users_with_no_dataset
 
 def gloss_from_identifier(value):
     """Given an id of the form "idgloss (pk)" return the
@@ -1578,18 +1592,13 @@ def fields_with_choices_glosses():
 
     from signbank.dictionary.models import Gloss
     for field in Gloss._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_glosses AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_handshapes():
@@ -1599,18 +1608,13 @@ def fields_with_choices_handshapes():
 
     from signbank.dictionary.models import Handshape
     for field in Handshape._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_handshapes AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_definition():
@@ -1620,18 +1624,13 @@ def fields_with_choices_definition():
 
     from signbank.dictionary.models import Definition
     for field in Definition._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_definition AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_morphology_definition():
@@ -1641,18 +1640,13 @@ def fields_with_choices_morphology_definition():
 
     from signbank.dictionary.models import MorphologyDefinition
     for field in MorphologyDefinition._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_morphology_definition AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_other_media_type():
@@ -1662,18 +1656,13 @@ def fields_with_choices_other_media_type():
 
     from signbank.dictionary.models import OtherMedia
     for field in OtherMedia._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_other_media_type AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def fields_with_choices_morpheme_type():
@@ -1683,18 +1672,13 @@ def fields_with_choices_morpheme_type():
 
     from signbank.dictionary.models import Morpheme
     for field in Morpheme._meta.fields:
-        if field.choices:
+        if hasattr(field, 'field_choice_category'):
             # field has choices
-            try:
-                field_category = field.field_choice_category
-                if field_category in fields_dict.keys():
-                    fields_dict[field_category].append(field.name)
-                else:
-                    fields_dict[field_category] = [field.name]
-
-            except AttributeError:
-                print('fields_with_choices_morpheme_type AttributeError on field ', field.name)
-                continue
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
     return fields_dict
 
 def write_ecv_files_for_all_datasets():
@@ -1712,6 +1696,8 @@ def write_ecv_file_for_dataset(dataset_name):
     dataset_id = Dataset.objects.get(acronym=dataset_name)
 
     query_dataset = Gloss.none_morpheme_objects().filter(excludeFromEcv=False).filter(lemma__dataset=dataset_id)
+    if not query_dataset:
+        return ''
 
     sOrder = 'annotationidglosstranslation__text'
     if dataset_id.default_language:
@@ -1745,16 +1731,22 @@ def write_ecv_file_for_dataset(dataset_name):
 
     return ecv_file
 
-def get_ecv_descripion_for_gloss(gloss, lang, include_phonology_and_frequencies=False):
+def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies=False):
     desc = ""
     if include_phonology_and_frequencies:
-        description_fields = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir',
-                              'movSh', 'tokNo',
-                              'tokNoSgnr']
+        fields_data = []
+        for field in Gloss._meta.fields:
+            if field.name in ECV_SETTINGS['description_fields']:
+                if hasattr(field, 'field_choice_category'):
+                    fc_category = field.field_choice_category
+                else:
+                    fc_category = None
+                fields_data.append((field.name, fc_category))
 
-        for f in description_fields:
-            if f in FIELDS['phonology']:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldname_to_category(f))
+        for (f, fieldchoice_category) in fields_data:
+
+            if fieldchoice_category:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 machine_value = getattr(gloss, f)
                 value = machine_value_to_translated_human_value(machine_value, choice_list, lang)
                 if value is None:
@@ -1762,6 +1754,9 @@ def get_ecv_descripion_for_gloss(gloss, lang, include_phonology_and_frequencies=
             else:
                 value = get_value_for_ecv(gloss, f)
 
+            # potential error: this pretty printing assumes a particular ordering of the fields
+            # parens might not match if sorted otherwise
+            # these fields seem to be hard coded
             if f == 'handedness':
                 desc = value
             elif f == 'domhndsh':
@@ -1893,9 +1888,9 @@ def update_cngt_counts(folder_index=None):
 
     folder_paths = []
 
-    for foldername in os.listdir(settings.CNGT_EAF_FILES_LOCATION):
+    for foldername in os.listdir(settings.EAF_FILES_LOCATION):
         if '.xml' not in foldername:
-            folder_paths.append(settings.CNGT_EAF_FILES_LOCATION+foldername+'/')
+            folder_paths.append(settings.EAF_FILES_LOCATION+foldername+'/')
 
     if folder_index != None:
         folder_paths = [folder_paths[int(folder_index)]]
@@ -1905,7 +1900,7 @@ def update_cngt_counts(folder_index=None):
     for folder_path in folder_paths:
         eaf_file_paths += [folder_path + f for f in os.listdir(folder_path)]
 
-    sign_counter = SignCounter(settings.CNGT_METADATA_LOCATION,
+    sign_counter = SignCounter(settings.METADATA_LOCATION,
                                eaf_file_paths,
                                settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT)
 
@@ -1983,3 +1978,188 @@ def update_cngt_counts(folder_index=None):
 
     print('No glosses were found for these names',glosses_not_in_signbank)
     print('Updated glosses',updated_glosses)
+
+def import_corpus_speakers():
+    import csv
+
+    errors = []
+
+    #First do some checks
+    if not os.path.isfile(settings.METADATA_LOCATION):
+        if settings.METADATA_LOCATION:
+            errors.append('The required file ' + settings.METADATA_LOCATION + ' is not present')
+        else:
+            errors.append('The required setting METADATA_LOCATION for corpus speakers is not defined.')
+    else:
+
+        for n,row in enumerate(csv.reader(open(settings.METADATA_LOCATION), delimiter='\t')):
+
+            #Skip the header
+            if n == 0:
+                if row == ['Participant','Metadata region','Age at time of recording','Gender','Preference hand']:
+                    continue
+                else:
+                    errors.append('The header of '+ settings.METADATA_LOCATION + ' is not Participant,Metadata region,Age at time of recording,Gender,Preference hand')
+                    continue
+
+            #Create an other video for this
+            try:
+                participant, location, age, gender, hand = row
+            except:
+                errors.append('Line '+str(n)+' does not seem to have the correct amount of items')
+                continue
+
+            # we use this syntax because we process the fields one at a time
+            try:
+                speaker = Speaker.objects.get(identifier=participant)
+            except:
+                speaker = Speaker()
+                speaker.identifier = participant
+            speaker.location = location
+            gender_lower = gender.lower()
+            if gender_lower in ['female', 'f', 'v']:
+                speaker.gender = 'f'
+            elif gender_lower in ['male', 'm']:
+                speaker.gender = 'm'
+            elif gender_lower in ['other', 'o']:
+                speaker.gender = 'o'
+            else:
+                speaker.gender = None
+            hand_lower = hand.lower()
+            if hand_lower in ['right', 'r']:
+                speaker.handedness = 'r'
+            elif hand_lower in ['left', 'l']:
+                speaker.handedness = 'l'
+            elif hand_lower in ['ambidextrous', 'a', 'both']:
+                speaker.handedness = 'a'
+            elif hand_lower in ['unknown']:
+                speaker.handedness = ''
+            else:
+                speaker.handedness = ''
+            try:
+                speaker.age = int(age)
+            except:
+                # might need to do some checking here if other data has been found
+                errors.append('Line '+str(n)+' has an incorrect age format')
+                pass
+            # field Preference hand is ignored
+            speaker.save()
+
+def configure_corpus_documents():
+
+    corpus_name = 'NGT'
+
+    # create a Corpus object if it does not exist
+    try:
+        corpus = Corpus.objects.get(name=corpus_name)
+    except:
+        corpus = Corpus()
+        corpus.name = corpus_name
+        corpus.description = 'Corpus NGT'
+        corpus.speakers_are_cross_referenced = True
+        corpus.save()
+
+    existing_documents = [ d.identifier for d in  Document.objects.all() ]
+
+    # create Document objects for the EAF files
+    folder_paths = []
+
+    for foldername in os.listdir(settings.EAF_FILES_LOCATION):
+        if '.xml' not in foldername:
+            folder_paths.append(settings.EAF_FILES_LOCATION + foldername + '/')
+
+    eaf_file_paths = []
+
+    for folder_path in folder_paths:
+        eaf_file_paths += [folder_path + f for f in os.listdir(folder_path)]
+
+    # get filenames out of paths to use as document identifiers
+
+    from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
+
+    document_identifiers = []
+    document_creation_dates = {}
+    for eaf_path in eaf_file_paths:
+        file_basename = os.path.basename(eaf_path)
+        basename = os.path.splitext(file_basename)[0]
+        if basename in document_identifiers:
+            print('configure_corpus_documents: Duplicate document identifier found: ', basename, '. No Document object created for file: ', eaf_path)
+        else:
+            document_identifiers += [basename]
+            document_creation_dates[basename] = get_creation_time(eaf_path)
+
+    for d in existing_documents:
+        if d in document_identifiers:
+            continue
+        else:
+            # document has been deleted, delete this document from the corpus
+            try:
+                d_obj = Document.objects.get(identifier=d)
+                d_obj.glossfrequency_set.all().delete()
+                d_obj.delete()
+            except:
+                print('configure_corpus_documents: Unknown error cleaning up corpus document ', d)
+                continue
+
+    document_objects = {}
+    # create Document objects if it does not exist
+    for document_id in document_identifiers:
+        try:
+            document = Document.objects.get(identifier=document_id)
+        except:
+            document = Document()
+            document.identifier = document_id
+            document.corpus = corpus
+            document.creation_time = document_creation_dates[document_id]
+            document.save()
+        # to speed up processing later, document objects are already looked up
+        document_objects[document_id] = document
+
+    speaker_objects = {}
+    for speaker in Speaker.objects.all():
+        speaker_objects[speaker.identifier] = speaker
+
+    from CNGT_scripts.python.signCounter import SignCounter
+
+    sign_counter = SignCounter(settings.METADATA_LOCATION,
+                               eaf_file_paths,
+                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT)
+
+    sign_counter.run()
+
+    # we get the frequencies from the sign_counter object, not from get_result as was done previously
+    try:
+        # this is inside a try to make sure the newest version of signCounter is used
+        frequencies_per_speaker = sign_counter.freqsPerPerson
+    except:
+        frequencies_per_speaker = {}
+
+    # dict person document gloss freq
+    glosses_not_in_signbank = []
+
+    for pers in frequencies_per_speaker.keys():
+        for doc in frequencies_per_speaker[pers].keys():
+            for gloss_id, cnt in frequencies_per_speaker[pers][doc].items():
+                # Collect the gloss needed
+                try:
+                    if gloss_id.startswith("gloss"):
+                        gloss_id = gloss_id[5:]
+                    gloss_id = int(gloss_id)
+                    gloss = Gloss.objects.get(id=gloss_id)
+                except (ObjectDoesNotExist, ValueError):
+                    if gloss_id != None:
+                        glosses_not_in_signbank.append(gloss_id)
+
+                    continue
+
+                try:
+                    gloss_frequency = GlossFrequency.objects.get(speaker=speaker_objects[pers], document=document_objects[doc], gloss=gloss)
+                except:
+                    gloss_frequency = GlossFrequency()
+                    gloss_frequency.speaker = speaker_objects[pers]
+                    gloss_frequency.document = document_objects[doc]
+                    gloss_frequency.gloss = gloss
+                gloss_frequency.frequency = int(cnt)
+                gloss_frequency.save()
+
+    print('configure_corpus_documents: No glosses were found for these names: ', glosses_not_in_signbank)

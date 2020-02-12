@@ -11,6 +11,7 @@ from django.db.models.fields import NullBooleanField
 from tagging.models import TaggedItem, Tag
 import os, shutil, re
 from datetime import datetime
+from django.utils.timezone import get_current_timezone
 from django.contrib import messages
 
 from signbank.dictionary.models import *
@@ -275,7 +276,6 @@ def update_gloss(request, glossid):
 
         elif field in 'isNew':
             # only modify if we have publish permission
-            print(_('yes'))
             gloss.isNew = value.lower() in [_('Yes').lower(),'true',True,1]
             gloss.save()
 
@@ -305,13 +305,8 @@ def update_gloss(request, glossid):
                 dataset = gloss.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
                 if dataset == lemma.dataset:
-                    old_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
                     gloss.lemma = lemma
                     gloss.save()
-                    new_video_path = settings.MEDIA_ROOT + gloss.get_video_path()
-
-                    # Rename video
-                    gloss.rename_video(old_video_path, new_video_path)
                 else:
                     messages.add_message(messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
             except ObjectDoesNotExist:
@@ -371,60 +366,32 @@ def update_gloss(request, glossid):
                                     if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
 
             if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
+                print('not set ', field)
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
 
             #Regular field updating
             else:
-                #Remember the old video path if you're changing the name
-                if field == 'idgloss':
-                    old_video_path = gloss.get_video_path()
-                    old_image_path = gloss.get_image_path()
 
-                    try:
-                        old_extension = old_image_path.split('.')[-1]
-                    except AttributeError:
-                        old_extension = ''
-
+                # Alert: Note that if field is idgloss, the following code updates it
                 setattr(gloss,field,value)
                 gloss.save()
 
-                #Update the video location if you're changing the name
-                if field == 'idgloss':
-                    new_video_path = gloss.get_video_path()
-                    new_image_path = gloss.get_image_path(check_existance=False)
-
-                    try:
-                        shutil.move(settings.MEDIA_ROOT+'/'+old_video_path,settings.MEDIA_ROOT+'/'+new_video_path)
-
-                    #You don't have to do this if there's no video
-                    except IOError:
-                        pass
-
-                    try:
-                        shutil.move(settings.MEDIA_ROOT+'/'+old_image_path,settings.MEDIA_ROOT+'/'+new_image_path+'.'+old_extension)
-
-                    #You don't have to do this if there's no image
-                    except (IOError,TypeError):
-                        pass
-
-                if field == 'idgloss':
-                    # new value has already been saved to gloss
-                    lemma_group_string = gloss.idgloss
-                    other_glosses_in_lemma_group = Gloss.objects.filter(idgloss__iexact=lemma_group_string).count()
-                    if other_glosses_in_lemma_group > 1:
-                        lemma_gloss_group = True
-                    else:
-                        lemma_gloss_group = False
-
                 #If the value is not a Boolean, return the new value
                 if not isinstance(value,bool):
+                    # if we get to here, field is a valid field of Gloss
+                    # field is a choice list and we need to get the translated human value
 
-                    field_category = fieldname_to_category(field)
+                    changed_field = [ f for f in Gloss._meta.fields if f.name == field].pop()
 
-                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                    newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                    if hasattr(changed_field, 'field_choice_category'):
+                        field_category = getattr(changed_field, 'field_choice_category')
+                        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                        # if the choice_list happens to be empty, the following call results in value being assigned
+                        newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                    else:
+                        newvalue = value
 
                 if field_category in FIELDS['phonology']:
 
@@ -437,6 +404,15 @@ def update_gloss(request, glossid):
         #This is because you cannot concat none to a string in py3
         if original_value == None:
             original_value = ''
+
+        #Remember this change for the history books
+        try:
+            original_human_value = machine_value_to_translated_human_value(original_value,choice_list,request.LANGUAGE_CODE)
+        except:
+            original_human_value = original_value
+
+        revision = GlossRevision(old_value=original_human_value, new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
+        revision.save()
 
         # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
         return HttpResponse(
@@ -1350,9 +1326,17 @@ def update_handshape(request, handshapeid):
             newvalue = value
 
             if not isinstance(value, bool):
-                field_category = fieldname_to_category(field)
-                choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
+                # field is a choice list and we need to get the translated human value
+
+                changed_field = [f for f in Handshape._meta.fields if f.name == field].pop()
+
+                if hasattr(changed_field, 'field_choice_category'):
+                    field_category = getattr(changed_field, 'field_choice_category')
+                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                    # if the choice_list happens to be empty, the following call results in value being assigned
+                    newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
+                else:
+                    newvalue = value
 
         # Finger selections are saved as both boolean values per finger and as patterns that include the fingers
         # The patterns, such as TIM, are stored as choice lists in FieldChoice.
@@ -1517,16 +1501,6 @@ def add_morpheme(request):
                 messages.add_message(request, messages.ERROR,
                                      _("The given Lemma Idgloss ID is unknown."))
                 return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
-
-        # Check for 'change_dataset' permission
-        if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) and ('change_dataset' not in get_group_perms(request.user, dataset)):
-            messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
-            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
-        elif not dataset:
-            # Dataset is empty, this is an error
-            messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
-            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
-
 
         for item, value in request.POST.items():
             if item.startswith(form.morpheme_create_field_prefix):
@@ -1720,13 +1694,8 @@ def update_morpheme(request, morphemeid):
                 dataset = morpheme.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
                 if dataset == lemma.dataset:
-                    old_video_path = settings.MEDIA_ROOT + morpheme.get_video_path()
                     morpheme.lemma = lemma
                     morpheme.save()
-                    new_video_path = settings.MEDIA_ROOT + morpheme.get_video_path()
-
-                    # Rename video
-                    morpheme.rename_video(old_video_path, new_video_path)
                 else:
                     messages.add_message(messages.ERROR, _("The dataset of the morpheme is not the same as that of the lemma."))
             except ObjectDoesNotExist:
@@ -1760,6 +1729,10 @@ def update_morpheme(request, morphemeid):
             # special value of 'notset' or -1 means remove the value
             fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
 
+            if field in FIELDS['phonology']:
+                # this is used as part of the feedback to the interface, to alert the user to refresh the display
+                category_value = 'phonology'
+
             char_fields_not_null = [f.name for f in Morpheme._meta.fields
                                     if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
 
@@ -1770,32 +1743,22 @@ def update_morpheme(request, morphemeid):
 
             # Regular field updating
             else:
-
-                # Remember the old video path if you're changing the name
-                if field == 'idgloss':
-                    old_video_path = morpheme.get_video_path()
-
                 morpheme.__setattr__(field, value)
                 morpheme.save()
 
-                # Update the video location if you're changing the name
-                if field == 'idgloss':
-                    new_video_path = morpheme.get_video_path()
-
-                    try:
-                        shutil.move(settings.MEDIA_ROOT + '/' + old_video_path,
-                                    settings.MEDIA_ROOT + '/' + new_video_path)
-
-                    # You don't have to do this if there's no video
-                    except IOError:
-                        pass
-
                 # If the value is not a Boolean, return the new value
                 if not isinstance(value, bool):
-                    field_category = fieldname_to_category(field)
-                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                    newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
-                    category_value = 'phonology'
+                    # field is a choice list and we need to get the translated human value
+
+                    changed_field = [ f for f in Morpheme._meta.fields if f.name == field].pop()
+
+                    if hasattr(changed_field, 'field_choice_category'):
+                        field_category = getattr(changed_field, 'field_choice_category')
+                        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                        # if the choice_list happens to be empty, the following call results in value being assigned
+                        newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                    else:
+                        newvalue = value
 
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
 

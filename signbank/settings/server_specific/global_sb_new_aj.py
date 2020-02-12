@@ -1,77 +1,27 @@
-import socket
-hostname = socket.gethostname()
-
-ROOT = '/var/www/signbank/live/'
-
-BASE_DIR = ROOT+'repo/'
-WRITABLE_FOLDER = ROOT+'writable/'
-
-# Added test database, to run unit tests using this copy of the database, use -k argument to keep test database
-#      python bin/develop.py test -k
-
-DATABASES = {'default':
-                {
-                    'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME': WRITABLE_FOLDER+'database/signbank.db',
-                    'TEST': {
-                        'NAME': WRITABLE_FOLDER+'database/test-signbank.db',
-                    }
-                }
-            }
+from signbank.settings.server_specific.default import *
 
 ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
-
-# what do we call this signbank?
-LANGUAGE_NAME = "Global"
-COUNTRY_NAME = "Netherlands"
-
-#Influences which template and css folder are used
+LANGUAGE_NAME = 'Global'
+COUNTRY_NAME = 'Netherlands'
 SIGNBANK_VERSION_CODE = 'global'
 URL = 'https://signbank.science.ru.nl/'
 ALLOWED_HOSTS = ['signbank.science.ru.nl','signbank.cls.ru.nl','new.signbank.science.ru.nl']
-PREFIX_URL = ''
 
-gettext = lambda s: s
+EAF_FILES_LOCATION = 'corpus-ngt/eaf/'
+METADATA_LOCATION = 'CNGT_MetadataEnglish_OtherResearchers.csv'
+
 LANGUAGES = (
   ('en', gettext('English')),
   ('nl', gettext('Dutch')),
   ('zh-hans', gettext('Chinese'))
 )
-LANGUAGE_CODE = "en"
 
-SEPARATE_ENGLISH_IDGLOSS_FIELD = True
-
-DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en'}
-
-DEFAULT_LANGUAGE_HEADER_COLUMN = {'English': 'name_en'}
-
-FIELDS = {}
-
-FIELDS['main'] = ['useInstr','wordClass']
-
-FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj',
-          'relOriMov','relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
-          'mouthing', 'phonetVar','domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number','weakdrop','weakprop',]
-
-FIELDS['semantics'] = ['iconImg','namEnt','semField','valence','concConcSet']
-
-FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe','tokNoSgnrGe',
-                       'tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
-
-FIELDS['handshape'] = ['hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf',
-                       'hsFingConf2', 'hsAperture',
-                       'hsSpread', 'hsFingUnsel', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
-                       'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
-                       'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
-
-MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
-                      'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
-MINIMAL_PAIRS_COUNT = len(MINIMAL_PAIRS_FIELDS)
-
-ECV_FILE = WRITABLE_FOLDER+'ecv/ngt.ecv'
-ECV_FOLDER = WRITABLE_FOLDER+'ecv'
+ECV_FILE = ECV_FOLDER+'ngt.ecv'
 ECV_SETTINGS = {
     'include_phonology_and_frequencies': True,
+
+    'description_fields': ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'locprim', 'relOriMov', 'movDir', 'movSh',
+                           'tokNo', 'tokNoSgnr'],
 
     # The order of languages matters as the first will
     # be treated as default by ELAN
@@ -99,45 +49,43 @@ ECV_SETTINGS = {
     ]
 }
 
-GLOSS_VIDEO_DIRECTORY = 'glossvideo'
-GLOSS_IMAGE_DIRECTORY = 'glossimage'
-FEEDBANK_VIDEO_DIRECTORY = 'comments'
-CROP_GLOSS_IMAGES = True
-HANDSHAPE_IMAGE_DIRECTORY = 'handshapeimage'
-OTHER_MEDIA_DIRECTORY = WRITABLE_FOLDER+'othermedia/'
-WSGI_FILE = ROOT+'lib/python2.7/site-packages/signbank/wsgi.py'
-IMAGES_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_images/'
-VIDEOS_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_videos/'
-OTHER_MEDIA_TO_IMPORT_FOLDER = WRITABLE_FOLDER+'import_other_media/'
-SIGNBANK_PACKAGES_FOLDER = WRITABLE_FOLDER+'packages/'
-
-SHOW_MORPHEME_SEARCH = True
-SHOW_DATASET_INTERFACE_OPTIONS = True
-SHOW_LETTER_NUMBER_PHONOLOGY = True
 DEFAULT_DATASET = 'Nederlandse Gebarentaal'
 DEFAULT_DATASET_ACRONYM = 'NGT'
 DEFAULT_DATASET_LANGUAGE_ID = 1
+DEFAULT_DATASET_PK = 5
 
-CNGT_EAF_FILES_LOCATION = WRITABLE_FOLDER+'corpus-ngt/eaf/'
-CNGT_METADATA_LOCATION = ROOT+'CNGT_MetadataEnglish_OtherResearchers.csv'
+FREQUENCY_CATEGORIES = ['Occurences', 'Signers']
 
-FFMPEG_PROGRAM = "avconv"
-TMP_DIR = "/tmp"
+FREQUENCY_REGIONS = ['Amsterdam', 'Voorburg', 'Rotterdam', 'Gestel', 'Groningen', 'Other']
 
-API_FIELDS = [
-    'idgloss',
-]
+# The above two are what Signbank Global has as hard-coded frequency fields, taken apart to show the types
+# Below they are coded into a table
+# This data structure is used to generate data for charts to display the existing frequency data
+# For use in GlossFrequencyView and LemmaFrequencyView (development) templates
+FREQUENCY_FIELDS = {
+    'Amsterdam' : {
+        'Occurences' : 'tokNoA',
+        'Signers' : 'tokNoSgnrA'
+    },
+    'Voorburg': {
+        'Occurences': 'tokNoV',
+        'Signers': 'tokNoSgnrV'
+    },
+    'Rotterdam': {
+        'Occurences': 'tokNoR',
+        'Signers': 'tokNoSgnrR'
+    },
+    'Gestel': {
+        'Occurences': 'tokNoGe',
+        'Signers': 'tokNoSgnrGe'
+    },
+    'Groningen': {
+        'Occurences': 'tokNoGr',
+        'Signers': 'tokNoSgnrGr'
+    },
+    'Other': {
+        'Occurences': 'tokNoO',
+        'Signers': 'tokNoSgnrO'
+    },
+}
 
-# This is a short mapping between 2 and 3 letter language code
-# This needs more complete solution (perhaps a library),
-# but then the code cn for Chinese should changed to zh.
-LANGUAGE_CODE_MAP = [
-    {2:'nl',3:'nld'},
-    {2:'en',3:'eng'},
-    {2:'zh-hans',3:'chi'}
-]
-
-SPEED_UP_RETRIEVING_ALL_SIGNS =	True
-
-import datetime
-RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=90)

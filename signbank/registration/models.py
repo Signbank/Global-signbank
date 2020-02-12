@@ -102,17 +102,18 @@ class RegistrationManager(models.Manager):
         
         if send_email:
             from django.core.mail import send_mail
-            current_site = Site.objects.get_current()
+            signbank_name = settings.LANGUAGE_NAME + ' Signbank'
 
             subject = render_to_string('registration/activation_email_subject.txt',
-                                       context={ 'site': current_site })
+                                       context={ 'signbank_name': signbank_name})
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
             
             message = render_to_string('registration/activation_email.txt',
                                        context={ 'activation_key': registration_profile.activation_key,
                                          'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
-                                         'site': current_site })
+                                         'signbank_name': signbank_name,
+                                         'url': settings.URL})
 
             # for debug purposes on local machine
             # print('register subject: ', subject)

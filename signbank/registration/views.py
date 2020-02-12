@@ -13,6 +13,7 @@ from django.middleware.csrf import get_token
 
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
 from signbank.registration.models import RegistrationProfile
+from django.contrib.auth.models import User
 from signbank.dictionary.models import Dataset
 from django.contrib import messages
 from django.template.loader import render_to_string
@@ -237,4 +238,27 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         'error_message': error_message})
 mylogin = never_cache(mylogin)
 
+def users_without_dataset(request):
 
+    from signbank.tools import get_users_without_dataset
+    from guardian.shortcuts import assign_perm
+
+    main_dataset = Dataset.objects.get(pk=settings.DEFAULT_DATASET_PK)
+
+    if len(request.POST) > 0:
+        users_with_access = []
+        for user in request.POST.keys():
+
+            if not 'user' in user:
+                continue
+
+            user = User.objects.get(pk=int(user.split('_')[-1]))
+            assign_perm('view_dataset', user, main_dataset)
+
+            users_with_access.append(user.first_name + ' ' + user.last_name)
+
+        alert_success = ', '.join(users_with_access)
+    else:
+        alert_success = None
+
+    return render (request, 'users_without_dataset.html', {'users_without_dataset':get_users_without_dataset(),'main_dataset_name':main_dataset.name,'alert_success':alert_success})

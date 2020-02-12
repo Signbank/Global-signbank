@@ -52,7 +52,8 @@
     {% else %}
     var dataset_choices = {};
     {% endif %}
-    var gloss_dataset_id = {{ morpheme.lemma.dataset_id}}
+    var gloss_dataset_id = {{ morpheme.lemma.dataset_id}};
+    var gloss_default_language_code = '{{morpheme.lemma.dataset.default_language.language_code_2char}}';
     var mrptype_choices = {{morpheme.mrptype_choices|safe}};
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 
@@ -427,7 +428,23 @@
         <div id='phonology' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in phonology_fields %}
-		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
+                {% if name == 'domhndsh' %}
+                 <tr value="{{value}}">
+                 <th>{{label}}</th>
+                        <td class="edit edit_list" id='{{name}}'>
+                            {% if StrongHand %}
+                            <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
+                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{ value }}</a>
+                            {% else %}
+                            <span style="color:red">{{value}}</span>
+                            {% endif %}
+                        </td>
+                 </tr>
+                {% else %}
+		    <tr><th>{{label}}</th>
+                <td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td>
+            </tr>
+            {% endif %}
 		{% endfor %}
 
             </table>

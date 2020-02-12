@@ -1,11 +1,12 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
+from django.db import OperationalError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
                                         MorphologyDefinition, build_choice_list, OtherMedia, Handshape, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
-                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, fieldname_to_category
+                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
@@ -22,6 +23,14 @@ from easy_select2.widgets import Select2, Select2Multiple
 CATEGORY_CHOICES = (('all', 'All Signs'),
                     ('semantic:health', 'Only Health Related Signs'),
                     ('semantic:education', 'Only Education Related Signs'))
+
+#See if there are any tags there, but don't crash if there isn't even a table
+try:
+    tag_choices = [(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()]
+    not_tag_choices = [(tag.name, tag.name) for tag in Tag.objects.all()]
+except OperationalError:
+    tag_choices = []
+    not_tag_choices = []
 
 class UserSignSearchForm(forms.Form):
 
@@ -177,16 +186,12 @@ class MorphemeCreateForm(forms.ModelForm):
 
         return morpheme
 
-class VideoUpdateForm(forms.Form):
-    """Form to allow update of the video for a sign"""
-    videofile = VideoUploadToFLVField()
-
 
 class TagUpdateForm(forms.Form):
     """Form to add a new tag to a gloss"""
 
     tag = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), 
-                            choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
+                            choices=tag_choices)
     delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
 
 YESNOCHOICES = (("unspecified", "Unspecified" ), ('yes', 'Yes'), ('no', 'No'))
@@ -219,8 +224,8 @@ class GlossSearchForm(forms.ModelForm):
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))
-    tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()])
-    nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
+    tags = forms.MultipleChoiceField(choices=tag_choices)
+    nottags = forms.MultipleChoiceField(choices=not_tag_choices)
     keyword = forms.CharField(label=_(u'Translations'))
     hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=YESNOCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
@@ -240,7 +245,9 @@ class GlossSearchForm(forms.ModelForm):
     hasRelation = forms.ChoiceField(label=_(u'Type of relation'),choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     hasComponentOfType = forms.TypedChoiceField(label=_(u'Has compound component type'),choices=COMPONENT_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasComponentOfType.field_choice_category = 'MorphologyType'
     hasMorphemeOfType = forms.TypedChoiceField(label=_(u'Has morpheme type'),choices=MORPHEME_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasMorphemeOfType.field_choice_category = 'MorphemeType'
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
     altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)
@@ -257,6 +264,7 @@ class GlossSearchForm(forms.ModelForm):
     isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     inWeb = forms.ChoiceField(label=_(u'Is in Web dictionary'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole = forms.ChoiceField(label=_(u'Note type'),choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_(u'Note contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     createdBefore = forms.DateField(label=_(u'Created before'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
@@ -265,7 +273,7 @@ class GlossSearchForm(forms.ModelForm):
     createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     gloss_search_field_prefix = "glosssearch_"
-    keyword_search_field_prefix = "keyword_"
+    keyword_search_field_prefix = "keywords_"
     lemma_search_field_prefix = "lemma_"
 
     class Meta:
@@ -310,10 +318,10 @@ class GlossSearchForm(forms.ModelForm):
 
         field_language = language_code
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and len(field.choices) > 0]
-        for fieldname in multiple_select_gloss_fields:
+        multiple_select_gloss_fields = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+
+        for (fieldname, field_category) in multiple_select_gloss_fields:
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
-            field_category = fieldname_to_category(fieldname)
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = [('0','---------')] + choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
@@ -328,8 +336,8 @@ class MorphemeSearchForm(forms.ModelForm):
     sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))
     lemmaGloss = forms.CharField(label=_("Lemma Gloss"))
-    tags = forms.MultipleChoiceField(choices=[(tag.name, tag.name.replace('_', ' ')) for tag in Tag.objects.all()])
-    nottags = forms.MultipleChoiceField(choices=[(tag.name, tag.name) for tag in Tag.objects.all()])
+    tags = forms.MultipleChoiceField(choices=tag_choices)
+    nottags = forms.MultipleChoiceField(choices=not_tag_choices)
     keyword = forms.CharField(label=_(u'Translations'))
     hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=YESNOCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
@@ -362,6 +370,7 @@ class MorphemeSearchForm(forms.ModelForm):
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole = forms.ChoiceField(label=_(u'Note type'), choices=DEFN_ROLE_CHOICES,
                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_(u'Note contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     createdBefore = forms.DateField(label=_(u'Created before'))
@@ -407,10 +416,10 @@ class MorphemeSearchForm(forms.ModelForm):
 
         field_language = language_code
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
-        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and len(field.choices) > 0]
-        for fieldname in multiple_select_morpheme_fields:
+        multiple_select_morpheme_fields = [(field.name, field.field_choice_category) for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+
+        for (fieldname, field_category) in multiple_select_morpheme_fields:
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
-            field_category = fieldname_to_category(fieldname)
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = [('0','---------')] + choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
@@ -509,7 +518,7 @@ class CSVUploadForm(forms.Form):
     file = forms.FileField()
 
 class ImageUploadForGlossForm(forms.Form):
-    """Form for video upload for a particular gloss"""
+    """Form for image upload for a particular gloss"""
 
     imagefile = forms.FileField(label="Upload Image")
     gloss_id = forms.CharField(widget=forms.HiddenInput)
@@ -611,7 +620,7 @@ class HandshapeSearchForm(forms.ModelForm):
 
 
 class ImageUploadForHandshapeForm(forms.Form):
-    """Form for video upload for a particular gloss"""
+    """Form for image upload for a particular gloss"""
 
     imagefile = forms.FileField(label="Upload Image")
     handshape_id = forms.CharField(widget=forms.HiddenInput)

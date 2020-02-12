@@ -1,3 +1,5 @@
+from django.core.management.base import BaseCommand, CommandError
+
 from os.path import isfile
 from sqlite3 import connect
 from shutil import copyfile, move
@@ -18,21 +20,25 @@ def make_db_small(filename):
     conn.commit()
     conn.close()
 
-if __name__ == '__main__':
 
-    #Static settings
-    WRITABLE_FOLDER = '/var/www/signbank/live/writable/database/'
-    SOURCE_DB = WRITABLE_FOLDER+'signbank.db'
-    TEST_DB_FILENAME = WRITABLE_FOLDER+'test-signbank.db'
-    SMALL = True
+class Command(BaseCommand):
+    help = 'Creates a smaller faster database for unit tests'
 
-    if isfile(TEST_DB_FILENAME):
-        print('Making backup of old test database')
-        move(TEST_DB_FILENAME,TEST_DB_FILENAME+'_save')
+    def handle(self, *args, **options):
 
-    print('Copying database file')
-    copyfile(SOURCE_DB,TEST_DB_FILENAME)
+        # Static settings
+        WRITABLE_FOLDER = '/var/www/signbank/live/writable/database/'
+        SOURCE_DB = WRITABLE_FOLDER + 'signbank.db'
+        TEST_DB_FILENAME = WRITABLE_FOLDER + 'test-signbank.db'
+        SMALL = True
 
-    if SMALL:
-        print('Emptying tables, for faster tests')
-        make_db_small(TEST_DB_FILENAME)
+        if isfile(TEST_DB_FILENAME):
+            self.stdout.write('Making backup of old test database')
+            move(TEST_DB_FILENAME, TEST_DB_FILENAME + '_save')
+
+        self.stdout.write('Copying database file')
+        copyfile(SOURCE_DB, TEST_DB_FILENAME)
+
+        if SMALL:
+            self.stdout.write('Emptying tables, for faster tests')
+            make_db_small(TEST_DB_FILENAME)

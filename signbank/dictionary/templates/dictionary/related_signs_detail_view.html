@@ -34,6 +34,12 @@
     <li class="nav-item">
         <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
     </li>
+    <li class="nav-item">
+        <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/frequency">{% trans "Frequency View" %}</a>
+    </li>
+    <li class="nav-item">
+        <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision history" %}</a>
+    </li>
 </ul>
 
 <br>
@@ -65,7 +71,7 @@
     </thead>
     <tbody>
       <tr>
-          <td>{%if gloss.get_image_path != None %}
+          <td>{%if gloss.get_image_path %}
               <div class="thumbnail_container">
               <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
                   <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}">
@@ -147,7 +153,7 @@
      {% for rel, target_display in otherrelations %}
       {% if rel.role == "homonym" %}
       <tr>
-            <td>{%if rel.target.get_image_path != None %}
+            <td>{%if rel.target.get_image_path %}
               <div class="thumbnail_container">
               <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
                   <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
@@ -202,7 +208,7 @@
      {% for rel, target_display in otherrelations %}
       {% if rel.role == "synonym" %}
       <tr>
-             <td>{%if rel.target.get_image_path != None %}
+             <td>{%if rel.target.get_image_path %}
               <div class="thumbnail_container">
               <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
                   <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
@@ -257,7 +263,7 @@
      {% for rel, target_display in otherrelations %}
       {% if rel.role == "antonym" %}
       <tr>
-          <td>{%if rel.target.get_image_path != None %}
+          <td>{%if rel.target.get_image_path %}
               <div class="thumbnail_container">
               <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
                   <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
@@ -312,7 +318,7 @@
      {% for rel, target_display in otherrelations %}
       {% if rel.role == "hyponym" %}
       <tr>
-          <td>{%if rel.target.get_image_path != None %}
+          <td>{%if rel.target.get_image_path %}
               <div class="thumbnail_container">
               <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
                   <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
@@ -367,7 +373,7 @@
      {% for rel, target_display in otherrelations %}
       {% if rel.role == "hypernym" %}
       <tr>
-          <td>{%if rel.target.get_image_path != None %}
+          <td>{%if rel.target.get_image_path %}
               <div class="thumbnail_container">
               <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
                   <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
@@ -422,7 +428,7 @@
      {% for rel, target_display in otherrelations %}
       {% if rel.role == "seealso" %}
       <tr>
-          <td>{%if rel.target.get_image_path != None %}
+          <td>{%if rel.target.get_image_path %}
               <div class="thumbnail_container">
               <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
                   <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
@@ -476,7 +482,7 @@
     <tbody>
      {% for gl, gl_display in variants %}
       <tr>
-          <td>{%if gl.get_image_path != None %}
+          <td>{%if gl.get_image_path %}
               <div class="thumbnail_container">
               <a href="{{PREFIX_URL}}/dictionary/gloss/{{gl.pk}}/">
                   <img class="thumbnail" src="{{protected_media_url}}{{gl.get_image_path}}">
@@ -526,7 +532,7 @@
      {% load field_choice %}
      {% for gl, dict, minpar_display in minimalpairs %}
 		<tr>
-          <td>{%if gl.get_image_path != None %}
+          <td>{%if gl.get_image_path %}
               <div class="thumbnail_container">
               <a href="{{PREFIX_URL}}/dictionary/gloss/{{gl.pk}}/">
                   <img class="thumbnail" src="{{protected_media_url}}{{gl.get_image_path}}">

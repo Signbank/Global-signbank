@@ -672,3 +672,33 @@ tr.rotated th {
     top: 0px;
     background-color: white;
 }
+
+canvas{
+    width:auto !important;
+    height:auto !important;
+}
+
+.chart-container {
+    width: 1000px;
+    height: auto;
+}
+
+.chart-nested-container {
+    width: 400px;
+    height: auto;
+}
+
+.chart-short-container {
+    width: 400px;
+    height: auto;
+}
+
+.chart-horizontal-single-bar-container {
+    width: 400px;
+    height: 50px;
+}
+
+.chart-multichart-enclosure-container {
+    width: 400px;
+    height: auto;
+}

@@ -13,7 +13,7 @@ from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 
 # local imports
-from signbank.registration.views import activate, register, mylogin
+from signbank.registration.views import activate, register, mylogin, users_without_dataset
 from signbank.registration.forms import RegistrationForm
 
 #It's weird that I have to set the correct success url by hand, but it doesn't work any other way
@@ -74,4 +74,6 @@ urlpatterns = [
                        url(r'^register/complete/$',
                            TemplateView.as_view(template_name='registration/registration_complete.html'),
                            name='registration_complete'),
+
+                        url(r'^users_without_dataset/$',users_without_dataset, name='users_without_dataset')
                        ]

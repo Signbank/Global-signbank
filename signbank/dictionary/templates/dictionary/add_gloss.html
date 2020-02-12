@@ -11,6 +11,8 @@
 
     <script type="text/javascript">
         var url = '{{URL}}{{ PREFIX_URL }}';
+        var language_code = '{{LANGUAGE_CODE}}';
+        var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
     </script>
 
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
@@ -33,6 +35,17 @@
          });
     });
 
+    /**
+     * set the lemma language for the chosen dataset
+     */
+    function do_set_lemma_language(el) {
+      if (user_can_add_gloss) {
+          var dataset_language_id = $(el).attr('value');
+          $("#selected_lemma_language").attr('value',dataset_language_id);
+          language_code = dataset_language_id;
+          set_lemma_language();
+      }
+    }
     </script>
 
 {% endblock %}
@@ -43,15 +56,14 @@
    <p>{% trans "Please provide some initial data" %}:</p>
      <form action='{% url "dictionary:add_gloss" %}' method='post'>
          {% csrf_token %}
-         <table class='table' style='width: 400px;'>
+         <table class='table' style='width: 1200px;'>
              <tr>
-                 <th><label for='dataset'>Dataset</label></th>
+                 <th style='width:300px;'><label for='dataset'>Dataset</label></th>
                  <td><select id="id_dataset" name="dataset" required="">
                          <option value=""
                                  dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
                          {% for s_dataset in selected_datasets %}
                          <option value="{{ s_dataset.id }}"
-                                 {% if add_gloss_form.last_used_dataset and add_gloss_form.last_used_dataset == s_dataset.name %}selected{% endif %}
                                  dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.name }}</option>
                          {% endfor %}
                      </select></td>
@@ -60,6 +72,17 @@
                  <th><label for='id_idgloss'>{% trans "ID Gloss" %}</label></th>
                  <td>
                          <div id="lemma_select">
+                             <label for="id_lemma_language_select">
+                             <span id="selected_lemma_language" value="">
+                             {% for dataset_lang in dataset_languages %}
+                                 <input id="lemma_language_{{ dataset_lang.language_code_2char }}"
+                                        type="radio" name="lemma_language" onclick="do_set_lemma_language(this)"
+                                        value="{{ dataset_lang.language_code_2char }}"/>
+                                 <label id="lemma_language_label_{{ dataset_lang.language_code_2char }}">{{dataset_lang.name}}</label>
+                             {% endfor %}
+                             </span>
+                             </label>
+                             <br/>
                              <!-- Input of the type ahead -->
                              <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->

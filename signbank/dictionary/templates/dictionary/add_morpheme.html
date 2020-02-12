@@ -11,6 +11,8 @@
 {% block extrajs %}
     <script type="text/javascript">
         var url = '{{URL}}{{ PREFIX_URL }}';
+        var language_code = '{{LANGUAGE_CODE}}';
+        var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
     </script>
 
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
@@ -20,6 +22,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
 
  <script type="text/javascript">
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
 
     $(document).ready(function(){
         /**
@@ -30,26 +33,8 @@
          $('#id_dataset').change(function() {
             set_annotationidglosslanguages();
          });
-
-         function set_annotationidglosslanguages() {
-            var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
-            var languages = languages_str.split(",");
-            $("[id*='add_morpheme_dataset_']").each(function(){
-                $(this).hide();
-            });
-            $("[id*='morphemecreate_']").each(function(){
-                $(this).prop('required', false);
-            });
-            for(var id in languages) {
-                $("[id*='add_morpheme_dataset_header_" + languages[id] + "']").show();
-                $("[id*='add_morpheme_dataset_value_" + languages[id] + "']").show();
-                $("[id*='morphemecreate_" + languages[id] + "']").prop('required', true);
-            }
-         }
     });
-
     var csrf_token = '{{csrf_token}}';
-    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
     var choice_lists = {{choice_lists|safe}};
     var mrp_data = choice_lists['mrpType'];
     $("#id_mrptype").html("");
@@ -58,6 +43,17 @@
         $("#id_mrptype").append($('<option>', { value : number_only }).text(value));
     });
 
+    /**
+     * set the lemma language for the chosen dataset
+     */
+    function do_set_lemma_language(el) {
+      if (user_can_add_gloss) {
+          var dataset_language_id = $(el).attr('value');
+          $("#selected_lemma_language").attr('value',dataset_language_id);
+          language_code = dataset_language_id;
+          set_lemma_language();
+      }
+    }
     </script>
 
 {% endblock %}
@@ -70,15 +66,15 @@
 
      <form action='{% url "dictionary:add_morpheme" %}' method='post'>
          {% csrf_token %}
-         <table class='table' style='width: 400px;'>
+         <table class='table' style='width: 1200px;'>
              <tr>
-                 <th><label for='dataset'>Dataset</label></th>
+                 <th style='width:300px;'><label for='dataset'>Dataset</label></th>
                  <td><select id="id_dataset" name="dataset" required="">
                          <option value="" {% if add_morpheme_form.last_used_dataset == None %}selected{% endif %}
                                  dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
                          {% for s_dataset in selected_datasets %}
                          <option value="{{ s_dataset.id }}"
-                                 {% if add_morpheme_form.last_used_dataset == s_dataset.name %}selected{% endif %}
+                                 {% if add_morpheme_form.last_used_dataset == s_dataset.acronym %}selected{% endif %}
                                  dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.name }}</option>
                          {% endfor %}
                      </select></td>
@@ -87,6 +83,19 @@
                  <th><label for='id_idgloss'>{% trans "ID Gloss" %}</label></th>
                  <td>
                          <div id="lemma_select">
+
+                             <label for="id_lemma_language_select">
+                             <span id="selected_lemma_language" value="">
+                             {% for dataset_lang in dataset_languages %}
+                                 <input id="lemma_language_{{ dataset_lang.language_code_2char }}"
+                                        type="radio" name="lemma_language" onclick="do_set_lemma_language(this)"
+                                        value="{{ dataset_lang.language_code_2char }}"/>
+                                 <label id="lemma_language_label_{{ dataset_lang.language_code_2char }}">{{dataset_lang.name}}</label>
+                             {% endfor %}
+                             </span>
+                             </label>
+                             <br/>
+
                              <!-- Input of the type ahead -->
                              <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
@@ -109,10 +118,10 @@
              </tr>
              {% for dataset_lang in dataset_languages %}
              <tr>
-                 <th id="add_morpheme_dataset_header_{{ dataset_lang.language_code_2char }}">
+                 <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}">
                      <label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
                  </th>
-                 <td id="add_morpheme_dataset_value_{{ dataset_lang.language_code_2char }}">
+                 <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
                      <input id="morphemecreate_{{ dataset_lang.language_code_2char }}" name="morphemecreate_{{ dataset_lang.language_code_2char }}" required="" maxlength="30" type="text"/>
                  </td>
              </tr>

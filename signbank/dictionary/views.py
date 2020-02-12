@@ -13,6 +13,7 @@ from django.utils.http import urlquote
 from collections import OrderedDict
 from django.contrib import messages
 from django.core.files import File
+from pathlib import Path
 
 import os
 import shutil
@@ -27,6 +28,7 @@ from signbank.dictionary.update import update_keywords, update_signlanguage, upd
     update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
 from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
+from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import *
@@ -218,8 +220,19 @@ def gloss(request, glossid):
     except ObjectDoesNotExist:
         raise Http404
 
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
-        return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
+        return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.',
+                                                       'dataset_languages': dataset_languages,
+                                                       'selected_datasets': selected_datasets,
+                                                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
     allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
@@ -310,7 +323,10 @@ def gloss(request, glossid):
                                'feedbackmessage': feedbackmessage,
                                'annotation_idgloss': annotation_idgloss,
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
+                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': selected_datasets,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
 
 def morpheme(request, glossid):
@@ -332,7 +348,7 @@ def morpheme(request, glossid):
     if not(request.user.has_perm('dictionary.search_gloss') or morpheme.inWeb):
         return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
 
-    allkwds = morpheme.translation_set.all()
+    allkwds = morpheme.translation_set.all().order_by('translation__text')
     if len(allkwds) == 0:
         trans = None
     else:
@@ -452,7 +468,7 @@ def missing_video_view(request):
 
     glosses = missing_video_list()
 
-    return render_to_response("dictionary/missingvideo.html",
+    return render(request, "dictionary/missingvideo.html",
                               {'glosses': glosses})
 
 def import_media(request,video):
@@ -472,13 +488,12 @@ def import_media(request,video):
     out = '<p>Imported</p><ul>'
     overwritten_files = '<p>Of these files, these were overwritten</p><ul>'
     errors = []
+    print("video: ", video)
 
     if video:
         import_folder = settings.VIDEOS_TO_IMPORT_FOLDER
-        goal_directory = settings.GLOSS_VIDEO_DIRECTORY
     else:
         import_folder = settings.IMAGES_TO_IMPORT_FOLDER
-        goal_directory = settings.GLOSS_IMAGE_DIRECTORY
 
     print("Import folder: %s" % import_folder)
 
@@ -524,43 +539,29 @@ def import_media(request,video):
 
                 default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
 
-                overwritten, was_allowed = save_media(lang3code_folder_path,lang3code_folder_name,
-                                                      settings.WRITABLE_FOLDER+goal_directory+'/',gloss,extension)
+                if not video:
+                    overwritten, was_allowed = save_media(lang3code_folder_path, lang3code_folder_name,
+                                                          GLOSS_IMAGE_DIRECTORY, gloss, extension)
 
-                if not was_allowed:
-                    errors.append('Failed to move media file for '+default_annotationidgloss+
-                                  '. Either the source could not be read or the destination could not be written.')
-                    continue
+                    if not was_allowed:
+                        errors.append('Failed to move media file for '+default_annotationidgloss+
+                                      '. Either the source could not be read or the destination could not be written.')
+                        continue
 
-                out += '<li>'+filename+'</li>'
+                    out += '<li>'+filename+'</li>'
 
-                # If it is a video also extract a still image and generate a thumbnail version
-                if video:
-                    annotation_id = default_annotationidgloss
-                    destination_folder = settings.WRITABLE_FOLDER+goal_directory+'/'+annotation_id[:2]+'/'
-                    video_filename = annotation_id+'-' + str(gloss.pk) + '.' + extension
-                    video_filepath_small = destination_folder + annotation_id+'-' + str(gloss.pk) + '_small.' + extension
+                else:
+                    video_file_path = os.path.join(lang3code_folder_path, filename)
+                    vfile = File(open(video_file_path, 'rb'))
+                    video = gloss.add_video(request.user, vfile)
+                    vfile.close()
 
                     try:
-                        print("Trying to resize video " + destination_folder+video_filename)
-                        from CNGT_scripts.python.resizeVideos import VideoResizer
-                        from signbank.settings.server_specific import FFMPEG_PROGRAM
-                        resizer = VideoResizer([destination_folder+video_filename], FFMPEG_PROGRAM, 180, 0, 0)
-                        resizer.run()
-                    except ImportError as i:
-                        print(i)
-                    except IOError as io:
-                        print(io)
+                        os.remove(video_file_path)
+                    except OSError as oserror:
+                        errors.append("OSError: {}".format(oserror))
 
-                    # Issue #255: generate still image
-                    try:
-                        print("Trying to generate still images for " + destination_folder+video_filename)
-                        from signbank.tools import generate_still_image
-                        generate_still_image(annotation_id[:2],
-                                             destination_folder,
-                                             video_filename)
-                    except ImportError as i:
-                        print(i.message)
+                    overwritten = False
 
                 if overwritten:
                     overwritten_files += '<li>'+filename+'</li>'
@@ -659,7 +660,38 @@ def try_code(request):
 
     """A view for the developer to try out things"""
 
-    return render(request,'dictionary/try.html',{})
+    from collections import Counter
+
+    encountered_lemmata = []
+    lemmata_nr_of_glosses = {}
+    lemmata_frequency = {}
+
+    dataset = Dataset.objects.get(pk=5)
+
+    for gloss in Gloss.objects.filter(lemma__dataset=5):
+
+        if gloss.lemma == None:
+            continue
+
+        translations = [translation.text for translation in LemmaIdglossTranslation.objects.filter(lemma = gloss.lemma)]
+        name = ','.join(translations)
+
+        if gloss.lemma not in encountered_lemmata:
+            encountered_lemmata.append(gloss.lemma)
+            lemmata_nr_of_glosses[name] = 0
+            lemmata_frequency[name] = 0
+
+        lemmata_nr_of_glosses[name] += 1
+
+        try:
+            lemmata_frequency[name] += gloss.tokNo
+        except TypeError:
+            pass
+
+    interesting_lemmata = [(name,lemmata_frequency[name]) for name, freq in lemmata_nr_of_glosses.items() if freq > 1]
+    interesting_lemmata.sort(key=lambda x: x[1], reverse=True)
+
+    return HttpResponse(str(interesting_lemmata))
 
 def import_authors(request):
 
@@ -726,41 +758,38 @@ def search_morpheme(request):
 
 def add_new_morpheme(request):
 
-    oContext = {}
-
-    # Add essential information to the context
-    oChoiceLists = {}
-    oContext['choice_lists'] = oChoiceLists
+    context = {}
+    choicelists = {}
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-    oContext['dataset_languages'] = dataset_languages
+    context['dataset_languages'] = dataset_languages
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        oContext['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
-        oContext['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
     if 'last_used_dataset' in request.session.keys():
-        oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
+        context['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
     else:
-        oContext['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=None)
+        context['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=None)
 
-    # Get and save the choice list for this field
-    field_category = fieldname_to_category('mrpType')
-    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-
+    # Get and save the choice list for mrpType
+    try:
+        field_mrpType = Morpheme._meta.get_field('mrpType')
+        field_category = field_mrpType.field_choice_category
+        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+    except:
+        print('add_new_morpheme request: error getting field category for mrpType, set to empty list. Check models.py for attribute field_choice_category.')
+        choice_list = []
     if len(choice_list) > 0:
         ordered_dict = choicelist_queryset_to_translated_dict(choice_list, request.LANGUAGE_CODE)
-        oChoiceLists['mrpType'] = ordered_dict
-        oContext['choice_lists'] = oChoiceLists
+        choicelists['mrpType'] = ordered_dict
 
-    oContext['choice_lists'] = json.dumps(oContext['choice_lists'])
+    context['choice_lists'] = json.dumps(choicelists)
 
-    oContext['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+    context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
-    # Continue
-    oBack = render(request,'dictionary/add_morpheme.html', oContext)
-    return oBack
-
+    return render(request,'dictionary/add_morpheme.html',context)
 
 
 
@@ -816,17 +845,16 @@ def import_csv_create(request):
         delimiter = ','
 
         # the following code allows for specifying a column delimiter in the import_csv_create.html template
-        # if 'delimiter' in request.POST:
-        #     delimiter_radio = request.POST['delimiter']
-        #     print('radio is: ', delimiter_radio)
-        #     if delimiter_radio == 'tab':
-        #         delimiter = '\t'
-        #     elif delimiter_radio == 'comma':
-        #         delimiter = ','
-        #     elif delimiter_radio == 'semicolon':
-        #         delimiter = ';'
-        #     else:
-        #         print('unknown delimiter found during import_csv_create')
+        if 'delimiter' in request.POST:
+            delimiter_radio = request.POST['delimiter']
+            if delimiter_radio == 'tab':
+                delimiter = '\t'
+            elif delimiter_radio == 'comma':
+                delimiter = ','
+            elif delimiter_radio == 'semicolon':
+                delimiter = ';'
+            else:
+                print('Unknown delimiter found during import_csv_create: ', delimiter_radio)
 
         creation = []
         keys = {}   # in case something goes wrong in header row
@@ -1905,9 +1933,9 @@ def switch_to_language(request,language):
 def recently_added_glosses(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 
     try:
-        from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
         recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
         recent_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
                           creationDate__range=[recently_added_signs_since_date, DT.datetime.now()]).order_by(
@@ -1916,6 +1944,7 @@ def recently_added_glosses(request):
                       {'glosses': recent_glosses,
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
+                        'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     except:
@@ -1923,6 +1952,7 @@ def recently_added_glosses(request):
                       {'glosses':Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
+                        'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
@@ -1935,6 +1965,7 @@ def proposed_new_signs(request):
                   {'glosses': proposed_or_new_signs,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
+                   'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 def add_params_to_url(url,params):
@@ -1985,8 +2016,13 @@ def add_image(request):
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing image for this sign
-            goal_path =  settings.WRITABLE_FOLDER+settings.GLOSS_IMAGE_DIRECTORY + '/' + gloss.idgloss[:2] + '/'
-            goal_location_str = goal_path + gloss.idgloss + '-' + str(gloss.pk) + extension
+            goal_path = os.path.join(
+                WRITABLE_FOLDER,
+                GLOSS_IMAGE_DIRECTORY,
+                gloss.lemma.dataset.acronym,
+                signbank.tools.get_two_letter_dir(gloss.idgloss)
+            )
+            goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
             #First make the dir if needed
             try:
@@ -2283,46 +2319,50 @@ def configure_handshapes(request):
 
         return HttpResponse(output_string)
 
+def configure_speakers(request):
+
+    if request.user.has_perm('dictionary.change_gloss'):
+
+        import_corpus_speakers()
+
+        return HttpResponse('<p>Speakers have been configured.</p>')
+
+    else:
+
+        return HttpResponse('<p>You do not have permission to configure speakers.</p>')
+
+def configure_corpus_documents_ngt(request):
+
+    if request.user.has_perm('dictionary.change_gloss'):
+
+        configure_corpus_documents()
+
+        return HttpResponse('<p>Corpus NGT has been configured.</p>')
+
+    else:
+
+        return HttpResponse('<p>You do not have permission to configure the corpus NGT.</p>')
+
 def get_unused_videos(request):
+    file_not_in_glossvideo_object = []
+    gloss_video_dir = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY)
+    all_files = [str(file) for file in Path(gloss_video_dir).glob('**/*') if file.is_file()]
 
-    videos_with_unused_pk = []
-    videos_where_pk_does_match_idgloss = []
-    videos_with_unusual_file_names = []
+    for file in all_files:
+        full_file_path = file
+        file = file[len(settings.WRITABLE_FOLDER):]
+        if file.startswith('/'):
+            file = file[1:]
+        if small_appendix in file:
+            file = add_small_appendix(file, reverse=True)
 
-    for dir_name in os.listdir(settings.WRITABLE_FOLDER+settings.GLOSS_VIDEO_DIRECTORY):
+        gloss_videos = GlossVideo.objects.filter(videofile=file)
+        if not gloss_videos:
+            file_not_in_glossvideo_object.append(full_file_path)
 
-        dir_path = settings.WRITABLE_FOLDER+settings.GLOSS_VIDEO_DIRECTORY+'/'+dir_name+'/'
+    return render(request, "dictionary/unused_videos.html",
+                  {'file_not_in_glossvideo_object': file_not_in_glossvideo_object})
 
-        for file_name in os.listdir(dir_path):
-
-            try:
-                items = file_name.replace('.mp4','').split('-')
-                pk = int(items[-1])
-                idgloss = '-'.join(items[:-1])
-            except ValueError:
-                videos_with_unusual_file_names.append(file_name)
-                continue
-
-            try:
-                if Gloss.objects.get(pk=pk).idgloss != idgloss:
-                    videos_where_pk_does_match_idgloss.append(file_name)
-            except ObjectDoesNotExist:
-                videos_with_unused_pk.append(file_name)
-                continue
-
-    result = '<p>For these videos, the pk does not match the idgloss:</p><ul>'
-    result += ''.join(['<li>'+video+'</li>' for video in videos_where_pk_does_match_idgloss])
-    result += '</ul></p>'
-
-    result += '<p>These videos have unusual file names:</p><ul>'
-    result += ''.join(['<li>'+video+'</li>' for video in videos_with_unusual_file_names])
-    result += '</ul></p>'
-
-    result += '<p>These videos have unused pks:</p><ul>'
-    result += ''.join(['<li>'+video+'</li>' for video in videos_with_unused_pk])
-    result += '</ul></p>'
-
-    return HttpResponse(result)
 
 def list_all_fieldchoice_names(request):
 
@@ -2356,9 +2396,10 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = 0
 
-    dataset = None
     if 'dataset_name' in request.GET:
         dataset = Dataset.objects.get(acronym=request.GET['dataset_name'])
+    else:
+        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
 
     video_folder_name = 'glossvideo'
@@ -2373,11 +2414,16 @@ def package(request):
     archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
 
-    video_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(video_folder_name,since_timestamp, dataset)
-    image_urls = signbank.tools.get_static_urls_of_files_in_writable_folder(image_folder_name,since_timestamp, dataset)
-    # Filter out all backup files
-    video_urls = dict([(gloss_id, url) for (gloss_id, url) in video_urls.items() if not re.match('.*_\d+', url)])
-    image_urls = dict([(gloss_id, url) for (gloss_id, url) in image_urls.items() if not re.match('.*_\d+', url)])
+    video_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
+                      reverse('dictionary:protected_media', args=[gv.small_video(use_name=True) or gv.videofile.name])
+                  for gv in GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
+                  if os.path.exists(str(gv.videofile.path))
+                  and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
+    image_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
+                       reverse('dictionary:protected_media', args=[gv.poster_file()])
+                  for gv in GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
+                  if os.path.exists(str(gv.videofile.path))
+                     and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
 
     collected_data = {'video_urls':video_urls,
                       'image_urls':image_urls,
@@ -2529,9 +2575,6 @@ def show_unassigned_glosses(request):
 
 def choice_lists(request):
 
-    FIELDS_TO_EXCLUDE = ['weakprop', 'weakdrop', 'domhndsh_number', 'domhndsh_letter', 'subhndsh_number',
-                             'subhndsh_letter']
-
     selected_datasets = get_selected_datasets_for_user(request.user)
     all_choice_lists = {}
 
@@ -2542,13 +2585,12 @@ def choice_lists(request):
 
     # Translate the machine values to human values in the correct language, and save the choice lists along the way
     for topic in ['main', 'phonology', 'semantics', 'frequency']:
-        for field in FIELDS[topic]:
 
-            if field in FIELDS_TO_EXCLUDE:
-                continue
+        fields_with_choices = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in FIELDS[topic] and hasattr(field, 'field_choice_category') ]
+
+        for (field, fieldchoice_category) in fields_with_choices:
 
             # Get and save the choice list for this field
-            fieldchoice_category = fieldname_to_category(field)
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             if len(choice_list) > 0:
@@ -2584,3 +2626,258 @@ def choice_lists(request):
         FieldChoice.objects.filter(field__iexact='MorphemeType'),request.LANGUAGE_CODE)
 
     return HttpResponse(json.dumps(all_choice_lists), content_type='application/json')
+
+def gloss_revision_history(request,gloss_pk):
+
+    gloss = Gloss.objects.get(pk=gloss_pk)
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
+    return render(request, 'dictionary/gloss_revision_history.html',
+                  {'gloss': gloss, 'revisions':GlossRevision.objects.filter(gloss=gloss),
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })
+
+def gloss_frequency(request,gloss_pk):
+
+    gloss = Gloss.objects.get(pk=gloss_pk)
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
+    speakers_summary = gloss.speaker_age_data()
+    speaker_age_data = []
+    for i in range(1, 100):
+        i_key = str(i)
+        if i_key in speakers_summary.keys():
+            i_value = speakers_summary[i_key]
+            speaker_age_data.append(i_value)
+        else:
+            speaker_age_data.append(0)
+
+    speaker_data = gloss.speaker_data()
+
+    # incorporates legacy relations
+    # a variant pattern is only a variant if there are no other relations between the focus gloss and other glosses under consideration
+    # variants might be explictly stored as relations to other glosses
+    # the has_variants method only catches explicitly stored variants
+    # the pattern variants method excludes glosses with explictly stored relations (including variant relations) to the focus gloss
+    # therefore we first try pattern variants
+
+    # for the purposes of frequency charts in the template, the focus gloss is included in the variants
+    # this simplifies generating tables for variants inside of a loop in the javascript
+    try:
+        variants = gloss.pattern_variants()
+    except:
+        try:
+            variants = gloss.has_variants()
+        except:
+            variants = []
+    if gloss not in variants:
+        variants_with_keys = [ (og.idgloss, og) for og in variants ] + [ ( gloss.idgloss, gloss )]
+    else:
+        variants_with_keys = [ (og.idgloss, og) for og in variants ]
+    sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
+    variant_objects = [ og for (og_idgloss, og) in variants_with_keys ]
+    sorted_variant_keys = sorted( [ og_idgloss for (og_idgloss, og) in variants_with_keys] )
+    variants_data_quick_access = {}
+    variants_data = []
+    for (og_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+        variants_speaker_data = variant_of_gloss.speaker_data()
+        variants_data.append( (og_idgloss, variants_speaker_data ))
+        variants_data_quick_access[og_idgloss] = variants_speaker_data
+
+    variants_age_distribution_data = {}
+    for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+        variant_speaker_age_data_v = variant_of_gloss.speaker_age_data()
+
+        speaker_age_data_v = []
+        for i in range(1, 100):
+            i_key = str(i)
+            if i_key in variant_speaker_age_data_v.keys():
+                i_value = variant_speaker_age_data_v[i_key]
+                speaker_age_data_v.append(i_value)
+            else:
+                speaker_age_data_v.append(0)
+
+        variants_age_distribution_data[variant_idgloss] = speaker_age_data_v
+
+    variants_sex_distribution_data = {}
+    variants_sex_distribution_data_percentage = {}
+    variants_sex_distribution_data_totals = {}
+    variants_sex_distribution_data_totals['Female'] = 0
+    variants_sex_distribution_data_totals['Male'] = 0
+
+    for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+        for i_key in ['Female', 'Male']:
+            variants_sex_distribution_data_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
+            variants_sex_distribution_data[i_key] = {}
+            variants_sex_distribution_data_percentage[i_key] = {}
+
+    for i_key in ['Female', 'Male']:
+        total_gender_across_variants = variants_sex_distribution_data_totals[i_key]
+        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+            variant_speaker_data_v = variant_of_gloss.speaker_data()
+            i_value = variant_speaker_data_v[i_key]
+
+            # print('variant idgloss ', variant_idgloss, ' i key ', i_key, ' total across variants: ', total_gender_across_variants, ' key value: ', i_value)
+
+            speaker_data_v = i_value
+            if total_gender_across_variants > 0:
+                speaker_data_p = i_value/total_gender_across_variants
+            else:
+                speaker_data_p = 0
+
+            variants_sex_distribution_data[i_key][variant_idgloss] = speaker_data_v
+            variants_sex_distribution_data_percentage[i_key][variant_idgloss] = speaker_data_p
+
+    # print('variants_sex_distribution_data: ', variants_sex_distribution_data)
+    # print('variants_sex_distribution_data_percentage: ', variants_sex_distribution_data_percentage)
+
+    variants_age_distribution_cat_data = {}
+    variants_age_distribution_cat_percentage = {}
+    variants_age_distribution_cat_totals = {}
+    variants_age_distribution_cat_totals['< 25'] = 0
+    variants_age_distribution_cat_totals['25 - 35'] = 0
+    variants_age_distribution_cat_totals['36 - 65'] = 0
+    variants_age_distribution_cat_totals['> 65'] = 0
+
+    for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+        for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
+            variants_age_distribution_cat_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
+            variants_age_distribution_cat_data[i_key] = {}
+            variants_age_distribution_cat_percentage[i_key] = {}
+
+    for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
+        total_age_across_variants = variants_age_distribution_cat_totals[i_key]
+        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+
+            variant_age_data_v = variant_of_gloss.speaker_data()
+            i_value = variant_age_data_v[i_key]
+
+            # print('variant idgloss ', variant_idgloss, ' i key ', i_key, ' total across variants: ', total_age_across_variants, ' key value: ', i_value)
+
+            speaker_data_v = i_value
+            if total_age_across_variants > 0:
+                speaker_data_p = i_value/total_age_across_variants
+            else:
+                speaker_data_p = i_value
+            variants_age_distribution_cat_data[i_key][variant_idgloss] = speaker_data_v
+            variants_age_distribution_cat_percentage[i_key][variant_idgloss] = speaker_data_p
+
+    # print('variants_age_distribution_cat_data: ', variants_age_distribution_cat_data)
+    # print('variants_age_distribution_cat_percentage: ', variants_age_distribution_cat_percentage)
+
+    speaker_per_variant_data = {}
+    speaker_per_variant_data['Female'] = {}
+    speaker_per_variant_data['Male'] = {}
+    speaker_per_variant_data['Female'][gloss.idgloss] = speaker_data['Female']
+    speaker_per_variant_data['Male'][gloss.idgloss] = speaker_data['Male']
+
+    for variant_of_gloss in variant_objects:
+        speaker_per_variant_data['Female'][variant_of_gloss.idgloss] = variants_data_quick_access[variant_of_gloss.idgloss]['Female']
+        speaker_per_variant_data['Male'][variant_of_gloss.idgloss] = variants_data_quick_access[variant_of_gloss.idgloss]['Male']
+
+    variant_labels = []
+    for og_igloss in sorted_variant_keys:
+        if og_igloss not in variant_labels:
+            variant_labels.append(og_igloss)
+
+    variant_female_data = []
+    for v_label in variant_labels:
+        variant_female_data.append(speaker_per_variant_data['Female'][v_label])
+
+    variant_male_data = []
+    for v_label in variant_labels:
+        variant_male_data.append(speaker_per_variant_data['Male'][v_label])
+
+    return render(request, 'dictionary/gloss_frequency.html',
+                  {'gloss': gloss,
+                   'has_frequency_data': gloss.has_frequency_data(),
+                   'variants': variants,
+                   'variants_data': variants_data,
+                   'variants_data_quick_access': variants_data_quick_access,
+                   'variants_age_distribution_data': variants_age_distribution_data,
+                   'variants_age_distribution_cat_data': variants_age_distribution_cat_data,
+                   'variants_age_distribution_cat_percentage': variants_age_distribution_cat_percentage,
+                   'frequency_regions': settings.FREQUENCY_REGIONS,
+                   'data_datasets': gloss.data_datasets(),
+                   'speaker_age_data': speaker_age_data,
+                   'speaker_data': speaker_data,
+                   'variant_labels' : variant_labels,
+                   'variants_sex_distribution_data': variants_sex_distribution_data,
+                   'variants_sex_distribution_data_percentage': variants_sex_distribution_data_percentage,
+                   'speaker_per_variant_data' : speaker_per_variant_data,
+                   'variant_female_data': variant_female_data,
+                   'variant_male_data': variant_male_data,
+                   'view_type': 'percentage',
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })
+
+def find_interesting_frequency_examples(request):
+
+    INTERESTING_FREQUENCY_THRESHOLD = 25
+
+    interesting_gloss_pks = []
+
+    debug_str = ''
+
+    for gloss in Gloss.objects.all():
+
+        speaker_data = gloss.speaker_data()
+
+        if speaker_data['Male'] > 0:
+            debug_str += str(speaker_data['Male']) + ' '
+
+        if speaker_data['Male'] + speaker_data['Female'] < INTERESTING_FREQUENCY_THRESHOLD:
+            continue
+
+        try:
+            variants = gloss.pattern_variants()
+        except:
+            try:
+                variants = gloss.has_variants()
+            except:
+                variants = []
+
+        if len(variants) == 0:
+            continue
+
+        found_interesting_variant = False
+
+        for variant in variants:
+
+            speaker_data = variant.speaker_data()
+
+            if speaker_data['Male'] + speaker_data['Female'] >= INTERESTING_FREQUENCY_THRESHOLD:
+                found_interesting_variant = True
+                break
+
+        if not found_interesting_variant:
+            continue
+
+        interesting_gloss_pks.append(gloss.pk)
+
+        if len(interesting_gloss_pks) > 100: #This prevents this code from running too long
+            break
+
+        if len(debug_str) > 1000:
+            break
+
+    return HttpResponse(' '.join(['<a href="/dictionary/gloss/'+str(i)+'">'+str(i)+'</a>' for i in interesting_gloss_pks]))
+

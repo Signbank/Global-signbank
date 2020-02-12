@@ -1,7 +1,9 @@
+from itertools import zip_longest
+
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm
 from signbank.dictionary.models import *
-from signbank.settings.base import WRITABLE_FOLDER
+from signbank.settings.base import *
 
 from django.contrib.auth.models import User, Permission, Group
 from django.test import TestCase, RequestFactory
@@ -11,6 +13,7 @@ from django.contrib.messages.storage.cookie import MessageDecoder
 from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages.storage.cookie import CookieStorage
+from itertools import *
 
 from guardian.shortcuts import assign_perm
 
@@ -75,13 +78,42 @@ class BasicCRUDTests(TestCase):
         changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
         self.assertEqual(changed_gloss.handedness, '6')
 
+        # set up keyword search parameter for default language
+        default_language = Language.objects.get(id=get_default_language_id())
+        keyword_search_field_prefix = "keywords_"
+        keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
+
         #We can even add and remove stuff to the keyword table
+
+        # to start with, both tables are empty in the test database
         self.assertEqual(Keyword.objects.all().count(), 0)
         self.assertEqual(Translation.objects.all().count(), 0)
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'keywords_nl','value':'a, b, c, d, e'})
+
+        # add five keywords to the translations of this gloss
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c, d, e'})
+
+        all_keywords = Keyword.objects.all()
+        for k in all_keywords:
+            print('test_CRUD update1 keyword: ', k)
+        all_translations = Translation.objects.all()
+        for t in all_translations:
+            print('test_CRUD update1 gloss translation: ', t)
+
         self.assertEqual(Keyword.objects.all().count(), 5)
         self.assertEqual(Translation.objects.all().count(), 5)
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'keywords_nl','value':'a, b, c'})
+
+        # update the gloss to only have three of the translations
+        # the keyword table still has the same data, but only three translations are associated with the gloss
+
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c'})
+
+        all_keywords = Keyword.objects.all()
+        for k in all_keywords:
+            print('test_CRUD update2 keyword: ', k)
+        all_translations = Translation.objects.all()
+        for t in all_translations:
+            print('test_CRUD update2 gloss translation: ', t)
+
         self.assertEqual(Keyword.objects.all().count(), 5)
         self.assertEqual(Translation.objects.all().count(), 3)
 
@@ -159,28 +191,64 @@ class BasicCRUDTests(TestCase):
         new_lemma.save()
 
         # Create a lemma idgloss translation
-        language = Language.objects.get(id=get_default_language_id())
+        default_language = Language.objects.get(id=get_default_language_id())
         new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
-                                                              lemma=new_lemma, language=language)
+                                                              lemma=new_lemma, language=default_language)
         new_lemmaidglosstranslation.save()
 
-        new_gloss = Gloss()
-        new_gloss.handedness = 4
-        new_gloss.lemma = new_lemma
-        new_gloss.save()
+
+
 
         new_gloss = Gloss()
         new_gloss.handedness = 4
         new_gloss.lemma = new_lemma
         new_gloss.save()
+
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '1'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
+
+        new_gloss = Gloss()
+        new_gloss.handedness = 4
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '2'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
 
         new_gloss = Gloss()
         new_gloss.handedness = 5
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '3'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
+
+        all_glosses = Gloss.objects.all()
+        for ag in all_glosses:
+            try:
+                print('testSearchForGlosses created gloss: ', ag.annotationidglosstranslation_set.get(language=default_language).text)
+            except:
+                print('testSearchForGlosses created gloss has empty annotation translation')
         #Search
-        response = client.get('/signs/search/',{'handedness':4})
+        response = client.get('/signs/search/',{'handedness[]':4})
         self.assertEqual(len(response.context['object_list']), 0) #Nothing without dataset permission
 
         assign_perm('view_dataset', self.user, test_dataset)
@@ -188,7 +256,73 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(len(response.context['object_list']), 2)
 
         response = client.get('/signs/search/',{'handedness[]':5})
+        for gl in response.context['object_list']:
+            try:
+                print('testSearchForGlosses response 3: ', gl.annotationidglosstranslation_set.get(language=default_language).text)
+            except:
+                print('testSearchForGlosses response 3: returned gloss has empty annotation translation')
         self.assertEqual(len(response.context['object_list']), 1)
+
+    def test_package_function(self):
+        #Create a client and log in
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
+        #Get a dataset
+        dataset_name = settings.DEFAULT_DATASET
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('dictionary.search_gloss', self.user)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        self.user.save()
+
+        # Create a lemma in order to store the dataset with the new gloss
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        default_language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=default_language)
+        new_lemmaidglosstranslation.save()
+
+        # #Create the gloss
+        new_gloss = Gloss()
+        # to test the package functionality of phonology fields, add some to settings.API_FIELDS
+        # for this test, the local settings file has added these two fields
+        # they are visible in the result if they appear in API_FIELDS
+        new_gloss.handedness = 4
+        new_gloss.locprim = 8
+
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss'
+            annotationIdgloss.save()
+
+        # set up keyword search parameter for default language
+        keyword_search_field_prefix = "keywords_"
+        keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
+
+        # keywords: this is merely part of the setup for the test
+        # add five keywords to the translations of this gloss
+        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c, d, e'})
+
+        changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
+
+        # this calculates the data retrieved by get_gloss_data for packages
+        # it shows the format/display of the returned gloss fields
+        # note that the value of the phonology fields are numerical rather than human readable
+        result = changed_gloss.get_fields_dict()
+        print('test_package_function: settings.API_FIELDS: ', settings.API_FIELDS)
+        print('test_package_function: get_fields_dict: ', result)
 
 #Deprecated?
 class BasicQueryTests(TestCase):
@@ -224,9 +358,9 @@ class BasicQueryTests(TestCase):
         new_lemma.save()
 
         # Create a lemma idgloss translation
-        language = Language.objects.get(id=get_default_language_id())
+        default_language = Language.objects.get(id=get_default_language_id())
         new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
-                                                              lemma=new_lemma, language=language)
+                                                              lemma=new_lemma, language=default_language)
         new_lemmaidglosstranslation.save()
 
         # #Create the gloss
@@ -241,16 +375,14 @@ class BasicQueryTests(TestCase):
             annotationIdgloss.text = 'thisisatemporarytestgloss'
             annotationIdgloss.save()
 
+        # set the language for glosssearch field name
+        gloss_search_field_prefix = "glosssearch_"
+        glosssearch_field_name = gloss_search_field_prefix + default_language.language_code_2char
+
         #Search
-        # response = client.get('/signs/search/?handedness=4')
-        # response = client.get('/signs/search/?handedness=4', follow=True)
-        response = client.get('/signs/search/?handedness=4&glosssearch_nl=test', follow=True)
+        response = client.get('/signs/search/?handedness=4&'+glosssearch_field_name+'=test', follow=True)
         self.assertEqual(len(response.context['object_list']), 1)
 
-        #print(response)
-        #print(response.context.keys())
-        # print(response.context['object_list'],response.context['glosscount'])
-        #print(response.context['selected_datasets'])
 
 class ECVsNonEmptyTests(TestCase):
 
@@ -280,7 +412,11 @@ class ECVsNonEmptyTests(TestCase):
             try:
                 dataset_of_filename = Dataset.objects.get(acronym__iexact=fname)
             except:
-                print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
+                try:
+                    fname_nounderscore = fname.replace("_"," ")
+                    dataset_of_filename = Dataset.objects.get(acronym__iexact=fname_nounderscore)
+                except:
+                    print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
             if not len(entry_nodes):
                 # no glosses in the ecv
                 print('EMPTY ECV FILE FOUND: ', filename)
@@ -344,6 +480,11 @@ class ImportExportTests(TestCase):
         assign_perm('change_dataset', self.user, test_dataset)
         print('User has permmission to change dataset.')
 
+        test_dataset_acronym = 'temp_' + dataset_name
+
+        test_dataset.acronym = test_dataset_acronym
+        test_dataset.save()
+        print('Test dataset name changed to: ', test_dataset_acronym)
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
@@ -374,7 +515,7 @@ class ImportExportTests(TestCase):
             annotationIdgloss.text = 'thisisatemporarytestgloss'
             annotationIdgloss.save()
 
-        url = '/datasets/available?dataset_name=' + dataset_name + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_name=' + test_dataset_acronym + '&export_ecv=ECV'
 
         response = client.get(url)
 
@@ -384,8 +525,18 @@ class ImportExportTests(TestCase):
         json_message = json_decoded_cookies[0]
         print('Message TWO: ', json_message)
 
-        self.assertEqual(str(json_message), 'ECV ' + dataset_name + ' successfully updated.')
+        self.assertEqual(str(json_message), 'ECV ' + test_dataset_acronym + ' successfully updated.')
 
+        # cleanup
+        test_dataset.acronym = dataset_name
+        test_dataset.save()
+
+        location_ecv_files = ECV_FOLDER
+        for filename in os.listdir(location_ecv_files):
+            if filename == test_dataset_acronym.lower() + '.ecv':
+                filename_path = os.path.join(location_ecv_files,filename)
+                os.remove(filename_path)
+                print('Temp ecv file removed.')
 
     def test_DatasetListView_ECV_export_no_permission_change_dataset(self):
 
@@ -443,12 +594,12 @@ class ImportExportTests(TestCase):
         assign_perm('dictionary.export_csv', self.user)
         print('User has permmission to export csv.')
 
-        response = client.get('/signs/search/', {"search_type": "sign", "glosssearch_nl": "wesseltest6", "format": "CSV"})
+        # set the language for glosssearch field name
+        default_language = Language.objects.get(id=get_default_language_id())
+        gloss_search_field_prefix = "glosssearch_"
+        glosssearch_field_name = gloss_search_field_prefix + default_language.language_code_2char
 
-        # print(str(response['Content-Type']))
-        # print(str(response.status_code))
-        # print(str(response.wsgi_request))
-        # print("Export csv: {}".format(response.content))
+        response = client.get('/signs/search/', {"search_type": "sign", glosssearch_field_name : "wesseltest6", "format": "CSV"})
 
         self.assertEqual(response['Content-Type'], "text/csv")
         self.assertContains(response, b'Signbank ID,')
@@ -657,6 +808,7 @@ class VideoTests(TestCase):
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
+        print(str(logged_in))
 
         NAME = 'thisisatemporarytestlemmaidglosstranslation'
 
@@ -664,8 +816,9 @@ class VideoTests(TestCase):
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
-        test_dataset.default_language = default_language
-        test_dataset.save()
+
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User granted permmission to change dataset.')
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
@@ -685,11 +838,9 @@ class VideoTests(TestCase):
         client = Client()
         client.login(username='test-user', password='test-user')
 
-        video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
+        video_url = '/dictionary/protected_media/glossvideo/'+test_dataset.acronym+'/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
         #We expect no video before
         response = client.get(video_url)
-        # print("Video url first test: {}".format(video_url))
-        # print("Video upload response first test: {}".format(response))
         if response.status_code == 200:
             print('The test video already exists in the archive: ', video_url)
             self.assertEqual(response.status_code,200)
@@ -698,36 +849,32 @@ class VideoTests(TestCase):
             self.assertEqual(response.status_code,302)
 
             #Upload the video
-            print('Proceding with video upload tests...')
+            print('Uploading the test video.')
             videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
             response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
                                                      'videofile': videofile,
                                                      'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
-            print("Post video response upload: {}".format(response))
             self.assertEqual(response.status_code,200)
 
         #We expect a video now
         response = client.get(video_url, follow=True)
-        # print("Video url second test: {}".format(video_url))
-        # print("Video upload response second test: {}".format(response))
         self.assertEqual(response.status_code,200)
 
         #You can't see it if you log out
         client.logout()
         print('User has logged out.')
-        print('Attempt to see video.')
+        print('Attempt to see video. Must log in.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
         #Remove the video
         client.login(username='test-user',password='test-user')
-        print('User has logged in.')
+        print('User has logged back in.')
         print('Delete the uploaded video.')
         response = client.post('/video/delete/'+str(new_gloss.pk))
-        print("Post delete video response: {}".format(response))
 
         #We expect no video anymore
-        print('Attempt to see video.')
+        print('Attempt to see video. It is not found.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
 
@@ -737,14 +884,15 @@ class VideoTests(TestCase):
 
         logged_in = client.login(username='test-user', password='test-user')
 
-        NAME = 'thisisatémporarytéstlemmä'
+        NAME = 'XXtéstlemmä  ~山脉 %20'  # %20 is an url encoded space
 
         # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
-        test_dataset.default_language = default_language
-        test_dataset.save()
+
+        assign_perm('change_dataset', self.user, test_dataset)
+        print('User granted permmission to change dataset.')
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
@@ -764,49 +912,54 @@ class VideoTests(TestCase):
         client = Client()
         client.login(username='test-user', password='test-user')
 
-        video_url = '/dictionary/protected_media/glossvideo/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
+        video_url = '/dictionary/protected_media/glossvideo/'+test_dataset.acronym+'/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
+
+        if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+            # If the file name is escaped, the url should be escaped twice:
+            # the file may contain percent encodings,
+            # so in the path the percent should be encoded
+            from django.utils.encoding import escape_uri_path
+            video_url = escape_uri_path(video_url)
+        video_url = video_url.replace('%', '%25')
+
         #We expect no video before
         response = client.get(video_url)
-        # print("Video url first test: {}".format(video_url))
-        # print("Video upload response first test: {}".format(response))
         if response.status_code == 200:
-            print('The test video already exists in the archive: ', video_url)
+            print('The test video already exists in the archive: ', video_url, ' (', type(video_url), ')')
             self.assertEqual(response.status_code,200)
         else:
-            print('The test video does not exist in the archive: ', video_url)
+            print('The test video does not exist in the archive: ', video_url, ' (', type(video_url), ')')
             self.assertEqual(response.status_code,302)
 
             #Upload the video
-            print('Proceding with video upload tests...')
             videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
+
             response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
                                                      'videofile': videofile,
                                                      'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
-            print("Post video response upload: {}".format(response))
             self.assertEqual(response.status_code,200)
 
         #We expect a video now
         response = client.get(video_url, follow=True)
-        # print("Video url second test: {}".format(video_url))
-        # print("Video upload response second test: {}".format(response))
+        print("Video url second test: {}".format(video_url))
+        print("Video upload response second test: {}".format(response))
         self.assertEqual(response.status_code,200)
 
         #You can't see it if you log out
         client.logout()
         print('User has logged out.')
-        print('Attempt to see video.')
+        print('Attempt to see video. Must log in.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
         #Remove the video
         client.login(username='test-user',password='test-user')
-        print('User has logged in.')
+        print('User has logged back in.')
         print('Delete the uploaded video.')
         response = client.post('/video/delete/'+str(new_gloss.pk))
-        print("Post delete video response: {}".format(response))
 
         #We expect no video anymore
-        print('Attempt to see video.')
+        print('Attempt to see video. It is not found.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
 
@@ -1217,6 +1370,136 @@ class ManageDatasetTests(TestCase):
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
                                                             language.name, self.test_dataset.acronym))
+
+
+class HandshapeTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        assign_perm('dictionary.search_gloss', self.user)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        self.user.save()
+
+    def create_handshape(self):
+
+        new_machine_value = 588
+        new_english_name = 'thisisanewtesthandshape_en'
+        new_dutch_name = 'thisisanewtesthandshape_nl'
+
+        new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name)
+        new_handshape.save()
+
+        print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.english_name, new_handshape.dutch_name)
+
+        return new_handshape
+
+    def test_create_handshape(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
+        # assign_perm('dictionary.search_gloss', self.user)
+        # assign_perm('dictionary.add_gloss', self.user)
+        # assign_perm('dictionary.change_gloss', self.user)
+
+        self.client.login(username='test-user', password='test-user')
+
+        #Add info of the dataset to the session (normally done in the detail view)
+        self.client.session['datasetid'] = test_dataset.pk
+        self.client.session['search_results'] = None
+        self.client.session.save()
+
+        # new_machine_value = 588
+        # new_english_name = 'thisisanewtesthandshape_en'
+        # new_dutch_name = 'thisisanewtesthandshape_nl'
+        #
+        # new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name)
+        # new_handshape.save()
+        #
+        # print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.english_name, new_handshape.dutch_name)
+
+        new_handshape = self.create_handshape()
+        #We can now request a detail view
+        print('Test HandshapeDetailView for new handshape.')
+        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+        self.assertEqual(response.status_code,200)
+
+        # Querying the new handshape puts it into FieldChoice
+        field_choices_handshapes = FieldChoice.objects.filter(field='Handshape')
+        machine_values_of_field_choices_handshapes = [ h.machine_value for h in field_choices_handshapes]
+        print('Test that the new handshape is in FieldChoice for Handshape')
+        self.assertIn(new_handshape.machine_value, machine_values_of_field_choices_handshapes)
+
+    def test_handshape_choices(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
+
+        # Create 10 lemmas for use in testing
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,4):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        # print('created lemmas: ', lemmas)
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        # Create 10 glosses that start out being the same
+        glosses = {}
+        for gloss_id in range(1,4):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : str(test_handshape1.machine_value),
+                'subhndsh': str(test_handshape2.machine_value),
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        # print('created glosses: ', glosses)
+
+        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
+
+        self.client.login(username='test-user', password='test-user')
+
+        new_handshape = self.create_handshape()
+        #We can now request a detail view
+        print('Test HandshapeDetailView for new handshape.')
+        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+        self.assertEqual(response.status_code,200)
+
+        # Find out if the new handshape appears in the Field Choice menus
+        print("Update a gloss to use the new handshape, using the choice list")
+        self.client.post('/dictionary/update/gloss/'+str(glosses[1].pk),{'id':'domhndsh','value':'_588'})
+
+        changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
+        print('Confirm the gloss was updated to the new handshape.')
+        self.assertEqual(changed_gloss.domhndsh, '588')
 
 
 class FieldChoiceTests(TestCase):
@@ -1692,6 +1975,754 @@ class FieldChoiceTests(TestCase):
                       str(field_choice_in_use.english_name), ' (not used)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
+
+class testFrequencyAnalysis(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.save()
+
+        self.client = Client()
+
+    def test_analysis_frequency(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,10):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        glosses = {}
+        for gloss_id in range(1,10):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : str(test_handshape1.machine_value),
+                'subhndsh': str(test_handshape2.machine_value),
+                'locprim': 5,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        glosses[2].locprim = 8
+        glosses[2].save()
+
+        glosses[3].handedness = 4
+        glosses[3].save()
+
+        glosses[4].handCh = 7
+        glosses[4].save()
+
+        glosses[5].domhndsh = str(test_handshape2.machine_value)
+        glosses[5].save()
+
+        glosses[6].handedness = 5
+        glosses[6].save()
+
+        glosses[7].domhndsh = str(test_handshape2.machine_value)
+        glosses[7].save()
+
+        glosses[8].namEnt = 16
+        glosses[8].save()
+
+        glosses[9].handedness = 6
+        glosses[9].save()
+
+        self.client.login(username='test-user', password='test-user')
+
+        assign_perm('view_dataset', self.user, test_dataset)
+
+        response = self.client.get('/analysis/frequencies/', follow=True)
+        self.assertEqual(response.status_code,200)
+
+        table_code = str(test_dataset.id) + '_results_'
+
+        frequency_dict = test_dataset.generate_frequency_dict(language.language_code_2char)
+
+        for fieldname in frequency_dict.keys():
+            self.assertContains(response, table_code + fieldname)
+
+        table_code_empty_prefix = str(test_dataset.id) + '_field_'
+        table_code_empty_suffix = '_empty_frequency'
+
+        for (k,d) in frequency_dict.items():
+
+            for (c,v) in d.items():
+                if v:
+                    print('Frequency analysis field ', k, ', choice ', c, ' (', v, ' results)')
+                    self.assertNotContains(response, table_code_empty_prefix + k + '_' + c + table_code_empty_suffix)
+                else:
+                    self.assertContains(response, table_code_empty_prefix + k + '_' + c + table_code_empty_suffix)
+
+
+    def test_frequency_sorting(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        language = Language.objects.get(id=get_default_language_id())
+        language_code = language.language_code_2char
+
+        codes_to_adjectives = dict(settings.LANGUAGES)
+
+        if language_code not in codes_to_adjectives.keys():
+            adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+        else:
+            adjective = codes_to_adjectives[language_code].lower()
+
+        frequency_dict = test_dataset.generate_frequency_dict(language_code)
+        frequency_dict_keys = frequency_dict.keys()
+
+        fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category)
+                                                for field in Gloss._meta.fields if (field.name in FIELDS['phonology'] + FIELDS['semantics']) and hasattr(field, 'field_choice_category') ]
+        fields_data_keys = [ f_name for (f_name,v_verbose,c_category) in fields_data]
+
+        self.assertNotEqual(len(fields_data),0)
+        self.assertEqual(len(frequency_dict_keys), len(fields_data_keys))
+
+        ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
+        for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
+
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+
+            if len(choice_list) > 0:
+                translated_choices = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False, shortlist=False)
+            else:
+                translated_choices = []
+            frequency_choices_f = frequency_dict[f]
+
+            self.assertEqual(len(translated_choices), len(frequency_choices_f))
+
+            frequency_choices_f_keys = [ k for k in frequency_choices_f.keys() ]
+            translated_choices_keys = [ k for (k,v) in translated_choices ]
+
+            # Make sure the sorted field choices are in the same order
+            self.assertEqual(translated_choices_keys, frequency_choices_f_keys)
+
+
+class testSettings(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.save()
+
+    def test_Settings(self):
+
+        from os.path import isfile, join
+        full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
+        all_settings = [ f for f in os.listdir(full_root_path) if isfile(join(full_root_path, f))
+                                    and f.endswith('.py') and f != '__init__.py' and f != 'server_specific.py']
+        print('Checking settings files: ', all_settings)
+        # check that one of the files is the default file
+        self.assertIn('default.py', all_settings)
+        all_settings_strings = {}
+        for next_file in all_settings:
+            all_settings_strings[next_file] = []
+            next_file_path = os.path.join(full_root_path, next_file)
+            with open(next_file_path, 'r') as f:
+                for line in f:
+                    if '#' in line:
+                        line = line.split('#')
+                        string_before_hash = line[0]
+                        line = string_before_hash.strip()
+                    if '=' in line:
+                        definition_list = line.split('=')
+                        right_hand_side = definition_list[1]
+                        right_hand_side = right_hand_side.strip()
+                        if right_hand_side.startswith('lambda'):
+                            # this is a function definition
+                            # this is a bit of a hack because a function is used in the global settings
+                            continue
+                        definition = definition_list[0]
+                        definition = definition.strip()
+                        all_settings_strings[next_file].append(definition)
+
+        comparison_table_first_not_in_second = {}
+        for first_file in all_settings:
+            if not first_file in comparison_table_first_not_in_second.keys():
+                comparison_table_first_not_in_second[first_file] = {}
+            for second_file in all_settings:
+                if first_file != second_file:
+                    comparison_table_first_not_in_second[first_file][second_file] = []
+                    for setting_first_file in all_settings_strings[first_file]:
+                        if setting_first_file not in all_settings_strings[second_file]:
+                            comparison_table_first_not_in_second[first_file][second_file].append(setting_first_file)
+
+        for first_file in all_settings:
+            for second_file in all_settings:
+                # the default.py file is part of the installation (should this filename be a setting?)
+                # check that other settings files do not contain settings that are not in the default settings file
+                if first_file != second_file and second_file == 'default.py':
+                    self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
+
+    def test_settings_field_choice_category(self):
+        # this test checks that fieldnames in settings exist in the models
+        # this can catch spelling errors in the settings
+        # next, the test checks that for fields with choice lists that the field_choice_category is defined
+        # and that there exist field choices for it
+        # this test is intended to help find potential errors in templates that use choice lists for fields
+        if 'phonology' in settings.FIELDS.keys():
+            phonology_fields = settings.FIELDS['phonology']
+            gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
+            print('Testing phonology fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
+            for f in phonology_fields:
+                # make sure all phonology fields in settings are defined in Gloss
+                self.assertIn(f, gloss_fields_names.keys())
+                # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
+                self.assertTrue(hasattr(gloss_fields_names[f], 'choices'))
+                # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
+                if not isinstance(gloss_fields_names[f], models.CharField):
+                    # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
+                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    self.assertNotEqual(fieldname_to_kind_table[f], 'list')
+                elif not gloss_fields_names[f].choices:
+                    # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
+                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    self.assertNotEqual(fieldname_to_kind_table[f], 'list')
+                else:
+                    # we expect the field to be a choice list field and to have field_choice_category defined
+                    self.assertEqual(fieldname_to_kind_table[f], 'list')
+                    if hasattr(gloss_fields_names[f], 'max_length') and gloss_fields_names[f].max_length > 9:
+                        print('Note: phonology field ', f, ' has max_length ', str(gloss_fields_names[f].max_length), ' but also has field choices.')
+                    self.assertTrue(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    fc_category = gloss_fields_names[f].field_choice_category
+                    # make sure there are fields for the category
+                    fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category)
+                    self.assertGreater(len(fields_for_this_category),0)
+
+        if 'semantics' in settings.FIELDS.keys():
+            semantics_fields = settings.FIELDS['semantics']
+            gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
+            print('Testing semantics fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
+            for f in semantics_fields:
+                # make sure all semantics fields are defined in Gloss
+                self.assertIn(f, gloss_fields_names.keys())
+                # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
+                self.assertTrue(hasattr(gloss_fields_names[f], 'choices'))
+                # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
+                if not isinstance(gloss_fields_names[f], models.CharField):
+                    # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
+                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    self.assertNotEqual(fieldname_to_kind_table[f], 'list')
+                elif not gloss_fields_names[f].choices:
+                    # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
+                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    self.assertNotEqual(fieldname_to_kind_table[f], 'list')
+                else:
+                    # we expect the field to be a choice list field and have field_choice_category defined
+                    self.assertEqual(fieldname_to_kind_table[f], 'list')
+                    if hasattr(gloss_fields_names[f], 'max_length') and gloss_fields_names[f].max_length > 9:
+                        print('Note: semantics field ', f, ' has max_length ', str(gloss_fields_names[f].max_length), ' but also has field choices.')
+                    self.assertTrue(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    fc_category = gloss_fields_names[f].field_choice_category
+                    # make sure there are fields for the category
+                    fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category)
+                    self.assertGreater(len(fields_for_this_category),0)
+
+        if 'handshape' in settings.FIELDS.keys():
+            handshape_fields = settings.FIELDS['handshape']
+            handshape_fields_names = { f.name: f for f in Handshape._meta.fields }
+            print('Testing handshape fields for declaration in Handshape model with field_choice_category in FieldChoice table.')
+            for f in handshape_fields:
+                # make sure all handshape fields are defined in Gloss
+                self.assertIn(f, handshape_fields_names.keys())
+                # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
+                self.assertTrue(hasattr(handshape_fields_names[f], 'choices'))
+                # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
+                if not isinstance(handshape_fields_names[f], models.CharField):
+                    # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
+                    self.assertFalse(hasattr(handshape_fields_names[f], 'field_choice_category'))
+                    self.assertNotEqual(fieldname_to_kind_table[f], 'list')
+                elif not handshape_fields_names[f].choices:
+                    # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
+                    self.assertFalse(hasattr(handshape_fields_names[f], 'field_choice_category'))
+                    self.assertNotEqual(fieldname_to_kind_table[f], 'list')
+                else:
+                    # we expect the field to be a choice list field and have field_choice_category defined
+                    self.assertEqual(fieldname_to_kind_table[f], 'list')
+                    if hasattr(handshape_fields_names[f], 'max_length') and handshape_fields_names[f].max_length > 9:
+                        print('Note: handshape field ', f, ' has max_length ', str(handshape_fields_names[f].max_length), ' but also has field choices.')
+                    self.assertTrue(hasattr(handshape_fields_names[f], 'field_choice_category'))
+                    fc_category = handshape_fields_names[f].field_choice_category
+                    # make sure there are fields for the category
+                    fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category)
+                    self.assertGreater(len(fields_for_this_category),0)
+
+    def test_duplicate_machine_values(self):
+
+        field_choice_objects = FieldChoice.objects.all()
+
+        grouped_by_field = dict()
+        for fco in field_choice_objects:
+            field = fco.field
+            if field not in grouped_by_field.keys():
+                grouped_by_field[field] = []
+            if fco.machine_value in grouped_by_field[field]:
+                matches_to_field = field_choice_objects.filter(field=field, machine_value=fco.machine_value)
+                matches_to_string = [ ( m.field, str(m.machine_value),m.english_name) for m in matches_to_field ]
+                print('Duplicate machine value for ', field, ': ', matches_to_string)
+            else:
+                grouped_by_field[field].append(fco.machine_value)
+
+class RevisionHistoryTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        assign_perm('dictionary.can_publish', self.user)
+        self.user.save()
+
+    def test_field_types(self):
+
+        # Create a new lemma in the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        # Create a new gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        gloss_update_phonology_data = []
+        gloss_fields = settings.FIELDS['phonology']+settings.FIELDS['semantics']+settings.FIELDS['main']+['inWeb', 'isNew', 'excludeFromEcv']
+        gloss_fields_names = {f.name: f for f in Gloss._meta.fields}
+
+        # make a bunch of new field choices
+        for f in gloss_fields_names.keys():
+            if hasattr(gloss_fields_names[f], 'field_choice_category'):
+                fc_category = gloss_fields_names[f].field_choice_category
+                new_machine_value = 500
+                new_human_value = 'fieldchoice_' + fc_category + '_500'
+                this_field_choice = FieldChoice(machine_value=new_machine_value,
+                                                field=fc_category,
+                                                english_name=new_human_value,
+                                                dutch_name=new_human_value,
+                                                chinese_name=new_human_value)
+                this_field_choice.save()
+
+        for f in gloss_fields:
+            if hasattr(gloss_fields_names[f], 'field_choice_category'):
+                new_machine_value_string = '_500'
+                gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+            elif isinstance(gloss_fields_names[f], CharField) or isinstance(gloss_fields_names[f], TextField):
+                new_machine_value_string = f + '_string'
+                gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+            elif f in settings.HANDSHAPE_ETYMOLOGY_FIELDS:
+                new_machine_value_string = 'true'
+                gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+            elif f in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                new_machine_value_string = '2'
+                gloss_update_phonology_data.append({'id': f, 'value': new_machine_value_string})
+            elif isinstance(gloss_fields_names[f], NullBooleanField):
+                new_machine_value_string = 'true'
+                gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
+        for update_data in gloss_update_phonology_data:
+            client.post('/dictionary/update/gloss/' + str(new_gloss.pk), update_data)
+
+        all_revisions = GlossRevision.objects.filter(gloss=new_gloss.pk, user=self.user)
+        updated_fields = [ r.field_name for r in all_revisions ]
+
+        for f in gloss_fields:
+            self.assertTrue(f in updated_fields)
+
+
+class CNGT_Tests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        assign_perm('dictionary.change_gloss', self.user)
+        self.user.save()
+
+    def test_metadata_file(self):
+        # this imports the Speaker data to the test database
+        from signbank.tools import import_corpus_speakers
+
+        import_corpus_speakers()
+
+        count_known_speakers = Speaker.objects.all().count()
+
+        # find out how many entries are in the meta data file
+        get_wc = "wc " + settings.METADATA_LOCATION
+
+        import subprocess
+        wc_output = subprocess.check_output(get_wc, shell=True)
+        wc_output_string = wc_output.decode("utf-8").strip()
+        wc_output_values = wc_output_string.split()
+        if wc_output_values:
+            number_of_entries = int(wc_output_values[0]) - 1
+        else:
+            number_of_entries = 0
+
+        self.assertEqual(count_known_speakers, number_of_entries)
+
+        # try to read file again, make sure no new entries are created
+        import_corpus_speakers()
+        count_known_speakers2 = Speaker.objects.all().count()
+        self.assertEqual(count_known_speakers2, number_of_entries)
+
+
+class MinimalPairsTests(TestCase):
+
+    # This test exists because a bug had previously been found with the display of the repeat phonology field
+    # repeat is a Boolean field that should be either True or False (the default if not set)
+    # This should be displayed as Yes or No
+
+    # MINIMAL_PAIRS_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+    #                         'relOriMov', 'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'repeat', 'altern']
+
+    # This test currently checks minimal pairs involving the following phonology fields,
+    # based on type of the field:
+
+    # handedness
+    # domhndsh
+    # subhndsh
+    # locprim
+    # repeat, altern
+    # handCh
+
+    def setUp(self):
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.save()
+
+        self.client = Client()
+
+    def test_analysis_minimalpairs(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create 10 lemmas for use in testing
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,15):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        # print('created lemmas: ', lemmas)
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        # Create 10 glosses that start out being the same
+        glosses = {}
+        for gloss_id in range(1,15):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : str(test_handshape1.machine_value),
+                'locprim': 7,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        # print('created glosses: ', glosses)
+
+        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
+
+        glosses[2].locprim = 8
+        glosses[2].save()
+
+        glosses[3].repeat = True
+        glosses[3].save()
+
+        glosses[4].handedness = 4
+        glosses[4].save()
+
+        glosses[5].domhndsh_letter = True
+        glosses[5].save()
+
+        glosses[6].weakdrop = True
+        glosses[6].save()
+
+        glosses[7].weakdrop = False
+        glosses[7].save()
+
+        glosses[8].altern = True
+        glosses[8].save()
+
+        glosses[9].handCh = 7
+        glosses[9].save()
+
+        glosses[10].domhndsh = str(test_handshape2.machine_value)
+        glosses[10].domhndsh_letter = True
+        glosses[10].save()
+
+        glosses[11].handedness = 4
+        glosses[11].weakdrop = False
+        glosses[11].save()
+
+        glosses[12].handedness = 4
+        glosses[12].weakdrop = True
+        glosses[12].save()
+
+        glosses[13].handedness = 4
+        glosses[13].save()
+
+        glosses[14].domhndsh = str(test_handshape2.machine_value)
+        glosses[14].domhndsh_letter = False
+        glosses[14].save()
+
+        self.client.login(username='test-user', password='test-user')
+
+        assign_perm('view_dataset', self.user, test_dataset)
+        response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
+
+        objects_on_page = response.__dict__['context_data']['objects_on_page']
+
+        # check that all objects retrieved by minimal pairs are also displayed
+        # objects_on_page is a list of object ids
+        # check for these rows
+        for obj in objects_on_page:
+            pattern_gloss = 'focusgloss_' + str(obj)
+            self.assertContains(response, pattern_gloss)
+
+        # now fetch the table row contents for each object, using the ajax call of the template
+        # check that the repeat phonology field is correctly displayed as Yes and No for True and False
+        for obj in objects_on_page:
+            response_row = self.client.get('/dictionary/ajax/minimalpairs/' + str(obj) + '/')
+            minimal_pairs_dict = response_row.context['minimal_pairs_dict']
+
+            # uncomment print statement to see what the minimal pairs are
+            # print('minimal pairs ', response_row.context['focus_gloss_translation'])
+
+            for minimalpair in minimal_pairs_dict:
+                # check that there is a row for this minimal pair in the html
+                other_gloss_id = str(minimalpair['other_gloss'].id)
+                pattern_cell = 'cell_' + str(obj) + '_' + other_gloss_id
+                self.assertContains(response_row, pattern_cell)
+                # check that the field 'repeat' has different values in the table
+                # we make use of the fact that the values in the minimal_pairs_dict returned by the ajax call are used
+                field = minimalpair['field']
+                focus_gloss_value = minimalpair['focus_gloss_value']
+                other_gloss_value = minimalpair['other_gloss_value']
+                other_gloss_idgloss = minimalpair['other_gloss_idgloss']
+
+                # uncomment print statement to see what the minimal pairs are
+                # print('                                  ', other_gloss_idgloss, '     ', field, '     ', focus_gloss_value, '   ', other_gloss_value)
+
+                # this test makes sure that when minimal pair rows are displayed that the values differ in the display
+                self.assertNotEqual(focus_gloss_value, other_gloss_value)
+
+    def test_emptyvalues_minimalpairs(self):
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create 10 lemmas for use in testing
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,15):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        # print('created lemmas: ', lemmas)
+
+        test_handshape1 = Handshape.objects.get(machine_value = 62)
+        test_handshape2 = Handshape.objects.get(machine_value = 154)
+
+        # Create 10 glosses that start out being the same
+        glosses = {}
+        for gloss_id in range(1,15):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'domhndsh' : test_handshape1.machine_value,
+                'locprim': 7,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
+
+        # print('created glosses: ', glosses)
+
+        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
+
+        # pretend locprim hasn't been assigned
+        glosses[2].locprim = None
+        glosses[2].save()
+
+        glosses[3].locprim = ''
+        glosses[3].save()
+
+        glosses[4].locprim = '-'
+        glosses[4].save()
+
+        # this is an errorneous None value
+        glosses[5].locprim = 'None'
+        glosses[5].save()
+        error_none_gloss_5 = 'ERROR_None'
+
+        glosses[6].locprim = 337
+        glosses[6].save()
+        error_337_gloss_6 = 'ERROR_337'
+
+        glosses[7].locprim = 0
+        glosses[7].save()
+
+        glosses[8].locprim = '0'
+        glosses[8].save()
+
+        # gloss 9 has an empty handedness, it has no minimal pairs
+        glosses[9].handedness = None
+        glosses[9].save()
+
+        glosses[10].domhndsh = test_handshape2.machine_value
+        glosses[10].domhndsh_letter = True
+        glosses[10].save()
+
+        glosses[11].handedness = 4
+        glosses[11].weakdrop = False
+        glosses[11].save()
+
+        glosses[12].handedness = 4
+        glosses[12].weakdrop = True
+        glosses[12].save()
+
+        glosses[13].domhndsh = test_handshape2.machine_value
+        glosses[13].handedness = 4
+        glosses[13].save()
+
+        glosses[14].domhndsh = test_handshape2.machine_value
+        glosses[14].handedness = 4
+        glosses[14].subhndsh = test_handshape2.machine_value
+        glosses[14].save()
+
+        glosses_to_ids = {}
+
+        for gloss_id in range(1,15):
+            glosses_to_ids[str(glosses[gloss_id].id)] = str(gloss_id)
+
+        self.client.login(username='test-user', password='test-user')
+
+        assign_perm('view_dataset', self.user, test_dataset)
+        response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
+
+        objects_on_page = response.__dict__['context_data']['objects_on_page']
+
+        # check that all objects retrieved by minimal pairs are also displayed
+        # objects_on_page is a list of object ids
+        # check for these rows
+        for obj in objects_on_page:
+            pattern_gloss = 'focusgloss_' + str(obj)
+            self.assertContains(response, pattern_gloss)
+
+        # now fetch the table row contents for each object, using the ajax call of the template
+        # check that the repeat phonology field is correctly displayed as Yes and No for True and False
+        for obj in objects_on_page:
+            response_row = self.client.get('/dictionary/ajax/minimalpairs/' + str(obj) + '/')
+            minimal_pairs_dict = response_row.context['minimal_pairs_dict']
+
+            if str(obj) == str(glosses[9].id):
+                # make sure no minimal pairs for this gloss, since handedness is empty
+                self.assertEqual(minimal_pairs_dict, [])
+                continue
+
+            # uncomment print statement to see what the minimal pairs are
+            # print('minimal pairs for ', response_row.context['focus_gloss_translation'], ' (glosses[', glosses_to_ids[str(obj)], '])')
+
+            for minimalpair in minimal_pairs_dict:
+                # check that there is a row for this minimal pair in the html
+                other_gloss_id = str(minimalpair['other_gloss'].id)
+                pattern_cell = 'cell_' + str(obj) + '_' + other_gloss_id
+                self.assertContains(response_row, pattern_cell)
+                # check that the field 'repeat' has different values in the table
+                # we make use of the fact that the values in the minimal_pairs_dict returned by the ajax call are used
+                field = minimalpair['field']
+                focus_gloss_value = minimalpair['focus_gloss_value']
+                other_gloss_value = minimalpair['other_gloss_value']
+                other_gloss_idgloss = minimalpair['other_gloss_idgloss']
+
+                # uncomment print statement to see what the minimal pairs are
+                # print('          ', other_gloss_idgloss, ' (glosses[', glosses_to_ids[other_gloss_id], ']) ', field, '     ', focus_gloss_value, '     ', other_gloss_value)
+
+                # this test makes sure that when minimal pair rows are displayed that the values differ in the display
+                self.assertNotEqual(focus_gloss_value, other_gloss_value)
+
+                if str(obj) == str(glosses[5].id):
+                    # gloss 5 contains an erroneous None value
+                    self.assertEqual(focus_gloss_value, error_none_gloss_5)
+                    continue
+                if other_gloss_id == str(glosses[5].id):
+                    # gloss 5 contains an erroneous None value
+                    self.assertEqual(other_gloss_value, error_none_gloss_5)
+                    continue
+                if str(obj) == str(glosses[6].id):
+                    # gloss 6 contains an erroneous locprim value
+                    self.assertEqual(focus_gloss_value, error_337_gloss_6)
+                    continue
+                if other_gloss_id == str(glosses[6].id):
+                    # gloss 6 contains an erroneous locprim value
+                    self.assertEqual(other_gloss_value, error_337_gloss_6)
+                    continue
 
 # Helper function to retrieve contents of json-encoded message
 def decode_messages(data):

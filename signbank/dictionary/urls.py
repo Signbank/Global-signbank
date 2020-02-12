@@ -4,8 +4,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossRelationsDetailView, MorphemeDetailView, \
-    MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, \
+from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossFrequencyView, GlossRelationsDetailView, MorphemeDetailView, \
+    MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView, \
     create_lemma_for_gloss, LemmaUpdateView
 
 #These are needed for the urls below
@@ -62,9 +62,12 @@ urlpatterns = [
     url(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),
     url(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),
     url(r'^ajax/handshapesearchresults/$', signbank.dictionary.adminviews.handshape_ajax_search_results, name='handshape_ajax_search_results'),
-    url(r'^ajax/lemma/(?P<dataset_id>.*)/(?P<q>.*)$', signbank.dictionary.adminviews.lemma_ajax_complete, name='lemma_complete'),
+    url(r'^ajax/lemma/(?P<dataset_id>.*)/(?P<language_code>.*)/(?P<q>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.lemma_ajax_complete), name='lemma_complete'),
     url(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete, name='homonyms_ajax_complete'),
     url(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete, name='minimalpairs_ajax_complete'),
+    url(r'^ajax/glossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.glosslist_ajax_complete, name='glosslist_ajax_complete'),
+    url(r'^ajax/glosslistheader/$', signbank.dictionary.adminviews.glosslistheader_ajax, name='glosslistheader_ajax'),
+    url(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.lemmaglosslist_ajax_complete, name='lemmaglosslist_ajax_complete'),
     url(r'^ajax/choice_lists/$', signbank.dictionary.views.choice_lists,name='choice_lists'),
 
     url(r'^missingvideo.html$', signbank.dictionary.views.missing_video_view),
@@ -79,6 +82,10 @@ urlpatterns = [
     url(r'update_cngt_counts/(?P<folder_index>\d+)$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.update_cngt_counts)),
     url(r'configure_handshapes/$',
         permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_handshapes)),
+    url(r'configure_speakers/$',
+        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_speakers)),
+    url(r'configure_corpus_documents_ngt/$',
+        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_corpus_documents_ngt)),
 
     url(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     url(r'all_field_choices.tsv/$',signbank.dictionary.views.list_all_fieldchoice_names),
@@ -93,7 +100,11 @@ urlpatterns = [
     url(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
     url(r'^morphemes/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view()), name='admin_morpheme_list'),
     url(r'^handshapes/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
+    url(r'^gloss/(?P<gloss_pk>\d+)/history', signbank.dictionary.views.gloss_revision_history, name='gloss_revision_history'),
+    url(r'^gloss/(?P<gloss_pk>\d+)/frequency', signbank.dictionary.views.gloss_frequency, name='gloss_frequency'),
     url(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view'),
+    url(r'^gloss_frequency/(?P<gloss_id>.*)/$', GlossFrequencyView.as_view(), name='admin_frequency_gloss'),
+    url(r'^lemma_frequency/(?P<gloss_id>.*)/$', LemmaFrequencyView.as_view(), name='admin_frequency_lemma'),
     url(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     url(r'^morpheme/(?P<pk>\d+)', MorphemeDetailView.as_view(), name='admin_morpheme_view'),
     url(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
@@ -104,4 +115,6 @@ urlpatterns = [
     url(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
     url(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
     url(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
+
+    url(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples)
 ]

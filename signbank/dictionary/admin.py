@@ -89,7 +89,7 @@ class GlossAdmin(VersionAdmin):
 
     idgloss_fields = ['lemma']
 
-    fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('dataset', 'signlanguage', 'dialect')}, ),
+    fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('signlanguage', 'dialect')}, ),
                  ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate','alternative_id'),
                                        'classes': ('collapse',)}, ),
                  ('Phonology', {'fields': FIELDS['phonology'], 'classes': ('collapse',)}, ),
@@ -100,11 +100,11 @@ class GlossAdmin(VersionAdmin):
     save_on_top = True
     save_as = True
 
-    list_display = ['lemma','dataset']
+    list_display = ['lemma']
 
     list_display += ['morph', 'sense', 'sn']
     search_fields = ['^lemma__lemmaidglosstranslation__text', '=sn']
-    list_filter = ['lemma__dataset', 'signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
+    list_filter = ['signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
     inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 
     history_latest_first = True
@@ -113,6 +113,10 @@ class GlossAdmin(VersionAdmin):
 class HandshapeAdmin(VersionAdmin):
 
     list_display = ['machine_value', 'english_name', 'dutch_name']
+
+class GlossRevisionAdmin(VersionAdmin):
+
+    model = GlossRevision
 
 class RegistrationProfileAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'activation_key_expired', )
@@ -310,6 +314,7 @@ admin.site.register(SimultaneousMorphologyDefinition)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 admin.site.register(Handshape, HandshapeAdmin)
+admin.site.register(GlossRevision,GlossRevisionAdmin)
 
 admin.site.register(UserProfile)
 admin.site.register(Language, LanguageAdmin)
