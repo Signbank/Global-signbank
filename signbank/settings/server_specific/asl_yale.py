@@ -25,7 +25,7 @@ ALLOWED_HOSTS = ['spinup-000691.yu.yale.edu','10.5.34.251','aslsignbank.haskins.
 PREFIX_URL = ''
 
 LANGUAGES = (
-  ('en_US', 'American English'),
+  ('en_US', 'American_English'),
 )
 
 LANGUAGE_CODE = "en-us"
