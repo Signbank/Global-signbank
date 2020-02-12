@@ -2688,11 +2688,14 @@ def gloss_frequency(request,gloss_pk):
         except:
             variants = []
     if gloss not in variants:
-        variants_with_keys = [ (og.idgloss, og) for og in variants ] + [ ( gloss.idgloss, gloss )]
-    else:
-        variants_with_keys = [ (og.idgloss, og) for og in variants ]
+        variants.append(gloss)
+    variants_with_keys = []
+    for gl in variants:
+        # get the annotation explicitly
+        # do not use the __str__ property idgloss
+        gl_idgloss = gl.annotationidglosstranslation_set.get(language=gloss.lemma.dataset.default_language).text
+        variants_with_keys.append((gl_idgloss, gl))
     sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
-    variant_objects = [ og for (og_idgloss, og) in variants_with_keys ]
     sorted_variant_keys = sorted( [ og_idgloss for (og_idgloss, og) in variants_with_keys] )
     variants_data_quick_access = {}
     variants_data = []
@@ -2782,28 +2785,10 @@ def gloss_frequency(request,gloss_pk):
     # print('variants_age_distribution_cat_data: ', variants_age_distribution_cat_data)
     # print('variants_age_distribution_cat_percentage: ', variants_age_distribution_cat_percentage)
 
-    speaker_per_variant_data = {}
-    speaker_per_variant_data['Female'] = {}
-    speaker_per_variant_data['Male'] = {}
-    speaker_per_variant_data['Female'][gloss.idgloss] = speaker_data['Female']
-    speaker_per_variant_data['Male'][gloss.idgloss] = speaker_data['Male']
-
-    for variant_of_gloss in variant_objects:
-        speaker_per_variant_data['Female'][variant_of_gloss.idgloss] = variants_data_quick_access[variant_of_gloss.idgloss]['Female']
-        speaker_per_variant_data['Male'][variant_of_gloss.idgloss] = variants_data_quick_access[variant_of_gloss.idgloss]['Male']
-
     variant_labels = []
     for og_igloss in sorted_variant_keys:
         if og_igloss not in variant_labels:
             variant_labels.append(og_igloss)
-
-    variant_female_data = []
-    for v_label in variant_labels:
-        variant_female_data.append(speaker_per_variant_data['Female'][v_label])
-
-    variant_male_data = []
-    for v_label in variant_labels:
-        variant_male_data.append(speaker_per_variant_data['Male'][v_label])
 
     return render(request, 'dictionary/gloss_frequency.html',
                   {'gloss': gloss,
@@ -2821,9 +2806,6 @@ def gloss_frequency(request,gloss_pk):
                    'variant_labels' : variant_labels,
                    'variants_sex_distribution_data': variants_sex_distribution_data,
                    'variants_sex_distribution_data_percentage': variants_sex_distribution_data_percentage,
-                   'speaker_per_variant_data' : speaker_per_variant_data,
-                   'variant_female_data': variant_female_data,
-                   'variant_male_data': variant_male_data,
                    'view_type': 'percentage',
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
