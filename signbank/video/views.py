@@ -65,26 +65,7 @@ def deletevideo(request, videoid):
                                           goal_location=v.videofile.path)
             log_entry.save()
 
-<<<<<<< HEAD
-        gloss_video_filename = gloss.get_video_path_prefix()
-        gloss_basename = os.path.basename(gloss_video_filename)
-        fpath, fname = os.path.split(gloss.get_video_path())
 
-        import urllib.parse
-        quoted_filename = gloss_basename #urllib.parse.quote(gloss_basename)
-        quoted_path = os.path.join(fpath, quoted_filename + '.mp4')
-
-        filename_small = quoted_filename + '_small' + '.mp4'
-        gloss_video_path_small = os.path.join(WRITABLE_FOLDER, filename_small)
-        gloss_video_path = os.path.join(WRITABLE_FOLDER, quoted_path)
-        #Extra check: if the file is still there, delete it manually
-        if os.path.exists(gloss_video_path):
-            os.remove(gloss_video_path)
-        if os.path.exists(gloss_video_path_small):
-            os.remove(gloss_video_path_small)
-
-=======
->>>>>>> origin/master
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     deleted_video = DeletedGlossOrMedia()
@@ -120,17 +101,9 @@ def video(request, videoid):
 
 def create_still_images(request):
     processed_videos = []
-<<<<<<< HEAD
-    for gloss in Gloss.objects.all():
-        video_path = WRITABLE_FOLDER + gloss.get_video_path()
-        if os.path.isfile(video_path.encode('UTF-8')):
-            idgloss_prefix = gloss.idgloss[:2]
-            (folder, basename) = os.path.split(video_path)
-            generate_still_image(idgloss_prefix, folder + os.sep, basename)
-            processed_videos.append(video_path)
-=======
+
     for video in GlossVideo.objects.filter(version=0):
         generate_still_image(video)
         processed_videos.append(str(video))
->>>>>>> origin/master
+
     return HttpResponse('Processed videos: <br/>' + "<br/>".join(processed_videos))
