@@ -24,13 +24,23 @@ CATEGORY_CHOICES = (('all', 'All Signs'),
                     ('semantic:health', 'Only Health Related Signs'),
                     ('semantic:education', 'Only Education Related Signs'))
 
-#See if there are any tags there, but don't crash if there isn't even a table
-try:
-    tag_choices = [(tag.name, tag.name.replace('_',' ')) for tag in Tag.objects.all()]
-    not_tag_choices = [(tag.name, tag.name) for tag in Tag.objects.all()]
-except OperationalError:
-    tag_choices = []
-    not_tag_choices = []
+
+# See if there are any tags there, but don't crash if there isn't even a table
+def tag_choices():
+    try:
+        tag_choices_list = [(tag.name, tag.name.replace('_', ' ')) for tag in Tag.objects.all()]
+    except OperationalError:
+        tag_choices_list = []
+    return tag_choices_list
+
+
+def not_tag_choices():
+    try:
+        not_tag_choices_list = [(tag.name, tag.name) for tag in Tag.objects.all()]
+    except:
+        not_tag_choices_list = []
+    return not_tag_choices_list
+
 
 class UserSignSearchForm(forms.Form):
 
