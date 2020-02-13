@@ -1384,6 +1384,21 @@ class HandshapeTests(TestCase):
         assign_perm('dictionary.change_gloss', self.user)
         self.user.save()
 
+        used_machine_values = [ h.machine_value for h in Handshape.objects.all() ]
+        max_used_machine_value = max(used_machine_values)
+
+        # create two arbitrary new Handshapes
+
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name='thisisatemporarytesthandshape1',
+                                                                                dutch_name='thisisatemporarytesthandshape1',
+                                                                                chinese_name='thisisatemporarytesthandshape1')
+        self.test_handshape1.save()
+
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name='thisisatemporarytesthandshape2',
+                                                                                dutch_name='thisisatemporarytesthandshape2',
+                                                                                chinese_name='thisisatemporarytesthandshape2')
+        self.test_handshape2.save()
+
     def create_handshape(self):
 
         new_machine_value = 588
@@ -1457,17 +1472,14 @@ class HandshapeTests(TestCase):
 
         # print('created lemmas: ', lemmas)
 
-        test_handshape1 = Handshape.objects.get(machine_value = 62)
-        test_handshape2 = Handshape.objects.get(machine_value = 154)
-
         # Create 10 glosses that start out being the same
         glosses = {}
         for gloss_id in range(1,4):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': 2,
-                'domhndsh' : str(test_handshape1.machine_value),
-                'subhndsh': str(test_handshape2.machine_value),
+                'domhndsh' : str(self.test_handshape1.machine_value),
+                'subhndsh': str(self.test_handshape2.machine_value),
             }
             new_gloss = Gloss(**gloss_data)
             new_gloss.save()
@@ -1734,7 +1746,7 @@ class FieldChoiceTests(TestCase):
 
     def test_delete_fieldchoice_morphology_definition(self):
 
-        # delete fieldchoice for OtherMediaType
+        # delete fieldchoice for morphology definition
 
         from signbank.tools import fields_with_choices_morphology_definition
         fields_with_choices = fields_with_choices_morphology_definition()
@@ -1899,7 +1911,7 @@ class FieldChoiceTests(TestCase):
 
     def test_delete_fieldchoice_morpheme_type(self):
 
-        # delete fieldchoice for OtherMediaType
+        # delete fieldchoice for morpheme type
 
         from signbank.tools import fields_with_choices_morpheme_type
         fields_with_choices = fields_with_choices_morpheme_type()
@@ -1986,6 +1998,21 @@ class testFrequencyAnalysis(TestCase):
 
         self.client = Client()
 
+        used_machine_values = [ h.machine_value for h in Handshape.objects.all() ]
+        max_used_machine_value = max(used_machine_values)
+
+        # create two arbitrary new Handshapes
+
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name='thisisatemporarytesthandshape1',
+                                                                                dutch_name='thisisatemporarytesthandshape1',
+                                                                                chinese_name='thisisatemporarytesthandshape1')
+        self.test_handshape1.save()
+
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name='thisisatemporarytesthandshape2',
+                                                                                dutch_name='thisisatemporarytesthandshape2',
+                                                                                chinese_name='thisisatemporarytesthandshape2')
+        self.test_handshape2.save()
+
     def test_analysis_frequency(self):
 
         # set the test dataset
@@ -2002,16 +2029,13 @@ class testFrequencyAnalysis(TestCase):
             new_lemmaidglosstranslation.save()
             lemmas[lemma_id] = new_lemma
 
-        test_handshape1 = Handshape.objects.get(machine_value = 62)
-        test_handshape2 = Handshape.objects.get(machine_value = 154)
-
         glosses = {}
         for gloss_id in range(1,10):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': 2,
-                'domhndsh' : str(test_handshape1.machine_value),
-                'subhndsh': str(test_handshape2.machine_value),
+                'domhndsh' : str(self.test_handshape1.machine_value),
+                'subhndsh': str(self.test_handshape2.machine_value),
                 'locprim': 5,
             }
             new_gloss = Gloss(**gloss_data)
@@ -2034,13 +2058,13 @@ class testFrequencyAnalysis(TestCase):
         glosses[4].handCh = 7
         glosses[4].save()
 
-        glosses[5].domhndsh = str(test_handshape2.machine_value)
+        glosses[5].domhndsh = str(self.test_handshape2.machine_value)
         glosses[5].save()
 
         glosses[6].handedness = 5
         glosses[6].save()
 
-        glosses[7].domhndsh = str(test_handshape2.machine_value)
+        glosses[7].domhndsh = str(self.test_handshape2.machine_value)
         glosses[7].save()
 
         glosses[8].namEnt = 16
@@ -2434,6 +2458,21 @@ class MinimalPairsTests(TestCase):
 
         self.client = Client()
 
+        used_machine_values = [ h.machine_value for h in Handshape.objects.all() ]
+        max_used_machine_value = max(used_machine_values)
+
+        # create two arbitrary new Handshapes
+
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name='thisisatemporarytesthandshape1',
+                                                                                dutch_name='thisisatemporarytesthandshape1',
+                                                                                chinese_name='thisisatemporarytesthandshape1')
+        self.test_handshape1.save()
+
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name='thisisatemporarytesthandshape2',
+                                                                                dutch_name='thisisatemporarytesthandshape2',
+                                                                                chinese_name='thisisatemporarytesthandshape2')
+        self.test_handshape2.save()
+
     def test_analysis_minimalpairs(self):
 
         # set the test dataset
@@ -2453,16 +2492,13 @@ class MinimalPairsTests(TestCase):
 
         # print('created lemmas: ', lemmas)
 
-        test_handshape1 = Handshape.objects.get(machine_value = 62)
-        test_handshape2 = Handshape.objects.get(machine_value = 154)
-
         # Create 10 glosses that start out being the same
         glosses = {}
         for gloss_id in range(1,15):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': 2,
-                'domhndsh' : str(test_handshape1.machine_value),
+                'domhndsh' : str(self.test_handshape1.machine_value),
                 'locprim': 7,
             }
             new_gloss = Gloss(**gloss_data)
@@ -2505,7 +2541,7 @@ class MinimalPairsTests(TestCase):
         glosses[9].handCh = 7
         glosses[9].save()
 
-        glosses[10].domhndsh = str(test_handshape2.machine_value)
+        glosses[10].domhndsh = str(self.test_handshape2.machine_value)
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
@@ -2520,7 +2556,7 @@ class MinimalPairsTests(TestCase):
         glosses[13].handedness = 4
         glosses[13].save()
 
-        glosses[14].domhndsh = str(test_handshape2.machine_value)
+        glosses[14].domhndsh = str(self.test_handshape2.machine_value)
         glosses[14].domhndsh_letter = False
         glosses[14].save()
 
@@ -2584,16 +2620,13 @@ class MinimalPairsTests(TestCase):
 
         # print('created lemmas: ', lemmas)
 
-        test_handshape1 = Handshape.objects.get(machine_value = 62)
-        test_handshape2 = Handshape.objects.get(machine_value = 154)
-
         # Create 10 glosses that start out being the same
         glosses = {}
         for gloss_id in range(1,15):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': 2,
-                'domhndsh' : test_handshape1.machine_value,
+                'domhndsh' : self.test_handshape1.machine_value,
                 'locprim': 7,
             }
             new_gloss = Gloss(**gloss_data)
@@ -2641,7 +2674,7 @@ class MinimalPairsTests(TestCase):
         glosses[9].handedness = None
         glosses[9].save()
 
-        glosses[10].domhndsh = test_handshape2.machine_value
+        glosses[10].domhndsh = self.test_handshape2.machine_value
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
@@ -2653,13 +2686,13 @@ class MinimalPairsTests(TestCase):
         glosses[12].weakdrop = True
         glosses[12].save()
 
-        glosses[13].domhndsh = test_handshape2.machine_value
+        glosses[13].domhndsh = self.test_handshape2.machine_value
         glosses[13].handedness = 4
         glosses[13].save()
 
-        glosses[14].domhndsh = test_handshape2.machine_value
+        glosses[14].domhndsh = self.test_handshape2.machine_value
         glosses[14].handedness = 4
-        glosses[14].subhndsh = test_handshape2.machine_value
+        glosses[14].subhndsh = self.test_handshape2.machine_value
         glosses[14].save()
 
         glosses_to_ids = {}
