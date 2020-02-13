@@ -2086,11 +2086,17 @@ class testFrequencyAnalysis(TestCase):
         language_code = language.language_code_2char
 
         codes_to_adjectives = dict(settings.LANGUAGES)
+        field_choices_names = [ f.name for f in FieldChoice._meta.fields ]
+        # print('field_choices_names: ', field_choices_names)
 
         if language_code not in codes_to_adjectives.keys():
             adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
         else:
             adjective = codes_to_adjectives[language_code].lower()
+            desired_ordering_on_field = adjective + '_name'
+            # to accomodate other Signbanks, confirm whether the language exists in the FieldChoice model
+            if desired_ordering_on_field not in field_choices_names:
+                adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
 
         frequency_dict = test_dataset.generate_frequency_dict(language_code)
         frequency_dict_keys = frequency_dict.keys()
