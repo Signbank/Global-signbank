@@ -1384,24 +1384,32 @@ class HandshapeTests(TestCase):
         assign_perm('dictionary.change_gloss', self.user)
         self.user.save()
 
-        used_machine_values = [ h.machine_value for h in Handshape.objects.all() ]
-        max_used_machine_value = max(used_machine_values)
+        if settings.USE_HANDSHAPE:
+            print('HandshapeTests setUp.')
+            used_machine_values = [ h.machine_value for h in Handshape.objects.all() ]
+            max_used_machine_value = max(used_machine_values)
 
-        # create two arbitrary new Handshapes
+            # create two arbitrary new Handshapes
 
-        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name='thisisatemporarytesthandshape1',
-                                                                                dutch_name='thisisatemporarytesthandshape1',
-                                                                                chinese_name='thisisatemporarytesthandshape1')
-        self.test_handshape1.save()
+            self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name='thisisatemporarytesthandshape1',
+                                                                                    dutch_name='thisisatemporarytesthandshape1',
+                                                                                    chinese_name='thisisatemporarytesthandshape1')
+            self.test_handshape1.save()
 
-        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name='thisisatemporarytesthandshape2',
-                                                                                dutch_name='thisisatemporarytesthandshape2',
-                                                                                chinese_name='thisisatemporarytesthandshape2')
-        self.test_handshape2.save()
+            self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name='thisisatemporarytesthandshape2',
+                                                                                    dutch_name='thisisatemporarytesthandshape2',
+                                                                                    chinese_name='thisisatemporarytesthandshape2')
+            self.test_handshape2.save()
+
+            print('New handshape ', self.test_handshape1.machine_value, ' created: ', self.test_handshape1.english_name, self.test_handshape1.dutch_name)
+            print('New handshape ', self.test_handshape2.machine_value, ' created: ', self.test_handshape2.english_name, self.test_handshape2.dutch_name)
 
     def create_handshape(self):
 
-        new_machine_value = 588
+        used_machine_values = [h.machine_value for h in Handshape.objects.all()]
+        max_used_machine_value = max(used_machine_values)
+        print('max_used_machine_value: ', max_used_machine_value)
+        new_machine_value = max_used_machine_value + 1
         new_english_name = 'thisisanewtesthandshape_en'
         new_dutch_name = 'thisisanewtesthandshape_nl'
 
@@ -1414,104 +1422,110 @@ class HandshapeTests(TestCase):
 
     def test_create_handshape(self):
 
-        # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
-        test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('view_dataset', self.user, test_dataset)
-        assign_perm('change_dataset', self.user, test_dataset)
-        # assign_perm('dictionary.search_gloss', self.user)
-        # assign_perm('dictionary.add_gloss', self.user)
-        # assign_perm('dictionary.change_gloss', self.user)
+        if settings.USE_HANDSHAPE:
+            print('HandshapeTests test_create_handshape')
+            # set the test dataset
+            dataset_name = settings.DEFAULT_DATASET
+            test_dataset = Dataset.objects.get(name=dataset_name)
+            assign_perm('view_dataset', self.user, test_dataset)
+            assign_perm('change_dataset', self.user, test_dataset)
+            # assign_perm('dictionary.search_gloss', self.user)
+            # assign_perm('dictionary.add_gloss', self.user)
+            # assign_perm('dictionary.change_gloss', self.user)
 
-        self.client.login(username='test-user', password='test-user')
+            self.client.login(username='test-user', password='test-user')
 
-        #Add info of the dataset to the session (normally done in the detail view)
-        self.client.session['datasetid'] = test_dataset.pk
-        self.client.session['search_results'] = None
-        self.client.session.save()
+            #Add info of the dataset to the session (normally done in the detail view)
+            self.client.session['datasetid'] = test_dataset.pk
+            self.client.session['search_results'] = None
+            self.client.session.save()
 
-        # new_machine_value = 588
-        # new_english_name = 'thisisanewtesthandshape_en'
-        # new_dutch_name = 'thisisanewtesthandshape_nl'
-        #
-        # new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name)
-        # new_handshape.save()
-        #
-        # print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.english_name, new_handshape.dutch_name)
+            # new_machine_value = 588
+            # new_english_name = 'thisisanewtesthandshape_en'
+            # new_dutch_name = 'thisisanewtesthandshape_nl'
+            #
+            # new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name)
+            # new_handshape.save()
+            #
+            # print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.english_name, new_handshape.dutch_name)
 
-        new_handshape = self.create_handshape()
-        #We can now request a detail view
-        print('Test HandshapeDetailView for new handshape.')
-        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
-        self.assertEqual(response.status_code,200)
+            new_handshape = self.create_handshape()
+            #We can now request a detail view
+            print('Test HandshapeDetailView for new handshape.')
+            response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+            self.assertEqual(response.status_code,200)
 
-        # Querying the new handshape puts it into FieldChoice
-        field_choices_handshapes = FieldChoice.objects.filter(field='Handshape')
-        machine_values_of_field_choices_handshapes = [ h.machine_value for h in field_choices_handshapes]
-        print('Test that the new handshape is in FieldChoice for Handshape')
-        self.assertIn(new_handshape.machine_value, machine_values_of_field_choices_handshapes)
+            # Querying the new handshape puts it into FieldChoice
+            field_choices_handshapes = FieldChoice.objects.filter(field='Handshape')
+            machine_values_of_field_choices_handshapes = [ h.machine_value for h in field_choices_handshapes]
+            print('Test that the new handshape is in FieldChoice for Handshape')
+            self.assertIn(new_handshape.machine_value, machine_values_of_field_choices_handshapes)
 
     def test_handshape_choices(self):
 
-        # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
-        test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('view_dataset', self.user, test_dataset)
-        assign_perm('change_dataset', self.user, test_dataset)
+        if settings.USE_HANDSHAPE:
+            print('HandshapeTests test_handshape_choices')
 
-        # Create 10 lemmas for use in testing
-        language = Language.objects.get(id=get_default_language_id())
-        lemmas = {}
-        for lemma_id in range(1,4):
-            new_lemma = LemmaIdgloss(dataset=test_dataset)
-            new_lemma.save()
-            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
-                                                                  lemma=new_lemma, language=language)
-            new_lemmaidglosstranslation.save()
-            lemmas[lemma_id] = new_lemma
+            # set the test dataset
+            dataset_name = settings.DEFAULT_DATASET
+            test_dataset = Dataset.objects.get(name=dataset_name)
+            assign_perm('view_dataset', self.user, test_dataset)
+            assign_perm('change_dataset', self.user, test_dataset)
 
-        # print('created lemmas: ', lemmas)
+            # Create 10 lemmas for use in testing
+            language = Language.objects.get(id=get_default_language_id())
+            lemmas = {}
+            for lemma_id in range(1,4):
+                new_lemma = LemmaIdgloss(dataset=test_dataset)
+                new_lemma.save()
+                new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                      lemma=new_lemma, language=language)
+                new_lemmaidglosstranslation.save()
+                lemmas[lemma_id] = new_lemma
 
-        # Create 10 glosses that start out being the same
-        glosses = {}
-        for gloss_id in range(1,4):
-            gloss_data = {
-                'lemma' : lemmas[gloss_id],
-                'handedness': 2,
-                'domhndsh' : str(self.test_handshape1.machine_value),
-                'subhndsh': str(self.test_handshape2.machine_value),
-            }
-            new_gloss = Gloss(**gloss_data)
-            new_gloss.save()
-            for language in test_dataset.translation_languages.all():
-                language_code_2char = language.language_code_2char
-                annotationIdgloss = AnnotationIdglossTranslation()
-                annotationIdgloss.gloss = new_gloss
-                annotationIdgloss.language = language
-                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
-                annotationIdgloss.save()
-            glosses[gloss_id] = new_gloss
+            # print('created lemmas: ', lemmas)
 
-        # print('created glosses: ', glosses)
+            # Create 10 glosses that start out being the same
+            glosses = {}
+            for gloss_id in range(1,4):
+                gloss_data = {
+                    'lemma' : lemmas[gloss_id],
+                    'handedness': 2,
+                    'domhndsh' : str(self.test_handshape1.machine_value),
+                    'subhndsh': str(self.test_handshape2.machine_value),
+                }
+                new_gloss = Gloss(**gloss_data)
+                new_gloss.save()
+                for language in test_dataset.translation_languages.all():
+                    language_code_2char = language.language_code_2char
+                    annotationIdgloss = AnnotationIdglossTranslation()
+                    annotationIdgloss.gloss = new_gloss
+                    annotationIdgloss.language = language
+                    annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                    annotationIdgloss.save()
+                glosses[gloss_id] = new_gloss
 
-        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
-        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
+            # print('created glosses: ', glosses)
 
-        self.client.login(username='test-user', password='test-user')
+            # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+            # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
 
-        new_handshape = self.create_handshape()
-        #We can now request a detail view
-        print('Test HandshapeDetailView for new handshape.')
-        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
-        self.assertEqual(response.status_code,200)
+            self.client.login(username='test-user', password='test-user')
 
-        # Find out if the new handshape appears in the Field Choice menus
-        print("Update a gloss to use the new handshape, using the choice list")
-        self.client.post('/dictionary/update/gloss/'+str(glosses[1].pk),{'id':'domhndsh','value':'_588'})
+            new_handshape = self.create_handshape()
+            #We can now request a detail view
+            print('Test HandshapeDetailView for new handshape.')
+            response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+            self.assertEqual(response.status_code,200)
 
-        changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
-        print('Confirm the gloss was updated to the new handshape.')
-        self.assertEqual(changed_gloss.domhndsh, '588')
+            new_handshape_value_string = '_' + str(new_handshape.machine_value)
+            # Find out if the new handshape appears in the Field Choice menus
+            print("Update a gloss to use the new handshape, using the choice list")
+            self.client.post('/dictionary/update/gloss/'+str(glosses[1].pk),{'id':'domhndsh','value':new_handshape_value_string})
+
+            changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
+            print('Confirm the gloss was updated to the new handshape.')
+            self.assertEqual(changed_gloss.domhndsh, str(new_handshape.machine_value))
 
 
 class FieldChoiceTests(TestCase):
