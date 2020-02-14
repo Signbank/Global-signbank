@@ -2097,6 +2097,9 @@ def add_handshape_image(request):
     else:
         url = '/'
 
+    if not settings.USE_HANDSHAPE:
+        return redirect(url)
+
     if request.method == 'POST':
 
         form = ImageUploadForHandshapeForm(request.POST, request.FILES)
@@ -2288,6 +2291,8 @@ def configure_handshapes(request):
     output_string_suffix = '</body>\n' \
                          '</html>'
 
+    if not settings.USE_HANDSHAPE:
+        return HttpResponse(output_string + '<p>Handshapes are not supported by your Signbank configuration.</p>' + output_string_suffix)
     # check if the Handshape table has been filled, if so don't do anything
     already_filled_handshapes = Handshape.objects.count()
     if already_filled_handshapes:
