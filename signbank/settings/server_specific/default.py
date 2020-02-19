@@ -169,6 +169,9 @@ DEFAULT_DATASET_ACRONYM = 'YDS'
 DEFAULT_DATASET_LANGUAGE_ID = 1
 DEFAULT_DATASET_PK = 1
 
+#whether the Handshape functionality should be present in the interface
+USE_HANDSHAPE = True
+
 #Gloss fields used in the API
 API_FIELDS = ['idgloss']
 

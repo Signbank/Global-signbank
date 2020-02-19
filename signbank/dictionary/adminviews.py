@@ -1041,10 +1041,7 @@ class GlossDetailView(DetailView):
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
             if dataset_of_requested_gloss not in datasets_user_can_view:
                 if self.object.inWeb:
-                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk,
-                                                                                           'dataset_languages': dataset_languages,
-                                                                                           'selected_datasets': selected_datasets,
-                                                                                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface }))
+                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
                 else:
                     return render(request, 'dictionary/warning.html',
                                   {'warning': 'The gloss you are trying to view ('+str(self.object.id)+') is not assigned to a dataset.',
@@ -1053,10 +1050,7 @@ class GlossDetailView(DetailView):
                                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         else:
             if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk,
-                                                                                           'dataset_languages': dataset_languages,
-                                                                                           'selected_datasets': selected_datasets,
-                                                                                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface }))
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
