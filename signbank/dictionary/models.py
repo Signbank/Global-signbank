@@ -1547,9 +1547,12 @@ class Gloss(models.Model):
         if glossvideo:
             videofile_path = str(glossvideo.videofile)
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
-            imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + ".png"
-            if check_existance and os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
-                return imagefile_path
+
+            for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+                imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
+                if check_existance and os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
+                    return imagefile_path
+
         return ''
 
     def get_image_url(self):
