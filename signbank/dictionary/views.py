@@ -2664,6 +2664,30 @@ def gloss_frequency(request,gloss_pk):
     else:
         show_dataset_interface = False
 
+    if gloss.lemma.dataset.acronym != 'NGT':
+
+        return render(request, 'dictionary/gloss_frequency.html',
+                      {'gloss': gloss,
+                       'has_frequency_data': False,
+                       'variants': [],
+                       'variants_data': [],
+                       'variants_data_quick_access': {},
+                       'variants_age_distribution_data': {},
+                       'variants_age_distribution_cat_data': {},
+                       'variants_age_distribution_cat_percentage': {},
+                       'frequency_regions': settings.FREQUENCY_REGIONS,
+                       'data_datasets': gloss.data_datasets(),
+                       'speaker_age_data': {},
+                       'speaker_data': {},
+                       'variant_labels': [],
+                       'variants_sex_distribution_data': {},
+                       'variants_sex_distribution_data_percentage': {},
+                       'view_type': 'percentage',
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                       })
+
     speakers_summary = gloss.speaker_age_data()
     speaker_age_data = []
     for i in range(1, 100):
