@@ -524,6 +524,14 @@ class OtherMediaForm(forms.ModelForm):
         model = OtherMedia
         fields = ['type']
 
+class CSVMetadataForm(forms.Form):
+
+    file = forms.FileField()
+
+class EAFFilesForm(forms.Form):
+
+    file = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
+
 class CSVUploadForm(forms.Form):
 
     file = forms.FileField()

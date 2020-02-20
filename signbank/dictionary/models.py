@@ -22,7 +22,8 @@ import json
 from collections import OrderedDict, Counter
 from datetime import datetime, date
 
-from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE, WRITABLE_FOLDER
+from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE, \
+    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, STATIC_URL, DATASET_EAF_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 
 import signbank.settings
@@ -2130,6 +2131,36 @@ class Dataset(models.Model):
                 result = self.acronym
 
             return result[:CHARACTER_THRESHOLD]
+
+    def get_metadata_path(self, check_existance=True):
+        """Returns the path within the writable and static folder"""
+        metafile_name = self.acronym + '_metadata.csv'
+
+        goal_string = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + '/' + metafile_name
+
+        if check_existance and os.path.exists(goal_string): #os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
+            return goal_string
+
+        return ''
+
+    def metadata_url(self):
+        metafile_name = self.acronym + '_metadata.csv'
+
+        goal_string = DATASET_METADATA_DIRECTORY + '/' + metafile_name
+
+        return goal_string
+
+    def uploaded_eafs(self):
+
+        dataset_eaf_folder = WRITABLE_FOLDER + DATASET_EAF_DIRECTORY + '/' + self.acronym
+
+        uploaded_eafs = []
+        if os.path.isdir(dataset_eaf_folder):
+            for filename in os.listdir(dataset_eaf_folder):
+                uploaded_eafs.append(filename)
+        uploaded_eafs.sort()
+
+        return uploaded_eafs
 
     def count_glosses(self):
 

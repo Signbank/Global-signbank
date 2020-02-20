@@ -204,6 +204,114 @@
                 </form>
             </td>
         </tr>
+      <hrule></hrule>
+      <tr>
+          <th></th>
+          <td><label>Metadata CSV</label>
+            <div data-toggle="collapse" href="#dataset_{{dataset.acronym}}_metadata" data-target=".multi-collapse-meta"><button>{% trans "Manage" %}</button></div>
+            <div id='dataset_{{dataset.acronym}}_metadata' class='collapse multi-collapse-meta' >
+                <div class="text-container hasTooltip"><p>{{dataset.acronym}} {% trans "metadata CSV" %}</p>
+              <span class="isTooltip" style="width: 400px;">The Metadata CSV currently supports:<br>
+                  <table>
+                    <tr>
+                        <td align='right'>Signer ID</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Used in Dataset EAF files" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>Region</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Geographical region" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>Age</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Age at time of recording" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>Gender</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Male (m), Female (f), Other (o)" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>Handedness</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Right (r), Left (l), Ambidextrous (a), Unknown" %}</td>
+                    </tr>
+                  </table>
+              </span></div>
+            </div>
+          </td>
+          <td>
+            <div>
+                {% if dataset.get_metadata_path %}
+                {% url 'dictionary:protected_media' '' as protected_media_url %}
+                    <a download="{{dataset.acronym}}_metadata.csv" href="{{protected_media_url}}{{ dataset.metadata_url }}"
+                                style="font-style: bold;">{{dataset.acronym}}_metadata.csv</a>
+                {% else %}
+                <div class="text-container hasTooltip">
+                    <p style="font-style: oblique;">[{% trans "Metadata CSV file" %}]</p>
+                <span class="isTooltip" style="width: 400px;">The Metadata CSV file currently supports:
+                  <table>
+                    <tr>
+                        <td align='right'>Signer ID</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Used in Dataset EAF files" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>Region</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Geographical region" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>Age</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Age at time of recording" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>Gender</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Male (m), Female (f), Other (o)" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>Handedness</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Right (r), Left (l), Ambidextrous (a), Unknown" %}</td>
+                    </tr>
+                  </table>
+                </span>
+                </div>
+                {% endif %}
+            </div>
+          <div id='dataset_{{dataset.acronym}}_upload_metadata' class='collapse multi-collapse-meta'>
+          <label>&nbsp;</label>
+          <form id='upload_metadata_csv' action="{{PREFIX_URL}}/update/metadata/" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input class='btn btn-primary' id='upload_metadata' name='upload_metadata' type='submit'
+                   value='{% if dataset.get_metadata_path %}
+                     {% trans "Update CSV" %}
+                     {% else %}
+                     {% trans "Upload Metadata CSV" %}
+                     {% endif %}' >
+
+            <input type='hidden' name='dataset_acronym' value='{{dataset.acronym}}'>
+            <input class='form-control' placeholder='{% trans "Upload CSV" %}' name='file' type='file' required="">
+          </form>
+          </div>
+          </td>
+      </tr>
+      <tr>
+          <th></th>
+          <td><label>EAF Files</label>
+              <div data-toggle="collapse" href="#dataset_{{dataset.acronym}}_view_eafs" data-target=".multi-collapse"><button>{% trans "Manage" %}</button></div>
+              <div id='dataset_{{dataset.acronym}}_view_eafs' class='collapse multi-collapse'>
+                  {% if dataset.uploaded_eafs %}
+                  {% url 'dictionary:protected_media' '' as protected_media_url %}
+                  <list name="uploaded_eaf_files" style="height:120px; overflow:auto;display:block;">
+                  {% for eaf_name in dataset.uploaded_eafs %}
+                  <ul>{{eaf_name}}</ul>
+                  {% endfor %}
+                  </list>
+                  {% else %}
+                  <p>{% trans "No EAF files found." %}</p>
+                  {% endif %}
+              </div>
+          </td>
+          <td>
+<!--          <div data-toggle="collapse" href="#dataset_{{dataset.acronym}}_upload_eafs"><button>{% trans "Upload" %}</button></div>-->
+          <div id='dataset_{{dataset.acronym}}_upload_eafs' class='collapse multi-collapse'>
+          <label>&nbsp;</label>
+          <form id='upload_eaf_files' action="{{PREFIX_URL}}/update/dataset_eafs/" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input class='btn btn-primary' id='upload_eafs' name='upload_eafs' type='submit'
+                   value='{% trans "Upload EAF Files" %}' >
+
+            <input type='hidden' name='dataset_acronym' value='{{dataset.acronym}}'>
+            <input class='form-control' placeholder='{% trans "Upload EAF Files" %}' name='file' type='file' multiple required="">
+          </form>
+          </div>
+          </td>
+      </tr>
       {% endif %}
       {% endif %}
     {% endfor %}

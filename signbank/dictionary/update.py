@@ -19,7 +19,7 @@ from signbank.dictionary.forms import *
 import signbank.settings
 from django.conf import settings
 
-from signbank.settings.base import OTHER_MEDIA_DIRECTORY
+from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 
@@ -2057,3 +2057,80 @@ def update_excluded_choices(request):
         dataset.save()
 
     return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
+
+def upload_metadata(request):
+    if request.method == "POST":
+
+        form = CSVMetadataForm(request.POST,request.FILES)
+
+        if form.is_valid():
+
+            new_metadata = request.FILES['file']
+
+            # extension = '.'+new_metadata.name.split('.')[-1]
+            # print('extension: ', extension)
+
+            for key in request.POST.keys():
+                if key == 'dataset_acronym':
+                    dataset_acronym = request.POST['dataset_acronym']
+
+            metafile_name = dataset_acronym + '_metadata.csv'
+
+            if not os.path.isdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY):
+                os.mkdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY, mode=0o755)
+
+            goal_string = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + '/' + metafile_name
+
+            f_handle = open(goal_string, mode='wb+')
+
+            for chunk in request.FILES['file'].chunks():
+                f_handle.write(chunk)
+
+            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+    raise Http404('Incorrect request')
+
+def upload_eaf_files(request):
+    if request.method == "POST":
+
+        form = EAFFilesForm(request.POST,request.FILES)
+
+        if form.is_valid():
+
+            dataset_acronym = ''
+
+            eaf_filenames_list = []
+
+            if request.FILES:
+                for f in request.FILES.getlist('file'):
+                    eaf_filenames_list.append(f.name)
+            else:
+                messages.add_message(request, messages.ERROR, _('No eaf files found.'))
+                return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+            # print('found files ', eaf_filenames_list)
+
+            for key in request.POST.keys():
+                if key == 'dataset_acronym':
+                    dataset_acronym = request.POST['dataset_acronym']
+
+            if dataset_acronym == '':
+                messages.add_message(request, messages.ERROR, _('No acronym for dataset.'))
+                return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+            if not os.path.isdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY):
+                os.mkdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY, mode=0o755)
+
+            dataset_eaf_folder = WRITABLE_FOLDER + DATASET_EAF_DIRECTORY + '/' + dataset_acronym
+            if not os.path.isdir(dataset_eaf_folder):
+                os.mkdir(dataset_eaf_folder, mode=0o755)
+
+            for f in request.FILES.getlist('file'):
+                next_eaf_file = dataset_eaf_folder + os.sep + f.name
+                f_handle = open(next_eaf_file, mode='wb+')
+                for chunk in f.chunks():
+                    f_handle.write(chunk)
+
+            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+    raise Http404('Incorrect request')

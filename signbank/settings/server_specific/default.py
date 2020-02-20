@@ -16,6 +16,8 @@ VIDEOS_TO_IMPORT_FOLDER = 'import_videos/'
 OTHER_MEDIA_TO_IMPORT_FOLDER = 'import_other_media/'
 SIGNBANK_PACKAGES_FOLDER = 'packages/'
 EAF_FILES_LOCATION = 'eaf/'
+DATASET_EAF_DIRECTORY = 'eafs'
+DATASET_METADATA_DIRECTORY = 'metadata_eafs'
 
 #Tmp folder to use
 TMP_DIR = '/tmp'
