@@ -38,33 +38,15 @@ var variant_colors = [ 'hsl(0, 0%, 10%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 70%)', 
                         'Blue', 'Khaki', 'Chartreuse', 'Coral', 'Brown', 'BlueViolet', 'DarkCyan', 'Aqua', 'DarkRed', 'DarkOrange',
                         'DarkSeaGreen', 'DeepPink', 'Gold', 'Indigo' ];
 
-// shades of darkred
-// var variant_colors = [ 'hsl(0, 98%, 12%)', 'hsl(0, 80%, 27%)', 'hsl(0, 64%, 40%)', 'hsl(0, 40%, 51%)', 'hsl(0, 26%, 58%)', 'hsl(0, 34%, 68%)',
-//                         'hsl(0, 98%, 12%)', 'hsl(0, 80%, 27%)', 'hsl(0, 64%, 40%)', 'hsl(0, 40%, 51%)', 'hsl(0, 26%, 58%)', 'hsl(0, 34%, 68%)',
-//                        'Blue', 'Khaki', 'Chartreuse', 'Coral', 'Brown', 'BlueViolet', 'DarkCyan', 'Aqua', 'DarkRed', 'DarkOrange',
-//                         'DarkSeaGreen', 'DeepPink', 'Gold', 'Indigo' ];
-
 // different hover colors are used because the horizontal bar chars hover hovers over all the stacked values
 // otherwise the categories are no longer visible during the hover
-// shades of darkred
-//var gender_hover_colors = { 'Female': 'hsl(0,25%,83%)', 'Male': 'hsl(0,25%,28%)' };
-//var gender_colors = { 'Female': 'hsl(0,18%,75%)', 'Male': 'hsl(0,18%,50%)' };
 // shades of grey
 var gender_hover_colors = { 'Female': 'hsl(0,0%,83%)', 'Male': 'hsl(0,0%,28%)' };
 var gender_colors = { 'Female': 'hsl(0,0%,75%)', 'Male': 'hsl(0,0%,50%)' };
-//var gender_hover_colors = { 'Female': 'LightGray', 'Male': 'rgb(72,72,72)' };
-//var gender_colors = { 'Female': 'Silver', 'Male': 'Gray' };
-//var gender_hover_colors = { 'Female': 'hsl(0,0%,83%)', 'Male': 'hsl(0,0%,28%)' };   // hsl of named greyscale
-//var gender_colors = { 'Female': 'hsl(0,0%,75%)', 'Male': 'hsl(0,0%,50%)' };       // hsl of named greyscale
 
-// shades of darkred
-//var ages_colors = [ 'hsl(0, 23%, 68%)', 'hsl(0, 28%, 58%)', 'hsl(0, 28%, 42%)', 'hsl(0, 25%, 27%)' ];
-//var ages_hover_colors = [ 'hsl(0, 23%, 80%)', 'hsl(0, 34%, 62%)', 'hsl(0, 38%, 32%)', 'hsl(0, 28%, 11%)' ];
 // shades of grey
 var ages_colors = [ 'hsl(0, 0%, 80%)', 'hsl(0, 0%, 60%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 20%)' ];
 var ages_hover_colors = [ 'hsl(0, 0%, 70%)', 'hsl(0, 0%, 50%)', 'hsl(0, 0%, 30%)', 'hsl(0, 0%, 10%)' ];
-//var ages_colors = [ 'hsl(0, 53%, 68%)', 'hsl(0, 58%, 58%)', 'hsl(0, 54%, 42%)', 'hsl(0, 85%, 27%)' ];
-//var ages_hover_colors = [ 'hsl(0, 53%, 80%)', 'hsl(0, 38%, 52%)', 'hsl(0, 54%, 35%)', 'hsl(0, 85%, 15%)' ];
 
 var frequency_regions = {{frequency_regions|safe}};
 var data_datasets = {{data_datasets|safe}};
@@ -72,29 +54,20 @@ var speaker_age_data = {{speaker_age_data|safe}};
 var speaker_data = {{speaker_data|safe}};
 var variants_data = {{variants_data|safe}};
 var variants_data_quick_access = {{variants_data_quick_access|safe}};
-<!--console.log('variants quick access: ', variants_data_quick_access);-->
 var variants_age_distribution_data = {{variants_age_distribution_data|safe}};
 var variants_age_distribution_cat_data = {{variants_age_distribution_cat_data|safe}};
-<!--console.log('variants_age_distribution_cat_data: ', variants_age_distribution_cat_data);-->
 var variants_age_distribution_cat_percentage = {{variants_age_distribution_cat_percentage|safe}};
-<!--console.log('variants_age_distribution_cat_percentage: ', variants_age_distribution_cat_percentage);-->
 var age_distribution_labels = [ '{{gloss.idgloss}}' ];
 var gloss_idgloss = '{{gloss.idgloss}}';
 var variant_labels = {{variant_labels|safe}};
-<!--console.log('variant_labels: ', variant_labels);-->
 var variants_sex_distribution_data = {{variants_sex_distribution_data|safe}};
-<!--console.log('variants_sex_distribution_data: ', variants_sex_distribution_data);-->
 var variants_sex_distribution_data_percentage = {{variants_sex_distribution_data_percentage|safe}};
-<!--console.log('variants_sex_distribution_data_percentage: ', variants_sex_distribution_data_percentage);-->
 var variant_0_speaker_data = [ speaker_data['Female'], speaker_data['Male'] ];
 var ages_labels = ['< 25', '25 - 35', '36 - 65', '> 65'];
 var gender_labels = ['Female', 'Male'];
 
 var display_percentage = true;
 var view_type = '{{view_type}}';
-
-<!--var charcode_index = gloss_idgloss.length - 1;-->
-<!--var variant_char = gloss_idgloss.charAt(charcode_index).toUpperCase();-->
 
 var age_distribution_labels = [];
 
@@ -104,8 +77,6 @@ var total_variants_age = [];
 
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
-<!--    var charcode_index = variant_idgloss.length - 1;-->
-<!--    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();-->
     var k_total_age = 0;
     for (i in variants_age_distribution_data[variant_idgloss]) {
         k_total_age += variants_age_distribution_data[variant_idgloss][i];
@@ -118,9 +89,6 @@ for (k in variant_labels) {
     age_distribution_labels.push(variant_idgloss);
 };
 
-<!--console.log('total_variants_age: ', total_variants_age);-->
-<!--console.log('datasets_age_distribution_list: ', datasets_age_distribution_list);-->
-
 var sex_distribution_labels = [];
 
 var variants_sex_distribution_list = [];
@@ -129,19 +97,14 @@ var total_variants_sex = [];
 
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
-<!--    var charcode_index = variant_idgloss.length - 1;-->
-<!--    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();-->
     var k_total_sex = 0;
     var gender_data_variant = [];
     for (idx in gender_labels) {
-    // variants_sex_distribution_data[variant_idgloss]
         gender_label = gender_labels[idx];
         k_total_sex += parseInt(variants_sex_distribution_data[gender_label][variant_idgloss]);
         gender_data_variant.push(variants_sex_distribution_data_percentage[gender_label][variant_idgloss]);
     };
     total_variants_sex[variant_idgloss] = k_total_sex;
-<!--    console.log('total variants sex: ', total_variants_sex);-->
-<!--    console.log('gender data variant: ', variant_idgloss, gender_data_variant);-->
     variants_sex_distribution_list.push( {
                                             label: variant_idgloss,
                                             data: gender_data_variant,
@@ -158,33 +121,25 @@ var total_variants_age_cat = [];
 
 for (i in ages_labels) {
     next_age_category = ages_labels[i];
-<!--    console.log('next age category: ', next_age_category);-->
     var k_total_age_cat = 0;
 
     for (k in variant_labels) {
         var variant_idgloss = variant_labels[k];
         variant_gloss_age_category = variants_age_distribution_cat_data[next_age_category][variant_idgloss];
-<!--        console.log('make variants_age_distribution_list_cat: ', variant_idgloss, variant_gloss_age_category);-->
         k_total_age_cat += parseInt(variant_gloss_age_category);
     };
     total_variants_age_cat[next_age_category] = k_total_age_cat;
 };
-<!--console.log('total_variants_age_cat: ', total_variants_age_cat);-->
 
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
-<!--    var charcode_index = variant_idgloss.length - 1;-->
-<!--    var variant_char = variant_idgloss.charAt(charcode_index).toUpperCase();-->
 
     var variant_percentage_data = [];
     for (i in ages_labels) {
         var next_age_category = ages_labels[i];
-<!--        console.log('next age category: ', next_age_category);-->
         var next_percentage = variants_age_distribution_cat_percentage[next_age_category][variant_idgloss];
-<!--        console.log('EEEEEEE make variants_age_distribution_list_cat: ', variant_idgloss, next_age_category, next_percentage);-->
         variant_percentage_data.push(next_percentage);
     };
-<!--    console.log('variant percentage cat data: ', variant_idgloss, variant_percentage_data);-->
     variants_age_distribution_list_cat.push( {
                                             label: variant_idgloss,
                                             data: variant_percentage_data,
@@ -192,8 +147,6 @@ for (k in variant_labels) {
                                             backgroundColor: variant_colors[k] } );
     age_distribution_labels_cat.push(variant_idgloss);
 };
-<!--console.log('age_distribution_labels_cat: ', age_distribution_labels_cat);-->
-<!--console.log('variants_age_distribution_list_cat: ', variants_age_distribution_list_cat);-->
 </script>
 
 <script type="text/javascript">
@@ -512,7 +465,6 @@ var glossvariantsSexChart = new Chart(ctgs, {
 
 glossvariantsSexChart.options.title.display = false;
 glossvariantsSexChart.update();
-<!--console.log('glossvariantsSexChart created: ', glossvariantsSexChart.data);-->
 
 var ctga = document.getElementById('glossvariantsAgeChart').getContext('2d');
 var glossvariantsAgeChart = new Chart(ctga, {
@@ -631,27 +583,14 @@ var newLegendClickHandler = function(e, legendItem) {
     });
 };
 
-<!--        let ci = this.chart;-->
-<!--        [-->
-<!--            ci.getDatasetMeta(0),-->
-<!--            ci.getDatasetMeta(1)-->
-<!--        ].forEach(function(meta) {-->
-<!--            meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;-->
-<!--        });-->
-<!--        ci.update();-->
-<!--};-->
-
-
 for (k in variant_labels) {
     var variant_key = variant_labels[k];
-<!--    console.log('loop variant_labels gender: ', variant_key);-->
     var canvasId = 'variantsGenderChart_'+variant_key;
     var ctk = document.getElementById('variantsGenderChart_'+variant_key).getContext('2d');
     var flattened_genders_vk = [];
     for (idx in gender_labels) {
         var data_gender_idx = variants_data_quick_access[variant_key][gender_labels[idx]];
         var total_gender_idx = total_variants_sex[ variant_key ];
-<!--        console.log('total gender idx: ', idx, data_gender_idx, total_gender_idx);-->
         var data_gender_idx_percentage = Math.round(total_gender_idx == 0 ? 0 : (data_gender_idx/total_gender_idx));
         flattened_genders_vk.push( {
                                 label: gender_labels[idx],
@@ -683,7 +622,6 @@ for (k in variant_labels) {
                 titleFontSize: 14,
                 callbacks: {
                     label: function(tooltipItem, data) {
-<!--                        console.log('tooltipitem: ', tooltipItem);-->
                         var label = data.datasets[tooltipItem.datasetIndex].label || '';
                         if (label) {
                             label += ' : ';
@@ -718,27 +656,13 @@ for (k in variant_labels) {
             showLines: true
         }
     });
-<!--    if (k == 0) {-->
-<!--        variant_k_chart.options.legend.labels.fontSize = 16;-->
-<!--        variant_k_chart.options.legend.display = true;-->
-<!--        variant_k_chart.options.layout.padding.top = 10;-->
-<!--        variant_k_chart.options.layout.padding.bottom = 10;-->
-<!--        variant_k_chart.options.legend.onClick = newLegendClickHandler;-->
-<!--        variant_k_chart.canvas.parentNode.style.height = '70px';-->
-<!--    } else {-->
-<!--        variant_k_chart.canvas.parentNode.style.height = '50px';-->
-<!--    };-->
 
-<!--    variant_k_chart.canvas.parentNode.style.height = '50px';-->
     variant_k_chart.update();
-<!--    console.log('variant gender chart created ', canvasId, variant_k_chart.data);-->
     variants_gender_charts[canvasId] = variant_k_chart;
-
 };
 
 for (k in variant_labels) {
     var variant_key = variant_labels[k];
-<!--    console.log('loop variant_labels age: ', variant_key);-->
     var canvasId = 'variantsAgeChart_'+variant_key;
     var ctm = document.getElementById('variantsAgeChart_'+variant_key).getContext('2d');
 
@@ -748,7 +672,6 @@ for (k in variant_labels) {
     for (idx in ages_labels) {
         var data_age_idx = variants_data_quick_access[variant_key][ages_labels[idx]];
         var total_age_idx = total_variants_age[ variant_key ];
-<!--        console.log('initialize chart ', variant_key, ' total age: ', total_age_idx, ', data age idx: ', data_age_idx);-->
         var data_category_percentage = total_age_idx == 0 ? 0 : (data_age_idx/total_age_idx);
         flattened_ages_vk.push( {
                                 label: ages_labels[idx],
@@ -758,8 +681,6 @@ for (k in variant_labels) {
                                 barThickness: 20
                                 });
     };
-<!--    console.log('flattened ages vk: ', flattened_ages_vk);-->
-<!--    console.log('creation of chart ', canvasId, ': ', flattened_ages_vk);-->
     var variant_m_chart = new Chart(ctm, {
         type: 'horizontalBar',
         responsive: true,
@@ -817,17 +738,7 @@ for (k in variant_labels) {
         }
     });
 
-<!--    if (k == 0) {-->
-<!--        variant_m_chart.options.legend.labels.fontSize = 16;-->
-<!--        variant_m_chart.options.legend.display = true;-->
-<!--        variant_m_chart.options.layout.padding.top = 10;-->
-<!--        variant_m_chart.options.layout.padding.bottom = 10;-->
-<!--        variant_m_chart.canvas.parentNode.style.height = '70px';-->
-<!--    } else {-->
-<!--        variant_m_chart.canvas.parentNode.style.height = '50px';-->
-<!--    };-->
     variant_m_chart.update();
-<!--    console.log('variant age chart created ', canvasId, variant_m_chart.data);-->
     variants_age_charts[canvasId] = variant_m_chart;
 };
 
@@ -912,22 +823,17 @@ function do_toggle_display(el) {
         for (idx in ids_variant_gender_charts) {
             var variant_idgloss = variant_labels[idx];
             var next_gender_chart = variants_gender_charts[ids_variant_gender_charts[idx]];
-<!--            console.log('next gender chart before update: ', variant_idgloss, next_gender_chart.data);-->
 
             for (idy in gender_labels) {
                 var gender_category_label = gender_labels[idy];
-<!--                console.log('gender category: ', idy, gender_category_label);-->
                 var next_raw = variants_sex_distribution_data[gender_category_label][variant_idgloss];
-<!--                console.log('sex raw data: ', variant_idgloss, next_raw);-->
                 next_gender_chart.data.datasets[idy].data.pop();
                 next_gender_chart.data.datasets[idy].data.push(next_raw);
             };
             next_gender_chart.options.scales.xAxes[0].ticks.max = total_sex_data;
             next_gender_chart.update();
-<!--            console.log('next gender chart after update: ', variant_idgloss, next_gender_chart.data);-->
         };
 
-<!--        console.log('glossvariantsSexChart before update: ', glossvariantsSexChart.data);-->
         // glossvariantsSexChart one dataset per variant
         // first pop off old data
         var max_ticks = 0;
@@ -938,12 +844,10 @@ function do_toggle_display(el) {
             glossvariantsSexChart.data.datasets[idx].data.pop();
             max_ticks += total_variants_sex[variant_idgloss]
         };
-<!--        console.log('max ticks: ', max_ticks);-->
         for (idy in gender_labels) {
             var gender_label = gender_labels[idy];
             for (idx in variant_labels) {
                 var variant_idgloss = variant_labels[idx];
-<!--                console.log('total sex: ', gender_label, variant_idgloss, total_variants_sex[variant_idgloss]);-->
                 // push for each dataset the next sex data
                 var next_raw = variants_sex_distribution_data[gender_label][variant_idgloss];
                 glossvariantsSexChart.data.datasets[idx].data.push(next_raw);
@@ -951,7 +855,6 @@ function do_toggle_display(el) {
         };
         glossvariantsSexChart.options.scales.xAxes[0].ticks.max = max_ticks;
         glossvariantsSexChart.update();
-<!--        console.log('glossvariantsSexChart after update: ', glossvariantsSexChart.data);-->
 
         agechart.data.datasets[0].data.pop();
         agechart.data.datasets[0].data.pop();
@@ -974,22 +877,17 @@ function do_toggle_display(el) {
         for (idx in ids_variant_age_charts) {
             var variant_idgloss = variant_labels[idx];
             var next_age_chart = variants_age_charts[ids_variant_age_charts[idx]];
-<!--            console.log('next age chart before update: ', variant_idgloss, next_age_chart.data);-->
 
             for (idy in ages_labels) {
                 var age_category_label = ages_labels[idy];
-<!--                console.log('age category: ', idy, age_category_label);-->
                 var next_age_data_raw = variants_age_distribution_cat_data[age_category_label][variant_idgloss];
-<!--                console.log('age raw data: ', variant_idgloss, next_age_data_raw);-->
                 next_age_chart.data.datasets[idy].data.pop();
                 next_age_chart.data.datasets[idy].data.push(next_age_data_raw);
             };
             next_age_chart.options.scales.xAxes[0].ticks.max = total_age_data;
             next_age_chart.update();
-<!--            console.log('next age chart after update: ', variant_idgloss, next_age_chart.data);-->
         };
 
-<!--        console.log('glossvariantsAgeChart before update: ', glossvariantsAgeChart.data);-->
         // glossvariantsAgeChart one dataset per variant
         // first pop off old data
         var max_ticks = 0;
@@ -1002,7 +900,6 @@ function do_toggle_display(el) {
             glossvariantsAgeChart.data.datasets[idx].data.pop();
             max_ticks += total_variants_age[variant_idgloss]
         };
-<!--        console.log('max ticks: ', max_ticks);-->
         for (idy in ages_labels) {
             var age_category_label = ages_labels[idy];
             for (idx in variant_labels) {
@@ -1011,11 +908,8 @@ function do_toggle_display(el) {
                 glossvariantsAgeChart.data.datasets[idx].data.push(next_raw);
             };
         };
-//        total_variants_age_cat
         glossvariantsAgeChart.options.scales.xAxes[0].ticks.max = max_ticks;
         glossvariantsAgeChart.update();
-<!--        console.log('glossvariantsAgeChart after update: ', glossvariantsAgeChart.data);-->
-
         break;
     case "percentage":
         $(el).val('raw');
@@ -1035,24 +929,18 @@ function do_toggle_display(el) {
         for (idx in ids_variant_gender_charts) {
             var variant_idgloss = variant_labels[idx];
             var next_gender_chart = variants_gender_charts[ids_variant_gender_charts[idx]];
-<!--            console.log('next gender chart before update perc: ', variant_idgloss, next_gender_chart.data);-->
 
             for (idy in gender_labels) {
                 var gender_category_label = gender_labels[idy];
-<!--                console.log('gender category: ', idy, gender_category_label);-->
                 var next_data = variants_sex_distribution_data[gender_category_label][variant_idgloss];
-<!--                console.log('variants_sex_distribution_data_percentage, gender_category_label: ', variants_sex_distribution_data, gender_category_label);-->
-<!--                console.log('next gender percentage data: ', variant_idgloss, gender_category_label, next_data);-->
                 var next_percentage = next_data / total_variants_sex[variant_idgloss];
                 next_gender_chart.data.datasets[idy].data.pop();
                 next_gender_chart.data.datasets[idy].data.push(next_percentage);
             };
             next_gender_chart.options.scales.xAxes[0].ticks.max = 1;
             next_gender_chart.update();
-<!--            console.log('next gender chart after update perc: ', variant_idgloss, next_gender_chart.data);-->
         };
 
-<!--        console.log('glossvariantsSexChart before update perc: ', glossvariantsSexChart.data);-->
         // glossvariantsSexChart one dataset per variant
         // first pop off old data
         for (idx in variant_labels) {
@@ -1071,10 +959,7 @@ function do_toggle_display(el) {
         };
         glossvariantsSexChart.options.scales.xAxes[0].ticks.max = 1;
         glossvariantsSexChart.update();
-<!--        console.log('glossvariantsSexChart after update percentage: ', glossvariantsSexChart.data);-->
 
-
-<!--        console.log('glossvariantsAgeChart before update perc: ', glossvariantsAgeChart.data);-->
         // glossvariantsAgeChart one dataset per variant
         // first pop off old data
         for (idx in variant_labels) {
@@ -1094,9 +979,6 @@ function do_toggle_display(el) {
         };
         glossvariantsAgeChart.options.scales.xAxes[0].ticks.max = 1;
         glossvariantsAgeChart.update();
-<!--        console.log('glossvariantsAgeChart after update perc: ', glossvariantsAgeChart.data);-->
-
-
 
         agechart.data.datasets[0].data.pop();
         agechart.data.datasets[0].data.pop();
@@ -1114,21 +996,16 @@ function do_toggle_display(el) {
         for (idx in ids_variant_age_charts) {
             var variant_idgloss = variant_labels[idx];
             var next_age_chart = variants_age_charts[ids_variant_age_charts[idx]];
-<!--            console.log('next age chart before update: ', variant_idgloss, next_age_chart.data);-->
 
             for (idy in ages_labels) {
                 var age_category_label = ages_labels[idy];
-<!--                console.log('age category: ', idy, age_category_label);-->
                 total_variant = total_variants_age[ variant_idgloss ];
-<!--                console.log('total variant ', variant_idgloss, total_variant);-->
                 var next_age_data_percentage = variants_age_distribution_cat_data[age_category_label][variant_idgloss] / total_variant;
-<!--                console.log('age percentage data: ', variant_idgloss, next_age_data_percentage);-->
                 next_age_chart.data.datasets[idy].data.pop();
                 next_age_chart.data.datasets[idy].data.push(next_age_data_percentage);
             };
             next_age_chart.options.scales.xAxes[0].ticks.max = 1;
             next_age_chart.update();
-<!--            console.log('next age chart after update: ', variant_idgloss, next_age_chart.data);-->
         };
         break;
   }
@@ -1157,9 +1034,11 @@ function do_toggle_display(el) {
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
         </li>
+        {% if gloss.has_frequency_data %}
         <li class="nav-item">
             <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Frequency View" %}</a>
         </li>
+        {% endif %}
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision history" %}</a>
         </li>
