@@ -57,6 +57,8 @@
                 {{ lemma.num_gloss }}
             </td>
             <td>
+            {% get_obj_perms request.user for lemma.dataset as "dataset_perms" %}
+            {% if "change_dataset" in dataset_perms %}
                 <a class="change-entry" href="{% url 'dictionary:change_lemma' lemma.pk %}" >
                     <span class="glyphicon glyphicon-pencil" data-toggle="tooltip" data-original-title="{% trans 'Update' %}"></span>
                 </a>
@@ -65,6 +67,7 @@
                     <span class="glyphicon glyphicon-trash" data-toggle="tooltip" data-original-title="{% trans 'Delete' %}"></span>
                 </a>
                 {% endif %}
+            {% endif %}
             </td>
         </tr>
     {% endfor %}

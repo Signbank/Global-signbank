@@ -721,9 +721,21 @@ def import_authors(request):
 
 # this method is called from the Signbank menu bar
 def add_new_sign(request):
+    print('inside views add_new_sign')
     context = {}
 
     selected_datasets = get_selected_datasets_for_user(request.user)
+
+    default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+    default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+
+    if len(selected_datasets) == 1:
+        last_used_dataset = selected_datasets[0]
+    elif 'last_used_dataset' in request.session.keys():
+        last_used_dataset = request.session['last_used_dataset']
+    else:
+        last_used_dataset = default_dataset
+    context['last_used_dataset'] = last_used_dataset
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
     context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
@@ -731,10 +743,7 @@ def add_new_sign(request):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-    if 'last_used_dataset' in request.session.keys():
-        context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
-    else:
-        context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=None)
+    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
     return render(request,'dictionary/add_gloss.html',context)
 
@@ -764,14 +773,23 @@ def add_new_morpheme(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
+
+    default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+    default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+
+    if len(selected_datasets) == 1:
+        last_used_dataset = selected_datasets[0]
+    elif 'last_used_dataset' in request.session.keys():
+        last_used_dataset = request.session['last_used_dataset']
+    else:
+        last_used_dataset = default_dataset
+    context['last_used_dataset'] = last_used_dataset
+
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-    if 'last_used_dataset' in request.session.keys():
-        context['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
-    else:
-        context['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=None)
+    context['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
     # Get and save the choice list for mrpType
     try:

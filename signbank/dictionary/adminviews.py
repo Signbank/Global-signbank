@@ -193,8 +193,7 @@ class GlossListView(ListView):
             self.view_type = self.request.GET['view_type']
             context['view_type'] = self.view_type
 
-        if 'last_used_dataset' in self.request.session.keys():
-            self.last_used_dataset = self.request.session['last_used_dataset']
+
         if 'inWeb' in self.request.GET:
             # user is searching for signs / morphemes visible to anonymous uers
             self.web_search = self.request.GET['inWeb'] == '2'
@@ -205,6 +204,19 @@ class GlossListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
+
+        default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+        default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets[0]
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets[0]
+        elif 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
+        else:
+            self.last_used_dataset = default_dataset
+        context['last_used_dataset'] = self.last_used_dataset
 
         selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
         sign_languages = []
@@ -1128,6 +1140,7 @@ class GlossDetailView(DetailView):
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
+        # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -1698,12 +1711,22 @@ class MorphemeListView(ListView):
         if 'search_type' in self.request.GET:
             self.search_type = self.request.GET['search_type']
 
-        if 'last_used_dataset' in self.request.session.keys():
-            self.last_used_dataset = self.request.session['last_used_dataset']
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
+
+        default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+        default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets[0]
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets[0]
+        elif 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
+        else:
+            self.last_used_dataset = default_dataset
+        context['last_used_dataset'] = self.last_used_dataset
 
         selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
         sign_languages = []
@@ -2639,6 +2662,7 @@ class GlossFrequencyView(DetailView):
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
+        # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -2808,6 +2832,7 @@ class LemmaFrequencyView(DetailView):
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
+        # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -4071,6 +4096,7 @@ class MorphemeDetailView(DetailView):
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
+        # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         context['choice_lists'] = {}

@@ -9,6 +9,8 @@
 {% block extrahead %}
 {% endblock %}
 
+{% load guardian_tags %}
+
 {% block extrajs %}
     <script type="text/javascript">
         var url = '{{URL}}{{ PREFIX_URL }}';
@@ -611,27 +613,35 @@ function do_set_lemma_language(el) {
                          <th></th>
                      </tr>
                      <tr>
+                         <td>
+                         <select id="id_dataset" name="dataset" required="">
                          {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-                         <td><select id="id_dataset" name="dataset" required="">
                              <option value=""
                                      dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
-                             {% for s_dataset in selected_datasets %}
-                             <option value="{{ s_dataset.id }}"
-                                     dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
-                             {% endfor %}
-                         </select></td>
+                         {% for s_dataset in selected_datasets %}
+
+                         {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
+                         {% if "change_dataset" in dataset_perms %}
+                         {% if last_used_dataset == s_dataset.acronym %}
+                         <option value="{{ s_dataset.id }}" selected="selected"
+                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
                          {% else %}
-                         <div style="display: hidden">
-                            <select id="id_dataset" name="dataset">
+                         <option value="{{ s_dataset.id }}"
+                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
+                         {% endif %}
+                         {% endif %}
+
+                         {% endfor %}
+                         {% else %}
                             <option value="{{ selected_datasets.0.id }}"
                                  dataset_languages="{% for dataset_lang in selected_datasets.0.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ selected_datasets.0.acronym }}</option>
-                            </select>
-                         </div>
                          <script type='text/javascript'>
                          gloss_dataset_id = {{ selected_datasets.0.id }};
                          language_code = '{{selected_datasets.0.default_language.language_code_2char}}';
                          </script>
-                         {% endif %}
+                     {% endif %}
+                     </select>
+                     </td>
                          <td style="width:600px;">
                              <div id="lemma_select">
 

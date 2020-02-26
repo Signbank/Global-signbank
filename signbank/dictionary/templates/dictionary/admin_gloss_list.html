@@ -9,12 +9,16 @@
 {% block extrahead %}
 {% endblock %}
 
+{% load guardian_tags %}
+
 {% block extrajs %}
 <script type="text/javascript">
     var url = '{{PREFIX_URL}}';
     var language_code = '{{ LANGUAGE_CODE }}';
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
     var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
+    var last_used_dataset = '{{last_used_dataset}}';
+    console.log('last_used_dataset: ', last_used_dataset);
 </script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
@@ -47,7 +51,6 @@ $(document).ready(function() {
          set_annotationidglosslanguages();
 
          $('#id_dataset').change(function() {
-<!--            console.log("Dataset changed");-->
             set_annotationidglosslanguages();
          });
      }
@@ -734,7 +737,7 @@ function do_set_lemma_language(el) {
 
     <div></div>
 
-{% if perms.dictionary.add_gloss %}
+<!--{% if perms.dictionary.add_gloss %}-->
 <div  class="panel panel-default">
   <div class="panel-heading" data-toggle="collapse"  data-target='#add_gloss_form'>{% trans "Add New Sign" %}</div>
 
@@ -743,7 +746,10 @@ function do_set_lemma_language(el) {
              {% csrf_token %}
              <table class='table'>
                  <tr>
-                     {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th><label for='dataset'>{% trans "Dataset" %}</label></th>{% endif %}
+                     {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th><label for='dataset'>{% trans "Dataset" %}</label></th>
+                     {% else %}
+                     <th></th>
+                     {% endif %}
                      <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
                      {% for dataset_lang in dataset_languages %}
                      <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
@@ -751,26 +757,36 @@ function do_set_lemma_language(el) {
                      <th></th>
                  </tr>
                  <tr>
+                      <td>
+                      <select id="id_dataset" name="dataset" required="">
                      {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-                     <td><select id="id_dataset" name="dataset" required="">
                          <option value=""
                                  dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
                          {% for s_dataset in selected_datasets %}
+
+                         {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
+                         {% if "change_dataset" in dataset_perms %}
+                         {% if last_used_dataset == s_dataset.acronym %}
+                         <option value="{{ s_dataset.id }}" selected="selected"
+                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
+                         {% else %}
                          <option value="{{ s_dataset.id }}"
                                  dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
-                         {% endfor %}
-                     </select></td>
+                         {% endif %}
+                         {% endif %}
+
+                          {% endfor %}
                      {% else %}
-                     <div style="display: hidden"><select id="id_dataset" name="dataset">
                          <option value="{{ selected_datasets.0.id }}"
                                  dataset_languages="{% for dataset_lang in selected_datasets.0.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ selected_datasets.0.acronym }}</option>
-                     </select></div>
                      <script type='text/javascript'>
                      gloss_dataset_id = {{ selected_datasets.0.id }};
                      language_code = '{{selected_datasets.0.default_language.language_code_2char}}';
 <!--                     console.log('admin_gloss_list template, show dataset interface options false, language code is: '+language_code);-->
                      </script>
                      {% endif %}
+                     </select>
+                     </td>
                      <td>
                          <div id="lemma_select">
 
@@ -817,7 +833,7 @@ function do_set_lemma_language(el) {
          </form>
      </div>
   </div>
-  {% endif %}
+<!--  {% endif %}-->
 
 
 {% if view_type == "gloss_list" %}

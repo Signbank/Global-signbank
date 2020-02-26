@@ -28,10 +28,9 @@ from django.utils.translation import ugettext_lazy as _
 from guardian.shortcuts import get_user_perms, get_group_perms
 
 # this method is called from the GlossListView (Add Gloss button on the page)
-@permission_required('dictionary.add_gloss')
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
-
+    print('inside update add_gloss')
     if request.method == "POST":
         dataset = None
         if 'dataset' in request.POST and request.POST['dataset'] is not None:
@@ -41,10 +40,17 @@ def add_gloss(request):
             selected_datasets = get_selected_datasets_for_user(request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        if 'last_used_dataset' in request.session.keys():
-            form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
+        default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+        default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+
+        if len(selected_datasets) == 1:
+            last_used_dataset = selected_datasets[0]
+        elif 'last_used_dataset' in request.session.keys():
+            last_used_dataset = request.session['last_used_dataset']
         else:
-            form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=None)
+            last_used_dataset = default_dataset
+
+        form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
         # Lemma handling
         lemmaidgloss = None
@@ -1468,10 +1474,17 @@ def add_morpheme(request):
             selected_datasets = get_selected_datasets_for_user(request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        if 'last_used_dataset' in request.session.keys():
-            form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=request.session['last_used_dataset'])
+        default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+        default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+
+        if len(selected_datasets) == 1:
+            last_used_dataset = selected_datasets[0]
+        elif 'last_used_dataset' in request.session.keys():
+            last_used_dataset = request.session['last_used_dataset']
         else:
-            form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=None)
+            last_used_dataset = default_dataset
+
+        form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
         # Check for 'change_dataset' permission
         if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
