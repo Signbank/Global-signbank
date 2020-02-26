@@ -105,8 +105,11 @@ urlpatterns = [
     url(r'^datasets/manager', login_required(DatasetManagerView.as_view()), name='admin_dataset_manager'),
     url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
     url(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
-    url(r'^datasets/field_choices/$', dataset_field_choices_view, name='admin_dataset_field_choices'),
-    url(r'^datasets/update_excluded_choices/$',signbank.dictionary.update.update_excluded_choices,name='update_excluded_choices'),
+    url(r'^datasets/field_choices/$', permission_required('dictionary.change_dataset')(dataset_field_choices_view),
+        name='admin_dataset_field_choices'),
+    url(r'^datasets/update_excluded_choices/$',
+        permission_required('dictionary.change_dataset')(signbank.dictionary.update.update_excluded_choices),
+        name='update_excluded_choices'),
     url(r'^update/metadata/', signbank.dictionary.update.upload_metadata, name='upload_metadata'),
     url(r'^update/dataset_eafs/', signbank.dictionary.update.upload_eaf_files, name='upload_eaf_files'),
                   url(r'^__debug__/', include(debug_toolbar.urls))
