@@ -7,7 +7,7 @@
 <br><br>
 <p>{% trans "Here you can exclude field choices for datasets you manage:" %}</p>
 
-<form method="post" action="/datasets/update_excluded_choices/">
+<form method="post" action="{{ PREFIX_URL }}/datasets/update_excluded_choices/">
 
     {% csrf_token %}
 
