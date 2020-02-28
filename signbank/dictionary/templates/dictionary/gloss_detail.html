@@ -100,7 +100,12 @@
             }
             var signinfo = $('#signinfo');
             signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
-        }
+        } else {
+            // results=inline is empty but we still need space to be added
+            var scrollPanel = $('#searchresults');
+            var signinfo = $('#signinfo');
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
+        };
     });
 
     function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {

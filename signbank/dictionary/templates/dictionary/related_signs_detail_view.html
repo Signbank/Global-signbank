@@ -3,6 +3,10 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 
+{% block bootstrap3_title %}
+{% blocktrans %}Relations for {{ gloss }}{% endblocktrans %}
+{% endblock %}
+
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
 {% endblock %}
