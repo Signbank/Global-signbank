@@ -1,5 +1,14 @@
 {% extends "baselayout.html" %}
 {% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Revision history for {{ gloss }}{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
 
 {% block extrajs %}
     <script type='text/javascript'>
@@ -41,7 +50,12 @@
             }
             var signinfo = $('#signinfo');
             signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
-        }
+        } else {
+            // results=inline is empty but we still need space to be added
+            var scrollPanel = $('#searchresults');
+            var signinfo = $('#signinfo');
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
+        };
     });
 
     </script>
@@ -57,6 +71,23 @@
 </div>
 
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+
+    <div class='btn-group'>
+        {% if SIGN_NAVIGATION %}
+
+            {% if navigation.prev %}
+            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %]
+            </a>
+            {% endif %}
+
+            <button class='btn navbar-btn'>{% blocktrans %}"Sign {{glossposn}} of {{glosscount}} in the dictionary" {% endblocktrans %}</button>
+
+            {% if navigation.next %}
+            <a class="btn navbar-btn btn-default"
+               href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
+            {% endif %}
+         {% endif %}
+    </div>
 
     <ul class='nav nav-tabs'>
         <li class="nav-item">

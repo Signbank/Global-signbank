@@ -236,7 +236,7 @@ def gloss(request, glossid):
 
     allkwds = gloss.translation_set.all()
     if len(allkwds) == 0:
-        trans = None
+        trans = None  # this seems to cause problems in the template, the title of the page ends up empty
     else:
         trans = allkwds[0]
 
@@ -278,6 +278,14 @@ def gloss(request, glossid):
     else:
         language = Language.objects.get(id=get_default_language_id())
         annotation_idgloss[language] = gloss.annotationidglosstranslation_set.filter(language=language)
+
+    default_language = Language.objects.get(id=get_default_language_id())
+    if not trans:
+        # this prevents an empty title in the template
+        # this essentially overrides the "gloss.idgloss" method to prevent it from putting translations between parentheses
+        # print('trans was None, set it to annotation id gloss of default language')
+        trans = gloss.annotationidglosstranslation_set.get(language=default_language).text
+    # print('word trans: ', trans)
 
     # Regroup notes
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
