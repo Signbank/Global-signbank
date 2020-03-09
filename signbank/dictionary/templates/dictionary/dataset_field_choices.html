@@ -2,49 +2,111 @@
 {% load i18n %}
 {% load stylesheet %}
 {% load bootstrap3 %}
+{% load annotation_idgloss_translation %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type='text/javascript'>
+function configure_edit() {
+
+    $.fn.editable.defaults['submitdata'] = {'csrfmiddlewaretoken': csrf_token};
+
+     $('.edit_check').editable(edit_post_url, {
+         type      : 'checkbox',
+         checkbox: { falseValue: 'False', trueValue: 'True'  },
+		 callback : update_view_and_remember_original_value
+     });
+
+}
+
+function update_view_and_remember_original_value(change_summary)
+{
+	split_values_count = change_summary.split('\t').length - 1;
+	if (split_values_count > 0)
+	{
+        split_values = change_summary.split('\t');
+        original_value = split_values[0];
+        new_value = split_values[1];
+
+        id = $(this).attr('id');
+        $(this).html(new_value);
+
+        if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' || new_value == 0 )
+        {
+            console.log("new value is empty, new value is: ", new_value);
+            $(this).parent().attr("value", original_value);
+            $(this).html(original_value);
+        }
+    }
+}
+
+// initiallly hide the field choice category panels
+$(document).ready(function(){
+    $("tr .collapse").collapse('hide');
+});
+
+</script>
+{% endblock %}
+
+{% block bootstrap3_title %}Signbank: Manage field choices{% endblock %}
 
 {% block content %}
-<br><br>
-<p>{% trans "Here you can exclude field choices for datasets you manage:" %}</p>
 
-<form method="post" action="{{ PREFIX_URL }}/datasets/update_excluded_choices/">
+<h3>{% trans "Manage Field Choices" %}</h3>
+
+{% if object_list %}
+
+<p>{% trans "Here you can exclude field choices for datasets you manage. Excluded field choices are checked." %}</p>
+
+<form method="post" action="{{PREFIX_URL}}/datasets/update_excluded_choices/">
 
     {% csrf_token %}
 
     <div class="exclude-field-choices">
-        <table class="table table-condensed">
-            <thead>
-                <tr>
-                    <th></th>
+        <table class="table table-condensed" id="exclude-field-choices">
+                <tr class="accordian">
+                    <th>{% trans "Field Choice Category" %}</th><th>{% trans "Field Choice [Frequency in Selected Managed Datasets]" %}</th>
                     {% for dataset, excluded_choices in datasets %}
                         <th>{{ dataset.generate_short_name }}</th>
                     {% endfor %}
                 </tr>
-            </thead>
-            {% for choice in field_choices %}
-
-                <tr>
-                    <td>{{choice}}</td>
+            {% for category in field_choices.keys %}
+            <tr><td><button class="collapse" type="button" data-toggle='collapse' data-target=".collapse-{{category}}" data-parent="#accordian">{{category}}</button></td>
+                <td></td>
                 {% for dataset, excluded_choices in datasets %}
-
-                    <td>
-                        <input type="checkbox" name="{{dataset.name}}|{{choice.pk}}" value=true
-
-                        {% if choice not in excluded_choices %}
-                           checked="checked"
-                        {% endif %}
-                        >
-                    </td>
-
+                <td></td>
                 {% endfor %}
+            </tr>
+                {% with field_choices|keyvalue:category as choice_display_list %}
+                {% for choice, display in choice_display_list %}
+                <tr id='{{category}}_{{choice.pk}}' class='collapse collapse-{{category}}'>
+                    <td ></td>
+                    <td >{{display}}</td>
+                    {% for dataset, excluded_choices in datasets %}
+
+                    <td class="edit edit_check" id='{{dataset.acronym}}_{{choice.field}}_{{choice.pk}}' value='' name="{{dataset.acronym}}_{{choice.field}}_{{choice.pk}}">
+
+                                <input type="checkbox" name="{{dataset.acronym}}|{{choice.pk}}"
+
+                                {% if choice.pk in excluded_choices %}
+                                   checked="checked"
+                                {% endif %}
+                                >
+                    </td>
+                    {% endfor %}
                 </tr>
-
+                {% endfor %}
+                {% endwith %}
             {% endfor %}
-
         </table>
     </div>
 
     <input class="pull-right btn btn-primary" type="submit" value="Save">
 </form>
+
+{% else %}
+<p>{% trans "You must be in group Dataset Manager to use this functionality." %}</p>
+{% endif %}
 
 {% endblock %}

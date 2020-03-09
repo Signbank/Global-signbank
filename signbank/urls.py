@@ -19,7 +19,7 @@ import django.contrib.admindocs.urls
 import django_summernote.urls
 
 from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
-                                            HomonymListView, MinimalPairsListView, DatasetManagerView, DatasetDetailView, FrequencyListView, dataset_field_choices_view
+                                            HomonymListView, MinimalPairsListView, DatasetManagerView, DatasetDetailView, FrequencyListView, DatasetFieldChoiceView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -105,10 +105,9 @@ urlpatterns = [
     url(r'^datasets/manager', login_required(DatasetManagerView.as_view()), name='admin_dataset_manager'),
     url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
     url(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
-    url(r'^datasets/field_choices/$', permission_required('dictionary.change_dataset')(dataset_field_choices_view),
+    url(r'^datasets/field_choices/$', login_required(DatasetFieldChoiceView.as_view()),
         name='admin_dataset_field_choices'),
-    url(r'^datasets/update_excluded_choices/$',
-        permission_required('dictionary.change_dataset')(signbank.dictionary.update.update_excluded_choices),
+    url(r'^datasets/update_excluded_choices/$', login_required(signbank.dictionary.update.update_excluded_choices),
         name='update_excluded_choices'),
     url(r'^update/metadata/', signbank.dictionary.update.upload_metadata, name='upload_metadata'),
     url(r'^update/dataset_eafs/', signbank.dictionary.update.upload_eaf_files, name='upload_eaf_files'),

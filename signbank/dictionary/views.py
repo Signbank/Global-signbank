@@ -21,12 +21,12 @@ import csv
 import time
 import re
 
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
     update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
-from signbank.dictionary.adminviews import choicelist_queryset_to_translated_dict
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 

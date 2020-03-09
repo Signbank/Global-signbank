@@ -3886,6 +3886,156 @@ class DatasetDetailView(DetailView):
 
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/detail/' + str(dataset_object.id))
 
+
+class DatasetFieldChoiceView(ListView):
+    model = Dataset
+    template_name = 'dictionary/dataset_field_choices.html'
+
+    # set the default dataset, this should not be empty
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DatasetFieldChoiceView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        context['dataset_languages'] = dataset_languages
+
+        default_language_choice_dict = dict()
+        for language in dataset_languages:
+            default_language_choice_dict[language.name] = language.name
+        context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
+
+        managed_datasets = []
+        change_dataset_permission = get_objects_for_user(self.request.user, 'change_dataset', Dataset)
+        for dataset in selected_datasets:
+            if dataset in change_dataset_permission:
+                dataset_excluded_choices = dataset.exclude_choices.all();
+                list_of_excluded_ids = []
+                for ec in dataset_excluded_choices:
+                    list_of_excluded_ids.append(ec.pk)
+                managed_datasets.append((dataset, list_of_excluded_ids))
+
+        context['datasets'] = managed_datasets
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        all_choice_lists = {}
+        for topic in ['main', 'phonology', 'semantics', 'frequency']:
+
+            fields_with_choices = [(field, field.field_choice_category) for field in Gloss._meta.fields if
+                                   field.name in FIELDS[topic] and hasattr(field, 'field_choice_category')]
+
+            for (field, fieldchoice_category) in fields_with_choices:
+
+                # Get and save the choice list for this field
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                if len(choice_list) > 0:
+                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list,
+                                                                                                    self.request.LANGUAGE_CODE,
+                                                                                                    choices_to_exclude=[])
+                    choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
+
+                    for choice_list_field, machine_value in choice_list_machine_values:
+
+                        if machine_value == 0:
+                            frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
+                                                                       Q(**{field.name + '__isnull': True}) |
+                                                                       Q(**{field.name: 0})).count()
+
+                        else:
+                            variable_column = field.name
+                            search_filter = 'exact'
+                            filter = variable_column + '__' + search_filter
+                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+                                **{filter: machine_value}).count()
+
+                        try:
+                            all_choice_lists[fieldchoice_category][choice_list_field] += ' [' + str(
+                                frequency_for_field) + ']'
+                        except KeyError:
+                            continue
+
+        field_choices = {}
+        for field_choice_category in all_choice_lists.keys():
+            field_choices[field_choice_category] = []
+
+        for field_choice_category in all_choice_lists.keys():
+            for machine_value_string, display_with_frequency in all_choice_lists[field_choice_category].items():
+                if machine_value_string != '_0' and machine_value_string != '_1':
+                    mvid, mvv = machine_value_string.split('_')
+                    machine_value = int(mvv)
+
+                    try:
+                        field_choice_object = FieldChoice.objects.get(field=field_choice_category,
+                                                                      machine_value=machine_value)
+                    except:
+                        try:
+                            field_choice_object = \
+                            FieldChoice.objects.filter(field=field_choice_category, machine_value=machine_value)[0]
+                        except:
+                            print('Multiple ', field_choice_category, ' objects share the same machine value: ',
+                                  machine_value)
+                            continue
+                    # field_display_with_frequency = field_choice_object.field + ': ' + display_with_frequency
+                    field_choices[field_choice_category].append((field_choice_object, display_with_frequency))
+        context['field_choices'] = field_choices
+
+        return context
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # get query terms from self.request
+        get = self.request.GET
+
+        # Then check what kind of stuff we want
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        # otherwise the default dataset_name DEFAULT_DATASET_ACRONYM is used
+
+        setattr(self.request, 'dataset_name', self.dataset_name)
+
+        if user.is_authenticated():
+
+            # determine if user is a dataset manager
+            from django.contrib.auth.models import Group, User
+            try:
+                group_manager = Group.objects.get(name='Dataset_Manager')
+            except:
+                messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+                return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+
+            groups_of_user = self.request.user.groups.all()
+            if not group_manager in groups_of_user:
+                return None
+
+            from django.db.models import Prefetch
+            qs = Dataset.objects.all().prefetch_related(
+                Prefetch(
+                    "userprofile_set",
+                    queryset=UserProfile.objects.filter(user=user),
+                    to_attr="user"
+                )
+            )
+
+            checker = ObjectPermissionChecker(user)
+
+            checker.prefetch_perms(qs)
+
+            for dataset in qs:
+                checker.has_perm('change_dataset', dataset)
+
+            return qs
+        else:
+            # User is not authenticated
+            return None
+
+
 def dataset_field_choices_view(request):
 
     # check that the user is logged in
@@ -3896,8 +4046,113 @@ def dataset_field_choices_view(request):
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
     context = {}
-    context['field_choices'] = sorted(FieldChoice.objects.all(),key=lambda x: (x.field,x.english_name))
-    context['datasets'] = [(dataset,dataset.exclude_choices.all()) for dataset in get_objects_for_user(request.user, 'change_dataset', Dataset,accept_global_perms=False)]
+
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    context['selected_datasets'] = selected_datasets
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    context['dataset_languages'] = dataset_languages
+
+    # context['datasets'] = [(dataset,dataset.exclude_choices.all()) for dataset in get_objects_for_user(request.user, 'change_dataset', Dataset)]
+    managed_datasets = []
+    managed_datasets_excluded_choices = []
+
+    change_dataset_permission = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    for dataset in selected_datasets:
+        if dataset in change_dataset_permission:
+            managed_datasets.append(dataset)
+            if dataset.exclude_choices == None:
+                list_of_excluded_choices = []
+            else:
+                list_of_excluded_choices = dataset.exclude_choices.all()
+            list_of_excluded_ids = []
+            for ec in list_of_excluded_choices:
+                list_of_excluded_ids.append(ec.pk)
+            managed_datasets_excluded_choices.append( (dataset, list_of_excluded_ids) )
+
+    context['datasets'] = managed_datasets_excluded_choices
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+    all_choice_lists = {}
+    for topic in ['main', 'phonology', 'semantics', 'frequency']:
+
+        fields_with_choices = [(field, field.field_choice_category) for field in Gloss._meta.fields if field.name in FIELDS[topic] and hasattr(field, 'field_choice_category') ]
+
+        for (field, fieldchoice_category) in fields_with_choices:
+            # if fieldchoice_category == 'Handshape' and settings.USE_HANDSHAPE:
+            #     choice_list_handshapes = Handshape.objects.all()
+            #     sorted_handshapes = sorted([h.machine_value for h in choice_list_handshapes])
+            #     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            #     sorted_fieldchoice_handshapes = sorted([fc.machine_value for fc in choice_list])
+            #     print('choice lists: ', fieldchoice_category, choice_list)
+            #
+            #     if sorted_handshapes != sorted_fieldchoice_handshapes:
+            #         print('Handshape FieldChoice not up to date')
+            #         print('Handshape objects: ', sorted_handshapes)
+            #         print('Fieldchoice Handshape objects: ', sorted_fieldchoice_handshapes)
+            # else:
+            # Get and save the choice list for this field
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            if len(choice_list) > 0:
+                all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list,request.LANGUAGE_CODE,
+                                                                                 choices_to_exclude=[])
+                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
+
+                for choice_list_field, machine_value in choice_list_machine_values:
+
+                    if machine_value == 0:
+                        frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=managed_datasets),
+                                                                   Q(**{field.name + '__isnull': True}) |
+                                                                   Q(**{field.name: 0})).count()
+
+                    else:
+                        variable_column = field.name
+                        search_filter = 'exact'
+                        filter = variable_column + '__' + search_filter
+                        frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
+
+                    try:
+                        all_choice_lists[fieldchoice_category][choice_list_field] += ' ['+str(frequency_for_field)+']'
+                    except KeyError: #This might an excluded field
+                        continue
+
+    field_choices = []
+
+    for field_choice_category in all_choice_lists.keys():
+        # print('field choice: ', field_choice_category)
+        # print('all choice lists: ', all_choice_lists[field_choice_category])
+        for machine_value_string, display_with_frequency in all_choice_lists[field_choice_category].items():
+            if machine_value_string != '_0' and machine_value_string != '_1':
+                mvid, mvv = machine_value_string.split('_')
+                machine_value = int(mvv)
+                # print('next field ', field_choice_category, machine_value_string)
+                # get the FieldChoice object for the combination field_choice_category and machine value
+                # if fieldchoice_category == 'Handshape' and settings.USE_HANDSHAPE:
+                #     try:
+                #         field_choice_object = Handshape.objects.get(machine_value=machine_value)
+                #     except:
+                #         try:
+                #             field_choice_object = Handshape.objects.filter(machine_value=machine_value)[0]
+                #         except:
+                #             print('Multiple Handshape objects share the same machine value: ', machine_value)
+                #             continue
+                # else:
+                try:
+                    field_choice_object = FieldChoice.objects.get(field=field_choice_category, machine_value=machine_value)
+                except:
+                    try:
+                        field_choice_object = FieldChoice.objects.filter(field=field_choice_category, machine_value=machine_value)[0]
+                    except:
+                        print('Multiple ', field_choice_category, ' objects share the same machine value: ', machine_value)
+                        continue
+                # print(field_choice_object.field + ': ' + display_with_frequency)
+                field_display_with_frequency = field_choice_object.field + ': ' + display_with_frequency
+                field_choices.append( (field_choice_object, field_display_with_frequency) )
+    context['field_choices'] = field_choices
 
     return render(request,'dictionary/dataset_field_choices.html',context)
 

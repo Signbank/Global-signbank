@@ -156,6 +156,10 @@ body {
 }
 
 
+#exclude-field-choices .collapse.in {
+    display: table-row !important;
+}
+
 
 /* admin search form */
 
