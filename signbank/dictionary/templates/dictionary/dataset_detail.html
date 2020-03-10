@@ -31,6 +31,8 @@
 
 {% block content %}
 
+<h3>{% trans "Dataset details" %}</h3>
+
     <div class='pull-right'>
         {% get_obj_perms request.user for dataset as "dataset_perms" %}
         {% if "change_dataset" in dataset_perms %}

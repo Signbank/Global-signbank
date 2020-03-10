@@ -3217,6 +3217,15 @@ class DatasetListView(ListView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
+        nr_of_public_glosses = {}
+
+        for ds in selected_datasets:
+            count_public_glosses = Gloss.objects.filter(lemma__dataset=ds, inWeb=True).count()
+
+            nr_of_public_glosses[ds] = count_public_glosses
+
+        context['nr_of_public_glosses'] = nr_of_public_glosses
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -3377,7 +3386,8 @@ class DatasetListView(ListView):
             self.dataset_name = get['dataset_name']
         # otherwise the default dataset_name DEFAULT_DATASET_ACRONYM is used
 
-        setattr(self.request, 'dataset_name', self.dataset_name)
+        # not sure what this accomplishes
+        # setattr(self.request, 'dataset_name', self.dataset_name)
 
         if user.is_authenticated():
             from django.db.models import Prefetch
@@ -3401,7 +3411,10 @@ class DatasetListView(ListView):
             return qs
         else:
             # User is not authenticated
-            return None
+            # this reverts to publically available datasets or the default dataset
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+            return selected_datasets
 
 class DatasetManagerView(ListView):
     model = Dataset

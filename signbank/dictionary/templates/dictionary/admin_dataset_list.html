@@ -3,6 +3,7 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 {% load guardian_tags %}
+{% load annotation_idgloss_translation %}
 
 {% block bootstrap3_title %}Signbank: Available datasets{% endblock %}
 
@@ -18,13 +19,20 @@
       <tr>
           <th style="width:150px;">{% trans "Dataset Acronym" %}</th>
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
+          <th style="width:200px;">{% trans "Languages" %}</th>
+          {% if user.is_anonymous %}
+          <th style="width:255px;">{% trans "Number of public glosses" %}</th>
+          {% else %}
+          <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
+          {% endif %}
+          {% if not user.is_anonymous %}
           <th style="width:80px;">{% trans "View Dataset" %}</th>
           <th style="width:80px;">{% trans "Change Dataset" %}</th>
           <th style="width:300px;">{% trans "Request Access" %}</th>
-          <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
+
           <th style="width:80px;">{% trans "Selected" %}</th>
-          <th style="width:200px;">{% trans "Languages" %}</th>
           <th>{% trans "Export dataset" %}</th>
+          {% endif %}
       </tr>
     </thead>
     <tbody>
@@ -34,6 +42,19 @@
                 <a href="{{PREFIX_URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.acronym }}</a>
             </td>
             <td>{{ dataset.name }}</td>
+            <td>
+                {% for dsl in dataset.translation_languages.all %}
+                    {{ dsl }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+            {% if user.is_anonymous %}
+            {% with nr_of_public_glosses|keyvalue:dataset as count_public_glosses %}
+            <td>{{count_public_glosses}}</td>
+            {% endwith %}
+            {% else %}
+            <td>{{dataset.lemmaidgloss__gloss__count}}</td>
+            {% endif %}
+            {% if not user.is_anonymous %}
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
                 {% if "view_dataset" in dataset_perms %}
@@ -74,8 +95,7 @@
                 {% endif %}
                 {% endif %}
             </td>
-            <td>{{dataset.lemmaidgloss__gloss__count}}
-            </td>
+
             <td>
                 {% if dataset.user.0.user %}
                   {% trans "Yes" %}
@@ -83,11 +103,7 @@
                   {% trans "No" %}
                 {% endif %}
             </td>
-            <td>
-                {% for dsl in dataset.translation_languages.all %}
-                    {{ dsl }}{% if not forloop.last %}, {% endif %}
-                {% endfor %}
-            </td>
+
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
                 {% if "change_dataset" in dataset_perms and dataset.lemmaidgloss__gloss__count %}
@@ -101,6 +117,7 @@
                 </form>
                 {% endif %}
             </td>
+            {% endif %}
         </tr>
     {% endfor %}
     </tbody>
