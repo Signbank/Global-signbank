@@ -4013,8 +4013,6 @@ class DatasetFieldChoiceView(ListView):
 
             groups_of_user = self.request.user.groups.all()
             if not group_manager in groups_of_user:
-                print('not in group dataset manager')
-                # return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
                 messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
@@ -4040,126 +4038,6 @@ class DatasetFieldChoiceView(ListView):
             messages.add_message(self.request, messages.ERROR, ('Please login to use the requested functionality.'))
             return None
 
-
-def dataset_field_choices_view(request):
-
-    # check that the user is logged in
-    if request.user.is_authenticated():
-        pass
-    else:
-        messages.add_message(request, messages.ERROR, ('Please login to use this functionality.'))
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
-
-    context = {}
-
-
-    selected_datasets = get_selected_datasets_for_user(request.user)
-    context['selected_datasets'] = selected_datasets
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-    context['dataset_languages'] = dataset_languages
-
-    # context['datasets'] = [(dataset,dataset.exclude_choices.all()) for dataset in get_objects_for_user(request.user, 'change_dataset', Dataset)]
-    managed_datasets = []
-    managed_datasets_excluded_choices = []
-
-    change_dataset_permission = get_objects_for_user(request.user, 'change_dataset', Dataset)
-    for dataset in selected_datasets:
-        if dataset in change_dataset_permission:
-            managed_datasets.append(dataset)
-            if dataset.exclude_choices == None:
-                list_of_excluded_choices = []
-            else:
-                list_of_excluded_choices = dataset.exclude_choices.all()
-            list_of_excluded_ids = []
-            for ec in list_of_excluded_choices:
-                list_of_excluded_ids.append(ec.pk)
-            managed_datasets_excluded_choices.append( (dataset, list_of_excluded_ids) )
-
-    context['datasets'] = managed_datasets_excluded_choices
-
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-    all_choice_lists = {}
-    for topic in ['main', 'phonology', 'semantics', 'frequency']:
-
-        fields_with_choices = [(field, field.field_choice_category) for field in Gloss._meta.fields if field.name in FIELDS[topic] and hasattr(field, 'field_choice_category') ]
-
-        for (field, fieldchoice_category) in fields_with_choices:
-            # if fieldchoice_category == 'Handshape' and settings.USE_HANDSHAPE:
-            #     choice_list_handshapes = Handshape.objects.all()
-            #     sorted_handshapes = sorted([h.machine_value for h in choice_list_handshapes])
-            #     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-            #     sorted_fieldchoice_handshapes = sorted([fc.machine_value for fc in choice_list])
-            #     print('choice lists: ', fieldchoice_category, choice_list)
-            #
-            #     if sorted_handshapes != sorted_fieldchoice_handshapes:
-            #         print('Handshape FieldChoice not up to date')
-            #         print('Handshape objects: ', sorted_handshapes)
-            #         print('Fieldchoice Handshape objects: ', sorted_fieldchoice_handshapes)
-            # else:
-            # Get and save the choice list for this field
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-            if len(choice_list) > 0:
-                all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list,request.LANGUAGE_CODE,
-                                                                                 choices_to_exclude=[])
-                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
-
-                for choice_list_field, machine_value in choice_list_machine_values:
-
-                    if machine_value == 0:
-                        frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=managed_datasets),
-                                                                   Q(**{field.name + '__isnull': True}) |
-                                                                   Q(**{field.name: 0})).count()
-
-                    else:
-                        variable_column = field.name
-                        search_filter = 'exact'
-                        filter = variable_column + '__' + search_filter
-                        frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
-
-                    try:
-                        all_choice_lists[fieldchoice_category][choice_list_field] += ' ['+str(frequency_for_field)+']'
-                    except KeyError: #This might an excluded field
-                        continue
-
-    field_choices = []
-
-    for field_choice_category in all_choice_lists.keys():
-        # print('field choice: ', field_choice_category)
-        # print('all choice lists: ', all_choice_lists[field_choice_category])
-        for machine_value_string, display_with_frequency in all_choice_lists[field_choice_category].items():
-            if machine_value_string != '_0' and machine_value_string != '_1':
-                mvid, mvv = machine_value_string.split('_')
-                machine_value = int(mvv)
-                # print('next field ', field_choice_category, machine_value_string)
-                # get the FieldChoice object for the combination field_choice_category and machine value
-                # if fieldchoice_category == 'Handshape' and settings.USE_HANDSHAPE:
-                #     try:
-                #         field_choice_object = Handshape.objects.get(machine_value=machine_value)
-                #     except:
-                #         try:
-                #             field_choice_object = Handshape.objects.filter(machine_value=machine_value)[0]
-                #         except:
-                #             print('Multiple Handshape objects share the same machine value: ', machine_value)
-                #             continue
-                # else:
-                try:
-                    field_choice_object = FieldChoice.objects.get(field=field_choice_category, machine_value=machine_value)
-                except:
-                    try:
-                        field_choice_object = FieldChoice.objects.filter(field=field_choice_category, machine_value=machine_value)[0]
-                    except:
-                        print('Multiple ', field_choice_category, ' objects share the same machine value: ', machine_value)
-                        continue
-                # print(field_choice_object.field + ': ' + display_with_frequency)
-                field_display_with_frequency = field_choice_object.field + ': ' + display_with_frequency
-                field_choices.append( (field_choice_object, field_display_with_frequency) )
-    context['field_choices'] = field_choices
-
-    return render(request,'dictionary/dataset_field_choices.html',context)
 
 def order_handshape_queryset_by_sort_order(get, qs):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
