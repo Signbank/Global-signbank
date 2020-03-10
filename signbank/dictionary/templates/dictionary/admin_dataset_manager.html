@@ -32,13 +32,13 @@
 
 {% block bootstrap3_title %}Signbank: Manage datasets{% endblock %}
 
-
 {% block content %}
 <h3>{% trans "Manage Datasets" %}</h3>
 
-<a href="{% url 'admin_dataset_field_choices' %}"><button class="btn btn-primary" >{% trans "Exclude field choices for datasets" %}</button></a>
 
 {% if object_list %}
+
+<a href="{% url 'admin_dataset_field_choices' %}"><button class="btn btn-primary" >{% trans "Exclude field choices for datasets" %}</button></a>
 
 <table class='table'>
     <thead>

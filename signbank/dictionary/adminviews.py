@@ -3729,10 +3729,11 @@ class DatasetManagerView(ListView):
                 group_manager = Group.objects.get(name='Dataset_Manager')
             except:
                 messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
-                return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+                return None
 
             groups_of_user = self.request.user.groups.all()
             if not group_manager in groups_of_user:
+                messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
             from django.db.models import Prefetch
@@ -4008,10 +4009,13 @@ class DatasetFieldChoiceView(ListView):
                 group_manager = Group.objects.get(name='Dataset_Manager')
             except:
                 messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
-                return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+                return None
 
             groups_of_user = self.request.user.groups.all()
             if not group_manager in groups_of_user:
+                print('not in group dataset manager')
+                # return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
+                messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
             from django.db.models import Prefetch
@@ -4033,6 +4037,7 @@ class DatasetFieldChoiceView(ListView):
             return qs
         else:
             # User is not authenticated
+            messages.add_message(self.request, messages.ERROR, ('Please login to use the requested functionality.'))
             return None
 
 
