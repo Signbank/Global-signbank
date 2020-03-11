@@ -3926,6 +3926,11 @@ class DatasetFieldChoiceView(ListView):
 
         context['datasets'] = managed_datasets
 
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
         all_choice_lists = {}
         for topic in ['main', 'phonology', 'semantics', 'frequency']:
 
