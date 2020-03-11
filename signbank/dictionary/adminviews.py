@@ -3913,13 +3913,6 @@ class DatasetFieldChoiceView(ListView):
         context = super(DatasetFieldChoiceView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-        context['dataset_languages'] = dataset_languages
-
-        default_language_choice_dict = dict()
-        for language in dataset_languages:
-            default_language_choice_dict[language.name] = language.name
-        context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
 
         managed_datasets = []
         change_dataset_permission = get_objects_for_user(self.request.user, 'change_dataset', Dataset)
@@ -3932,11 +3925,6 @@ class DatasetFieldChoiceView(ListView):
                 managed_datasets.append((dataset, list_of_excluded_ids))
 
         context['datasets'] = managed_datasets
-
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         all_choice_lists = {}
         for topic in ['main', 'phonology', 'semantics', 'frequency']:
