@@ -2048,36 +2048,13 @@ def update_owner(dataset, field, values):
     return HttpResponse(str(new_owners_value) + '\t' + str(owners_value), {'content-type': 'text/plain'})
 
 def update_excluded_choices(request):
-
-    #We start with the assumption that everything is excluded
-
     selected_datasets = get_selected_datasets_for_user(request.user)
 
     managed_datasets = []
-    managed_datasets_excluded_choices = []
     change_dataset_permission = get_objects_for_user(request.user, 'change_dataset', Dataset)
     for dataset in selected_datasets:
         if dataset in change_dataset_permission:
-            if dataset.exclude_choices == None:
-                list_of_excluded_choices = []
-            else:
-                list_of_excluded_choices = dataset.exclude_choices.all()
-            list_of_excluded_ids = []
-            for ec in list_of_excluded_choices:
-                list_of_excluded_ids.append(ec.pk)
-            managed_datasets_excluded_choices.append( (dataset, list_of_excluded_ids) )
             managed_datasets.append(dataset)
-
-    # determine what fields Signbank uses
-    fields_in_use = []
-    for topic in ['main', 'phonology', 'semantics', 'frequency']:
-
-        fields_with_choices = [(field, field.field_choice_category) for field in Gloss._meta.fields if field.name in FIELDS[topic] and hasattr(field, 'field_choice_category') ]
-
-        for (field, fieldchoice_category) in fields_with_choices:
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-            for c in choice_list:
-                fields_in_use.append( (fieldchoice_category, c) )
 
     excluded_choices = {dataset.acronym: [] for dataset in managed_datasets}
 
@@ -2110,7 +2087,6 @@ def update_excluded_choices(request):
         dataset.exclude_choices.clear()
         for eo in excluded_objects:
             dataset.exclude_choices.add(eo)
-        dataset.save()
 
     return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
 
