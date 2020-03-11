@@ -2097,8 +2097,6 @@ class Dataset(models.Model):
     acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
-    # Notice that the default is True. This means that all fields are excluded
-    # This ought to be wrong because the possibility to exclude fields was added much later
     exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
 
     class Meta:
