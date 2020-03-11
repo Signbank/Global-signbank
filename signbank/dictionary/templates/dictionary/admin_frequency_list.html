@@ -209,6 +209,11 @@ table {
 }
 
 </style>
+
+<script type='text/javascript'>
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
+</script>
 {% endblock %}
 
 {% block content %}
