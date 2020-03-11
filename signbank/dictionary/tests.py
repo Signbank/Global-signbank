@@ -572,11 +572,8 @@ class ImportExportTests(TestCase):
 
         url = '/datasets/available?dataset_name=' + dataset_name + '&export_ecv=ECV'
 
-        response = client.get(url)
-        self.assertEqual(response.status_code, 302)
-        auth_login_url = reverse('registration:auth_login')
-        expected_url = settings.PREFIX_URL + auth_login_url
-        self.assertEqual(response['Location'][:len(expected_url)], expected_url)
+        response = client.get(url, follow=True)
+        self.assertTrue("Please login to use this functionality." in str(response.content))
 
     def test_Export_csv(self):
         client = Client()
