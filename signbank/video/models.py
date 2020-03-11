@@ -381,7 +381,7 @@ class GlossVideo(models.Model):
         :return: 
         """
         old_path = str(str(self.videofile))
-        new_path = get_video_file_path(self, "", self.version)
+        new_path = get_video_file_path(self, old_path, self.version)
         if old_path != new_path:
             if move_files_on_disk:
                 source = os.path.join(settings.WRITABLE_FOLDER, old_path)
