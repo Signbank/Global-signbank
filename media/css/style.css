@@ -586,7 +586,7 @@ tr.rotated th {
     flex-direction: column;
     height: 100px;
     flex-wrap: wrap;
-    margin-left: -75px;
+    margin-left: -85px;
     margin-top: 3px;
     justify-content: center;
 }
@@ -602,8 +602,7 @@ tr.rotated th {
     text-align: center;
     text-decoration: none;
     line-height: 20px;
-    margin-bottom: 4px;
-    margin-right: 20px;
+    margin: 0px 10px 4px 10px;
 }
 
 .ribbon:before, .ribbon:after
