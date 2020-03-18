@@ -1543,8 +1543,9 @@ class Gloss(models.Model):
 
     def get_image_path(self, check_existance=True):
         """Returns the path within the writable and static folder"""
-        glossvideo = self.glossvideo_set.get(version=0)
+        glossvideo = self.glossvideo_set.filter(version=0)
         if glossvideo:
+            glossvideo = glossvideo[0]
             videofile_path = str(glossvideo.videofile)
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
 
@@ -1552,7 +1553,20 @@ class Gloss(models.Model):
                 imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
                 if check_existance and os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
                     return imagefile_path
+        else:
+            # If there is no GlossVideo, see whether there is an image on disk anyway
+            # TODO Create a more elegant solution, e.g. by introducing a GlossImage model
 
+            # Create a dummy GlossVideo
+            from signbank.video.models import GlossVideo, get_video_file_path
+            glossvideo = GlossVideo(gloss=self)
+            videofile_path = get_video_file_path(glossvideo, 'does-not-exist.mp4')
+            videofile_path_without_extension, extension = os.path.splitext(videofile_path)
+
+            for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+                imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
+                if check_existance and os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
+                    return imagefile_path
         return ''
 
     def get_image_url(self):

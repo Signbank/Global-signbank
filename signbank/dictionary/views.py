@@ -2025,11 +2025,12 @@ def add_image(request):
             goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
             #First make the dir if needed
-            try:
-                os.mkdir(goal_path)
-            except OSError:
-                pass
-
+            if not os.path.exists(goal_path):
+                try:
+                    os.makedirs(goal_path)
+                except OSError as ose:
+                    print(ose)
+					
             #Remove previous video
             if gloss.get_image_path():
                 os.remove(settings.WRITABLE_FOLDER+gloss.get_image_path())
@@ -2041,7 +2042,7 @@ def add_image(request):
                 import urllib.parse
                 quoted_filename = urllib.parse.quote(gloss.idgloss, safe='')
                 filename = quoted_filename + '-' + str(gloss.pk) + extension
-                goal_location_str = goal_path + filename
+                goal_location_str = os.path.join(goal_path, filename)
                 try:
                     f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
                     destination = File(f)
