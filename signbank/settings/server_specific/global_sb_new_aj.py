@@ -89,3 +89,4 @@ FREQUENCY_FIELDS = {
     },
 }
 
+TMP_DIR = '/var/www/signbank/live/writable/tmp'
