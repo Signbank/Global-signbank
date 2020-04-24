@@ -1960,10 +1960,10 @@ def recently_added_glosses(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
-
+	
     try:
         recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
-        recent_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+        recent_glosses = Gloss.objects.filter(morpheme=None,lemma__dataset__in=selected_datasets).filter(
                           creationDate__range=[recently_added_signs_since_date, DT.datetime.now()]).order_by(
                           'creationDate').reverse()
         return render(request, 'dictionary/recently_added_glosses.html',
