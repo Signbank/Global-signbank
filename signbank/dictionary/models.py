@@ -1645,6 +1645,11 @@ class Gloss(models.Model):
 
         return video
 
+    def create_citation_image(self):
+        from signbank.video.models import GlossVideo
+        glossvideo = GlossVideo.objects.get(gloss=self, version=0)
+        glossvideo.make_poster_image()
+
     def published_definitions(self):
         """Return a query set of just the published definitions for this gloss
         also filter out those fields not in DEFINITION_FIELDS"""

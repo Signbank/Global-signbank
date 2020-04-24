@@ -1487,7 +1487,7 @@ def generate_still_image(video):
         destination = os.path.dirname(still_goal_location)
         for dir in output_dirs:
             for filename in os.listdir(dir):
-                if filename.replace('.png', '.mp4') == vfile_name:
+                if filename.replace('.png', '') == os.path.splitext(vfile_name)[0]:
                     if not os.path.isdir(destination):
                         os.makedirs(destination, 0o770)
                     shutil.copy(os.path.join(dir, filename), destination)

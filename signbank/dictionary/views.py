@@ -2004,6 +2004,20 @@ def add_params_to_url(url,params):
     url_parts[4] = urlencode(query)
     return urlparse.urlunparse(url_parts)
 
+def create_citation_image(request, pk):
+    gloss = get_object_or_404(Gloss, pk=pk)
+    try:
+        gloss.create_citation_image()
+    except:
+        print("Citation image for gloss {} could not be created.".format(gloss.id))
+
+    # return to referer
+    if 'HTTP_REFERER' in request.META:
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
+    return redirect(url)
+
 def add_image(request):
 
     if 'HTTP_REFERER' in request.META:

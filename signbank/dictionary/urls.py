@@ -8,6 +8,8 @@ from signbank.dictionary.adminviews import GlossListView, GlossDetailView, Gloss
     MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView, \
     create_lemma_for_gloss, LemmaUpdateView
 
+from signbank.dictionary.views import create_citation_image
+
 #These are needed for the urls below
 import signbank.dictionary.views
 import signbank.dictionary.tagviews
@@ -116,5 +118,7 @@ urlpatterns = [
     url(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
     url(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
 
-    url(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples)
+    url(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples),
+
+    url(r'createcitationimage/(?P<pk>\d+)', permission_required('dictionary.change_gloss')(create_citation_image), name='create_citation_image')
 ]

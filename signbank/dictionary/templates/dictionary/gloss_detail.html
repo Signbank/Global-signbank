@@ -419,6 +419,14 @@
             </form>
         </fieldset>
     </div>
+    {% endif %}
+
+    {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
+    {% if gloss.has_video and "change_dataset" in dataset_perms %}
+        <div class="editform">
+            <legend>{% trans "Create Citation Form Image from Current Video" %}</legend>
+            <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">Create</a>
+        </div>
 
     {% endif %}
 
