@@ -2523,9 +2523,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
             filename = quoted_filename
             path = quoted_path
 
-    USE_NEW_X_SENDFILE_APPROACH = True
-
-    if USE_NEW_X_SENDFILE_APPROACH:
+    if not hasattr(settings, 'USE_NEW_X_SENDFILE_APPROACH') or settings.USE_NEW_X_SENDFILE_APPROACH:
 
         if filename.split('.')[-1] == 'mp4':
             response = HttpResponse(content_type='video/mp4')
