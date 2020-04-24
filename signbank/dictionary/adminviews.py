@@ -4433,8 +4433,7 @@ def morph_ajax_complete(request, prefix):
     datasetid = request.session['datasetid']
     dataset_id = Dataset.objects.get(id=datasetid)
 
-    query = Q(idgloss__istartswith=prefix) | \
-            Q(annotationidglosstranslation__text__istartswith=prefix) | \
+    query = Q(annotationidglosstranslation__text__istartswith=prefix) | \
             Q(sn__startswith=prefix)
     qs = Morpheme.objects.filter(query).distinct()
 
