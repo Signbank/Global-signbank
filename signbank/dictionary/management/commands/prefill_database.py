@@ -88,6 +88,15 @@ class Command(BaseCommand):
 		print()
 		print('Step 2. Data management')
 		print('=======================')
+		print('A default Signbank writable folder has a folder for videos, images, other media, ecv files, Signbank packages and logs. Create it?')
+		if input('Create it? [y/n]: ').lower() in ['y','yes']:
+		
+			folders = ['glossimage','glossvideo','ecv','packages','logs','othermedia']
+		
+			#actually implement: create writable folder
+			print('Writable folder created')
+		print()
+			
 		print('Glosses in Signbank are categorized into datasets. Each dataset can have separate permissions with separate viewing and editing permissions per users, as well as a separate copyright statements, ECVs, etc.')
 		self.create_dataset(first_question='Name of first dataset (if only one dataset, this is the main dataset): ')
 
