@@ -69,7 +69,16 @@ class Command(BaseCommand):
 		#actually implement: create root user
 		print()
 		
-		if input('Create a user group for users that can edit the content in Signbank? [y/n]: ').lower() in ['y','yes']:
+		if input('Create a user group for users that can edit the pages and signs in Signbank? [y/n]: ').lower() in ['y','yes']:
+			publisher_group_name = input('Name of this group (leave blank for \'Publisher\'): ')
+			if publisher_group_name in ['',' ']:
+				publisher_group_name = 'Publisher'
+			#actually implement: create group
+			print('Group',publisher_group_name,'created')
+		
+		print()
+
+		if input('Create a user group for users that can edit signs but not pages in Signbank? [y/n]: ').lower() in ['y','yes']:
 			editor_group_name = input('Name of this group (leave blank for \'Editor\'): ')
 			if editor_group_name in ['',' ']:
 				editor_group_name = 'Editor'
@@ -77,7 +86,7 @@ class Command(BaseCommand):
 			print('Group',editor_group_name,'created')
 		
 		print()
-				
+		
 		if input('Create a user group for users with only reading permissions? [y/n]: ').lower() in ['y','yes']:
 			guest_group_name = input('Name of this group (leave blank for \'Guest\'): ')
 			if guest_group_name in ['',' ']:
@@ -85,6 +94,20 @@ class Command(BaseCommand):
 			#actually implement: create group
 			print('Group',guest_group_name,'created')
 
+		print()
+			
+		if input('Create a user group for users with reading and export permissions? [y/n]: ').lower() in ['y','yes']:
+			researcher_group_name = input('Name of this group (leave blank for \'Researcher\'): ')
+			if researcher_group_name in ['',' ']:
+				researcher_group_name = 'Researcher'
+			#actually implement: create group
+			print('Group',researcher_group_name,'created')			
+
+		print()
+		
+		if input('The registration functionality requires an extra table in the database. Do want to add this table? [y/n]: ').lower() in ['y','yes']:
+			print('Registration profile table created')
+		
 		print()
 		print('Step 2. Data management')
 		print('=======================')
