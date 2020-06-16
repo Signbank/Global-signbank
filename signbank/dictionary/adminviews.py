@@ -4274,7 +4274,9 @@ class MorphemeDetailView(DetailView):
             context[topic + '_fields'] = []
 
             for field in FIELDS[topic]:
-
+                if topic == 'phonology':
+                    if field not in settings.MORPHEME_DISPLAY_FIELDS:
+                        continue
                 # Get and save the choice list for this field
                 gloss_field = gloss_fields[field]
                 if hasattr(gloss_field, 'field_choice_category'):
