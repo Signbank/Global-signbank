@@ -1740,6 +1740,12 @@ class MorphemeListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
+        try:
+            if self.kwargs['show_all']:
+                context['show_all'] = True
+        except KeyError:
+            context['show_all'] = False
+
         search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
                                          dialects=dialects, language_code=self.request.LANGUAGE_CODE)
 
@@ -1809,14 +1815,28 @@ class MorphemeListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
+        try:
+            if self.kwargs['show_all']:
+                show_all = True
+        except (KeyError,TypeError):
+            show_all = False
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        if len(get) > 0:
+        if len(get) > 0 or show_all:
             qs = Morpheme.objects.all().filter(lemma__dataset__in=selected_datasets)
 
         #Don't show anything when we're not searching yet
         else:
             qs = Morpheme.objects.none()
+
+        if not self.request.user.has_perm('dictionary.search_gloss'):
+            qs = qs.filter(inWeb__exact=True)
+
+        #If we wanted to get everything, we're done now
+        if show_all:
+            # return order_queryset_by_sort_order(self.request.GET, qs)
+            return qs
 
         # Evaluate all morpheme/language search fields
         for get_key, get_value in get.items():
