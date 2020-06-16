@@ -442,7 +442,7 @@
                         </td>
                  </tr>
                 {% else %}
-                
+
                 <tr value="{{value}}" id="{{field}}"{% if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %}>
                     <th>{{label}}</th>
                     <td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}

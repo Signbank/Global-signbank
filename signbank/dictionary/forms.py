@@ -426,7 +426,7 @@ class MorphemeSearchForm(forms.ModelForm):
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
         field_language = language_code
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         multiple_select_morpheme_fields = [(field.name, field.field_choice_category) for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
 
         for (fieldname, field_category) in multiple_select_morpheme_fields:

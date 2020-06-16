@@ -1778,6 +1778,11 @@ class MorphemeListView(ListView):
             for fieldname in settings.FIELDS[topic]:
 
                 if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+
+                    if topic == 'phonology':
+                        if fieldname not in settings.MORPHEME_DISPLAY_FIELDS:
+                            continue
+
                     field = search_form[fieldname]
                     label = field.label
 
@@ -1796,8 +1801,9 @@ class MorphemeListView(ListView):
 
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+        print('morpheme multiple select: ', multiple_select_morpheme_fields)
         context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = multiple_select_morpheme_fields
 
         return context
@@ -1875,7 +1881,7 @@ class MorphemeListView(ListView):
             qs = qs.filter(definition__published=val)
 
 
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
 
         # SignLanguage and basic property filters
         # allows for multiselect
@@ -2119,7 +2125,7 @@ class MorphemeListView(ListView):
         #        fields = [f.name for f in Gloss._meta.fields]
         # We want to manually set which fields to export here
 
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
 
         # Different from Gloss: we use Morpheme here
         fields = [Morpheme._meta.get_field(fieldname) for fieldname in fieldnames]

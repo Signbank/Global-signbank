@@ -29,6 +29,7 @@
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
     var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
     var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
+    console.log(multiple_select_fields);
     var csrf_token = '{{csrf_token}}';
 
     $(document).ready(function(){
@@ -717,8 +718,6 @@ function do_set_lemma_language(el) {
            </th>
           {% endfor %}
            <th>{% trans "Handedness" %}</th>
-           <th>{% trans "Strong hand" %}</th>
-           <th>{% trans "Weak hand" %}</th>
            <th>{% trans "Location" %}</th>
            <th style="width:255px;">{% trans "Tags" %}</th>
       </tr>
@@ -763,7 +762,7 @@ function do_set_lemma_language(el) {
            {% endwith %}
            {% endfor %}
 
-           {% with "handedness domhndsh subhndsh locprim" as head_fields %}
+           {% with "handedness locprim" as head_fields %}
            {% for field in head_fields.split  %}
            {% with minfield="-"|add:field %}
            <th>
@@ -815,8 +814,6 @@ function do_set_lemma_language(el) {
             {% endfor %}
 
             <td>{% if morpheme.handedness %}{{ morpheme.get_handedness_display }}{% else %}-{% endif %}</td>
-            <td>{% if morpheme.domhndsh %}{{ morpheme.get_domhndsh_display }}{% else %}-{% endif %}</td>
-            <td>{% if morpheme.subhndsh %}{{ morpheme.get_subhndsh_display }}{% else %}-{% endif %}</td>
             <td>{% if morpheme.locprim %}{{ morpheme.get_locprim_display }}{% else %}-{% endif %}</td>
             {% load underscore_to_space %}
             <td>{% for tag in morpheme.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
