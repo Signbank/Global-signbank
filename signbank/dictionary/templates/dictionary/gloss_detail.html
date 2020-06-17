@@ -662,7 +662,7 @@
                        <td style="width:2em;"></td>
                        <td style="width:12em;">{{morphologyform.role}}</td>
                        <td>
-                           <input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID gloss" %}' />
+                           <input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID Gloss" %}' />
                            <input type="hidden" name="morpheme_id" value=""/>
                        </td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
@@ -1006,7 +1006,7 @@
         <div id='identicalphonology' class='panel-collapse collapse'>
             <table class='table table-condensed' style="padding-left: 20px;">
                <tr>
-                   <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
+                   <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
                </tr>
                 {% for gl, homo_display in homonyms_but_not_saved %}
                 <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ homo_display }}</a></td></tr>
@@ -1026,7 +1026,7 @@
         <div id='differentphonology' class='panel-collapse collapse'>
             <table class='table table-condensed' style="padding-left: 20px;">
                <tr>
-                   <th style="width:auto; padding-left: 25px;">{% trans "ID Gloss" %}</th>
+                   <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
                </tr>
                 {% for gl, homo_display in homonyms_different_phonology %}
                 <tr><td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ homo_display }}</a></td></tr>
@@ -1046,7 +1046,7 @@
 
             {% if minimalpairs %}
                <tr>
-                   <th style="width:auto; padding:0px 0px;">{% trans "ID Gloss" %}</th>
+                   <th style="width:auto; padding:0px 0px;">{% trans "Annotation ID Gloss" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Field name" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Source Sign Value" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
