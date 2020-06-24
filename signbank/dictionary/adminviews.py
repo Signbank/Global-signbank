@@ -1740,6 +1740,12 @@ class MorphemeListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
+        try:
+            if self.kwargs['show_all']:
+                context['show_all'] = True
+        except KeyError:
+            context['show_all'] = False
+
         search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
                                          dialects=dialects, language_code=self.request.LANGUAGE_CODE)
 
@@ -1772,6 +1778,11 @@ class MorphemeListView(ListView):
             for fieldname in settings.FIELDS[topic]:
 
                 if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+
+                    if topic == 'phonology':
+                        if fieldname not in settings.MORPHEME_DISPLAY_FIELDS:
+                            continue
+
                     field = search_form[fieldname]
                     label = field.label
 
@@ -1790,8 +1801,9 @@ class MorphemeListView(ListView):
 
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+        print('morpheme multiple select: ', multiple_select_morpheme_fields)
         context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = multiple_select_morpheme_fields
 
         return context
@@ -1809,14 +1821,28 @@ class MorphemeListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
+        try:
+            if self.kwargs['show_all']:
+                show_all = True
+        except (KeyError,TypeError):
+            show_all = False
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        if len(get) > 0:
+        if len(get) > 0 or show_all:
             qs = Morpheme.objects.all().filter(lemma__dataset__in=selected_datasets)
 
         #Don't show anything when we're not searching yet
         else:
             qs = Morpheme.objects.none()
+
+        if not self.request.user.has_perm('dictionary.search_gloss'):
+            qs = qs.filter(inWeb__exact=True)
+
+        #If we wanted to get everything, we're done now
+        if show_all:
+            # return order_queryset_by_sort_order(self.request.GET, qs)
+            return qs
 
         # Evaluate all morpheme/language search fields
         for get_key, get_value in get.items():
@@ -1855,7 +1881,7 @@ class MorphemeListView(ListView):
             qs = qs.filter(definition__published=val)
 
 
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
 
         # SignLanguage and basic property filters
         # allows for multiselect
@@ -2099,7 +2125,7 @@ class MorphemeListView(ListView):
         #        fields = [f.name for f in Gloss._meta.fields]
         # We want to manually set which fields to export here
 
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
 
         # Different from Gloss: we use Morpheme here
         fields = [Morpheme._meta.get_field(fieldname) for fieldname in fieldnames]
@@ -4254,7 +4280,9 @@ class MorphemeDetailView(DetailView):
             context[topic + '_fields'] = []
 
             for field in FIELDS[topic]:
-
+                if topic == 'phonology':
+                    if field not in settings.MORPHEME_DISPLAY_FIELDS:
+                        continue
                 # Get and save the choice list for this field
                 gloss_field = gloss_fields[field]
                 if hasattr(gloss_field, 'field_choice_category'):
