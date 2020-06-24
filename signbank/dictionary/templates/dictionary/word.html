@@ -28,6 +28,15 @@
     }
 {% endblock %}
 
+{% block extrahead %}
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="Sign for {{ gloss }} (Signbank)" />
+<meta property="og:url" content="https://signbank.cls.ru.nl/dictionary/gloss/{{gloss.pk}}" />
+<meta property="og:type" content="website" />
+<meta property="og:description" content="The sign for {{gloss}}, as recorded in the Global Signbank." />
+<meta property="og:image" content="https://signbank.cls.ru.nl/media/{{protected_media_url}}{{gloss.get_image_url}}" />
+{% endblock %}
+
 {% block extrajs %}
 <script type='text/javascript'>
     var url = '{{URL}}';
@@ -41,7 +50,6 @@
 
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
-
 
 <div id="searchresults" class='navbar navbar-default' style="border:0;">
 
