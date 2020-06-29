@@ -70,7 +70,7 @@ class DefinitionInline(admin.TabularInline):
             this_role = int(obj.role)
             this_choice = self.choice_list.filter(machine_value=this_role)[0]
             # just choose English for now
-            human_value = getattr(this_choice, 'english_name')
+            human_value = getattr(this_choice, 'name')
         except (TypeError, ValueError, AttributeError):
             human_value = '-'
         return human_value
@@ -395,7 +395,7 @@ class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
 
 class HandshapeAdmin(VersionAdmin):
 
-    list_display = ['machine_value', 'english_name', 'dutch_name']
+    list_display = ['machine_value', 'name']
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -645,7 +645,6 @@ class UserProfileInline(admin.StackedInline):
 class UserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
-
 class FieldChoiceAdminForm(forms.ModelForm):
 
     # this form is needed in order to validate against duplicates
@@ -666,11 +665,11 @@ class FieldChoiceAdminForm(forms.ModelForm):
 
     class Meta:
         model = FieldChoice
-        fields = ['field', 'english_name', 'dutch_name', 'chinese_name', 'field_color', 'machine_value']
+        fields = ['field', 'name', 'dutch_name', 'chinese_name', 'field_color', 'machine_value']
 
     def clean(self):
         # check that the field category and (english) name does not already occur
-        en_name = self.cleaned_data['english_name']
+        en_name = self.cleaned_data['name']
         field = self.cleaned_data['field']
 
         if not field:
@@ -681,7 +680,7 @@ class FieldChoiceAdminForm(forms.ModelForm):
         if len(qs_f) == 0:
             raise forms.ValidationError(_('This field category does not exist'))
 
-        qs_en = FieldChoice.objects.filter(field=field, english_name=en_name)
+        qs_en = FieldChoice.objects.filter(field=field, name=en_name)
 
         if len(qs_en) == 0:
             # new field choice
@@ -703,7 +702,7 @@ class FieldChoiceAdminForm(forms.ModelForm):
         return form
 
 
-class FieldChoiceAdmin(VersionAdmin):
+class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     readonly_fields=['machine_value']
     actions=['delete_selected']
 
@@ -717,9 +716,9 @@ class FieldChoiceAdmin(VersionAdmin):
 
     if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
         show_english_only = True
-        list_display = ['english_name', 'machine_value','field']
+        list_display = ['name', 'machine_value','field']
     else:
-        list_display = ['english_name', 'dutch_name', 'machine_value', 'field']
+        list_display = ['name', 'name_nl', 'dutch_name', 'machine_value', 'field']
         show_english_only = False
     list_filter = ['field']
 
@@ -780,7 +779,7 @@ class FieldChoiceAdmin(VersionAdmin):
             del actions['delete_selected']
         return actions
 
-    def get_action_choices(self, request):
+    def get_action_choices(self, request, **kwargs):
         # remove the empty choice '---------' from actions
         choices = super(FieldChoiceAdmin, self).get_action_choices(request)
         choices.pop(0)

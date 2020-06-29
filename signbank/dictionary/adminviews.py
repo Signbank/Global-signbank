@@ -2578,11 +2578,11 @@ class HandshapeDetailView(DetailView):
                 if o.machine_value == match_machine_value: # only one match
                     new_id = o.machine_value
                     new_machine_value = o.machine_value
-                    new_english_name = o.english_name
+                    new_name = o.name
                     new_dutch_name = o.dutch_name
                     new_chinese_name = o.chinese_name
 
-                    new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name,
+                    new_handshape = Handshape(machine_value=new_machine_value, name=new_name,
                                               dutch_name=new_dutch_name, chinese_name=new_chinese_name)
                     new_handshape.save()
                     handshape_not_created = 0
@@ -2606,7 +2606,7 @@ class HandshapeDetailView(DetailView):
             this_handshape = self.object
             this_field_choice = FieldChoice(machine_value=this_handshape.machine_value,
                                             field='Handshape',
-                                            english_name=this_handshape.english_name,
+                                            name=this_handshape.name,
                                             dutch_name=this_handshape.dutch_name,
                                             chinese_name=this_handshape.chinese_name)
             this_field_choice.save()
@@ -2788,7 +2788,7 @@ class SemanticFieldDetailView(DetailView):
             # for the purposes of FieldChoice choice lists, make sure the translations have values
             this_field_choice = FieldChoice(machine_value=this_semanticfield.machine_value,
                                             field='SemField',
-                                            english_name=this_semanticfield.name,
+                                            name=this_semanticfield.name,
                                             dutch_name=dutch_translation,
                                             chinese_name=chinese_translation)
             this_field_choice.save()
@@ -2957,7 +2957,7 @@ class DerivationHistoryDetailView(DetailView):
             # for the purposes of FieldChoice choice lists, make sure the translations have values
             this_field_choice = FieldChoice(machine_value=this_derivationhistory.machine_value,
                                             field='derivHist',
-                                            english_name=this_derivationhistory.name,
+                                            name=this_derivationhistory.name,
                                             dutch_name=dutch_translation,
                                             chinese_name=chinese_translation)
             this_field_choice.save()
@@ -3371,10 +3371,10 @@ class FrequencyListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         codes_to_adjectives = dict(settings.LANGUAGES)
-        if language_code not in codes_to_adjectives.keys():
-            adjective = 'english'
+        if language_code == 'en' or language_code not in codes_to_adjectives.keys():
+            order_by = 'name'
         else:
-            adjective = codes_to_adjectives[language_code].lower()
+            order_by = codes_to_adjectives[language_code].lower() + '_name'
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -3420,7 +3420,7 @@ class FrequencyListView(ListView):
             else:
                 field_category = field
 
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(order_by)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
             field_labels_choices[field] = dict(translated_choices)
 
@@ -3448,7 +3448,7 @@ class FrequencyListView(ListView):
                 field_category = gloss_field.field_choice_category
             else:
                 field_category = field
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(order_by)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
             field_labels_semantics_choices[field] = dict(translated_choices)
 
@@ -4053,11 +4053,11 @@ class HandshapeListView(ListView):
                 # create a new Handshape object
                 new_id = h.machine_value
                 new_machine_value = h.machine_value
-                new_english_name = h.english_name
+                new_name = h.name
                 new_dutch_name = h.dutch_name
                 new_chinese_name = h.chinese_name
 
-                new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name,
+                new_handshape = Handshape(machine_value=new_machine_value, name=new_name,
                                           dutch_name=new_dutch_name, chinese_name=new_chinese_name)
                 new_handshape.save()
                 new_handshape_created = 1
@@ -4067,7 +4067,7 @@ class HandshapeListView(ListView):
 
             qs = Handshape.objects.all().order_by('machine_value')
 
-        fieldnames = ['machine_value', 'english_name', 'dutch_name', 'chinese_name']+FIELDS['handshape']
+        fieldnames = ['machine_value', 'name', 'dutch_name', 'chinese_name']+FIELDS['handshape']
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
@@ -4111,14 +4111,33 @@ class HandshapeListView(ListView):
                     query = Q(chinese_name__icontains=val)
                     qs = qs.filter(query)
 
-                if fieldname == 'english_name' and val != '':
-                    query = Q(english_name__icontains=val)
+                if fieldname == 'name' and val != '':
+                    query = Q(name__icontains=val)
                     qs = qs.filter(query)
 
 
-                if val != '' and fieldname != 'hsNumSel' and fieldname != 'dutch_name' and fieldname != 'chinese_name' and fieldname != 'english_name':
+                if val != '' and fieldname != 'hsNumSel' and fieldname != 'dutch_name' and fieldname != 'chinese_name' and fieldname != 'name':
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
+
+        # Handshape searching of signs relies on using the search_results in order to search signs that have the handshapes
+        # The search_results is no longer set to None
+
+        # Make sure that the QuerySet has filters applied (user is searching for something instead of showing all results [objects.all()])
+
+        if hasattr(qs.query.where, 'children') and len(qs.query.where.children) > 0:
+
+            items = []
+
+            for item in qs:
+                if self.request.LANGUAGE_CODE == 'nl':
+                    items.append(dict(id = item.machine_value, handshape = item.dutch_name))
+                elif self.request.LANGUAGE_CODE == 'zh-hans':
+                    items.append(dict(id = item.machine_value, handshape = item.chinese_name))
+                else:
+                    items.append(dict(id = item.machine_value, handshape = item.name))
+
+            self.request.session['search_results'] = items
 
         if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
             # User has toggled the sort order for the column
@@ -5678,10 +5697,10 @@ def order_handshape_by_angle(qs, language_code):
         ordered = sorted(qs_no_angle, key=lambda x: x.chinese_name)
         ordered += sorted(qs_angle, key=lambda x: x.chinese_name)
     else:
-        qs_no_angle = qs.filter(**{'english_name__regex':r'^[^>]+$'})
-        qs_angle = qs.filter(**{'english_name__regex':r'^.+>.+$'})
-        ordered = sorted(qs_no_angle, key=lambda x: x.english_name)
-        ordered += sorted(qs_angle, key=lambda x: x.english_name)
+        qs_no_angle = qs.filter(**{'name__regex':r'^[^>]+$'})
+        qs_angle = qs.filter(**{'name__regex':r'^.+>.+$'})
+        ordered = sorted(qs_no_angle, key=lambda x: x.name)
+        ordered += sorted(qs_angle, key=lambda x: x.name)
 
     return ordered
 
@@ -6133,13 +6152,13 @@ def handshape_ajax_complete(request, prefix):
     elif request.LANGUAGE_CODE == 'zh-hans':
         query = Q(chinese_name__istartswith=prefix)
     else:
-        query = Q(english_name__istartswith=prefix)
+        query = Q(name__istartswith=prefix)
 
     qs = Handshape.objects.filter(query)
 
     result = []
     for g in qs:
-        result.append({'dutch_name': g.dutch_name, 'english_name': g.english_name, 'machine_value': g.machine_value, 'chinese_name': g.chinese_name})
+        result.append({'dutch_name': g.dutch_name, 'name': g.name, 'machine_value': g.machine_value, 'chinese_name': g.chinese_name})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
@@ -7146,7 +7165,7 @@ def semanticfield_fieldchoice_to_multiselect(machine_value):
             return None
 
     new_machine_value = semField_fieldchoice.machine_value
-    new_english_name = semField_fieldchoice.english_name
+    new_english_name = semField_fieldchoice.name
     # legacy values
     new_dutch_name = semField_fieldchoice.dutch_name
     dutch_language = Language.objects.get(language_code_2char='nl')
@@ -7189,7 +7208,7 @@ def derivationhistory_fieldchoice_to_multiselect(machine_value):
             return None
 
     new_machine_value = derivHist_fieldchoice.machine_value
-    new_english_name = derivHist_fieldchoice.english_name
+    new_english_name = derivHist_fieldchoice.name
     # legacy values
     new_dutch_name = derivHist_fieldchoice.dutch_name
     dutch_language = Language.objects.get(language_code_2char='nl')

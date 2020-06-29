@@ -245,12 +245,12 @@ handshape_bloodhound.initialize();
 function handshapetypeahead(target) {
 
      $(target).typeahead(null, {
-          name: 'dutch_name',
+          name: 'name',
           displayKey: 'machine_value',
           source: handshape_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(handshape) {
-                  return("<p><strong>" + handshape.dutch_name +  "</strong></p>");
+                  return("<p><strong>" + handshape.name +  "</strong></p>");
               }
           }
       });

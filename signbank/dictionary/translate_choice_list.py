@@ -3,6 +3,7 @@ from collections import OrderedDict
 import signbank.settings.base as settings
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import When, Case, NullBooleanField, IntegerField
+from django.db.utils import OperationalError
 
 def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
 
@@ -13,19 +14,19 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
 
     codes_to_adjectives = dict(settings.LANGUAGES)
 
-    if language_code not in codes_to_adjectives.keys():
-        adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+    if language_code == 'en' or language_code not in codes_to_adjectives.keys():
+        language_field = 'name'
     else:
-        adjective = codes_to_adjectives[language_code].lower()
+        language_field = codes_to_adjectives[language_code].lower() + '_name'
 
     temp_mapping_dict = {}
     raw_choice_list = []
     machine_values_seen = []
     for choice in queryset:
         try:
-            human_value = getattr(choice, adjective + '_name')
-        except AttributeError:
-            human_value = getattr(choice,'english_name')
+            human_value = getattr(choice, language_field)
+        except (OperationalError, AttributeError):
+            human_value = getattr(choice,'name')
 
         if choice.machine_value in machine_values_seen:
             # don't append to raw_choice_list
@@ -64,23 +65,27 @@ def choicelist_queryset_to_colors(queryset,language_code,ordered=True,id_prefix=
 
     codes_to_adjectives = dict(settings.LANGUAGES)
 
-    if language_code not in codes_to_adjectives.keys():
-        adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+    if language_code == 'en' or language_code not in codes_to_adjectives.keys():
+        language_field = 'name'
     else:
-        adjective = codes_to_adjectives[language_code].lower()
+        language_field = codes_to_adjectives[language_code].lower() + '_name'
 
     temp_mapping_dict = {}
     raw_choice_list = []
     machine_values_seen = []
     for choice in queryset:
-        human_value = getattr(choice, adjective + '_name')
+        try:
+            human_value = getattr(choice, language_field)
+        except (OperationalError, AttributeError):
+            human_value = getattr(choice,'name')
+
         if choice.machine_value in machine_values_seen:
             # don't append to raw_choice_list
             continue
         temp_mapping_dict[choice.machine_value] = human_value
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
-            raw_choice_list.append((id_prefix + str(choice.machine_value), getattr(choice, adjective + '_name'), getattr(choice, 'field_color')))
+            raw_choice_list.append((id_prefix + str(choice.machine_value), human_value, getattr(choice, 'field_color')))
 
     if ordered:
         sorted_choices = sorted(raw_choice_list,key = lambda x: x[1])
@@ -117,10 +122,10 @@ def choicelist_queryset_to_field_colors(queryset):
 def machine_value_to_translated_human_value(machine_value,choice_list,language_code):
     codes_to_adjectives = dict(settings.LANGUAGES)
 
-    if language_code not in codes_to_adjectives.keys():
-        adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+    if language_code == 'en' or language_code not in codes_to_adjectives.keys():
+        language_field = 'name'
     else:
-        adjective = codes_to_adjectives[language_code].lower()
+        language_field = codes_to_adjectives[language_code].lower() + '_name'
 
     if not choice_list or len(choice_list) == 0:
         # this function has been called with an inappropriate choice_list
@@ -142,9 +147,9 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
             selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
 
             try:
-                human_value = getattr(selected_field_choice, adjective + '_name')
+                human_value = getattr(selected_field_choice, language_field)
             except AttributeError:
-                human_value = getattr(selected_field_choice, 'english_name')
+                human_value = getattr(selected_field_choice, 'name')
 
         except (IndexError, ValueError):
             human_value = machine_value

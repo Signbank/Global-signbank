@@ -45,9 +45,9 @@ def build_choice_list(field):
     except:
         field_choices = []
 
-    # Get choices for a certain field in FieldChoices, append machine_value and english_name
+    # Get choices for a certain field in FieldChoices, append machine_value and name
     for choice in field_choices:
-        choice_list.append((str(choice.machine_value),choice.english_name))
+        choice_list.append((str(choice.machine_value),choice.name))
 
     choice_list = sorted(choice_list, key=lambda x: x[1])
     built_choice_list = [('0', '-'), ('1', 'N/A')] + choice_list
@@ -244,7 +244,7 @@ class RelationToForeignSign(models.Model):
 
 class FieldChoice(models.Model):
     field = models.CharField(max_length=50)
-    english_name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50)
     dutch_name = models.CharField(max_length=50)
     chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(
@@ -252,7 +252,7 @@ class FieldChoice(models.Model):
     field_color = ColorField(default='ffffff')
 
     def __str__(self):
-        name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
+        name = self.field + ': ' + self.name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
         return name
 
     class Meta:
@@ -261,7 +261,7 @@ class FieldChoice(models.Model):
 
 class Handshape(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
-    english_name = models.CharField(_("English name"), max_length=50)
+    name = models.CharField(_("English name"), max_length=50)
     dutch_name = models.CharField(_("Dutch name"), max_length=50)
     chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
     hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"),
@@ -365,7 +365,7 @@ class Handshape(models.Model):
             # no finger selection
             return
         # get the pattern, only one match is returned, in a list because of filter
-        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        fingerSelectionPattern = fieldSelectionMatch[0].name
         self.fsT = 'T' in fingerSelectionPattern
         self.fsI = 'I' in fingerSelectionPattern
         self.fsM = 'M' in fingerSelectionPattern
@@ -400,7 +400,7 @@ class Handshape(models.Model):
             # no finger selection
             return
         # get the pattern, only one match is returned, in a list because of filter
-        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        fingerSelectionPattern = fieldSelectionMatch[0].name
         self.fs2T = 'T' in fingerSelectionPattern
         self.fs2I = 'I' in fingerSelectionPattern
         self.fs2M = 'M' in fingerSelectionPattern
@@ -435,7 +435,7 @@ class Handshape(models.Model):
             # no finger selection
             return
         # get the pattern, only one match is returned, in a list because of filter
-        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        fingerSelectionPattern = fieldSelectionMatch[0].name
         self.ufT = 'T' in fingerSelectionPattern
         self.ufI = 'I' in fingerSelectionPattern
         self.ufM = 'M' in fingerSelectionPattern
@@ -1282,7 +1282,7 @@ class Gloss(models.Model):
         # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
         try:
             handedness_X = str(
-                FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
+                FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').machine_value)
         except:
             # We want to ignore handshape X, so return an empty value if it doesn't exist since empty is also ignored
             handedness_X = '0'
@@ -1412,7 +1412,7 @@ class Gloss(models.Model):
         # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
         try:
             handedness_X = str(
-                FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
+                FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').machine_value)
         except:
             handedness_X = ''
 
@@ -1483,7 +1483,7 @@ class Gloss(models.Model):
         # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
         try:
             handedness_X = str(
-                FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
+                FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').machine_value)
         except:
             handedness_X = ''
 
@@ -1910,7 +1910,7 @@ def generate_translated_choice_list_table():
                 # print('choices found')
                 for c in choice_list:
                     # c is either a Handshape or a FieldChoice object, get the translations from it
-                    # print('choice is: ', c.english_name)
+                    # print('choice is: ', c.name)
                     choices_machine_value = getattr(c, 'machine_value')
                     translations_for_choice = dict()
                     for (l_name, l_adjective) in codes_to_adjectives.items():
@@ -1919,11 +1919,11 @@ def generate_translated_choice_list_table():
                             human_value = getattr(c, adjective + '_name')
                         except AttributeError:
                             # in case the language name is empty for the field choice
-                            human_value = getattr(c, 'english_name')
+                            human_value = getattr(c, 'name')
                         except:
-                            # this should not happen, it seems the english_name field was removed from the model
+                            # this should not happen, it seems the name field was removed from the model
                             # probably a default setting is needed
-                            print('There is no field english_name in the FieldChoice table.')
+                            print('There is no field name in the FieldChoice table.')
                             human_value = ''
                         translations_for_choice[l_name] = human_value
                     field_translated_choice_list[choices_machine_value] = translations_for_choice
@@ -2299,10 +2299,11 @@ class Dataset(models.Model):
 
         codes_to_adjectives = dict(settings.LANGUAGES)
 
-        if language_code not in codes_to_adjectives.keys():
-            adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+        if language_code == 'en' or language_code not in codes_to_adjectives.keys():
+            # order_by = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+            order_by = 'name'
         else:
-            adjective = codes_to_adjectives[language_code].lower()
+            order_by = codes_to_adjectives[language_code].lower() + '_name'
 
         # sort the phonology fields based on field label in the designated language
         fields_data = []
@@ -2317,7 +2318,7 @@ class Dataset(models.Model):
         choice_lists = dict()
         for (f, field_verbose_name, fieldchoice_category) in fields_data:
             if fieldchoice_category:
-                choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+                choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(order_by)
                 # make a dictionary using the field name so we can look up the translated choices later
                 choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list_this_field, language_code, ordered=False)
 
@@ -2328,7 +2329,7 @@ class Dataset(models.Model):
         # To generate the correct order, iterate over the ordered fields data, which is ordered by translated verbose name
         for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
 
-            choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+            choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(order_by)
 
             # We now basically construct a duplicate of the choice_lists dict, but with the machine values instead of the labels
             # The machine value is what is stored as the value of the field in the Gloss objects

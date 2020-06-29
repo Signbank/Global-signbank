@@ -2465,11 +2465,11 @@ def configure_handshapes(request):
 
             new_id = o.machine_value
             new_machine_value = o.machine_value
-            new_english_name = o.english_name
+            new_name = o.name
             new_dutch_name = o.dutch_name
             new_chinese_name = o.chinese_name
 
-            new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
+            new_handshape = Handshape(machine_value=new_machine_value, name=new_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
             new_handshape.save()
 
     selected_datasets = get_selected_datasets_for_user(request.user)
@@ -2530,7 +2530,7 @@ def list_all_fieldchoice_names(request):
     for fieldchoice in FieldChoice.objects.all():
         columns = []
 
-        for column in [fieldchoice.field,fieldchoice.english_name,fieldchoice.dutch_name,fieldchoice.chinese_name]:
+        for column in [fieldchoice.field,fieldchoice.name,fieldchoice.dutch_name,fieldchoice.chinese_name]:
             if column not in [None,'']:
                 columns.append(column)
             else:
@@ -2923,7 +2923,7 @@ def configure_derivationhistory(request):
                                                (44, 'Motivated shape'), (45, 'Spiral'), (6, 'Straight'), (12, 'Zigzag')]
 
             for (machine_value, name) in derivationhistory_initial_choices:
-                dhfc = FieldChoice(field='derivHist', machine_value=machine_value, english_name=name, dutch_name=name, chinese_name=name)
+                dhfc = FieldChoice(field='derivHist', machine_value=machine_value, name=name, dutch_name=name, chinese_name=name)
                 dhfc.save()
 
         derivationhistory = FieldChoice.objects.filter(field__iexact='derivHist')
@@ -2931,7 +2931,7 @@ def configure_derivationhistory(request):
         for derivHist_fieldchoice in derivationhistory:
 
             new_machine_value = derivHist_fieldchoice.machine_value
-            new_english_name = derivHist_fieldchoice.english_name
+            new_english_name = derivHist_fieldchoice.name
 
             new_dutch_name = derivHist_fieldchoice.dutch_name
             dutch_language = Language.objects.get(language_code_2char='nl')

@@ -1511,18 +1511,18 @@ class HandshapeTests(TestCase):
 
             # create two arbitrary new Handshapes
 
-            self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name='thisisatemporarytesthandshape1',
+            self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1',
                                                                                     dutch_name='thisisatemporarytesthandshape1',
                                                                                     chinese_name='thisisatemporarytesthandshape1')
             self.test_handshape1.save()
 
-            self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name='thisisatemporarytesthandshape2',
+            self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2',
                                                                                     dutch_name='thisisatemporarytesthandshape2',
                                                                                     chinese_name='thisisatemporarytesthandshape2')
             self.test_handshape2.save()
 
-            print('New handshape ', self.test_handshape1.machine_value, ' created: ', self.test_handshape1.english_name, self.test_handshape1.dutch_name)
-            print('New handshape ', self.test_handshape2.machine_value, ' created: ', self.test_handshape2.english_name, self.test_handshape2.dutch_name)
+            print('New handshape ', self.test_handshape1.machine_value, ' created: ', self.test_handshape1.name, self.test_handshape1.dutch_name)
+            print('New handshape ', self.test_handshape2.machine_value, ' created: ', self.test_handshape2.name, self.test_handshape2.dutch_name)
 
     def create_handshape(self):
 
@@ -1530,13 +1530,13 @@ class HandshapeTests(TestCase):
         max_used_machine_value = max(used_machine_values)
         print('max_used_machine_value: ', max_used_machine_value)
         new_machine_value = max_used_machine_value + 1
-        new_english_name = 'thisisanewtesthandshape_en'
+        new_name = 'thisisanewtesthandshape_en'
         new_dutch_name = 'thisisanewtesthandshape_nl'
 
-        new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name)
+        new_handshape = Handshape(machine_value=new_machine_value, name=new_name, dutch_name=new_dutch_name)
         new_handshape.save()
 
-        print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.english_name, new_handshape.dutch_name)
+        print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.name, new_handshape.dutch_name)
 
         return new_handshape
 
@@ -1561,13 +1561,13 @@ class HandshapeTests(TestCase):
             self.client.session.save()
 
             # new_machine_value = 588
-            # new_english_name = 'thisisanewtesthandshape_en'
+            # new_name = 'thisisanewtesthandshape_en'
             # new_dutch_name = 'thisisanewtesthandshape_nl'
             #
-            # new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name)
+            # new_handshape = Handshape(machine_value=new_machine_value, name=new_name, dutch_name=new_dutch_name)
             # new_handshape.save()
             #
-            # print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.english_name, new_handshape.dutch_name)
+            # print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.name, new_handshape.dutch_name)
 
             new_handshape = self.create_handshape()
             #We can now request a detail view
@@ -1683,7 +1683,7 @@ class MultipleSelectTests(TestCase):
         # At the moment, the legacy fields are still used in Search routines
         new_fieldchoice = FieldChoice(machine_value=new_machine_value,
                                         field='semField',
-                                        english_name=new_english_name,
+                                        name=new_english_name,
                                         dutch_name=new_dutch_name,
                                         chinese_name=new_english_name)
         new_fieldchoice.save()
@@ -1841,7 +1841,7 @@ class FieldChoiceTests(TestCase):
             field_options = FieldChoice.objects.filter(field=fieldchoice)
             if field_options:
                 # a different field choice is chosen than that of the test gloss
-                field_choice_in_use = field_options[2]
+                field_choice_in_use = field_options.last()  # This assumes there is more than one
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_handshape(self):
@@ -1850,7 +1850,7 @@ class FieldChoiceTests(TestCase):
         fields_with_choices_handshapes = fields_with_choices_handshapes()
 
         #Create the handshape
-        new_handshape = Handshape(english_name="thisisatemporarytesthandshape",
+        new_handshape = Handshape(name="thisisatemporarytesthandshape",
                                   dutch_name="thisisatemporarytesthandshape", chinese_name="thisisatemporarytesthandshape")
         new_handshape.save()
 
@@ -1901,7 +1901,7 @@ class FieldChoiceTests(TestCase):
             field_options = FieldChoice.objects.filter(field=field_value)
             for opt in field_options:
                 if field_value in ['FingerSelection']:
-                    print('TEST: test whether has_change_permission is False for FingerSelection choice ', opt.english_name)
+                    print('TEST: test whether has_change_permission is False for FingerSelection choice ', opt.name)
                     self.assertEqual(self.fieldchoice_admin.has_change_permission(request=request, obj=opt), False)
                 queries_h = [Q(**{ field_name : opt.machine_value }) for field_name in fields_with_choices_handshapes[field_value]]
                 query_h = queries_h.pop()
@@ -1909,10 +1909,10 @@ class FieldChoiceTests(TestCase):
                     query_h |= item
                 field_is_in_use = Handshape.objects.filter(query_h).count()
                 if field_is_in_use > 0:
-                    print('TEST: test whether has_delete_permission is False for ', field_value, ' choice ', str(opt.english_name), ' (in use)')
+                    print('TEST: test whether has_delete_permission is False for ', field_value, ' choice ', str(opt.name), ' (in use)')
                     self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=opt), False)
                 else:
-                    print('TEST: test whether has_delete_permission is True for ', field_value, ' choice ', str(opt.english_name), ' (not used)')
+                    print('TEST: test whether has_delete_permission is True for ', field_value, ' choice ', str(opt.name), ' (not used)')
                     self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=opt), True)
 
     def test_delete_fieldchoice_definition(self):
@@ -1976,7 +1976,7 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.english_name), ' (in use)')
+                      str(field_choice_in_use.name), ' (in use)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
@@ -1985,9 +1985,9 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
             if field_options:
-                field_choice_in_use = field_options[2]
+                field_choice_in_use = field_options.last()  # This assumes there is more than one
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.english_name), ' (not used)')
+                      str(field_choice_in_use.name), ' (not used)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_morphology_definition(self):
@@ -2064,7 +2064,7 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.english_name), ' (in use)')
+                      str(field_choice_in_use.name), ' (in use)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
@@ -2075,7 +2075,7 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options[2]
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.english_name), ' (not used)')
+                      str(field_choice_in_use.name), ' (not used)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_othermediatype(self):
@@ -2141,7 +2141,7 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.english_name), ' (in use)')
+                      str(field_choice_in_use.name), ' (in use)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
@@ -2152,7 +2152,7 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options[2]
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.english_name), ' (not used)')
+                      str(field_choice_in_use.name), ' (not used)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_morpheme_type(self):
@@ -2219,7 +2219,7 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.english_name), ' (in use)')
+                      str(field_choice_in_use.name), ' (in use)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
         # now do the same with the second choice
@@ -2231,7 +2231,7 @@ class FieldChoiceTests(TestCase):
                 # a different field choice is chosen than that of the test morpheme
                 field_choice_in_use = field_options[2]
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                          str(field_choice_in_use.english_name), ' (not used)')
+                          str(field_choice_in_use.name), ' (not used)')
                 self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
 class testFrequencyAnalysis(TestCase):
@@ -2249,12 +2249,12 @@ class testFrequencyAnalysis(TestCase):
 
         # create two arbitrary new Handshapes
 
-        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name='thisisatemporarytesthandshape1',
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1',
                                                                                 dutch_name='thisisatemporarytesthandshape1',
                                                                                 chinese_name='thisisatemporarytesthandshape1')
         self.test_handshape1.save()
 
-        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name='thisisatemporarytesthandshape2',
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2',
                                                                                 dutch_name='thisisatemporarytesthandshape2',
                                                                                 chinese_name='thisisatemporarytesthandshape2')
         self.test_handshape2.save()
@@ -2356,17 +2356,10 @@ class testFrequencyAnalysis(TestCase):
         language_code = language.language_code_2char
 
         codes_to_adjectives = dict(settings.LANGUAGES)
-        field_choices_names = [ f.name for f in FieldChoice._meta.fields ]
-        # print('field_choices_names: ', field_choices_names)
-
-        if language_code not in codes_to_adjectives.keys():
-            adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+        if language_code == 'en' or language_code not in codes_to_adjectives.keys():
+            desired_ordering_on_field = 'name'
         else:
-            adjective = codes_to_adjectives[language_code].lower()
-            desired_ordering_on_field = adjective + '_name'
-            # to accomodate other Signbanks, confirm whether the language exists in the FieldChoice model
-            if desired_ordering_on_field not in field_choices_names:
-                adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+            desired_ordering_on_field = codes_to_adjectives[language_code].lower() + '_name'
 
         frequency_dict = test_dataset.generate_frequency_dict(language_code)
         frequency_dict_keys = frequency_dict.keys()
@@ -2381,7 +2374,7 @@ class testFrequencyAnalysis(TestCase):
         ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
         for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
 
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(desired_ordering_on_field)
 
             if len(choice_list) > 0:
                 translated_choices = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False, shortlist=False)
@@ -2560,7 +2553,7 @@ class testSettings(TestCase):
                 grouped_by_field[field] = []
             if fco.machine_value in grouped_by_field[field]:
                 matches_to_field = field_choice_objects.filter(field=field, machine_value=fco.machine_value)
-                matches_to_string = [ ( m.field, str(m.machine_value),m.english_name) for m in matches_to_field ]
+                matches_to_string = [ ( m.field, str(m.machine_value),m.name) for m in matches_to_field ]
                 print('Duplicate machine value for ', field, ': ', matches_to_string)
             else:
                 grouped_by_field[field].append(fco.machine_value)
@@ -2606,7 +2599,7 @@ class RevisionHistoryTests(TestCase):
                 new_human_value = 'fieldchoice_' + fc_category + '_500'
                 this_field_choice = FieldChoice(machine_value=new_machine_value,
                                                 field=fc_category,
-                                                english_name=new_human_value,
+                                                name=new_human_value,
                                                 dutch_name=new_human_value,
                                                 chinese_name=new_human_value)
                 this_field_choice.save()
@@ -2969,21 +2962,25 @@ class MinimalPairsTests(TestCase):
 
         # create two arbitrary new Handshapes and store the data in FieldChoice table
 
-        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name=name_1,dutch_name=name_1,chinese_name=name_1)
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1',
+                                                                                dutch_name='thisisatemporarytesthandshape1',
+                                                                                chinese_name='thisisatemporarytesthandshape1')
         self.test_handshape1.save()
 
-        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name=name_2,dutch_name=name_2,chinese_name=name_2)
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2',
+                                                                                dutch_name='thisisatemporarytesthandshape2',
+                                                                                chinese_name='thisisatemporarytesthandshape2')
         self.test_handshape2.save()
 
         # FieldChoice fields for Handshape are still used in MinimalPairs routines
         self.new_fieldchoice_1 = FieldChoice(machine_value=max_used_machine_value+1,
                                              field='Handshape',
-                                             english_name=name_1,dutch_name=name_1,chinese_name=name_1)
+                                             name=name_1,dutch_name=name_1,chinese_name=name_1)
         self.new_fieldchoice_1.save()
 
         self.new_fieldchoice_2 = FieldChoice(machine_value=max_used_machine_value+2,
                                         field='Handshape',
-                                        english_name=name_2,dutch_name=name_2,chinese_name=name_2)
+                                        name=name_2,dutch_name=name_2,chinese_name=name_2)
         self.new_fieldchoice_2.save()
 
         # Store the translations in the global quick access table used in the template
