@@ -112,7 +112,7 @@ class GlossAdmin(VersionAdmin):
 
 class HandshapeAdmin(VersionAdmin):
 
-    list_display = ['machine_value', 'english_name', 'dutch_name']
+    list_display = ['machine_value', 'name']
 
 class GlossRevisionAdmin(VersionAdmin):
 
@@ -144,21 +144,19 @@ class UserProfileInline(admin.StackedInline):
 class UserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
-class FieldChoiceAdmin(VersionAdmin):
+class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     readonly_fields=['machine_value']
     actions=['delete_selected']
 
     if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
         show_english_only = True
-        list_display = ['english_name', 'machine_value','field']
+        list_display = ['name', 'machine_value','field']
     else:
-        list_display = ['english_name', 'dutch_name', 'machine_value', 'field']
+        list_display = ['name', 'name_nl', 'dutch_name', 'machine_value', 'field']
         show_english_only = False
     list_filter = ['field']
 
     def get_form(self, request, obj=None, **kwargs):
-        if self.show_english_only:
-            self.exclude = ('dutch_name', 'chinese_name')
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
         return form
 

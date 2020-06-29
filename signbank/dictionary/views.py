@@ -614,7 +614,7 @@ def import_other_media(request):
                 continue
 
             for field_choice in FieldChoice.objects.filter(field='OtherMediaType'):
-                if field_choice.english_name == other_media_type:
+                if field_choice.name == other_media_type:
                     other_media_type_machine_value = field_choice.machine_value
 
             parent_gloss = Gloss.objects.filter(idgloss=idgloss)[0]
@@ -2348,14 +2348,14 @@ def configure_handshapes(request):
 
             new_id = o.machine_value
             new_machine_value = o.machine_value
-            new_english_name = o.english_name
+            new_name = o.name
             new_dutch_name = o.dutch_name
             new_chinese_name = o.chinese_name
 
-            new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
+            new_handshape = Handshape(machine_value=new_machine_value, name=new_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
             new_handshape.save()
 
-            output_string += '<tr><td>' + str(new_machine_value) + '</td><td>' + new_english_name + '</td><td>' + new_dutch_name + '</td><td>' + new_chinese_name + '</td></tr>\n'
+            output_string += '<tr><td>' + str(new_machine_value) + '</td><td>' + new_name + '</td><td>' + new_dutch_name + '</td><td>' + new_chinese_name + '</td></tr>\n'
 
         output_string += handshapes_table_suffix
 
@@ -2417,7 +2417,7 @@ def list_all_fieldchoice_names(request):
     for fieldchoice in FieldChoice.objects.all():
         columns = []
 
-        for column in [fieldchoice.field,fieldchoice.english_name,fieldchoice.dutch_name,fieldchoice.chinese_name]:
+        for column in [fieldchoice.field,fieldchoice.name,fieldchoice.dutch_name,fieldchoice.chinese_name]:
             if column not in [None,'']:
                 columns.append(column)
             else:

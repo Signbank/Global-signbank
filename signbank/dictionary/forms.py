@@ -613,7 +613,7 @@ class HandshapeSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Handshape
-        fields = ('machine_value', 'english_name', 'dutch_name', 'chinese_name',
+        fields = ('machine_value', 'name',
 				  'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2',
 				  'hsAperture', 'hsThumb', 'hsSpread', 'hsFingUnsel',
                   'fsT', 'fsI', 'fsM', 'fsR', 'fsP',

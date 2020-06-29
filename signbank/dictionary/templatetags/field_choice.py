@@ -52,7 +52,7 @@ def translate_to_english(machine_value,field_category):
     selected_field_choice = get_field_choice(machine_value, field_category)
 
     try:
-        return selected_field_choice.english_name
+        return selected_field_choice.name
     except AttributeError:
         return selected_field_choice
 

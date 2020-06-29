@@ -714,7 +714,7 @@ def subst_notes(gloss, field, values):
     # it allows the type of note to be in either English or Dutch in the CSV file
     note_reverse_translation = {}
     for nrc in note_role_choices:
-        note_reverse_translation[nrc.english_name] = nrc.machine_value
+        note_reverse_translation[nrc.name] = nrc.machine_value
         note_reverse_translation[nrc.dutch_name] = nrc.machine_value
 
     for original_note in gloss.definition_set.all():
@@ -1354,7 +1354,7 @@ def update_handshape(request, handshapeid):
             if newvalue != original_value:
                 hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
                 newPattern = hs_mod.get_fingerSelection_display()
-                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection', english_name__iexact=newPattern)
+                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection', name__iexact=newPattern)
                 if object_fingSelection:
                     mv = object_fingSelection[0].machine_value
                     hs_mod.__setattr__('hsFingSel', mv)
@@ -1368,7 +1368,7 @@ def update_handshape(request, handshapeid):
                 hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
                 newPattern = hs_mod.get_fingerSelection2_display()
                 object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection',
-                                                                  english_name__iexact=newPattern)
+                                                                  name__iexact=newPattern)
                 if object_fingSelection:
                     mv = object_fingSelection[0].machine_value
                     hs_mod.__setattr__('hsFingSel2', mv)
@@ -1382,7 +1382,7 @@ def update_handshape(request, handshapeid):
                 hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
                 newPattern = hs_mod.get_unselectedFingers_display()
                 object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection',
-                                                                  english_name__iexact=newPattern)
+                                                                  name__iexact=newPattern)
                 if object_fingSelection:
                     mv = object_fingSelection[0].machine_value
                     hs_mod.__setattr__('hsFingUnsel', mv)

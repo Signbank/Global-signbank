@@ -318,19 +318,19 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
     note_type_error = False
     note_tuple_error = False
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
-    all_notes = [ n.english_name for n in note_role_choices]
+    all_notes = [ n.name for n in note_role_choices]
     all_notes_display = ', '.join(all_notes)
     # this is used to speedup matching updates to Notes
     # it allows the type of note to be in either English or Dutch in the CSV file
     note_reverse_translation = {}
     for nrc in note_role_choices:
-        note_reverse_translation[nrc.english_name] = nrc.machine_value
+        note_reverse_translation[nrc.name] = nrc.machine_value
         note_reverse_translation[nrc.dutch_name] = nrc.machine_value
         # probably not a good idea because of character set
         # note_reverse_translation[nrc.chinese_name] = nrc.id
     note_translations = {}
     for nrc in note_role_choices:
-        note_translations[str(nrc.machine_value)] = nrc.english_name
+        note_translations[str(nrc.machine_value)] = nrc.name
 
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
@@ -1065,20 +1065,19 @@ try:
 except OperationalError:
     note_role_choices = []
 
-all_notes = [ n.english_name for n in note_role_choices]
+all_notes = [ n.name for n in note_role_choices]
 
 all_notes_display = ', '.join(all_notes)
 # this is used to speedup matching updates to Notes
 # it allows the type of note to be in either English or Dutch in the CSV file
 note_reverse_translation = {}
 for nrc in note_role_choices:
-    note_reverse_translation[nrc.english_name] = nrc.machine_value
-    note_reverse_translation[nrc.dutch_name] = nrc.machine_value
+    note_reverse_translation[nrc.name] = nrc.machine_value
     # probably not a good idea because of character set
     # note_reverse_translation[nrc.chinese_name] = nrc.id
 note_translations = {}
 for nrc in note_role_choices:
-    note_translations[str(nrc.machine_value)] = nrc.english_name
+    note_translations[str(nrc.machine_value)] = nrc.name
 
 def check_existence_notes(gloss, values, note_type_error, note_tuple_error, default_annotationidglosstranslation):
     # convert new Notes csv value to proper format

@@ -192,9 +192,9 @@ function do_adminsearch(el) {
                     {% csrf_token %}
                     <table class='table'>
                         <tr id='handshape_name_field'>
-                            <td><label for='id_english_name'>{% trans "Handshape name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='english_name' type='text'
-                                       value='{{searchform.english_name.value|default:'' }}'/></td>
+                            <td><label for='id_name'>{% trans "Handshape name" %}</label></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='name' type='text'
+                                       value='{{searchform.name.value|default:'' }}'/></td>
                         </tr>
                     </table>
                 </div>
@@ -458,14 +458,14 @@ function do_adminsearch(el) {
        </th>
         {% else %}
        <th>
-         <a href="#" onclick="do_sort_column('english_name','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'english_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         <a href="#" onclick="do_sort_column('name','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
          </a>
-         <a href="#" onclick="do_sort_column('english_name','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-english_name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         <a href="#" onclick="do_sort_column('name','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
          </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-english_name' or searchform.sortOrder and searchform.sortOrder.value == 'english_name'  %}
-           <a href="#" onclick="do_sort_column('english_name','del', 'adminsearch')">x</a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-name' or searchform.sortOrder and searchform.sortOrder.value == 'name'  %}
+           <a href="#" onclick="do_sort_column('name','del', 'adminsearch')">x</a>
          {% endif %}
        </th>
         {% endif %}
@@ -586,7 +586,7 @@ function do_adminsearch(el) {
         {% elif language == 'zh-hans' %}
         <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.chinese_name}}</a></td>
         {% else %}
-        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.english_name}}</a></td>
+        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.name}}</a></td>
         {% endif %}
             {% with handshape.hsFingSel as field_value %}
             {% with "FingerSelection " as field_category %}

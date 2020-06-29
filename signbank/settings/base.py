@@ -198,7 +198,7 @@ SIGN_NAVIGATION = False
 # which definition fields do we show and in what order?
 DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'deictic', 'modifier', 'question', 'augment', 'note']
 
-HANDSHAPE_RESULT_FIELDS = ['machine_value', 'english_name', 'dutch_name', 'chinese_name',
+HANDSHAPE_RESULT_FIELDS = ['machine_value', 'name', 'dutch_name', 'chinese_name',
                            'hsFingSel', 'hsFingConf', 'hsFingSel2', 'hsFingConf2', 'hsFingUnsel', 'hsSpread', 'hsAperture']
 
 # location and URL for uploaded files
