@@ -3927,6 +3927,13 @@ class DatasetDetailView(DetailView):
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/detail/' + str(dataset_object.id))
 
 
+def dataset_detail_view_by_acronym(request, acronym):
+    if request.method == 'GET':
+        dataset = get_object_or_404(Dataset, acronym=acronym)
+        return DatasetDetailView.as_view()(request, pk=dataset.pk)
+    raise Http404()
+
+
 class DatasetFieldChoiceView(ListView):
     model = Dataset
     template_name = 'dictionary/dataset_field_choices.html'
