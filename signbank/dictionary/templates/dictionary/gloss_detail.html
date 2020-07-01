@@ -552,7 +552,7 @@
             {% for lang, translations in translations_per_language.items %}
             <tr>
                 <th>
-                    {% trans "Translation equivalents" %} ({{ lang }})
+                    {% trans "Translation equivalents for" %} {{ lang }}
                 </th>
                 <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' colspan="2">{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             </tr>
