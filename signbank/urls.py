@@ -107,12 +107,12 @@ urlpatterns = [
     url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
     url(r'^datasets/manager', login_required(DatasetManagerView.as_view()), name='admin_dataset_manager'),
     url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
-    url(r'^datasets/(?P<acronym>.*)$', dataset_detail_view_by_acronym, name='dataset_detail_view_by_acronym'),
     url(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
     url(r'^datasets/field_choices/$', login_required(DatasetFieldChoiceView.as_view()),
         name='admin_dataset_field_choices'),
     url(r'^datasets/update_excluded_choices/$', login_required(signbank.dictionary.update.update_excluded_choices),
         name='update_excluded_choices'),
+    url(r'^datasets/(?P<acronym>.*)$', dataset_detail_view_by_acronym, name='dataset_detail_view_by_acronym'),
     url(r'^update/metadata/', signbank.dictionary.update.upload_metadata, name='upload_metadata'),
     url(r'^update/dataset_eafs/', signbank.dictionary.update.upload_eaf_files, name='upload_eaf_files'),
                   url(r'^__debug__/', include(debug_toolbar.urls))
