@@ -48,6 +48,9 @@
 
     $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
     $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
+	
+    {% include "dictionary/search_result_bar.html" %}		
+	
 </script>
 {% endblock %}
 
@@ -55,7 +58,12 @@
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
-<div id="searchresults" class='navbar navbar-default' style="border:0;">
+<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+    </div>
+    {% endif %}
+</div>
 
 </div>
 

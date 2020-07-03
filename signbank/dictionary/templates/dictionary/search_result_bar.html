@@ -1,0 +1,46 @@
+    // This script gets and inserts the users last searched items on the gloss page
+    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+    var req = $.ajax({
+        url: search_results_url,
+        dataType: "json",
+        context: document.body
+    })
+    req.done(function(json_data) {
+        for (var key in json_data) {
+            if (json_data.hasOwnProperty(key)) {
+                var a = document.createElement("a");
+                a.setAttribute("class", "search_result");
+                a.style["float"] = "none";
+                a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
+                a.id = json_data[key].id;
+                var linktext = document.createTextNode(json_data[key].gloss);
+                a.appendChild(linktext);
+                $( "#results-inline" ).append(a);
+            }
+        }
+        /* Determine the active button (if any), center the horizontal list according to the active button */
+        // Make sure that we are showing search results
+        if ($('#results-inline').length > 0) {
+            // Setting a button active according to which glosses page we are on. A.id should equal to gloss.id.
+            $('#results-inline #{{ gloss.id }}').addClass('active');
+            var scrollPanel = $('#searchresults');
+            var activeButton = $('#results-inline a.active');
+            // Make sure that activeButton exists
+            if (activeButton.length > 0) {
+                // Calculating the left offset position so that the button is centered
+                var leftOffset = activeButton.offset().left - scrollPanel.offset().left - (scrollPanel.width() / 2) + (activeButton.width() / 2);
+                // Scrolling to the active button
+                $('#searchresults').scrollLeft(leftOffset);
+            }
+            var signinfo = $('#signinfo');
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
+        } else {
+            // results=inline is empty but we still need space to be added
+            var scrollPanel = $('#searchresults');
+            var signinfo = $('#signinfo');
+            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
+        };
+    });
+	
+	$('#searchresults').css({'padding-top': 10});
+	$('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
