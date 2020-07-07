@@ -4216,14 +4216,6 @@ class MorphemeDetailView(DetailView):
         context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION'] = settings.SIGN_NAVIGATION
 
-        # check for existence of strong hand and weak hand shapes
-        try:
-            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh)
-        except Handshape.DoesNotExist:
-            strong_hand_obj = None
-        context['StrongHand'] = self.object.domhndsh if strong_hand_obj else 0
-        context['WeakHand'] = self.object.subhndsh
-
         # Get the set of all the Gloss signs that point to me
         other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
         context['appears_in'] = []
@@ -4271,36 +4263,76 @@ class MorphemeDetailView(DetailView):
 
         context['choice_lists'] = {}
 
+        phonology_list_kinds = []
+
         gloss_fields = {}
         for f in Morpheme._meta.fields:
             gloss_fields[f.name] = f
 
         # Translate the machine values to human values in the correct language, and save the choice lists along the way
-        for topic in ['phonology', 'semantics', 'frequency']:
+        for topic in ['phonology', 'semantics']:
             context[topic + '_fields'] = []
+        for field in settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics']:
+            if field in FIELDS['phonology']:
+                topic = 'phonology'
+            else:
+                topic = 'semantics'
+            kind = fieldname_to_kind(field)
+            if kind == 'list':
+                phonology_list_kinds.append(field)
 
-            for field in FIELDS[topic]:
-                if topic == 'phonology':
-                    if field not in settings.MORPHEME_DISPLAY_FIELDS:
-                        continue
-                # Get and save the choice list for this field
-                gloss_field = gloss_fields[field]
-                if hasattr(gloss_field, 'field_choice_category'):
-                    fieldchoice_category = gloss_field.field_choice_category
-                else:
-                    fieldchoice_category = field
+            choice_list = []
+            # Get and save the choice list for this field
+            gloss_field = gloss_fields[field]
+            if hasattr(gloss_field, 'field_choice_category'):
+                fieldchoice_category = gloss_field.field_choice_category
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            # else:
+            #     print('morpheme field has no field choice category attribute: ', field)
 
-                if len(choice_list) > 0:
-                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
+            context['choice_lists'][field] = {}
+            if len(choice_list) > 0:
+                display_choice_list = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
+                for (key, value) in display_choice_list.items():
+                    this_value = value
+                    try:
+                        index_of_gt = this_value.index('>')
+                    except:
+                        index_of_gt = -1
+                    if index_of_gt >= 0:
+                        escaped_value = this_value.replace('>', '\076')
+                        # print('escaped choice list string: ', this_value, ', escaped: ', escaped_value)
+                    else:
+                        escaped_value = value
+                    context['choice_lists'][field][key] = escaped_value
+                # context['choice_lists'][field] = json.dumps(display_choice_list)
+            # print('Morpheme Detail View context, choice list for field ', field, ': ', context['choice_lists'][field])
 
-                # Take the human value in the language we are using
-                machine_value = getattr(gl, field)
+            # Take the human value in the language we are using
+            machine_value = getattr(gl, field)
+            if len(choice_list) > 0:
+                # if there is a choice list, the value stored in the field is a code
                 human_value = machine_value_to_translated_human_value(machine_value, choice_list, self.request.LANGUAGE_CODE)
+                try:
+                    index_of_gt = human_value.index('>')
+                except:
+                    index_of_gt = -1
+                if index_of_gt >= 0:
+                    escaped_value = human_value.replace('>', '\076')
+                    # print('human value field ', field, ': ', escaped_value, type(escaped_value))
+                else:
+                    escaped_value = human_value
+            else:
+                # otherwise, it's a value
+                escaped_value = machine_value
+            # And add the kind of field
+            kind = fieldname_to_kind(field)
+            context[topic + '_fields'].append([escaped_value, field, labels[field], kind])
 
-                # And add the kind of field
-                kind = fieldname_to_kind(field)
-                context[topic + '_fields'].append([human_value, field, labels[field], kind])
+        # print('phonology_fields: ', context['phonology_fields'])
+
+        # print('phonology_list_kinds: ', phonology_list_kinds)
+        context['phonology_list_kinds'] = phonology_list_kinds
 
         # Gather the OtherMedia
         context['other_media'] = []
@@ -4376,6 +4408,11 @@ class MorphemeDetailView(DetailView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        if hasattr(settings, 'MORPHEME_DISPLAY_FIELDS'):
+            context['MORPHEME_DISPLAY_FIELDS'] = settings.MORPHEME_DISPLAY_FIELDS
+        else:
+            context['MORPHEME_DISPLAY_FIELDS'] = []
 
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context

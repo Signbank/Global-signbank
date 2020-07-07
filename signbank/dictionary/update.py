@@ -940,7 +940,7 @@ def update_relationtoforeignsign(gloss, field, value):
         # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
         return HttpResponse('', {'content-type': 'text/plain'})
     elif what == 'relationforeign_loan':
-        rel.loan = value == 'YES'
+        rel.loan = value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]
         rel.save()
 
     elif what == 'relationforeign_other_lang':
@@ -1011,7 +1011,7 @@ def update_definition(request, gloss, field, value):
     elif what == 'definitionpub':
         
         if request.user.has_perm('dictionary.can_publish'):
-            defn.published = value == 'Yes'
+            defn.published = value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]
             defn.save()
         
         if defn.published:
@@ -1687,7 +1687,7 @@ def update_morpheme(request, morphemeid):
         elif field == 'inWeb':
             # only modify if we have publish permission
             if request.user.has_perm('dictionary.can_publish'):
-                morpheme.inWeb = (value == 'Yes')
+                morpheme.inWeb = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
                 morpheme.save()
 
             if morpheme.inWeb:
@@ -1736,10 +1736,10 @@ def update_morpheme(request, morphemeid):
             # Translate the value if a boolean
             if isinstance(morpheme._meta.get_field(field), NullBooleanField):
                 newvalue = value
-                value = (value == 'Yes')
+                value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
             # special value of 'notset' or -1 means remove the value
-            fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+            fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew']
 
             if field in FIELDS['phonology']:
                 # this is used as part of the feedback to the interface, to alert the user to refresh the display

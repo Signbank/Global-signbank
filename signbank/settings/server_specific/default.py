@@ -124,8 +124,8 @@ MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic'
 #Display these fields als columns in the list view
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
 
-MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','locVirtObj','relOriMov',
-                       'relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth']
+MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','relOriMov',
+                       'relOriLoc','oriCh','contType','movSh','movDir', 'locVirtObj','phonOth','repeat','altern']
 
 #Where the ECV files are
 ECV_FOLDER = 'ecv/'

@@ -396,7 +396,7 @@ class MorphemeSearchForm(forms.ModelForm):
 
         model = Morpheme
 
-        fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew']
+        fields = settings.MORPHEME_DISPLAY_FIELDS + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew']
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
