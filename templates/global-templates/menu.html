@@ -25,7 +25,7 @@
             <div class='taglist ribbon_list'>
                 {% load underscore_to_space %}
                 {% for ds,selected in viewable_datasets %}
-                <a href="{{PREFIX_URL}}/datasets/detail/{{ds.id}}">
+                <a href="{{PREFIX_URL}}/datasets/{{ds.acronym}}">
                     <div class="ribbon {% if selected %}selected{% endif %}">
                         {{ds.generate_short_name|underscore_to_space}}
                     </div>

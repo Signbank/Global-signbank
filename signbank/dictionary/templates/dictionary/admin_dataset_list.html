@@ -39,7 +39,7 @@
       {% for dataset in object_list %}
         <tr>
             <td>
-                <a href="{{PREFIX_URL}}/datasets/detail/{{dataset.id}}" >{{ dataset.acronym }}</a>
+                <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.acronym }}</a>
             </td>
             <td>{{ dataset.name }}</td>
             <td>
