@@ -165,7 +165,18 @@ function configure_edit() {
      });
      $('.edit_list').click(function()
 	 {
+	     var this_data = $(this).attr('value');
+	     var edit_list_choices = choice_lists[$(this).attr('id')];
+	     var index_of_modified_field = '_0';
+         for (var key in edit_list_choices) {
+            var value = edit_list_choices[key];
+            if (value == this_data) {
+                index_of_modified_field = key;
+                break;
+            }
+         };
 		 $(this).editable(edit_post_url, {
+		     params : { a: index_of_modified_field },
 		     type      : 'select',
 		     data    : choice_lists[$(this).attr('id')],
 			 callback : update_view_and_remember_original_value
