@@ -31,10 +31,10 @@
 {% block extrahead %}
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:title" content="{% for kwd in allkwds %}{% if forloop.first %}{{ kwd.translation.text|title }}{% else %}{{ kwd.translation.text|safe }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %} (in {{gloss.dataset.acronym}})" />
-<meta property="og:url" content="https://signbank.cls.ru.nl/dictionary/gloss/{{gloss.pk}}" />
+<meta property="og:url" content="{{ request.build_absolute_uri  }}" />
 <meta property="og:type" content="website" />
 <meta property="og:description" content="From the {{gloss.dataset.acronym}} dataset in Global Signbank." />
-<meta property="og:image" content="https://signbank.cls.ru.nl/media/{{protected_media_url}}{{gloss.get_image_url}}" />
+<meta property="og:image" content="{{request.scheme}}://{{ request.get_host }}/media/{{protected_media_url}}{{gloss.get_image_url}}" />
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 <script src="https://cdn.jsdelivr.net/sharer.js/latest/sharer.min.js"></script>
@@ -196,12 +196,11 @@
     
     </div>
 
-	
 <div class="social">
-  <a href="mailto:?subject={% for kwd in allkwds %}{% if forloop.first %}{{ kwd.translation.text|title }}{% else %}{{ kwd.translation.text|safe }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %} (in {{gloss.dataset.acronym}})&amp;body=https://signbank.cls.ru.nl/media/{{protected_media_url}}{{gloss.get_image_url}}" id="share-em" class="sharer button"><i class="fa fa-3x fa-envelope-square"></i></a>
-  <a href="http://www.twitter.com/share?url=https://signbank.cls.ru.nl/dictionary/gloss/{{gloss.pk}}" id="share-tw" class="sharer button"><i class="fa fa-3x fa-twitter-square"></i></a>
-  <a href="https://api.whatsapp.com/send?text=https://signbank.cls.ru.nl/dictionary/gloss/{{gloss.pk}}" id="share-wa" class="sharer button"><i class="fa fa-3x fa-whatsapp"></i></a>
-  <a href="https://www.facebook.com/sharer/sharer.php?u=#url" id="share-fb" class="sharer button"><i class="fa fa-3x fa-facebook-square"></i></a>
+  <a target="_blank" href="mailto:?subject={% for kwd in allkwds %}{% if forloop.first %}{{ kwd.translation.text|title }}{% else %}{{ kwd.translation.text|safe }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %} (in {{gloss.dataset.acronym}})&amp;body={{ request.build_absolute_uri  }}" id="share-em" class="sharer button"><i class="fa fa-3x fa-envelope-square"></i></a>
+  <a target="_blank" href="http://www.twitter.com/share?url={{ request.build_absolute_uri  }}" id="share-tw" class="sharer button"><i class="fa fa-3x fa-twitter-square"></i></a>
+  <a target="_blank" href="https://api.whatsapp.com/send?text={{ request.build_absolute_uri  }}" id="share-wa" class="sharer button"><i class="fa fa-3x fa-whatsapp"></i></a>
+  <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=#url" id="share-fb" class="sharer button"><i class="fa fa-3x fa-facebook-square"></i></a>
 </div>
   
 </div>
