@@ -46,9 +46,11 @@
     {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
     <td>
       {% ifnotequal annotationidglosstranslation "" %}
-
+        {% if focus_gloss.is_morpheme %}
+        <div><a href="{{PREFIX_URL}}/dictionary/morpheme/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
+        {% else %}
         <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
-
+        {% endif %}
       {% endifnotequal %}
     </td>
     {% endwith %}

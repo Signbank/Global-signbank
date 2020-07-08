@@ -11,7 +11,11 @@
                 var a = document.createElement("a");
                 a.setAttribute("class", "search_result");
                 a.style["float"] = "none";
-                a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
+                if (json_data[key].ismorpheme) {
+                    a.href = "{{PREFIX_URL}}/dictionary/morpheme/" + json_data[key].id + "/";
+                } else {
+                    a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
+                };
                 a.id = json_data[key].id;
                 var linktext = document.createTextNode(json_data[key].gloss);
                 a.appendChild(linktext);

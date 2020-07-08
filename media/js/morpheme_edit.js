@@ -75,6 +75,47 @@ var busy_editing = 0;
         });
 
 
+    // a lot of console logging has been added to show events the user presses
+    // this is needed to help check different browsers
+    for (var i = 0; i < morpheme_phonology.length; i++) {
+        var field = morpheme_phonology[i];
+        var field_ref = '#' + morpheme_phonology[i];
+
+        $(field_ref).on("customEvent", function(e) {
+            var target = $(e.target);
+            var this_field_name = $(target).attr("id");
+            var classname = $(target).attr("class");
+            $(target).clearQueue();
+//            console.log('customEvent on '+this_field_name+' type '+e.type+' triggers select on '+this_field_name);
+            if (phonology_list_kinds.includes(this_field_name)) {
+                // for phonology pulldown lists do this to get list open
+                $(target).focus().click().click();
+            } else {
+                $(target).preventDefault();
+                $(target).click();
+            };
+        });
+        var this_field_node = document.getElementById(field);
+
+        this_field_node.addEventListener("keyup", function(e) {
+            var target = $(e.target);
+            var field_value = $(target).parent().parent().attr("value");
+            var field = $(target).parent().parent().attr("id");
+            var targetNodeName = e.target.nodeName;
+            var this_element = $(this);
+            var this_value = $(this_element).attr("value");
+
+//            console.log('field '+field+' key pressed '+e.keyCode+' nodeName '+targetNodeName+' value '+field_value+' option value '+this_value);
+            if (e.keyCode === 13) { // 'return'
+                e.preventDefault();
+                if (targetNodeName != 'INPUT') {
+                    $(target).submit();
+                };
+            }
+        });
+    };
+
+
     // setup requried for Ajax POST
     function csrfSafeMethod(method) {
         // these HTTP methods do not require CSRF protection
@@ -100,11 +141,8 @@ function disable_edit() {
     $('.edit').css('color', 'black');
     $('#edit_message').text('');
     if (busy_editing) {
-        strong_hand = $('#domhndsh').text();
-        weak_hand = $('#subhndsh').text();
+//        console.log('stop editing');
         new_lemma_group = $('#idgloss').text();
-        strong_machine_value = new_values_for_changes_made['domhndsh'];
-        weak_machine_value = new_values_for_changes_made['subhndsh'];
         new_lemma_group_value = new_values_for_changes_made['idgloss'];
         original_lemma_group_value = original_values_for_changes_made['idgloss'];
         if (new_lemma_group_value == undefined) {
@@ -112,37 +150,12 @@ function disable_edit() {
                 $('#idgloss').html('<a href="' + original_lemma_group_url + '">' + original_lemma_group_value + '</a>')
             }
         } else {
-            console.log('lemma group: ' + lemma_group)
             if (lemma_group == 'True') {
                 new_lemma_group_url = url + 'signs/search/?search_type=sign&view_type=lemma_groups&lemmaGloss=%5E' + new_lemma_group + '%24'
                 $('#idgloss').html('<a href="' + new_lemma_group_url + '">' + new_lemma_group + '</a>')
             }
         }
-        if (strong_machine_value == undefined) {
-            if (original_strong_hand) {
-                strong_hand_href = url + 'dictionary/handshape/'+ original_strong_hand + '/';
-                console.log('strong hand ref: ' + strong_hand_href);
-                $('#domhndsh').html('<a id="strong_hand_link" style="color: inherit; display: visible;" href="' + strong_hand_href + '">' + strong_hand + '</a>');
-            }
-        } else {
-            strong_hand_href = url + 'dictionary/handshape/'+ strong_machine_value + '/';
-            console.log('strong hand ref: ' + strong_hand_href);
-            $('#domhndsh').html('<a id="strong_hand_link" style="color: inherit; display: visible;" href="' + strong_hand_href + '">' + strong_hand + '</a>');
-        };
-        if (weak_machine_value == undefined) {
-            if (original_weak_hand) {
-                weak_hand_href = url + 'dictionary/handshape/'+ original_weak_hand + '/';
-                console.log('weak hand ref: ' + weak_hand_href);
-                $('#subhndsh').html('<a id="weak_hand_link" style="color: inherit; display: visible;" href="' + weak_hand_href + '">' + weak_hand + '</a>');
-            }
-         } else {
-            weak_hand_href = url + 'dictionary/handshape/'+ weak_machine_value + '/';
-            console.log('weak hand ref: ' + weak_hand_href);
-            $('#subhndsh').html('<a id="weak_hand_link" style="color: inherit; display: visible;" href="' + weak_hand_href + '">' + weak_hand + '</a>');
-        };
     };
-    $('#domhndsh').css('color', 'blue');
-    $('#subhndsh').css('color', 'blue');
     $('.editform').hide();
     $('.button-to-appear-in-edit-mode').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
@@ -173,11 +186,7 @@ function disable_edit() {
         if ($(this).html() == '------')
         {
             id = $(this).attr('id');
-            if (id == 'weakdrop' || id == 'weakprop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).html('&nbsp;');
-            } else {
-                $(this).html('-');
-            }
+            $(this).html('-');
         }
     });
 
@@ -192,21 +201,11 @@ function disable_edit() {
 };
 
 function enable_edit() {
-    //$('#affix-bar').hide(); // The affix bar appears on top of the Delete modal popup window, so it is hidden during editting
     $('.edit').editable('enable');
     $('.edit').css('color', 'red');
     $('#edit_message').text('Click on red text to edit  ');
     $('#edit_message').css('color', 'black');
-    strong_hand = $('#domhndsh').text();
-    weak_hand = $('#subhndsh').text();
     lemma_group_text = $('#idgloss').text();
-    console.log('original lemma group: ' + lemma_group_text);
-    console.log("original strong hand: " + strong_hand);
-    console.log("original weak hand: " + weak_hand);
-    $('#domhndsh').children().remove();
-    $('#domhndsh').html(strong_hand);
-    $('#subhndsh').children().remove();
-    $('#subhndsh').html(weak_hand);
     $('#idgloss').children().remove();
     $('#idgloss').html(lemma_group_text);
     $('.editform').show();
@@ -241,6 +240,7 @@ function enable_edit() {
         }
     });
     busy_editing = 1;
+//    console.log('start editing');
     $('#lemma a').hide();
 };
 
@@ -345,26 +345,6 @@ function configure_edit() {
          checkbox: { trueValue: yes_str, falseValue: no_str },
 		 callback : update_view_and_remember_original_value
      });
-     $('.edit_WD').editable(edit_post_url, {
-         type      : 'select',
-         data: handedness_weak_choices,
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_WP').editable(edit_post_url, {
-         type      : 'select',
-         data: handedness_weak_choices,
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_letter').editable(edit_post_url, {
-         type      : 'checkbox',
-         checkbox: { trueValue: 'letter', falseValue: '&nbsp;' },
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_number').editable(edit_post_url, {
-         type      : 'checkbox',
-         checkbox: { trueValue: 'number', falseValue: '&nbsp;' },
-		 callback : update_view_and_remember_original_value
-     });
      $('.edit_relation_role').editable(edit_post_url, {
          type      : 'select',
          data      : relation_role_choices,
@@ -407,7 +387,8 @@ function configure_edit() {
          data      : choice_lists['morphology_role'],
 	 	 callback : update_view_and_remember_original_value
      });
-     $('.edit_list').click(function() 
+
+     $('.edit_list').click(function()
 	 {
 	     var this_data = $(this).attr('value');
 	     var edit_list_choices = choice_lists[$(this).attr('id')];
@@ -433,8 +414,37 @@ function configure_edit() {
      });
 }
 
+
+function openDropdown(elementId) {
+    function down() {
+//        console.log('inside down');
+        var pos = $(this).offset();
+        var len = $(this).find("option").length;
+            if(len > 20) {
+                len = 20;
+            }
+        $(this).css("position", "absolute");
+        $(this).css("zIndex", 9999);
+        $(this).offset(pos);
+        $(this).attr("size", len);
+        $(this).unbind("focus", down);
+        $(this).focus();
+    }
+    function up() {
+//        console.log('inside up');
+        $(this).css("position", "static");
+        $(this).attr("size", "1");
+        $(this).unbind("change", up);
+        $(this).focus();
+    }
+//    console.log('inside openDropdown: ' + elementId);
+    $("#" + elementId).focus(down).blur(up).focus();
+//    $(elementId).focus(down).blur(up).focus();
+}
+
 function update_view_and_remember_original_value(change_summary)
 {
+//    console.log('update_view_and_remember_original_value change_summary: '+change_summary);
 	split_values_count = change_summary.split('\t').length - 1;
 	if (split_values_count > 0)
 	{
@@ -460,66 +470,71 @@ function update_view_and_remember_original_value(change_summary)
         new_value = split_values[1];
         machine_value = split_values[2];
         category_value = split_values[3];
+//        console.log('original_value: '+original_value);
+//        console.log('new_value: '+new_value);
+//        console.log('machine_value: '+machine_value);
+//        console.log('category_value: '+category_value);
+
 //        save the original value because the next line intentionally overwrites the variable in the template
         original_lemma_group = lemma_group;
         if (split_values_count > 3) {
 //        only the main update_gloss and update_morpheme functions return this extra information, their sub-functions do not
             lemma_group = split_values[4];
         }
-        console.log("change summary: ", change_summary);
-        console.log("machine value: ", machine_value);
-        console.log("category value: ", category_value);
-        console.log("lemma group boolean: ", lemma_group);
 
         id = $(this).attr('id');
-        $(this).html(new_value);
-        console.log('field changed: ', id);
-        console.log('new value: ', new_value);
-        console.log("original value: ", original_value);
+
+        if (category_value != 'phonology') {
+            $(this).html(new_value);
+        } else {
+            var display_value = new_value.toString("utf8");
+//            console.log('display value: '+display_value);
+            $(this).html(display_value);
+        }
 
         new_values_for_changes_made[id] = machine_value;
         if (new_value == '&nbsp;') {
             new_value = 'False';
-            console.log("new value changed from &nbsp; to False");
         }
 
         if (original_values_for_changes_made[id] == undefined)
         {
             original_values_for_changes_made[id] = original_value;
             $(this).parent().removeClass('empty_row');
-            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).attr("value", new_value);
-                if (new_value == '&nbsp;') {
-                    $(this).html("------");
-                }
-            }
-            else {
-                $(this).parent().attr("value", new_value);
-            }
+            $(this).attr("value", new_value);
         }
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
                         new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
         {
-            console.log("new value is empty, new value is: ", new_value);
-            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).attr("value", new_value);
-                $(this).html("------");
-            }
-            else {
-                if (id == 'idgloss') {
+//            console.log('new value is empty or False')
+            if (id == 'idgloss') {
 //                the user tried to erase the Lemma ID Gloss field, reset it in the template to what it was
-                    console.log('attempt to delete field idgloss');
-                    $(this).html(original_value);
-                    lemma_group = original_lemma_group;
-                } else {
-                    $(this).parent().addClass('empty_row');
-                    $(this).parent().attr("value", new_value);
-                    $(this).html("------");
-                }
+                $(this).html(original_value);
+                lemma_group = original_lemma_group;
+            } else {
+                $(this).parent().addClass('empty_row');
+                $(this).html("------");
             }
         }
         if (category_value == 'phonology') {
-            console.log('phonology modified');
+//            console.log('phonology modified '+id);
+           // $(this).change();
+            $(this).attr("value", new_value);
+            var index_of_modified_field = morpheme_phonology.indexOf(id);
+            var next_field_index = index_of_modified_field+1;
+            if (next_field_index < morpheme_phonology.length) {
+                var next_field = morpheme_phonology[next_field_index];
+                var next_field_ref = '#'+next_field;
+                $(next_field_ref).clearQueue();
+                if (phonology_list_kinds.includes(next_field)) {
+                    // for lists, do custom event instead of click
+//                    console.log('customEvent on '+next_field_ref);
+                    $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
+                } else {
+//                    console.log('click event on '+next_field_ref);
+                    $(next_field_ref).click();
+                };
+            }
         }
     }
 }
@@ -665,7 +680,7 @@ $.editable.addInputType("multiselect", {
             if ('selected' == key) {
                 continue;
             }
-            var option = $('<option />').val(key).append(json[key]);
+            var option = $('option').val(key).append(json[key]);
             $('select', this).append(option);
         }
 
@@ -810,10 +825,7 @@ function rewind()
 
 function check_phonology_modified()
 {
-    var phonology_keys = ["handedness", "domhndsh", "subhndsh", "handCh", "relatArtic", "locprim", "locVirtObj",
-                      "relOriMov", "relOriLoc", "oriCh", "contType", "movSh", "movDir", "repeat", "altern", "phonOth",
-                      "mouthG",
-                      "mouthing", "phonetVar", "weakprop", "weakdrop", "domhndsh_letter", "domhndsh_number", "subhndsh_letter", "subhndsh_number"];
+    var phonology_keys = morpheme_phonology;
     for (key in original_values_for_changes_made)
     {
         for (var i = 0; i < phonology_keys.length; i++) {
@@ -841,7 +853,6 @@ function hideLemmaForm(lemma_element) {
 }
 
 $("#lemma").on('click', function() {
-    console.log("busy_editing: " + busy_editing)
     if(busy_editing) {
         showLemmaForm($(this));
     }
