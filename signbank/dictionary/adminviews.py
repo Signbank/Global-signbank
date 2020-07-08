@@ -987,19 +987,20 @@ class GlossListView(ListView):
             items = []
 
             for item in qs:
+                item_is_morpheme = item.is_morpheme()
                 annotationidglosstranslations = item.annotationidglosstranslation_set.filter(
                     language__language_code_2char__exact=self.request.LANGUAGE_CODE
                 )
                 if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
-                    items.append(dict(id = item.id, gloss = annotationidglosstranslations[0].text))
+                    items.append(dict(id = item.id, gloss = annotationidglosstranslations[0].text, ismorpheme=item_is_morpheme))
                 else:
                     annotationidglosstranslations = item.annotationidglosstranslation_set.filter(
                         language__language_code_2char__exact= settings.LANGUAGES[0][0]
                     )
                     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
-                        items.append(dict(id=item.id, gloss=annotationidglosstranslations[0].text))
+                        items.append(dict(id=item.id, gloss=annotationidglosstranslations[0].text, ismorpheme=item_is_morpheme))
                     else:
-                        items.append(dict(id=item.id, gloss=item.idgloss))
+                        items.append(dict(id=item.id, gloss=item.idgloss, ismorpheme=item_is_morpheme))
 
             self.request.session['search_results'] = items
 
@@ -2083,7 +2084,8 @@ class MorphemeListView(ListView):
             items = []
 
             for item in qs:
-                items.append(dict(id=item.id, gloss=item.idgloss))
+                item_is_morpheme = item.is_morpheme()
+                items.append(dict(id=item.id, gloss=item.idgloss, ismorpheme=item_is_morpheme))
 
             self.request.session['search_results'] = items
 
