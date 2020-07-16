@@ -229,7 +229,7 @@ legend
     z-index: 9999;
 }
 
-.social .fa
+.social .fa, .social a, .social a:hover
 {
 	font-size: 2em;
     color: #d1d1d1;

@@ -159,7 +159,7 @@ class Definition(models.Model):
     text = models.TextField()
     role = models.CharField(_("Type"), blank=True, null=True, choices=build_choice_list("NoteType"), max_length=5)
     role.field_choice_category = 'NoteType'
-    count = models.IntegerField()
+    count = models.IntegerField(default=3)
     published = models.BooleanField(default=True)
 
     class Meta:
