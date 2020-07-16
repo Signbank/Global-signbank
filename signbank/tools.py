@@ -770,7 +770,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 # print('SUCCESS: accessing field name: (', human_key, ')')
 
             except KeyError:
-
+                print('field ', human_key, ' not found in fields')
                 # Signbank ID is skipped, for this purpose it was popped from the fields to compare
                 # Skip above fields with complex values: Keywords, Signlanguages, Dialects, Relations to other signs, Relations to foreign signs, Morphology.
 
@@ -808,10 +808,11 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     else:
                         raise KeyError
                 except KeyError:
+                    print('error looking up key ', new_human_value, ' field ', field.name)
                     #If you can't find a corresponding human value, maybe it's empty
                     if new_human_value in ['',' ', None, 'None']:
                         # print('exception in new human value to machine value: ', new_human_value)
-                        new_human_value = 'None'
+                        new_human_value = '-'
                         new_machine_value = None
 
                     #If not, stop trying
@@ -856,7 +857,6 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                         errors_found += [error_string]
             #If all the above does not apply, this is a None value or plain text
             else:
-
                 if new_human_value == 'None':
                     new_machine_value = None
                 else:
@@ -864,16 +864,20 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             #Try to translate the key to machine keys if possible
             try:
+                # print('get original machine value gloss ', gloss.id, ' machine_key ', machine_key)
                 original_machine_value = getattr(gloss,machine_key)
             except KeyError:
                 continue
 
             #Translate back the machine value from the gloss
-            if hasattr(field, 'field_choice_category'):
+            try:
+                if original_machine_value is None:
+                    original_machine_value = '0'
                 field_choices = build_choice_list(field.field_choice_category)
                 original_human_value = dict(field_choices)[original_machine_value]
-            else:
-                original_human_value = original_machine_value
+            except:
+                print('exception trying to get field choices for ', field.name)
+                original_human_value = '-'
 
             #Remove any weird char
             try:
