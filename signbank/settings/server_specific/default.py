@@ -92,9 +92,13 @@ FIELDS = {}
 
 FIELDS['main'] = ['useInstr','wordClass']
 
-FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj','relOriMov',
-                       'relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
-                       'mouthing', 'phonetVar','domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number',
+# fields are ordered per kind: Field Choice Lists, Text, Boolean
+# followed by etymology and articulation
+FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','relOriMov',
+                       'relOriLoc','oriCh','contType','movSh','movDir',
+                       'locVirtObj','phonOth', 'mouthG','mouthing', 'phonetVar',
+                       'repeat','altern',
+                       'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number',
                        'weakdrop','weakprop']
 
 FIELDS['semantics'] = ['iconImg','namEnt','semField','valence','concConcSet']
@@ -124,6 +128,7 @@ MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic'
 #Display these fields als columns in the list view
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
 
+# fields are ordered per kind: Field Choice Lists, Text, Boolean
 MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','relOriMov',
                        'relOriLoc','oriCh','contType','movSh','movDir', 'locVirtObj','phonOth','repeat','altern']
 

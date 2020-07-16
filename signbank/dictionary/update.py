@@ -222,6 +222,7 @@ def update_gloss(request, glossid):
                 return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
             if ds.is_public:
+                print('dataset is public')
                 newvalue = value
                 setattr(gloss, field, ds)
                 gloss.save()
@@ -309,7 +310,7 @@ def update_gloss(request, glossid):
             try:
                 dataset = gloss.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
-                if dataset == lemma.dataset:
+                if dataset is None or dataset == lemma.dataset:
                     gloss.lemma = lemma
                     gloss.save()
                 else:
@@ -398,9 +399,9 @@ def update_gloss(request, glossid):
                     else:
                         newvalue = value
 
-                if field_category in FIELDS['phonology']:
+        if field in FIELDS['phonology']:
 
-                     category_value = 'phonology'
+             category_value = 'phonology'
 
         # if field == 'domhndsh':
             # value should be the machine_value representation, please confirm if modifying the above code
@@ -521,14 +522,15 @@ def update_signlanguage(gloss, field, values):
 
 def update_dialect(gloss, field, values):
     # expecting possibly multiple values
-
+    # print('update dialect')
     dialect_choices = json.loads(gloss.dialect_choices())
     numerical_values_converted_to_dialects = [ dialect_choices[int(value)] for value in values ]
     error_string_values = ', '.join(numerical_values_converted_to_dialects)
     new_dialects_to_save = []
-
+    # print('numerical choices: ', numerical_values_converted_to_dialects)
     try:
         gloss_signlanguages = gloss.signlanguage.all()
+        # print('gloss sign languages: ', gloss_signlanguages)
         for value in numerical_values_converted_to_dialects:
             # Gloss Detail View pairs the Dialect with the Language in the update menu
             (sign_lang, dia) = value.split('/')
@@ -1393,7 +1395,7 @@ def update_handshape(request, handshapeid):
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
 
 def add_othermedia(request):
-
+    print('add other media')
     if request.method == "POST":
 
         form = OtherMediaForm(request.POST,request.FILES)
@@ -1403,7 +1405,7 @@ def add_othermedia(request):
             #Create the folder if needed
             goal_directory = OTHER_MEDIA_DIRECTORY+request.POST['gloss'] + '/'
             goal_path = goal_directory + request.FILES['file'].name
-
+            print('add other media: ', goal_directory, goal_path)
             if not os.path.isdir(goal_directory):
                 os.mkdir(goal_directory)
 
@@ -1627,7 +1629,7 @@ def update_morpheme(request, morphemeid):
             return update_dialect(morpheme, field, values)
 
         elif field == 'dataset':
-
+            # this has been hidden
             original_value = getattr(morpheme,field)
 
             # in case somebody tries an empty or non-existent dataset name
@@ -1705,7 +1707,7 @@ def update_morpheme(request, morphemeid):
             try:
                 dataset = morpheme.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
-                if dataset == lemma.dataset:
+                if dataset is None or dataset == lemma.dataset:
                     morpheme.lemma = lemma
                     morpheme.save()
                 else:

@@ -1176,6 +1176,10 @@ class GlossDetailView(DetailView):
         for f in Gloss._meta.fields:
             gloss_fields[f.name] = f
 
+        phonology_list_kinds = []
+        gloss_phonology = []
+
+        context['static_choice_lists'] = {}
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['main','phonology','semantics','frequency']:
             context[topic+'_fields'] = []
@@ -1184,23 +1188,60 @@ class GlossDetailView(DetailView):
 
                 # the following check will be used when querying is added, at the moment these don't appear in the phonology list
                 if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                    if topic == 'phonology':
+                        gloss_phonology.append(field)
+                    choice_list = []
                     #Get and save the choice list for this field
                     gloss_field = gloss_fields[field]
                     if hasattr(gloss_field, 'field_choice_category'):
                         fieldchoice_category = gloss_field.field_choice_category
-                    else:
-                        fieldchoice_category = field
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                        choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
+                    context['static_choice_lists'][field] = {}
                     #Take the human value in the language we are using
                     machine_value = getattr(gl,field)
-                    human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
+                    if len(choice_list) > 0:
+                        # if there is a choice list, the value stored in the field is a code
+                        human_value = machine_value_to_translated_human_value(machine_value, choice_list,
+                                                                              self.request.LANGUAGE_CODE)
+                        try:
+                            index_of_gt = human_value.index('>')
+                        except:
+                            index_of_gt = -1
+                        if index_of_gt >= 0:
+                            escaped_value = human_value.replace('>', '\076')
+                            # print('human value field ', field, ': ', escaped_value, type(escaped_value))
+                        else:
+                            escaped_value = human_value
+
+                        display_choice_list = choicelist_queryset_to_translated_dict(choice_list,
+                                                                                     self.request.LANGUAGE_CODE)
+                        for (key, value) in display_choice_list.items():
+                            this_value = value
+                            try:
+                                index_of_gt = this_value.index('>')
+                            except:
+                                index_of_gt = -1
+                            if index_of_gt >= 0:
+                                escaped_value = this_value.replace('>', '\076')
+                                # print('escaped choice list string: ', this_value, ', escaped: ', escaped_value)
+                            else:
+                                escaped_value = value
+                            context['static_choice_lists'][field][key] = escaped_value
+                        # context['static_choice_lists'][field] = json.dumps(display_choice_list)
+                    else:
+                        # otherwise, it's a value
+                        escaped_value = machine_value
 
                     #And add the kind of field
                     kind = fieldname_to_kind(field)
-                    context[topic+'_fields'].append([human_value,field,labels[field],kind])
+                    if kind == 'list' and topic == 'phonology':
+                        phonology_list_kinds.append(field)
+                    context[topic+'_fields'].append([escaped_value,field,labels[field],kind])
 
-
+        context['gloss_phonology'] = gloss_phonology
+        context['phonology_list_kinds'] = phonology_list_kinds
+        # print('gloss detail phonology choices: ', context['phonology_fields'])
         #Collect all morphology definitions for th sequential morphology section, and make some translations in advance
         morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
         morphdefs = []
@@ -1517,14 +1558,12 @@ class GlossRelationsDetailView(DetailView):
             context[topic+'_fields'] = []
 
             for field in FIELDS[topic]:
+                choice_list = []
                 gloss_field = gloss_fields[field]
                 #Get and save the choice list for this field
                 if hasattr(gloss_field, 'field_choice_category'):
                     fieldchoice_category = gloss_field.field_choice_category
-                else:
-                    fieldchoice_category = field
-
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
                 if len(choice_list) > 0:
                     context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
@@ -4194,13 +4233,34 @@ class MorphemeDetailView(DetailView):
             # return render(request, 'dictionary/warning.html', status=404)
             raise Http404()
 
+        dataset_of_requested_gloss = self.object.dataset
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            show_dataset_interface = False
+
         if request.user.is_authenticated():
-            if self.object.dataset not in get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False):
+
+            if dataset_of_requested_gloss not in selected_datasets:
+                return render(request, 'dictionary/warning.html',
+                              {'warning': 'The morpheme you are trying to view (' + str(
+                                  self.object.id) + ') is not in your selected datasets.',
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': selected_datasets,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            if dataset_of_requested_gloss not in datasets_user_can_view:
                 if self.object.inWeb:
-                    return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
+                    return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
                 else:
-                    messages.add_message(request, messages.WARNING, 'You are not allowed to see this morpheme.')
-                    return HttpResponseRedirect('/')
+                    return render(request, 'dictionary/warning.html',
+                                  {'warning': 'The morpheme you are trying to view ('+str(self.object.id)+') is not assigned to a dataset.',
+                                   'dataset_languages': dataset_languages,
+                                   'selected_datasets': selected_datasets,
+                                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         else:
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
@@ -4364,7 +4424,6 @@ class MorphemeDetailView(DetailView):
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
         # make lemma group empty for Morpheme (ask Onno about this)
-        # Morpheme Detail View shares the gloss_edit.js code with Gloss Detail View
         context['lemma_group'] = False
         context['lemma_group_url'] = ''
 
