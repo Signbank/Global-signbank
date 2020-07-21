@@ -110,6 +110,8 @@ FIELDS['handshape'] = ['hsNumSel','hsFingSel','hsFingSel2','hsFingConf','hsFingC
                        'hsFingUnsel','fsT','fsI','fsM','fsR','fsP','fs2T','fs2I','fs2M','fs2R','fs2P','ufT','ufI','ufM',
                        'ufR','ufP']
 
+FIELDS['publication'] = ['inWeb', 'isNew', 'excludeFromEcv']
+
 # Use these fields in the server specific settings to specify frequency fields, if available
 FREQUENCY_CATEGORIES = []
 FREQUENCY_REGIONS = []

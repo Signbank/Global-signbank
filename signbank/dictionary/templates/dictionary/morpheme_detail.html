@@ -572,21 +572,13 @@ function checkKey(e)
             {% endif %}
 
                 <tr><th>{% trans "In Web Dictionary" %}</th>
-                    <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb' value='{{morpheme.inWeb}}'>
-                        {% if morpheme.inWeb %}
-                            {% trans "Yes" %}
-                        {% else %}
-                            {% trans "No" %}
-                        {% endif %}
-                    </td></tr>
+                    <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'
+                        value='{{morpheme.inWeb}}'>{% if morpheme.inWeb %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                </tr>
                 <tr><th>{% trans "Proposed New Morpheme" %}</th>
-                    <td class='edit edit_check' id='isNew' value='{{morpheme.isNew}}'>
-                        {% if morpheme.isNew %}
-                            {% trans "Yes" %}
-                        {% else %}
-                            {% trans "No" %}
-                        {% endif %}
-                    </td></tr>
+                    <td class='edit edit_check' id='isNew'
+                        value='{{morpheme.isNew}}'>{% if morpheme.isNew %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                </tr>
             </table>
         </div>
     </div>
@@ -647,13 +639,8 @@ function checkKey(e)
                     {% endif %}
                     {% endif %}
                 </td>
-                <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}' value='{{def.published}}'>
-                    {% if def.published %}
-                        {% trans "Yes" %}
-                    {% else %}
-                        {% trans "No" %}
-                    {% endif %}
-                </td>
+                <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
+                    value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
                 <td class='edit edit_role' id='definitionrole_{{def.id}}' value='{{def.role}}'>{{def.get_role_display}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>

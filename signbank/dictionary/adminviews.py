@@ -1179,13 +1179,19 @@ class GlossDetailView(DetailView):
         phonology_list_kinds = []
         gloss_phonology = []
 
+        context['frequency_fields'] = []
+        for f_field in FIELDS['frequency']:
+            context['frequency_fields'].append([getattr(gl,f_field), f_field, labels[f_field], 'IntegerField'])
+
+        context['publication_fields'] = []
+        for p_field in FIELDS['publication']:
+            context['publication_fields'].append([getattr(gl,p_field), p_field, labels[p_field], 'check'])
+
         context['static_choice_lists'] = {}
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
-        for topic in ['main','phonology','semantics','frequency']:
+        for topic in ['main','phonology','semantics']:
             context[topic+'_fields'] = []
-
             for field in FIELDS[topic]:
-
                 # the following check will be used when querying is added, at the moment these don't appear in the phonology list
                 if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                     if topic == 'phonology':
@@ -1231,8 +1237,17 @@ class GlossDetailView(DetailView):
                         # context['static_choice_lists'][field] = json.dumps(display_choice_list)
                     else:
                         # otherwise, it's a value
-                        escaped_value = machine_value
 
+                        # field.__class__.__name__ == 'NullBooleanField'
+                        field_kind = fieldname_to_kind(field)
+                        # take care of different representations of empty text in database
+                        if field_kind == 'text' and (machine_value == '-' or machine_value == ' ' or machine_value == '------' or machine_value == '' or machine_value is None):
+                            # print('gloss detail text field ', field, ' machine value set to empty: ', machine_value)
+                            escaped_value = ''
+                        else:
+                            escaped_value = machine_value
+
+                            # print('gloss detail view ', field_kind, ' field ', field, ' escaped: ', escaped_value)
                     #And add the kind of field
                     kind = fieldname_to_kind(field)
                     if kind == 'list' and topic == 'phonology':
