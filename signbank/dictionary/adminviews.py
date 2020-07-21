@@ -550,9 +550,19 @@ class GlossListView(ListView):
 
                 if f.name in char_fields_not_null and value:
                     value = str(value)
-                if f.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
-                    if value == None:
+
+
+                if value is None:
+                    if f.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
                         value = 'Neutral'
+                    elif f.name in settings.HANDSHAPE_ETYMOLOGY_FIELDS:
+                        value = 'False'
+                    else:
+                        if f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
+                            value = ''
+                        else:
+                            # Are there any ohter cases?
+                            value = ''
 
                 # This was disabled with the move to Python 3... might not be needed anymore?
                 # if isinstance(value,unicode):

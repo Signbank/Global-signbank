@@ -371,12 +371,20 @@ def update_gloss(request, glossid):
             char_fields_not_null = [f.name for f in Gloss._meta.fields
                                     if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
 
+            text_fields = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField']
             if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
                 print('not set ', field)
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
 
+            elif field in text_fields and (value == '-' or value == '------'):
+                # this is to take care of legacy code where some values were set to the empty field display hint
+                print('not set text ', field)
+                gloss.__setattr__(field, None)
+                gloss.save()
+                newvalue = ''
             #Regular field updating
             else:
 

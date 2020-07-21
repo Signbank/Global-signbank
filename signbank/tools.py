@@ -794,33 +794,26 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             if hasattr(field, 'field_choice_category'):
                 field_choices = build_choice_list(field.field_choice_category)
                 human_to_machine_values = {human_value: machine_value for machine_value, human_value in field_choices}
+                if new_human_value in ['', ' ', None, 'None']:
+                    # print('exception in new human value to machine value: ', new_human_value)
+                    new_human_value = '-'
+                    new_machine_value = None
                 # print('Import CSV: human_to_machine_values: ', human_to_machine_values)
-                try:
-                    # print('new human value: ', new_human_value)
+                # Because some Handshape names can start with =, a special character ' is tested for in the name
+                if new_human_value[:1] == '\'':
+                    new_human_value = new_human_value[1:]
+                    print('Value started with single quote, revised human value: ', new_human_value)
 
-                    # Because some Handshape names can start with =, a special character ' is tested for in the name
-                    if new_human_value[:1] == '\'':
-                        new_human_value = new_human_value[1:]
-                        # print('revised human value: ', new_human_value)
+                if new_human_value in human_to_machine_values.keys():
+                    new_machine_value = human_to_machine_values[new_human_value]
+                else:
+                    new_machine_value = '0'
+                    error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                        gloss_id) + '), could not find option ' + str(new_human_value) + ' for ' + human_key
 
-                    if new_human_value in human_to_machine_values.keys():
-                        new_machine_value = human_to_machine_values[new_human_value]
-                    else:
-                        raise KeyError
-                except KeyError:
-                    print('error looking up key ', new_human_value, ' field ', field.name)
-                    #If you can't find a corresponding human value, maybe it's empty
-                    if new_human_value in ['',' ', None, 'None']:
-                        # print('exception in new human value to machine value: ', new_human_value)
-                        new_human_value = '-'
-                        new_machine_value = None
+                    errors_found += [error_string]
+                    continue
 
-                    #If not, stop trying
-                    else:
-                        new_machine_value = None
-                        error_string = 'For '+default_annotationidglosstranslation+' ('+str(gloss_id)+'), could not find option '+str(new_human_value)+' for '+human_key
-
-                        errors_found += [error_string]
             #Do something special for integers and booleans
             elif field.__class__.__name__ == 'IntegerField':
 
@@ -855,6 +848,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
                     if error_string:
                         errors_found += [error_string]
+                    continue
             #If all the above does not apply, this is a None value or plain text
             else:
                 if new_human_value == 'None':
@@ -866,7 +860,12 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             try:
                 # print('get original machine value gloss ', gloss.id, ' machine_key ', machine_key)
                 original_machine_value = getattr(gloss,machine_key)
-            except KeyError:
+            except:
+                original_machine_value = '0'
+                error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                    gloss_id) + '), could not get original value for field: ' + str(machine_key)
+
+                errors_found += [error_string]
                 continue
 
             #Translate back the machine value from the gloss
@@ -878,6 +877,11 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             except:
                 print('exception trying to get field choices for ', field.name)
                 original_human_value = '-'
+                error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                    gloss_id) + '), could not get choice for field '+field.verbose_name+': ' + str(original_machine_value)
+
+                errors_found += [error_string]
+                continue
 
             #Remove any weird char
             try:
@@ -1584,8 +1588,6 @@ from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS
 from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 import re
-import xml.etree.ElementTree as ET
-from xml.dom import minidom
 import datetime as DT
 
 
