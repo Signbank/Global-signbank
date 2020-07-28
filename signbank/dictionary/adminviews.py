@@ -1810,7 +1810,8 @@ class MorphemeListView(ListView):
                                          dialects=dialects, language_code=self.request.LANGUAGE_CODE)
 
         context['searchform'] = search_form
-        context['glosscount'] = Morpheme.objects.all().count()
+
+        context['glosscount'] = Morpheme.objects.filter(lemma__dataset__in=selected_datasets).count()
 
         context['search_type'] = self.search_type
 
