@@ -305,6 +305,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
         errors_found.append(e)
         return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
 
+    # print('compare valuedict to gloss, gloss ', gloss.__dict__['id'], gloss.__dict__['namEnt'])
     if gloss_id in earlier_updates_same_csv:
         e = 'Signbank ID (' + str(gloss_id) + ') found in multiple rows (Row ' + str(nl + 1) + ').'
         errors_found.append(e)
@@ -349,8 +350,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
         # print('fields: ', columnheaders)
 
-        if gloss.dataset:
-            current_dataset = gloss.dataset.acronym
+        if gloss.lemma.dataset:
+            current_dataset = gloss.lemma.dataset.acronym
         else:
             # because of legacy code, the current dataset might not have been set
             current_dataset = 'None'
@@ -387,7 +388,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                             glosses_with_same_annotation = Gloss.objects.filter(
                                 annotationidglosstranslation__text__exact=new_human_value,
                                 annotationidglosstranslation__language=language,
-                                lemma__dataset=gloss.dataset).count()
+                                lemma__dataset=gloss.lemma.dataset).count()
 
                             if glosses_with_same_annotation:
                                 # print('gloss ', gloss_id, ' duplicate annotation: ', new_human_value)
@@ -687,7 +688,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 if new_human_value == 'None' or new_human_value == '':
                     continue
 
-                tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
+                tags_of_gloss = TaggedItem.objects.filter(object_id=gloss_id)
                 tag_names_of_gloss = []
                 for t_obj in tags_of_gloss:
                     tag_id = t_obj.tag_id
@@ -770,7 +771,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 # print('SUCCESS: accessing field name: (', human_key, ')')
 
             except KeyError:
-                print('field ', human_key, ' not found in fields')
+                # print('field ', human_key, ' not found in fields')
                 # Signbank ID is skipped, for this purpose it was popped from the fields to compare
                 # Skip above fields with complex values: Keywords, Signlanguages, Dialects, Relations to other signs, Relations to foreign signs, Morphology.
 
@@ -794,7 +795,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             if hasattr(field, 'field_choice_category'):
                 field_choices = build_choice_list(field.field_choice_category)
                 human_to_machine_values = {human_value: machine_value for machine_value, human_value in field_choices}
-                if new_human_value in ['', ' ', None, 'None']:
+                if new_human_value in ['', '0', ' ', None, 'None']:
                     # print('exception in new human value to machine value: ', new_human_value)
                     new_human_value = '-'
                     new_machine_value = None
@@ -802,7 +803,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 # Because some Handshape names can start with =, a special character ' is tested for in the name
                 if new_human_value[:1] == '\'':
                     new_human_value = new_human_value[1:]
-                    print('Value started with single quote, revised human value: ', new_human_value)
+                    # print('Value started with single quote, revised human value: ', new_human_value)
 
                 if new_human_value in human_to_machine_values.keys():
                     new_machine_value = human_to_machine_values[new_human_value]
@@ -858,24 +859,77 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             #Try to translate the key to machine keys if possible
             try:
-                # print('get original machine value gloss ', gloss.id, ' machine_key ', machine_key)
+                # print('get original machine value gloss ', gloss_id, ' machine_key ', machine_key)
                 original_machine_value = getattr(gloss,machine_key)
+                # print('original value for field ', machine_key, ' for gloss ', gloss_id)
             except:
-                original_machine_value = '0'
                 error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
                     gloss_id) + '), could not get original value for field: ' + str(machine_key)
 
                 errors_found += [error_string]
                 continue
 
+
+            # elif field.__class__.__name__ == 'NullBooleanField':
+            #
+            #     new_human_value_lower = new_human_value.lower()
+            #     if new_human_value_lower == 'neutral' and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
+            #         new_machine_value = None
+            #     elif new_human_value_lower in ['true', 'yes', '1']:
+            #         new_machine_value = True
+            #         new_human_value = 'True'
+            #     elif new_human_value_lower == 'none':
+            #         new_machine_value = None
+            #     elif new_human_value_lower in ['false', 'no', '0']:
+            #         new_machine_value = False
+            #         new_human_value = 'False'
+
             #Translate back the machine value from the gloss
             try:
-                if original_machine_value is None:
-                    original_machine_value = '0'
-                field_choices = build_choice_list(field.field_choice_category)
-                original_human_value = dict(field_choices)[original_machine_value]
+                # if original_machine_value is None:
+                #     print(gloss_id, field.name, ' original machine value is None ', original_machine_value)
+                #     original_machine_value = '0'
+                if hasattr(field, 'field_choice_category'):
+                    # print('gloss ', gloss.__dict__)
+                    original_machine_value = getattr(gloss, machine_key)
+                    if original_machine_value is None:
+                        original_machine_value = '0'
+                    # else:
+                    #     original_machine_value = str(original_machine_value)
+                    # print(gloss_id, ' compare original ', field.name, ' original ', original_machine_value, ' new ', new_machine_value)
+                    field_choices = build_choice_list(field.field_choice_category)
+                    # print('field choices: ', field_choices)
+                    try:
+                        original_human_value = dict(field_choices)[original_machine_value]
+                    except:
+                        original_human_value = '-'
+                        print('CSV Update: Original machine value for gloss ', gloss_id, ' has an undefined choice for field ', field.name, ': ', original_machine_value)
+                        original_machine_value = '0'
+
+                    # original_human_value = getattr(gloss, 'get_' + field.name + '_display')()
+                    # print(gloss_id, ' compare original ', field.name, ' original ', original_machine_value, ' human ', original_human_value)
+
+                elif field.__class__.__name__ == 'NullBooleanField':
+                    # print('compare original ', field.name, ' original ', original_machine_value, ' new ', new_machine_value)
+                    if original_machine_value is None and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
+                        original_human_value = 'Neutral'
+                    elif original_machine_value:
+                        original_machine_value = True
+                        original_human_value = 'True'
+                    else:
+                        original_machine_value = False
+                        original_human_value = 'False'
+                # some legacy glosses have empty text fields of other formats
+                elif (field.__class__.__name__ == 'CharField' or field.__class__.__name__ == 'TextField') \
+                        and (original_machine_value is None or original_machine_value == '-' or original_machine_value == '------' or original_machine_value == ' '):
+                    # print(gloss_id, ' replace with empty string: ', original_machine_value)
+                    original_machine_value = ''
+                    original_human_value = ''
+                else:
+                    value = getattr(gloss, field.name)
+                    original_human_value = value
             except:
-                print('exception trying to get field choices for ', field.name)
+                # print('exception trying to get field choices for ', field.name)
                 original_human_value = '-'
                 error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
                     gloss_id) + '), could not get choice for field '+field.verbose_name+': ' + str(original_machine_value)

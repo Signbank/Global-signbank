@@ -368,20 +368,47 @@ def update_gloss(request, glossid):
             # special value of 'notset' or -1 means remove the value
             fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
 
+            # this is dangerous because Field CHoice fields are actually CharFields
+
+            fields_empty_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
+
             char_fields_not_null = [f.name for f in Gloss._meta.fields
-                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField'
+                                        and not hasattr(f, 'field_choice_category') and not f.null]
+
+            char_fields = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField'
+                                        and not hasattr(f, 'field_choice_category')]
+
+            # print('fields empty null: ', fields_empty_null)
+
+            # print('char fields not null: ', char_fields_not_null)
+            # print('char fields: ', char_fields)
 
             text_fields = [f.name for f in Gloss._meta.fields
-                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField']
-            if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
-                print('not set ', field)
+                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField' ]
+
+            text_fields_not_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField' and not f.null]
+
+            # The following code relies on the order of if else testing
+            # The updates ignore Placeholder empty fields of '-' and '------'
+            # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+            if (value == 'notset' or value == -1 or value == '' or value == '-' or value == '------') and field in fields_empty_null:
+                # print('a. field ', field, ' value ', value, ' set to None')
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
-
+            elif (field in char_fields or field in text_fields_not_null) and (value == '-' or value == '------'):
+                # print('b. field ', field, ' value ', value, ' set to empty string')
+                value = ''
+                gloss.__setattr__(field, value)
+                gloss.save()
+                newvalue = ''
             elif field in text_fields and (value == '-' or value == '------'):
+                # print('c. field ', field, ' value ', value, ' set to None')
                 # this is to take care of legacy code where some values were set to the empty field display hint
-                print('not set text ', field)
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
@@ -389,7 +416,8 @@ def update_gloss(request, glossid):
             else:
 
                 # Alert: Note that if field is idgloss, the following code updates it
-                setattr(gloss,field,value)
+                # print('update field of gloss ', gloss.id, field, value)
+                gloss.__setattr__(field,value)
                 gloss.save()
 
                 #If the value is not a Boolean, return the new value
