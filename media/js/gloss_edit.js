@@ -2,6 +2,14 @@
  * @author Steve Cassidy
  */
 
+function swap(json){
+  var ret = {};
+  for(var key in json){
+    ret[json[key]] = key;
+  }
+  return ret;
+};
+
 //Keep track of the original values of the changes made, so we can rewind it later if needed
 //Keep track of the new values in order to generate hyperlinks for Handshapes
 var original_values_for_changes_made = new Array();
@@ -75,6 +83,51 @@ var busy_editing = 0;
         });
 
 
+    // a lot of console logging has been added to show events the user presses
+    // this is needed to help check different browsers
+    for (var i = 0; i < gloss_phonology.length; i++) {
+        var field = gloss_phonology[i];
+        var field_ref = '#' + gloss_phonology[i];
+//        console.log('setup key listener '+field_ref);
+        $(field_ref).on("customEvent", function(e) {
+            var target = $(e.target);
+            var this_field_name = $(target).attr("id");
+            var classname = $(target).attr("class");
+            $(target).clearQueue();
+//            console.log('customEvent on '+this_field_name+' type '+e.type+' triggers select on '+this_field_name);
+            if (phonology_list_kinds.includes(this_field_name)) {
+                // for phonology pulldown lists do this to get list open
+                $(target).focus().click().click();
+            } else {
+                $(target).preventDefault();
+                $(target).click();
+            };
+        });
+        var this_field_node = document.getElementById(field);
+
+        this_field_node.addEventListener("keyup", function(e) {
+            var target = $(e.target);
+            var field_value = $(target).parent().parent().attr("value");
+            var field = $(target).parent().parent().attr("id");
+            var targetNodeName = e.target.nodeName;
+            var this_element = $(this);
+            var this_value = $(this_element).attr("value");
+
+//            console.log('field '+field+' key pressed '+e.keyCode+' nodeName '+targetNodeName+' value '+field_value+' option value '+this_value);
+            if (e.keyCode === 13) { // 'return'
+                e.preventDefault();
+                if (targetNodeName != 'INPUT') {
+                    $(target).submit();
+                };
+            }
+        });
+    };
+
+
+
+
+
+
     // setup requried for Ajax POST
     function csrfSafeMethod(method) {
         // these HTTP methods do not require CSRF protection
@@ -112,7 +165,7 @@ function disable_edit() {
                 $('#idgloss').html('<a href="' + original_lemma_group_url + '">' + original_lemma_group_value + '</a>')
             }
         } else {
-            console.log('lemma group: ' + lemma_group)
+//            console.log('lemma group: ' + lemma_group)
             if (lemma_group == 'True') {
                 new_lemma_group_url = url + 'signs/search/?search_type=sign&view_type=lemma_groups&lemmaGloss=%5E' + new_lemma_group + '%24'
                 $('#idgloss').html('<a href="' + new_lemma_group_url + '">' + new_lemma_group + '</a>')
@@ -121,23 +174,23 @@ function disable_edit() {
         if (strong_machine_value == undefined) {
             if (original_strong_hand) {
                 strong_hand_href = url + 'dictionary/handshape/'+ original_strong_hand + '/';
-                console.log('strong hand ref: ' + strong_hand_href);
+//                console.log('strong hand ref: ' + strong_hand_href);
                 $('#domhndsh').html('<a id="strong_hand_link" style="color: inherit; display: visible;" href="' + strong_hand_href + '">' + strong_hand + '</a>');
             }
         } else {
             strong_hand_href = url + 'dictionary/handshape/'+ strong_machine_value + '/';
-            console.log('strong hand ref: ' + strong_hand_href);
+//            console.log('strong hand ref: ' + strong_hand_href);
             $('#domhndsh').html('<a id="strong_hand_link" style="color: inherit; display: visible;" href="' + strong_hand_href + '">' + strong_hand + '</a>');
         };
         if (weak_machine_value == undefined) {
             if (original_weak_hand) {
                 weak_hand_href = url + 'dictionary/handshape/'+ original_weak_hand + '/';
-                console.log('weak hand ref: ' + weak_hand_href);
+//                console.log('weak hand ref: ' + weak_hand_href);
                 $('#subhndsh').html('<a id="weak_hand_link" style="color: inherit; display: visible;" href="' + weak_hand_href + '">' + weak_hand + '</a>');
             }
          } else {
             weak_hand_href = url + 'dictionary/handshape/'+ weak_machine_value + '/';
-            console.log('weak hand ref: ' + weak_hand_href);
+//            console.log('weak hand ref: ' + weak_hand_href);
             $('#subhndsh').html('<a id="weak_hand_link" style="color: inherit; display: visible;" href="' + weak_hand_href + '">' + weak_hand + '</a>');
         };
     };
@@ -200,9 +253,9 @@ function enable_edit() {
     strong_hand = $('#domhndsh').text();
     weak_hand = $('#subhndsh').text();
     lemma_group_text = $('#idgloss').text();
-    console.log('original lemma group: ' + lemma_group_text);
-    console.log("original strong hand: " + strong_hand);
-    console.log("original weak hand: " + weak_hand);
+//    console.log('original lemma group: ' + lemma_group_text);
+//    console.log("original strong hand: " + strong_hand);
+//    console.log("original weak hand: " + weak_hand);
     $('#domhndsh').children().remove();
     $('#domhndsh').html(strong_hand);
     $('#subhndsh').children().remove();
@@ -320,24 +373,15 @@ function configure_edit() {
          type      : 'textarea',
 		 callback : update_view_and_remember_original_value
      });
-     $('.edit_role').editable(edit_post_url, { 
+     $('.edit_role').editable(edit_post_url, {
+         params : { a: swap(definition_role_choices)[$(this).attr('value')] },
          type      : 'select',
          data      : definition_role_choices,
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_signlanguage').editable(edit_post_url, {
-         type      : 'multiselect',
-         data      : languages,
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_dialect').editable(edit_post_url, {
          type      : 'multiselect',
          data      : dialects,
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_dataset').editable(edit_post_url, {
-         type      : 'select',
-         data      : dataset_choices,
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_check').editable(edit_post_url, {
@@ -346,11 +390,13 @@ function configure_edit() {
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_WD').editable(edit_post_url, {
+         params : { a: swap(handedness_weak_choices)[$(this).attr('value')] },
          type      : 'select',
          data: handedness_weak_choices,
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_WP').editable(edit_post_url, {
+         params : { a: swap(handedness_weak_choices)[$(this).attr('value')] },
          type      : 'select',
          data: handedness_weak_choices,
 		 callback : update_view_and_remember_original_value
@@ -366,6 +412,7 @@ function configure_edit() {
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_relation_role').editable(edit_post_url, {
+         params : { a: swap(relation_role_choices)[$(this).attr('value')] },
          type      : 'select',
          data      : relation_role_choices,
 		 callback : update_view_and_remember_original_value
@@ -388,29 +435,18 @@ function configure_edit() {
          type      : 'glosstypeahead',
 		 callback : update_view_and_remember_original_value
      });
-     $('.edit_morpheme').editable(edit_post_url, {
-         type      : 'morphtypeahead',
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_mrptype').editable(edit_post_url, {
-         type      : 'select',
-         data      : choice_lists['morph_type'],
-		 callback : update_view_and_remember_original_value
-     });
      $('.edit_wordclass').editable(edit_post_url, {
+         params : { a: swap(wordclass_choices)[$(this).attr('value')] },
          type      : 'select',
          data      : wordclass_choices,
 		 callback : update_view_and_remember_original_value
      });
-     $('.edit_morphology_role').editable(edit_post_url, {
-         type      : 'select',
-         data      : choice_lists['morphology_role'],
-	 	 callback : update_view_and_remember_original_value
-     });
+
      $('.edit_list').click(function() 
 	 {
 	     var this_data = $(this).attr('value');
-	     var edit_list_choices = choice_lists[$(this).attr('id')];
+	     var edit_list_choices = static_choice_lists[$(this).attr('id')];
+//	     console.log('edit list choices: '+edit_list_choices);
 	     var index_of_modified_field = '_0';
          for (var key in edit_list_choices) {
             var value = edit_list_choices[key];
@@ -419,6 +455,8 @@ function configure_edit() {
                 break;
             }
          };
+//         console.log('edit_list on this data: '+this_data);
+//         console.log('index of modified key: '+index_of_modified_field);
 		 $(this).editable(edit_post_url, {
 		     params : { a: index_of_modified_field },
 		     type      : 'select',
@@ -427,6 +465,7 @@ function configure_edit() {
 		 });
      });
      $('.edit_variants').editable(edit_post_url, {
+         params : { a: swap(relation_role_choices)[$(this).attr('value')] },
 		 type      : 'select',
 		 data       : relation_role_choices,
 		 callback : update_view_and_remember_original_value
@@ -466,21 +505,21 @@ function update_view_and_remember_original_value(change_summary)
 //        only the main update_gloss and update_morpheme functions return this extra information, their sub-functions do not
             lemma_group = split_values[4];
         }
-        console.log("change summary: ", change_summary);
-        console.log("machine value: ", machine_value);
-        console.log("category value: ", category_value);
-        console.log("lemma group boolean: ", lemma_group);
+//        console.log("change summary: ", change_summary);
+//        console.log("machine value: ", machine_value);
+//        console.log("category value: ", category_value);
+//        console.log("lemma group boolean: ", lemma_group);
 
         id = $(this).attr('id');
         $(this).html(new_value);
-        console.log('field changed: ', id);
-        console.log('new value: ', new_value);
-        console.log("original value: ", original_value);
+//        console.log('field changed: ', id);
+//        console.log('new value: ', new_value);
+//        console.log("original value: ", original_value);
 
         new_values_for_changes_made[id] = machine_value;
         if (new_value == '&nbsp;') {
             new_value = 'False';
-            console.log("new value changed from &nbsp; to False");
+//            console.log("new value changed from &nbsp; to False");
         }
 
         if (original_values_for_changes_made[id] == undefined)
@@ -494,13 +533,13 @@ function update_view_and_remember_original_value(change_summary)
                 }
             }
             else {
-                $(this).parent().attr("value", new_value);
+                $(this).attr("value", new_value);
             }
         }
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
                         new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
         {
-            console.log("new value is empty, new value is: ", new_value);
+//            console.log("new value is empty, new value is: ", new_value);
             if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
                 $(this).attr("value", new_value);
                 $(this).html("------");
@@ -508,18 +547,34 @@ function update_view_and_remember_original_value(change_summary)
             else {
                 if (id == 'idgloss') {
 //                the user tried to erase the Lemma ID Gloss field, reset it in the template to what it was
-                    console.log('attempt to delete field idgloss');
+//                    console.log('attempt to delete field idgloss');
                     $(this).html(original_value);
                     lemma_group = original_lemma_group;
                 } else {
                     $(this).parent().addClass('empty_row');
-                    $(this).parent().attr("value", new_value);
+                    $(this).attr("value", new_value);
                     $(this).html("------");
                 }
             }
         }
         if (category_value == 'phonology') {
-            console.log('phonology modified');
+//            console.log('phonology modified');
+            $(this).attr("value", new_value);
+            var index_of_modified_field = gloss_phonology.indexOf(id);
+            var next_field_index = index_of_modified_field+1;
+            if (next_field_index < gloss_phonology.length) {
+                var next_field = gloss_phonology[next_field_index];
+                var next_field_ref = '#'+next_field;
+                $(next_field_ref).clearQueue();
+                if (phonology_list_kinds.includes(next_field)) {
+                    // for lists, do custom event instead of click
+//                    console.log('customEvent on '+next_field_ref);
+                    $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
+                } else {
+//                    console.log('click event on '+next_field_ref);
+                    $(next_field_ref).click();
+                };
+            }
         }
     }
 }
@@ -697,7 +752,7 @@ function update_foreign_delete(change_summary)
     var deleted_relation = deleted_relation_for_gloss.split('_');
     var deleted_relation_id = deleted_relation[1];
     $(this).css("color", "black");
-    console.log("Delete foreign relation: ", deleted_relation_id);
+//    console.log("Delete foreign relation: ", deleted_relation_id);
     var search_id = 'foreign_' + deleted_relation_id;
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');
@@ -710,7 +765,7 @@ function update_relation_delete(change_summary)
     var deleted_relation = deleted_relation_for_gloss.split('_');
     var deleted_relation_id = deleted_relation[1];
     $(this).css("color", "black");
-    console.log("Delete relation: ", deleted_relation_id);
+//    console.log("Delete relation: ", deleted_relation_id);
     var search_id = 'row_' + deleted_relation_id;
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');
@@ -841,7 +896,7 @@ function hideLemmaForm(lemma_element) {
 }
 
 $("#lemma").on('click', function() {
-    console.log("busy_editing: " + busy_editing)
+//    console.log("busy_editing: " + busy_editing)
     if(busy_editing) {
         showLemmaForm($(this));
     }

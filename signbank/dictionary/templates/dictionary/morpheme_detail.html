@@ -25,7 +25,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ URL }}{{ PREFIX_URL }}';
+    var url = '{{ PREFIX_URL }}';
     var phonology_list_kinds = {{phonology_list_kinds|safe}};
 //    console.log(phonology_list_kinds);
 
@@ -51,19 +51,19 @@
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
-    var languages = {{morpheme.signlanguage_choices|safe}};
     var dialects = {{morpheme.dialect_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
     {% else %}
     var dataset_choices = {};
     {% endif %}
-    var gloss_dataset_id = {{ morpheme.lemma.dataset_id}};
+    var gloss_dataset_id = {{ morpheme.lemma.dataset.id}};
     var gloss_default_language_code = '{{morpheme.lemma.dataset.default_language.language_code_2char}}';
     var mrptype_choices = {{morpheme.mrptype_choices|safe}};
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 
     var choice_lists = {{choice_lists|safe}};
+
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id;
     var next_morpheme_id = {{nextmorphemeid}};
@@ -124,6 +124,28 @@ function nextPhonologyField(e) {
     label.show();
 };
 
+
+<!--    //Fill choice_lists without frequencies now-->
+<!--    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{morpheme.lemma.dataset}}").done( function (data)-->
+<!--    {-->
+<!--        choice_lists = $.extend(data,{{other_media_field_choices | safe}});-->
+<!--        console.log("Added field choices");-->
+<!--    });-->
+
+<!--    //Fill choice_lists with frequencies later-->
+<!--    $(document).ready(function() {-->
+<!--        $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{morpheme.lemma.dataset}}").done( function (data)-->
+<!--        {-->
+<!--            choice_lists = $.extend(data,{{other_media_field_choices | safe}});-->
+
+<!--            // Reload the data in the lists-->
+<!--            $('.edit_list').unbind('click');-->
+<!--            configure_edit();-->
+
+<!--            console.log("Added field choices");-->
+<!--        });-->
+<!--    });-->
+
 //Keyboard shortcuts
 document.onkeydown = checkKey;
 
@@ -134,16 +156,15 @@ function checkKey(e)
 
     e = e || window.event;
 
-    switch(e.keycode)
+    switch(e.key)
     {
-      case 80: // 'p'
+      case 'p':
         element_id = 'phonology';
-        console.log('p pressed');
         break;
-      case 77: // 'm'
+      case 'm':
         element_id = 'morphology'
         break;
-      case 83: // 's'
+      case 's':
         element_id = 'semantics'
         break;
       default:
@@ -369,7 +390,7 @@ function checkKey(e)
                     </form>
                     <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' morpheme.id %}" >
                         {% csrf_token %}
-                        <input type="hidden" name="dataset" value="{{ morpheme.lemma.dataset_id }}"/>
+                        <input type="hidden" name="dataset" value="{{ morpheme.lemma.dataset.id }}"/>
                         {% for dataset_lang in morpheme.lemma.dataset.translation_languages.all %}
                         {{ dataset_lang.name }}:
                         <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
@@ -405,13 +426,11 @@ function checkKey(e)
 
             <tr>
                 <th>{% trans "Morpheme type" %}</th>
-                <td class='edit edit_mrptype' id='mrpType'>{{ morpheme_type }}</td>
+                <td class='edit edit_mrptype' id='mrpType' value='{{morpheme_type}}'>{{morpheme_type}}</td>
             </tr>
-            <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage'>{% for lang in morpheme.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr {%if morpheme_dialects|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in morpheme_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             {% endif %}
-            <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset'>{{ morpheme.dataset }}</td></tr>
         </table>
 
         {% if perms.dictionary.change_morpheme %}
@@ -512,7 +531,7 @@ function checkKey(e)
         <div id='semantics' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in semantics_fields %}
-		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
+		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}' >{% value value %}</td></tr>
 		{% endfor %}
             
             </table>
@@ -547,22 +566,18 @@ function checkKey(e)
                     </td>
                 </tr>
 
+            {%if SHOW_DATASET_INTERFACE_OPTIONS %}
+                <tr><th>{% trans "Dataset" %}</th><td id='dataset' colspan="2" >{{ morpheme.lemma.dataset }}</td></tr>
+            {% endif %}
+
                 <tr><th>{% trans "In Web Dictionary" %}</th>
-                    <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'>
-                        {% if morpheme.inWeb %}
-                            {% trans "Yes" %}
-                        {% else %}
-                            {% trans "No" %}
-                        {% endif %}
-                    </td></tr>
+                    <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'
+                        value='{{morpheme.inWeb}}'>{% if morpheme.inWeb %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                </tr>
                 <tr><th>{% trans "Proposed New Morpheme" %}</th>
-                    <td class='edit edit_check' id='isNew'>
-                        {% if morpheme.isNew %}
-                            {% trans "Yes" %}
-                        {% else %}
-                            {% trans "No" %}
-                        {% endif %}
-                    </td></tr>
+                    <td class='edit edit_check' id='isNew'
+                        value='{{morpheme.isNew}}'>{% if morpheme.isNew %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                </tr>
             </table>
         </div>
     </div>
@@ -623,15 +638,10 @@ function checkKey(e)
                     {% endif %}
                     {% endif %}
                 </td>
-                <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'>
-                    {% if def.published %}
-                        {% trans "Yes" %}
-                    {% else %}
-                        {% trans "No" %}
-                    {% endif %}
-                </td>
+                <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
+                    value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td class='edit edit_role' id='definitionrole_{{def.id}}'>{{def.get_role_display}}</td>
+                <td class='edit edit_role' id='definitionrole_{{def.id}}' value='{{def.role}}'>{{def.get_role_display}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
               </tr>
               {% endfor %}
@@ -720,7 +730,7 @@ function checkKey(e)
                     </td>
 
                     <td><a href="{{ path }}">Download</a></td>
-                    <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
+                    <td class='edit edit_list' id='other-media-type_{{ pk }}' value='{{type}}' >{{ type }}</td>
                     <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
                 </tr>
                {% endfor %}
@@ -730,7 +740,7 @@ function checkKey(e)
             {% if perms.dictionary.change_morpheme %}
             <form id='add_other_media' action='{% url "dictionary:add_othermedia" %}' method="POST" enctype="multipart/form-data">
 
-               <input type='hidden' name='morpheme' value='{{morpheme.pk}}'>
+               <input type='hidden' name='gloss' value='{{morpheme.pk}}'>
 
                 <fieldset>
                 {% csrf_token %}

@@ -156,22 +156,28 @@ class MorphemeCreateForm(forms.ModelForm):
 
         super(MorphemeCreateForm, self).__init__(queryDict, *args, **kwargs)
 
+        if 'dataset' in queryDict:
+            self.fields['dataset'] = forms.ModelChoiceField(queryset=Dataset.objects.all())
+            self.fields['dataset'].initial = queryDict['dataset']
+
         for language in self.languages:
             morphemecreate_field_name = self.morpheme_create_field_prefix + language.language_code_2char
-            self.fields[morphemecreate_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
+            self.fields[morphemecreate_field_name] = forms.CharField(label=_("Morpheme")+(" (%s)" % language.name))
             if morphemecreate_field_name in queryDict:
                 self.fields[morphemecreate_field_name].value = queryDict[morphemecreate_field_name]
 
     @atomic  # This rolls back the gloss creation if creating annotationidglosstranslations fails
     def save(self, commit=True):
         morpheme = super(MorphemeCreateForm, self).save(commit)
+        dataset = Dataset.objects.get(id=self['dataset'].value())
         for language in self.languages:
             morphemecreate_field_name = self.morpheme_create_field_prefix + language.language_code_2char
             annotation_idgloss_text = self.fields[morphemecreate_field_name].value
             existing_annotationidglosstranslations = morpheme.annotationidglosstranslation_set.filter(language=language)
             if existing_annotationidglosstranslations is None or len(existing_annotationidglosstranslations) == 0:
                 annotationidglosstranslation = AnnotationIdglossTranslation(gloss=morpheme, language=language,
-                                                                            text=annotation_idgloss_text)
+                                                                            text=annotation_idgloss_text,
+                                                                            dataset=dataset)
                 annotationidglosstranslation.save()
             elif len(existing_annotationidglosstranslations) == 1:
                 annotationidglosstranslation = existing_annotationidglosstranslations[0]
@@ -179,7 +185,7 @@ class MorphemeCreateForm(forms.ModelForm):
                 annotationidglosstranslation.save()
             else:
                 raise Exception(
-                    "In class %s: gloss with id %s has more than one annotation idgloss translation for language %s"
+                    "In class %s: morpheme with id %s has more than one annotation idgloss translation for language %s"
                     % (self.__class__.__name__, morpheme.pk, language.name)
                 )
         morpheme.creator.add(self.user)

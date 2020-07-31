@@ -2,6 +2,14 @@
  * @author Steve Cassidy
  */
 
+function swap(json){
+  var ret = {};
+  for(var key in json){
+    ret[json[key]] = key;
+  }
+  return ret;
+};
+
 //Keep track of the original values of the changes made, so we can rewind it later if needed
 //Keep track of the new values in order to generate hyperlinks for Handshapes
 var original_values_for_changes_made = new Array();
@@ -321,23 +329,14 @@ function configure_edit() {
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_role').editable(edit_post_url, { 
+         params : { a: swap(definition_role_choices)[$(this).attr('value')] },
          type      : 'select',
          data      : definition_role_choices,
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_signlanguage').editable(edit_post_url, {
-         type      : 'multiselect',
-         data      : languages,
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_dialect').editable(edit_post_url, {
          type      : 'multiselect',
          data      : dialects,
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_dataset').editable(edit_post_url, {
-         type      : 'select',
-         data      : dataset_choices,
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_check').editable(edit_post_url, {
@@ -346,6 +345,7 @@ function configure_edit() {
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_relation_role').editable(edit_post_url, {
+         params : { a: swap(relation_role_choices)[$(this).attr('value')] },
          type      : 'select',
          data      : relation_role_choices,
 		 callback : update_view_and_remember_original_value
@@ -355,11 +355,13 @@ function configure_edit() {
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_relation_delete').editable(edit_post_url, {
+        params : { a: swap(relation_delete_choices)[$(this).attr('value')] },
         type    : 'select',
         data    : relation_delete_choices,
         callback : update_relation_delete
      });
      $('.edit_foreign_delete').editable(edit_post_url, {
+        params : { a: swap(relation_delete_choices)[$(this).attr('value')] },
         type    : 'select',
         data    : relation_delete_choices,
         callback : update_foreign_delete
@@ -368,24 +370,17 @@ function configure_edit() {
          type      : 'glosstypeahead',
 		 callback : update_view_and_remember_original_value
      });
-     $('.edit_morpheme').editable(edit_post_url, {
-         type      : 'morphtypeahead',
-		 callback : update_view_and_remember_original_value
-     });
      $('.edit_mrptype').editable(edit_post_url, {
+         params : { a: swap(choice_lists['morph_type'])[$(this).attr('value')] },
          type      : 'select',
          data      : choice_lists['morph_type'],
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_wordclass').editable(edit_post_url, {
+         params : { a: swap(wordclass_choices)[$(this).attr('value')] },
          type      : 'select',
          data      : wordclass_choices,
 		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_morphology_role').editable(edit_post_url, {
-         type      : 'select',
-         data      : choice_lists['morphology_role'],
-	 	 callback : update_view_and_remember_original_value
      });
 
      $('.edit_list').click(function()
@@ -408,6 +403,7 @@ function configure_edit() {
 		 });
      });
      $('.edit_variants').editable(edit_post_url, {
+         params : { a: swap(definition_role_choices)[$(this).attr('value')] },
 		 type      : 'select',
 		 data       : relation_role_choices,
 		 callback : update_view_and_remember_original_value
@@ -484,13 +480,13 @@ function update_view_and_remember_original_value(change_summary)
 
         id = $(this).attr('id');
 
-        if (category_value != 'phonology') {
-            $(this).html(new_value);
-        } else {
-            var display_value = new_value.toString("utf8");
-//            console.log('display value: '+display_value);
-            $(this).html(display_value);
-        }
+//        if (category_value != 'phonology') {
+        $(this).html(new_value);
+//        } else {
+//            var display_value = new_value.toString("utf8");
+////            console.log('display value: '+display_value);
+//            $(this).html(display_value);
+//        }
 
         new_values_for_changes_made[id] = machine_value;
         if (new_value == '&nbsp;') {
@@ -680,7 +676,7 @@ $.editable.addInputType("multiselect", {
             if ('selected' == key) {
                 continue;
             }
-            var option = $('option').val(key).append(json[key]);
+            var option = $('<option />').val(key).append(json[key]);
             $('select', this).append(option);
         }
 

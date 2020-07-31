@@ -1724,8 +1724,23 @@ class Gloss(models.Model):
     def dialect_choices(self):
         """Return JSON for dialect choices"""
 
+        try:
+            dataset = self.lemma.dataset
+            try:
+                signlanguage = dataset.signlanguage
+            except:
+                signlanguage = None
+        except:
+            dataset = None
+
+        if signlanguage:
+            possible_dialects = Dialect.objects.filter(signlanguage=signlanguage)
+        elif dataset:
+            possible_dialects = []
+        else:
+            possible_dialects = Dialect.objects.all()
         d = dict()
-        for l in Dialect.objects.all():
+        for l in possible_dialects:
             dialect_name = l.signlanguage.name + "/" + l.name
             d[dialect_name] = dialect_name
 

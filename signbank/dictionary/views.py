@@ -1533,7 +1533,7 @@ def import_csv_update(request):
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                update_signlanguage(gloss,None,new_human_value_list)
+                update_signlanguage(gloss,'signlanguage',new_human_value_list)
                 gloss.save()
                 continue
 

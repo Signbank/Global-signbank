@@ -222,6 +222,7 @@ def update_gloss(request, glossid):
                 return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
             if ds.is_public:
+                print('dataset is public')
                 newvalue = value
                 setattr(gloss, field, ds)
                 gloss.save()
@@ -309,7 +310,7 @@ def update_gloss(request, glossid):
             try:
                 dataset = gloss.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
-                if dataset == lemma.dataset:
+                if dataset is None or dataset == lemma.dataset:
                     gloss.lemma = lemma
                     gloss.save()
                 else:
@@ -367,20 +368,56 @@ def update_gloss(request, glossid):
             # special value of 'notset' or -1 means remove the value
             fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
 
-            char_fields_not_null = [f.name for f in Gloss._meta.fields
-                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+            # this is dangerous because Field CHoice fields are actually CharFields
 
-            if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
-                print('not set ', field)
+            fields_empty_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
+
+            char_fields_not_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField'
+                                        and not hasattr(f, 'field_choice_category') and not f.null]
+
+            char_fields = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField'
+                                        and not hasattr(f, 'field_choice_category')]
+
+            # print('fields empty null: ', fields_empty_null)
+
+            # print('char fields not null: ', char_fields_not_null)
+            # print('char fields: ', char_fields)
+
+            text_fields = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField' ]
+
+            text_fields_not_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField' and not f.null]
+
+            # The following code relies on the order of if else testing
+            # The updates ignore Placeholder empty fields of '-' and '------'
+            # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+            if (value == 'notset' or value == -1 or value == '' or value == '-' or value == '------') and field in fields_empty_null:
+                # print('a. field ', field, ' value ', value, ' set to None')
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
-
+            elif (field in char_fields or field in text_fields_not_null) and (value == '-' or value == '------'):
+                # print('b. field ', field, ' value ', value, ' set to empty string')
+                value = ''
+                gloss.__setattr__(field, value)
+                gloss.save()
+                newvalue = ''
+            elif field in text_fields and (value == '-' or value == '------'):
+                # print('c. field ', field, ' value ', value, ' set to None')
+                # this is to take care of legacy code where some values were set to the empty field display hint
+                gloss.__setattr__(field, None)
+                gloss.save()
+                newvalue = ''
             #Regular field updating
             else:
 
                 # Alert: Note that if field is idgloss, the following code updates it
-                setattr(gloss,field,value)
+                # print('update field of gloss ', gloss.id, field, value)
+                gloss.__setattr__(field,value)
                 gloss.save()
 
                 #If the value is not a Boolean, return the new value
@@ -398,9 +435,9 @@ def update_gloss(request, glossid):
                     else:
                         newvalue = value
 
-                if field_category in FIELDS['phonology']:
+        if field in FIELDS['phonology']:
 
-                     category_value = 'phonology'
+             category_value = 'phonology'
 
         # if field == 'domhndsh':
             # value should be the machine_value representation, please confirm if modifying the above code
@@ -499,6 +536,7 @@ def update_signlanguage(gloss, field, values):
     dialects_value = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in gloss.dialect.all()])
     current_signlanguages = gloss.signlanguage.all()
     current_signlanguage_name = ''
+    print('update_signlanguage: ', current_signlanguages)
     for lang in current_signlanguages:
         # this looks strange, is this a convenience for a singleton set
         current_signlanguage_name = lang.name
@@ -526,21 +564,16 @@ def update_dialect(gloss, field, values):
     numerical_values_converted_to_dialects = [ dialect_choices[int(value)] for value in values ]
     error_string_values = ', '.join(numerical_values_converted_to_dialects)
     new_dialects_to_save = []
-
     try:
-        gloss_signlanguages = gloss.signlanguage.all()
+        # there is actually only one sign language
+        gloss_signlanguage = gloss.lemma.dataset.signlanguage
         for value in numerical_values_converted_to_dialects:
             # Gloss Detail View pairs the Dialect with the Language in the update menu
             (sign_lang, dia) = value.split('/')
             lang = SignLanguage.objects.get(name=sign_lang)
-            if not lang in gloss_signlanguages:
-                if gloss_signlanguages:
-                    # There is currently a sign language assigned to this gloss, the new dialect does not match it
-                    raise Exception
-                else:
-                    # currently no sign language has been assigned, assign this one
-                    # this value is not returned to the Gloss Detail View, it is a side effect
-                    gloss.signlanguage.add(lang)
+            if lang != gloss_signlanguage:
+                # There is currently a sign language assigned to this gloss, the new dialect does not match it
+                raise Exception
 
             dialect_objs = Dialect.objects.filter(name=dia).filter(signlanguage_id=lang)
             for lang in dialect_objs:
@@ -1393,7 +1426,7 @@ def update_handshape(request, handshapeid):
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
 
 def add_othermedia(request):
-
+    print('add other media')
     if request.method == "POST":
 
         form = OtherMediaForm(request.POST,request.FILES)
@@ -1403,7 +1436,7 @@ def add_othermedia(request):
             #Create the folder if needed
             goal_directory = OTHER_MEDIA_DIRECTORY+request.POST['gloss'] + '/'
             goal_path = goal_directory + request.FILES['file'].name
-
+            print('add other media: ', goal_directory, goal_path)
             if not os.path.isdir(goal_directory):
                 os.mkdir(goal_directory)
 
@@ -1627,7 +1660,7 @@ def update_morpheme(request, morphemeid):
             return update_dialect(morpheme, field, values)
 
         elif field == 'dataset':
-
+            # this has been hidden
             original_value = getattr(morpheme,field)
 
             # in case somebody tries an empty or non-existent dataset name
@@ -1705,7 +1738,7 @@ def update_morpheme(request, morphemeid):
             try:
                 dataset = morpheme.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
-                if dataset == lemma.dataset:
+                if dataset is None or dataset == lemma.dataset:
                     morpheme.lemma = lemma
                     morpheme.save()
                 else:
