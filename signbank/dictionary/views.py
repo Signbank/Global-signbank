@@ -2931,3 +2931,7 @@ def find_interesting_frequency_examples(request):
             break
 
     return HttpResponse(' '.join(['<a href="/dictionary/gloss/'+str(i)+'">'+str(i)+'</a>' for i in interesting_gloss_pks]))
+
+def gif_prototype(request):
+
+    return render(request,'dictionary/gif_prototype.html')
