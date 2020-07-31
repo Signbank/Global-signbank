@@ -47,7 +47,6 @@
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
     var handedness_weak_choices = {{gloss.handedness_weak_choices_json|safe}};
-    var languages = {{gloss.signlanguage_choices|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
@@ -430,7 +429,7 @@
         {% include "dictionary/glosstags.html" %}
 
         <table class='table table-condensed'>
-            <tr {%if gloss.dialect.all|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr {%if gloss_dialects|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
 
                 <td><span id="lemma">{{ gloss.lemma }}

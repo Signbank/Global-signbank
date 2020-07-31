@@ -51,7 +51,6 @@
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
-    var languages = {{morpheme.signlanguage_choices|safe}};
     var dialects = {{morpheme.dialect_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
@@ -430,7 +429,7 @@ function checkKey(e)
                 <td class='edit edit_mrptype' id='mrpType' value='{{morpheme_type}}'>{{morpheme_type}}</td>
             </tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-            <tr {%if morpheme.dialect.all|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in morpheme.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr {%if morpheme_dialects|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in morpheme_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             {% endif %}
         </table>
 

@@ -536,6 +536,7 @@ def update_signlanguage(gloss, field, values):
     dialects_value = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in gloss.dialect.all()])
     current_signlanguages = gloss.signlanguage.all()
     current_signlanguage_name = ''
+    print('update_signlanguage: ', current_signlanguages)
     for lang in current_signlanguages:
         # this looks strange, is this a convenience for a singleton set
         current_signlanguage_name = lang.name
@@ -558,27 +559,21 @@ def update_signlanguage(gloss, field, values):
 
 def update_dialect(gloss, field, values):
     # expecting possibly multiple values
-    # print('update dialect')
+
     dialect_choices = json.loads(gloss.dialect_choices())
     numerical_values_converted_to_dialects = [ dialect_choices[int(value)] for value in values ]
     error_string_values = ', '.join(numerical_values_converted_to_dialects)
     new_dialects_to_save = []
-    # print('numerical choices: ', numerical_values_converted_to_dialects)
     try:
-        gloss_signlanguages = gloss.signlanguage.all()
-        # print('gloss sign languages: ', gloss_signlanguages)
+        # there is actually only one sign language
+        gloss_signlanguage = gloss.lemma.dataset.signlanguage
         for value in numerical_values_converted_to_dialects:
             # Gloss Detail View pairs the Dialect with the Language in the update menu
             (sign_lang, dia) = value.split('/')
             lang = SignLanguage.objects.get(name=sign_lang)
-            if not lang in gloss_signlanguages:
-                if gloss_signlanguages:
-                    # There is currently a sign language assigned to this gloss, the new dialect does not match it
-                    raise Exception
-                else:
-                    # currently no sign language has been assigned, assign this one
-                    # this value is not returned to the Gloss Detail View, it is a side effect
-                    gloss.signlanguage.add(lang)
+            if lang != gloss_signlanguage:
+                # There is currently a sign language assigned to this gloss, the new dialect does not match it
+                raise Exception
 
             dialect_objs = Dialect.objects.filter(name=dia).filter(signlanguage_id=lang)
             for lang in dialect_objs:

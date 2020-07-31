@@ -1056,7 +1056,19 @@ class GlossDetailView(DetailView):
             # return render(request, 'dictionary/warning.html', status=404)
             raise Http404()
 
-        dataset_of_requested_gloss = self.object.dataset
+        datasetid = settings.DEFAULT_DATASET_PK
+        default_dataset = Dataset.objects.get(id=datasetid)
+
+        try:
+            dataset_of_requested_gloss = self.object.lemma.dataset
+        except:
+            print('Requested gloss has no dataset: ', self.object.pk)
+            dataset_of_requested_gloss = default_dataset
+
+        # signlanguages_of_requested_gloss = dataset_of_requested_gloss.signlanguage
+        # dialect_of_requested_gloss = self.object.dialect_choices()
+
+        # print('Gloss Detail gloss, dataset, signlanguages: ', self.object.id, dataset_of_requested_gloss, signlanguages_of_requested_gloss)
         datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -1406,6 +1418,38 @@ class GlossDetailView(DetailView):
         else:
             language = Language.objects.get(id=get_default_language_id())
             context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
+
+        bad_dialect = False
+        gloss_dialects = []
+
+        try:
+            gloss_signlanguage = gl.lemma.dataset.signlanguage
+        except:
+            gloss_signlanguage = None
+            # this is needed to catch legacy code
+        initial_gloss_dialects = gl.dialect.all()
+        if gloss_signlanguage:
+            gloss_dialect_choices = Dialect.objects.filter(signlanguage=gloss_signlanguage)
+        else:
+            gloss_dialect_choices = []
+
+        for gd in initial_gloss_dialects:
+            # print('initial gloss dialect: ', gd)
+            if gd in gloss_dialect_choices:
+                gloss_dialects.append(gd)
+            else:
+                bad_dialect = True
+                print('Bad dialect found in gloss ', gl.pk, ': ', gd)
+
+        context['gloss_dialects'] = gloss_dialects
+
+        # This is a patch
+        if bad_dialect:
+            print('PATCH: Remove bad dialect from gloss ', gl.pk)
+            # take care of bad dialects due to evolution of Lemma, Dataset, SignLanguage setup
+            gl.dialect.clear()
+            for d in gloss_dialects:
+                gl.dialect.add(d)
 
         simultaneous_morphology = []
         sim_morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
@@ -4254,7 +4298,23 @@ class MorphemeDetailView(DetailView):
             # return render(request, 'dictionary/warning.html', status=404)
             raise Http404()
 
-        dataset_of_requested_gloss = self.object.dataset
+        try:
+            self.object = self.get_object()
+        # except Http404:
+        except:
+            # return custom template
+            # return render(request, 'dictionary/warning.html', status=404)
+            raise Http404()
+
+        datasetid = settings.DEFAULT_DATASET_PK
+        default_dataset = Dataset.objects.get(id=datasetid)
+
+        try:
+            dataset_of_requested_gloss = self.object.lemma.dataset
+        except:
+            print('Requested morpheme has no dataset.')
+            dataset_of_requested_gloss = default_dataset
+
         datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -4459,6 +4519,39 @@ class MorphemeDetailView(DetailView):
 
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
+
+        bad_dialect = False
+        morpheme_dialects = []
+
+        try:
+            gloss_signlanguage = gl.lemma.dataset.signlanguage
+        except:
+            gloss_signlanguage = None
+            # this is needed to catch legacy code
+        initial_gloss_dialects = gl.dialect.all()
+        if gloss_signlanguage:
+            gloss_dialect_choices = Dialect.objects.filter(signlanguage=gloss_signlanguage)
+        else:
+            gloss_dialect_choices = []
+
+        for gd in initial_gloss_dialects:
+            # print('initial gloss dialect: ', gd)
+            if gd in gloss_dialect_choices:
+                morpheme_dialects.append(gd)
+            else:
+                bad_dialect = True
+                print('Bad dialect found in morpheme ', gl.pk, ': ', gd)
+
+        context['morpheme_dialects'] = morpheme_dialects
+
+        # This is a patch
+        if bad_dialect:
+            print('PATCH: Remove bad dialect from morpheme ', gl.pk)
+            # take care of bad dialects due to evolution of Lemma, Dataset, SignLanguage setup
+            gl.dialect.clear()
+            for d in morpheme_dialects:
+                gl.dialect.add(d)
+
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
