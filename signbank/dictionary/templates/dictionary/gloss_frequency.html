@@ -162,22 +162,22 @@ var chart = new Chart(ctx, {
     },
 });
 
-chart.options.scales.yAxes[0].ticks.fontSize = 16;
+chart.options.scales.yAxes[0].ticks.fontSize = 12;
 chart.options.scales.yAxes[0].ticks.fontColor = 'Black';
 chart.options.scales.yAxes[0].ticks.precision = 0;
-chart.options.scales.xAxes[0].ticks.fontSize = 16;
+chart.options.scales.xAxes[0].ticks.fontSize = 12;
 chart.options.scales.xAxes[0].ticks.fontColor = 'Black';
 chart.options.scales.xAxes[0].ticks.precision = 0;
-chart.options.legend.labels.fontSize = 16;
+chart.options.legend.labels.fontSize = 12;
 chart.options.legend.labels.fontColor = 'Black';
 chart.options.legend.position = 'top';
 chart.data.datasets[0].backgroundColor = ages_colors[0];
 chart.data.datasets[1].backgroundColor = ages_colors[3];
-chart.options.tooltips.titleFontSize = 16;
-chart.options.tooltips.bodyFontSize = 16;
+chart.options.tooltips.titleFontSize = 12;
+chart.options.tooltips.bodyFontSize = 12;
 chart.options.title.display = false;
 chart.options.title.position = 'bottom';
-chart.options.title.fontSize = 20;
+chart.options.title.fontSize = 12;
 chart.options.title.text = "Title of chart";
 chart.update();
 
@@ -201,12 +201,12 @@ var speakerchart = new Chart(cty, {
 });
 
 speakerchart.options.scales.yAxes[0].ticks.precision = 0;
-speakerchart.options.scales.yAxes[0].ticks.fontSize = 16;
+speakerchart.options.scales.yAxes[0].ticks.fontSize = 12;
 
 speakerchart.options.scales.xAxes[0].ticks.precision = 0;
-speakerchart.options.scales.xAxes[0].ticks.fontSize = 16;
+speakerchart.options.scales.xAxes[0].ticks.fontSize = 12;
 
-speakerchart.options.legend.labels.fontSize = 16;
+speakerchart.options.legend.labels.fontSize = 12;
 speakerchart.update();
 
 // these variables are used specifically to switch between percentage and raw values in the dataset
@@ -251,8 +251,8 @@ var genderchart = new Chart(ctz, {
             mode: 'point',
             yAlign: 'center',
             xAlign: 'center',
-            fontSize: 14,
-            titleFontSize: 14,
+            fontSize: 10,
+            titleFontSize: 10,
             callbacks: {
                 label: function(tooltipItem, data) {
                     var value = data.datasets[0].data[tooltipItem.index] || 0;
@@ -271,7 +271,7 @@ var genderchart = new Chart(ctz, {
         },
         legend: {
             labels: {
-                fontSize: 14,
+                fontSize: 10,
                 fontStyle: 'bold',
                 usePointStyle: true,
                 boxWidth: 10,
@@ -285,7 +285,7 @@ var genderchart = new Chart(ctz, {
 });
 
 genderchart.options.title.display = true;
-genderchart.options.title.fontSize = 16;
+genderchart.options.title.fontSize = 12;
 genderchart.options.title.fontStyle = 'bold';
 genderchart.options.title.fontColor = 'black';
 genderchart.options.title.position = 'left';
@@ -338,8 +338,8 @@ var agechart = new Chart(ctw, {
             mode: 'point',
             yAlign: 'center',
             xAlign: 'center',
-            fontSize: 14,
-            titleFontSize: 14,
+            fontSize: 10,
+            titleFontSize: 10,
             callbacks: {
                 label: function(tooltipItem, data) {
                     var value = data.datasets[0].data[tooltipItem.index] || 0;
@@ -358,7 +358,7 @@ var agechart = new Chart(ctw, {
         },
         legend: {
             labels: {
-                fontSize: 14,
+                fontSize: 10,
                 fontStyle: 'bold',
                 usePointStyle: true,
                 boxWidth: 10,
@@ -372,7 +372,7 @@ var agechart = new Chart(ctw, {
 });
 
 agechart.options.title.display = true;
-agechart.options.title.fontSize = 16;
+agechart.options.title.fontSize = 12;
 agechart.options.title.fontStyle = 'bold';
 agechart.options.title.fontColor = 'black';
 agechart.options.title.position = 'left';
@@ -402,7 +402,7 @@ var glossvariantsSexChart = new Chart(ctgs, {
         },
         legend: {
             labels: {
-                fontSize: 14,
+                fontSize: 10,
                 usePointStyle: true,
                 boxWidth: 10
             },
@@ -452,7 +452,7 @@ var glossvariantsSexChart = new Chart(ctgs, {
                             drawBorder: false,
                             display: false
                         },
-                        ticks: { fontSize: 14,
+                        ticks: { fontSize: 10,
                                  fontStyle: 'bold' },
                         afterFit: function(scaleInstance) {
                             scaleInstance.width = 100;
@@ -506,7 +506,7 @@ var glossvariantsAgeChart = new Chart(ctga, {
         },
         legend: {
             labels: {
-                fontSize: 14,
+                fontSize: 10,
                 usePointStyle: true,
                 boxWidth: 10
             },
@@ -535,7 +535,7 @@ var glossvariantsAgeChart = new Chart(ctga, {
                             drawBorder: false,
                             display: false
                         },
-                        ticks: { fontSize: 14,
+                        ticks: { fontSize: 10,
                                  fontStyle: 'bold' },
                         afterFit: function(scaleInstance) {
                             scaleInstance.width = 100;
@@ -618,8 +618,8 @@ for (k in variant_labels) {
                 mode: 'point',
                 yAlign: 'center',
                 xAlign: 'center',
-                fontSize: 14,
-                titleFontSize: 14,
+                fontSize: 10,
+                titleFontSize: 10,
                 callbacks: {
                     label: function(tooltipItem, data) {
                         var label = data.datasets[tooltipItem.datasetIndex].label || '';
@@ -649,7 +649,7 @@ for (k in variant_labels) {
                                 drawBorder: false,
                                 display: false
                             },
-                            ticks: { fontSize: 14,
+                            ticks: { fontSize: 10,
                                      fontStyle: 'bold' }
                 }]
             },
@@ -697,8 +697,8 @@ for (k in variant_labels) {
                 mode: 'point',
                 yAlign: 'center',
                 xAlign: 'center',
-                fontSize: 14,
-                titleFontSize: 14,
+                fontSize: 10,
+                titleFontSize: 10,
                 callbacks: {
                     label: function(tooltipItem, data) {
                         var label = data.datasets[tooltipItem.datasetIndex].label || '';
@@ -725,7 +725,7 @@ for (k in variant_labels) {
                 yAxes: [{ stacked: true,
                             display: true,
                             ticks: {
-                                fontSize: 14,
+                                fontSize: 10,
                                 fontStyle: 'bold'
                             },
                             gridLines: {
@@ -1056,13 +1056,13 @@ function do_toggle_display(el) {
                     <a data-toggle='collapse' data-parent='#regionschart' data-target='#regions'>{% trans "Gloss Regions" %}</a>
                 </div>
             </div>
-            <div id='regions' class='collapse'>
+            <div id='regions' class='collapse' style="width:80%;">
                 <div class="chart-container">
                 <canvas id="myChart"></canvas>
                 </div>
             </div>
             <hr>
-
+<div class="clearfix"></div>
              <div class='panel-heading'>
                 <div class='panel-title hasTooltip'>
                     <a data-toggle='collapse' data-parent='#ageschart' data-target='#ages'>
@@ -1077,27 +1077,27 @@ function do_toggle_display(el) {
                     {% endif %}
                 </div>
             </div>
-            <div id='ages' class='collapse'>
+            <div id='ages' class='collapse' style="width:80%;">
                 <div class="chart-container">
                 <canvas id="speakerChart"></canvas>
                 </div>
             </div>
             <hr>
-
+<div class="clearfix"></div>
             <div class='panel-heading'>
                 <div class='panel-title'>
                     <a data-toggle='collapse' data-parent='#speakerchart' data-target='#speaker'>{% trans "Speaker Data" %}</a>
                 </div>
             </div>
             <div id='speaker' class='container-fluid collapse in'>
-                <div style="float:left; width:100%;">
+                <div style="float:left; width:80%;">
                     <button class="btn btn-primary" type="submit" name="view_type" onclick="do_toggle_display(this);" value='raw'/>{% trans "Raw View" %}</button>
                 </div>
-                <div class="row">
+                <div class="row" style="float:left; width:80%;">
 <!--                    <div class="col-lg-12">-->
                 <div class="col-lg-3">
                 <div class="chart-container">
-                <canvas id="genderChart" width="400"></canvas>
+                <canvas id="genderChart" width="300"></canvas>
                 </div>
                 </div>
                 <div class="col-lg-4">
@@ -1108,7 +1108,7 @@ function do_toggle_display(el) {
                 {% endif %}
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
-                <canvas id="variantsGenderChart_{{key}}" height="50" width="400"></canvas>
+                <canvas id="variantsGenderChart_{{key}}" height="50" width="300"></canvas>
                 </div>
                 {% endfor %}
                 </div>
@@ -1120,18 +1120,18 @@ function do_toggle_display(el) {
                 <div class="chart-multichart-enclosure-container" style="float:right; display:none;" >
                 {% endif %}
                 <div class="chart-short-container" style="float:right;">
-                <canvas id="glossvariantsSexChart" width="400" ></canvas>
+                <canvas id="glossvariantsSexChart" width="300" ></canvas>
                 </div>
                 </div>
                 </div>
                     <!--                </div>-->
                 </div>
                 <div class="clearfix"></div>
-                <div class="row">
+                <div class="row" style="float:left; width:80%;">
 <!--                    <div class="col-lg-12">-->
                 <div class="col-lg-3">
                 <div class="chart-container" >
-                <canvas id="ageChart" width="400"></canvas>
+                <canvas id="ageChart" width="300"></canvas>
                 </div>
                 </div>
                 <div class="col-lg-4">
@@ -1154,7 +1154,7 @@ function do_toggle_display(el) {
                 <div class="chart-multichart-enclosure-container" style="float:right; display:none;" >
                 {% endif %}
                 <div class="chart-short-container" style="float:right;">
-                <canvas id="glossvariantsAgeChart" width="600" ></canvas>
+                <canvas id="glossvariantsAgeChart" width="300" ></canvas>
                 </div>
                 </div>
                 </div>
