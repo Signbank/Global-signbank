@@ -68,7 +68,7 @@
 
     {% for lang, translations in translations_per_language %}
     <td>
-        <div class="translation_{{dataset_lang.language_code_2char}}">
+        <div class="translation_{{lang.language_code_2char}}">
         {% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}
         </div>
     </td>

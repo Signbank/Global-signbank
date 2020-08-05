@@ -332,17 +332,6 @@ function do_set_lemma_language(el) {
   }
 };
 
-<!--        {% for dataset_lang in dataset_languages %}-->
-<!--        dataset_language_code = '{{dataset_lang.language_code_2char}}';-->
-<!--        button_column = '#button_annotation_' + dataset_language_code;-->
-<!--        dataset_cell = '.annotation_' + dataset_language_code;-->
-<!--        console.log('button_column '+button_column);-->
-<!--        $(button_column).on("click", function() {-->
-<!--            console.log('click '+dataset_cell);-->
-<!--            alert("hello");-->
-<!--        });-->
-<!--        {% endfor %}-->
-
 // This function toggles the different language columns for Annotations, Lemmas, and Translations
 function do_toggle_annotation(el) {
     var dataset_language_id = $(el).attr('value');
