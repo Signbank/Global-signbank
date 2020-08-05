@@ -330,7 +330,31 @@ function do_set_lemma_language(el) {
       language_code = dataset_language_id;
       set_lemma_language();
   }
-}
+};
+
+<!--        {% for dataset_lang in dataset_languages %}-->
+<!--        dataset_language_code = '{{dataset_lang.language_code_2char}}';-->
+<!--        button_column = '#button_annotation_' + dataset_language_code;-->
+<!--        dataset_cell = '.annotation_' + dataset_language_code;-->
+<!--        console.log('button_column '+button_column);-->
+<!--        $(button_column).on("click", function() {-->
+<!--            console.log('click '+dataset_cell);-->
+<!--            alert("hello");-->
+<!--        });-->
+<!--        {% endfor %}-->
+
+// This function toggles the different language columns for Annotations, Lemmas, and Translations
+function do_toggle_annotation(el) {
+    var dataset_language_id = $(el).attr('value');
+    console.log('toggle column annotation '+dataset_language_id);
+    var annotation_column_id = '.annotation_' + dataset_language_id;
+    var lemma_column_id = '.lemma_' + dataset_language_id;
+    var translation_column_id = '.translation_' + dataset_language_id;
+    $(annotation_column_id).toggle();
+    $(lemma_column_id).toggle();
+    $(translation_column_id).toggle();
+};
+
 </script>
 
 <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
@@ -854,6 +878,17 @@ function do_set_lemma_language(el) {
     </form>
 
 {% if object_list %}
+{% if SHOW_DATASET_INTERFACE_OPTIONS %}
+{% if dataset_languages|length > 2 %}
+{% for dataset_lang in dataset_languages %}
+<button name="button_annotation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_annotation(this);"
+        value="{{dataset_lang.language_code_2char}}" >
+    {{ dataset_lang.name }}
+</button>
+{% endfor %}
+{% endif %}
+{% endif %}
+
 <table class='table table-condensed' id = 'glosslist_table'>
     <thead id = 'glosslist_table_header'></thead>
     <tbody>

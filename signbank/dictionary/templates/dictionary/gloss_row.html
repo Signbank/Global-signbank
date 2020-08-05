@@ -46,11 +46,13 @@
     {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
     <td>
       {% ifnotequal annotationidglosstranslation "" %}
+        <div class="annotation_{{dataset_lang.language_code_2char}}">
         {% if focus_gloss.is_morpheme %}
         <div><a href="{{PREFIX_URL}}/dictionary/morpheme/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
         {% else %}
         <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
         {% endif %}
+        </div>
       {% endifnotequal %}
     </td>
     {% endwith %}
@@ -59,13 +61,17 @@
     {% for dataset_lang in dataset_languages %}
     {% with focus_gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
       <td>
-          <div>{{ lemmaidglosstranslation }}</div>
+          <div class="lemma_{{dataset_lang.language_code_2char}}">{{ lemmaidglosstranslation }}</div>
       </td>
     {% endwith %}
     {% endfor %}
 
     {% for lang, translations in translations_per_language %}
-    <td>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+    <td>
+        <div class="translation_{{dataset_lang.language_code_2char}}">
+        {% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        </div>
+    </td>
     {% endfor %}
 
     {% for value in column_values %}
