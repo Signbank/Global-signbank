@@ -150,8 +150,9 @@ def order_queryset_by_sort_order(get, qs):
             qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name})
 
             sort_key = sOrder
-            ordered = list(qs_letters.order_by(sort_key))
-            ordered += list(qs_special.order_by(sort_key))
+            # Using the order_by here results in duplicating the objects!
+            ordered = list(qs_letters) #.order_by(sort_key))
+            ordered += list(qs_special) #.order_by(sort_key))
             ordered += list(qs_empty)
         else:
             ordered = qs
