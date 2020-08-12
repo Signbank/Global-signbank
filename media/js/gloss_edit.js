@@ -217,8 +217,10 @@ function disable_edit() {
 
     $('.empty_row').hide();
 
+    // initial setup not in Edit mode
     hideLemmaForm($("#lemma"));
     $("#lemma a").show();
+    $('#edit_lemma_form').hide();
 
     //To prevent RSI
     $('.edit').each(function()
@@ -301,6 +303,7 @@ function toggle_edit(redirect_to_next) {
     if ($('#enable_edit').hasClass('edit_enabled'))
     {
         disable_edit();
+        $('#edit_lemma_form').hide();
         $('#enable_edit').removeClass('edit_enabled');
         $('#enable_edit').text(edit_mode_str);
 
@@ -317,11 +320,13 @@ function toggle_edit(redirect_to_next) {
 
     } else {
         enable_edit();
+        $('#edit_lemma_form').show();
         $('#enable_edit').addClass('edit_enabled');
         $('#enable_edit').text(turn_off_edit_mode_str);
     }
 
     $('#lemma').css('color', $('.edit').css('color'));
+
 }
 
 
@@ -886,14 +891,24 @@ function showLemmaForm(lemma_element) {
     lemma_element.hide();
     lemma_element.parent().find("[name='add_lemma_form']").hide();
     lemma_element.parent().find("[name='set_lemma_form']").show();
+    lemma_element.parent().find("[name='edit_lemma_form']").hide();
     lemma_element.parent().find("[name='add_lemma_form']").find(".lemmatypeahead.tt-input").focus();
 }
 
 function hideLemmaForm(lemma_element) {
     lemma_element.parent().find("[name='set_lemma_form']").hide();
     lemma_element.parent().find("[name='add_lemma_form']").hide();
+    lemma_element.parent().find("[name='edit_lemma_form']").show();
     lemma_element.show();
 }
+
+//function showEditLemma(lemma_element) {
+//    lemma_element.parent().find("[name='edit_lemma_form']").show();
+//};
+//
+//function hideEditLemma(lemma_element) {
+//    lemma_element.parent().find("[name='edit_lemma_form']").hide();
+//};
 
 $("#lemma").on('click', function() {
 //    console.log("busy_editing: " + busy_editing)
@@ -904,6 +919,7 @@ $("#lemma").on('click', function() {
 
 $(".lemma-form-dismiss").on('click', function() {
     hideLemmaForm($("#lemma"));
+//    showEditLemma($("#edit_lemma_form"))
 });
 
 function showAddLemma() {

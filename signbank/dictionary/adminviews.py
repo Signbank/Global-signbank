@@ -5229,6 +5229,8 @@ class LemmaUpdateView(UpdateView):
     page_in_lemma_list = ''
     template_name = 'dictionary/update_lemma.html'
     fields = []
+    gloss_found = False
+    gloss_id = ''
 
     def get_context_data(self, **kwargs):
         context = super(LemmaUpdateView, self).get_context_data(**kwargs)
@@ -5244,6 +5246,24 @@ class LemmaUpdateView(UpdateView):
         path_parms = request_path.split('?page=')
         if len(path_parms) > 1:
             self.page_in_lemma_list = str(path_parms[1])
+        if 'gloss' in path_parms[0]:
+            self.gloss_found = True
+            context['caller'] = 'gloss_detail_view'
+            # caller was Gloss Detail View
+            import re
+            try:
+                m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
+                gloss_id_pattern = m.group(1)
+                self.gloss_id = gloss_id_pattern
+            except:
+                print('LemmaUpdateView get_context_data gloss id match failed: ', path_parms[0])
+        else:
+            context['caller'] = 'lemma_list'
+        # These are needed for return to the Gloss Detail View
+        # They are passed to the POST handling via hidden variables in the template
+        context['gloss_id'] = self.gloss_id
+        context['gloss_found'] = self.gloss_found
+
         context['page_in_lemma_list'] = self.page_in_lemma_list
         dataset = self.object.dataset
         context['dataset'] = dataset
@@ -5251,6 +5271,26 @@ class LemmaUpdateView(UpdateView):
         context['dataset_languages'] = dataset_languages
         context['change_lemma_form'] = LemmaUpdateForm(instance=self.object, page_in_lemma_list=self.page_in_lemma_list)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+
+        # lemnma group
+
+        # Make sure these are evaluated ih Python
+        lemma_group_count = self.object.gloss_set.count()
+        lemma_group_glossset = Gloss.objects.filter(lemma=self.object)
+        lemma_group_list = []
+        for lemma in lemma_group_glossset:
+            annotation_idgloss = {}
+            if lemma.dataset:
+                for language in lemma.dataset.translation_languages.all():
+                    annotation_idgloss[language] = lemma.annotationidglosstranslation_set.filter(
+                        language=language)
+            else:
+                language = Language.objects.get(id=get_default_language_id())
+                annotation_idgloss[language] = lemma.annotationidglosstranslation_set.filter(language=language)
+            lemma_group_list.append((lemma, annotation_idgloss))
+        context['lemma_group_count'] = lemma_group_count
+        context['lemma_group_list'] = lemma_group_list
+        print('lemma group: ', lemma_group_list)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -5281,8 +5321,20 @@ class LemmaUpdateView(UpdateView):
             elif item.startswith('page') and value:
                 # page of the lemma list where the gloss to update is displayed
                 self.page_in_lemma_list = value
+            elif item.startswith('gloss_found') and value:
+                # this was obtained in get_context_data and put in the hidden variable of the template
+                self.gloss_found = value
+            elif item.startswith('gloss_id') and value:
+                # this was obtained in get_context_data and put in the hidden variable of the template
+                self.gloss_id = value
 
         if form.is_valid():
+
+            request_path = self.request.META.get('HTTP_REFERER')
+            path_parms = request_path.split('?page=')
+            if len(path_parms) > 1:
+                self.page_in_lemma_list = str(path_parms[1])
+
             try:
                 form.save()
                 messages.add_message(request, messages.INFO, _("The changes to the lemma have been saved."))
@@ -5290,11 +5342,18 @@ class LemmaUpdateView(UpdateView):
             except:
                 # a specific message is put into the messages frmaework rather than the message caught in the exception
                 # if it's not done this way, it gives a runtime error
-                messages.add_message(request, messages.ERROR, _("There must be at least one translation for this lemma."))
+                if self.page_in_lemma_list:
+                    messages.add_message(request, messages.ERROR, _("There must be at least one translation for this lemma."))
+                else:
+                    return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
 
             # return to the same page in the list of lemmas, if available
             if self.page_in_lemma_list:
                 return HttpResponseRedirect(self.success_url + '?page='+self.page_in_lemma_list)
+            elif self.gloss_found and self.gloss_id:
+                # return to Gloss Detail View
+                gloss_detail_view_url = reverse_lazy('dictionary:admin_gloss_view', kwargs={'pk': self.gloss_id})
+                return HttpResponseRedirect(gloss_detail_view_url)
             else:
                 return HttpResponseRedirect(self.success_url)
 

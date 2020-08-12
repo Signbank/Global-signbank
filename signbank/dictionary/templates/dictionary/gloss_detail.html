@@ -432,11 +432,20 @@
             <tr {%if gloss_dialects|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
 
-                <td><span id="lemma">{{ gloss.lemma }}
+                <td style="width:600px;"><span id="lemma">{{ gloss.lemma }}
                         {% if lemma_group %}
                             <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
                     </span>
+                    <form name='edit_lemma_form' id='edit_lemma_form'
+                          method='post' action='{% url "dictionary:change_lemma" gloss.lemma.id %}'>
+                         {% csrf_token %}
+                        <input class='btn btn-primary'
+                            value='{% trans "Edit lemma" %}'
+                            type='submit'>
+                        <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma.id}}'>
+                        <input type='hidden' id="page" name="page" value=''>
+                    </form>
                     <form name='set_lemma_form' id='set_lemma_form'
                      onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
                                                     "Please choose a lemma.",

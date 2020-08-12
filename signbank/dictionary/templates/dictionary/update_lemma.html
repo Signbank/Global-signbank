@@ -5,6 +5,8 @@
 {% load guardian_tags %}
 {% block bootstrap3_title %}Signbank: Update Lemma{% endblock %}
 
+{% load annotation_idgloss_translation %}
+
 <script type="text/javascript">
 
 </script>
@@ -14,10 +16,14 @@
    {% if perms.dictionary.change_lemmaidgloss %}
    <h3>{% trans "Update lemma" %}</h3>
 
-    {% if page_in_lemma_list %}
-    <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}?page={{page_in_lemma_list}}'>{% trans "Return to Lemma List" %}</a>
-    {% else %}
-    <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}'>{% trans "Return to Lemma List" %}</a>
+    {% if caller == 'lemma_list' %}
+        {% if page_in_lemma_list %}
+        <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}?page={{page_in_lemma_list}}'>{% trans "Return to Lemma List" %}</a>
+        {% else %}
+        <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}'>{% trans "Return to Lemma List" %}</a>
+        {% endif %}
+    {% elif caller == 'gloss_detail_view' and gloss_id %}
+        <a class="btn btn-default" href='{% url "dictionary:admin_gloss_view" pk=gloss_id %}?edit'>{% trans "Return to Gloss Detail View" %}</a>
     {% endif %}
      <form action='{% url "dictionary:change_lemma" object.pk %}' method='post'>
          {% csrf_token %}
@@ -26,8 +32,43 @@
          </table>
 
      <input type='hidden' id="page" name="page" value="{{page_in_lemma_list}}">
+     <input type='hidden' id="gloss_found" name="gloss_found" value="{{gloss_found}}">
+     <input type='hidden' id="gloss_id" name="gloss_id" value="{{gloss_id}}">
      <input class='btn btn-primary' type='submit' value='{% trans "Update" %}'>
      </form>
+        <div>
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+            {% csrf_token %}
+            <table class='table' style='width: 800px;'>
+                <tr>
+                    <th>{% trans "Dataset" %}</th>
+                    <td><a href="{{PREFIX_URL}}/datasets/detail/{{object.dataset.id}}" >{{ object.dataset.acronym }}</a></td>
+                </tr>
+                <tr>
+                    <th>{% trans "Glosses" %}</th>
+                    <th>{% trans "Signbank ID" %}</th>
+                           {% for dataset_lang in dataset_languages %}
+                                <th>{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
+                            {% endfor %}
+                </tr>
+                {% for lemma, annotation_idgloss_translations in lemma_group_list %}
+                <tr><td></td>
+
+                    <td>{{lemma.id}}</td>
+                    {% for dataset_lang in dataset_languages %}
+                    {% with lemma|get_annotation_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
+                        <td>
+                            {% ifnotequal lemmaidglosstranslation "" %}
+                                {{lemmaidglosstranslation}}
+                            {% endifnotequal %}
+                        </td>
+                    {% endwith %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+        </div>
     {% else %}
         <p>(% trans "You are not allowed to update lemma's. %}</p>
     {% endif %}
