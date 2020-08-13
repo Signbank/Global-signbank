@@ -13,7 +13,7 @@ from django.utils.translation import override
 from signbank.dictionary.models import *
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import OperationalError
+from django.db import OperationalError, ProgrammingError
 from django.core.urlresolvers import reverse
 from tagging.models import TaggedItem, Tag
 
@@ -91,7 +91,7 @@ try:
     for language in Language.objects.all():
         lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
         table_column_name_lemma_id_gloss_translations[language.language_code_2char] = lemmaidgloss_comumn_name
-except OperationalError:
+except (OperationalError, ProgrammingError) as e:
     pass
 
 def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss):
@@ -1124,7 +1124,7 @@ def check_existance_signlanguage(gloss, values):
 #See if there are any note typefield choices there, but don't crash if there isn't even a table
 try:
     note_role_choices = list(FieldChoice.objects.filter(field__iexact='NoteType'))
-except OperationalError:
+except (OperationalError, ProgrammingError) as e:
     note_role_choices = []
 
 all_notes = [ n.english_name for n in note_role_choices]

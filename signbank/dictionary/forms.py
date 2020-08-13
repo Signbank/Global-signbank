@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
-from django.db import OperationalError
+from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
@@ -29,7 +29,7 @@ CATEGORY_CHOICES = (('all', 'All Signs'),
 def tag_choices():
     try:
         tag_choices_list = [(tag.name, tag.name.replace('_', ' ')) for tag in Tag.objects.all()]
-    except OperationalError:
+    except (OperationalError, ProgrammingError) as e:
         tag_choices_list = []
     return tag_choices_list
 

@@ -1,5 +1,5 @@
 from django.db.models import Q
-from django.db import models, OperationalError
+from django.db import models, OperationalError, ProgrammingError
 from django.conf import settings
 from django.http import Http404
 from django.utils.encoding import escape_uri_path
@@ -1872,7 +1872,7 @@ def generate_translated_choice_list_table():
                     choice_list = list(Handshape.objects.all())
                 else:
                     choice_list = list(FieldChoice.objects.filter(field__iexact=f_category))
-            except OperationalError:
+            except (OperationalError, ProgrammingError) as e:
                 choice_list = []
 
             # print('after getting choice_list: ', choice_list)

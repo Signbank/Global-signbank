@@ -11,7 +11,7 @@ from signbank.settings.server_specific import *
 from django.utils.safestring import mark_safe
 from django.utils.functional import lazy
 from django.utils import six
-from django.db.utils import OperationalError
+from django.db.utils import OperationalError, ProgrammingError
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
@@ -73,7 +73,7 @@ class RegistrationForm(forms.Form):
                 dataset_choices = [(ds.name, ds.name) for ds in Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)]
 
         #This process can fail during migrations of the Dataset model
-        except OperationalError:
+        except (OperationalError, ProgrammingError) as e:
             dataset_choices = []
 
         dataset = forms.TypedMultipleChoiceField(label=_(u'Requested Datasets'),
