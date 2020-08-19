@@ -43,7 +43,7 @@ from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes
 
 
-def order_queryset_by_sort_order(get, qs, queryset_language_code):
+def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
 
     This function is used both by GlossListView as well as by MorphemeListView.
@@ -80,6 +80,7 @@ def order_queryset_by_sort_order(get, qs, queryset_language_code):
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
+        print('sort order: ', sOrderAsc)
         annotationidglosstranslation = AnnotationIdglossTranslation.objects.filter(gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char).distinct()
         qs = qs.annotate(**{sOrderAsc: Subquery(annotationidglosstranslation.values('text')[:1])}).order_by(sOrder)
         return qs
@@ -145,29 +146,23 @@ def order_queryset_by_sort_order(get, qs, queryset_language_code):
     else:
         # Use straightforward ordering on field [sOrder]
         if default_sort_order:
-            # this is needed because a language has been implicitly specified in the menu bar of the interface
-            lang_attr_name = queryset_language_code
-            # the language code is needed by the specific annotation sorting function
-            annotation_default_language_sort_order = 'annotationidglosstranslation_order_' + lang_attr_name
-            qs_pre = order_queryset_by_annotationidglosstranslation(qs, annotation_default_language_sort_order)
-
+            lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
             sort_language = 'annotationidglosstranslation__language__language_code_2char'
-            qs_empty = qs.filter(**{sOrder+'__isnull': True})
-            # the qs_letters makes use of the annotation sorting function because otherwise duplicates were
-            # appearing in the results
-            qs_letters = qs_pre.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
-            qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name})
+            if len(queryset_language_codes) == 0:
+                ordered = qs
+            else:
+                if lang_attr_name not in queryset_language_codes:
+                    lang_attr_name = queryset_language_codes[0]
 
-            # annotationidglosstranslation = AnnotationIdglossTranslation.objects.filter(gloss=OuterRef('pk')).filter(
-            #     language__language_code_2char__iexact=lang_attr_name).distinct()
-            #
-            # qs_letters = qs.annotate(**{sOrder: Subquery(annotationidglosstranslation.values('text')[:1])}).filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name}).order_by(sOrder)
-            #
-            # sort_key = sOrder
-            # # Using the order_by here results in duplicating the objects!
-            ordered = list(qs_letters) #.order_by(sort_key))
-            ordered += list(qs_special) #.order_by(sort_key))
-            ordered += list(qs_empty)
+                qs_empty = qs.filter(**{sOrder+'__isnull': True})
+                qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
+                qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name})
+
+                # sort_key = sOrder
+                # # Using the order_by here results in duplicating the objects!
+                ordered = list(qs_letters) #.order_by(sort_key))
+                ordered += list(qs_special) #.order_by(sort_key))
+                ordered += list(qs_empty)
         else:
             ordered = qs
     if bReversed and bText:
@@ -189,7 +184,7 @@ class GlossListView(ListView):
     show_all = False
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
-    queryset_language_code = settings.LANGUAGE_CODE
+    queryset_language_codes = []
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -224,19 +219,25 @@ class GlossListView(ListView):
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
-        if len(selected_datasets) == 1:
-            self.last_used_dataset = selected_datasets[0]
+        from signbank.tools import convert_language_code_to_2char
+        for lang in dataset_languages:
+            lang_code = convert_language_code_to_2char(lang.language_code_2char)
+            if lang_code not in self.queryset_language_codes:
+                self.queryset_language_codes.append(lang_code)
+        if self.queryset_language_codes is None:
+            self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
+
+        # print('queryset_lang codes: ', self.queryset_language_codes)
+
         if len(selected_datasets) == 1:
             self.last_used_dataset = selected_datasets[0]
         elif 'last_used_dataset' in self.request.session.keys():
             self.last_used_dataset = self.request.session['last_used_dataset']
-        else:
-            self.last_used_dataset = default_dataset
+        if not self.last_used_dataset:
+            # it hasn't been set yet
+            self.last_used_dataset = selected_datasets[0]
+
         context['last_used_dataset'] = self.last_used_dataset
-        try:
-            self.queryset_language_code = self.last_used_dataset.default_language.language_code_2char
-        except:
-            pass
 
         selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
         sign_languages = []
@@ -694,13 +695,6 @@ class GlossListView(ListView):
 
     def get_queryset(self):
 
-        # this is needed because sometimes the context code has not been executed yet
-        from signbank.tools import convert_language_code_to_2char
-        if self.last_used_dataset:
-            self.queryset_language_code = self.last_used_dataset.default_language.language_code_2char
-        else:
-            self.queryset_language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-
         get = self.request.GET
 
         #First check whether we want to show everything or a subset
@@ -763,7 +757,7 @@ class GlossListView(ListView):
 
         #If we wanted to get everything, we're done now
         if show_all:
-            return order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_code)
+            return order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             # return qs
 
         #If not, we will go trhough a long list of filters
@@ -1054,7 +1048,7 @@ class GlossListView(ListView):
             self.request.session['search_results'] = items
 
         # Sort the queryset by the parameters given
-        qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_code)
+        qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
         self.request.session['search_type'] = self.search_type
         self.request.session['web_search'] = self.web_search
@@ -1832,7 +1826,7 @@ class MorphemeListView(ListView):
     last_used_dataset = None
     template_name = 'dictionary/admin_morpheme_list.html'
     paginate_by = 500
-    queryset_language_code = settings.LANGUAGE_CODE
+    queryset_language_codes = []
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -1849,6 +1843,16 @@ class MorphemeListView(ListView):
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
+        from signbank.tools import convert_language_code_to_2char
+        for lang in dataset_languages:
+            lang_code = convert_language_code_to_2char(lang.language_code_2char)
+            if lang_code not in self.queryset_language_codes:
+                self.queryset_language_codes.append(lang_code)
+        if self.queryset_language_codes is None:
+            self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
+
+        # print('morpheme list view: queryset_lang codes: ', self.queryset_language_codes)
+
         if len(selected_datasets) == 1:
             self.last_used_dataset = selected_datasets[0]
         if len(selected_datasets) == 1:
@@ -1858,11 +1862,6 @@ class MorphemeListView(ListView):
         else:
             self.last_used_dataset = default_dataset
         context['last_used_dataset'] = self.last_used_dataset
-
-        try:
-            self.queryset_language_code = self.last_used_dataset.default_language.language_code_2char
-        except:
-            pass
 
         selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
         sign_languages = []
@@ -1978,7 +1977,7 @@ class MorphemeListView(ListView):
 
         #If we wanted to get everything, we're done now
         if show_all:
-            # return order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_code)
+            # return order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return qs
 
         # Evaluate all morpheme/language search fields
@@ -2226,7 +2225,7 @@ class MorphemeListView(ListView):
             self.request.session['search_results'] = items
 
         # Sort the queryset by the parameters given
-        qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_code)
+        qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
         self.request.session['search_type'] = self.search_type
 
