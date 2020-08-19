@@ -59,6 +59,16 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
     else:
         adjective = codes_to_adjectives[language_code].lower()
 
+    if not choice_list or len(choice_list) == 0:
+        # this function has been called with an inappropriate choice_list
+        return machine_value
+
+    if machine_value is None or type(machine_value) == bool:
+        return machine_value
+
+    if machine_value == '':
+        return machine_value
+
     if machine_value == '0':
         human_value = '-'
     elif machine_value == '1':
