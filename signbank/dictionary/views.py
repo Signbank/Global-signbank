@@ -1651,7 +1651,7 @@ def import_csv_update(request):
 
         stage = 0
 
-    if stage and not changes and not error:
+    if stage == 1 and not changes and not error:
         # no changes were found in the input file. print a message as feedback
         # this is needed in order to have output that can be tested for in the unit tests
         messages.add_message(request, messages.INFO, ('No changes were found.'))
