@@ -5321,7 +5321,7 @@ class LemmaUpdateView(UpdateView):
             lemma_group_list.append((lemma, annotation_idgloss))
         context['lemma_group_count'] = lemma_group_count
         context['lemma_group_list'] = lemma_group_list
-        print('lemma group: ', lemma_group_list)
+        # print('lemma group: ', lemma_group_list)
         return context
 
     def post(self, request, *args, **kwargs):

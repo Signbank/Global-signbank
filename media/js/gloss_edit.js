@@ -218,9 +218,15 @@ function disable_edit() {
     $('.empty_row').hide();
 
     // initial setup not in Edit mode
-    hideLemmaForm($("#lemma"));
-    $("#lemma a").show();
+//    hideLemmaForm($("#lemma"));
+//    $("#lemma a").show();
     $('#edit_lemma_form').hide();
+    $("#set_lemma_form").hide();
+    $("#add_lemma_form").hide();
+    $('#show_edit_lemma_form').hide();
+    $('#show_set_lemma_form').hide();
+    $('#show_create_lemma_form').hide();
+    $('#lemma_buttons_group').hide();
 
     //To prevent RSI
     $('.edit').each(function()
@@ -296,7 +302,7 @@ function enable_edit() {
         }
     });
     busy_editing = 1;
-    $('#lemma a').hide();
+//    $('#lemma a').hide();
 };
 
 function toggle_edit(redirect_to_next) {
@@ -304,6 +310,12 @@ function toggle_edit(redirect_to_next) {
     {
         disable_edit();
         $('#edit_lemma_form').hide();
+//        $('#set_lemma_form').hide();
+        $('#show_edit_lemma_form').hide();
+        $('#show_set_lemma_form').hide();
+        $('#show_create_lemma_form').hide();
+        $('#lemma_buttons_group').hide();
+
         $('#enable_edit').removeClass('edit_enabled');
         $('#enable_edit').text(edit_mode_str);
 
@@ -321,6 +333,12 @@ function toggle_edit(redirect_to_next) {
     } else {
         enable_edit();
         $('#edit_lemma_form').show();
+        $('#show_edit_lemma_form').show();
+        $('#show_set_lemma_form').show();
+        $('#show_create_lemma_form').show();
+        $('#lemma_buttons_group').show();
+
+//        $('#set_lemma_form').show();
         $('#enable_edit').addClass('edit_enabled');
         $('#enable_edit').text(turn_off_edit_mode_str);
     }
@@ -888,18 +906,28 @@ function check_phonology_modified()
 
 // Lemma toggle stuff
 function showLemmaForm(lemma_element) {
-    lemma_element.hide();
-    lemma_element.parent().find("[name='add_lemma_form']").hide();
-    lemma_element.parent().find("[name='set_lemma_form']").show();
-    lemma_element.parent().find("[name='edit_lemma_form']").hide();
-    lemma_element.parent().find("[name='add_lemma_form']").find(".lemmatypeahead.tt-input").focus();
+    lemma_element.parent().hide();
+//    $('#lemma_buttons_group').hide();
+//    lemma_element.parent().find("[name='add_lemma_form']").hide();
+    $("#set_lemma_form").show();
+//    lemma_element.parent().find("[name='edit_lemma_form']").hide();
+    $('#add_lemma_form').hide();
 }
 
 function hideLemmaForm(lemma_element) {
-    lemma_element.parent().find("[name='set_lemma_form']").hide();
-    lemma_element.parent().find("[name='add_lemma_form']").hide();
-    lemma_element.parent().find("[name='edit_lemma_form']").show();
-    lemma_element.show();
+    $(lemma_element).parent().hide();
+//    $("#add_lemma_form").hide();
+
+//    lemma_element.parent().find("[name='set_lemma_form']").hide();
+//    lemma_element.parent().find("[name='add_lemma_form']").hide();
+//    lemma_element.parent().find("[name='edit_lemma_form']").show();
+//    lemma_element.show();
+    $('#lemma_buttons_group').show();
+    $('#lemma_buttons').show();
+    $('#show_edit_lemma_form').show();
+    $('#show_set_lemma_form').show();
+    $('#show_create_lemma_form').show();
+    $('.lemma_buttons').css("visibility", "visible")
 }
 
 //function showEditLemma(lemma_element) {
@@ -910,21 +938,47 @@ function hideLemmaForm(lemma_element) {
 //    lemma_element.parent().find("[name='edit_lemma_form']").hide();
 //};
 
-$("#lemma").on('click', function() {
+//$("#lemma").on('click', function() {
+////    console.log("busy_editing: " + busy_editing)
+//    if(busy_editing) {
+//        showLemmaForm($(this));
+//    }
+//});
+
+$("#show_edit_lemma_form").on('click', function() {
+//    console.log("busy_editing: " + busy_editing)
+    if(busy_editing) {
+        $('#edit_lemma_form').submit();
+    }
+});
+
+$("#show_set_lemma_form").on('click', function() {
 //    console.log("busy_editing: " + busy_editing)
     if(busy_editing) {
         showLemmaForm($(this));
     }
 });
 
+$("#show_create_lemma_form").on('click', function() {
+//    console.log("busy_editing: " + busy_editing)
+    if(busy_editing) {
+        showAddLemma($(this));
+    }
+});
+
 $(".lemma-form-dismiss").on('click', function() {
-    hideLemmaForm($("#lemma"));
+//    console.log($(this).parent().parent().attr("name"));
+    hideLemmaForm($(this));
 //    showEditLemma($("#edit_lemma_form"))
 });
 
-function showAddLemma() {
-    $("#lemma").hide();
-    $("#lemma").parent().find("[name='set_lemma_form']").hide();
-    $("#lemma").parent().find("[name='add_lemma_form']").show();
-    return false;
+function showAddLemma(lemma_element) {
+    lemma_element.parent().hide();
+    $('#add_lemma_form').show();
+    $("#set_lemma_form").hide();
+
+//    $("#lemma").hide();
+//    $("#lemma").parent().find("[name='set_lemma_form']").hide();
+//    $("#lemma").parent().find("[name='add_lemma_form']").show();
+//    return false;
 }

@@ -262,7 +262,7 @@
 
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
-    <div class='pull-right' style="margin-right:15px;margin-top:3px;">
+    <div class='pull-right' style="margin-right:15px;margin-top:10px;z-index:100;">
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
@@ -437,10 +437,24 @@
                             <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
                     </span>
+                </td></tr>
+            <tr class="empty_row lemma_buttons" id="lemma-buttons-group" name="lemma-buttons-group"><th></th>
+                <td>
+                    <div id="lemma_buttons" name="lemma_buttons" class="btn-group">
+                        <button id='show_edit_lemma_form' name='show_edit_lemma_form'
+                                class='btn btn-primary btn-space'>{% trans "Edit lemma" %}</button>
+                        <button id='show_set_lemma_form' name='show_set_lemma_form'
+                                class='btn btn-primary btn-space'>{% trans "Choose other" %}</button>
+                        <button id='show_create_lemma_form' name='show_create_lemma_form'
+                                class='btn btn-primary btn-space'>{% trans "Create new" %}</button>
+                    </div>
+                </td></tr>
+                <tr name="lemma_forms_row"><th></th>
+                    <td name="lemma_forms_cell">
                     <form name='edit_lemma_form' id='edit_lemma_form'
-                          method='post' action='{% url "dictionary:change_lemma" gloss.lemma.id %}'>
+                          method='post' action='{% url "dictionary:update_lemma" gloss.lemma.id %}'>
                          {% csrf_token %}
-                        <input class='btn btn-primary'
+                        <input type="hidden" class='btn btn-primary'
                             value='{% trans "Edit lemma" %}'
                             type='submit'>
                         <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma.id}}'>
@@ -462,11 +476,9 @@
                         <input type='hidden' name='value' value='confirmed'>
                         <!-- Input for gloss_update (1) -->
                         <input type='hidden' name='id' value='lemmaidgloss'>
-
                         <!-- Submit -->
                         <input class='btn btn-primary' value='{% trans "Set lemma" %}' type='submit'>
                         <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
-                        <a href="#" onclick="return showAddLemma()">{% trans "Create new" %}</a>
                     </form>
                     <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
                         {% csrf_token %}
