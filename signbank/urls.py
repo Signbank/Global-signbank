@@ -74,6 +74,7 @@ urlpatterns = [
     url(r'^analysis/frequencies/$', FrequencyListView.as_view(), name='admin_frequency_list'),
     url(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
     url(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
+    url(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
     url(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
     url(r'^morphemes/dictionary/$', signbank.dictionary.views.search_morpheme),
     url(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),

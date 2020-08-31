@@ -2509,13 +2509,18 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     if not request.user.is_authenticated():
 
         # If we are not logged in, try to find if this maybe belongs to a gloss that is free to see for everbody?
-        gloss_pk = int(filename.split('.')[-2].split('-')[-1])
+        (name, ext) = os.path.splitext(os.path.basename(filename))
+        if 'handshape' in name:
+            # handshape images are allowed to be seen in Show All Handshapes
+            pass
+        else:
+            gloss_pk = int(filename.split('.')[-2].split('-')[-1])
 
-        try:
-            if not Gloss.objects.get(pk=gloss_pk).inWeb:
+            try:
+                if not Gloss.objects.get(pk=gloss_pk).inWeb:
+                    return HttpResponse(status=401)
+            except Gloss.DoesNotExist:
                 return HttpResponse(status=401)
-        except Gloss.DoesNotExist:
-            return HttpResponse(status=401)
 
         #If we got here, the gloss was found and in the web dictionary, so we can continue
 

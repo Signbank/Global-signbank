@@ -1822,6 +1822,7 @@ class MorphemeListView(ListView):
 
     model = Morpheme
     search_type = 'morpheme'
+    show_all = False
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
     template_name = 'dictionary/admin_morpheme_list.html'
@@ -3107,6 +3108,7 @@ class HandshapeListView(ListView):
     model = Handshape
     template_name = 'dictionary/admin_handshape_list.html'
     search_type = 'handshape'
+    show_all = False
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -3161,6 +3163,12 @@ class HandshapeListView(ListView):
                                                                                         self.request.LANGUAGE_CODE, id_prefix='')
 
         context['choice_lists'] = json.dumps(context['choice_lists'])
+
+        try:
+            if self.kwargs['show_all']:
+                context['show_all'] = True
+        except KeyError:
+            context['show_all'] = False
 
         context['handshapescount'] = Handshape.objects.count()
 
@@ -3226,6 +3234,12 @@ class HandshapeListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
+        #First check whether we want to show everything or a subset
+        try:
+            if self.kwargs['show_all']:
+                show_all = True
+        except (KeyError,TypeError):
+            show_all = False
 
         #Then check what kind of stuff we want
         if 'search_type' in get:
@@ -3236,6 +3250,9 @@ class HandshapeListView(ListView):
         setattr(self.request, 'search_type', self.search_type)
 
         qs = Handshape.objects.all().order_by('machine_value')
+
+        if show_all:
+            return qs
 
         handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
         # Find out if any Handshapes exist for which no Handshape object has been created
