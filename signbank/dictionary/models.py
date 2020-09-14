@@ -27,6 +27,7 @@ from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGU
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 
 import signbank.settings
+# -*- coding: utf-8 -*-
 
 
 # this variable is set later in the code, it needs to be declared before it is used
@@ -1550,10 +1551,15 @@ class Gloss(models.Model):
             videofile_path = str(glossvideo.videofile)
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
 
-            for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
-                imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
-                if check_existance and os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
-                    return imagefile_path
+            if check_existance:
+                for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+                    imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
+                    try:
+                        imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
+                    except:
+                        imagefile_path_exists = False
+                    if check_existance and imagefile_path_exists:
+                        return imagefile_path
         else:
             # If there is no GlossVideo, see whether there is an image on disk anyway
             # TODO Create a more elegant solution, e.g. by introducing a GlossImage model
@@ -1562,11 +1568,16 @@ class Gloss(models.Model):
             from signbank.video.models import GlossVideo, get_video_file_path
             glossvideo = GlossVideo(gloss=self)
             videofile_path = get_video_file_path(glossvideo, 'does-not-exist.mp4')
+
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
 
             for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
                 imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
-                if check_existance and os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
+                try:
+                    imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
+                except:
+                    imagefile_path_exists = False
+                if check_existance and imagefile_path_exists:
                     return imagefile_path
         return ''
 

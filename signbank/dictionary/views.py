@@ -2065,8 +2065,13 @@ def add_image(request):
             )
             goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
+            try:
+                exists = os.path.exists(goal_path)
+            except:
+                exists = False
+
             #First make the dir if needed
-            if not os.path.exists(goal_path):
+            if not exists:
                 try:
                     os.makedirs(goal_path)
                 except OSError as ose:
@@ -2528,7 +2533,10 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
 
     dir_path = WRITABLE_FOLDER
     path = dir_path.encode('utf-8') + filename.encode('utf-8')
-    exists = os.path.exists(path)
+    try:
+        exists = os.path.exists(path)
+    except:
+        exists = False
     if not exists:
         # quote the filename instead to resolve special characters in the url
         (head, tail) = os.path.split(filename)
