@@ -3592,7 +3592,7 @@ class DatasetListView(ListView):
         else:
             # User is not authenticated
             # this reverts to publically available datasets or the default dataset
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
+            selected_datasets = get_selected_datasets_for_user(self.request.user, readonly=True)
 
             return selected_datasets
 

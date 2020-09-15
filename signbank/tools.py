@@ -1561,7 +1561,7 @@ def generate_still_image(video):
         print("IOError: ", io)
 
 
-def get_selected_datasets_for_user(user):
+def get_selected_datasets_for_user(user, readonly=False):
     if user.is_authenticated:
         user_profile = UserProfile.objects.get(user=user)
         viewable_datasets = get_objects_for_user(user, 'view_dataset', Dataset)
@@ -1569,6 +1569,9 @@ def get_selected_datasets_for_user(user):
         if not selected_datasets:
             return viewable_datasets
         return selected_datasets & viewable_datasets # intersection of the selected and viewable datasets
+    elif readonly:
+        selected_datasets = Dataset.objects.all()
+        return selected_datasets
     else:
         # Make sure a non-empty set is returned, for anonymous users when no datasets are public
         public_datasets = Dataset.objects.filter(is_public=True)
