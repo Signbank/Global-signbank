@@ -3592,8 +3592,9 @@ class DatasetListView(ListView):
         else:
             # User is not authenticated
             # this reverts to publically available datasets or the default dataset
-            selected_datasets = get_selected_datasets_for_user(self.request.user, readonly=True)
+            qs = get_selected_datasets_for_user(self.request.user, readonly=True)
 
+            selected_datasets = qs.annotate(Count('lemmaidgloss__gloss')).order_by('name')
             return selected_datasets
 
 class DatasetManagerView(ListView):

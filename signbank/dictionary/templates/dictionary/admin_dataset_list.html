@@ -21,6 +21,7 @@
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
           <th style="width:200px;">{% trans "Languages" %}</th>
           {% if user.is_anonymous %}
+          <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
           <th style="width:255px;">{% trans "Number of public glosses" %}</th>
           {% else %}
           <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
@@ -48,6 +49,7 @@
                 {% endfor %}
             </td>
             {% if user.is_anonymous %}
+            <td>{{dataset.lemmaidgloss__gloss__count}}</td>
             {% with nr_of_public_glosses|keyvalue:dataset as count_public_glosses %}
             <td>{{count_public_glosses}}</td>
             {% endwith %}
