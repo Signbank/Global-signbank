@@ -146,23 +146,26 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     else:
         # Use straightforward ordering on field [sOrder]
         if default_sort_order:
-            lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+            from signbank.tools import convert_language_code_to_language_minus_locale
+            lang_attr_name = convert_language_code_to_language_minus_locale(settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
             sort_language = 'annotationidglosstranslation__language__language_code_2char'
-            if len(queryset_language_codes) == 0:
-                ordered = qs
-            else:
-                if lang_attr_name not in queryset_language_codes:
-                    lang_attr_name = queryset_language_codes[0]
 
-                qs_empty = qs.filter(**{sOrder+'__isnull': True})
-                qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
-                qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name})
+            if queryset_language_codes and lang_attr_name not in queryset_language_codes:
+                # this is actually checking if English (Default Keywords Language) is available
+                lang_attr_name = queryset_language_codes[0]
 
-                # sort_key = sOrder
-                # # Using the order_by here results in duplicating the objects!
-                ordered = list(qs_letters) #.order_by(sort_key))
-                ordered += list(qs_special) #.order_by(sort_key))
-                ordered += list(qs_empty)
+            qs_empty = qs.filter(**{sOrder+'__isnull': True})
+            qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name}).order_by(sOrder)
+            qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name}).order_by(sOrder)
+
+            # This removes duplicates in the list
+            ordered_list = []
+            for qso in qs_letters:
+                if qso not in ordered_list:
+                    ordered_list.append(qso)
+            ordered = ordered_list
+            ordered += list(qs_special)
+            ordered += list(qs_empty)
         else:
             ordered = qs
     if bReversed and bText:
@@ -219,9 +222,9 @@ class GlossListView(ListView):
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
-        from signbank.tools import convert_language_code_to_2char
+        from signbank.tools import convert_language_code_to_language_minus_locale
         for lang in dataset_languages:
-            lang_code = convert_language_code_to_2char(lang.language_code_2char)
+            lang_code = convert_language_code_to_language_minus_locale(lang.language_code_2char)
             if lang_code not in self.queryset_language_codes:
                 self.queryset_language_codes.append(lang_code)
         if self.queryset_language_codes is None:
@@ -758,7 +761,6 @@ class GlossListView(ListView):
         #If we wanted to get everything, we're done now
         if show_all:
             return order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
-            # return qs
 
         #If not, we will go trhough a long list of filters
         if 'search' in get and get['search'] != '':
