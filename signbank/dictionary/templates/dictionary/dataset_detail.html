@@ -96,7 +96,7 @@
             {% csrf_token %}
             <td class='edit edit_default_language' id='default_language'
                 value='{{datasetform.default_language.value}}'>{{dataset.default_language}}</td></tr>
-        <tr><th>{% trans "Conditions for data citaion and usage" %}</th>
+        <tr><th>{% trans "Conditions for data citation and usage" %}</th>
             <td class='edit edit_area' id='conditions_of_use' name='conditions_of_use'
                 placeholder='{% trans "Conditions of use by others" %}' value="{{datasetform.conditions_of_use.value|default:''}}">{{dataset.conditions_of_use}}</td></tr>
         <tr><th>{% trans "Copyright statement" %}</th>
