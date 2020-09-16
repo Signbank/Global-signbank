@@ -1,4 +1,8 @@
 You have been granted access to dataset {{dataset}} at {{site.name}}.
 
+For more information on the type of information Global Signbank stores about signs, see the manual on this page: https://signbank.science.ru.nl/about/manual/
+Note that handshapes are described in terms of phonological features separately from signs; see this page: https://signbank.science.ru.nl/signs/search_handshape/
+
+The Release Notes page describes the latest changes and additions to the functionalities of the website: https://signbank.science.ru.nl/about/release/
 
 {{site.name}} Webmaster
