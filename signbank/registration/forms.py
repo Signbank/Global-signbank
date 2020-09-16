@@ -103,6 +103,9 @@ class RegistrationForm(forms.Form):
         in use.
 
         """
+        data = self.cleaned_data['username']
+        if '@' in data or '|' in data or ' ' in data or '+' in data:
+            raise forms.ValidationError(_(u'Usernames should not have special characters.'))
         try:
             user = User.objects.get(username__exact=self.cleaned_data['username'])
         except User.DoesNotExist:
