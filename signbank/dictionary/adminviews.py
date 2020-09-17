@@ -4081,7 +4081,7 @@ class DatasetDetailView(DetailView):
         messages.add_message(self.request, messages.INFO,
                      ('User ' + username + ' successfully made (co-)owner of this dataset.'))
 
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/detail/' + str(dataset_object.id))
+        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/' + dataset_object.acronym)
 
 
 def dataset_detail_view_by_acronym(request, acronym):
