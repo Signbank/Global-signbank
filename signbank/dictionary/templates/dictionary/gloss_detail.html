@@ -452,7 +452,7 @@
                 <tr name="lemma_forms_row"><th></th>
                     <td name="lemma_forms_cell">
                     <form name='edit_lemma_form' id='edit_lemma_form'
-                          method='post' action='{% url "dictionary:update_lemma" gloss.lemma.id %}'>
+                          method='post' action='{% url "dictionary:change_lemma" gloss.lemma.id %}'>
                          {% csrf_token %}
                         <input type="hidden" class='btn btn-primary'
                             value='{% trans "Edit lemma" %}'
