@@ -3840,8 +3840,10 @@ class DatasetManagerView(ListView):
             try:
                 assign_perm('change_dataset', user_object, dataset_object)
 
-                # send email to new user
-                # probably don't want to assign change permission to new users
+                if not user_object.has_perm('dictionary.change_gloss'):
+                    assign_perm('dictionary.change_gloss', user_object)
+                if not user_object.has_perm('dictionary.add_gloss'):
+                    assign_perm('dictionary.add_gloss', user_object)
 
                 messages.add_message(self.request, messages.INFO,
                                      ('Change permission for user ' + username + ' successfully granted.'))
@@ -3879,7 +3881,9 @@ class DatasetManagerView(ListView):
         if 'delete_change_perm' in self.request.GET:
             manage_identifier += '_manage_change'
 
-            if dataset_object in get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False):
+            datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False)
+
+            if dataset_object in datasets_user_can_change:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.ERROR,
                                          (
@@ -3889,6 +3893,12 @@ class DatasetManagerView(ListView):
                     # can remove permission
                     try:
                         remove_perm('change_dataset', user_object, dataset_object)
+                        other_datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset,
+                                                                            accept_global_perms=True)
+                        if len(other_datasets_user_can_change) == 0:
+                            # this was the only dataset the user could change
+                            remove_perm('dictionary.change_gloss', user_object)
+                            remove_perm('dictionary.add_gloss', user_object)
                         messages.add_message(self.request, messages.INFO,
                                              ('Change permission for user ' + username + ' successfully revoked.'))
                     except:

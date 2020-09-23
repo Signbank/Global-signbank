@@ -460,6 +460,9 @@ def update_gloss(request, glossid):
         return HttpResponse(
             str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group),
             {'content-type': 'text/plain'})
+    else:
+        print('update gloss is not POST')
+        return HttpResponseForbidden("Gloss Update Not Allowed")
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
@@ -2064,6 +2067,7 @@ def update_dataset(request, datasetid):
 
     else:
         print('update dataset is not POST')
+        return HttpResponseForbidden("Dataset Update Not Allowed")
 
 def update_owner(dataset, field, values):
     # expecting possibly multiple values
