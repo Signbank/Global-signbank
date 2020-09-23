@@ -1966,6 +1966,20 @@ def update_dataset(request, datasetid):
         dataset.save() # This updates the lastUpdated field
 
         import guardian
+        from django.contrib.auth.models import Group
+
+        try:
+            group_manager = Group.objects.get(name='Dataset_Manager')
+        except:
+            messages.add_message(request, messages.ERROR, ('No group Dataset_Manager found.'))
+            return HttpResponseForbidden("Dataset Update Not Allowed")
+
+        groups_of_user = request.user.groups.all()
+        if not group_manager in groups_of_user:
+            messages.add_message(request, messages.ERROR,
+                                 ('You must be in group Dataset Manager to modify dataset details.'))
+            return HttpResponseForbidden("Dataset Update Not Allowed")
+
         user_change_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
         if not dataset in user_change_datasets:
             return HttpResponseForbidden("Dataset Update Not Allowed")
