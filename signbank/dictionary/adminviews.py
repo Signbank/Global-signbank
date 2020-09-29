@@ -2430,7 +2430,7 @@ class HandshapeDetailView(DetailView):
 
         hs = context['handshape']
 
-        setattr(self.request, 'search_type', self.search_type)
+        setattr(self.request.session, 'search_type', self.search_type)
 
         labels = hs.field_labels()
         context['imageform'] = ImageUploadForHandshapeForm()
