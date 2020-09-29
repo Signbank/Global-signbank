@@ -232,13 +232,10 @@ class GlossListView(ListView):
 
         # print('queryset_lang codes: ', self.queryset_language_codes)
 
-        if len(selected_datasets) == 1:
+        if len(selected_datasets) > 0:
             self.last_used_dataset = selected_datasets[0]
         elif 'last_used_dataset' in self.request.session.keys():
             self.last_used_dataset = self.request.session['last_used_dataset']
-        if not self.last_used_dataset:
-            # it hasn't been set yet
-            self.last_used_dataset = selected_datasets[0]
 
         context['last_used_dataset'] = self.last_used_dataset
 
