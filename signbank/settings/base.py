@@ -235,7 +235,7 @@ ACCOUNT_ACTIVATION_DAYS = 7
 SHOW_NUMBERSIGNS = True
 
 LOGIN_URL = PREFIX_URL+'/accounts/login/'
-LOGIN_REDIRECT_URL = PREFIX_URL+'/signs/recently_added/'
+LOGIN_REDIRECT_URL = PREFIX_URL+'/accounts/user_profile/'
 
 
 # location of ffmpeg, used to convert uploaded videos

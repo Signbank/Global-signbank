@@ -152,7 +152,13 @@
             </div>
           <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
     </form>
-
+    <div class="nav navbar-left navbar-nav" id="user-menu" style="height: 10px;box-sizing:content-box;">
+        {% if user.is_authenticated %}
+        <div class='navbar-text'>
+            <a href="{% url 'registration:user_profile' %}">{% trans "Profile" %}</a>
+        </div>
+        {% endif %}
+    </div>
       <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">
         {% if user.is_authenticated %}
             <div class='navbar-text'>

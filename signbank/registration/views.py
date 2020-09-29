@@ -14,7 +14,7 @@ from django.middleware.csrf import get_token
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
 from signbank.registration.models import RegistrationProfile
 from django.contrib.auth.models import User
-from signbank.dictionary.models import Dataset
+from signbank.dictionary.models import Dataset, UserProfile
 from django.contrib import messages
 from django.template.loader import render_to_string
 
@@ -262,3 +262,29 @@ def users_without_dataset(request):
         alert_success = None
 
     return render (request, 'users_without_dataset.html', {'users_without_dataset':get_users_without_dataset(),'main_dataset_name':main_dataset.name,'alert_success':alert_success})
+
+def user_profile(request):
+
+    from datetime import date
+    from signbank.tools import get_selected_datasets_for_user
+    from guardian.shortcuts import get_objects_for_user
+
+    user = request.user
+    user_object = User.objects.get(username=user)
+    user_profile = UserProfile.objects.get(id=user_object.id)
+    expiry = getattr(user_profile, 'expiry_date')
+    today = date.today()
+    if expiry:
+        delta = expiry - today
+    else:
+        delta = None
+    selected_datasets = get_selected_datasets_for_user(user)
+    view_permit_datasets = get_objects_for_user(user, 'view_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
+
+    return render (request, 'user_profile.html', {'selected_datasets': selected_datasets,
+                                                  'view_permit_datasets': view_permit_datasets,
+                                                  'change_permit_datasets': change_permit_datasets,
+                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                                                  'expiry': expiry,
+                                                  'delta': delta})
