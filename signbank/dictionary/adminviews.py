@@ -2486,32 +2486,30 @@ class HandshapeDetailView(DetailView):
 
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
+        if 'search_type' not in self.request.session.keys() or self.request.session['search_type'] != 'handshape':
+            self.request.session['search_type'] = self.search_type
+
         # Check the type of the current search results
         if 'search_results' in self.request.session.keys():
             if self.request.session['search_results'] and len(self.request.session['search_results']) > 0:
                 if 'gloss' in self.request.session['search_results'][0].keys():
                     self.request.session['search_results'] = None
 
-            # if there are no current handshape search results in the current session, display all of them in the navigation bar
-            if self.request.session['search_type'] != 'handshape' or self.request.session['search_results'] == None:
+        if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
+            # there are no handshapes in the scrollbar, put some there
+            qs = Handshape.objects.all().order_by('machine_value')
 
-                self.request.session['search_type'] = self.search_type
+            items = []
 
-                qs = Handshape.objects.all().order_by('machine_value')
+            for item in qs:
+                if self.request.LANGUAGE_CODE == 'nl':
+                    items.append(dict(id=item.machine_value, handshape=item.dutch_name))
+                elif self.request.LANGUAGE_CODE == 'zh-hans':
+                    items.append(dict(id=item.machine_value, handshape=item.chinese_name))
+                else:
+                    items.append(dict(id=item.machine_value, handshape=item.english_name))
 
-                items = []
-
-                for item in qs:
-                    if self.request.LANGUAGE_CODE == 'nl':
-                        items.append(dict(id=item.machine_value, handshape=item.dutch_name))
-                    elif self.request.LANGUAGE_CODE == 'zh-hans':
-                        items.append(dict(id=item.machine_value, handshape=item.chinese_name))
-                    else:
-                        items.append(dict(id=item.machine_value, handshape=item.english_name))
-
-                self.request.session['search_results'] = items
-        else:
-            self.request.session['search_results'] = None
+            self.request.session['search_results'] = items
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
