@@ -80,7 +80,6 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
-        print('sort order: ', sOrderAsc)
         annotationidglosstranslation = AnnotationIdglossTranslation.objects.filter(gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char).distinct()
         qs = qs.annotate(**{sOrderAsc: Subquery(annotationidglosstranslation.values('text')[:1])}).order_by(sOrder)
         return qs
@@ -153,8 +152,8 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
             if queryset_language_codes and lang_attr_name not in queryset_language_codes:
                 # this is actually checking if English (Default Keywords Language) is available
                 lang_attr_name = queryset_language_codes[0]
-
-            qs_empty = qs.filter(**{sOrder+'__isnull': True})
+            empty_text_filter = sOrder+'__exact'
+            qs_empty = qs.filter(**{empty_text_filter:''})
             qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name}).order_by(sOrder)
             qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name}).order_by(sOrder)
 
