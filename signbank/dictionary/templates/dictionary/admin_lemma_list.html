@@ -41,7 +41,7 @@
         <tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             <td>
-                <a href="{{PREFIX_URL}}/datasets/detail/{{lemma.dataset.id}}" >{{ lemma.dataset.acronym }}</a>
+                <a href="{{PREFIX_URL}}/datasets/{{lemma.dataset.acronym}}" >{{ lemma.dataset.acronym }}</a>
             </td>
             {% endif %}
             {% for dataset_lang in dataset_languages %}

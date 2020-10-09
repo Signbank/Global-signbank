@@ -1,0 +1,63 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% block content %}
+
+<h2>User profile</h2>
+
+<table class="table">
+    {% if user.is_anonymous %}
+        <tr><th>Username</th>
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+        <th style="white-space:nowrap;">{% trans "View Permission for Public Signs in Datasets" %}</th>
+        {% endif %}
+    </tr>
+    <tr><td>Anonymous User</td>
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+        <td>
+        {% for ds in selected_datasets %}
+            {{ds.acronym}}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+        </td>
+        {% endif %}
+    </tr>
+    {% else %}
+    <tr><th>Username</th><th>Name</th><th>Email</th><th>Expiration Date</th>
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+        <th style="white-space:nowrap;">{% trans "Selected Datasets" %}</th>
+        <th style="white-space:nowrap;">{% trans "View Permission" %}</th>
+        <th style="white-space:nowrap;">{% trans "Change Permission" %}</th>
+        {% endif %}
+    </tr>
+    <tr><td>{{user.username}}</td>
+        <td>{{user.first_name}} {{user.last_name}}</td>
+        <td>{{user.email}}</td>
+        <td>{{expiry}}
+            {% if delta %}
+            ({{ delta.days }} {% trans "days remaining" %})
+            {% endif %}
+        </td>
+        {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+        <td style="width: 320px;">
+        {% for ds in selected_datasets %}
+            {{ds.acronym}}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+        </td>
+        <td style="width: 320px;">
+        {% for ds in view_permit_datasets %}
+            {{ds.acronym}}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+        </td>
+        <td style="width: 320px;">
+        {% for ds in change_permit_datasets %}
+            {{ds.acronym}}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+        </td>
+        {% endif %}
+    </tr>
+    {% endif %}
+</table>
+
+{% endblock %}

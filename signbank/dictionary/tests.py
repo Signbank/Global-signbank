@@ -661,7 +661,7 @@ class ImportExportTests(TestCase):
         print('Form data test 2 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
         response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
-        self.assertContains(response, 'No changes were found.')
+        self.assertEqual(response.status_code, 200)
 
         count_dataset_translation_languages = test_dataset.translation_languages.all().count()
         print('Number of translation languages for the test dataset: ', count_dataset_translation_languages)
@@ -1547,7 +1547,6 @@ class FieldChoiceTests(TestCase):
 
         from signbank.tools import fields_with_choices_glosses
         fields_with_choices = fields_with_choices_glosses()
-
         # create a gloss with and without field choices
 
         # set the test dataset
@@ -1605,9 +1604,12 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
             if field_options:
-                field_choice_in_use = field_options[2]
-                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
-
+                if fieldchoice != 'Handshape':
+                    field_choice_in_use = field_options[2]
+                    self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+                else:
+                    field_choice_in_use = field_options[2]
+                    self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
     def test_delete_fieldchoice_handshape(self):
 
@@ -1926,7 +1928,7 @@ class FieldChoiceTests(TestCase):
 
         from signbank.tools import fields_with_choices_morpheme_type
         fields_with_choices = fields_with_choices_morpheme_type()
-        print('fields with choices morpheme type: ', fields_with_choices)
+        # print('fields with choices morpheme type: ', fields_with_choices)
         # create a gloss with and without field choices
 
         # set the test dataset
@@ -1960,7 +1962,7 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 for field in fields_with_choices[fieldchoice]:
-                    print('field: ', field)
+                    # print('field: ', field)
                     setattr(new_gloss, field, field_choice_in_use.machine_value)
                     setattr(new_morpheme, field, field_choice_in_use.machine_value)
         new_gloss.save()
@@ -1994,10 +1996,15 @@ class FieldChoiceTests(TestCase):
             field_options = FieldChoice.objects.filter(field=fieldchoice)
             if field_options:
                 field_choice_in_use = field_options[2]
-                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.english_name), ' (not used)')
-                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
-
+                if fieldchoice != 'Handshape':
+                    print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                          str(field_choice_in_use.english_name), ' (not used)')
+                    self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+                else:
+                    print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
+                          str(field_choice_in_use.english_name), ' (not used)')
+                    self.assertEqual(
+                        self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
 
 class testFrequencyAnalysis(TestCase):
 

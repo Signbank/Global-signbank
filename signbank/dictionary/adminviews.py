@@ -232,13 +232,10 @@ class GlossListView(ListView):
 
         # print('queryset_lang codes: ', self.queryset_language_codes)
 
-        if len(selected_datasets) == 1:
+        if len(selected_datasets) > 0:
             self.last_used_dataset = selected_datasets[0]
         elif 'last_used_dataset' in self.request.session.keys():
             self.last_used_dataset = self.request.session['last_used_dataset']
-        if not self.last_used_dataset:
-            # it hasn't been set yet
-            self.last_used_dataset = selected_datasets[0]
 
         context['last_used_dataset'] = self.last_used_dataset
 
@@ -2430,7 +2427,7 @@ class HandshapeDetailView(DetailView):
 
         hs = context['handshape']
 
-        setattr(self.request, 'search_type', self.search_type)
+        setattr(self.request.session, 'search_type', self.search_type)
 
         labels = hs.field_labels()
         context['imageform'] = ImageUploadForHandshapeForm()
@@ -2489,32 +2486,30 @@ class HandshapeDetailView(DetailView):
 
         context['choice_lists'] = json.dumps(context['choice_lists'])
 
+        if 'search_type' not in self.request.session.keys() or self.request.session['search_type'] != 'handshape':
+            self.request.session['search_type'] = self.search_type
+
         # Check the type of the current search results
         if 'search_results' in self.request.session.keys():
             if self.request.session['search_results'] and len(self.request.session['search_results']) > 0:
                 if 'gloss' in self.request.session['search_results'][0].keys():
                     self.request.session['search_results'] = None
 
-            # if there are no current handshape search results in the current session, display all of them in the navigation bar
-            if self.request.session['search_type'] != 'handshape' or self.request.session['search_results'] == None:
+        if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
+            # there are no handshapes in the scrollbar, put some there
+            qs = Handshape.objects.all().order_by('machine_value')
 
-                self.request.session['search_type'] = self.search_type
+            items = []
 
-                qs = Handshape.objects.all().order_by('machine_value')
+            for item in qs:
+                if self.request.LANGUAGE_CODE == 'nl':
+                    items.append(dict(id=item.machine_value, handshape=item.dutch_name))
+                elif self.request.LANGUAGE_CODE == 'zh-hans':
+                    items.append(dict(id=item.machine_value, handshape=item.chinese_name))
+                else:
+                    items.append(dict(id=item.machine_value, handshape=item.english_name))
 
-                items = []
-
-                for item in qs:
-                    if self.request.LANGUAGE_CODE == 'nl':
-                        items.append(dict(id=item.machine_value, handshape=item.dutch_name))
-                    elif self.request.LANGUAGE_CODE == 'zh-hans':
-                        items.append(dict(id=item.machine_value, handshape=item.chinese_name))
-                    else:
-                        items.append(dict(id=item.machine_value, handshape=item.english_name))
-
-                self.request.session['search_results'] = items
-        else:
-            self.request.session['search_results'] = None
+            self.request.session['search_results'] = items
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -3840,8 +3835,10 @@ class DatasetManagerView(ListView):
             try:
                 assign_perm('change_dataset', user_object, dataset_object)
 
-                # send email to new user
-                # probably don't want to assign change permission to new users
+                if not user_object.has_perm('dictionary.change_gloss'):
+                    assign_perm('dictionary.change_gloss', user_object)
+                if not user_object.has_perm('dictionary.add_gloss'):
+                    assign_perm('dictionary.add_gloss', user_object)
 
                 messages.add_message(self.request, messages.INFO,
                                      ('Change permission for user ' + username + ' successfully granted.'))
@@ -3879,7 +3876,9 @@ class DatasetManagerView(ListView):
         if 'delete_change_perm' in self.request.GET:
             manage_identifier += '_manage_change'
 
-            if dataset_object in get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False):
+            datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False)
+
+            if dataset_object in datasets_user_can_change:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.ERROR,
                                          (
@@ -3889,6 +3888,12 @@ class DatasetManagerView(ListView):
                     # can remove permission
                     try:
                         remove_perm('change_dataset', user_object, dataset_object)
+                        other_datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset,
+                                                                            accept_global_perms=True)
+                        if len(other_datasets_user_can_change) == 0:
+                            # this was the only dataset the user could change
+                            remove_perm('dictionary.change_gloss', user_object)
+                            remove_perm('dictionary.add_gloss', user_object)
                         messages.add_message(self.request, messages.INFO,
                                              ('Change permission for user ' + username + ' successfully revoked.'))
                     except:
@@ -4081,7 +4086,7 @@ class DatasetDetailView(DetailView):
         messages.add_message(self.request, messages.INFO,
                      ('User ' + username + ' successfully made (co-)owner of this dataset.'))
 
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/detail/' + str(dataset_object.id))
+        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/' + dataset_object.acronym)
 
 
 def dataset_detail_view_by_acronym(request, acronym):
