@@ -154,15 +154,28 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
                 lang_attr_name = queryset_language_codes[0]
             empty_text_filter = sOrder+'__exact'
             qs_empty = qs.filter(**{empty_text_filter:''})
-            qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name}).order_by(sOrder)
+            # sorting is done separately instead of in query
+            qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
+            qs_letters_tuple = []
+            for qso in qs_letters:
+                annotationidglosstranslation = qso.annotationidglosstranslation_set.filter(language__language_code_2char=lang_attr_name)
+                if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
+                    label = annotationidglosstranslation[0].text
+                else:
+                    # this happens if there is no annotation for the language
+                    # however, the value of an annotation can be an empty string
+                    label = ''
+                qs_letters_tuple.append((label, qso))
+            # manually do the sort based on the annotation in the sort language
+            sorted_qs_letters_tuples = sorted(qs_letters_tuple, key=lambda tup : tup[0])
+            # remove the labels that were used for sorting, just get the objects
+            just_the_objects = []
+            for x in sorted_qs_letters_tuples:
+                just_the_objects.append(x[1])
+
             qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name}).order_by(sOrder)
 
-            # This removes duplicates in the list
-            ordered_list = []
-            for qso in qs_letters:
-                if qso not in ordered_list:
-                    ordered_list.append(qso)
-            ordered = ordered_list
+            ordered = just_the_objects
             ordered += list(qs_special)
             ordered += list(qs_empty)
         else:
