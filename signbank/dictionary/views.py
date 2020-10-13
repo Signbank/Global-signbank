@@ -2622,7 +2622,7 @@ def show_unassigned_glosses(request):
     else:
         from django.db.models import OuterRef, Subquery, Count, Prefetch
         unassigned_glosses = Gloss.objects.filter(
-                    dataset=None,
+                    lemma__dataset=None,
                     signlanguage=OuterRef('pk')
                 ).order_by().values('signlanguage')
         count_unassigned_glosses = unassigned_glosses.annotate(cnt=Count('pk')).values('cnt')
@@ -2640,7 +2640,7 @@ def show_unassigned_glosses(request):
         )
 
         number_of_unassigned_glosses_without_signlanguage = Gloss.objects.filter(
-            dataset=None,
+            lemma__dataset=None,
             signlanguage=None
         ).count()
 
