@@ -239,6 +239,8 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
 mylogin = never_cache(mylogin)
 
 def users_without_dataset(request):
+    if not request.user.is_superuser:
+        return HttpResponse('Unauthorized', status=401)
 
     from signbank.tools import get_users_without_dataset
     from guardian.shortcuts import assign_perm
