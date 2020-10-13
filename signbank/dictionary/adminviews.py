@@ -1082,9 +1082,12 @@ class GlossDetailView(DetailView):
 
         try:
             self.object = self.get_object()
-        # except Http404:
-        except:
+            if self.object.lemma == None:
+                raise Exception("Requested gloss has no lemma.")
+        except Exception as e:
             # return custom template
+            print(e)
+            messages.add_message(self.request, messages.ERROR, e)
             # return render(request, 'dictionary/warning.html', status=404)
             raise Http404()
 
@@ -1123,7 +1126,7 @@ class GlossDetailView(DetailView):
                     return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
                 else:
                     return render(request, 'dictionary/warning.html',
-                                  {'warning': 'The gloss you are trying to view ('+str(self.object.id)+') is not assigned to a dataset.',
+                                  {'warning': 'The gloss you are trying to view ('+str(self.object.id)+') is not in a dataset you can view.',
                                    'dataset_languages': dataset_languages,
                                    'selected_datasets': selected_datasets,
                                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
@@ -4360,17 +4363,14 @@ class MorphemeDetailView(DetailView):
     def get(self, request, *args, **kwargs):
         try:
             self.object = self.get_object()
+            if self.object.lemma == None:
+                raise Exception("Requested morpheme has no lemma.")
+            # print('MorphemeDetail get object: ', self.object.__dict__)
         # except Http404:
-        except:
+        except Exception as e:
             # return custom template
-            # return render(request, 'dictionary/warning.html', status=404)
-            raise Http404()
-
-        try:
-            self.object = self.get_object()
-        # except Http404:
-        except:
-            # return custom template
+            # print(e)
+            messages.add_message(self.request, messages.ERROR, e)
             # return render(request, 'dictionary/warning.html', status=404)
             raise Http404()
 
@@ -4378,10 +4378,16 @@ class MorphemeDetailView(DetailView):
         default_dataset = Dataset.objects.get(id=datasetid)
 
         try:
-            dataset_of_requested_gloss = self.object.lemma.dataset
-        except:
-            print('Requested morpheme has no dataset.')
-            dataset_of_requested_gloss = default_dataset
+            dataset_of_requested_morpheme = self.object.lemma.dataset
+            if dataset_of_requested_morpheme == None:
+                raise Exception("Lemma of requested morpheme has no dataset.")
+            # print('Dataset of requested morpheme: ', dataset_of_requested_morpheme)
+        except Exception as e:
+            # print('Lemma of requested morpheme has no dataset.')
+            # print('Object: ', self.object.__dict__)
+            messages.add_message(self.request, messages.ERROR, e)
+            # what to do here?
+            dataset_of_requested_morpheme = default_dataset
 
         datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
         selected_datasets = get_selected_datasets_for_user(self.request.user)
