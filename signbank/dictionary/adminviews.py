@@ -2908,11 +2908,9 @@ class GlossFrequencyView(DetailView):
         except:
             interface_language = default_language
 
-        # Call the base implementation first to get a context
-        context = super(GlossFrequencyView, self).get_context_data(**kwargs)
-
         #Pass info about which fields we want to see
         gl = context['gloss']
+        context['active_id'] = gl.id
         labels = gl.field_labels()
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
@@ -2928,6 +2926,7 @@ class GlossFrequencyView(DetailView):
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
@@ -2949,7 +2948,6 @@ class GlossFrequencyView(DetailView):
         context['data_datasets'] = gl.data_datasets()
 
         context['has_frequency_data'] = gl.has_frequency_data()
-
         speakers_summary = gl.speaker_age_data()
         speaker_age_data = []
         for i in range(1, 100):
@@ -2964,6 +2962,15 @@ class GlossFrequencyView(DetailView):
 
         context['speaker_data'] = gl.speaker_data()
 
+        # incorporates legacy relations
+        # a variant pattern is only a variant if there are no other relations between the focus gloss and other glosses under consideration
+        # variants might be explictly stored as relations to other glosses
+        # the has_variants method only catches explicitly stored variants
+        # the pattern variants method excludes glosses with explictly stored relations (including variant relations) to the focus gloss
+        # therefore we first try pattern variants
+
+        # for the purposes of frequency charts in the template, the focus gloss is included in the variants
+        # this simplifies generating tables for variants inside of a loop in the javascript
         try:
             variants = gl.pattern_variants()
         except:
@@ -2971,16 +2978,28 @@ class GlossFrequencyView(DetailView):
                 variants = gl.has_variants()
             except:
                 variants = []
-
         context['variants'] = variants
 
-        variants_data = {}
-        for variant_of_gloss in variants:
-            variants_data[variant_of_gloss.idgloss] = variant_of_gloss.speaker_data()
+        variants_with_keys = []
+        for gl in variants:
+            # get the annotation explicitly
+            # do not use the __str__ property idgloss
+            gl_idgloss = gl.annotationidglosstranslation_set.get(language=gl.lemma.dataset.default_language).text
+            variants_with_keys.append((gl_idgloss, gl))
+        sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
+        sorted_variant_keys = sorted([og_idgloss for (og_idgloss, og) in variants_with_keys])
+        variants_data_quick_access = {}
+        variants_data = []
+        for (og_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+            variants_speaker_data = variant_of_gloss.speaker_data()
+            variants_data.append((og_idgloss, variants_speaker_data))
+            variants_data_quick_access[og_idgloss] = variants_speaker_data
+
         context['variants_data'] = variants_data
+        context['variants_data_quick_access'] = variants_data_quick_access
 
         variants_age_distribution_data = {}
-        for variant_of_gloss in variants:
+        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
             variant_speaker_age_data_v = variant_of_gloss.speaker_age_data()
 
             speaker_age_data_v = []
@@ -2992,40 +3011,77 @@ class GlossFrequencyView(DetailView):
                 else:
                     speaker_age_data_v.append(0)
 
-            variants_age_distribution_data[variant_of_gloss.idgloss] = speaker_age_data_v
+            variants_age_distribution_data[variant_idgloss] = speaker_age_data_v
 
         context['variants_age_distribution_data'] = variants_age_distribution_data
 
-        speaker_per_variant_data = {}
-        speaker_per_variant_data['Female'] = {}
-        speaker_per_variant_data['Male'] = {}
-        speaker_per_variant_data['Female'][gl.idgloss] = context['speaker_data']['Female']
-        speaker_per_variant_data['Male'][gl.idgloss] = context['speaker_data']['Male']
+        variants_sex_distribution_data = {}
+        variants_sex_distribution_data_percentage = {}
+        variants_sex_distribution_data_totals = {}
+        variants_sex_distribution_data_totals['Female'] = 0
+        variants_sex_distribution_data_totals['Male'] = 0
 
-        for variant_of_gloss in variants:
-            speaker_per_variant_data['Female'][variant_of_gloss.idgloss] = context['variants_data'][variant_of_gloss.idgloss]['Female']
-            speaker_per_variant_data['Male'][variant_of_gloss.idgloss] = context['variants_data'][variant_of_gloss.idgloss]['Male']
+        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+            for i_key in ['Female', 'Male']:
+                variants_sex_distribution_data_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
+                variants_sex_distribution_data[i_key] = {}
+                variants_sex_distribution_data_percentage[i_key] = {}
 
-        context['speaker_per_variant_data'] = speaker_per_variant_data
+        for i_key in ['Female', 'Male']:
+            total_gender_across_variants = variants_sex_distribution_data_totals[i_key]
+            for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+                variant_speaker_data_v = variant_of_gloss.speaker_data()
+                i_value = variant_speaker_data_v[i_key]
 
-        variant_labels = [gl.idgloss]
-        for variant_of_gloss in variants:
-            if variant_of_gloss.idgloss not in variant_labels:
-                variant_labels.append(variant_of_gloss.idgloss)
+                speaker_data_v = i_value
+                if total_gender_across_variants > 0:
+                    speaker_data_p = i_value / total_gender_across_variants
+                else:
+                    speaker_data_p = 0
 
+                variants_sex_distribution_data[i_key][variant_idgloss] = speaker_data_v
+                variants_sex_distribution_data_percentage[i_key][variant_idgloss] = speaker_data_p
+
+        context['variants_sex_distribution_data'] = variants_sex_distribution_data
+        context['variants_sex_distribution_data_percentage'] = variants_sex_distribution_data_percentage
+
+        variants_age_distribution_cat_data = {}
+        variants_age_distribution_cat_percentage = {}
+        variants_age_distribution_cat_totals = {}
+        variants_age_distribution_cat_totals['< 25'] = 0
+        variants_age_distribution_cat_totals['25 - 35'] = 0
+        variants_age_distribution_cat_totals['36 - 65'] = 0
+        variants_age_distribution_cat_totals['> 65'] = 0
+
+        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+            for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
+                variants_age_distribution_cat_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
+                variants_age_distribution_cat_data[i_key] = {}
+                variants_age_distribution_cat_percentage[i_key] = {}
+
+        for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
+            total_age_across_variants = variants_age_distribution_cat_totals[i_key]
+            for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+
+                variant_age_data_v = variant_of_gloss.speaker_data()
+                i_value = variant_age_data_v[i_key]
+
+                speaker_data_v = i_value
+                if total_age_across_variants > 0:
+                    speaker_data_p = i_value / total_age_across_variants
+                else:
+                    speaker_data_p = i_value
+                variants_age_distribution_cat_data[i_key][variant_idgloss] = speaker_data_v
+                variants_age_distribution_cat_percentage[i_key][variant_idgloss] = speaker_data_p
+
+        context['variants_age_distribution_cat_data'] = variants_age_distribution_cat_data
+        context['variants_age_distribution_cat_percentage'] = variants_age_distribution_cat_percentage
+
+        variant_labels = []
+        for og_igloss in sorted_variant_keys:
+            if og_igloss not in variant_labels:
+                variant_labels.append(og_igloss)
         context['variant_labels'] = variant_labels
-
-        variant_female_data = []
-        for v_label in variant_labels:
-            variant_female_data.append(speaker_per_variant_data['Female'][v_label])
-
-        context['variant_female_data'] = variant_female_data
-
-        variant_male_data = []
-        for v_label in variant_labels:
-            variant_male_data.append(speaker_per_variant_data['Male'][v_label])
-
-        context['variant_male_data'] = variant_male_data
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -3053,6 +3109,8 @@ class GlossFrequencyView(DetailView):
         context['gloss_idgloss'] = gloss_idgloss.text
 
         context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
+
+        context['view_type'] = 'percentage'
 
         return context
 

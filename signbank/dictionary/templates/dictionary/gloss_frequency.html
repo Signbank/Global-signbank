@@ -13,6 +13,17 @@
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
+
+
+<script type='text/javascript'>
+    var url = '{{PREFIX_URL}}';
+
+    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+
+    {% include "dictionary/search_result_bar.html" %}
+
+</script>
+
 <script type='text/javascript'>
 var happy_colors = [ 'LightBlue', 'Magenta', 'Green', 'OrangeRed', 'Salmon', 'Orange', 'Purple', 'Olive', 'DarkBlue', 'Yellow', 'Red',
                         'HotPink', 'Blue', 'Khaki', 'Chartreuse', 'Coral', 'Brown', 'BlueViolet', 'DarkCyan', 'Aqua', 'DarkRed', 'DarkOrange',
@@ -74,7 +85,6 @@ var age_distribution_labels = [];
 var datasets_age_distribution_list = [];
 
 var total_variants_age = [];
-
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
     var k_total_age = 0;
@@ -744,55 +754,8 @@ for (k in variant_labels) {
 
 </script>
 
-<script type='text/javascript'>
-    // This script gets and inserts the users last searched items on the gloss page
-    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
-    var req = $.ajax({
-        url: search_results_url,
-        dataType: "json",
-        context: document.body
-    })
-
-    req.done(function(json_data) {
-        for (var key in json_data) {
-            if (json_data.hasOwnProperty(key)) {
-                var a = document.createElement("a");
-                a.setAttribute("class", "search_result");
-                a.style["float"] = "none";
-                a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
-                a.id = json_data[key].id;
-                var linktext = document.createTextNode(json_data[key].gloss);
-                a.appendChild(linktext);
-                $( "#results-inline" ).append(a);
-            }
-        }
-
-        /* Determine the active button (if any), center the horizontal list according to the active button */
-        // Make sure that we are showing search results
-        if ($('#results-inline').length > 0) {
-            // Setting a button active according to which glosses page we are on. A.id should equal to gloss.id.
-            $('#results-inline #{{ gloss.id }}').addClass('active');
-            var scrollPanel = $('#searchresults');
-            var activeButton = $('#results-inline a.active');
-            // Make sure that activeButton exists
-            if (activeButton.length > 0) {
-                // Calculating the left offset position so that the button is centered
-                var leftOffset = activeButton.offset().left - scrollPanel.offset().left - (scrollPanel.width() / 2) + (activeButton.width() / 2);
-                // Scrolling to the active button
-                $('#searchresults').scrollLeft(leftOffset);
-            }
-            var signinfo = $('#signinfo');
-            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
-        }
-    });
-
-</script>
 
 <script type='text/javascript'>
-
-        $('#searchresults').css({'top': Math.round($('#signbank-bar').height() + 10)});
-        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
-
 /**
  * toggle between percentage view and raw view
  */
@@ -1056,7 +1019,7 @@ function do_toggle_display(el) {
                     <a data-toggle='collapse' data-parent='#regionschart' data-target='#regions'>{% trans "Gloss Regions" %}</a>
                 </div>
             </div>
-            <div id='regions' class='collapse' style="width:80%;">
+            <div id='regions' class='collapse' style="width:60%;">
                 <div class="chart-container">
                 <canvas id="myChart"></canvas>
                 </div>
@@ -1077,7 +1040,7 @@ function do_toggle_display(el) {
                     {% endif %}
                 </div>
             </div>
-            <div id='ages' class='collapse' style="width:80%;">
+            <div id='ages' class='collapse' style="width:60%;">
                 <div class="chart-container">
                 <canvas id="speakerChart"></canvas>
                 </div>
@@ -1090,14 +1053,14 @@ function do_toggle_display(el) {
                 </div>
             </div>
             <div id='speaker' class='container-fluid collapse in'>
-                <div style="float:left; width:80%;">
+                <div style="float:left; width:100%;">
                     <button class="btn btn-primary" type="submit" name="view_type" onclick="do_toggle_display(this);" value='raw'/>{% trans "Raw View" %}</button>
                 </div>
-                <div class="row" style="float:left; width:80%;">
+                <div class="row" style="float:left; width:100%;">
 <!--                    <div class="col-lg-12">-->
                 <div class="col-lg-3">
                 <div class="chart-container">
-                <canvas id="genderChart" width="300"></canvas>
+                <canvas id="genderChart" width="400"></canvas>
                 </div>
                 </div>
                 <div class="col-lg-4">
@@ -1108,7 +1071,7 @@ function do_toggle_display(el) {
                 {% endif %}
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
-                <canvas id="variantsGenderChart_{{key}}" height="50" width="300"></canvas>
+                <canvas id="variantsGenderChart_{{key}}" height="50" width="400"></canvas>
                 </div>
                 {% endfor %}
                 </div>
@@ -1120,18 +1083,18 @@ function do_toggle_display(el) {
                 <div class="chart-multichart-enclosure-container" style="float:right; display:none;" >
                 {% endif %}
                 <div class="chart-short-container" style="float:right;">
-                <canvas id="glossvariantsSexChart" width="300" ></canvas>
+                <canvas id="glossvariantsSexChart" width="400" ></canvas>
                 </div>
                 </div>
                 </div>
                     <!--                </div>-->
                 </div>
                 <div class="clearfix"></div>
-                <div class="row" style="float:left; width:80%;">
+                <div class="row" style="float:left; width:100%;">
 <!--                    <div class="col-lg-12">-->
                 <div class="col-lg-3">
                 <div class="chart-container" >
-                <canvas id="ageChart" width="300"></canvas>
+                <canvas id="ageChart" width="400"></canvas>
                 </div>
                 </div>
                 <div class="col-lg-4">
@@ -1154,7 +1117,7 @@ function do_toggle_display(el) {
                 <div class="chart-multichart-enclosure-container" style="float:right; display:none;" >
                 {% endif %}
                 <div class="chart-short-container" style="float:right;">
-                <canvas id="glossvariantsAgeChart" width="300" ></canvas>
+                <canvas id="glossvariantsAgeChart" width="400" ></canvas>
                 </div>
                 </div>
                 </div>
