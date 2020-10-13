@@ -27,7 +27,6 @@
     <script type='text/javascript'>
     var url = '{{ PREFIX_URL }}';
     var phonology_list_kinds = {{phonology_list_kinds|safe}};
-//    console.log(phonology_list_kinds);
 
     var morpheme_phonology = {{MORPHEME_DISPLAY_FIELDS|safe}};
 
@@ -68,48 +67,9 @@
     var next_gloss_id;
     var next_morpheme_id = {{nextmorphemeid}};
 
-    // This script gets and inserts the users last searched items on the gloss page
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
-    var req = $.ajax({
-        url: search_results_url,
-        dataType: "json",
-        context: document.body
-    });
-    req.done(function(json_data) {
-        for (var key in json_data) {
-            if (json_data.hasOwnProperty(key)) {
-                var a = document.createElement("a");
-                a.setAttribute("class", "btn btn-default");
-                a.style["float"] = "none";
-                if (json_data[key].ismorpheme) {
-                    a.href = "{{PREFIX_URL}}/dictionary/morpheme/" + json_data[key].id + "/";
-                } else {
-                    a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
-                };
-                a.id = json_data[key].id;
-                var linktext = document.createTextNode(json_data[key].gloss);
-                a.appendChild(linktext);
-                $( "#results-inline" ).append(a);
-            }
-        }
-        /* Determine the active button (if any), center the horizontal list according to the active button */
-        // Make sure that we are showing search results
-        if ($('#results-inline').length > 0) {
-            // Setting a button active according to which morphemes page we are on. A.id should equal to morpheme.id.
-            $('#results-inline #{{ morpheme.id }}').addClass('active');
-            var scrollPanel = $('#searchresults');
-            var activeButton = $('#results-inline a.active');
-            // Make sure that activeButton exists
-            if (activeButton.length > 0) {
-                // Calculating the left offset position so that the button is centered
-                var leftOffset = activeButton.offset().left - scrollPanel.offset().left - (scrollPanel.width() / 2) + (activeButton.width() / 2);
-                // Scrolling to the active button
-                $('#searchresults').scrollLeft(leftOffset);
-            }
-            var signinfo = $('#signinfo');
-            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height())});
-        }
-    });
+
+    {% include "dictionary/search_result_bar.html" %}
 
     </script>
 
@@ -124,27 +84,6 @@ function nextPhonologyField(e) {
     label.show();
 };
 
-
-<!--    //Fill choice_lists without frequencies now-->
-<!--    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{morpheme.lemma.dataset}}").done( function (data)-->
-<!--    {-->
-<!--        choice_lists = $.extend(data,{{other_media_field_choices | safe}});-->
-<!--        console.log("Added field choices");-->
-<!--    });-->
-
-<!--    //Fill choice_lists with frequencies later-->
-<!--    $(document).ready(function() {-->
-<!--        $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{morpheme.lemma.dataset}}").done( function (data)-->
-<!--        {-->
-<!--            choice_lists = $.extend(data,{{other_media_field_choices | safe}});-->
-
-<!--            // Reload the data in the lists-->
-<!--            $('.edit_list').unbind('click');-->
-<!--            configure_edit();-->
-
-<!--            console.log("Added field choices");-->
-<!--        });-->
-<!--    });-->
 
 //Keyboard shortcuts
 document.onkeydown = checkKey;
@@ -184,20 +123,47 @@ function checkKey(e)
 
     <script type='text/javascript' src="{{ STATIC_URL }}js/morpheme_edit.js"></script>
 
-     <script type='text/javascript'>
-<!--        console.log('after reading script morpheme edit js');-->
-        $('#searchresults').css({'top': Math.round($('#signbank-bar').height() + 10)});
+    <script type='text/javascript'>
+        $('#searchresults').css({'padding-top': 10});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
-     </script>
+        $('#expand-panels').on('click', function() {
+            $('#definition .collapse').collapse('show');
+        });
+        $('#collapse-panels').on('click', function() {
+            $('#definition .collapse').collapse('hide');
+        });
+        $('#panel-expand-collapse-btn-group').affix({
+            offset: {
+                top: $('#panel-expand-collapse-btn-group').offset().top - $('#signbank-bar').height() - $('#signinfo').height()
+                 + parseInt($('#signbank-bar').css('margin-bottom'))
+                 + parseInt($('#panel-expand-collapse-btn-group').css('height')),
+            }
+        });
+        $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
+            $('#panel-expand-collapse-btn-group').css({
+                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
+                'top': ($('#signbank-bar').height() - $('#navbar').height() + parseInt($('#definitionblock').css('padding-top')) + 3) + 'px',
+            });
+         });
+        $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
+            $('#panel-expand-collapse-btn-group').css({
+                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
+                'top': '0px',
+            });
+         });
+         $('#panel-expand-collapse-btn-toolbar').css({
+            'height': $('#panel-expand-collapse-btn-group').css('height'),
+         });
+    </script>
 
 {% endblock %}
 
 
 {% block content %}
 
-<div id="searchresults" class='navbar navbar-default' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box;overflow-x:scroll;">
+<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background:white;margin-top:3px;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background:white;">
     </div>
     {% endif %}
 </div>
@@ -238,7 +204,7 @@ function checkKey(e)
     {% get_obj_perms request.user for morpheme.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     {% if perms.dictionary.change_morpheme %}
-    <div class='pull-right' style="margin-right:15px;margin-top:3px;">
+    <div class='pull-right' style="margin-right:15px;margin-top:10px;z-index:100;">
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
@@ -250,7 +216,7 @@ function checkKey(e)
     {% endif %}
 </div>
 
-<div id="definitionblock">
+<div id="definitionblock" style="z-index:0;">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
     <div id="videocontainer">
@@ -460,6 +426,20 @@ function checkKey(e)
 
    {% if perms.dictionary.view_advanced_properties %}
 
+    <!-- Expand and collapse all panels -->
+    <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
+        <div class="pull-right">
+            <div class="btn-group" id="panel-expand-collapse-btn-group">
+                <button id="expand-panels" type="button" class="btn btn-default btn-xs">
+                        <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+                </button>
+                <button id="collapse-panels" type="button" class="btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
    <!-- Morphology -->
    <div class="panel panel-default">
         <div class='panel-heading'>
@@ -500,7 +480,7 @@ function checkKey(e)
     <!-- Phonology -->
 	<div class="panel panel-default">
         <div class='panel-heading'>
-            <div class='panel-title'>
+            <div class='panel-title' id='phonology_heading'>
                 <a data-toggle='collapse' data-parent='#definition' href='#phonology'>{% trans "Phonology" %}</a>
             </div>
         </div>

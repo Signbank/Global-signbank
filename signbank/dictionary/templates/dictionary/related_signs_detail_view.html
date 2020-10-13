@@ -18,6 +18,8 @@
 
     <script type='text/javascript'>
 
+    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+
     {% include "dictionary/search_result_bar.html" %}	
 
     var choice_lists = {{ choice_lists | safe }};

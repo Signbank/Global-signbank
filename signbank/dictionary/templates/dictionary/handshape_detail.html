@@ -5,15 +5,6 @@
 
 {% load guardian_tags %}
 
-{% block extrahead %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
-    <style>
-        #panel-expand-collapse-btn-group.affix {
-            position:fixed;
-        }
-    </style>
-{% endblock %}
-
 {% block extrajs %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
@@ -34,42 +25,8 @@
 
     // This script gets and inserts the users last searched items on the handshape page
     var search_results_url = '{% url 'dictionary:handshape_ajax_search_results' %}';
-    var req = $.ajax({
-        url: search_results_url,
-        dataType: "json",
-        context: document.body
-    })
-    req.done(function(json_data) {
-        for (var key in json_data) {
-            if (json_data.hasOwnProperty(key)) {
-                var a = document.createElement("a");
-                a.setAttribute("class", "search_result");
-                a.style["float"] = "none";
-                a.href = "{{PREFIX_URL}}/dictionary/handshape/" + json_data[key].id + "/";
-                a.id = json_data[key].id;
-                var linktext = document.createTextNode(json_data[key].handshape);
-                a.appendChild(linktext);
-                $( "#results-inline" ).append(a);
-            }
-        }
-        /* Determine the active button (if any), center the horizontal list according to the active button */
-        // Make sure that we are showing search results
-        if ($('#results-inline').length > 0) {
-            // Setting a button active according to which handshape page we are on. A.id should equal to handshape.machine_value.
-            $('#results-inline #{{ handshape.machine_value }}').addClass('active');
-            var scrollPanel = $('#searchresults');
-            var activeButton = $('#results-inline a.active');
-            // Make sure that activeButton exists
-            if (activeButton.length > 0) {
-                // Calculating the left offset position so that the button is centered
-                var leftOffset = activeButton.offset().left - scrollPanel.offset().left - (scrollPanel.width() / 2) + (activeButton.width() / 2);
-                // Scrolling to the active button
-                $('#searchresults').scrollLeft(leftOffset);
-            }
-            var signinfo = $('#signinfo');
-            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
-        }
-    });
+
+    {% include "dictionary/search_result_bar.html" %}
 
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/handshape_edit.js"></script>
@@ -78,34 +35,6 @@
     <script type='text/javascript'>
         $('#searchresults').css({'top': 10+Math.round($('#signbank-bar').height())});
         $('#definitionblock').css({'padding-top': 10+Math.round($('#searchresults').height() + $('#signinfo').height())});
-        $('#expand-panels').on('click', function() {
-            $('#definition .collapse').collapse('show');
-        });
-        $('#collapse-panels').on('click', function() {
-            $('#definition .collapse').collapse('hide');
-        });
-        $('#panel-expand-collapse-btn-group').affix({
-            offset: {
-                top: $('#panel-expand-collapse-btn-group').offset().top - $('#signbank-bar').height() - $('#signinfo').height()
-                 + parseInt($('#signbank-bar').css('margin-bottom'))
-                 + parseInt($('#panel-expand-collapse-btn-group').css('height')),
-            }
-        });
-        $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
-            $('#panel-expand-collapse-btn-group').css({
-                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': ($('#signbank-bar').height() - $('#navbar').height() + parseInt($('#definitionblock').css('padding-top')) + 3) + 'px',
-            });
-         });
-        $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
-            $('#panel-expand-collapse-btn-group').css({
-                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': '0px',
-            });
-         });
-         $('#panel-expand-collapse-btn-toolbar').css({
-            'height': $('#panel-expand-collapse-btn-group').css('height'),
-         });
     </script>
 
 {% endblock %}

@@ -220,6 +220,25 @@ def gloss(request, glossid):
     except ObjectDoesNotExist:
         raise Http404
 
+    # set session variables for scroll bar
+    if 'search_results' in request.session.keys():
+        search_results = request.session['search_results']
+    else:
+        search_results = []
+    if search_results and len(search_results) > 0:
+        if request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+            # if the results have the wrong type
+            request.session['search_results'] = None
+    if 'search_type' in request.session.keys():
+        # check that the search type matches the results
+        # the session variables are used by the ajax call
+        if request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            # search type is not correct, see if the results were not erased in the last step
+            if request.session['search_results']:
+                # this was not set to None in the previous step, results have the right type
+                # search type is set to handshape but there are glosses in the search results
+                request.session['search_type'] = 'sign_or_morpheme'
+
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
@@ -334,6 +353,7 @@ def gloss(request, glossid):
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
                                'dataset_languages': dataset_languages,
                                'selected_datasets': selected_datasets,
+                               'active_id': glossid,
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
 
@@ -432,6 +452,7 @@ def morpheme(request, glossid):
                                'feedbackmessage': feedbackmessage,
                                'annotation_idgloss': annotation_idgloss,
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
+                               'active_id': glossid,
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 

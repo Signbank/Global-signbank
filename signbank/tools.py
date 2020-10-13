@@ -2242,3 +2242,32 @@ def configure_corpus_documents():
                 gloss_frequency.save()
 
     print('configure_corpus_documents: No glosses were found for these names: ', glosses_not_in_signbank)
+
+def construct_scrollbar(qs, search_type, language_code):
+    items = []
+    if search_type in ['sign', 'sign_or_morpheme', 'morpheme', 'sign_handshape']:
+        for item in qs:
+            if item.is_morpheme():
+                item_is_morpheme = 'morpheme'
+            else:
+                item_is_morpheme = 'gloss'
+            annotationidglosstranslations = item.annotationidglosstranslation_set.filter(
+                language__language_code_2char__exact=language_code
+            )
+            if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
+                gloss_text = annotationidglosstranslations[0].text
+                if not gloss_text:
+                    gloss_text = item.idgloss
+                items.append(dict(id=item.id, data_label=gloss_text, href_type=item_is_morpheme))
+            else:
+                # no annotations found for gloss
+                # idgloss defaults to the id if nothing is found
+                items.append(dict(id=item.id, data_label=item.idgloss, href_type=item_is_morpheme))
+
+    elif search_type in ['handshape']:
+        for item in qs:
+            # if language_code == 'nl':
+            data_label = item.dutch_name
+            items.append(dict(id = item.machine_value, data_label = data_label, href_type = 'handshape'))
+
+    return items

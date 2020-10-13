@@ -1,5 +1,4 @@
-    // This script gets and inserts the users last searched items on the gloss page
-    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+    // This script gets and inserts the users last searched items on the page
     var req = $.ajax({
         url: search_results_url,
         dataType: "json",
@@ -11,13 +10,15 @@
                 var a = document.createElement("a");
                 a.setAttribute("class", "search_result");
                 a.style["float"] = "none";
-                if (json_data[key].ismorpheme) {
-                    a.href = "{{PREFIX_URL}}/dictionary/morpheme/" + json_data[key].id + "/";
-                } else {
-                    a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
-                };
+                var type_of_data = json_data[key].href_type;
+                a.href = "{{PREFIX_URL}}/dictionary/" + type_of_data + "/" + json_data[key].id + "/";
                 a.id = json_data[key].id;
-                var linktext = document.createTextNode(json_data[key].gloss);
+                var data_label = json_data[key].data_label;
+                if (data_label) {
+                    var linktext = document.createTextNode(data_label);
+                } else {
+                    var linktext = document.createTextNode("-----");
+                };
                 a.appendChild(linktext);
                 $( "#results-inline" ).append(a);
             }
@@ -26,7 +27,7 @@
         // Make sure that we are showing search results
         if ($('#results-inline').length > 0) {
             // Setting a button active according to which glosses page we are on. A.id should equal to gloss.id.
-            $('#results-inline #{{ gloss.id }}').addClass('active');
+                $('#results-inline #{{ active_id }}').addClass('active');
             var scrollPanel = $('#searchresults');
             var activeButton = $('#results-inline a.active');
             // Make sure that activeButton exists
