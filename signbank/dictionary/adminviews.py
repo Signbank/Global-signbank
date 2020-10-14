@@ -41,7 +41,7 @@ from signbank.settings.server_specific import *
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
-from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, construct_scrollbar
+from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, construct_scrollbar, write_csv_for_minimalpairs
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -2655,6 +2655,31 @@ class MinimalPairsListView(ListView):
         Paginate by specified value in querystring, or use default class property value.
         """
         return self.request.GET.get('paginate_by', self.paginate_by)
+
+    def render_to_response(self, context):
+        # Look for a 'format=json' GET argument
+        if self.request.GET.get('format') == 'CSV':
+            return self.render_to_csv_response(context)
+        else:
+            return super(MinimalPairsListView, self).render_to_response(context)
+
+    def render_to_csv_response(self, context):
+
+        if not self.request.user.has_perm('dictionary.export_csv'):
+            raise PermissionDenied
+
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="dictionary-export-minimalpairs.csv"'
+
+        # this ends up being English for Global Signbank
+        language_code = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+
+        writer = csv.writer(response)
+
+        writer = write_csv_for_minimalpairs(self, writer, language_code=language_code)
+
+        return response
 
     def get_queryset(self):
 

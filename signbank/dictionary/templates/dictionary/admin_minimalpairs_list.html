@@ -1,7 +1,10 @@
 {% extends "baselayout.html" %}
 {% load i18n %}
-{% load annotation_idgloss_translation %}
+{% load stylesheet %}
 {% load bootstrap3 %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
 {% block bootstrap3_title %}Signbank: Minimal Pairs list{% endblock %}
 
 {% block extrahead %}
@@ -57,6 +60,7 @@ $(document).ready(function() {
 
 {% block content %}
 <body>
+
 <div id="definitionblock">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
 
@@ -70,6 +74,17 @@ $(document).ready(function() {
 </select>
 {% csrf_token %}
     <input type="submit" value = '{% trans "Refresh" %}' />
+</div>
+</form>
+
+<h3>{% trans "Minimal pairs" %}</h3>
+
+<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/minimalpairs/'>
+<div class='btn-group' style="margin-bottom: 20px">
+
+{% if perms.dictionary.export_csv %}
+<input class='btn btn-default' type='submit' name='format' value='CSV'>
+{% endif %}
 </div>
 </form>
 
