@@ -40,16 +40,18 @@ def move_fieldchoice_choice_for_class(apps, schema_editor, klass):
 
     for obj in klass_old.objects.all():
         for field in fk_field_names:
+            category = klass._meta.get_field(field+'_fk').field_choice_category
             machine_value = getattr(obj, field)
-            if machine_value:
-                category = klass._meta.get_field(field+'_fk').field_choice_category
-                print(klass.__name__, obj.pk,"=> Field:", field, "Category:", category, "machine_value:", machine_value)
-                try:
+            print(klass.__name__, obj.pk, "=> Field:", field, "Category:", category, "machine_value:", machine_value)
+            try:
+                if machine_value:
                     field_choice = FieldChoice.objects.get(field=category, machine_value=machine_value)
-                    setattr(obj, field+'_fk', field_choice)
-                    obj.save()
-                except:
-                    print("INFO: fieldchoice not found")
+                else:
+                    field_choice = FieldChoice.objects.get(field=category, machine_value=0)
+                setattr(obj, field+'_fk', field_choice)
+                obj.save()
+            except Exception as e:
+                print("INFO: fieldchoice not found", e)
 
 
 def move_fieldchoice_choice(apps, schema_editor):
