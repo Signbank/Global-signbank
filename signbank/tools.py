@@ -2283,10 +2283,8 @@ def write_csv_for_minimalpairs(minimalpairslistview, csvwriter, language_code):
     csvwriter.writerow(header)
 
     minimalpairs_list = minimalpairslistview.get_queryset()
-    cnt = 0
+    # for debug purposes use a count, otherwise this is extremely slow if all glosses are shown
     for glo in minimalpairs_list:
-        if cnt > 10:
-            break
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             try:
                 mp_dataset = glo.lemma.dataset.acronym
@@ -2335,14 +2333,13 @@ def write_csv_for_minimalpairs(minimalpairslistview, csvwriter, language_code):
                     safe_row.append(None)
 
             csvwriter.writerow(safe_row)
-        cnt = cnt + 1
     return csvwriter
 
 def minimalpairs_focusgloss(gloss_id, language_code):
 
     from django.utils import translation
     translation.activate(language_code)
-    
+
     this_gloss = Gloss.objects.get(id=gloss_id)
 
     try:

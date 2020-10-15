@@ -2597,6 +2597,7 @@ class MinimalPairsListView(ListView):
     model = Gloss
     template_name = 'dictionary/admin_minimalpairs_list.html'
     paginate_by = 10
+    filter = False
 
     def get_context_data(self, **kwargs):
         # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
@@ -2625,6 +2626,10 @@ class MinimalPairsListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
         context['translated_choice_lists_table'] = generate_translated_choice_list_table()
 
         field_names = []
@@ -2642,11 +2647,66 @@ class MinimalPairsListView(ListView):
 
         context['field_labels'] = field_labels
 
+
+        selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
+        sign_languages = []
+        for sl in selected_datasets_signlanguage:
+            if not ((str(sl.id),sl.name) in sign_languages):
+                sign_languages.append((str(sl.id), sl.name))
+
+        selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage)\
+            .prefetch_related('signlanguage').distinct()
+        dialects = []
+        for dl in selected_datasets_dialects:
+            dialect_name = dl.signlanguage.name + "/" + dl.name
+            dialects.append((str(dl.id),dialect_name))
+
+        search_form = FocusGlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
+                                      dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+
+        context['searchform'] = search_form
+
+
+        context['input_names_fields_and_labels'] = {}
+
+        for topic in ['main','phonology','semantics']:
+
+            context['input_names_fields_and_labels'][topic] = []
+
+            for fieldname in settings.FIELDS[topic]:
+
+                if fieldname in settings.MINIMAL_PAIRS_SEARCH_FIELDS:
+                    # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand for purposes of nested dependencies in Search form
+                    if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                        field = search_form[fieldname]
+                        label = field.label
+                        context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
+
+
         context['page_number'] = context['page_obj'].number
 
         context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
+
+        # the minimal pairs are computed during ajax calls in the view template
+        # all queried objects are shown on pages in the list view
+        # but those focus glosses without minimal pairs have empty columns
+        # it doesn't work to try to put additional glosses in the search_results scroll bar because
+        # ajax hasn't been called for glosses on other pages
+        if len(self.object_list) > settings.MAX_SCROLL_BAR:
+            list_of_objects = context['page_obj'].object_list
+        else:
+            list_of_objects = self.object_list
+
+        # construct scroll bar
+        # the following retrieves language code for English (or DEFAULT LANGUAGE)
+        # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
+        from signbank.tools import convert_language_code_to_language_minus_locale
+        lang_attr_name = convert_language_code_to_language_minus_locale(
+            settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+        items = construct_scrollbar(list_of_objects, 'sign', lang_attr_name)
+        self.request.session['search_results'] = items
 
         return context
 
@@ -2683,6 +2743,8 @@ class MinimalPairsListView(ListView):
 
     def get_queryset(self):
 
+        get = self.request.GET
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         # grab gloss ids for finger spelling glosses, identified by text #.
@@ -2691,7 +2753,74 @@ class MinimalPairsListView(ListView):
 
         glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(lemma__dataset__in=selected_datasets).exclude(id__in=finger_spelling_glosses).exclude((Q(**{'handedness__isnull': True}))).exclude((Q(**{'domhndsh__isnull': True})))
 
-        return glosses_with_phonology
+        if 'filter' in get or len(get) > 0:
+            self.filter = True
+            pass
+        else:
+            self.filter = False
+            return glosses_with_phonology
+
+        qs = glosses_with_phonology
+        # Evaluate all gloss/language search fields
+        for get_key, get_value in get.items():
+            if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
+                language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
+                               annotationidglosstranslation__language=language)
+            elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
+                language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
+                               lemma__lemmaidglosstranslation__language=language)
+            elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
+                language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(translation__translation__text__iregex=get_value,
+                               translation__language=language)
+
+        if 'keyword' in get and get['keyword'] != '':
+            val = get['keyword']
+            qs = qs.filter(translation__translation__text__iregex=val)
+
+        fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+
+        for fieldnamemulti in multiple_select_gloss_fields:
+
+            fieldnamemultiVarname = fieldnamemulti + '[]'
+            fieldnameQuery = fieldnamemulti + '__in'
+
+            vals = get.getlist(fieldnamemultiVarname)
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                qs = qs.filter(**{ fieldnameQuery: vals })
+
+        ## phonology and semantics field filters
+        fieldnames = [ f for f in fieldnames if f not in multiple_select_gloss_fields ]
+        for fieldname in fieldnames:
+
+            if fieldname in get and get[fieldname] != '':
+
+                field_obj = Gloss._meta.get_field(fieldname)
+
+                if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
+                    key = fieldname + '__iregex'
+                else:
+                    key = fieldname + '__exact'
+
+                val = get[fieldname]
+
+                if isinstance(field_obj,NullBooleanField):
+                    val = {'0':'','1': None, '2': True, '3': False}[val]
+
+                if val != '':
+                    kwargs = {key:val}
+                    qs = qs.filter(**kwargs)
+        qs = qs.select_related('lemma')
+
+        return qs
 
 class FrequencyListView(ListView):
     # not sure what model should be used here, it applies to all the glosses in a dataset
