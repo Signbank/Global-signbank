@@ -46,7 +46,8 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
-    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses
+    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
+    language_codes_to_adjectives
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -1332,11 +1333,16 @@ class GlossDetailView(DetailView):
                     context['static_choice_list_colors'][field] = {}
 
                     #Take the human value in the language we are using
-                    machine_value = getattr(gl,field)
+                    # TODO: TEMPORARY check for _fk version
+                    if hasattr(gl, field + '_fk'):
+                        machine_value = getattr(gl, field + '_fk')
+                    else:
+                        machine_value = getattr(gl,field)
+
                     if len(choice_list) > 0:
-                        # if there is a choice list, the value stored in the field is a code
-                        human_value = machine_value_to_translated_human_value(machine_value, choice_list,
-                                                                              self.request.LANGUAGE_CODE)
+                        # if there is a choice list, machine_value is FieldChoice object
+                        language_adjective = language_codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
+                        human_value = getattr(machine_value, language_adjective + '_name')
 
                         # The static_choice_lists structure is used in the Detail View to reverse map in javascript
                         # It's only needed for choice lists.

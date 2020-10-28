@@ -23,6 +23,9 @@ from tagging.models import TaggedItem, Tag
 from guardian.shortcuts import get_objects_for_user
 
 
+language_codes_to_adjectives = dict(settings.LANGUAGES)
+
+
 def get_two_letter_dir(idgloss):
     foldername = idgloss[:2]
 

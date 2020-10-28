@@ -6,12 +6,12 @@ from django.db.models import When, Case, NullBooleanField, IntegerField
 from django.db.utils import OperationalError
 
 def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
-
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
     # Or the queryset is a set of Handshape objects
     # Other functions that call this function expect either a list or an OrderedDict that maps machine values to human values
     # Make sure the machine values are unique by only using the first human value
 
+    list_head_values = ['-', 'N/A']
     codes_to_adjectives = dict(settings.LANGUAGES)
 
     if language_code == 'en' or language_code not in codes_to_adjectives.keys():
@@ -22,38 +22,30 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
     temp_mapping_dict = {}
     raw_choice_list = []
     machine_values_seen = []
+    empty_or_NA = {}
     for choice in queryset:
-        try:
-            human_value = getattr(choice, language_field)
-        except (OperationalError, AttributeError):
-            human_value = getattr(choice,'name')
-
         if choice.machine_value in machine_values_seen:
             # don't append to raw_choice_list
             continue
+
+        human_value = getattr(choice, language_field)
+        if human_value in list_head_values:
+            empty_or_NA[human_value] = choice
+            continue
+
         temp_mapping_dict[choice.machine_value] = human_value
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
-            raw_choice_list.append((id_prefix + str(choice.machine_value), human_value))
+            raw_choice_list.append((id_prefix + str(choice.id), getattr(choice, language_field)))
+
+    list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].id), v) for v in list_head_values]
 
     if ordered:
-
-        if shortlist:
-            sorted_choice_list = OrderedDict(sorted(raw_choice_list,key = lambda x: x[1]))
-        else:
-            sorted_choice_list = OrderedDict(sorted(raw_choice_list,key = lambda x: x[1]))
-            sorted_choice_list.update({id_prefix+'1':'N/A'})
-            sorted_choice_list.move_to_end(id_prefix+'1', last=False)
-            sorted_choice_list.update({id_prefix+'0':'-'})
-            sorted_choice_list.move_to_end(id_prefix+'0', last=False)
+        sorted_choice_list = OrderedDict(list_head)
+        sorted_choice_list.update(OrderedDict(sorted(raw_choice_list,key = lambda x: x[1])))
         return sorted_choice_list
     else:
-
-        if shortlist:
-            sorted_choice_list = sorted(raw_choice_list, key=lambda x: x[1])
-        else:
-            sorted_choice_list = [(id_prefix + '0', '-'), (id_prefix + '1', 'N/A')] + sorted(raw_choice_list,
-                                                                                             key=lambda x: x[1])
+        sorted_choice_list = list_head + sorted(raw_choice_list, key=lambda x: x[1])
         return sorted_choice_list
 
 def choicelist_queryset_to_colors(queryset,language_code,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
