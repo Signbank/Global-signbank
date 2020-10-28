@@ -21,7 +21,7 @@ from django.conf import settings
 
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, language_codes_to_adjectives
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -368,7 +368,10 @@ def update_gloss(request, glossid):
             # special value of 'notset' or -1 means remove the value
             fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
 
-            # this is dangerous because Field CHoice fields are actually CharFields
+            fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
+                                            if f.name in fieldnames
+                                            and f.name + '_fk' in  [f.name for f in Gloss._meta.fields]
+                                            and isinstance(Gloss._meta.get_field(f.name + '_fk'), FieldChoiceForeignKey)]
 
             fields_empty_null = [f.name for f in Gloss._meta.fields
                                     if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
@@ -395,7 +398,13 @@ def update_gloss(request, glossid):
             # The following code relies on the order of if else testing
             # The updates ignore Placeholder empty fields of '-' and '------'
             # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-            if (value == 'notset' or value == -1 or value == '' or value == '-' or value == '------') and field in fields_empty_null:
+            if field in fieldchoiceforeignkey_fields:
+                fieldchoice = FieldChoice.objects.get(id=value)
+                gloss.__setattr__(field + '_fk', fieldchoice)
+                gloss.save()
+                language_adjective = language_codes_to_adjectives[request.LANGUAGE_CODE].lower()
+                newvalue = getattr(fieldchoice, language_adjective + '_name')
+            elif (value == 'notset' or value == -1 or value == '' or value == '-' or value == '------') and field in fields_empty_null:
                 # print('a. field ', field, ' value ', value, ' set to None')
                 gloss.__setattr__(field, None)
                 gloss.save()

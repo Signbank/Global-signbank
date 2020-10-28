@@ -40,7 +40,8 @@ from signbank.settings.server_specific import *
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
-from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes
+from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
+    language_codes_to_adjectives
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1260,11 +1261,16 @@ class GlossDetailView(DetailView):
 
                     context['static_choice_lists'][field] = {}
                     #Take the human value in the language we are using
-                    machine_value = getattr(gl,field)
+                    # TODO: TEMPORARY check for _fk version
+                    if hasattr(gl, field + '_fk'):
+                        machine_value = getattr(gl, field + '_fk')
+                    else:
+                        machine_value = getattr(gl,field)
+
                     if len(choice_list) > 0:
-                        # if there is a choice list, the value stored in the field is a code
-                        human_value = machine_value_to_translated_human_value(machine_value, choice_list,
-                                                                              self.request.LANGUAGE_CODE)
+                        # if there is a choice list, machine_value is FieldChoice object
+                        language_adjective = language_codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
+                        human_value = getattr(machine_value, language_adjective + '_name')
 
                         # The static_choice_lists structure is used in the Detail View to reverse map in javascript
                         # It's only needed for choice lists.

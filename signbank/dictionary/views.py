@@ -2650,7 +2650,9 @@ def choice_lists(request):
 
                 #Also concatenate the frequencies of all values
                 if 'include_frequencies' in request.GET and request.GET['include_frequencies']:
-                    for choice_list_field, machine_value in choice_list_machine_values:
+                    for choicefield in choice_list:
+                        machine_value = choicefield.machine_value
+                        choice_list_field = '_' + str(choicefield.id)
 
                         if machine_value == 0:
                             frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
@@ -2658,10 +2660,16 @@ def choice_lists(request):
                                                                        Q(**{field: 0})).count()
 
                         else:
-                            variable_column = field
-                            search_filter = 'exact'
-                            filter = variable_column + '__' + search_filter
-                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
+                            try:
+                                Gloss._meta.get_field(field + '_fk')
+                                filter = field + '_fk'
+                                filter_value = choicefield
+                            except KeyError:
+                                variable_column = field
+                                search_filter = 'exact'
+                                filter = variable_column + '__' + search_filter
+                                filter_value = machine_value
+                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: filter_value}).count()
 
                         try:
                             all_choice_lists[field][choice_list_field] += ' ['+str(frequency_for_field)+']'
