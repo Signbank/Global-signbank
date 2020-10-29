@@ -126,6 +126,7 @@ HANDEDNESS_ARTICULATION_FIELDS = ['weakdrop','weakprop']
 #Use these fields to figure out which glosses are minimal pairs
 MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','relOriMov','relOriLoc',
                         'oriCh','contType','movSh','movDir','repeat','altern']
+MINIMAL_PAIRS_SEARCH_FIELDS = MINIMAL_PAIRS_FIELDS + ['namEnt','semField','valence']
 
 #Display these fields als columns in the list view
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']

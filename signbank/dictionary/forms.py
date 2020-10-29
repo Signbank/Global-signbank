@@ -780,4 +780,80 @@ class LemmaUpdateForm(forms.ModelForm):
         # print("POST SAVE for Translations")
         return
 
+class FocusGlossSearchForm(forms.ModelForm):
+
+    use_required_attribute = False #otherwise the html required attribute will show up on every form
+
+    search = forms.CharField(label=_("Dutch Gloss"))
+    sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
+    englishGloss = forms.CharField(label=_("English Gloss"))
+    keyword = forms.CharField(label=_(u'Translations'))
+
+    oriChAbd = forms.ChoiceField(label=_(u'Abduction change'),choices=NULLBOOLEANCHOICES)
+    oriChFlex = forms.ChoiceField(label=_(u'Flexion change'),choices=NULLBOOLEANCHOICES)
+
+    repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
+    altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)
+
+    createdBefore = forms.DateField(label=_(u'Created before'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
+    createdAfter = forms.DateField(label=_(u'Created after'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
+
+    createdBy = forms.CharField(label=_(u'Created by'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+
+    gloss_search_field_prefix = "glosssearch_"
+    keyword_search_field_prefix = "keywords_"
+    lemma_search_field_prefix = "lemma_"
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class':'form-control'}
+
+        model = Gloss
+        fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+
+    def __init__(self, queryDict, *args, **kwargs):
+        languages = kwargs.pop('languages')
+        sign_languages = kwargs.pop('sign_languages')
+        dialects = kwargs.pop('dialects')
+        language_code = kwargs.pop('language_code')
+        super(FocusGlossSearchForm, self).__init__(queryDict, *args, **kwargs)
+
+        for language in languages:
+            glosssearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
+            setattr(self, glosssearch_field_name, forms.CharField(label=_("Gloss")+(" (%s)" % language.name)))
+            if glosssearch_field_name in queryDict:
+                getattr(self, glosssearch_field_name).value = queryDict[glosssearch_field_name]
+
+            # do the same for Translations
+            keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
+            setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
+            if keyword_field_name in queryDict:
+                getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
+
+            # and for LemmaIdgloss
+            lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
+            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
+            if lemma_field_name in queryDict:
+                getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
+
+        field_label_signlanguage = gettext("Sign language")
+        field_label_dialects = gettext("Dialect")
+        self.fields['signLanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage, widget=Select2,
+                    queryset=SignLanguage.objects.filter(id__in=[signlanguage[0] for signlanguage in sign_languages]))
+
+        self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
+                    queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
+
+        field_language = language_code
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+        multiple_select_gloss_fields = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+
+        for (fieldname, field_category) in multiple_select_gloss_fields:
+            field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            translated_choices = [('0','---------')] + choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
+            self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
+                                                        choices=translated_choices,
+                                                        required=False, widget=Select2)
+
 
