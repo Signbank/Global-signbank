@@ -41,7 +41,8 @@ from signbank.settings.server_specific import *
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
-from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, construct_scrollbar
+from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
+    construct_scrollbar, get_dataset_languages
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -229,7 +230,7 @@ class GlossListView(ListView):
         context['web_search'] = self.web_search
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
@@ -544,7 +545,7 @@ class GlossListView(ListView):
         fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
         annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                                for language in dataset_languages]
@@ -1105,7 +1106,7 @@ class GlossDetailView(DetailView):
         # print('Gloss Detail gloss, dataset, signlanguages: ', self.object.id, dataset_of_requested_gloss, signlanguages_of_requested_gloss)
         datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -1226,7 +1227,7 @@ class GlossDetailView(DetailView):
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         # set up weak drop weak prop fields
@@ -1833,7 +1834,7 @@ class GlossRelationsDetailView(DetailView):
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -1861,7 +1862,7 @@ class MorphemeListView(ListView):
         context = super(MorphemeListView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
@@ -1970,7 +1971,7 @@ class MorphemeListView(ListView):
             context['paginate_by'] = self.paginate_by # default
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -2300,7 +2301,7 @@ class MorphemeListView(ListView):
         fields = [Morpheme._meta.get_field(fieldname) for fieldname in fieldnames]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
         annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in
                                                dataset_languages]
@@ -2541,7 +2542,7 @@ class HandshapeDetailView(DetailView):
             self.request.session['search_results'] = items
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -2569,7 +2570,7 @@ class HomonymListView(ListView):
             context['language'] = Language.objects.get(id=get_default_language_id())
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -2617,7 +2618,7 @@ class MinimalPairsListView(ListView):
             context['language'] = Language.objects.get(id=get_default_language_id())
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -2689,7 +2690,7 @@ class FrequencyListView(ListView):
             context['language'] = Language.objects.get(id=get_default_language_id())
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         codes_to_adjectives = dict(settings.LANGUAGES)
@@ -2849,7 +2850,7 @@ class GlossFrequencyView(DetailView):
 
         datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -2927,7 +2928,7 @@ class GlossFrequencyView(DetailView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         context['dataset_ids'] = [ ds.id for ds in selected_datasets]
@@ -3156,7 +3157,7 @@ class LemmaFrequencyView(DetailView):
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         context['dataset_ids'] = [ ds.id for ds in selected_datasets]
@@ -3346,7 +3347,7 @@ class HandshapeListView(ListView):
         self.request.session['search_results'] = items
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -3548,7 +3549,7 @@ class DatasetListView(ListView):
         context = super(DatasetListView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         nr_of_public_glosses = {}
@@ -3764,7 +3765,7 @@ class DatasetManagerView(ListView):
         context = super(DatasetManagerView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         default_language_choice_dict = dict()
@@ -4154,7 +4155,7 @@ class DatasetDetailView(DetailView):
         context['datasetform'] = datasetform
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -4534,7 +4535,7 @@ class MorphemeDetailView(DetailView):
 
         datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -4798,7 +4799,7 @@ class MorphemeDetailView(DetailView):
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -5145,7 +5146,7 @@ def glosslist_ajax_complete(request, gloss_id):
         SHOW_DATASET_INTERFACE_OPTIONS = False
 
     selected_datasets = get_selected_datasets_for_user(request.user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    dataset_languages = get_dataset_languages(selected_datasets)
 
     # Put translations (keywords) per language in the context
     translations_per_language = []
@@ -5193,7 +5194,7 @@ def glosslistheader_ajax(request):
         SHOW_DATASET_INTERFACE_OPTIONS = False
 
     selected_datasets = get_selected_datasets_for_user(request.user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    dataset_languages = get_dataset_languages(selected_datasets)
 
     column_headers = []
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
@@ -5233,7 +5234,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
         SHOW_DATASET_INTERFACE_OPTIONS = False
 
     selected_datasets = get_selected_datasets_for_user(request.user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    dataset_languages = get_dataset_languages(selected_datasets)
 
     # Put translations (keywords) per language in the context
     translations_per_language = {}
@@ -5286,7 +5287,7 @@ class LemmaListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         return context
@@ -5308,7 +5309,7 @@ class LemmaListView(ListView):
         response['Content-Disposition'] = 'attachment; filename="dictionary-export-lemmas.csv"'
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
 
         lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
@@ -5358,7 +5359,7 @@ class LemmaCreateView(CreateView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
         context['add_lemma_form'] = LemmaCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
@@ -5372,7 +5373,7 @@ class LemmaCreateView(CreateView):
             selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
         else:
             selected_datasets = get_selected_datasets_for_user(request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS

@@ -12,7 +12,7 @@ from django.utils.translation import override
 
 from signbank.dictionary.models import *
 from django.utils.dateformat import format
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
 from django.core.urlresolvers import reverse
 from tagging.models import TaggedItem, Tag
@@ -1578,8 +1578,21 @@ def get_selected_datasets_for_user(user, readonly=False):
         if public_datasets:
             selected_datasets = public_datasets
         else:
-            selected_datasets = [ Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM) ]
+            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         return selected_datasets
+
+
+def get_dataset_languages(datasets):
+    """
+    Return Language queryset containing languages for given datasets
+    :param datasets: 
+    :return: dataset_languages: Language queryset: 
+    """
+    try:
+        dataset_languages = Language.objects.filter(dataset__in=datasets).distinct()
+    except EmptyResultSet:
+        dataset_languages = Language.objects.none()
+    return dataset_languages
 
 
 def get_users_without_dataset():
