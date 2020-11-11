@@ -1,7 +1,7 @@
 from colorfield.fields import ColorWidget
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, get_language
 from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
@@ -447,12 +447,18 @@ class MorphemeSearchForm(forms.ModelForm):
                                                         required=False, widget=Select2)
 
 class DefinitionForm(forms.ModelForm):
-    note = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),
-                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-
     class Meta:
         model = Definition
         fields = ('published','count', 'text')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['note'] = forms.ChoiceField(label=_(u'Type'),
+                             choices=choicelist_queryset_to_translated_dict(
+                                 FieldChoice.objects.filter(field__exact='NoteType'),
+                                 get_language(), ordered=False, id_prefix=''
+                             ),
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         
 class RelationForm(forms.ModelForm):
     

@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from signbank.dictionary.models import Handshape, Gloss
+from signbank.dictionary.models import Handshape, Gloss, Definition, Morpheme, OtherMedia
 
 
 def add_default_fieldchoices(apps, schema_editor):
@@ -55,14 +55,17 @@ def move_fieldchoice_choice_for_class(apps, schema_editor, klass):
 
 
 def move_fieldchoice_choice(apps, schema_editor):
+    move_fieldchoice_choice_for_class(apps, schema_editor, Definition)
     move_fieldchoice_choice_for_class(apps, schema_editor, Handshape)
     move_fieldchoice_choice_for_class(apps, schema_editor, Gloss)
+    move_fieldchoice_choice_for_class(apps, schema_editor, Morpheme)
+    move_fieldchoice_choice_for_class(apps, schema_editor, OtherMedia)
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0038_auto_20200914_1221'),
+        ('dictionary', '0038_auto_20201029_1217'),
     ]
 
     operations = [

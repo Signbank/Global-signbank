@@ -7,7 +7,7 @@ from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, get_language
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
@@ -60,6 +60,110 @@ def get_default_language_id():
     if language is not None:
         return language.id
     return None
+
+
+class FieldChoiceForeignKey(models.ForeignKey):
+    """
+    Extend ForeignKey to also hold field_choice_category
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.field_choice_category = "---"
+        if 'field_choice_category' in kwargs:
+            self.field_choice_category = kwargs.pop('field_choice_category')
+        super().__init__(*args, **kwargs)
+
+
+class FieldChoice(models.Model):
+
+    # field categories
+    ABSORIFING = 'AbsOriFing'
+    ABSORIPALM = 'AbsOriPalm'
+    APERTURE = 'Aperture'
+    ARTICULATOR_WH_SELECTED_FINGERS = 'Articulator WH: selected fingers'
+    CONTACTTYPE = 'ContactType'
+    DERIVHIST = 'derivHist'
+    DOMINANTHANDFLEXION = 'DominantHandFlexion'
+    DOMINANTHANDSELECTEDFINGERS = 'DominantHandSelectedFingers'
+    FINGERSELECTION = 'FingerSelection'
+    HANDEDNESS = 'Handedness'
+    HANDSHAPE = 'Handshape'
+    HANDSHAPECHANGE = 'HandshapeChange'
+    ICONICITY = 'iconicity'
+    JOINTCONFIGURATION = 'JointConfiguration'
+    LOCATION = 'Location'
+    MINORLOCATION = 'MinorLocation'
+    MORPHEMETYPE = 'MorphemeType'
+    MORPHOLOGYTYPE = 'MorphologyType'
+    MOVEMENTDIR = 'MovementDir'
+    MOVEMENTMAN = 'MovementMan'
+    MOVEMENTSHAPE = 'MovementShape'
+    NAMEDENTITY = 'NamedEntity'
+    NOTETYPE = 'NoteType'
+    ORICHANGE = 'OriChange'
+    OTHERMEDIATYPE = 'OtherMediaType'
+    PATHONPATH = 'PathOnPath'
+    QUANTITY = 'Quantity'
+    RELORILOC = 'RelOriLoc'
+    RELORIMOV = 'RelOriMov'
+    RELATARTIC = 'RelatArtic'
+    SEMFIELD = 'SemField'
+    SPREADING = 'Spreading'
+    THUMB = 'Thumb'
+    VALENCE = 'Valence'
+    WORDCLASS = 'WordClass'
+
+    FIELDCHOICE_FIELDS = [
+        (ABSORIFING, 'AbsOriFing'),
+        (ABSORIPALM, 'AbsOriPalm'),
+        (APERTURE, 'Aperture'),
+        (ARTICULATOR_WH_SELECTED_FINGERS, 'Articulator WH: selected fingers'),
+        (CONTACTTYPE, 'ContactType'),
+        (DERIVHIST, 'derivHist'),
+        (DOMINANTHANDFLEXION, 'DominantHandFlexion'),
+        (DOMINANTHANDSELECTEDFINGERS, 'DominantHandSelectedFingers'),
+        (FINGERSELECTION, 'FingerSelection'),
+        (HANDEDNESS, 'Handedness'),
+        (HANDSHAPE, 'Handshape'),
+        (ICONICITY, 'iconicity'),
+        (HANDSHAPECHANGE, 'HandshapeChange'),
+        (JOINTCONFIGURATION, 'JointConfiguration'),
+        (LOCATION, 'Location'),
+        (MINORLOCATION, 'MinorLocation'),
+        (MORPHEMETYPE, 'MorphemeType'),
+        (MORPHOLOGYTYPE, 'MorphologyType'),
+        (MOVEMENTDIR, 'MovementDir'),
+        (MOVEMENTMAN, 'MovementMan'),
+        (MOVEMENTSHAPE, 'MovementShape'),
+        (NAMEDENTITY, 'NamedEntity'),
+        (NOTETYPE, 'NoteType'),
+        (ORICHANGE, 'OriChange'),
+        (OTHERMEDIATYPE, 'OtherMediaType'),
+        (PATHONPATH, 'PathOnPath'),
+        (QUANTITY, 'Quantity'),
+        (RELORILOC, 'RelOriLoc'),
+        (RELORIMOV, 'RelOriMov'),
+        (RELATARTIC, 'RelatArtic'),
+        (SEMFIELD, 'SemField'),
+        (SPREADING, 'Spreading'),
+        (THUMB, 'Thumb'),
+        (VALENCE, 'Valence'),
+        (WORDCLASS, 'WordClass')
+    ]
+
+    field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
+    english_name = models.CharField(max_length=50)
+    dutch_name = models.CharField(max_length=50)
+    chinese_name = models.CharField(max_length=50, blank=True)
+    machine_value = models.IntegerField(
+        help_text="The actual numeric value stored in the database. Created automatically.")
+
+    def __str__(self):
+        name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
+        return name
+
+    class Meta:
+        ordering = ['machine_value']
 
 
 class Translation(models.Model):
@@ -155,12 +259,16 @@ class Definition(models.Model):
     """An English text associated with a gloss. It's called a note in the web interface"""
 
     def __str__(self):
-        return str(self.gloss) + "/" + self.role
+        return str(self.gloss) + "/" + (self.role or str(self.role_fk))
 
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
     role = models.CharField(_("Type"), blank=True, null=True, choices=build_choice_list("NoteType"), max_length=5)
     role.field_choice_category = 'NoteType'
+    role_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.NOTETYPE},
+                                    field_choice_category=FieldChoice.NOTETYPE,
+                                    verbose_name=_("Type"), related_name="definition")
     count = models.IntegerField(default=3)
     published = models.BooleanField(default=True)
 
@@ -240,111 +348,6 @@ class RelationToForeignSign(models.Model):
         list_display = ['gloss', 'loan', 'other_lang', 'other_lang_gloss']
         list_filter = ['other_lang']
         search_fields = ['gloss__idgloss']
-
-
-class FieldChoice(models.Model):
-
-    # field categories
-    ABSORIFING = 'AbsOriFing'
-    ABSORIPALM = 'AbsOriPalm'
-    APERTURE = 'Aperture'
-    ARTICULATOR_WH_SELECTED_FINGERS = 'Articulator WH: selected fingers'
-    CONTACTTYPE = 'ContactType'
-    DERIVHIST = 'derivHist'
-    DOMINANTHANDFLEXION = 'DominantHandFlexion'
-    DOMINANTHANDSELECTEDFINGERS = 'DominantHandSelectedFingers'
-    FINGERSELECTION = 'FingerSelection'
-    HANDEDNESS = 'Handedness'
-    HANDSHAPE = 'Handshape'
-    HANDSHAPECHANGE = 'HandshapeChange'
-    ICONICITY = 'iconicity'
-    JOINTCONFIGURATION = 'JointConfiguration'
-    LOCATION = 'Location'
-    MINORLOCATION = 'MinorLocation'
-    MORPHEMETYPE = 'MorphemeType'
-    MORPHOLOGYTYPE = 'MorphologyType'
-    MOVEMENTDIR = 'MovementDir'
-    MOVEMENTMAN = 'MovementMan'
-    MOVEMENTSHAPE = 'MovementShape'
-    NAMEDENTITY = 'NamedEntity'
-    NOTETYPE = 'NoteType'
-    ORICHANGE = 'OriChange'
-    OTHERMEDIATYPE = 'OtherMediaType'
-    PATHONPATH = 'PathOnPath'
-    QUANTITY = 'Quantity'
-    RELORILOC = 'RelOriLoc'
-    RELORIMOV = 'RelOriMov'
-    RELATARTIC = 'RelatArtic'
-    SEMFIELD = 'SemField'
-    SPREADING = 'Spreading'
-    THUMB = 'Thumb'
-    VALENCE = 'Valence'
-    WORDCLASS = 'WordClass'
-
-    FIELDCHOICE_FIELDS = [
-        (ABSORIFING, 'AbsOriFing'),
-        (ABSORIPALM, 'AbsOriPalm'),
-        (APERTURE, 'Aperture'),
-        (ARTICULATOR_WH_SELECTED_FINGERS, 'Articulator WH: selected fingers'),
-        (CONTACTTYPE, 'ContactType'),
-        (DERIVHIST, 'derivHist'),
-        (DOMINANTHANDFLEXION, 'DominantHandFlexion'),
-        (DOMINANTHANDSELECTEDFINGERS, 'DominantHandSelectedFingers'),
-        (FINGERSELECTION, 'FingerSelection'),
-        (HANDEDNESS, 'Handedness'),
-        (HANDSHAPE, 'Handshape'),
-        (ICONICITY, 'iconicity'),
-        (HANDSHAPECHANGE, 'HandshapeChange'),
-        (JOINTCONFIGURATION, 'JointConfiguration'),
-        (LOCATION, 'Location'),
-        (MINORLOCATION, 'MinorLocation'),
-        (MORPHEMETYPE, 'MorphemeType'),
-        (MORPHOLOGYTYPE, 'MorphologyType'),
-        (MOVEMENTDIR, 'MovementDir'),
-        (MOVEMENTMAN, 'MovementMan'),
-        (MOVEMENTSHAPE, 'MovementShape'),
-        (NAMEDENTITY, 'NamedEntity'),
-        (NOTETYPE, 'NoteType'),
-        (ORICHANGE, 'OriChange'),
-        (OTHERMEDIATYPE, 'OtherMediaType'),
-        (PATHONPATH, 'PathOnPath'),
-        (QUANTITY, 'Quantity'),
-        (RELORILOC, 'RelOriLoc'),
-        (RELORIMOV, 'RelOriMov'),
-        (RELATARTIC, 'RelatArtic'),
-        (SEMFIELD, 'SemField'),
-        (SPREADING, 'Spreading'),
-        (THUMB, 'Thumb'),
-        (VALENCE, 'Valence'),
-        (WORDCLASS, 'WordClass')
-    ]
-
-    field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
-    english_name = models.CharField(max_length=50)
-    dutch_name = models.CharField(max_length=50)
-    chinese_name = models.CharField(max_length=50, blank=True)
-    machine_value = models.IntegerField(
-        help_text="The actual numeric value stored in the database. Created automatically.")
-    field_color = ColorField(default='ffffff')
-
-    def __str__(self):
-        name = self.field + ': ' + self.name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
-        return name
-
-    class Meta:
-        ordering = ['machine_value']
-
-
-class FieldChoiceForeignKey(models.ForeignKey):
-    """
-    Extend ForeignKey to also hold field_choice_category
-    """
-
-    def __init__(self, *args, **kwargs):
-        self.field_choice_category = "---"
-        if 'field_choice_category' in kwargs:
-            self.field_choice_category = kwargs.pop('field_choice_category')
-        super().__init__(*args, **kwargs)
 
 
 class Handshape(models.Model):
@@ -1980,8 +1983,11 @@ class Gloss(models.Model):
 
     def definition_role_choices_json(self):
         """Return JSON for the definition role choice list"""
-        from signbank.dictionary.forms import DEFN_ROLE_CHOICES
-        return self.options_to_json(DEFN_ROLE_CHOICES)
+        definition_role_choices = choicelist_queryset_to_translated_dict(
+                                 FieldChoice.objects.filter(field__exact='NoteType'),
+                                 get_language(), ordered=False, id_prefix=''
+                             )
+        return self.options_to_json(definition_role_choices)
 
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""
@@ -2307,6 +2313,10 @@ class Morpheme(Gloss):
     mrpType = models.CharField(_("Has morpheme type"), max_length=5, blank=True, null=True,
                                choices=build_choice_list('MorphemeType'))
     mrpType.field_choice_category = 'MorphemeType'
+    mrpType_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                       limit_choices_to={'field': FieldChoice.MORPHEMETYPE},
+                                       field_choice_category=FieldChoice.MORPHEMETYPE,
+                                       verbose_name=_("Has morpheme type"), related_name='morpheme_type')
 
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
@@ -2445,6 +2455,10 @@ class OtherMedia(models.Model):
     parent_gloss = models.ForeignKey(Gloss)
     type = models.CharField(max_length=5, choices=build_choice_list('OtherMediaType'))
     type.field_choice_category = 'OtherMediaType'
+    type_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.OTHERMEDIATYPE},
+                                    field_choice_category=FieldChoice.OTHERMEDIATYPE,
+                                    verbose_name=_("Type"), related_name='other_media')
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
 

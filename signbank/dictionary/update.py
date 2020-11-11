@@ -1146,10 +1146,10 @@ def update_definition(request, gloss, field, value):
         else:
             newvalue = 'No'
     elif what == 'definitionrole':
-        defn.role = value
+        defn.role_fk = FieldChoice.objects.get(id=value)
         defn.save()
-        choice_list = FieldChoice.objects.filter(field__iexact='NoteType')
-        newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
+        language_adjective = language_codes_to_adjectives[request.LANGUAGE_CODE].lower()
+        newvalue = getattr(defn.role_fk, language_adjective + '_name')
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -1295,10 +1295,10 @@ def add_definition(request, glossid):
             
             published = form.cleaned_data['published']
             count = form.cleaned_data['count']
-            role = form.cleaned_data['note']
+            role = FieldChoice.objects.get(pk=form.cleaned_data['note'])
             text = form.cleaned_data['text']
             
-            defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
+            defn = Definition(gloss=thisgloss, count=count, role_fk=role, text=text, published=published)
             defn.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
