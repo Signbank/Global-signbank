@@ -1133,6 +1133,8 @@ class GlossDetailView(DetailView):
         language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
         language = Language.objects.get(id=get_default_language_id())
         default_language_code = language.language_code_2char
+        codes_to_adjectives = dict(settings.LANGUAGES)
+        adjective = codes_to_adjectives[language_code].lower()
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
@@ -1369,7 +1371,10 @@ class GlossDetailView(DetailView):
         notes_groupedby_role = {}
         for note in notes:
             # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
-            translated_note_role = machine_value_to_translated_human_value(note.role,note_role_choices,self.request.LANGUAGE_CODE)
+            if note.role_fk:
+                translated_note_role = getattr(note.role_fk, adjective + '_name')
+            else:
+                translated_note_role = machine_value_to_translated_human_value(note.role,note_role_choices,self.request.LANGUAGE_CODE)
             role_id = (note.role, translated_note_role)
             if role_id not in notes_groupedby_role:
                 notes_groupedby_role[role_id] = []

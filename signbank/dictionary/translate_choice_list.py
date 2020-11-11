@@ -35,6 +35,9 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
             machine_values_seen.append(choice.machine_value)
             raw_choice_list.append((id_prefix + str(choice.id), getattr(choice, adjective + '_name')))
 
+    if 'NoteType' in str(queryset.query):
+        print(raw_choice_list)
+
     list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].id), v) for v in list_head_values]
 
     if ordered:
