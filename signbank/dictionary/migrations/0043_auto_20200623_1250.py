@@ -46,7 +46,7 @@ def copy_dutch_and_chinese_name_fields(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0040_auto_20200623_1245'),
+        ('dictionary', '0042_auto_20200623_1245'),
     ]
 
     operations = [
