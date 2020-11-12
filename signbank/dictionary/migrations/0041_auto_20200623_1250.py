@@ -4,10 +4,16 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 from django.db.models import F
+from django.core.exceptions import FieldDoesNotExist
 
 
 def copy_dutch_and_chinese_name_fields(apps, schema_editor):
     FieldChoice = apps.get_model('dictionary', 'FieldChoice')
+    try:
+        FieldChoice.objects.all().update(name_en=F('name'))
+        print("Copied FieldChoice name to name_en")
+    except FieldDoesNotExist:
+        pass
     try:
         FieldChoice.objects.all().update(name_nl=F('dutch_name'))
         print("Copied FieldChoice dutch_name to name_nl")
@@ -20,6 +26,11 @@ def copy_dutch_and_chinese_name_fields(apps, schema_editor):
         pass
     
     Handshape = apps.get_model('dictionary', 'Handshape')
+    try:
+        Handshape.objects.all().update(name_en=F('name'))
+        print("Copied Handshape name to name_en")
+    except FieldDoesNotExist:
+        pass
     try:
         Handshape.objects.all().update(name_nl=F('dutch_name'))
         print("Copied Handshape dutch_name to name_nl")
