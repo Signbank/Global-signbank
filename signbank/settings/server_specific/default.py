@@ -92,9 +92,13 @@ FIELDS = {}
 
 FIELDS['main'] = ['useInstr','wordClass']
 
-FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','locVirtObj','relOriMov',
-                       'relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth', 'mouthG',
-                       'mouthing', 'phonetVar','domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number',
+# fields are ordered per kind: Field Choice Lists, Text, Boolean
+# followed by etymology and articulation
+FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','relOriMov',
+                       'relOriLoc','oriCh','contType','movSh','movDir',
+                       'locVirtObj','phonOth', 'mouthG','mouthing', 'phonetVar',
+                       'repeat','altern',
+                       'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number',
                        'weakdrop','weakprop']
 
 FIELDS['semantics'] = ['iconImg','namEnt','semField','valence','concConcSet']
@@ -105,6 +109,8 @@ FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNo
 FIELDS['handshape'] = ['hsNumSel','hsFingSel','hsFingSel2','hsFingConf','hsFingConf2','hsAperture','hsSpread',
                        'hsFingUnsel','fsT','fsI','fsM','fsR','fsP','fs2T','fs2I','fs2M','fs2R','fs2P','ufT','ufI','ufM',
                        'ufR','ufP']
+
+FIELDS['publication'] = ['inWeb', 'isNew', 'excludeFromEcv']
 
 # Use these fields in the server specific settings to specify frequency fields, if available
 FREQUENCY_CATEGORIES = []
@@ -124,8 +130,9 @@ MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic'
 #Display these fields als columns in the list view
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
 
-MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','locVirtObj','relOriMov',
-                       'relOriLoc','oriCh','contType','movSh','movDir','repeat','altern','phonOth']
+# fields are ordered per kind: Field Choice Lists, Text, Boolean
+MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','relOriMov',
+                       'relOriLoc','oriCh','contType','movSh','movDir', 'locVirtObj','phonOth','repeat','altern']
 
 #Where the ECV files are
 ECV_FOLDER = 'ecv/'

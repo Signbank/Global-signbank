@@ -158,6 +158,7 @@ function do_adminsearch(el) {
 <div id='searchformwell' class='well'>
 <form name='adminsearch' id='adminsearch'>
 <div class="panel panel-default">
+{% if not user.is_anonymous %}
 <div class="panel-heading" data-toggle="collapse" data-target="#queryarea">{% trans "Form your query" %}</div>
 <div id='queryarea' class='panel-collapse collapse'>
         <div class="hidden">
@@ -392,6 +393,7 @@ function do_adminsearch(el) {
 
     <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
 </div>
+{% endif %}
 </div>
 </form>
 </div>
@@ -400,7 +402,9 @@ function do_adminsearch(el) {
 
 {% if search_type == 'handshape' %}
 
+{% if not user.is_anonymous %}
 <p>{% trans "Number of matches:" %} {{ object_list|length }} {% trans "out of" %} {{handshapescount}}.</p>
+{% endif %}
 
 {% if object_list %}
 

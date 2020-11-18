@@ -705,3 +705,7 @@ canvas{
     width: auto;
     height: auto;
 }
+
+.btn-space {
+    margin-right: 5px;
+}

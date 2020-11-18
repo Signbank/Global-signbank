@@ -25,38 +25,41 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ PREFIX_URL }}'
+    var url = '{{ PREFIX_URL }}';
+    var phonology_list_kinds = {{phonology_list_kinds|safe}};
+    var gloss_phonology = {{gloss_phonology|safe}};
+
     var language_code = '{{ LANGUAGE_CODE }}';
-    var edit_mode_str = '{% trans "Edit" %}'
-    var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
-    var delete_this_gloss_str = '{% trans "Delete this gloss" %}'
-    var saving_str = '{% trans "Saving..." %}'
-    var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}'
+    var edit_mode_str = '{% trans "Edit" %}';
+    var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
+    var delete_this_gloss_str = '{% trans "Delete this gloss" %}';
+    var saving_str = '{% trans "Saving..." %}';
+    var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}';
     var yes_str = '{% trans "Yes" %}'
     var no_str = '{% trans "No" %}'
-    var original_strong_hand = '{{StrongHand}}'
-    var original_weak_hand = '{{WeakHand}}'
-    var original_lemma_group_url = '{{lemma_group_url}}'
-    var lemma_group = '{{lemma_group}}'
+    var original_strong_hand = '{{StrongHand}}';
+    var original_weak_hand = '{{WeakHand}}';
+    var original_lemma_group_url = '{{lemma_group_url}}';
+    var lemma_group = '{{lemma_group}}';
 
     var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
-    var definition_role_choices = {{gloss.definition_role_choices_json|safe}}
-    var relation_role_choices = {{gloss.relation_role_choices_json|safe}}
+    var definition_role_choices = {{gloss.definition_role_choices_json|safe}};
+    var relation_role_choices = {{gloss.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
-    var handedness_weak_choices = {{gloss.handedness_weak_choices_json|safe}}
-    var languages = {{gloss.signlanguage_choices|safe}};
+    var handedness_weak_choices = {{gloss.handedness_weak_choices_json|safe}};
     var dialects = {{gloss.dialect_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
     {% else %}
     var dataset_choices = {};
     {% endif %}
-    var gloss_dataset_id = {{ gloss.lemma.dataset_id}};
+    var gloss_dataset_id = {{ gloss.lemma.dataset.id}};
     var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
-    var mrptype_choices = {};
     var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
     var choice_lists = [];
+    var static_choice_lists = {{static_choice_lists|safe}};
+
     var generate_translated_choice_list_table = {{generate_translated_choice_list_table|safe}};
 
     var csrf_token = '{{csrf_token}}';
@@ -64,49 +67,7 @@
     var next_morpheme_id;
     var this_gloss_id = {{gloss.id}};
 
-    // This script gets and inserts the users last searched items on the gloss page
-    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
-    var req = $.ajax({
-        url: search_results_url,
-        dataType: "json",
-        context: document.body
-    })
-    req.done(function(json_data) {
-        for (var key in json_data) {
-            if (json_data.hasOwnProperty(key)) {
-                var a = document.createElement("a");
-                a.setAttribute("class", "search_result");
-                a.style["float"] = "none";
-                a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
-                a.id = json_data[key].id;
-                var linktext = document.createTextNode(json_data[key].gloss);
-                a.appendChild(linktext);
-                $( "#results-inline" ).append(a);
-            }
-        }
-        /* Determine the active button (if any), center the horizontal list according to the active button */
-        // Make sure that we are showing search results
-        if ($('#results-inline').length > 0) {
-            // Setting a button active according to which glosses page we are on. A.id should equal to gloss.id.
-            $('#results-inline #{{ gloss.id }}').addClass('active');
-            var scrollPanel = $('#searchresults');
-            var activeButton = $('#results-inline a.active');
-            // Make sure that activeButton exists
-            if (activeButton.length > 0) {
-                // Calculating the left offset position so that the button is centered
-                var leftOffset = activeButton.offset().left - scrollPanel.offset().left - (scrollPanel.width() / 2) + (activeButton.width() / 2);
-                // Scrolling to the active button
-                $('#searchresults').scrollLeft(leftOffset);
-            }
-            var signinfo = $('#signinfo');
-            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
-        } else {
-            // results=inline is empty but we still need space to be added
-            var scrollPanel = $('#searchresults');
-            var signinfo = $('#signinfo');
-            signinfo.offset({top: ($('#signbank-bar').height() + scrollPanel.height() + 10)});
-        };
-    });
+    {% include "dictionary/search_result_bar.html" %}
 
     function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
         var target_object = document.forms[formId][targetObjectId].value;
@@ -301,7 +262,7 @@
 
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
-    <div class='pull-right' style="margin-right:15px;margin-top:3px;">
+    <div class='pull-right' style="margin-right:15px;margin-top:10px;z-index:100;">
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
@@ -468,14 +429,37 @@
         {% include "dictionary/glosstags.html" %}
 
         <table class='table table-condensed'>
-            <tr {%if gloss.dialect.all|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr {%if gloss_dialects|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
 
-                <td><span id="lemma">{{ gloss.lemma }}
+                <td style="width:600px;"><span id="lemma">{{ gloss.lemma }}
                         {% if lemma_group %}
                             <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
                     </span>
+                </td></tr>
+            <tr class="empty_row lemma_buttons" id="lemma-buttons-group" name="lemma-buttons-group"><th></th>
+                <td>
+                    <div id="lemma_buttons" name="lemma_buttons" class="btn-group">
+                        <button id='show_edit_lemma_form' name='show_edit_lemma_form'
+                                class='btn btn-primary btn-space'>{% trans "Edit lemma" %}</button>
+                        <button id='show_set_lemma_form' name='show_set_lemma_form'
+                                class='btn btn-primary btn-space'>{% trans "Choose other" %}</button>
+                        <button id='show_create_lemma_form' name='show_create_lemma_form'
+                                class='btn btn-primary btn-space'>{% trans "Create new" %}</button>
+                    </div>
+                </td></tr>
+                <tr name="lemma_forms_row"><th></th>
+                    <td name="lemma_forms_cell">
+                    <form name='edit_lemma_form' id='edit_lemma_form'
+                          method='post' action='{% url "dictionary:update_lemma" gloss.lemma.id %}'>
+                         {% csrf_token %}
+                        <input type="hidden" class='btn btn-primary'
+                            value='{% trans "Edit lemma" %}'
+                            type='submit'>
+                        <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma.id}}'>
+                        <input type='hidden' id="page" name="page" value=''>
+                    </form>
                     <form name='set_lemma_form' id='set_lemma_form'
                      onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
                                                     "Please choose a lemma.",
@@ -492,15 +476,13 @@
                         <input type='hidden' name='value' value='confirmed'>
                         <!-- Input for gloss_update (1) -->
                         <input type='hidden' name='id' value='lemmaidgloss'>
-
                         <!-- Submit -->
                         <input class='btn btn-primary' value='{% trans "Set lemma" %}' type='submit'>
                         <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
-                        <a href="#" onclick="return showAddLemma()">{% trans "Create new" %}</a>
                     </form>
                     <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
                         {% csrf_token %}
-                        <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset_id }}"/>
+                        <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
                         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                         {{ dataset_lang.name }}:
                         <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
@@ -552,14 +534,16 @@
             {% for lang, translations in translations_per_language.items %}
             <tr>
                 <th>
-                    {% trans "Translation equivalents" %} ({{ lang }})
+                    {% trans "Translation equivalents for" %} {{ lang }}
                 </th>
                 <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' colspan="2">{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             </tr>
             {% endfor %}
 
             {% for value,name,label,kind in main_fields %}
-                <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
+                <tr><th>{{label}}</th>
+                    <td class="edit edit_{{kind}}" id='{{name}}'
+                        value='{{value}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
             {% endfor %}
 
         </table>
@@ -639,7 +623,7 @@
                         {% else %}
                         <td></td>
                         {% endif %}
-                        <td class='edit edit_morphology_role' id='morphology-definition-role_{{morphdef.id}}'>{{translated_role}}</td>
+                        <td id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
                         <td id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
                    {% endfor %}
 
@@ -868,9 +852,9 @@
                         <th/><th/><th>WD</th><th>WP</th>
                     </tr>
                     {% if value == '-' or value == ' ' or value == '' or value == None %}
-                    <tr value="{{value}}" class="empty_row">
+                    <tr class="empty_row">
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
+                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
                             {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
@@ -882,9 +866,9 @@
 		                {% endfor %}
                     </tr>
                     {% else %}
-                    <tr value="{{value}}">
+                    <tr >
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
+                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
                             {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
@@ -901,9 +885,9 @@
                         <th/><th/><th>letter</th><th>number</th>
                     </tr>
                     {% if value == '-' or value == ' ' or value == '' or value == None %}
-                    <tr value="{{value}}" class="empty_row">
+                    <tr class="empty_row">
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
+                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
                             <td class="edit edit_letter" id='{{name}}'
@@ -915,9 +899,9 @@
 		                {% endfor %}
                     </tr>
                     {% else %}
-                    <tr value="{{value}}">
+                    <tr >
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'>
+                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >
                             {% with generate_translated_choice_list_table|get_item:name as choices_for_field %}
                             {% with gloss.domhndsh|to_int as domhndsh_value %}
                             {% with choices_for_field|keyvalue:domhndsh_value as translates_for_field %}
@@ -951,9 +935,9 @@
                         <th/><th/><th>letter</th><th>number</th>
                     </tr>
                     {% if value == '-' or value == ' ' or value == '' or value == None %}
-                    <tr value="{{value}}" class="empty_row">
+                    <tr class="empty_row">
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'>{% value value %}</td>
+                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if name == 'subhndsh_letter' %}
                             <td class="edit edit_letter" id='{{name}}'
@@ -965,9 +949,9 @@
 		                {% endfor %}
                     </tr>
                     {% else %}
-                    <tr value="{{value}}">
+                    <tr >
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'>
+                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >
                             <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_sub %}
@@ -982,9 +966,9 @@
                     </tr>
                     {% endif %}
                 {% else %}
-                <tr value="{{value}}" id="{{field}}"{% if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %}>
+                <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %} class="empty_row"{% endif %}>
                     <th>{{label}}</th>
-                    <td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}
+                    <td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}' >{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}
                                                                     {% else %}{% value value %}{% endif %}</td>
                 </tr>
                 {% endif %}
@@ -1077,7 +1061,7 @@
                     {% else %}
                         {{label}}
                     {% endif %}
-                 </th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
+                 </th><td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}'>{% value value %}</td></tr>
             {% endfor %}
             
             </table>
@@ -1171,7 +1155,8 @@
                         {% else %}
                         <td></td>
                         {% endif %}
-                        <td class='edit edit_check' id='relationforeign-loan_{{rel.id}}'>{{rel.loan}}</td>
+                        <td class='edit edit_check' id='relationforeign-loan_{{rel.id}}'
+                            value='{{rel.loan}}'>{% if rel.loan %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                         <td class='edit edit_text' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
                         <td class='edit edit_text' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
                     </tr>
@@ -1232,7 +1217,7 @@
             <div id='frequency' class='panel-collapse collapse'>
                 <table class='table table-condensed'>
                     {% for value,name,label,kind in frequency_fields %}
-                    <tr><th>{{label}}</th><td class="edit edit_text" id='{{name}}'>{% value value %}</td></tr>
+                    <tr><th>{{label}}</th><td id='{{name}}'>{% value value %}</td></tr>
                     {% endfor %}
                 </table>
             </div>
@@ -1246,15 +1231,12 @@
                 <a data-toggle='collapse' href='#pubStatus'>{% trans "Publication Status" %}</a>
             </div>
         </div>
-        
-            
+
         <div id="pubStatus" class="panel-collapse collapse">
-        
             <table class='table table-condensed'>
                 <tr><th>{% trans "Creation Date" %}</th><td>{{gloss.creationDate}}</td></tr>
                 <tr><th>{% trans "Creator" %}</th>
-                    <td>
-                        {% for creator in gloss.creator.all %}
+                    <td>{% for creator in gloss.creator.all %}
                             {% if forloop.last %}
                                 {{creator.first_name}} {{creator.last_name}}
                             {% else %}
@@ -1264,32 +1246,17 @@
                     </td>
                 </tr>
 
-                {%if SHOW_DATASET_INTERFACE_OPTIONS %} <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset' colspan="2">{{ gloss.lemma.dataset }}</td></tr>{% endif %}
+                {%if SHOW_DATASET_INTERFACE_OPTIONS %}
+                <tr><th>{% trans "Dataset" %}</th><td id='dataset' colspan="2">{{ gloss.lemma.dataset }}</td></tr>
+                {% endif %}
 
-                <tr><th>{% trans "In Web Dictionary" %}</th>
-                    <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'>
-                        {% if gloss.inWeb %}
-                            {% trans "Yes" %}
-                        {% else %}
-                            {% trans "No" %}
-                        {% endif %}
-                    </td></tr>
-                <tr><th>{% trans "Proposed New Sign" %}</th>
-                    <td class='edit edit_check' id='isNew'>
-                        {% if gloss.isNew %}
-                            {% trans "Yes" %}
-                        {% else %}
-                            {% trans "No" %}
-                        {% endif %}
-                    </td></tr>
-                <tr><th>{% trans "Exclude from ECV" %}</th>
-                    <td class='edit edit_check' id='excludeFromEcv'>
-                        {% if gloss.excludeFromEcv %}
-                            {% trans "Yes" %}
-                        {% else %}
-                            {% trans "No" %}
-                        {% endif %}
-                    </td></tr>
+                {% for value,name,label,kind in publication_fields %}
+	            <tr {% if value == None or value == False %} class="empty_row" {% endif %}>
+                      <th>{{label}}</th>
+                      <td class="edit edit_{{kind}}" id='{{name}}'
+                          value='{{value}}'>{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                </tr>
+                {% endfor %}
             </table>
         </div>
     </div>
@@ -1317,7 +1284,7 @@
                   <th style='width:10em'>{% trans "Type" %}</th>
                   <th>{% trans "Text" %}</th>
               </tr>
-            {% for role_id, note_list in notes_groupedby_role.items %}
+                {% for role_id, note_list in notes_groupedby_role.items %}
 
               {% for def in note_list %}
               <tr>
@@ -1354,13 +1321,8 @@
                     {% endif %}
                     {% endif %}
                 </td>
-                <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'>
-                    {% if def.published %}
-                        {% trans "Yes" %}
-                    {% else %}
-                        {% trans "No" %}
-                    {% endif %}
-                </td>
+                <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
+                    value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
                 <td class='edit edit_role' id='definitionrole_{{def.id}}'>{{role_id.1}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
@@ -1380,7 +1342,7 @@
                     <tr>
                         <td style="width:2em"></td>
                         <td style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
-                        <td style='width:5em'><input class='form-control' name='count' id='id_count' type='number'></td>
+                        <td style='width:5em'><input class='form-control' name='count' id='id_count' type='number' value=3></td>
                         <td style='width:10em'>{{definitionform.note}}</td>
                         <td><input class='form-control' name='text' id='id_text' placeholder='{% trans "Enter new note" %}'></td>
                     </tr>

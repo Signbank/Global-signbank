@@ -1533,7 +1533,7 @@ def import_csv_update(request):
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                update_signlanguage(gloss,None,new_human_value_list)
+                update_signlanguage(gloss,'signlanguage',new_human_value_list)
                 gloss.save()
                 continue
 
@@ -1651,7 +1651,7 @@ def import_csv_update(request):
 
         stage = 0
 
-    if stage and not changes and not error:
+    if stage == 1 and not changes and not error:
         # no changes were found in the input file. print a message as feedback
         # this is needed in order to have output that can be tested for in the unit tests
         messages.add_message(request, messages.INFO, ('No changes were found.'))
@@ -2509,13 +2509,18 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     if not request.user.is_authenticated():
 
         # If we are not logged in, try to find if this maybe belongs to a gloss that is free to see for everbody?
-        gloss_pk = int(filename.split('.')[-2].split('-')[-1])
+        (name, ext) = os.path.splitext(os.path.basename(filename))
+        if 'handshape' in name:
+            # handshape images are allowed to be seen in Show All Handshapes
+            pass
+        else:
+            gloss_pk = int(filename.split('.')[-2].split('-')[-1])
 
-        try:
-            if not Gloss.objects.get(pk=gloss_pk).inWeb:
+            try:
+                if not Gloss.objects.get(pk=gloss_pk).inWeb:
+                    return HttpResponse(status=401)
+            except Gloss.DoesNotExist:
                 return HttpResponse(status=401)
-        except Gloss.DoesNotExist:
-            return HttpResponse(status=401)
 
         #If we got here, the gloss was found and in the web dictionary, so we can continue
 
@@ -2645,7 +2650,9 @@ def choice_lists(request):
 
                 #Also concatenate the frequencies of all values
                 if 'include_frequencies' in request.GET and request.GET['include_frequencies']:
-                    for choice_list_field, machine_value in choice_list_machine_values:
+                    for choicefield in choice_list:
+                        machine_value = choicefield.machine_value
+                        choice_list_field = '_' + str(choicefield.id)
 
                         if machine_value == 0:
                             frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
@@ -2653,10 +2660,16 @@ def choice_lists(request):
                                                                        Q(**{field: 0})).count()
 
                         else:
-                            variable_column = field
-                            search_filter = 'exact'
-                            filter = variable_column + '__' + search_filter
-                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
+                            try:
+                                Gloss._meta.get_field(field + '_fk')
+                                filter = field + '_fk'
+                                filter_value = choicefield
+                            except KeyError:
+                                variable_column = field
+                                search_filter = 'exact'
+                                filter = variable_column + '__' + search_filter
+                                filter_value = machine_value
+                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: filter_value}).count()
 
                         try:
                             all_choice_lists[field][choice_list_field] += ' ['+str(frequency_for_field)+']'
@@ -2931,3 +2944,7 @@ def find_interesting_frequency_examples(request):
             break
 
     return HttpResponse(' '.join(['<a href="/dictionary/gloss/'+str(i)+'">'+str(i)+'</a>' for i in interesting_gloss_pks]))
+
+def gif_prototype(request):
+
+    return render(request,'dictionary/gif_prototype.html')

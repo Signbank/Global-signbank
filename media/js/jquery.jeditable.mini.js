@@ -1,4 +1,3 @@
-
 (function($){$.fn.editable=function(target,options){if('disable'==target){$(this).data('disabled.editable',true);return;}
 if('enable'==target){$(this).data('disabled.editable',false);return;}
 if('destroy'==target){$(this).unbind($(this).data('event.editable')).removeData('disabled.editable').removeData('event.editable');return;}
@@ -35,4 +34,4 @@ $(this).append(textarea);return(textarea);}},select:{element:function(settings,o
 for(var key in json){if(!json.hasOwnProperty(key)){continue;}
 if('selected'==key){continue;}
 var option=$('<option />').val(key).append(json[key]);$('select',this).append(option);}
-$('select',this).children().each(function(){if($(this).val()==json['selected']||$(this).text()==$.trim(original.revert)){$(this).attr('selected','selected');}});}}},addInputType:function(name,input){$.editable.types[name]=input;}};$.fn.editable.defaults={name:'value',id:'id',type:'text',width:'auto',height:'auto',event:'click.editable',onblur:'cancel',loadtype:'GET',loadtext:'Loading...',placeholder:'Click to edit',loaddata:{},submitdata:{},ajaxoptions:{}};})(jQuery);
+$('select',this).children().each(function(){var indie = (settings.params===undefined)?-1:settings.params.a;if($(this).val()==json['selected']||$(this).val()==indie||$(this).text()==$.trim(original.revert)){$(this).attr('selected','selected');}});}}},addInputType:function(name,input){$.editable.types[name]=input;}};$.fn.editable.defaults={name:'value',id:'id',type:'text',width:'auto',height:'auto',event:'click.editable',onblur:'cancel',loadtype:'GET',loadtext:'Loading...',placeholder:'Click to edit',loaddata:{},submitdata:{},ajaxoptions:{}};})(jQuery);

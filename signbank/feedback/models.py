@@ -1,4 +1,4 @@
-from django.db import models, OperationalError
+from django.db import models, OperationalError, ProgrammingError
 from django.contrib.auth import models as authmodels
 from django.conf import settings
 from signbank.video.fields import VideoUploadToFLVField
@@ -67,7 +67,7 @@ class GeneralFeedbackForm(forms.Form):
 
 try:
 	signLanguageChoices = [ (0, '---------') ] + [ ( sl.id, sl.name ) for sl in SignLanguage.objects.all() ]
-except OperationalError:
+except (OperationalError, ProgrammingError) as e:
 	signLanguageChoices = []
 
 if settings.LANGUAGE_NAME == "BSL":

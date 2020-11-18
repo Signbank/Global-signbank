@@ -1,6 +1,6 @@
 from django import forms
-from django.utils.translation import ugettext_lazy as _
-from django.db import OperationalError
+from django.utils.translation import ugettext_lazy as _, get_language
+from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
@@ -29,7 +29,7 @@ CATEGORY_CHOICES = (('all', 'All Signs'),
 def tag_choices():
     try:
         tag_choices_list = [(tag.name, tag.name.replace('_', ' ')) for tag in Tag.objects.all()]
-    except OperationalError:
+    except (OperationalError, ProgrammingError) as e:
         tag_choices_list = []
     return tag_choices_list
 
@@ -156,22 +156,28 @@ class MorphemeCreateForm(forms.ModelForm):
 
         super(MorphemeCreateForm, self).__init__(queryDict, *args, **kwargs)
 
+        if 'dataset' in queryDict:
+            self.fields['dataset'] = forms.ModelChoiceField(queryset=Dataset.objects.all())
+            self.fields['dataset'].initial = queryDict['dataset']
+
         for language in self.languages:
             morphemecreate_field_name = self.morpheme_create_field_prefix + language.language_code_2char
-            self.fields[morphemecreate_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
+            self.fields[morphemecreate_field_name] = forms.CharField(label=_("Morpheme")+(" (%s)" % language.name))
             if morphemecreate_field_name in queryDict:
                 self.fields[morphemecreate_field_name].value = queryDict[morphemecreate_field_name]
 
     @atomic  # This rolls back the gloss creation if creating annotationidglosstranslations fails
     def save(self, commit=True):
         morpheme = super(MorphemeCreateForm, self).save(commit)
+        dataset = Dataset.objects.get(id=self['dataset'].value())
         for language in self.languages:
             morphemecreate_field_name = self.morpheme_create_field_prefix + language.language_code_2char
             annotation_idgloss_text = self.fields[morphemecreate_field_name].value
             existing_annotationidglosstranslations = morpheme.annotationidglosstranslation_set.filter(language=language)
             if existing_annotationidglosstranslations is None or len(existing_annotationidglosstranslations) == 0:
                 annotationidglosstranslation = AnnotationIdglossTranslation(gloss=morpheme, language=language,
-                                                                            text=annotation_idgloss_text)
+                                                                            text=annotation_idgloss_text,
+                                                                            dataset=dataset)
                 annotationidglosstranslation.save()
             elif len(existing_annotationidglosstranslations) == 1:
                 annotationidglosstranslation = existing_annotationidglosstranslations[0]
@@ -179,7 +185,7 @@ class MorphemeCreateForm(forms.ModelForm):
                 annotationidglosstranslation.save()
             else:
                 raise Exception(
-                    "In class %s: gloss with id %s has more than one annotation idgloss translation for language %s"
+                    "In class %s: morpheme with id %s has more than one annotation idgloss translation for language %s"
                     % (self.__class__.__name__, morpheme.pk, language.name)
                 )
         morpheme.creator.add(self.user)
@@ -396,7 +402,7 @@ class MorphemeSearchForm(forms.ModelForm):
 
         model = Morpheme
 
-        fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew']
+        fields = settings.MORPHEME_DISPLAY_FIELDS + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew']
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
@@ -438,12 +444,18 @@ class MorphemeSearchForm(forms.ModelForm):
                                                         required=False, widget=Select2)
 
 class DefinitionForm(forms.ModelForm):
-    note = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),
-                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-
     class Meta:
         model = Definition
         fields = ('published','count', 'text')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['note'] = forms.ChoiceField(label=_(u'Type'),
+                             choices=choicelist_queryset_to_translated_dict(
+                                 FieldChoice.objects.filter(field__exact='NoteType'),
+                                 get_language(), ordered=False, id_prefix=''
+                             ),
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         
 class RelationForm(forms.ModelForm):
     

@@ -351,7 +351,8 @@ class GlossVideo(models.Model):
                     if bak != '.bak' + str(self.id):
                         # hmm, something bad happened
                         raise Exception('Unknown suffix on stored video file. Expected .bak')
-                    os.rename(os.path.join(storage.location, self.videofile.name),
+                    if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
+                        os.rename(os.path.join(storage.location, self.videofile.name),
                               os.path.join(storage.location, newname))
                     self.videofile.name = newname
                 self.version -= 1
@@ -360,7 +361,8 @@ class GlossVideo(models.Model):
             if self.version == 0:
                 # find a name for the backup, a filename that isn't used already
                 newname = self.videofile.name + ".bak" + str(self.id)
-                os.rename(os.path.join(storage.location, self.videofile.name), os.path.join(storage.location, newname))
+                if os.path.isfile(os.path.join(storage.location, self.videofile.name)):    
+                    os.rename(os.path.join(storage.location, self.videofile.name), os.path.join(storage.location, newname))
                 self.videofile.name = newname
             self.version += 1
             self.save()

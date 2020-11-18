@@ -1212,9 +1212,6 @@ msgstr "Datasets:"
 msgid "Lemma ID gloss"
 msgstr "Lemma-ID-Glos"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:832
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1096
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:403
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:46
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:125
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:180
@@ -1224,7 +1221,11 @@ msgstr "Lemma-ID-Glos"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:400
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:455
 msgid "Translation equivalents"
-msgstr "Mogelijke vertalingen in het Nederlands"
+msgstr "Mogelijke vertalingen"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:555
+msgid "Translation equivalents for"
+msgstr "Mogelijke vertalingen in het"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:834
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1098

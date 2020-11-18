@@ -25,7 +25,17 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ URL }}{{ PREFIX_URL }}';
+    var url = '{{ PREFIX_URL }}';
+    var phonology_list_kinds = {{phonology_list_kinds|safe}};
+//    console.log(phonology_list_kinds);
+
+    var morpheme_phonology = {{MORPHEME_DISPLAY_FIELDS|safe}};
+
+// TODO: see what the order of the fields is, this needs to be non-dynamic to help
+// manage user interface events during editing, to go to the next displayed field
+// At the moment, the morpheme_phonology setting is used
+//    var phonology_fields = {{phonology_fields|safe}};
+//    console.log('phonology_fields '+phonology_fields);
 
     var edit_mode_str = '{% trans "Edit" %}';
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
@@ -33,31 +43,27 @@
     var saving_str = '{% trans "Saving..." %}';
     var yes_str = '{% trans "Yes" %}'
     var no_str = '{% trans "No" %}'
-    var original_strong_hand = ''
-    var original_weak_hand = ''
     var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}';
     var original_lemma_group_url = '{{lemma_group_url}}'
     var lemma_group = '{{lemma_group}}'
-    console.log('lemma group on loading page: ' + lemma_group)
 
     var edit_post_url = '{% url 'dictionary:update_morpheme' morpheme.id %}';
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
-    var handedness_weak_choices = {{morpheme.handedness_weak_choices_json|safe}};
-    var languages = {{morpheme.signlanguage_choices|safe}};
     var dialects = {{morpheme.dialect_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
     {% else %}
     var dataset_choices = {};
     {% endif %}
-    var gloss_dataset_id = {{ morpheme.lemma.dataset_id}};
+    var gloss_dataset_id = {{ morpheme.lemma.dataset.id}};
     var gloss_default_language_code = '{{morpheme.lemma.dataset.default_language.language_code_2char}}';
     var mrptype_choices = {{morpheme.mrptype_choices|safe}};
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 
     var choice_lists = {{choice_lists|safe}};
+
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id;
     var next_morpheme_id = {{nextmorphemeid}};
@@ -75,7 +81,11 @@
                 var a = document.createElement("a");
                 a.setAttribute("class", "btn btn-default");
                 a.style["float"] = "none";
-                a.href = "{{PREFIX_URL}}/dictionary/morpheme/" + json_data[key].id + "/";
+                if (json_data[key].ismorpheme) {
+                    a.href = "{{PREFIX_URL}}/dictionary/morpheme/" + json_data[key].id + "/";
+                } else {
+                    a.href = "{{PREFIX_URL}}/dictionary/gloss/" + json_data[key].id + "/";
+                };
                 a.id = json_data[key].id;
                 var linktext = document.createTextNode(json_data[key].gloss);
                 a.appendChild(linktext);
@@ -102,9 +112,80 @@
     });
 
     </script>
-    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
-    
+
+<script type='text/javascript'>
+
+var defaultText = '------';
+function nextPhonologyField(e) {
+    var input = $(e.target),
+        label = input && input.prev();
+    label.text(input.val() === '' ? defaultText : input.val());
+    input.hide();
+    label.show();
+};
+
+
+<!--    //Fill choice_lists without frequencies now-->
+<!--    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{morpheme.lemma.dataset}}").done( function (data)-->
+<!--    {-->
+<!--        choice_lists = $.extend(data,{{other_media_field_choices | safe}});-->
+<!--        console.log("Added field choices");-->
+<!--    });-->
+
+<!--    //Fill choice_lists with frequencies later-->
+<!--    $(document).ready(function() {-->
+<!--        $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{morpheme.lemma.dataset}}").done( function (data)-->
+<!--        {-->
+<!--            choice_lists = $.extend(data,{{other_media_field_choices | safe}});-->
+
+<!--            // Reload the data in the lists-->
+<!--            $('.edit_list').unbind('click');-->
+<!--            configure_edit();-->
+
+<!--            console.log("Added field choices");-->
+<!--        });-->
+<!--    });-->
+
+//Keyboard shortcuts
+document.onkeydown = checkKey;
+
+function checkKey(e)
+{
+    // No shortcut if your typing
+    if (document.activeElement.tagName == 'INPUT') {return;}
+
+    e = e || window.event;
+
+    switch(e.key)
+    {
+      case 'p':
+        element_id = 'phonology';
+        break;
+      case 'm':
+        element_id = 'morphology'
+        break;
+      case 's':
+        element_id = 'semantics'
+        break;
+      default:
+        element_id = null
+    }
+
+    if (element_id != null)
+    {
+        toggle_edit();
+        $('#'+element_id).collapse('show');
+        $('#'+element_id)[0].scrollIntoView();
+    }
+
+};
+
+</script>
+
+    <script type='text/javascript' src="{{ STATIC_URL }}js/morpheme_edit.js"></script>
+
      <script type='text/javascript'>
+<!--        console.log('after reading script morpheme edit js');-->
         $('#searchresults').css({'top': Math.round($('#signbank-bar').height() + 10)});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
      </script>
@@ -309,7 +390,7 @@
                     </form>
                     <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' morpheme.id %}" >
                         {% csrf_token %}
-                        <input type="hidden" name="dataset" value="{{ morpheme.lemma.dataset_id }}"/>
+                        <input type="hidden" name="dataset" value="{{ morpheme.lemma.dataset.id }}"/>
                         {% for dataset_lang in morpheme.lemma.dataset.translation_languages.all %}
                         {{ dataset_lang.name }}:
                         <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
@@ -345,13 +426,11 @@
 
             <tr>
                 <th>{% trans "Morpheme type" %}</th>
-                <td class='edit edit_mrptype' id='mrpType'>{{ morpheme_type }}</td>
+                <td class='edit edit_mrptype' id='mrpType' value='{{morpheme_type}}'>{{morpheme_type}}</td>
             </tr>
-            <tr><th>{% trans "Language" %}</th><td class='edit edit_signlanguage' id='signlanguage'>{% for lang in morpheme.signlanguage.all %}{{lang.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-            <tr><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect'>{% for dia in morpheme.dialect.all %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr {%if morpheme_dialects|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in morpheme_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             {% endif %}
-            <tr><th>{% trans "Dataset" %}</th><td class='edit edit_dataset' id='dataset'>{{ morpheme.dataset }}</td></tr>
         </table>
 
         {% if perms.dictionary.change_morpheme %}
@@ -428,28 +507,14 @@
         <div id='phonology' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in phonology_fields %}
-                {% if name == 'domhndsh' %}
-                <!-- This case no longer arises -->
-                 <tr value="{{value}}">
-                 <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'>
-                            {% if StrongHand %}
-                            <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
-                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{ value }}</a>
-                            {% else %}
-                            <span style="color:red">{{value}}</span>
-                            {% endif %}
-                        </td>
-                 </tr>
-                {% else %}
 
-                <tr value="{{value}}" id="{{field}}"{% if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %}>
+                <tr  {% if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %} />
                     <th>{{label}}</th>
-                    <td class="edit edit_{{kind}}" id='{{name}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}
+                    <td class="edit edit_{{kind}}"
+                        id='{{name}}' value='{{value}}' >{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}
                                                                     {% else %}{% value value %}{% endif %}</td>
                 </tr>
 
-            {% endif %}
 		{% endfor %}
 
             </table>
@@ -466,7 +531,7 @@
         <div id='semantics' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in semantics_fields %}
-		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}'>{% value value %}</td></tr>
+		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}' >{% value value %}</td></tr>
 		{% endfor %}
             
             </table>
@@ -501,22 +566,18 @@
                     </td>
                 </tr>
 
+            {%if SHOW_DATASET_INTERFACE_OPTIONS %}
+                <tr><th>{% trans "Dataset" %}</th><td id='dataset' colspan="2" >{{ morpheme.lemma.dataset }}</td></tr>
+            {% endif %}
+
                 <tr><th>{% trans "In Web Dictionary" %}</th>
-                    <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'>
-                        {% if morpheme.inWeb %}
-                            {% trans "Yes" %}
-                        {% else %}
-                            {% trans "No" %}
-                        {% endif %}
-                    </td></tr>
+                    <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='inWeb'
+                        value='{{morpheme.inWeb}}'>{% if morpheme.inWeb %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                </tr>
                 <tr><th>{% trans "Proposed New Morpheme" %}</th>
-                    <td class='edit edit_check' id='isNew'>
-                        {% if morpheme.isNew %}
-                            {% trans "Yes" %}
-                        {% else %}
-                            {% trans "No" %}
-                        {% endif %}
-                    </td></tr>
+                    <td class='edit edit_check' id='isNew'
+                        value='{{morpheme.isNew}}'>{% if morpheme.isNew %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                </tr>
             </table>
         </div>
     </div>
@@ -577,15 +638,10 @@
                     {% endif %}
                     {% endif %}
                 </td>
-                <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'>
-                    {% if def.published %}
-                        {% trans "Yes" %}
-                    {% else %}
-                        {% trans "No" %}
-                    {% endif %}
-                </td>
+                <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
+                    value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td class='edit edit_role' id='definitionrole_{{def.id}}'>{{def.get_role_display}}</td>
+                <td class='edit edit_role' id='definitionrole_{{def.id}}' value='{{def.role}}'>{{def.get_role_display}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
               </tr>
               {% endfor %}
@@ -674,7 +730,7 @@
                     </td>
 
                     <td><a href="{{ path }}">Download</a></td>
-                    <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
+                    <td class='edit edit_list' id='other-media-type_{{ pk }}' value='{{type}}' >{{ type }}</td>
                     <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
                 </tr>
                {% endfor %}
@@ -684,7 +740,7 @@
             {% if perms.dictionary.change_morpheme %}
             <form id='add_other_media' action='{% url "dictionary:add_othermedia" %}' method="POST" enctype="multipart/form-data">
 
-               <input type='hidden' name='morpheme' value='{{morpheme.pk}}'>
+               <input type='hidden' name='gloss' value='{{morpheme.pk}}'>
 
                 <fieldset>
                 {% csrf_token %}

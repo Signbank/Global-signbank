@@ -21,7 +21,7 @@ from django.conf import settings
 
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, language_codes_to_adjectives
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -222,6 +222,7 @@ def update_gloss(request, glossid):
                 return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
             if ds.is_public:
+                print('dataset is public')
                 newvalue = value
                 setattr(gloss, field, ds)
                 gloss.save()
@@ -309,7 +310,7 @@ def update_gloss(request, glossid):
             try:
                 dataset = gloss.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
-                if dataset == lemma.dataset:
+                if dataset is None or dataset == lemma.dataset:
                     gloss.lemma = lemma
                     gloss.save()
                 else:
@@ -367,20 +368,65 @@ def update_gloss(request, glossid):
             # special value of 'notset' or -1 means remove the value
             fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
 
-            char_fields_not_null = [f.name for f in Gloss._meta.fields
-                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+            fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
+                                            if f.name in fieldnames
+                                            and f.name + '_fk' in  [f.name for f in Gloss._meta.fields]
+                                            and isinstance(Gloss._meta.get_field(f.name + '_fk'), FieldChoiceForeignKey)]
 
-            if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
-                print('not set ', field)
+            fields_empty_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
+
+            char_fields_not_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField'
+                                        and not hasattr(f, 'field_choice_category') and not f.null]
+
+            char_fields = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField'
+                                        and not hasattr(f, 'field_choice_category')]
+
+            # print('fields empty null: ', fields_empty_null)
+
+            # print('char fields not null: ', char_fields_not_null)
+            # print('char fields: ', char_fields)
+
+            text_fields = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField' ]
+
+            text_fields_not_null = [f.name for f in Gloss._meta.fields
+                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField' and not f.null]
+
+            # The following code relies on the order of if else testing
+            # The updates ignore Placeholder empty fields of '-' and '------'
+            # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+            if field in fieldchoiceforeignkey_fields:
+                fieldchoice = FieldChoice.objects.get(id=value)
+                gloss.__setattr__(field + '_fk', fieldchoice)
+                gloss.save()
+                language_adjective = language_codes_to_adjectives[request.LANGUAGE_CODE].lower()
+                newvalue = getattr(fieldchoice, language_adjective + '_name')
+            elif (value == 'notset' or value == -1 or value == '' or value == '-' or value == '------') and field in fields_empty_null:
+                # print('a. field ', field, ' value ', value, ' set to None')
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
-
+            elif (field in char_fields or field in text_fields_not_null) and (value == '-' or value == '------'):
+                # print('b. field ', field, ' value ', value, ' set to empty string')
+                value = ''
+                gloss.__setattr__(field, value)
+                gloss.save()
+                newvalue = ''
+            elif field in text_fields and (value == '-' or value == '------'):
+                # print('c. field ', field, ' value ', value, ' set to None')
+                # this is to take care of legacy code where some values were set to the empty field display hint
+                gloss.__setattr__(field, None)
+                gloss.save()
+                newvalue = ''
             #Regular field updating
             else:
 
                 # Alert: Note that if field is idgloss, the following code updates it
-                setattr(gloss,field,value)
+                # print('update field of gloss ', gloss.id, field, value)
+                gloss.__setattr__(field,value)
                 gloss.save()
 
                 #If the value is not a Boolean, return the new value
@@ -398,9 +444,9 @@ def update_gloss(request, glossid):
                     else:
                         newvalue = value
 
-                if field_category in FIELDS['phonology']:
+        if field in FIELDS['phonology']:
 
-                     category_value = 'phonology'
+             category_value = 'phonology'
 
         # if field == 'domhndsh':
             # value should be the machine_value representation, please confirm if modifying the above code
@@ -499,6 +545,7 @@ def update_signlanguage(gloss, field, values):
     dialects_value = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in gloss.dialect.all()])
     current_signlanguages = gloss.signlanguage.all()
     current_signlanguage_name = ''
+    print('update_signlanguage: ', current_signlanguages)
     for lang in current_signlanguages:
         # this looks strange, is this a convenience for a singleton set
         current_signlanguage_name = lang.name
@@ -526,21 +573,16 @@ def update_dialect(gloss, field, values):
     numerical_values_converted_to_dialects = [ dialect_choices[int(value)] for value in values ]
     error_string_values = ', '.join(numerical_values_converted_to_dialects)
     new_dialects_to_save = []
-
     try:
-        gloss_signlanguages = gloss.signlanguage.all()
+        # there is actually only one sign language
+        gloss_signlanguage = gloss.lemma.dataset.signlanguage
         for value in numerical_values_converted_to_dialects:
             # Gloss Detail View pairs the Dialect with the Language in the update menu
             (sign_lang, dia) = value.split('/')
             lang = SignLanguage.objects.get(name=sign_lang)
-            if not lang in gloss_signlanguages:
-                if gloss_signlanguages:
-                    # There is currently a sign language assigned to this gloss, the new dialect does not match it
-                    raise Exception
-                else:
-                    # currently no sign language has been assigned, assign this one
-                    # this value is not returned to the Gloss Detail View, it is a side effect
-                    gloss.signlanguage.add(lang)
+            if lang != gloss_signlanguage:
+                # There is currently a sign language assigned to this gloss, the new dialect does not match it
+                raise Exception
 
             dialect_objs = Dialect.objects.filter(name=dia).filter(signlanguage_id=lang)
             for lang in dialect_objs:
@@ -940,7 +982,7 @@ def update_relationtoforeignsign(gloss, field, value):
         # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
         return HttpResponse('', {'content-type': 'text/plain'})
     elif what == 'relationforeign_loan':
-        rel.loan = value == 'YES'
+        rel.loan = value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]
         rel.save()
 
     elif what == 'relationforeign_other_lang':
@@ -1011,7 +1053,7 @@ def update_definition(request, gloss, field, value):
     elif what == 'definitionpub':
         
         if request.user.has_perm('dictionary.can_publish'):
-            defn.published = value == 'Yes'
+            defn.published = value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]
             defn.save()
         
         if defn.published:
@@ -1019,10 +1061,10 @@ def update_definition(request, gloss, field, value):
         else:
             newvalue = 'No'
     elif what == 'definitionrole':
-        defn.role = value
+        defn.role_fk = FieldChoice.objects.get(id=value)
         defn.save()
-        choice_list = FieldChoice.objects.filter(field__iexact='NoteType')
-        newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
+        language_adjective = language_codes_to_adjectives[request.LANGUAGE_CODE].lower()
+        newvalue = getattr(defn.role_fk, language_adjective + '_name')
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -1168,10 +1210,10 @@ def add_definition(request, glossid):
             
             published = form.cleaned_data['published']
             count = form.cleaned_data['count']
-            role = form.cleaned_data['note']
+            role = FieldChoice.objects.get(pk=form.cleaned_data['note'])
             text = form.cleaned_data['text']
             
-            defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
+            defn = Definition(gloss=thisgloss, count=count, role_fk=role, text=text, published=published)
             defn.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
@@ -1393,7 +1435,7 @@ def update_handshape(request, handshapeid):
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
 
 def add_othermedia(request):
-
+    print('add other media')
     if request.method == "POST":
 
         form = OtherMediaForm(request.POST,request.FILES)
@@ -1403,7 +1445,7 @@ def add_othermedia(request):
             #Create the folder if needed
             goal_directory = OTHER_MEDIA_DIRECTORY+request.POST['gloss'] + '/'
             goal_path = goal_directory + request.FILES['file'].name
-
+            print('add other media: ', goal_directory, goal_path)
             if not os.path.isdir(goal_directory):
                 os.mkdir(goal_directory)
 
@@ -1627,7 +1669,7 @@ def update_morpheme(request, morphemeid):
             return update_dialect(morpheme, field, values)
 
         elif field == 'dataset':
-
+            # this has been hidden
             original_value = getattr(morpheme,field)
 
             # in case somebody tries an empty or non-existent dataset name
@@ -1687,7 +1729,7 @@ def update_morpheme(request, morphemeid):
         elif field == 'inWeb':
             # only modify if we have publish permission
             if request.user.has_perm('dictionary.can_publish'):
-                morpheme.inWeb = (value == 'Yes')
+                morpheme.inWeb = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
                 morpheme.save()
 
             if morpheme.inWeb:
@@ -1705,7 +1747,7 @@ def update_morpheme(request, morphemeid):
             try:
                 dataset = morpheme.dataset
                 lemma = LemmaIdgloss.objects.get(pk=value)
-                if dataset == lemma.dataset:
+                if dataset is None or dataset == lemma.dataset:
                     morpheme.lemma = lemma
                     morpheme.save()
                 else:
@@ -1736,10 +1778,10 @@ def update_morpheme(request, morphemeid):
             # Translate the value if a boolean
             if isinstance(morpheme._meta.get_field(field), NullBooleanField):
                 newvalue = value
-                value = (value == 'Yes')
+                value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
             # special value of 'notset' or -1 means remove the value
-            fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+            fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew']
 
             if field in FIELDS['phonology']:
                 # this is used as part of the feedback to the interface, to alert the user to refresh the display

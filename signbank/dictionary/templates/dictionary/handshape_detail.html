@@ -127,7 +127,11 @@
 
     <ul class='nav nav-tabs'>
         <li class="nav-item">
+        {% if user.is_anonymous %}
+            <a class='nav-link' href="{{PREFIX_URL}}/handshapes/show_all/">{% trans "Handshapes List" %}</a>
+        {% else %}
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/handshapes/">{% trans "Handshapes List" %}</a>
+        {% endif %}
         </li>
     </ul>
 

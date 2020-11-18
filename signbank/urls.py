@@ -19,7 +19,9 @@ import django.contrib.admindocs.urls
 import django_summernote.urls
 
 from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
-                                            HomonymListView, MinimalPairsListView, DatasetManagerView, DatasetDetailView, FrequencyListView, DatasetFieldChoiceView
+                                            HomonymListView, MinimalPairsListView, DatasetManagerView, \
+                                            DatasetDetailView, FrequencyListView, DatasetFieldChoiceView, \
+                                            dataset_detail_view_by_acronym
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -72,6 +74,7 @@ urlpatterns = [
     url(r'^analysis/frequencies/$', FrequencyListView.as_view(), name='admin_frequency_list'),
     url(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
     url(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
+    url(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
     url(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
     url(r'^morphemes/dictionary/$', signbank.dictionary.views.search_morpheme),
     url(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),
@@ -110,6 +113,7 @@ urlpatterns = [
         name='admin_dataset_field_choices'),
     url(r'^datasets/update_excluded_choices/$', login_required(signbank.dictionary.update.update_excluded_choices),
         name='update_excluded_choices'),
+    url(r'^datasets/(?P<acronym>.*)$', dataset_detail_view_by_acronym, name='dataset_detail_view_by_acronym'),
     url(r'^update/metadata/', signbank.dictionary.update.upload_metadata, name='upload_metadata'),
     url(r'^update/dataset_eafs/', signbank.dictionary.update.upload_eaf_files, name='upload_eaf_files'),
                   url(r'^__debug__/', include(debug_toolbar.urls))
