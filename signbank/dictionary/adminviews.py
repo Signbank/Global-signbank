@@ -40,8 +40,7 @@ from signbank.settings.server_specific import *
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
-from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
-    language_codes_to_adjectives
+from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -370,8 +369,6 @@ class GlossListView(ListView):
             context['show_all'] = False
 
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
-
-        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
 
         if self.search_type == 'sign' or not self.request.user.is_authenticated():
             # Only count the none-morpheme glosses
@@ -1133,8 +1130,6 @@ class GlossDetailView(DetailView):
         language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
         language = Language.objects.get(id=get_default_language_id())
         default_language_code = language.language_code_2char
-        codes_to_adjectives = dict(settings.LANGUAGES)
-        adjective = codes_to_adjectives[language_code].lower()
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
@@ -1271,8 +1266,7 @@ class GlossDetailView(DetailView):
 
                     if len(choice_list) > 0:
                         # if there is a choice list, machine_value is FieldChoice object
-                        language_adjective = language_codes_to_adjectives[self.request.LANGUAGE_CODE].lower()
-                        human_value = getattr(machine_value, language_adjective + '_name')
+                        human_value = machine_value.name
 
                         # The static_choice_lists structure is used in the Detail View to reverse map in javascript
                         # It's only needed for choice lists.
@@ -1372,7 +1366,7 @@ class GlossDetailView(DetailView):
         for note in notes:
             # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
             if note.role_fk:
-                translated_note_role = getattr(note.role_fk, adjective + '_name')
+                translated_note_role = note.role_fk.name
             else:
                 translated_note_role = machine_value_to_translated_human_value(note.role,note_role_choices,self.request.LANGUAGE_CODE)
             role_id = (note.role, translated_note_role)
@@ -2584,33 +2578,14 @@ class MinimalPairsListView(ListView):
     paginate_by = 10
 
     def get_context_data(self, **kwargs):
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-        language = Language.objects.get(id=get_default_language_id())
-        default_language_code = language.language_code_2char
-
-        # Refresh the "constant" translated choice lists table
-        translated_choice_lists_table = generate_translated_choice_list_table()
-
         context = super(MinimalPairsListView, self).get_context_data(**kwargs)
 
-        languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
-        if languages:
-            context['language'] = languages[0]
-        else:
-            context['language'] = Language.objects.get(id=get_default_language_id())
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-        context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-        context['translated_choice_lists_table'] = generate_translated_choice_list_table()
 
         field_names = []
         for field in FIELDS['phonology']:
@@ -2677,12 +2652,6 @@ class FrequencyListView(ListView):
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         context['dataset_languages'] = dataset_languages
 
-        codes_to_adjectives = dict(settings.LANGUAGES)
-        if language_code not in codes_to_adjectives.keys():
-            adjective = 'english'
-        else:
-            adjective = codes_to_adjectives[language_code].lower()
-
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -2728,7 +2697,7 @@ class FrequencyListView(ListView):
             else:
                 field_category = field
 
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
             field_labels_choices[field] = dict(translated_choices)
 
@@ -2757,7 +2726,7 @@ class FrequencyListView(ListView):
                 field_category = gloss_field.field_choice_category
             else:
                 field_category = field
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
             field_labels_semantics_choices[field] = dict(translated_choices)
 
@@ -2765,8 +2734,6 @@ class FrequencyListView(ListView):
 
         # for ease of implementation in the template, the results of the two kinds of frequencies
         # (phonology fields, semantics fields) are displayed in the same table, the lookup tables are merged so only one loop is needed
-
-        context['all_field_labels_choices'] = dict(field_labels_choices, **field_labels_semantics_choices)
 
         context['all_field_labels'] = dict(field_labels, **field_labels_semantics)
 
@@ -2965,8 +2932,6 @@ class GlossFrequencyView(DetailView):
             gloss_idgloss = context['annotation_idgloss'][default_language]
         context['gloss_idgloss'] = gloss_idgloss.text
 
-        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
-
         return context
 
 
@@ -3108,8 +3073,6 @@ class LemmaFrequencyView(DetailView):
         context['data_lemmas'] = json.dumps(data_lemmas)
 
         context['glosses_in_lemma_group'] = glosses_in_lemma_group
-
-        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
 
         return context
 
@@ -4153,9 +4116,9 @@ class DatasetFieldChoiceView(ListView):
                                                                        Q(**{field.name: 0})).count()
 
                         else:
-                            variable_column = field.name
+                            variable_column = field.name + '_id'
                             search_filter = 'exact'
-                            filter = variable_column + '__' + search_filter
+                            filter = variable_column
                             frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
                                 **{filter: machine_value}).count()
 

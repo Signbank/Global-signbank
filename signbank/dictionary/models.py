@@ -2180,8 +2180,6 @@ def fieldname_to_kind(fieldname):
 
 def generate_translated_choice_list_table():
     # Result of the line below is a list in this format {'en-us':'english'}
-    codes_to_adjectives = dict(
-        [(language.lower().replace('_', '-'), adjective) for language, adjective in settings.LANGUAGES])
 
     temp_translated_choice_lists_table = dict()
     for f in Gloss._meta.fields:
@@ -2207,39 +2205,18 @@ def generate_translated_choice_list_table():
             # print('after getting choice_list: ', choice_list)
             field_translated_choice_list = dict()
 
-            # add choices for 0 and 1
-            human_value_0 = '-'
-            translations_for_choice_0 = dict()
-            for (l_name, l_adjective) in codes_to_adjectives.items():
-                translations_for_choice_0[l_name] = human_value_0
-            field_translated_choice_list[0] = translations_for_choice_0
-            human_value_1 = 'N/A'
-            translations_for_choice_1 = dict()
-            for (l_name, l_adjective) in codes_to_adjectives.items():
-                translations_for_choice_1[l_name] = human_value_1
-            field_translated_choice_list[1] = translations_for_choice_1
-
             if len(choice_list) > 0:
                 # print('choices found')
-                for c in choice_list:
-                    # c is either a Handshape or a FieldChoice object, get the translations from it
-                    # print('choice is: ', c.name)
-                    choices_machine_value = getattr(c, 'machine_value')
-                    translations_for_choice = dict()
-                    for (l_name, l_adjective) in codes_to_adjectives.items():
-                        adjective = l_adjective.lower()
-                        try:
-                            human_value = getattr(c, adjective + '_name')
-                        except AttributeError:
-                            # in case the language name is empty for the field choice
-                            human_value = getattr(c, 'name')
-                        except:
-                            # this should not happen, it seems the name field was removed from the model
-                            # probably a default setting is needed
-                            print('There is no field name in the FieldChoice table.')
-                            human_value = ''
-                        translations_for_choice[l_name] = human_value
-                    field_translated_choice_list[choices_machine_value] = translations_for_choice
+                for choice in choice_list:
+                    # choice is either a Handshape or a FieldChoice object, get the translations from it
+                    try:
+                        human_value = choice.name
+                    except:
+                        # this should not happen, it seems the name field was removed from the model
+                        # probably a default setting is needed
+                        print('There is no field name in the FieldChoice table.')
+                        human_value = ''
+                    field_translated_choice_list[choice.pk] = human_value
                 #
                 temp_translated_choice_lists_table[f.name] = field_translated_choice_list
             else:
@@ -2576,14 +2553,6 @@ class Dataset(models.Model):
         return users_who_can_change_dataset
 
     def generate_frequency_dict(self, language_code):
-
-        codes_to_adjectives = dict(settings.LANGUAGES)
-
-        if language_code not in codes_to_adjectives.keys():
-            adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
-        else:
-            adjective = codes_to_adjectives[language_code].lower()
-
         # sort the phonology fields based on field label in the designated language
         fields_data = []
         for field in Gloss._meta.fields:
@@ -2597,7 +2566,7 @@ class Dataset(models.Model):
         choice_lists = dict()
         for (f, field_verbose_name, fieldchoice_category) in fields_data:
             if fieldchoice_category:
-                choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
+                choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('name')
                 # make a dictionary using the field name so we can look up the translated choices later
                 choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list_this_field, language_code, ordered=False)
 
@@ -2607,40 +2576,26 @@ class Dataset(models.Model):
         frequency_lists_phonology_fields = OrderedDict()
         # To generate the correct order, iterate over the ordered fields data, which is ordered by translated verbose name
         for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
-
-            choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
-
-            # We now basically construct a duplicate of the choice_lists dict, but with the machine values instead of the labels
-            # The machine value is what is stored as the value of the field in the Gloss objects
-            # We take the count of the machine value in the Gloss objects
-
-            # ordered = True means return an OrderedDict instead of a list
-            choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list_this_field, ordered=True)
-
-            # get dictionary of translated field choices CHOICE_LISTS for this field in sorted order (as per the language code)
-            sorted_field_choices = copy.deepcopy(choice_lists[f])
+            # FieldChoices: the ones with machine_value 0 and 1 first, the rest is sorted by name, which is the translated name
+            choice_list_this_field = list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__lte=1).order_by('machine_value')) \
+                                    + list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__gt=1).order_by('name'))
 
             # Because we're dealing with multiple languages and we want the fields to be sorted for the language,
             # we maintain the order of the fields established for the choice_lists dict of field choice names
             choice_list_frequencies = OrderedDict()
-            for choice, label in sorted_field_choices:
-
-                machine_value = choice_list_machine_values[choice]
+            for fieldchoice in choice_list_this_field:
+                variable_column = f + '_fk'
                 # empty values can be either 0 or else null
-                # the raw query is constructed for this case separately from the case for actual values
-                if machine_value == 0:
-                    choice_list_frequencies[choice] = Gloss.objects.filter(Q(lemma__dataset=self),
-                                                                           Q(**{f + '__isnull': True}) |
-                                                                           Q(**{f: 0})).count()
+                if fieldchoice.machine_value == 0:
+                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(Q(lemma__dataset=self),
+                                                                           Q(**{variable_column + '__isnull': True}) |
+                                                                           Q(**{variable_column: fieldchoice})).count()
                 else:
-                    variable_column = f
-                    search_filter = 'exact'
-                    filter = variable_column + '__' + search_filter
-                    choice_list_frequencies[choice] = Gloss.objects.filter(lemma__dataset=self.id).filter(
-                        **{filter: machine_value}).count()
+                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                        **{variable_column: fieldchoice}).count()
 
-                # the new frequencies for this field are added using the update method to insure the order is maintained
-                frequency_lists_phonology_fields.update({f: copy.deepcopy(choice_list_frequencies)})
+            # the new frequencies for this field are added using the update method to insure the order is maintained
+            frequency_lists_phonology_fields.update({f: copy.deepcopy(choice_list_frequencies)})
 
         return frequency_lists_phonology_fields
 

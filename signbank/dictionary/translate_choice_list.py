@@ -9,12 +9,6 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
     # Make sure the machine values are unique by only using the first human value
 
     list_head_values = ['-', 'N/A']
-    codes_to_adjectives = dict(settings.LANGUAGES)
-
-    if language_code not in codes_to_adjectives.keys():
-        adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
-    else:
-        adjective = codes_to_adjectives[language_code].lower()
 
     temp_mapping_dict = {}
     raw_choice_list = []
@@ -25,7 +19,7 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
             # don't append to raw_choice_list
             continue
 
-        human_value = getattr(choice, adjective + '_name')
+        human_value = choice.name
         if human_value in list_head_values:
             empty_or_NA[human_value] = choice
             continue
@@ -33,7 +27,7 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
         temp_mapping_dict[choice.machine_value] = human_value
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
-            raw_choice_list.append((id_prefix + str(choice.id), getattr(choice, adjective + '_name')))
+            raw_choice_list.append((id_prefix + str(choice.id), choice.name))
 
     if 'NoteType' in str(queryset.query):
         print(raw_choice_list)
@@ -50,13 +44,6 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
 
 
 def machine_value_to_translated_human_value(machine_value,choice_list,language_code):
-
-    codes_to_adjectives = dict(settings.LANGUAGES)
-
-    if language_code not in codes_to_adjectives.keys():
-        adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
-    else:
-        adjective = codes_to_adjectives[language_code].lower()
 
     if not choice_list or len(choice_list) == 0:
         # this function has been called with an inappropriate choice_list
@@ -77,7 +64,7 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
         try:
             selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
 
-            human_value = getattr(selected_field_choice, adjective + '_name')
+            human_value = selected_field_choice.name
 
         except (IndexError, ValueError):
             human_value = machine_value
@@ -100,7 +87,7 @@ def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=Fal
         machine_values_seen.append(choice.machine_value)
         queryset_no_dupes.append(choice)
 
-    raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,'machine_value')) for choice in queryset_no_dupes]
+    raw_choice_list = [(id_prefix+str(choice.pk),choice.pk) for choice in queryset_no_dupes]
 
     sorted_choice_list = [(id_prefix+'0',0),(id_prefix+'1',1)]+sorted(raw_choice_list,key = lambda x: x[1])
 
