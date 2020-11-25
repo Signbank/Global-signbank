@@ -1117,8 +1117,8 @@ class Gloss(models.Model):
         for (f, field_verbose_name, fieldchoice_category) in fields_data:
             if fieldchoice_category:
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                machine_value = str(getattr(self, f))
-                field_value = machine_value_to_translated_human_value(machine_value, choice_list, settings.LANGUAGE_CODE)
+                fieldchoice = getattr(self, f)
+                field_value = fieldchoice.name
                 if field_value is None:
                     field_value = ' '
             else:
