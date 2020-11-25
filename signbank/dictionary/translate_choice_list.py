@@ -12,12 +12,6 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
     # Make sure the machine values are unique by only using the first human value
 
     list_head_values = ['-', 'N/A']
-    codes_to_adjectives = dict(settings.LANGUAGES)
-
-    if language_code == 'en' or language_code not in codes_to_adjectives.keys():
-        language_field = 'name'
-    else:
-        language_field = codes_to_adjectives[language_code].lower() + '_name'
 
     temp_mapping_dict = {}
     raw_choice_list = []
@@ -28,7 +22,7 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
             # don't append to raw_choice_list
             continue
 
-        human_value = getattr(choice, language_field)
+        human_value = choice.name
         if human_value in list_head_values:
             empty_or_NA[human_value] = choice
             continue
@@ -36,7 +30,7 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
         temp_mapping_dict[choice.machine_value] = human_value
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
-            raw_choice_list.append((id_prefix + str(choice.id), getattr(choice, language_field)))
+            raw_choice_list.append((id_prefix + str(choice.id), choice.name))
 
     if 'NoteType' in str(queryset.query):
         print(raw_choice_list)
@@ -58,53 +52,44 @@ def choicelist_queryset_to_colors(queryset,language_code,ordered=True,id_prefix=
     # Other functions that call this function expect either a list or an OrderedDict that maps machine values to human values
     # Make sure the machine values are unique by only using the first human value
 
-    codes_to_adjectives = dict(settings.LANGUAGES)
-
-    if language_code == 'en' or language_code not in codes_to_adjectives.keys():
-        language_field = 'name'
-    else:
-        language_field = codes_to_adjectives[language_code].lower() + '_name'
+    list_head_values = ['-', 'N/A']
 
     temp_mapping_dict = {}
     raw_choice_list = []
     machine_values_seen = []
+    empty_or_NA = {}
     for choice in queryset:
-        try:
-            human_value = getattr(choice, language_field)
-        except (OperationalError, AttributeError):
-            human_value = getattr(choice,'name')
-
         if choice.machine_value in machine_values_seen:
             # don't append to raw_choice_list
             continue
+
+        human_value = choice.name
+        if human_value in list_head_values:
+            empty_or_NA[human_value] = choice
+            continue
+
         temp_mapping_dict[choice.machine_value] = human_value
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
             raw_choice_list.append((id_prefix + str(choice.machine_value), human_value, getattr(choice, 'field_color')))
 
+    if 'NoteType' in str(queryset.query):
+        print(raw_choice_list)
+
+    list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].id), v, 'ffffff') for v in list_head_values]
+
     if ordered:
+        sorted_choice_list = OrderedDict(list_head)
         sorted_choices = sorted(raw_choice_list,key = lambda x: x[1])
-        sorted_choice_list = []
-
-        if not shortlist:
-            sorted_choice_list = [ (id_prefix+'0', '-', 'ffffff'), (id_prefix+'1', 'N/A', 'ffffff')] + sorted_choices
-
         sorted_tuple_dict = []
-        for (a, b, c) in sorted_choice_list:
+        for (a, b, c) in sorted_choices:
             sorted_tuple_dict.append((a, c))
-        sorted_choice_dict = OrderedDict(sorted_tuple_dict)
+        sorted_choice_list.update(OrderedDict(sorted_tuple_dict))
+        return sorted_choice_list
+    else:
+        sorted_choice_list = list_head + sorted(raw_choice_list, key=lambda x: x[1])
+        return sorted_choice_list
 
-        return sorted_choice_dict
-    # else:
-    #
-    #     if shortlist:
-    #         sorted_choice_list = sorted(raw_choice_list, key=lambda x: x[1])
-    #     else:
-    #         sorted_choice_list = [(id_prefix + '0', 'ffffff'), (id_prefix + '1', 'ffffff')] + sorted(raw_choice_list,
-    #                                                                                          key=lambda x: x[1])
-    #     return sorted_choice_list
-
-    return OrderedDict([])
 
 def choicelist_queryset_to_field_colors(queryset):
 
@@ -115,12 +100,6 @@ def choicelist_queryset_to_field_colors(queryset):
     return temp_mapping_dict
 
 def machine_value_to_translated_human_value(machine_value,choice_list,language_code):
-    codes_to_adjectives = dict(settings.LANGUAGES)
-
-    if language_code == 'en' or language_code not in codes_to_adjectives.keys():
-        language_field = 'name'
-    else:
-        language_field = codes_to_adjectives[language_code].lower() + '_name'
 
     if not choice_list or len(choice_list) == 0:
         # this function has been called with an inappropriate choice_list
@@ -141,10 +120,7 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
         try:
             selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
 
-            try:
-                human_value = getattr(selected_field_choice, language_field)
-            except AttributeError:
-                human_value = getattr(selected_field_choice, 'name')
+            human_value = selected_field_choice.name
 
         except (IndexError, ValueError):
             human_value = machine_value
@@ -218,7 +194,7 @@ def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=Fal
         machine_values_seen.append(choice.machine_value)
         queryset_no_dupes.append(choice)
 
-    raw_choice_list = [(id_prefix+str(choice.machine_value),getattr(choice,'machine_value')) for choice in queryset_no_dupes]
+    raw_choice_list = [(id_prefix+str(choice.pk),choice.pk) for choice in queryset_no_dupes]
 
     sorted_choice_list = [(id_prefix+'0',0),(id_prefix+'1',1)]+sorted(raw_choice_list,key = lambda x: x[1])
 

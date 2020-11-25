@@ -21,7 +21,7 @@ from django.conf import settings
 
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, language_codes_to_adjectives
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
 from django.utils.translation import ugettext_lazy as _
@@ -401,8 +401,6 @@ def update_gloss(request, glossid):
                                         and f.name + '_fk' in [f.name for f in Gloss._meta.fields]
                                         and isinstance(Gloss._meta.get_field(f.name + '_fk'), FieldChoiceForeignKey)]
 
-        # this is dangerous because Field CHoice fields are actually CharFields
-
         fields_empty_null = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
 
@@ -427,8 +425,7 @@ def update_gloss(request, glossid):
             fieldchoice = FieldChoice.objects.get(id=value)
             gloss.__setattr__(field + '_fk', fieldchoice)
             gloss.save()
-            language_adjective = language_codes_to_adjectives[request.LANGUAGE_CODE].lower()
-            newvalue = getattr(fieldchoice, language_adjective + '_name')
+            newvalue = fieldchoice.name
         elif value in ['notset','','-','------'] and field in fields_empty_null:
             gloss.__setattr__(field, None)
             gloss.save()
@@ -1148,8 +1145,7 @@ def update_definition(request, gloss, field, value):
     elif what == 'definitionrole':
         defn.role_fk = FieldChoice.objects.get(id=value)
         defn.save()
-        language_adjective = language_codes_to_adjectives[request.LANGUAGE_CODE].lower()
-        newvalue = getattr(defn.role_fk, language_adjective + '_name')
+        newvalue = defn.role_fk.name
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 

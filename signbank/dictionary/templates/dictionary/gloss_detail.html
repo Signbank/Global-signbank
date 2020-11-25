@@ -72,8 +72,6 @@
     var static_choice_lists = {{static_choice_lists|safe}};
     var static_choice_list_colors = {{static_choice_list_colors|safe}};
 
-    var generate_translated_choice_list_table = {{generate_translated_choice_list_table|safe}};
-
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id = {{nextglossid}};
     var next_morpheme_id;
@@ -983,17 +981,9 @@ option:not(:checked) {
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
                             {% with generate_translated_choice_list_table|get_item:name as choices_for_field %}
                             {% with gloss.domhndsh|to_int as domhndsh_value %}
-                            {% with choices_for_field|keyvalue:domhndsh_value as translates_for_field %}
-                            {% if translates_for_field %}
-                            {% with request.LANGUAGE_CODE as language %}
-                            {% with translates_for_field|get_item:language as translated_field %}
+                            {% with choices_for_field|keyvalue:domhndsh_value as translated_field %}
                             <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
                                href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{ translated_field }}</a>
-                            {% endwith %}
-                            {% endwith %}
-                            {% else %}
-                            <span style="color:red">{{domhndsh_value}}</span>
-                            {% endif %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}

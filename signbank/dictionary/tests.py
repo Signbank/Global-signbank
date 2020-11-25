@@ -1,4 +1,5 @@
 from itertools import zip_longest
+from collections import OrderedDict
 
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm
@@ -14,6 +15,7 @@ from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages.storage.cookie import CookieStorage
 from itertools import *
+
 
 from guardian.shortcuts import assign_perm
 
@@ -2352,43 +2354,40 @@ class testFrequencyAnalysis(TestCase):
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
-        language = Language.objects.get(id=get_default_language_id())
-        language_code = language.language_code_2char
+        from django.utils import translation
+        for language_code in dict(settings.LANGUAGES).keys():
+            translation.activate(language_code)
 
-        codes_to_adjectives = dict(settings.LANGUAGES)
-        if language_code == 'en' or language_code not in codes_to_adjectives.keys():
-            desired_ordering_on_field = 'name'
-        else:
-            desired_ordering_on_field = codes_to_adjectives[language_code].lower() + '_name'
+            frequency_dict = test_dataset.generate_frequency_dict(language_code)
+            frequency_dict_keys = frequency_dict.keys()
 
-        frequency_dict = test_dataset.generate_frequency_dict(language_code)
-        frequency_dict_keys = frequency_dict.keys()
+            fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category)
+                                                    for field in Gloss._meta.fields if (field.name in FIELDS['phonology'] + FIELDS['semantics']) and hasattr(field, 'field_choice_category') ]
+            fields_data_keys = [ f_name for (f_name,v_verbose,c_category) in fields_data]
 
-        fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category)
-                                                for field in Gloss._meta.fields if (field.name in FIELDS['phonology'] + FIELDS['semantics']) and hasattr(field, 'field_choice_category') ]
-        fields_data_keys = [ f_name for (f_name,v_verbose,c_category) in fields_data]
+            self.assertNotEqual(len(fields_data),0)
+            self.assertEqual(len(frequency_dict_keys), len(fields_data_keys))
 
-        self.assertNotEqual(len(fields_data),0)
-        self.assertEqual(len(frequency_dict_keys), len(fields_data_keys))
+            ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
+            for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
 
-        ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
-        for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
+                choice_list = list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__lte=1).
+                                   order_by('machine_value').distinct()) \
+                              + list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__gt=1)
+                                     .distinct().order_by('name'))
 
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(desired_ordering_on_field)
-
-            if len(choice_list) > 0:
-                translated_choices = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False, shortlist=False)
+                if len(choice_list) > 0:
+                    translated_choices = list(OrderedDict([(choice.name, choice.id) for choice in choice_list]).keys())
+                else:
+                    translated_choices = []
+                    
                 frequency_choices_f = frequency_dict[f]
-                frequency_choices_f_keys = frequency_choices_f.keys()
+                frequency_choices_f_keys = list(frequency_choices_f.keys())
 
                 self.assertEqual(len(translated_choices), len(frequency_choices_f))
 
-                frequency_choices_f_keys = [ k for k in frequency_choices_f_keys ]
-                translated_choices_keys = [ k for (k,v) in translated_choices ]
-
                 # Make sure the sorted field choices are in the same order
-                print('Testing choices for field choice category: ', fieldchoice_category)
-                self.assertEqual(translated_choices_keys, frequency_choices_f_keys)
+                self.assertEqual(translated_choices, frequency_choices_f_keys)
 
 
 class testSettings(TestCase):
