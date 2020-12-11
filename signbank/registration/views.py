@@ -50,6 +50,8 @@ def activate(request, activation_key, template_name='registration/activate.html'
     """
     activation_key = activation_key.lower() # Normalize before trying anything with it.
     account = RegistrationProfile.objects.activate_user(activation_key)
+    account.is_active = True
+    account.save()
     return render(request, template_name,
                               { 'account': account,
                                 'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS })
