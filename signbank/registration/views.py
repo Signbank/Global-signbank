@@ -275,7 +275,7 @@ def user_profile(request):
 
     user = request.user
     user_object = User.objects.get(username=user)
-    user_profile = UserProfile.objects.get(id=user_object.id)
+    user_profile = UserProfile.objects.get(user=user_object)
     expiry = getattr(user_profile, 'expiry_date')
     today = date.today()
     if expiry:
