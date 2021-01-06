@@ -24,7 +24,8 @@ from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, STATIC_URL, DATASET_EAF_DIRECTORY
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict, \
+    choicelist_queryset_to_machine_value_dict
 
 import signbank.settings
 
@@ -254,7 +255,7 @@ class Definition(models.Model):
     """An English text associated with a gloss. It's called a note in the web interface"""
 
     def __str__(self):
-        return str(self.gloss) + "/" + (self.role or str(self.role))
+        return str(self.gloss) + "/" + str(self.role)
 
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
@@ -1310,8 +1311,8 @@ class Gloss(models.Model):
                 else:
                     choice_list = []
                 # Take the human value in the language we are using
-                machine_value = getattr(self, field)
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
+                fieldchoice = getattr(self, field)
+                human_value = fieldchoice.name
                 label = fieldLabel[field]
                 if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
                     empty_phonology = empty_phonology + [(field, str(label))]
@@ -1355,16 +1356,8 @@ class Gloss(models.Model):
                 if machine_value:
                     non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
             else:
-                if hasattr(gloss_field, 'field_choice_category'):
-                    fieldchoice_category = gloss_field.field_choice_category
-                    if fieldchoice_category == 'Handshape':
-                        choice_list = Handshape.objects.all()
-                    else:
-                        choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                else:
-                    choice_list = []
-                machine_value = getattr(self, field)
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
+                fieldchoice = getattr(self, field)
+                human_value = fieldchoice.name
                 label = fieldLabel[field]
 
                 if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
@@ -1397,7 +1390,7 @@ class Gloss(models.Model):
             if (isinstance(gloss_field, models.CharField) and not hasattr(gloss_field, 'field_choice_category')) or isinstance(gloss_field, models.TextField):
                 continue
             phonology_dict[field] = None
-            machine_value = getattr(self, field)
+            field_value = getattr(self, field)
             if hasattr(gloss_field, 'field_choice_category'):
                 fieldchoice_category = gloss_field.field_choice_category
                 if fieldchoice_category == 'Handshape':
@@ -1405,18 +1398,18 @@ class Gloss(models.Model):
                 else:
                     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
+                human_value = field_value.name
                 if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None or human_value == '0' or human_value == 'None'):
-                    phonology_dict[field] = str(machine_value)
+                    phonology_dict[field] = str(field_value.machine_value)
                 else:
                     phonology_dict[field] = None
             else:
                 # gloss_field is a Boolean
                 # TO DO: check these conversions to Strings instead of Booleans
 
-                if machine_value is not None:
+                if field_value is not None:
 
-                    if machine_value:
+                    if field_value:
                         # machine value is 1
                         phonology_dict[field] = 'True'
                     else:
@@ -1443,7 +1436,7 @@ class Gloss(models.Model):
             gloss_fields[f.name] = f
         for field in settings.MINIMAL_PAIRS_FIELDS:
             phonology_dict[field] = None
-            machine_value = getattr(self, field)
+            fieldchoice = getattr(self, field)
             gloss_field = gloss_fields[field]
             if hasattr(gloss_field, 'field_choice_category'):
                 fieldchoice_category = gloss_field.field_choice_category
@@ -1452,13 +1445,13 @@ class Gloss(models.Model):
                 else:
                     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
+                human_value = fieldchoice.name
                 if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                    phonology_dict[field] = machine_value
+                    phonology_dict[field] = fieldchoice.machine_value
                 else:
                     phonology_dict[field] = None
             else:
-                phonology_dict[field] = machine_value
+                phonology_dict[field] = fieldchoice.machine_value
 
         return phonology_dict
 

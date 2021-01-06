@@ -900,14 +900,8 @@
                     <tr >
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            {% with generate_translated_choice_list_table|get_item:name as choices_for_field %}
-                            {% with gloss.domhndsh|to_int as domhndsh_value %}
-                            {% with choices_for_field|keyvalue:domhndsh_value as translated_field %}
                             <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
-                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{ translated_field }}</a>
-                            {% endwith %}
-                            {% endwith %}
-                            {% endwith %}
+                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{ value }}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
@@ -942,7 +936,7 @@
                     <tr >
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
+                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh.machine_value}}/">{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if name == 'subhndsh_letter' %}

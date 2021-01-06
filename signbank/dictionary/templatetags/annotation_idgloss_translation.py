@@ -94,13 +94,6 @@ def get_item(dictionary,key):
     return dictionary.get(key)
 
 @register.filter
-def to_int(value):
-    if value:
-        return int(value)
-    else:
-        return 0
-
-@register.filter
 def getattr (obj, args):
     """ Try to get an attribute from an object.
 
