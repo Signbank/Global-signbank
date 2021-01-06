@@ -1451,7 +1451,7 @@ class Gloss(models.Model):
                 else:
                     phonology_dict[field] = None
             else:
-                phonology_dict[field] = fieldchoice.machine_value
+                phonology_dict[field] = fieldchoice
 
         return phonology_dict
 
@@ -1499,27 +1499,11 @@ class Gloss(models.Model):
 
             if hasattr(gloss_field, 'field_choice_category'):
                 # field is a choice list
-                if value_of_this_field != None:
-                    different_field = 'different_' + field
-                    field_compare = field + '__exact'
+                different_field = 'different_' + field
+                field_compare = field + '__exact'
 
-                    different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
-
-                else:
-                    different_field = 'different_' + field
-                    field_compare = field + '__exact'
-                    field_isnull = field + '__isnull'
-                    # due to legacy data, possible empty_values are: None, '', '0', 'None', ' ', '-'
-                    different_case = Case(When(**{ field_compare : '' , 'then' : 0 }),
-                                          When(**{field_isnull: True, 'then': 0}),
-                                          When(**{field_compare: 0, 'then': 0}),
-                                          When(**{field_compare: '0', 'then': 0}),
-                                          When(**{field_compare: '-', 'then': 0}),
-                                          When(**{field_compare: ' ', 'then': 0}),
-                                          When(**{field_compare: 'None', 'then': 0}),
-                                          default=1, output_field=IntegerField())
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
+                different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
+                minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
             else:
                 # field is a Boolean
