@@ -627,7 +627,7 @@ class GlossListView(ListView):
             for f in fields:
 
                 #Try the value of the choicelist
-                if hasattr(f, 'field_choice_category'):
+                if hasattr(f, 'field_choice_category') and hasattr(gloss, 'get_' + f.name + '_display'):
                     value = getattr(gloss, 'get_' + f.name + '_display')()
                 else:
                     value = getattr(gloss, f.name)
@@ -743,7 +743,7 @@ class GlossListView(ListView):
             notes_of_gloss = gloss.definition_set.all()
             notes_list = []
             for note in notes_of_gloss:
-                translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices, 'en')
+                translated_note_role = note.role_fk.name
                 note_string = translated_note_role + ": (" + str(note.published) +","+ str(note.count) +","+ note.text + ")"
                 notes_list.append(note_string)
             sorted_notes_list = sorted(notes_list)
@@ -1216,26 +1216,25 @@ class GlossDetailView(DetailView):
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
-        context['handedness'] = (int(self.object.handedness) > 1) if self.object.handedness else 0  # minimal machine value is 2
-        context['domhndsh'] = (int(self.object.domhndsh) > 2) if self.object.domhndsh else 0        # minimal machine value -s 3
-        if self.object.tokNo:
-            # in the model this field can be null or blank, which is not a number
-            # the template compares it to 1
-            context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
-        else:
-            context['tokNo'] = 0
-        # check for existence of strong hand and weak hand shapes
-        if self.object.domhndsh:
-            try:
-                strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh)
-            except Handshape.DoesNotExist:
-                strong_hand_obj = None
-        else:
-                strong_hand_obj = None
-        context['StrongHand'] = self.object.domhndsh if strong_hand_obj else 0
-        context['WeakHand'] = self.object.subhndsh
+        context['handedness'] = (int(self.object.handedness_fk.machine_value) > 1) \
+            if self.object.handedness_fk and self.object.handedness_fk.machine_value else 0  # minimal machine value is 2
+        context['domhndsh'] = (int(self.object.domhndsh_fk.machine_value) > 2) \
+            if self.object.domhndsh_fk and self.object.domhndsh_fk.machine_value else 0        # minimal machine value -s 3
+        context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
-        context['SemanticFieldDefined'] =  self.object.semFieldShadow.all().count() > 0
+        # check for existence of strong hand and weak hand shapes
+        try:
+            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh_fk.machine_value)
+        except (Handshape.DoesNotExist, AttributeError):
+            strong_hand_obj = None
+        context['StrongHand'] = self.object.domhndsh_fk.machine_value if strong_hand_obj else 0
+        context['WeakHand'] = self.object.subhndsh_fk.machine_value if self.object.subhndsh_fk else 0
+
+        # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
+        context['SemanticFieldDefined'] = (int(self.object.semField_fk.machine_value) > 1) \
+            if self.object.semField_fk and self.object.semField_fk.machine_value else 0  # minimal machine value is 2
+        # context['ValenceDefined'] = (int(self.object.valence) > 1) if self.object.valence else 0          # minimal machine value is 2
+        # context['IconicImageDefined'] = self.object.iconImage                                             # exists if not emtpy
 
         context['DerivationHistoryDefined'] = self.object.derivHistShadow.all().count() > 0
 
@@ -1441,10 +1440,10 @@ class GlossDetailView(DetailView):
         notes_groupedby_role = {}
         for note in notes:
             # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
-            if note.role_fk:
+            if note.role_fk is not None:
                 translated_note_role = note.role_fk.name
             else:
-                translated_note_role = machine_value_to_translated_human_value(note.role,note_role_choices,self.request.LANGUAGE_CODE)
+                translated_note_role = ''
             role_id = (note.role, translated_note_role)
             if role_id not in notes_groupedby_role:
                 notes_groupedby_role[role_id] = []
@@ -1459,7 +1458,7 @@ class GlossDetailView(DetailView):
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
-            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
+            human_value_media_type = other_media.type_fk.name
 
             import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
@@ -1586,7 +1585,7 @@ class GlossDetailView(DetailView):
 
         if gl.simultaneous_morphology:
             for sim_morph in gl.simultaneous_morphology.all():
-                translated_morph_type = machine_value_to_translated_human_value(sim_morph.morpheme.mrpType,sim_morph_typ_choices,self.request.LANGUAGE_CODE)
+                translated_morph_type = sim_morph.morpheme.mrpType_fk.name
 
                 morpheme_annotation_idgloss = {}
                 if sim_morph.morpheme.dataset:
@@ -1796,7 +1795,7 @@ class GlossRelationsDetailView(DetailView):
 
                 #Take the human value in the language we are using
                 machine_value = getattr(gl,field)
-                human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
+                human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
 
                 #And add the kind of field
                 kind = fieldname_to_kind(field)
@@ -2663,7 +2662,7 @@ class HandshapeDetailView(DetailView):
 
             #Take the human value in the language we are using
             machine_value = getattr(hs, field)
-            human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
+            human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
 
             #And add the kind of field
             kind = fieldname_to_kind(field)
@@ -5757,12 +5756,10 @@ class MorphemeDetailView(DetailView):
         other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
         context['appears_in'] = []
 
-        word_class_choices = FieldChoice.objects.filter(field__iexact='WordClass')
-
         for sim_morph in other_glosses_that_point_to_morpheme:
             parent_gloss = sim_morph.parent_gloss
-            if parent_gloss.wordClass:
-                translated_word_class = machine_value_to_translated_human_value(parent_gloss.wordClass,word_class_choices,self.request.LANGUAGE_CODE)
+            if parent_gloss.wordClass_fk:
+                translated_word_class = parent_gloss.wordClass_fk.name
             else:
                 translated_word_class = ''
 
@@ -5839,10 +5836,6 @@ class MorphemeDetailView(DetailView):
             # Take the human value in the language we are using
             machine_value = getattr(gl, field)
             if len(choice_list) > 0:
-                # if there is a choice list, the value stored in the field is a code
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list,
-                                                                      self.request.LANGUAGE_CODE)
-
                 # The static_choice_lists structure is used in the Detail View to reverse map in javascript
                 # It's only needed for choice lists.
                 # In the template, choice lists are generated by Ajax calls
@@ -5858,6 +5851,7 @@ class MorphemeDetailView(DetailView):
                 for (key, value) in display_choice_list_colors.items():
                     this_value = value
                     context['static_choice_list_colors'][field][key] = this_value
+
             else:
                 # otherwise, it's a value, not a choice
                 # take care of different representations of empty text in database
@@ -5882,7 +5876,7 @@ class MorphemeDetailView(DetailView):
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
-            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
+            human_value_media_type = other_media.type_fk.name
 
             import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
@@ -5914,10 +5908,8 @@ class MorphemeDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
-        morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
-
         if gl.mrpType:
-            translated_morph_type = machine_value_to_translated_human_value(gl.mrpType,morph_typ_choices,self.request.LANGUAGE_CODE)
+            translated_morph_type = gl.mrpType_fk.name
         else:
             translated_morph_type = ''
 
@@ -6241,6 +6233,8 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         print(e)
         minimalpairs_objects = {}
 
+    print("MINIMALPAIRS_OBJECTS", minimalpairs_objects)
+
     translation_focus_gloss = ""
     translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
     if translations_this_gloss is not None and len(translations_this_gloss) > 0:
@@ -6371,7 +6365,7 @@ def glosslist_ajax_complete(request, gloss_id):
         else:
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-        human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
+        human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
         if human_value:
             column_values.append(human_value)
         else:
@@ -6454,17 +6448,8 @@ def glossrow_ajax_complete_colors(request, gloss_id, show_colors=True):
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
 
         machine_value = getattr(this_gloss,fieldname)
-        gloss_field = Gloss._meta.get_field(fieldname)
-        if hasattr(gloss_field, 'field_choice_category'):
-            fieldchoice_category = gloss_field.field_choice_category
-        else:
-            fieldchoice_category = fieldname
-        if fieldchoice_category == 'Handshape':
-            choice_list = Handshape.objects.all()
-        else:
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-        human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
+        human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
         if human_value:
             column_values.append(human_value)
         else:
@@ -6505,17 +6490,8 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
 
         machine_value = getattr(this_gloss,fieldname)
-        gloss_field = Gloss._meta.get_field(fieldname)
-        if hasattr(gloss_field, 'field_choice_category'):
-            fieldchoice_category = gloss_field.field_choice_category
-        else:
-            fieldchoice_category = fieldname
-        if fieldchoice_category == 'Handshape':
-            choice_list = Handshape.objects.all()
-        else:
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-        human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
+        human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
         if human_value:
             column_values.append(human_value)
         else:

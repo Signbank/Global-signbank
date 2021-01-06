@@ -21,7 +21,7 @@ from django.conf import settings
 
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, map_field_names_to_fk_field_names
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
 from django.utils.translation import ugettext_lazy as _
@@ -109,6 +109,19 @@ def add_gloss(request):
                 if lemma_form:
                     lemmaidgloss = lemma_form.save()
                 gloss.lemma = lemmaidgloss
+
+                # Set a default for all FieldChoice fields
+                for field in [f for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]:
+                    field_value = getattr(gloss, field.name)
+                    if field_value is None:
+                        field_choice_category = field.field_choice_category
+                        try:
+                            fieldchoice = FieldChoice.objects.get(field=field_choice_category, machine_value=0)
+                        except ObjectDoesNotExist:
+                            fieldchoice = FieldChoice.objects.create(field=field_choice_category, machine_value=0,
+                                                                     name='-')
+                        setattr(gloss, field.name, fieldchoice)
+
                 gloss.save()
                 gloss.creator.add(request.user)
             except ValidationError as ve:
@@ -395,11 +408,10 @@ def update_gloss(request, glossid):
                 newvalue = value
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-
+        fieldnames = map_field_names_to_fk_field_names(fieldnames)
         fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
                                         if f.name in fieldnames
-                                        and f.name + '_fk' in [f.name for f in Gloss._meta.fields]
-                                        and isinstance(Gloss._meta.get_field(f.name + '_fk'), FieldChoiceForeignKey)]
+                                        and isinstance(Gloss._meta.get_field(f.name), FieldChoiceForeignKey)]
 
         fields_empty_null = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
@@ -423,7 +435,7 @@ def update_gloss(request, glossid):
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
         if field in fieldchoiceforeignkey_fields:
             fieldchoice = FieldChoice.objects.get(id=value)
-            gloss.__setattr__(field + '_fk', fieldchoice)
+            gloss.__setattr__(field, fieldchoice)
             gloss.save()
             newvalue = fieldchoice.name
         elif value in ['notset','','-','------'] and field in fields_empty_null:
@@ -449,21 +461,11 @@ def update_gloss(request, glossid):
             #If the value is not a Boolean, get the human readable value
             if not isinstance(value,bool):
                 # if we get to here, field is a valid field of Gloss
-                # field is a choice list and we need to get the translated human value
-
-                changed_field = [ f for f in Gloss._meta.fields if f.name == field].pop()
-
-                if hasattr(changed_field, 'field_choice_category'):
-                    field_category = getattr(changed_field, 'field_choice_category')
-                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                    # if the choice_list happens to be empty, the following call results in 'value' being assigned
-                    newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
-                else:
-                    newvalue = value
+                newvalue = value
 
     if field in FIELDS['phonology']:
 
-         category_value = 'phonology'
+        category_value = 'phonology'
 
     # the gloss has been updated, now prepare values for saving to GlossHistory and display in template
     #This is because you cannot concat none to a string in py3
@@ -475,7 +477,8 @@ def update_gloss(request, glossid):
         newvalue = ''
 
     # if choice_list is empty, the original_value is returned by the called function
-    original_human_value = machine_value_to_translated_human_value(original_value,choice_list,request.LANGUAGE_CODE)
+    # Remember this change for the history books
+    original_human_value = original_value.name if isinstance(original_value, FieldChoice) else original_value
     if isinstance(value, bool) and field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
     # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
@@ -1169,7 +1172,7 @@ def update_other_media(request,gloss,field,value):
     elif action_or_fieldname == 'other-media-type':
         other_media.type = value
         choice_list = FieldChoice.objects.filter(field__iexact='OtherMediaType')
-        value = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+        value = value.name
 
     elif action_or_fieldname == 'other-media-alternative-gloss':
         other_media.alternative_gloss = value
@@ -1455,16 +1458,7 @@ def update_handshape(request, handshapeid):
 
             if not isinstance(value, bool):
                 # field is a choice list and we need to get the translated human value
-
-                changed_field = [f for f in Handshape._meta.fields if f.name == field].pop()
-
-                if hasattr(changed_field, 'field_choice_category'):
-                    field_category = getattr(changed_field, 'field_choice_category')
-                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                    # if the choice_list happens to be empty, the following call results in value being assigned
-                    newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
-                else:
-                    newvalue = value
+                newvalue = value.name if isinstance(value, FieldChoice) else value
 
         # Finger selections are saved as both boolean values per finger and as patterns that include the fingers
         # The patterns, such as TIM, are stored as choice lists in FieldChoice.
@@ -1978,16 +1972,7 @@ def update_morpheme(request, morphemeid):
                 # If the value is not a Boolean, return the new value
                 if not isinstance(value, bool):
                     # field is a choice list and we need to get the translated human value
-
-                    changed_field = [ f for f in Morpheme._meta.fields if f.name == field].pop()
-
-                    if hasattr(changed_field, 'field_choice_category'):
-                        field_category = getattr(changed_field, 'field_choice_category')
-                        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                        # if the choice_list happens to be empty, the following call results in value being assigned
-                        newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
-                    else:
-                        newvalue = value
+                    newvalue = newvalue.name if isinstance(value, FieldChoice) else value
 
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
 

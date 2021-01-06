@@ -2777,9 +2777,14 @@ def choice_lists(request):
 
                         else:
                             try:
-                                Gloss._meta.get_field(field + '_fk')
-                                filter = field + '_fk'
-                                filter_value = choicefield
+                                if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+                                    Gloss._meta.get_field(field)
+                                    filter = field
+                                    filter_value = choicefield
+                                else:
+                                    Gloss._meta.get_field(field + '_fk')
+                                    filter = field + '_fk'
+                                    filter_value = choicefield
                             except KeyError:
                                 variable_column = field
                                 search_filter = 'exact'
