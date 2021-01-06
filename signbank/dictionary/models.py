@@ -2133,9 +2133,7 @@ class MorphologyDefinition(models.Model):
     """Tells something about morphology of a gloss"""
 
     parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses")
-    role = models.CharField(max_length=5, choices=build_choice_list('MorphologyType'))
-    role.field_choice_category = 'MorphologyType'
-    role_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.MORPHOLOGYTYPE},
                                     field_choice_category=FieldChoice.MORPHOLOGYTYPE,
                                     verbose_name=_("MorphologyType"))
