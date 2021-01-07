@@ -205,20 +205,6 @@ class SignFeedbackForm(forms.Form):
     kwnotbelong = forms.CharField(label="List keywords", required=False, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
     comment = forms.CharField(label="Comment or new keywords", required=True, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
 
- 
-handformChoices = build_choice_list("Handedness")
-
-handshapeChoices = build_choice_list("Handshape")
-
-locationChoices = build_choice_list("Location")
-
-handbodycontactChoices = build_choice_list("ContactType")
-
-directionChoices = build_choice_list("MovementDir")
-
-movementtypeChoices = build_choice_list("MovementShape")
-
-smallmovementChoices = build_choice_list("JointConfiguration")
 
 repetitionChoices = ((0, 'None'),
                       (493, 'Do the movement once'),
@@ -226,32 +212,29 @@ repetitionChoices = ((0, 'None'),
                       (495, 'Repeat the movement several times')
                       )
 
-relativelocationChoices = build_choice_list("Location")
-
-handinteractionChoices = build_choice_list("RelatArtic")
-
                        
-class MissingSignFeedbackForm(forms.Form):   
-    handform = forms.ChoiceField(choices=handformChoices,  required=False,
-        label='How many hands are used to make this sign?')
-    handshape = forms.ChoiceField(choices=handshapeChoices, required=False,
-        label='What is the handshape?')
-    althandshape = forms.ChoiceField(choices=handshapeChoices, required=False, 
-        label='What is the handshape of the left hand?')    
-    location = forms.ChoiceField(choices=locationChoices, required=False,
-        label='Choose the location of the sign on, or near the body')
-    relativelocation = forms.ChoiceField(choices=relativelocationChoices, 
-        label='Choose the location of the right hand on, or near the left hand', required=False)
-    handbodycontact = forms.ChoiceField(choices=handbodycontactChoices, 
-        label='Contact between hands and body', required=False)
-    handinteraction = forms.ChoiceField(choices=handinteractionChoices, 
-        label='Interaction between hands', required=False)
-    direction = forms.ChoiceField(choices=directionChoices, 
-        label='Movement direction of the hand(s)', required=False)
-    movementtype = forms.ChoiceField(choices=movementtypeChoices, 
-        label='Type of movement', required=False)
-    smallmovement = forms.ChoiceField(choices=smallmovementChoices, 
-        label='Small movements of the hand(s) and fingers', required=False)
+class MissingSignFeedbackForm(forms.Form):
+    handform = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDEDNESS),
+                                      required=False, label='How many hands are used to make this sign?')
+    handshape = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDSHAPE),
+                                       required=False, label='What is the handshape?')
+    althandshape = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDSHAPE),
+                                          required=False, label='What is the handshape of the left hand?')
+    location = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.LOCATION),
+                                      required=False, label='Choose the location of the sign on, or near the body')
+    relativelocation = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.LOCATION),
+                                              label='Choose the location of the right hand on, or near the left hand',
+                                              required=False)
+    handbodycontact = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.CONTACTTYPE),
+                                             label='Contact between hands and body', required=False)
+    handinteraction = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.RELATARTIC),
+                                             label='Interaction between hands', required=False)
+    direction = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.MOVEMENTDIR),
+                                       label='Movement direction of the hand(s)', required=False)
+    movementtype = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.MOVEMENTSHAPE),
+                                          label='Type of movement', required=False)
+    smallmovement = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.JOINTCONFIGURATION),
+                                           label='Small movements of the hand(s) and fingers', required=False)
     repetition = forms.ChoiceField(choices=repetitionChoices, 
         label='Number of movements', required=False)
     
@@ -263,71 +246,61 @@ class MissingSignFeedbackForm(forms.Form):
 class MissingSignFeedback(models.Model):    
     user = models.ForeignKey(authmodels.User)
     date = models.DateTimeField(auto_now_add=True)
-    handform = models.IntegerField(choices=handformChoices, blank=True, default=0)
-    handform_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    handform = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDEDNESS},
                                           field_choice_category=FieldChoice.HANDEDNESS,
                                           verbose_name=_("Handedness"),
                                            related_name="handednessMissingSignFeedback")
 
-    handshape = models.IntegerField(choices=handshapeChoices, blank=True, default=0)
-    handshape_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    handshape = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                      limit_choices_to={'field': FieldChoice.HANDSHAPE},
                                      field_choice_category=FieldChoice.HANDSHAPE,
                                      verbose_name=_("Handshape"),
                                      related_name="Handshape")
 
-    althandshape = models.IntegerField(choices=handshapeChoices, blank=True, default=0)
-    althandshape_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    althandshape = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.HANDSHAPE},
                                             field_choice_category=FieldChoice.HANDSHAPE,
                                             verbose_name=_("AltHandshape"),
                                             related_name="AltHandshape")
 
-    location = models.IntegerField(choices=locationChoices, blank=True, default=0)
-    location_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    location = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.LOCATION},
                                             field_choice_category=FieldChoice.LOCATION,
                                             verbose_name=_("Location"),
                                             related_name="LocationMissingSignFeedback")
 
-    relativelocation = models.IntegerField(choices=relativelocationChoices, blank=True, default=0)
-    relativelocation_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    relativelocation = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.LOCATION},
                                             field_choice_category=FieldChoice.LOCATION,
                                             verbose_name=_("Location"),
                                             related_name="Location")
 
-    handbodycontact = models.IntegerField(choices=handbodycontactChoices, blank=True, default=0)
-    handbodycontact_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    handbodycontact = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.CONTACTTYPE},
                                             field_choice_category=FieldChoice.CONTACTTYPE,
                                             verbose_name=_("HandBodyContact"),
                                             related_name="HandBodyContact")
 
-    handinteraction = models.IntegerField(choices=handinteractionChoices, blank=True, default=0)
-    handinteraction_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    handinteraction = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.RELATARTIC},
                                             field_choice_category=FieldChoice.RELATARTIC,
                                             verbose_name=_("HandInteraction"),
                                             related_name="HandInteraction")
 
-    direction = models.IntegerField(choices=directionChoices, blank=True, default=0)
-    direction_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    direction = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.MOVEMENTDIR},
                                             field_choice_category=FieldChoice.MOVEMENTDIR,
                                             verbose_name=_("Direction"),
                                             related_name="Direction")
 
-    movementtype = models.IntegerField(choices=movementtypeChoices, blank=True, default=0)
-    movementtype_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    movementtype = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
                                             field_choice_category=FieldChoice.MOVEMENTSHAPE,
                                             verbose_name=_("MovementType"),
                                             related_name="MovementType")
 
-    smallmovement = models.IntegerField(choices=smallmovementChoices, blank=True, default=0)
-    smallmovement_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    smallmovement = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.JOINTCONFIGURATION},
                                             field_choice_category=FieldChoice.JOINTCONFIGURATION,
                                             verbose_name=_("SmallMovement"),
