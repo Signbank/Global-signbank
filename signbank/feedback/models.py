@@ -3,6 +3,8 @@ from django.contrib.auth import models as authmodels
 from django.conf import settings
 from signbank.video.fields import VideoUploadToFLVField
 
+from django.utils.translation import ugettext_lazy as _
+
 from signbank.dictionary.models import *
 #from signbank.dictionary.models import Gloss
 # models to represent the feedback from users in the site
@@ -262,15 +264,75 @@ class MissingSignFeedback(models.Model):
     user = models.ForeignKey(authmodels.User)
     date = models.DateTimeField(auto_now_add=True)
     handform = models.IntegerField(choices=handformChoices, blank=True, default=0)
+    handform_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.HANDEDNESS},
+                                          field_choice_category=FieldChoice.HANDEDNESS,
+                                          verbose_name=_("Handedness"),
+                                           related_name="handednessMissingSignFeedback")
+
     handshape = models.IntegerField(choices=handshapeChoices, blank=True, default=0)
-    althandshape = models.IntegerField(choices=handshapeChoices, blank=True, default=0)    
+    handshape_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                     limit_choices_to={'field': FieldChoice.HANDSHAPE},
+                                     field_choice_category=FieldChoice.HANDSHAPE,
+                                     verbose_name=_("Handshape"),
+                                     related_name="Handshape")
+
+    althandshape = models.IntegerField(choices=handshapeChoices, blank=True, default=0)
+    althandshape_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.HANDSHAPE},
+                                            field_choice_category=FieldChoice.HANDSHAPE,
+                                            verbose_name=_("AltHandshape"),
+                                            related_name="AltHandshape")
+
     location = models.IntegerField(choices=locationChoices, blank=True, default=0)
+    location_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.LOCATION},
+                                            field_choice_category=FieldChoice.LOCATION,
+                                            verbose_name=_("Location"),
+                                            related_name="LocationMissingSignFeedback")
+
     relativelocation = models.IntegerField(choices=relativelocationChoices, blank=True, default=0)
+    relativelocation_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.LOCATION},
+                                            field_choice_category=FieldChoice.LOCATION,
+                                            verbose_name=_("Location"),
+                                            related_name="Location")
+
     handbodycontact = models.IntegerField(choices=handbodycontactChoices, blank=True, default=0)
+    handbodycontact_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.CONTACTTYPE},
+                                            field_choice_category=FieldChoice.CONTACTTYPE,
+                                            verbose_name=_("HandBodyContact"),
+                                            related_name="HandBodyContact")
+
     handinteraction = models.IntegerField(choices=handinteractionChoices, blank=True, default=0)
+    handinteraction_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.RELATARTIC},
+                                            field_choice_category=FieldChoice.RELATARTIC,
+                                            verbose_name=_("HandInteraction"),
+                                            related_name="HandInteraction")
+
     direction = models.IntegerField(choices=directionChoices, blank=True, default=0)
+    direction_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.MOVEMENTDIR},
+                                            field_choice_category=FieldChoice.MOVEMENTDIR,
+                                            verbose_name=_("Direction"),
+                                            related_name="Direction")
+
     movementtype = models.IntegerField(choices=movementtypeChoices, blank=True, default=0)
+    movementtype_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
+                                            field_choice_category=FieldChoice.MOVEMENTSHAPE,
+                                            verbose_name=_("MovementType"),
+                                            related_name="MovementType")
+
     smallmovement = models.IntegerField(choices=smallmovementChoices, blank=True, default=0)
+    smallmovement_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.JOINTCONFIGURATION},
+                                            field_choice_category=FieldChoice.JOINTCONFIGURATION,
+                                            verbose_name=_("SmallMovement"),
+                                            related_name="SmallMovement")
+
     repetition = models.IntegerField(choices=repetitionChoices, blank=True, default=0)
     meaning = models.TextField()
     comments = models.TextField(blank=True)
