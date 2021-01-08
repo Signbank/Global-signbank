@@ -82,25 +82,13 @@ jQuery.fn.show_all_languages = function(callback)
         //Give a bottom margin to all flags but the last
         var margin_bottom = 'margin-bottom:'+SPACE_BETWEEN_ITEMS+'px';
 
-        if (language_index == all_languages.length-1)
-        {
-	    margin_bottom = '';
-        }
-
-        //Add the flag, below the highest flag (will be animated down)
-        html_content += '<div class="flagbutton" id="flag_'+current_language_code+'"  language_code="'+current_language_code+'" style="top:-'+current_amount_of_pixels_down+'px;'+margin_bottom+'" start-top="-'+current_amount_of_pixels_down+'px;">'+current_language_name+'</div>';
+        //Add the flag, below the highest flag
+        html_content += '<div class="flagbutton" id="flag_'+current_language_code+'"  language_code="'+current_language_code+'" style="'+margin_bottom+'">'+current_language_name+'</div>';
         nr_of_flags_processed += 1;
     }
 
     //Show the created html
     $(this).html(html_content);
-
-    //Animate all flags to their real position
-    for (var language_index in all_languages)
-    {
-        current_language_code = all_languages[language_index];
-	$("#flag_"+current_language_code).animate({'top':0},400);
-    }
 
     //Also grow the height of the picker
     var picker_height = ((SPACE_BETWEEN_ITEMS+HEIGHT_OF_ITEMS) * all_languages.length) + 10;
