@@ -114,6 +114,7 @@ ROOT_URLCONF = 'signbank.urls'
 WSGI_APPLICATION = 'signbank.wsgi.application'
 
 INSTALLED_APPS = (
+    'colorfield',
     'modeltranslation',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -134,10 +135,11 @@ INSTALLED_APPS = (
     'signbank.attachments',
     'signbank.video',
     'reversion',
-    #'django_mobile',
+    # 'django_mobile',
     'tagging',
     'guardian',
-    #'debug_toolbar'
+    # 'debug_toolbar',
+    'video_encoding'
 )
 
 # A sample logging configuration. The only tangible logging

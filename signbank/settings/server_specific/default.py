@@ -173,6 +173,9 @@ SHOW_MORPHEME_SEARCH = True
 #Whether the letter number phonology should be present in the interface
 SHOW_LETTER_NUMBER_PHONOLOGY = True
 
+#Whether colors can be set for field choices
+SHOW_FIELD_CHOICE_COLORS = True
+
 #Whether the dataset functionality should be present in the interface
 SHOW_DATASET_INTERFACE_OPTIONS = True
 
