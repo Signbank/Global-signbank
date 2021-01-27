@@ -1,3 +1,4 @@
+from colorfield.fields import ColorField
 from django.db.models import Q
 from django.db import models, OperationalError, ProgrammingError
 from django.conf import settings
@@ -226,6 +227,7 @@ class FieldChoice(models.Model):
     chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(
         help_text="The actual numeric value stored in the database. Created automatically.")
+    field_color = ColorField(default='ffffff')
 
     def __str__(self):
         name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
@@ -1701,6 +1703,34 @@ class Gloss(models.Model):
     def handedness_weak_choices_json(self):
         """Return JSON for the etymology choice list"""
         from signbank.dictionary.forms import NEUTRALBOOLEANCHOICES
+
+        return self.options_to_json(NEUTRALBOOLEANCHOICES)
+
+    def handedness_weak_drop_prop_json(self):
+        """Return JSON for the etymology choice list"""
+
+        # NEUTRALBOOLEANCHOICES = [('None', 'Neutral'), ('True', 'Yes'), ('False', 'No')]
+
+        NEUTRALBOOLEANCHOICES = [('None', _('Neutral')), ('True', _('Yes')), ('False', _('No'))]
+
+        return self.options_to_json(NEUTRALBOOLEANCHOICES)
+
+    def handedness_weak_drop_reverse_prop_json(self):
+        """Return JSON for the etymology choice list"""
+
+        # NEUTRALBOOLEANCHOICES = [('None', 'Neutral'), ('True', 'Yes'), ('False', 'No')]
+
+        # NEUTRALBOOLEANCHOICES = [('None', '1'), ('True', '2'), ('False', '3')]
+        NEUTRALBOOLEANCHOICES = [('1', _('Neutral')), ('2', _('Yes')), ('3', _('No'))]
+
+        return self.options_to_json(NEUTRALBOOLEANCHOICES)
+
+    def handedness_weak_drop_json(self):
+        """Return JSON for the etymology choice list"""
+
+        # NEUTRALBOOLEANCHOICES = [('None', 'Neutral'), ('True', 'Yes'), ('False', 'No')]
+
+        NEUTRALBOOLEANCHOICES = [(_('Neutral'), '1'), (_('Yes'), '2'), (_('No'), '3')]
 
         return self.options_to_json(NEUTRALBOOLEANCHOICES)
 

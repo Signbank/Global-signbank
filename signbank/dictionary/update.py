@@ -395,7 +395,7 @@ def update_gloss(request, glossid):
             # The following code relies on the order of if else testing
             # The updates ignore Placeholder empty fields of '-' and '------'
             # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-            if (value == 'notset' or value == -1 or value == '' or value == '-' or value == '------') and field in fields_empty_null:
+            if (value == None or value == 'notset' or value == -1 or value == '' or value == '-' or value == '------') and field in fields_empty_null:
                 # print('a. field ', field, ' value ', value, ' set to None')
                 gloss.__setattr__(field, None)
                 gloss.save()
@@ -414,7 +414,6 @@ def update_gloss(request, glossid):
                 newvalue = ''
             #Regular field updating
             else:
-
                 # Alert: Note that if field is idgloss, the following code updates it
                 # print('update field of gloss ', gloss.id, field, value)
                 gloss.__setattr__(field,value)
@@ -2108,18 +2107,33 @@ def update_excluded_choices(request):
             managed_datasets.append(dataset)
 
     excluded_choices = {dataset.acronym: [] for dataset in managed_datasets}
+    # print('keys: ', request.POST.keys())
 
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    print('update excluded choices: field, value: ', field, value)
     for key in request.POST.keys():
 
         if key == 'csrfmiddlewaretoken':
             continue
-        dataset, choice_pk = key.split('|')
-
         try:
-            choice_pk = int(choice_pk)
-            excluded_choices[dataset].append(choice_pk)
+            dataset, choice_pk = key.split('|')
+            category = None
         except:
-            print('dataset, field choice not possible: ', key, dataset, choice_pk)
+            category, choice_pk = key.split('_color_')
+            dataset = None
+
+        if dataset:
+            try:
+                choice_pk = int(choice_pk)
+                excluded_choices[dataset].append(choice_pk)
+            except:
+                print('dataset, field choice not possible: ', key, dataset, choice_pk)
+        else:
+            # category
+            fco = FieldChoice.objects.get(pk=choice_pk)
+            # fco.field_color =
+            # print('category: ', category)
 
     #Now update all datasets but only if user manages the dataset
     for dataset_name, choice_pks in excluded_choices.items():
@@ -2134,12 +2148,40 @@ def update_excluded_choices(request):
                 print('Field choice pk not found: ', fcpk)
                 continue
             excluded_objects.append(fco)
-        # replace the excluded field choices with the new field choices to exclude
-        dataset.exclude_choices.clear()
-        for eo in excluded_objects:
-            dataset.exclude_choices.add(eo)
+        # # replace the excluded field choices with the new field choices to exclude
+        # dataset.exclude_choices.clear()
+        # for eo in excluded_objects:
+        #     dataset.exclude_choices.add(eo)
 
     return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
+
+def update_field_choice_color(request, fieldchoiceid):
+
+    if request.method == "POST":
+        form = FieldChoiceForm(request.POST)
+
+        thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
+        # print('field choice id: ', fieldchoiceid)
+        if form.is_valid():
+
+            new_color = form.cleaned_data['field_color']
+
+            if new_color[0] == '#':
+                new_color = new_color[1:]
+
+            original_value = thisfieldchoice.field_color
+            machine_value = str(thisfieldchoice.machine_value)
+            thisfieldchoice.field_color = new_color
+            thisfieldchoice.save()
+            category = thisfieldchoice.field
+            # print('inside update field color: ', original_value, machine_value, new_color, category)
+
+            return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
+                                {'content-type': 'text/plain'})
+
+    # If we get here the request method has apparently been changed to get instead of post, can this happen?
+    raise Http404('Incorrect request')
+
 
 def upload_metadata(request):
     if request.method == "POST":

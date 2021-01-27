@@ -1,3 +1,4 @@
+from colorfield.fields import ColorWidget
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.db import OperationalError, ProgrammingError
@@ -855,5 +856,12 @@ class FocusGlossSearchForm(forms.ModelForm):
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
+
+class FieldChoiceForm(forms.Form):
+    field_color = forms.CharField(widget=ColorWidget)
+
+    class Meta:
+        model = FieldChoice
+
 
 
