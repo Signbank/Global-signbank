@@ -1,0 +1,312 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load annotation_idgloss_translation %}
+
+{% block extrajs %}
+<style>
+.preview {
+    background-color: white !important;
+    height: 40;
+    padding: 0 0 0 0 !important;
+}
+
+select option {
+    background-color: '#FFFFFF';
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.hasTooltip:hover .isTooltip {
+    display: block;
+    background-color: white;
+    border-radius: 5px;
+    color: black;
+    box-shadow: 1px 1px 3px gray;
+    position: absolute;
+    padding: 5px;
+    top: 3em;
+    left: 0px;
+    max-width: 360px;
+    min-width: 300px;
+    font-size: 12px;
+    z-index: 9999;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.bootstrap-select.btn-group .dropdown-menu li a:hover {
+    color: blue !important;
+    background-color: #ffffff !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default.active, .open .dropdown-toggle.btn-default {
+
+background-color: #2F3E48;
+-webkit-appearance: none;
+-moz-appearance: none;
+color:#FFF;
+
+border-color: #31347B;
+
+}
+
+input[type="color"] {
+    width: 3rem;
+    height: 3rem;
+    padding: .5rem;
+    background-color: #ffffff !important;
+    border: 0;
+    border-radius: 100%;
+}
+</style>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type='text/javascript' src="{{ STATIC_URL }}js/field_choice_colors.js"></script>
+
+<style>
+.custom-select {
+  position: relative;
+  padding: 0px;
+}
+
+.custom-select option {
+    ::-moz-appearance: none;
+    appearance: none;
+}
+
+.custom-select select {
+  display: none; /*hide original SELECT element: */
+  ::-moz-appearance: none;
+  ::-webkit-appearance: none;
+}
+
+<!--.select-selected {-->
+<!--  background-color: AliceBlue; // DodgerBlue-->
+<!--  padding: 0 0 0 0 !important;-->
+<!--}-->
+
+/* Style the arrow inside the select element: */
+.select-selected:after {
+  position: absolute;
+  content: "";
+  top: 14px;
+  right: 14px;
+ // left: 380;
+ // width: 0;
+ // height: 0;
+  border: 6px solid transparent;
+  border-color: Black transparent transparent transparent;
+}
+
+/* Point the arrow upwards when the select box is open (active): */
+.select-selected.select-arrow-active:after {
+  border-color: transparent transparent Black transparent;
+  top: 7px;
+}
+
+/* style the items (options), including the selected item: */
+.select-items div,.select-selected {
+  color: Black; //#ffffff;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+//  border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
+  border-color: Black Black Black Black;
+  cursor: pointer;
+}
+
+/* Style items (options): */
+.select-items {
+  position: absolute;
+//  background-color: AliceBlue; // DodgerBlue
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  max-height: 400px;
+  white-space: nowrap;
+  max-width: 400px;
+  width: auto;
+  ::-moz-appearance: none;
+}
+
+/* Hide the items when the select box is closed: */
+.select-hide {
+  display: none;
+  ::-moz-appearance: none;
+}
+
+.select-items div:hover, .same-as-selected {
+  background-color: rgba(0, 0, 0, 0.1);
+  ::-moz-appearance: none;
+}
+</style>
+
+<script type='text/javascript'>
+
+</script>
+
+<style>
+.color-picker {
+    padding: 0 0 0 0;
+}
+
+.color-field-choices
+{
+    overflow-y: auto;
+    height: 64vh;
+}
+
+.color-field-choices table
+{
+    border-spacing: 0px;
+}
+
+.color-field-choices table th
+{
+    position: sticky;
+    background-color: white;
+    text-align: left;
+    padding: 0 0 0 0 !important;
+    height: 40px;
+    line-height: 20px;
+    vertical-align: middle;
+}
+
+.color-field-choices table td
+{
+    position: static; //sticky;
+    top: 0px;
+    background-color: white;
+    padding: 0 0 0 0 !important;
+    height: 40px;
+    line-height: 20px;
+    vertical-align: middle;
+}
+
+.color-field-choices table td.preview th.preview {
+    text-align: left;
+    width: 400px important!;
+    display: table-cell !important;
+    height: 40px;
+    padding: 0 0 0 0 !important;
+    position: sticky;
+    border-collapse: collapse;
+}
+
+#color-field-choices .collapse.in {
+    display: table-row !important;
+    padding: 0 0 0 0 !important;
+}
+
+.table table-extra-condensed > thead > tr > th,
+.table table-extra-condensed > tbody > tr > td {
+     padding: 0 0 0 0 !important;
+}
+
+#color-field-choices select {
+    background-color: white;
+    color: black;
+}
+</style>
+{% endblock %}
+
+{% block bootstrap3_title %}Signbank: Manage field choice colors{% endblock %}
+
+{% block content %}
+
+<h3>{% trans "Manage Field Choice Colors" %}</h3>
+
+{% if object_list %}
+
+<p>{% trans "Here you can alter the display color of field choices." %}</p>
+
+    {% csrf_token %}
+
+    <div class="color-field-choices">
+        <table id="color-field-choices" class='table table-extra-condensed' >
+            <thead>
+                <tr class="accordian" >
+                    <th class="preview">{% trans "Field Choice Category" %}</th>
+                    <th class="preview">{% trans "Preview" %}</th>
+                    <th style="width:600px;">{% trans "Field Choice" %}</th>
+                    <th style="width:200px;">{% trans "Color" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for category in field_choices.keys %}
+            <tr style="width:1600px;">
+                <td class="preview"><button class="collapse" type="button" data-toggle='collapse'
+                            data-target=".collapse-{{category}}"
+                            data-parent="#accordian" value="{{category}}"
+                            onclick="toggle_preview(this)">{{category}}</button></td>
+                <td class="preview"></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class='collapse collapse-{{category}}' >
+                <td class="preview"></td>
+                <td class="preview preview_{{category}} collapse collapse-{{category}}" >
+                        <div class="custom-select" id="{{category}}" data-style="btn btn-color">
+                        <select class="color-picker" >
+                        {% with static_choice_list_colors|keyvalue:category as choice_display_list_colors %}
+                        {% with static_choice_lists|keyvalue:category as choice_display_list_displays %}
+                        {% for choice_label in choice_display_list_colors %}
+                        {% with choice_display_list_colors|keyvalue:choice_label as field_color %}
+                        {% with choice_display_list_displays|keyvalue:choice_label as display %}
+                            <option value="{{choice_label}}"
+                                    id="{{category}}_{{choice_label}}_{{field_color}}">{{display}}</option>
+                        {% endwith %}
+                        {% endwith %}
+                        {% endfor %}
+                        {% endwith %}
+                        {% endwith %}
+                        </select>
+                        </div>
+                </td>
+                <td colspan="2" style="width:600px !important;" >
+                <div class="preview preview_{{category}} collapse collapse-{{category}}" >
+                <table class='table table-extra-condensed'>
+                <tbody style="display:block; max-height: 400px; overflow-y:scroll;">
+                {% with field_choices|keyvalue:category as choice_display_list %}
+                {% for choice, display in choice_display_list %}
+                <tr id='{{category}}_{{choice.pk}}' >
+                    {% csrf_token %}
+
+                    <td id='{{category}}_{{choice.pk}}_display'
+                        style="background-color:#{{choice.field_color}}; width:600px; vertical-align: middle;">{{display}}</td>
+
+                    <td style="width:200px;">
+
+                        <form id="update_color_{{category}}_{{choice.pk}}"
+                            name="update_color_{{category}}_{{choice.pk}}"
+                            method='post' action="{% url 'dictionary:update_field_choice_color' choice.pk %}"
+                        >
+                        {% csrf_token %}
+
+                        <input name="field_color"
+                               type='color' value=#{{choice.field_color}}>
+                        <input type='hidden' name='id' value='{{category}}_color_{{choice.pk}}'>
+                        <input type="submit" value="Ok" >
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endwith %}
+                </tbody>
+                </table>
+                </div>
+                </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+        </div>
+
+{% else %}
+<p>{% trans "You must be a superuser to use this functionality." %}</p>
+{% endif %}
+
+{% endblock %}

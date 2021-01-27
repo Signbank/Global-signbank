@@ -1,0 +1,735 @@
+﻿{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+{% block bootstrap3_title %}Signbank: Search Signs (Preview Colors){% endblock %}
+{% block extrahead %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var url = '{{PREFIX_URL}}';
+    var language_code = '{{ LANGUAGE_CODE }}';
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
+    var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
+    var last_used_dataset = '{{last_used_dataset}}';
+<!--    console.log('last_used_dataset: ', last_used_dataset);-->
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+<script type='text/javascript'>
+var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var csrf_token = '{{csrf_token}}';
+var page_number = {{ page_number }};
+var objects_on_this_page = {{objects_on_page|safe}};
+var view_type = '{{view_type}}';
+var paginate_by = '{{paginate_by}}';
+
+<!--console.log(objects_on_this_page);-->
+
+
+$(document).ready(function() {
+
+    $('[data-toggle="tooltip"]').tooltip();
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        console.log('makeMultipleSelect '+fieldId+' '+fieldVar);
+        var target_pulldown = document.getElementById(fieldId);
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     $('.js-example-basic-multiple').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve'
+     });
+     $('.js-example-basic-multiple').val(null).trigger('change');
+
+
+    $('#id_handedness option').each(function(){
+        var this_node_str = $(this).html();
+        console.log(this_node_str);
+        $(this).css({'color': 'red' });
+<!--        for(k = 0; k < optionValues.length; k++) {-->
+<!--            console.log(k+' '+optionValues[k]);-->
+<!--            if (this_node_str.startsWith(optionValues[k])) {-->
+<!--                $(this).removeAttr('disabled');-->
+<!--            }-->
+<!--        };-->
+    });
+
+     <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
+     <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
+
+     <!--Alert: the id for sign language is signLanguage (with an uppercase L), not the same as the model field!-->
+     <!--Django was messing up the template generation otherwise (without the uppercase L)-->
+     <!--The value field is signlanguage[] (lowercase l to match the model)-->
+
+     makeMultipleSelect('id_signLanguage', 'signlanguage[]');
+     $('#id_signLanguage').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve'
+     });
+     $('#id_signLanguage').val(null).trigger('change');
+
+     $('#id_signLanguage').change(function() {
+        set_signlanguages_dialects();
+     });
+
+     <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
+     <!--Django was messing up the template generation otherwise (without the s at the end)-->
+
+     makeMultipleSelect('id_dialects', 'dialect[]');
+     $('#id_dialects').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve'
+     });
+     $('#id_dialects').val(null).trigger('change');
+
+     // Empty menu_bar_search_mirror
+     $("#adminsearch :input").change(function() {
+        $("#menu_bar_search_mirror").val("");
+     });
+
+        // This script gets gloss list data and displays it as table rows
+        // Each ajax call generates one row, it is appended to the table dynamically
+
+        lookup = "#glosslist_table";
+        $.ajax({
+                url : url + "/dictionary/ajax/glosslistheader/",
+                datatype: "json",
+                async: true,
+                success : function(result) {
+                    var elem = $(result);
+                    var parsed = $.parseHTML(result);
+    <!--                console.log(parsed);-->
+                    $(lookup).find('#glosslist_table_header').before(result);
+                }
+
+        });
+        for (var i = 0; i < objects_on_this_page.length; i++) {
+            $.ajax({
+                url : url + "/dictionary/ajax/glosspreview/" + objects_on_this_page[i] + "/",
+                datatype: "json",
+                async: true,
+                success : function(result) {
+                    <!--console.log(result);-->
+                    var elem = $(result);
+                    var parsed = $.parseHTML(result);
+                    <!--console.log(parsed);-->
+                    $.each( parsed, function(i, el ) {
+                        nodename = el.nodeName;
+                        <!--console.log(nodename);-->
+                        if (nodename == 'TR') {
+                            id_of_row = $(el).attr('id');
+                            res = id_of_row.split("_");
+                            id_of_gloss = res[1];
+                            <!--console.log(id_of_gloss);-->
+                            focus_gloss_lookup = '#focusgloss_' + id_of_gloss;
+                            $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
+                            video_lookup = '#glossvideo_' + id_of_gloss;
+                            video_elt = $(lookup).find(video_lookup)
+                            video_elt.addClass("hover-shows-video");
+                            ready_videos(video_elt);
+                        };
+                    });
+                }
+            });
+        };
+        ready_videos();
+
+});
+
+// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
+function clearForm(myFormElement) {
+
+  var elements = myFormElement.elements;
+
+  myFormElement.reset();
+
+  for(i=0; i<elements.length; i++) {
+
+      field_type = elements[i].type.toLowerCase();
+
+      switch(field_type) {
+
+        case "text":
+        case "password":
+        case "textarea":
+        case "hidden":
+
+          elements[i].value = "";
+          break;
+
+        case "radio":
+        case "checkbox":
+          if (elements[i].checked) {
+              elements[i].checked = false;
+          }
+          break;
+
+        case "select-one":
+        case "select-multiple":
+          elements[i].selectedIndex = -1;
+          break;
+
+        default:
+          break;
+      }
+    }
+    return(false);
+}
+
+ /**
+ * @param {string} field_name - name of the field to sort on
+ * @param {string} action     - one of: desc, asc, del
+ * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
+ * @returns {void}
+ */
+function do_sort_column(field_name, action, frmName) {
+  // Combine @field_name and @action into [sOrder]
+  var sOrder = field_name;
+  if (action == 'desc') {
+    // Descending sort order is signified by a '-' prefix
+    sOrder = '-' + sOrder;
+  } else if (action == 'del') {
+    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
+    sOrder = '';
+  }
+  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
+  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
+
+  // Submit the form with the indicated name
+
+  $("#" + frmName).submit();
+
+}
+
+/**
+ * @returns {void}
+ */
+function do_adminsearch(el) {
+ var sSearchType = $(el).attr('value');
+  $("#adminsearch input[name='search_type']").val(sSearchType);
+  switch(sSearchType) {
+    case "sign":
+        $("#adminsearch").attr('action', ' {{PREFIX_URL}}/settings/glosslist_colors/');
+        break;
+    case "sign_or_morpheme":
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/settings/glosslist_colors/');
+        break;
+  }
+  document.getElementById('adminsearch').submit();
+}
+
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        $(this).find('img').hide();
+        $(this).find('video').show();
+        $(this).find('video').get(0).play();
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+        $(this).find('video').hide();
+
+        $(this).find('video').get(0).pause();
+        $(this).find('video').get(0).currentTime = 0;
+    });
+}
+
+/**
+ * set the lemma language for the chosen dataset
+ */
+function do_set_lemma_language(el) {
+  if (user_can_add_gloss) {
+      var dataset_language_id = $(el).attr('value');
+    <!--  console.log('lemma_language');-->
+    <!--  console.log(dataset_language_id);-->
+      $("#selected_lemma_language").attr('value',dataset_language_id);
+      language_code = dataset_language_id;
+      set_lemma_language();
+  }
+};
+
+// This function toggles the different language columns for Annotations, Lemmas, and Translations
+function do_toggle_annotation(el) {
+    var dataset_language_id = $(el).attr('value');
+    console.log('toggle column annotation '+dataset_language_id);
+    var annotation_column_id = '.annotation_' + dataset_language_id;
+    var lemma_column_id = '.lemma_' + dataset_language_id;
+    var translation_column_id = '.translation_' + dataset_language_id;
+    $(annotation_column_id).toggle();
+    $(lemma_column_id).toggle();
+    $(translation_column_id).toggle();
+};
+
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
+
+<script type='text/javascript'>
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="definitionblock">
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
+{{ form.media.css }}
+{{ form.media.js }}
+
+<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/settings/glosslist_colors'>
+<div class="panel panel-default">
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
+            <span class="hasTooltip">
+                <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                  title=""></span>
+                <span class="isTooltip">In many text fields, you can use patterns as follows:
+                  <table>
+                    <tr>
+                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                    </tr>
+                  </table>
+                </span>
+            </span>
+    </div>
+
+    <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+        <div id='searchformwell' class='well search-results-collapsable'>
+
+                <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
+                        <!-- this is empty as an initial value because the view python code sets it -->
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='' >
+                    <input name='search_type' class='form-control' value='{{search_type}}'>
+                </div>
+                <div>
+                    <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{ menu_bar_search }}"/>
+                </div>
+                <div>
+                    <table class='table' id='searchfields'>
+                        {% for dataset_lang in dataset_languages %}
+
+                        <tr>
+                            {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
+                            <td>
+                                <div class='input-group'>
+                                <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
+                                    {{search_field.label}}
+                                </label>
+                                <input id='glosssearch_{{ dataset_lang.language_code_2char }}' name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                                </div>
+                            </td>
+                            {% endwith %}
+
+                            {% with searchform|get_lemma_field_for_language:dataset_lang as lemma_field %}
+                            <td><div class='input-group'>
+
+                                <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
+                                    {{lemma_field.label}}
+                                </label>
+                                <input name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
+                            </td>
+                            {% endwith %}
+
+                            {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
+                            <td><div class='input-group'>
+                                <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
+                                <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
+                            </td>
+                            {% endwith %}
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+
+                <div class="panel-group">
+                    <div  class="panel panel-default">
+                        <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Language and Basic Properties" %}</div>
+
+                        <div id='searchpanels' class='collapse'>
+                        <table class='table'>
+                            {% csrf_token %}
+                            <tr id='signlanguage_selection'>
+                                <td><label>{{searchform.signLanguage.label}}</label>
+                                        {{ searchform.signLanguage }}
+                                </td>
+                            </tr>
+                            <tr id='dialect_selection'>
+                                  <td><label>{{searchform.dialects.label}}</label>
+                                        {{ searchform.dialects }}
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table class='table'>
+                            {% for fieldname,field,label in input_names_fields_and_labels.main %}
+
+                                <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+
+                            {% endfor %}
+
+                        </table>
+
+                        </div>
+                      </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
+
+                      <div id='morph_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+                        {% csrf_token %}
+                          <td>
+                            <table class='table table-condensed'>
+                                <tr>
+                                    <td><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
+                                    <td>
+                                        <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' value="{{searchform.morpheme.value|default:''}}"/>
+                                        <input type="hidden" name='morpheme' value=""/>
+                                    </td>
+                                </tr>
+                                <tr><td><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td><td>{{searchform.hasComponentOfType}}</td></tr>
+                                <tr><td><label for='id_hasMorphemeOfType'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
+
+                      <div id='phon_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+
+                          <td>
+                            <table class='table table-condensed'>
+                                {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
+
+                                    <tr>
+                                        <td><label>{{label}}</label></td><td>{{field}}</td>
+                                        {% if fieldname == 'handedness' %}
+                                            {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
+                                                <td><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td>{{handednessfield}}</td>
+                                            {% endfor %}
+                                        {% elif fieldname == 'domhndsh' %}
+                                            {% for domhndshfieldname,domhndshfield,domhndshlabel in input_names_fields_labels_domhndsh %}
+                                                <td><label for='id_{{domhndshfieldname}}'>{{domhndshlabel}}</label></td><td>{{domhndshfield}}</td>
+                                            {% endfor %}
+                                        {% elif fieldname == 'subhndsh' %}
+                                            {% for subhndshfieldname,subhndshfield,subhndshlabel in input_names_fields_labels_subhndsh %}
+                                                <td><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td>{{subhndshfield}}</td>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">{% trans "Search by Semantics" %}</div>
+
+                      <div id='sem_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+
+                          <td>
+                            <table class='table table-condensed'>
+                                {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
+
+                                    <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+
+                                {% endfor %}
+
+
+
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#rel_search">{% trans "Search by Relation" %}</div>
+
+                      <div id='rel_search' class='collapse'>
+                      <table class='table'>
+                        <tr>
+
+                              <tr>
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_relation'>{{searchform.relation.label}}</label>
+                                        {{searchform.relation}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_hasRelation'>{{searchform.hasRelation.label}}</label>
+                                        {{searchform.hasRelation}}
+                                    </div>
+                                </td>
+                              </tr>
+
+                              <tr>
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_relationToForeignSign'>{{searchform.relationToForeignSign.label}}</label>
+                                        {{searchform.relationToForeignSign}}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class='input-group'>
+                                        <label class='input-group-addon' for='id_hasRelationToForeignSign'>{{searchform.hasRelationToForeignSign.label}}</label>
+                                        {{searchform.hasRelationToForeignSign}}
+                                    </div>
+                                </td>
+
+                              </tr>
+
+
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
+
+                      <div id='pub_search' class='collapse'>
+                      <table class='table'>
+                          <tr>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
+                                    {{searchform.inWeb}}
+                                </div>
+                            </td>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
+                                    {{searchform.isNew}}
+                                </div>
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
+                                    {{searchform.definitionRole}}
+                                </div>
+                            </td>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
+                                    {{searchform.definitionContains}}
+                                </div>
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_definitionRole'>{{searchform.createdBefore.label}}</label>
+                                    {{searchform.createdBefore}}
+                                </div>
+                            </td>
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_definitionContains'>{{searchform.createdAfter.label}}</label>
+                                    {{searchform.createdAfter}}
+                                </div>
+                            </td>
+                          </tr>
+
+                          <tr>
+                              <td>
+                                  <div class='input-group'>
+                                    <label class='input-group-addon' for='id_createdBy'>{{searchform.createdBy.label}}</label>
+                                    {{searchform.createdBy}}
+                                  </div>
+                              </td>
+                          </tr>
+
+                          <tr>
+                              <td>
+                                  <div class='input-group'>
+                                    <label class='input-group-addon' for='id_language'>{{searchform.tags.label}}</label>
+                                    {{searchform.tags}}
+                                  </div>
+                              </td>
+                          </tr>
+
+                      </table>
+
+                      </div>
+                    </div>
+                </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <div class='btn-group' style="margin-bottom: 20px">
+        <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
+
+        <input class="btn btn-primary" type="submit" name="search_type" value='{% trans "Search sign" %}'/>
+
+        <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
+               value='{% trans "Reset" %}'>
+    </div>
+
+
+
+    <div>
+        {% trans "Number of matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{glosscount}}.
+
+        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
+        {% trans "Datasets:" %}
+        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+</form>
+
+    <div></div>
+
+        <form name="show_pages">
+        <div class='form-group' id='paginate_by'>
+        <label for='paginate_by'>{% trans "Results per page" %}</label>
+        <select class='form-control' name="paginate_by">
+            <option {% if paginate_by == 500 %} selected="" {% endif %}>500</option>
+            <option {% if paginate_by == 100 %} selected="" {% endif %}>100</option>
+            <option {% if paginate_by == 50 %} selected="" {% endif %}>50</option>
+            <option {% if paginate_by == 25 %} selected="" {% endif %}>25</option>
+            <option {% if paginate_by == 10 %} selected="" {% endif %}>10</option>
+        </select>
+        {% csrf_token %}
+        <input type="submit" value = '{% trans "Refresh" %}' />
+    </div>
+    </form>
+
+{% if object_list %}
+{% if SHOW_DATASET_INTERFACE_OPTIONS %}
+{% if dataset_languages|length > 2 %}
+{% for dataset_lang in dataset_languages %}
+<button name="button_annotation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_annotation(this);"
+        value="{{dataset_lang.language_code_2char}}" >
+    {{ dataset_lang.name }}
+</button>
+{% endfor %}
+{% endif %}
+{% endif %}
+
+<table class='table table-condensed' id = 'glosslist_table'>
+    <thead id = 'glosslist_table_header'></thead>
+    <tbody>
+    {% for gloss in object_list %}
+    <tr id = "focusgloss_{{gloss.id}}">
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<div class="pagination">
+    <span class="step-links">
+
+        <ul class='pagination pagination-sm'>
+        {% if page_obj.has_previous %}
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&laquo;</a></li>
+        {% endif %}
+
+          {% if  page_obj.number > 10 %}
+            <li><a>...</a></li>
+          {% endif %}
+
+          {% for p in page_obj.paginator.page_range %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+             <li {% ifequal p page_obj.number %}class='active'{% endifequal %}>
+             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
+             </li>
+             {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+            <li><a>...</a></li>
+            <li>
+            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
+            </li>
+          {% endif %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&raquo;</a></li>
+
+
+      </ul>
+
+
+        {% endif %}
+    </span>
+</div>
+
+{% endblock content %}

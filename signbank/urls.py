@@ -21,7 +21,7 @@ import django_summernote.urls
 from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
                                             HomonymListView, MinimalPairsListView, DatasetManagerView, \
                                             DatasetDetailView, FrequencyListView, DatasetFieldChoiceView, \
-                                            dataset_detail_view_by_acronym
+                                            dataset_detail_view_by_acronym, FieldChoiceView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -93,6 +93,11 @@ urlpatterns = [
     url(r'^accounts/', include(signbank.registration.urls,namespace="registration")),
     url(r'^admin/doc/', include(django.contrib.admindocs.urls)),
     url(r'^admin/', include(admin.site.urls)),
+
+    url(r'^settings/field_colors/$', login_required(FieldChoiceView.as_view()), {'color': True},
+        name='admin_dataset_field_choice_colors'),
+    url(r'^settings/glosslist_colors/$', login_required(GlossListView.as_view()), {'settings': True},
+        name='admin_settings_glosslist_colors_preview'),
 
     # special admin sub site
     url(r'^publisher/', include(publisher_admin.urls)),
