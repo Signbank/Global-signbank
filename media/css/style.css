@@ -709,3 +709,7 @@ canvas{
 .btn-space {
     margin-right: 5px;
 }
+
+.btn-color {
+    background-color: Pink;
+}
