@@ -847,7 +847,7 @@ def import_csv_create(request):
     user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
 
     selected_datasets = get_selected_datasets_for_user(user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    dataset_languages = get_dataset_languages(selected_datasets)
 
     translation_languages_dict = {}
     # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
@@ -1263,7 +1263,7 @@ def import_csv_update(request):
     user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
 
     selected_datasets = get_selected_datasets_for_user(user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    dataset_languages = get_dataset_languages(selected_datasets)
     translation_languages_dict = {}
     # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
     for dataset_object in user_datasets:

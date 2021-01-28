@@ -1,4 +1,5 @@
 from signbank.pages.models import *
+from signbank.tools import get_dataset_languages
 from django.template import loader, RequestContext
 from django.shortcuts import get_object_or_404, render_to_response
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
@@ -73,7 +74,7 @@ def page(request, url='/'):
     from signbank.tools import get_selected_datasets_for_user
 
     selected_datasets = get_selected_datasets_for_user(request.user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    dataset_languages = get_dataset_languages(selected_datasets)
 
     response = HttpResponse(t.render({'page': f,
                                       'dataset_languages': dataset_languages,

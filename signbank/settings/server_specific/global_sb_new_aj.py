@@ -90,3 +90,13 @@ FREQUENCY_FIELDS = {
 }
 
 TMP_DIR = '/var/www/signbank/live/writable/tmp'
+
+#temp experiment
+SWITCH_TO_MYSQL = False 
+
+if SWITCH_TO_MYSQL:
+    DATABASES = {'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': 'mysql.conf',
+        'TEST': {'NAME':'sigbank_test'}
+    }}

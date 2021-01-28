@@ -50,6 +50,8 @@ def activate(request, activation_key, template_name='registration/activate.html'
     """
     activation_key = activation_key.lower() # Normalize before trying anything with it.
     account = RegistrationProfile.objects.activate_user(activation_key)
+    account.is_active = True
+    account.save()
     return render(request, template_name,
                               { 'account': account,
                                 'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS })
@@ -273,7 +275,7 @@ def user_profile(request):
 
     user = request.user
     user_object = User.objects.get(username=user)
-    user_profile = UserProfile.objects.get(id=user_object.id)
+    user_profile = UserProfile.objects.get(user=user_object)
     expiry = getattr(user_profile, 'expiry_date')
     today = date.today()
     if expiry:

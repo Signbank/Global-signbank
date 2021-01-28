@@ -81,8 +81,8 @@
                 <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.name }}</a>
             </td>
             <td>
-                <div data-toggle="collapse" href="#dataset_{{dataset.name|cut:' '}}_manage_view"><button>{% trans "Manage" %}</button></div>
-                <div id='dataset_{{dataset.name|cut:" "}}_manage_view' class='collapse'>
+                <div data-toggle="collapse" href="#dataset_{{dataset.name|slugify}}_manage_view"><button>{% trans "Manage" %}</button></div>
+                <div id='dataset_{{dataset.name|slugify}}_manage_view' class='collapse'>
                 {% with dataset.get_users_who_can_view_dataset as view_users %}
                 {% if view_users|length > 0 %}
                     {% with view_users|length as num_rows %}
@@ -145,8 +145,8 @@
                 </div>
             </td>
             <td>
-                <div data-toggle="collapse" href="#dataset_{{dataset.name|cut:' '}}_manage_change"><button>{% trans "Manage" %}</button></div>
-                <div id='dataset_{{dataset.name|cut:" "}}_manage_change' class='collapse'>
+                <div data-toggle="collapse" href="#dataset_{{dataset.name|slugify}}_manage_change"><button>{% trans "Manage" %}</button></div>
+                <div id='dataset_{{dataset.name|slugify}}_manage_change' class='collapse'>
                 {% with dataset.get_users_who_can_change_dataset as change_users %}
                 {% if change_users|length > 0 %}
                     {% with change_users|length as num_rows %}
