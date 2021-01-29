@@ -139,7 +139,7 @@ INSTALLED_APPS = (
     'tagging',
     'guardian',
     # 'debug_toolbar',
-    'video_encoding'
+    # 'video_encoding'
 )
 
 # A sample logging configuration. The only tangible logging
