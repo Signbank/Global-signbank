@@ -3613,6 +3613,12 @@ class HandshapeListView(ListView):
         qs = Handshape.objects.all().order_by('machine_value')
 
         if show_all:
+            if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
+                # User has toggled the sort order for the column
+                qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
+            else:
+                # The default is to order the signs alphabetically by whether there is an angle bracket
+                qs = order_handshape_by_angle(qs, self.request.LANGUAGE_CODE)
             return qs
 
         handshapes = FieldChoice.objects.filter(field__iexact='Handshape')

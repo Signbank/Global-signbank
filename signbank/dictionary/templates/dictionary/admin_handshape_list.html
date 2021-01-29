@@ -417,13 +417,7 @@ function do_adminsearch(el) {
     <thead>
       <tr>
           <th>{% trans "Handshape" %}</th>
-          {% if language == 'nl' %}
-          <th>{% trans "Dutch name" %}</th>
-        {% elif language == 'zh-hans' %}
-          <th>{% trans "Chinese name" %}</th>
-        {% else %}
-          <th>{% trans "English name" %}</th>
-        {% endif %}
+          <th>{% trans "Name" %}</th>
           <th>{% trans "Finger selection" %}</th>
           <th>{% trans "Finger configuration" %}</th>
           <th>{% trans "Finger selection 2" %}</th>
