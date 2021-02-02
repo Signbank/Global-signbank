@@ -652,6 +652,32 @@ class ImageUploadForHandshapeForm(forms.Form):
     handshape_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
 
+class LemmaSearchForm(forms.ModelForm):
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    search = forms.CharField(label=_("Lemma"))
+    sortOrder = forms.CharField(label=_("Sort Order"))
+    lemma_search_field_prefix = "lemma_"
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class':'form-control'}
+
+        model = LemmaIdgloss
+        fields = ['dataset']
+
+    def __init__(self, queryDict, *args, **kwargs):
+        languages = kwargs.pop('languages')
+        language_code = kwargs.pop('language_code')
+        super(LemmaSearchForm, self).__init__(queryDict, *args, **kwargs)
+
+        for language in languages:
+            # and for LemmaIdgloss
+            lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
+            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
+            if lemma_field_name in queryDict:
+                getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
+
 
 class LemmaCreateForm(forms.ModelForm):
     """Form for creating a new lemma from scratch"""

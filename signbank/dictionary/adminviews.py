@@ -5679,14 +5679,45 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
 class LemmaListView(ListView):
     model = LemmaIdgloss
     template_name = 'dictionary/admin_lemma_list.html'
-    paginate_by = 100
+    paginate_by = 50
+    show_all = False
+
+    def get_paginate_by(self, queryset):
+        """
+        Paginate by specified value in querystring, or use default class property value.
+        """
+        return self.request.GET.get('paginate_by', self.paginate_by)
 
     def get_queryset(self, **kwargs):
-        queryset = super(LemmaListView, self).get_queryset(**kwargs)
+
+        get = self.request.GET
+
+        #First check whether we want to show everything or a subset
+        try:
+            if self.kwargs['show_all']:
+                show_all = True
+        except (KeyError,TypeError):
+            show_all = False
+
+        queryset = LemmaIdgloss.objects.all()
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        return queryset.filter(dataset__in=selected_datasets).annotate(num_gloss=Count('gloss'))
+        qs = queryset.filter(dataset__in=selected_datasets)
+
+        if show_all:
+            return qs.annotate(num_gloss=Count('gloss'))
+        else:
+            # There are only Lemma ID Gloss fields
+            for get_key, get_value in get.items():
+                if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
+                    language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
+                    language = Language.objects.filter(language_code_2char=language_code_2char)
+                    qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
+                                   lemmaidglosstranslation__language=language)
+
+        return qs.annotate(num_gloss=Count('gloss'))
 
     def get_context_data(self, **kwargs):
+
         context = super(LemmaListView, self).get_context_data(**kwargs)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -5698,6 +5729,20 @@ class LemmaListView(ListView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
+
+        context['page_number'] = context['page_obj'].number
+
+        context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
+
+        context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
+
+        context['lemma_count'] = LemmaIdgloss.objects.filter(dataset__in=selected_datasets).count()
+
+        search_form = LemmaSearchForm(self.request.GET, languages=dataset_languages, language_code=self.request.LANGUAGE_CODE)
+
+        context['searchform'] = search_form
+
+        context['search_type'] = 'lemma'
 
         return context
 
@@ -5730,8 +5775,8 @@ class LemmaListView(ListView):
             header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields
 
         writer.writerow(header)
-
-        for lemma in self.get_queryset():
+        queryset = self.get_queryset()
+        for lemma in queryset:
             row = [str(lemma.pk), lemma.dataset.acronym]
 
             for language in dataset_languages:
