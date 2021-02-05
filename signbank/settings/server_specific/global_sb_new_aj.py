@@ -13,8 +13,12 @@ METADATA_LOCATION = 'CNGT_MetadataEnglish_OtherResearchers.csv'
 LANGUAGES = (
   ('en', gettext('English')),
   ('nl', gettext('Dutch')),
-  ('zh-hans', gettext('Chinese'))
+  ('zh-hans', gettext('Chinese')),
+  ('he', gettext('Hebrew')),
+  ('ar', gettext('Arabic'))  
 )
+
+INTERFACE_LANGUAGE_SHORT_NAMES = ['EN','NL','官话','עִברִית','عربى']
 
 ECV_FILE = ECV_FOLDER+'ngt.ecv'
 ECV_SETTINGS = {

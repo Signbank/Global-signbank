@@ -13,4 +13,7 @@ def url(request):
             'viewable_datasets': [(dataset,dataset in selected_datasets) for dataset in viewable_datasets],
             'selected_datasets': selected_datasets,
             'SEPARATE_ENGLISH_IDGLOSS_FIELD':settings.SEPARATE_ENGLISH_IDGLOSS_FIELD,
-            'CROP_GLOSS_IMAGES': settings.CROP_GLOSS_IMAGES}
+            'CROP_GLOSS_IMAGES': settings.CROP_GLOSS_IMAGES,
+			'INTERFACE_LANGUAGE_CODES': [language_code for language_code, full_name in settings.LANGUAGES],
+			'INTERFACE_LANGUAGE_SHORT_NAMES': settings.INTERFACE_LANGUAGE_SHORT_NAMES
+			}

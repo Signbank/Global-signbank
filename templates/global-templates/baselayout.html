@@ -97,7 +97,7 @@
             {% endif %}
         {% endif %}
 
-    	$('#minimalistic_language_picker').minimalistic_language_picker(['en','nl','zh-hans'],['EN','NL','官话'],'{{WEBSITE_LANGUAGE}}',function(chosen_language)
+    	$('#minimalistic_language_picker').minimalistic_language_picker([{% for code in INTERFACE_LANGUAGE_CODES %}'{{code}}',{% endfor %}], [{% for name in INTERFACE_LANGUAGE_SHORT_NAMES %}'{{name}}',{% endfor %}],'{{WEBSITE_LANGUAGE}}',function(chosen_language)
     	{
             {% if user.is_authenticated and user.user_profile_user.last_used_language != chosen_language %}
 
