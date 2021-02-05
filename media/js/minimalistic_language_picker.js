@@ -28,7 +28,6 @@ jQuery.fn.minimalistic_language_picker = function(language_codes,language_names,
 jQuery.fn.show_chosen_language = function()
 {
     $(this).removeClass('active_language_picker'); //Changes layout
-    $(this).css('height','55px'); //Needed because the language will stay invisibly long
 
     //The layout below is Signbank specific
     $(this).css('margin-right',0);
@@ -89,10 +88,6 @@ jQuery.fn.show_all_languages = function(callback)
 
     //Show the created html
     $(this).html(html_content);
-
-    //Also grow the height of the picker
-    var picker_height = ((SPACE_BETWEEN_ITEMS+HEIGHT_OF_ITEMS) * all_languages.length) + 10;
-    $(this).animate({'height':picker_height},400);
 
     //Move a language to the top when clicked
     $('.language_button').click(function()
