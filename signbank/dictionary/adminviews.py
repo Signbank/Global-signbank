@@ -1861,6 +1861,15 @@ class GlossRelationsDetailView(DetailView):
 
         context['minimalpairs'] = minimalpairs
 
+        morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
+        compounds = []
+        reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl.id)
+        for rm in reverse_morphdefs:
+            translated_role = machine_value_to_translated_human_value(rm.role,morphdef_roles,self.request.LANGUAGE_CODE)
+
+            compounds.append((rm.parent_gloss, translated_role))
+        context['compounds'] = compounds
+
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         if gl.dataset:
