@@ -312,6 +312,8 @@ class GlossListView(ListView):
         # for all languages for which results were found.
         if 'search' in self.request.GET and self.request.GET['search'] != '':
             val = self.request.GET['search']
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(val)
             context['gloss_fields_to_populate'] = json.dumps([
                 language[0] for language in
                 AnnotationIdglossTranslation.objects.filter(text__iregex=val,
@@ -818,6 +820,8 @@ class GlossListView(ListView):
         #If not, we will go trhough a long list of filters
         if 'search' in get and get['search'] != '':
             val = get['search']
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(val)
             query = Q(annotationidglosstranslation__text__iregex=val)
 
             if re.match('^\d+$', val):

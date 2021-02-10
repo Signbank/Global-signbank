@@ -2441,3 +2441,15 @@ def minimalpairs_focusgloss(gloss_id, language_code):
         other_gloss_dict['other_gloss_idgloss'] = translation
         result.append(other_gloss_dict)
     return result
+
+def strip_control_characters(input):
+
+    if input:
+
+        import re
+
+        # remove an ending backslash
+        input = re.sub(r"\\$", "", input)
+
+    return input
+
