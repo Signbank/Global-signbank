@@ -4719,8 +4719,6 @@ class FieldChoiceView(ListView):
                         fieldchoice_category = gloss_field.field_choice_category
                         choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-                        context['static_choice_lists'][fieldchoice_category] = {}
-                        context['static_choice_list_colors'][fieldchoice_category] = {}
 
                         display_choice_list = choicelist_queryset_to_translated_dict(choice_list,
                                                                                      self.request.LANGUAGE_CODE)
@@ -4728,14 +4726,8 @@ class FieldChoiceView(ListView):
                         display_choice_list_colors = choicelist_queryset_to_colors(choice_list,
                                                                                      self.request.LANGUAGE_CODE)
 
-                        # print('field ', field, ' display chice list: ', display_choice_list)
-                        for (key, value) in display_choice_list.items():
-                            this_value = value
-                            context['static_choice_lists'][fieldchoice_category][key] = this_value
-
-                        for (key, value) in display_choice_list_colors.items():
-                            this_value = value
-                            context['static_choice_list_colors'][fieldchoice_category][key] = this_value
+                        context['static_choice_lists'][fieldchoice_category] = display_choice_list
+                        context['static_choice_list_colors'][fieldchoice_category] = display_choice_list_colors
                     else:
                         # otherwise, it's a value, not a choice
                         pass
