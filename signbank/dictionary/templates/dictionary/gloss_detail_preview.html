@@ -127,40 +127,6 @@
         });
     });
 
-    //Keyboard shortcuts
-    document.onkeydown = checkKey;
-
-    function checkKey(e)
-    {
-        // No shortcut if your typing
-        if (document.activeElement.tagName == 'INPUT') {return;}
-
-        e = e || window.event;
-
-        switch(e.key)
-        {
-          case 'p':
-            element_id = 'phonology'
-            break;
-          case 'm':
-            element_id = 'morphology'
-            break;
-          case 's':
-            element_id = 'semantics'
-            break;
-          default:
-            element_id = null
-        }
-
-        if (element_id != null)
-        {
-            toggle_edit();
-            $('#'+element_id).collapse('show');
-            $('#'+element_id)[0].scrollIntoView();
-        }
-
-    }
-
     </script>
 
     <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit_color.js"></script>
@@ -271,14 +237,6 @@ select option {
 .dropdown-item:active{
     color: blue;
     background-color: darkviolet;
-}
-
-.btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default.active, .open .dropdown-toggle.btn-default {
-    background-color: white;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    color: black;
-    border-color: #31347B;
 }
 
 .bootstrap-select {
