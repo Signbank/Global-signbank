@@ -333,9 +333,9 @@
 					} else {
 						dropdown_button.html('------');
 					};
-					dropdown_button.click(function () {
-						console.log('clicked button');
-					});
+//					dropdown_button.click(function () {
+//						console.log('clicked button: ' + settings.params.field);
+//					});
 					$(this).append(dropdown_button);
 					var select = $('<ul />');
 					select.attr('class', 'dropdown-menu shadow-sm p-3 mb-5 bg-white rounded');
@@ -363,6 +363,8 @@
 						var key_color = (settings.params === undefined) ? 'fffff': settings.params.colors[key];
 						var option = $('<li />');
 						option.attr('value', key);
+						option.attr('name',json[key]);
+						option.attr('id',json[key]);
 						option.append(json[key]);
 						option.attr('class', 'dropdown-item');
 						option.attr('data-value', key);
@@ -370,7 +372,8 @@
 							'color': 'black', 'background-color': '#' + key_color
 						});;
 						$('ul', this).append(option);
-					}
+					};
+					var chosen_offset = 0;
 					$('ul', this).children().each(function (index) {
 						var indie = (settings.params === undefined) ? -1: settings.params.a;
 						if ($(this).val() == json[ 'selected'] || $(this).data('value') == indie || $(this).text() == $.trim(original.revert)) {
@@ -378,9 +381,8 @@
 								"value": settings.params.a
 							});
 							$(this).attr('class', 'dropdown-item active');
-							console.log('scroll ' + index * 20);
-							var offset_li = index * 20;
-							$(this).parent().scrollTop = offset_li;
+							chosen_offset = index*20;
+							console.log('active offset: '+chosen_offset);
 						} else {
 							var this_val = $(this).data('value');
 							$(this).click(function () {
@@ -394,6 +396,26 @@
 								});
 							});
 						}
+					});
+					$(this).keypress(function(e){
+					    var touched = String.fromCharCode(e.charCode);
+					    touched = touched.toUpperCase();
+					    var this_ul = '#ul_' + settings.params.field;
+                        var this_li = $(this_ul).find('li[id^="'+touched+'"]')[0];
+                        var scroller = 0;
+                        if (this_li) {
+                            scroller = this_li.offsetTop;
+                        };
+                        console.log('key press offset: ', scroller);
+                        $('.dropdown-menu').animate({
+                            scrollTop: scroller
+                        }, 1000);
+					});
+					$(this).click(function(){
+                        scroller = chosen_offset;
+                        $('.dropdown-menu').animate({
+                            scrollTop: scroller
+                        }, 1000);
 					});
 				}
 			}
