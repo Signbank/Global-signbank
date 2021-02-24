@@ -100,6 +100,14 @@ def choicelist_queryset_to_colors(queryset,language_code,ordered=True,id_prefix=
 
     return OrderedDict([])
 
+def choicelist_queryset_to_field_colors(queryset):
+
+    temp_mapping_dict = {}
+    temp_mapping_dict[0] = 'ffffff'
+    for choice in queryset:
+        temp_mapping_dict[choice.machine_value] = getattr(choice, 'field_color')
+    return temp_mapping_dict
+
 def machine_value_to_translated_human_value(machine_value,choice_list,language_code):
 
     codes_to_adjectives = dict(settings.LANGUAGES)

@@ -310,6 +310,7 @@ class GlossListView(ListView):
 
         # If the menu bar search form was used, populate the search form with the query string
         # for all languages for which results were found.
+        import json # for some reason this is needed here, perhaps removed from a previous import?
         if 'search' in self.request.GET and self.request.GET['search'] != '':
             val = self.request.GET['search']
             from signbank.tools import strip_control_characters
@@ -343,6 +344,17 @@ class GlossListView(ListView):
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
+        multiple_select_gloss_categories = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+
+        choices_colors = {}
+        for (fieldname, field_category) in multiple_select_gloss_categories:
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors
+            import json
+            choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+
+        context['field_colors'] = choices_colors
 
         if hasattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'):
             context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = settings.DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
