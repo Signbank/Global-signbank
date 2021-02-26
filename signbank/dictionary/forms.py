@@ -748,7 +748,7 @@ class LemmaUpdateForm(forms.ModelForm):
 
         for language in self.languages:
             lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
-            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name), required=False)
+            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name), required=True)
             if queryDict:
                 if lemmaupdate_field_name in queryDict:
                     self.fields[lemmaupdate_field_name].initial = queryDict[lemmaupdate_field_name]
