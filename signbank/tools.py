@@ -2282,6 +2282,23 @@ def construct_scrollbar(qs, search_type, language_code):
             # if language_code == 'nl':
             data_label = item.dutch_name
             items.append(dict(id = item.machine_value, data_label = data_label, href_type = 'handshape'))
+    elif search_type in ['lemma']:
+        # there is no lemma detail view, so the href goes to lemma/update
+        for item in qs:
+            lemmaidglosstranslations = item.lemmaidglosstranslation_set.all()
+            if lemmaidglosstranslations:
+                if len(lemmaidglosstranslations) == 1:
+                    # there are lemma's with only one translation, make sure they can be printed in the scroll bar
+                    lemma_text = lemmaidglosstranslations[0].text
+                else:
+                    lemma_text = str(item.id)
+                    for tr in lemmaidglosstranslations:
+                        if tr.language.language_code_2char == language_code:
+                            lemma_text = tr.text
+                items.append(dict(id=item.id, data_label=lemma_text, href_type='lemma/update'))
+            else:
+                # no translations found for lemma
+                items.append(dict(id=item.id, data_label=str(item.id), href_type='lemma/update'))
 
     return items
 

@@ -5203,6 +5203,14 @@ def handshape_ajax_search_results(request):
     else:
         return HttpResponse(json.dumps(None))
 
+def lemma_ajax_search_results(request):
+    """Returns a JSON list of handshapes that match the previous search stored in sessions"""
+    if 'search_type' in request.session.keys() and request.session['search_type'] == 'lemma':
+        return HttpResponse(json.dumps(request.session['search_results']))
+    else:
+        print('lemma ajax search results: search type not in session')
+        return HttpResponse(json.dumps(None))
+
 def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
@@ -5698,6 +5706,7 @@ class LemmaListView(ListView):
     template_name = 'dictionary/admin_lemma_list.html'
     paginate_by = 50
     show_all = False
+    search_type = 'lemma'
 
     def get_paginate_by(self, queryset):
         """
@@ -5760,6 +5769,32 @@ class LemmaListView(ListView):
         context['searchform'] = search_form
 
         context['search_type'] = 'lemma'
+
+        list_of_objects = self.object_list
+
+        from signbank.tools import convert_language_code_to_language_minus_locale
+
+        # to accomodate putting lemma's in the scroll bar in the LemmaUpdateView (aka LemmaDetailView),
+        # look at available translations, choose the Interface language if it is a Dataset language
+        # some legacy lemma's have missing translations,
+        # the language code is used when more than one is available,
+        # otherwise the Default language will be used, if available
+        # otherwise the Lemma ID will be used in the scroll bar
+        display_language_code = convert_language_code_to_language_minus_locale(self.request.LANGUAGE_CODE)
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            lang_code = convert_language_code_to_language_minus_locale(lang.language_code_2char)
+            dataset_display_languages.append(lang_code)
+        if display_language_code in dataset_display_languages:
+            lang_attr_name = display_language_code
+        else:
+            # construct scroll bar
+            # the following retrieves language code for English (or DEFAULT LANGUAGE)
+            # so the sorting of the scroll bar matches the default sorting of the results in Lemma List View
+            lang_attr_name = convert_language_code_to_language_minus_locale(
+                settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
 
         return context
 
@@ -5938,9 +5973,41 @@ class LemmaUpdateView(UpdateView):
     fields = []
     gloss_found = False
     gloss_id = ''
+    search_type = 'lemma'
 
     def get_context_data(self, **kwargs):
+        # print('get context lemma update view')
         context = super(LemmaUpdateView, self).get_context_data(**kwargs)
+
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+            # print('search results: ', search_results)
+        else:
+            search_results = []
+        if search_results and len(search_results) > 0:
+            if not self.request.session['search_results'][0]['href_type'] == 'lemma/update':
+                print('not lemma type')
+                self.request.session['search_results'] = None
+        if 'search_type' in self.request.session.keys():
+            if not self.request.session['search_type'] == 'lemma':
+                # search_type is 'handshape'
+                self.request.session['search_results'] = None
+        self.request.session['search_type'] = self.search_type
+
+        # if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
+        #     # there are no handshapes in the scrollbar, put some there
+        #
+        #     queryset = LemmaIdgloss.objects.all()
+        #     selected_datasets = get_selected_datasets_for_user(self.request.user)
+        #     qs = queryset.filter(dataset__in=selected_datasets)
+        #
+        #     from signbank.tools import convert_language_code_to_language_minus_locale
+        #     lang_attr_name = convert_language_code_to_language_minus_locale(
+        #         settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+        #     items = construct_scrollbar(qs, self.search_type, lang_attr_name)
+        #     self.request.session['search_results'] = items
+
+        context['active_id'] = self.object.pk
 
         # this is needed by the menu bar
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -6065,8 +6132,62 @@ class LemmaUpdateView(UpdateView):
                 return HttpResponseRedirect(self.success_url)
 
         else:
+            print('form not valid')
             return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
 
+    def get(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+
+        except Exception as e:
+            # return custom template
+            print(e)
+            messages.add_message(self.request, messages.ERROR, e)
+            # return render(request, 'dictionary/warning.html', status=404)
+            raise Http404()
+
+        datasetid = settings.DEFAULT_DATASET_PK
+        default_dataset = Dataset.objects.get(id=datasetid)
+
+        try:
+            dataset_of_requested_lemma = self.object.dataset
+        except:
+            print('Requested lemma has no dataset: ', self.object.pk)
+            dataset_of_requested_lemma = default_dataset
+
+        # signlanguages_of_requested_gloss = dataset_of_requested_gloss.signlanguage
+        # dialect_of_requested_gloss = self.object.dialect_choices()
+
+        # print('Gloss Detail gloss, dataset, signlanguages: ', self.object.id, dataset_of_requested_gloss, signlanguages_of_requested_gloss)
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            show_dataset_interface = False
+
+        if request.user.is_authenticated():
+            if dataset_of_requested_lemma not in selected_datasets:
+                return render(request, 'dictionary/warning.html',
+                              {'warning': 'The lemma you are trying to view (' + str(
+                                  self.object.id) + ') is not in your selected datasets.',
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': selected_datasets,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            if dataset_of_requested_lemma not in datasets_user_can_view:
+                return render(request, 'dictionary/warning.html',
+                              {'warning': 'The lemma you are trying to view ('+str(self.object.id)+') is not in a dataset you can view.',
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': selected_datasets,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+        else:
+            return HttpResponseRedirect(reverse('registration:auth_login'))
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
 
 class LemmaDeleteView(DeleteView):
     model = LemmaIdgloss
