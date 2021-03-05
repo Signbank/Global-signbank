@@ -89,8 +89,11 @@ input[type="color"] {
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/select2-colors-full.css">
-<script type="text/javascript" src="{{ STATIC_URL }}js/select2-colors-full.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+<!--<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/select2-colors-full.css">-->
+<!--<script type="text/javascript" src="{{ STATIC_URL }}js/select2-colors-full.js"></script>-->
+<!--https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js-->
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
@@ -135,13 +138,41 @@ $(document).ready(function() {
         makeMultipleSelect(this_id, this_var);
      }
 
+     function addOptionColor(optionNode) {
+        var color_text = optionNode.text;
+<!--        console.log(color_text);-->
+<!--        console.log(JSON.stringify(optionNode));-->
+
+        // pattern of resultId: "select2-id_handedness-result-58e8-0"
+
+        if (optionNode._resultId) {
+<!--            console.log(JSON.stringify(optionNode._resultId));-->
+            var resultString = optionNode._resultId
+            splitPattern = resultString.split('-');
+<!--            console.log(splitPattern);-->
+<!--            console.log(splitPattern[1], splitPattern[4]);-->
+            var fieldId = splitPattern[1];
+            var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
+            var this_code = splitPattern[4];
+            var pulldown_colors_str = new String(pulldown_colors);
+            var pulldown_lookup = JSON.parse(pulldown_colors_str);
+            var this_color = pulldown_lookup[this_code];
+            var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;background-color:#"+this_color+"'>"+color_text+"</span>");
+<!--            console.log($color_text_node);-->
+            return $color_text_node
+        } else {
+            return color_text;
+        };
+     }
+
      $('.js-example-basic-multiple').each(function() {
          var thisId = this.id;
          $(this).select2({
             allowClear: true,
             dropdownAutoWidth: true,
             width: 'resolve',
-            placeholder: ''
+            placeholder: '',
+            templateResult: addOptionColor
          });
      });
 
