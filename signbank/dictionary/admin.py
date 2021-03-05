@@ -1,4 +1,6 @@
-from django.contrib import admin 
+from colorfield.fields import ColorWidget
+from django import forms
+from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
 from reversion.admin import VersionAdmin
@@ -144,9 +146,59 @@ class UserProfileInline(admin.StackedInline):
 class UserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
+
+class FieldChoiceAdminForm(forms.ModelForm):
+
+    # this form is needed in order to validate against duplicates
+    # hide some fields
+
+    show_field_choice_colors = server_specific.SHOW_FIELD_CHOICE_COLORS
+    show_english_only = server_specific.SHOW_ENGLISH_ONLY
+
+    def __init__(self, *args, **kwargs):
+        super(FieldChoiceAdminForm, self).__init__(*args, **kwargs)
+        if not self.show_field_choice_colors:
+            self.fields['field_color'].widget = forms.HiddenInput()
+        if self.show_english_only:
+            self.fields['dutch_name'].widget = forms.HiddenInput()
+            self.fields['chinese_name'].widget = forms.HiddenInput()
+
+    class Meta:
+        model = FieldChoice
+        fields = ['field', 'english_name', 'dutch_name', 'chinese_name', 'field_color', 'machine_value']
+
+    def clean(self):
+        # check that the field category and (english) name does not already occur
+        en_name = self.cleaned_data['english_name']
+        field = self.cleaned_data['field']
+
+        if not field:
+            raise forms.ValidationError('The field name category is required')
+
+        qs_en = FieldChoice.objects.filter(field=field, english_name=en_name)
+
+        if len(qs_en) == 0:
+            return self.cleaned_data
+        else:
+            raise forms.ValidationError('This field choice already exists')
+
+    def get_form(self, request, obj=None, **kwargs):
+
+        form = super(FieldChoiceAdminForm, self).get_form(request, obj, **kwargs)
+        return form
+
+
 class FieldChoiceAdmin(VersionAdmin):
     readonly_fields=['machine_value']
     actions=['delete_selected']
+
+    model = FieldChoice
+    form = FieldChoiceAdminForm
+
+    if hasattr(server_specific, 'SHOW_FIELD_CHOICE_COLORS') and server_specific.SHOW_FIELD_CHOICE_COLORS:
+        show_field_choice_colors = True
+    else:
+        show_field_choice_colors = False
 
     if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
         show_english_only = True
@@ -157,9 +209,48 @@ class FieldChoiceAdmin(VersionAdmin):
     list_filter = ['field']
 
     def get_form(self, request, obj=None, **kwargs):
+        # for display in the HTML color picker, the field color needs to be prefixed with #
+        # in the database,only the hex number is stored
+        # because Django loads the form multiple times (why?), check whether there is already an initial # before adding one
+        if obj:
+            obj_color = obj.field_color
+            if obj_color[0] != '#':
+                obj.field_color = '#'+obj.field_color
+
         if self.show_english_only:
             self.exclude = ('dutch_name', 'chinese_name')
+        if self.show_field_choice_colors:
+            self.exclude = ('field_color')
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
+        if not obj:
+            # a new field choice is being created
+            # see if the user is inside a category
+            try:
+                changelist_filters = request.GET['_changelist_filters']
+            except:
+                changelist_filters = ''
+            from urllib.parse import parse_qsl
+            query_params = dict(parse_qsl(changelist_filters))
+            if query_params:
+                new_field_category = query_params.get('field')
+                form.__dict__['base_fields']['field'].initial = new_field_category
+                form.__dict__['base_fields']['field'].disabled = True
+            else:
+                # restrict categories to those already existing
+                # categories are determined by the fields in the Models, the user does not create categories
+                field_choice_categories = FieldChoice.objects.all().values('field').distinct()
+                field_choices = [(f['field'], f['field']) for f in field_choice_categories]
+                form.__dict__['base_fields']['field'].widget = forms.Select(choices=field_choices)
+
+        if self.show_field_choice_colors:
+            # SHOW_FIELD_COLORS
+            # set up the HTML color picker widget
+            form.__dict__['base_fields']['field_color'].widget = forms.TextInput(attrs={'type': 'color' })
+
+            # in the model, the default value is ffffff
+            # in the admin, the default value is a display value, so needs the #
+            form.__dict__['base_fields']['field_color'].initial = '#ffffff'
+
         return form
 
     def get_actions(self, request):
@@ -289,7 +380,14 @@ class FieldChoiceAdmin(VersionAdmin):
                 highest_machine_value = max([field_choice.machine_value for field_choice in qs])
                 # The automatic machine value we calculate is 1 higher
                 obj.machine_value= highest_machine_value+1
-
+        if self.show_field_choice_colors:
+            # the color in the database needs to be without the #, which is for display
+            new_color = form.cleaned_data['field_color']
+            # strip any initial #'s
+            while new_color[0] == '#':
+                new_color = new_color[1:]
+            # store only the hex part
+            obj.field_color = new_color
         obj.save()
 
 class LanguageAdmin(TranslationAdmin):
