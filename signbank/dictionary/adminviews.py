@@ -4004,6 +4004,8 @@ class DatasetManagerView(ListView):
             return self.render_to_add_user_response(context)
         elif 'default_language' in self.request.GET:
             return self.render_to_set_default_language()
+        elif 'format' in self.request.GET:
+            return self.render_to_csv_response()
         else:
             return super(DatasetManagerView, self).render_to_response(context)
 
@@ -4284,6 +4286,77 @@ class DatasetManagerView(ListView):
         # the code doesn't seem to get here. if somebody puts something else in the url (else case), there is no (hidden) csrf token.
         messages.add_message(self.request, messages.ERROR, ('Unrecognised argument to dataset manager url.'))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+    def render_to_csv_response(self):
+
+        if not self.request.user.has_perm('dictionary.export_csv'):
+            raise PermissionDenied
+
+        if not self.request.user.is_authenticated():
+            raise PermissionDenied
+
+        dataset_object, response = self.get_dataset_from_request()
+        if response:
+            return response
+
+        response = self.check_user_permissions_for_managing_dataset(dataset_object)
+        if response:
+            return response
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+
+        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in
+                                               dataset_languages]
+
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="dictionary-dataset_links.csv"'
+        writer = csv.writer(response)
+
+        with override(LANGUAGE_CODE):
+            header = ['Signbank ID', 'Dataset'] + annotationidglosstranslation_fields + ['glossvideo url', 'glossimage url']
+
+        writer.writerow(header)
+        queryset = Gloss.objects.filter(lemma__dataset_id=dataset_object.id)
+        for gloss in queryset:
+            row = [str(gloss.pk), gloss.lemma.dataset.acronym]
+
+            for language in dataset_languages:
+                annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+                if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
+                    row.append(annotationidglosstranslations[0].text)
+                else:
+                    row.append("")
+
+            hyperlink_domain = settings.URL + settings.PREFIX_URL
+            protected_media_url = os.path.join('dictionary','protected_media').encode('utf-8')
+            gloss_image_path = gloss.get_image_url()
+            gloss_video_path = gloss.get_video_url()
+            if gloss_image_path:
+                gloss_image_path = gloss_image_path.encode('utf-8')
+                gloss_image_path = os.path.join(protected_media_url,gloss_image_path)
+                gloss_image_path = hyperlink_domain + gloss_image_path.decode()
+            if gloss_video_path:
+                gloss_video_path = gloss_video_path.encode('utf-8')
+                gloss_video_path = os.path.join(protected_media_url,gloss_video_path)
+                gloss_video_path = hyperlink_domain + gloss_video_path.decode()
+
+            row.append(gloss_video_path)
+            row.append(gloss_image_path)
+
+            #Make it safe for weird chars
+            safe_row = []
+            for column in row:
+                try:
+                    safe_row.append(column.encode('utf-8').decode())
+                except AttributeError:
+                    safe_row.append(None)
+
+            writer.writerow(row)
+
+        return response
 
     def get_queryset(self):
         user = self.request.user
