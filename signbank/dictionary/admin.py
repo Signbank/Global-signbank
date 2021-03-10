@@ -178,8 +178,17 @@ class FieldChoiceAdminForm(forms.ModelForm):
         qs_en = FieldChoice.objects.filter(field=field, english_name=en_name)
 
         if len(qs_en) == 0:
+            # new field choice
             return self.cleaned_data
+        elif len(qs_en) == 1:
+            # found exactly one match
+            fc_obj = qs_en[0]
+            if fc_obj.id == self.instance.id:
+                return self.cleaned_data
+            else:
+                forms.ValidationError('This field choice already exists')
         else:
+            # multiple duplicates found
             raise forms.ValidationError('This field choice already exists')
 
     def get_form(self, request, obj=None, **kwargs):
