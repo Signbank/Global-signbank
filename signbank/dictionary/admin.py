@@ -382,10 +382,15 @@ class FieldChoiceAdmin(VersionAdmin):
                 obj.machine_value= highest_machine_value+1
         if self.show_field_choice_colors:
             # the color in the database needs to be without the #, which is for display
-            new_color = form.cleaned_data['field_color']
-            # strip any initial #'s
-            while new_color[0] == '#':
-                new_color = new_color[1:]
+            if form and form.cleaned_data.get('field_color'):
+                new_color = form.cleaned_data['field_color']
+                # strip any initial #'s
+                while new_color[0] == '#':
+                    new_color = new_color[1:]
+            else:
+                # this is the default value in the model, it ought to be set regardless
+                # the tests of admin complained
+                new_color = 'ffffff'
             # store only the hex part
             obj.field_color = new_color
         obj.save()
