@@ -101,54 +101,12 @@
             <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search gloss" %}' type="Text" name="search" id="tooltip-search"
                                                onfocus="focusFunction()" onblur="blurFunction()"
                                                value="{{ glossQuery }}" maxlength="60" size="36" />
-                <span class="isTooltip">In many text fields, you can use patterns as follows:
-                  <table>
-                    <tr>
-                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
-                    </tr>
-                  </table>
-                </span>
+				{% include "tooltip.html" with include_tags=True %}
             </div>
             <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search translation" %}' type="Text" name="keyword" id="tooltip-translation"
                                                onfocus="focusFunction2()" onblur="blurFunction2()"
                                                value="{{ query }}" maxlength="60" size="36" />
-                <span class="isTooltip">In many text fields, you can use patterns as follows:
-                  <table>
-                    <tr>
-                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
-                    </tr>
-                  </table>
-                </span>
+				{% include "tooltip.html" with include_tags=True %}
             </div>
           <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
     </form>
@@ -163,12 +121,12 @@
         {% if user.is_authenticated %}
             <div class='navbar-text'>
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
-            <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
         {% else %}
             <div class='navbar-text'><a href="{{PREFIX_URL}}/accounts/login/?next={{PREFIX_URL}}/">{% trans "Login" %}</a></div>
-            <div class='navbar-text' id="minimalistic_language_picker" style="height: 55px;"></div>
         {% endif %}
-      </div>
+		<div class='navbar-text' id="minimalistic_language_picker"></div>
+
+	</div>
     </div>
     </div>
   </nav>

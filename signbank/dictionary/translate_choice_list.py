@@ -20,14 +20,18 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
     raw_choice_list = []
     machine_values_seen = []
     for choice in queryset:
-        human_value = getattr(choice, adjective + '_name')
+        try:
+            human_value = getattr(choice, adjective + '_name')
+        except AttributeError:
+            human_value = getattr(choice,'english_name')
+
         if choice.machine_value in machine_values_seen:
             # don't append to raw_choice_list
             continue
         temp_mapping_dict[choice.machine_value] = human_value
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
-            raw_choice_list.append((id_prefix + str(choice.machine_value), getattr(choice, adjective + '_name')))
+            raw_choice_list.append((id_prefix + str(choice.machine_value), human_value))
 
     if ordered:
 
@@ -128,7 +132,10 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
         try:
             selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
 
-            human_value = getattr(selected_field_choice, adjective + '_name')
+            try:
+                human_value = getattr(selected_field_choice, adjective + '_name')
+            except AttributeError:
+                human_value = getattr(selected_field_choice, 'english_name')
 
         except (IndexError, ValueError):
             human_value = machine_value
