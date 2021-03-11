@@ -1,22 +1,28 @@
-source /var/www/signbank/live/sb-env/bin/activate
+ROOT=/var/www/signbank/live/
+
+#Step 0: To be sure, start the env
+source "$ROOT"sb-env/bin/activate
 
 #Step 1: Save the current git commit message
-git rev-parse HEAD >> /var/www/signbank/live/writable/commit_hash_before_latest_deploy
+git rev-parse HEAD >> "$ROOT"writable/commit_hash_before_latest_deploy
 
 #Step 2: Update the repo 
-git fetch #Change to pull when done
+git fetch
+git merge
 
 #Step 3: Backup the databse
-cp /var/www/signbank/live/writable/database/signbank.db /var/www/signbank/live/writable/database/manual_backups/before_latest_deploy.db 
-chmod a-w /var/www/signbank/live/writable/database/manual_backups/before_latest_deploy.db
+cp "$ROOT"writable/database/signbank.db /var/www/signbank/live/writable/database/manual_backups/before_latest_deploy.db 
+chmod a-w "$ROOT"writable/database/manual_backups/before_latest_deploy.db
 
 #Step 4: install any new requirements
-pip install -r /var/www/signbank/live/repo/requirements.txt
+pip install -r "$ROOT"repo/requirements.txt
 
 #Step 5: fix all permissions
+mod -R g=rw "$ROOT"signbank/live/repo
+setfacl -R -m user:wapsignbank:rx "$ROOT"repo/
 
 #Step 6: backup the database
-python /var/www/signbank/live/repo/bin/develop.py migrate
+python "$ROOT"repo/bin/develop.py migrate
 
 #Step 7: Run all unit tests
-python /var/www/signbank/live/repo/bin/develop.py test -k
+python "$ROOT"repo/bin/develop.py test -k
