@@ -4,7 +4,7 @@ ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
 LANGUAGE_NAME = 'Global'
 COUNTRY_NAME = 'Netherlands'
 SIGNBANK_VERSION_CODE = 'global'
-URL = 'https://signbank.science.ru.nl/'
+URL = 'https://signbank.cls.ru.nl/'
 ALLOWED_HOSTS = ['signbank.science.ru.nl','signbank.cls.ru.nl','new.signbank.science.ru.nl']
 
 EAF_FILES_LOCATION = 'corpus-ngt/eaf/'
