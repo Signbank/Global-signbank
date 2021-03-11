@@ -2178,54 +2178,54 @@ class testSettings(TestCase):
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.save()
 
-    # def test_Settings(self):
-    #
-    #     from os.path import isfile, join
-    #     full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
-    #     all_settings = [ f for f in os.listdir(full_root_path) if isfile(join(full_root_path, f))
-    #                                 and f.endswith('.py') and f != '__init__.py' and f != 'server_specific.py']
-    #     print('Checking settings files: ', all_settings)
-    #     # check that one of the files is the default file
-    #     self.assertIn('default.py', all_settings)
-    #     all_settings_strings = {}
-    #     for next_file in all_settings:
-    #         all_settings_strings[next_file] = []
-    #         next_file_path = os.path.join(full_root_path, next_file)
-    #         with open(next_file_path, 'r') as f:
-    #             for line in f:
-    #                 if '#' in line:
-    #                     line = line.split('#')
-    #                     string_before_hash = line[0]
-    #                     line = string_before_hash.strip()
-    #                 if '=' in line:
-    #                     definition_list = line.split('=')
-    #                     right_hand_side = definition_list[1]
-    #                     right_hand_side = right_hand_side.strip()
-    #                     if right_hand_side.startswith('lambda'):
-    #                         # this is a function definition
-    #                         # this is a bit of a hack because a function is used in the global settings
-    #                         continue
-    #                     definition = definition_list[0]
-    #                     definition = definition.strip()
-    #                     all_settings_strings[next_file].append(definition)
-    #
-    #     comparison_table_first_not_in_second = {}
-    #     for first_file in all_settings:
-    #         if not first_file in comparison_table_first_not_in_second.keys():
-    #             comparison_table_first_not_in_second[first_file] = {}
-    #         for second_file in all_settings:
-    #             if first_file != second_file:
-    #                 comparison_table_first_not_in_second[first_file][second_file] = []
-    #                 for setting_first_file in all_settings_strings[first_file]:
-    #                     if setting_first_file not in all_settings_strings[second_file]:
-    #                         comparison_table_first_not_in_second[first_file][second_file].append(setting_first_file)
-    #
-    #     for first_file in all_settings:
-    #         for second_file in all_settings:
-    #             # the default.py file is part of the installation (should this filename be a setting?)
-    #             # check that other settings files do not contain settings that are not in the default settings file
-    #             if first_file != second_file and second_file == 'default.py':
-    #                 self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
+    def test_Settings(self):
+
+        from os.path import isfile, join
+        full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
+        all_settings = [ f for f in os.listdir(full_root_path) if isfile(join(full_root_path, f))
+                                    and f.endswith('.py') and f != '__init__.py' and f != 'server_specific.py']
+        print('Checking settings files: ', all_settings)
+        # check that one of the files is the default file
+        self.assertIn('default.py', all_settings)
+        all_settings_strings = {}
+        for next_file in all_settings:
+            all_settings_strings[next_file] = []
+            next_file_path = os.path.join(full_root_path, next_file)
+            with open(next_file_path, 'r') as f:
+                for line in f:
+                    if '#' in line:
+                        line = line.split('#')
+                        string_before_hash = line[0]
+                        line = string_before_hash.strip()
+                    if '=' in line:
+                        definition_list = line.split('=')
+                        right_hand_side = definition_list[1]
+                        right_hand_side = right_hand_side.strip()
+                        if right_hand_side.startswith('lambda'):
+                            # this is a function definition
+                            # this is a bit of a hack because a function is used in the global settings
+                            continue
+                        definition = definition_list[0]
+                        definition = definition.strip()
+                        all_settings_strings[next_file].append(definition)
+
+        comparison_table_first_not_in_second = {}
+        for first_file in all_settings:
+            if not first_file in comparison_table_first_not_in_second.keys():
+                comparison_table_first_not_in_second[first_file] = {}
+            for second_file in all_settings:
+                if first_file != second_file:
+                    comparison_table_first_not_in_second[first_file][second_file] = []
+                    for setting_first_file in all_settings_strings[first_file]:
+                        if setting_first_file not in all_settings_strings[second_file]:
+                            comparison_table_first_not_in_second[first_file][second_file].append(setting_first_file)
+
+        for first_file in all_settings:
+            for second_file in all_settings:
+                # the default.py file is part of the installation (should this filename be a setting?)
+                # check that other settings files do not contain settings that are not in the default settings file
+                if first_file != second_file and second_file == 'default.py':
+                    self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
 
     def test_settings_field_choice_category(self):
         # this test checks that fieldnames in settings exist in the models
