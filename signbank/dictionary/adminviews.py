@@ -1039,14 +1039,8 @@ class GlossListView(ListView):
             morpheme_type = get['hasMorphemeOfType']
             # Get all Morphemes of the indicated mrpType
             target_morphemes = Morpheme.objects.filter(mrpType__exact=morpheme_type)
-            sim_morphemes = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__in=target_morphemes)
-            # Get all glosses that have one of the morphemes in this set
-            glosses_with_correct_mrpType = Gloss.objects.filter(simultaneous_morphology__in=sim_morphemes)
 
-            # Turn this into a list with pks
-            pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in glosses_with_correct_mrpType]
-
-            qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
+            qs = qs.filter(id__in=target_morphemes)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
 
