@@ -62,6 +62,9 @@ PREFIX_URL = ''
 gettext = lambda s: s
 LANGUAGES = [('en', gettext('English'))]
 
+#Short (abbreviated) version of how language users call their language, to be used in the langauge picker
+INTERFACE_LANGUAGE_SHORT_NAMES = ['EN','NL','官话','עִברִית','عربى']
+
 #The main interface language
 LANGUAGE_CODE = "en"
 

@@ -367,28 +367,7 @@ function do_toggle_annotation(el) {
             <span class="hasTooltip">
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
                   title=""></span>
-                <span class="isTooltip">In many text fields, you can use patterns as follows:
-                  <table>
-                    <tr>
-                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
-                    </tr>
-                    <tr>
-                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
-                    </tr>
-                  </table>
-                </span>
+				{% include "tooltip.html" with include_tags=True %}
             </span>
     </div>
 
