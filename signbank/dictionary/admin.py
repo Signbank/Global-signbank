@@ -157,6 +157,8 @@ class FieldChoiceAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(FieldChoiceAdminForm, self).__init__(*args, **kwargs)
+        if self.instance.field:
+            self.fields['field'].disabled = True
         if not self.show_field_choice_colors:
             self.fields['field_color'].widget = forms.HiddenInput()
         if self.show_english_only:
@@ -173,7 +175,12 @@ class FieldChoiceAdminForm(forms.ModelForm):
         field = self.cleaned_data['field']
 
         if not field:
-            raise forms.ValidationError('The field name category is required')
+            raise forms.ValidationError(_('The field name category is required'))
+
+        qs_f = FieldChoice.objects.filter(field=field)
+
+        if len(qs_f) == 0:
+            raise forms.ValidationError(_('This field category does not exist'))
 
         qs_en = FieldChoice.objects.filter(field=field, english_name=en_name)
 
@@ -186,10 +193,10 @@ class FieldChoiceAdminForm(forms.ModelForm):
             if fc_obj.id == self.instance.id:
                 return self.cleaned_data
             else:
-                forms.ValidationError('This field choice already exists')
+                raise forms.ValidationError(_('This field choice already exists'))
         else:
             # multiple duplicates found
-            raise forms.ValidationError('This field choice already exists')
+            raise forms.ValidationError(_('This field choice already exists'))
 
     def get_form(self, request, obj=None, **kwargs):
 
@@ -230,6 +237,7 @@ class FieldChoiceAdmin(VersionAdmin):
             self.exclude = ('dutch_name', 'chinese_name')
         if self.show_field_choice_colors:
             self.exclude = ('field_color')
+
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
         if not obj:
             # a new field choice is being created
@@ -248,7 +256,9 @@ class FieldChoiceAdmin(VersionAdmin):
                 # restrict categories to those already existing
                 # categories are determined by the fields in the Models, the user does not create categories
                 field_choice_categories = FieldChoice.objects.all().values('field').distinct()
-                field_choices = [(f['field'], f['field']) for f in field_choice_categories]
+                field_choice_categories = [ f['field'] for f in field_choice_categories]
+                field_choice_categories = sorted(list(set(field_choice_categories)))
+                field_choices = [(f, f) for f in field_choice_categories]
                 form.__dict__['base_fields']['field'].widget = forms.Select(choices=field_choices)
 
         if self.show_field_choice_colors:
@@ -396,12 +406,8 @@ class FieldChoiceAdmin(VersionAdmin):
                 # strip any initial #'s
                 while new_color[0] == '#':
                     new_color = new_color[1:]
-            else:
-                # this is the default value in the model, it ought to be set regardless
-                # the tests of admin complained
-                new_color = 'ffffff'
-            # store only the hex part
-            obj.field_color = new_color
+                # store only the hex part
+                obj.field_color = new_color
         obj.save()
 
 class LanguageAdmin(TranslationAdmin):
