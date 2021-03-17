@@ -250,7 +250,7 @@ class GlossListView(ListView):
                                       dialects=dialects, language_code=self.request.LANGUAGE_CODE)
 
         #Translations for field choices dropdown menu
-        fields_that_need_translated_options = ['hasComponentOfType','hasMorphemeOfType']
+        fields_that_need_translated_options = []
 
         for field_group in FIELDS.values():
             for field in field_group:
@@ -1133,12 +1133,7 @@ class GlossDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
-
         context['morphologyform'] = GlossMorphologyForm()
-        context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-            choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
-                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''), required=True)
-
         context['morphemeform'] = GlossMorphemeForm()
         context['blendform'] = GlossBlendForm()
         context['othermediaform'] = OtherMediaForm()

@@ -228,10 +228,21 @@ RELATION_ROLE_CHOICES = (('','---------'),
                          ('seealso', 'See Also'),
                          )
 
-DEFN_ROLE_CHOICES = [('','---------'),('all','All')] + build_choice_list('NoteType')
-COMPONENT_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphologyType')
-MORPHEME_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphemeType')
+
+def get_definition_role_choices():
+    return build_choice_list('NoteType', [('','---------'),('all','All')])
+
+
+def get_component_role_choice():
+    return build_choice_list('MorphologyType', [('','---------')])
+
+
+def get_morpheme_role_choices():
+    return build_choice_list('MorphemeType', [('','---------')])
+
+
 ATTRS_FOR_FORMS = {'class':'form-control'}
+
 
 class GlossSearchForm(forms.ModelForm):
 
@@ -260,9 +271,9 @@ class GlossSearchForm(forms.ModelForm):
     hasRelationToForeignSign = forms.ChoiceField(label=_(u'Related to foreign sign or not'),choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hasRelation = forms.ChoiceField(label=_(u'Type of relation'),choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
-    hasComponentOfType = forms.TypedChoiceField(label=_(u'Has compound component type'),choices=COMPONENT_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasComponentOfType = forms.ChoiceField(label=_(u'Has compound component type'),choices=get_component_role_choice,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hasComponentOfType.field_choice_category = 'MorphologyType'
-    hasMorphemeOfType = forms.TypedChoiceField(label=_(u'Has morpheme type'),choices=MORPHEME_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasMorphemeOfType = forms.ChoiceField(label=_(u'Has morpheme type'),choices=get_morpheme_role_choices,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hasMorphemeOfType.field_choice_category = 'MorphemeType'
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
@@ -279,7 +290,7 @@ class GlossSearchForm(forms.ModelForm):
 
     isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     inWeb = forms.ChoiceField(label=_(u'Is in Web dictionary'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    definitionRole = forms.ChoiceField(label=_(u'Note type'),choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    definitionRole = forms.ChoiceField(label=_(u'Note type'),choices=get_definition_role_choices,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_(u'Note contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
@@ -384,7 +395,7 @@ class MorphemeSearchForm(forms.ModelForm):
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     inWeb = forms.ChoiceField(label=_(u'Is in Web dictionary'), choices=NULLBOOLEANCHOICES,
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    definitionRole = forms.ChoiceField(label=_(u'Note type'), choices=DEFN_ROLE_CHOICES,
+    definitionRole = forms.ChoiceField(label=_(u'Note type'), choices=get_definition_role_choices,
                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_(u'Note contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
@@ -488,16 +499,21 @@ class RelationToForeignSignForm(forms.ModelForm):
         widgets = {}
 
 
+def get_morphology_type_choices():
+    return build_choice_list('MorphologyType')
+
+
 class GlossMorphologyForm(forms.ModelForm):
     """Morphology specification of a Gloss"""
 
     parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
-    role = forms.ChoiceField(label=_(u'Type'),choices=build_choice_list('MorphologyType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    role = forms.ChoiceField(label=_(u'Type'),choices=get_morphology_type_choices,
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     morpheme_id = forms.CharField(label=_(u'Morpheme'))
 
     class Meta:
         model = MorphologyDefinition
-        fields = ['role']
+        fields = []
 
 
 class GlossMorphemeForm(forms.Form):
@@ -518,7 +534,8 @@ class MorphemeMorphologyForm(forms.ModelForm):
     """Morphology specification for a Morpheme"""
 
     parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
-    role = forms.ChoiceField(label=_(u'Type'),choices=build_choice_list('MorphologyType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    role = forms.ChoiceField(label=_(u'Type'),choices=get_morphology_type_choices,
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     morpheme_id = forms.CharField(label=_(u'Morpheme'))
 
     class Meta:
@@ -573,12 +590,8 @@ class DatasetUpdateForm(forms.ModelForm):
         super(DatasetUpdateForm, self).__init__(*args, **kwargs)
         self.fields['default_language'] = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), choices=languages)
 
-FINGER_SELECTION_CHOICES = [('','---------')] + build_choice_list('FingerSelection')
-FINGER_CONFIGURATION_CHOICES = [('','---------')] + build_choice_list('JointConfiguration')
-QUANTITY_CHOICES = [('','---------')] + build_choice_list('Quantity')
-THUMB_CHOICES = [('','---------')] + build_choice_list('Thumb')
-SPREADING_CHOICES = [('','---------')] + build_choice_list('Spreading')
-APERTURE_CHOICES = [('','---------')] + build_choice_list('Aperture')
+def get_finger_selection_choices():
+    return build_choice_list('FingerSelection', [('','---------')])
 attrs_default = {'class': 'form-control'}
 FINGER_SELECTION = ((True, 'True'), (False, 'False'), (None, 'Either'))
 
@@ -589,21 +602,9 @@ class HandshapeSearchForm(forms.ModelForm):
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="machine_value")  # Used in Handshapelistview to store user-selection
 
-    fingerSelection = forms.ChoiceField(label=_(u'Finger Selection'), choices=FINGER_SELECTION_CHOICES,
-                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    fingerConfiguration = forms.ChoiceField(label=_(u'Finger Configuration'), choices=FINGER_CONFIGURATION_CHOICES,
-                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-
-    numSelected = forms.ChoiceField(label=_(u'Quantity'),
-                               choices=QUANTITY_CHOICES ,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-
     # this is used to pass the label to the handshapes list view
-    unselectedFingers = forms.ChoiceField(label=_(u'Unselected fingers extended'), choices=FINGER_SELECTION_CHOICES,
+    unselectedFingers = forms.ChoiceField(label=_(u'Unselected fingers extended'), choices=get_finger_selection_choices,
                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    spreading = forms.ChoiceField(label=_(u'Spreading'), choices=SPREADING_CHOICES,
-                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    aperture = forms.ChoiceField(label=_(u'Aperture'), choices=APERTURE_CHOICES,
-                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     fsT = forms.NullBooleanSelect()
     fsI = forms.NullBooleanSelect()
