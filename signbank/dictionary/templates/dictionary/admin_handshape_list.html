@@ -585,76 +585,17 @@ function do_adminsearch(el) {
           {% endif %}
       </td>
 
-        {% if language == 'nl' %}
-        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
-        {% elif language == 'zh-hans' %}
-        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.chinese_name}}</a></td>
-        {% else %}
+
         <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.name}}</a></td>
-        {% endif %}
-            {% with handshape.hsFingSel as field_value %}
-            {% with "FingerSelection " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsFingConf as field_value %}
-            {% with "JointConfiguration " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsFingSel2 as field_value %}
-            {% with "FingerSelection " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsFingConf2 as field_value %}
-            {% with "JointConfiguration " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsNumSel as field_value %}
-            {% with "Quantity " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            <!--{% with handshape.hsThumb as field_value %}-->
-            <!--{% with "Thumb " as field_category %}-->
-            <!--{% with field_category|add:language as args %}-->
-            <!--<td>{{ field_value|machine_field_translate:args }}</td>-->
-            <!--{% endwith %}-->
-            <!--{% endwith %}-->
-            <!--{% endwith %}-->
-            {% with handshape.hsFingUnsel as field_value %}
-            {% with "FingerSelection " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsSpread as field_value %}
-            {% with "Spreading " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsAperture as field_value %}
-            {% with "Aperture " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
+            <td>{{ handshape.hsFingSel.name }}</td>
+            <td>{{ handshape.hsFingConf.name }}</td>
+            <td>{{ handshape.hsFingSel2.name }}</td>
+            <td>{{ handshape.hsFingConf2.name }}</td>
+            <td>{{ handshape.hsNumSel.name }}</td>
+            <!--<td>{{ handshape.hsThumb.name }}</td>-->
+            <td>{{ handshape.hsFingUnsel.name }}</td>
+            <td>{{ handshape.hsSpread.name }}</td>
+            <td>{{ handshape.hsAperture.name }}</td>
     </tr>
     {% endfor %}
   </tbody>
