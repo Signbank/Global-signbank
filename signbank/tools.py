@@ -793,22 +793,15 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             #Try to translate the value to machine values if needed
             if hasattr(field, 'field_choice_category'):
-                field_choices = build_choice_list(field.field_choice_category)
-                human_to_machine_values = {human_value: machine_value for machine_value, human_value in field_choices}
                 if new_human_value in ['', '0', ' ', None, 'None']:
                     # print('exception in new human value to machine value: ', new_human_value)
                     new_human_value = '-'
-                    new_machine_value = None
-                # print('Import CSV: human_to_machine_values: ', human_to_machine_values)
-                # Because some Handshape names can start with =, a special character ' is tested for in the name
-                if new_human_value[:1] == '\'':
-                    new_human_value = new_human_value[1:]
-                    # print('Value started with single quote, revised human value: ', new_human_value)
 
-                if new_human_value in human_to_machine_values.keys():
-                    new_machine_value = human_to_machine_values[new_human_value]
-                else:
-                    new_machine_value = '0'
+                try:
+                    field_choice = FieldChoice.objects.get(name=new_human_value, field=field.field_choice_category)
+                    new_machine_value = field_choice.id
+                except:
+                    new_machine_value = None
                     error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
                         gloss_id) + '), could not find option ' + str(new_human_value) + ' for ' + human_key
 
@@ -892,19 +885,12 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 if hasattr(field, 'field_choice_category'):
                     # print('gloss ', gloss.__dict__)
                     original_machine_value = getattr(gloss, machine_key)
-                    if original_machine_value is None:
-                        original_machine_value = '0'
-                    # else:
-                    #     original_machine_value = str(original_machine_value)
-                    # print(gloss_id, ' compare original ', field.name, ' original ', original_machine_value, ' new ', new_machine_value)
-                    field_choices = build_choice_list(field.field_choice_category)
-                    # print('field choices: ', field_choices)
                     try:
-                        original_human_value = dict(field_choices)[original_machine_value]
+                        original_human_value = getattr(gloss, field.name).name
                     except:
                         original_human_value = '-'
                         print('CSV Update: Original machine value for gloss ', gloss_id, ' has an undefined choice for field ', field.name, ': ', original_machine_value)
-                        original_machine_value = '0'
+                        original_machine_value = None
 
                     # original_human_value = getattr(gloss, 'get_' + field.name + '_display')()
                     # print(gloss_id, ' compare original ', field.name, ' original ', original_machine_value, ' human ', original_human_value)
