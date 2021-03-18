@@ -1363,6 +1363,12 @@ def update_handshape(request, handshapeid):
             hs.__setattr__(field, None)
             hs.save()
             newvalue = ''
+        elif isinstance(Handshape._meta.get_field(field), FieldChoiceForeignKey):
+            original_value = getattr(hs, field)
+            field_choice = FieldChoice.objects.get(id=int(value))
+            setattr(hs, field, field_choice)
+            hs.save()
+            newvalue = field_choice
         else:
             original_value = getattr(hs, field)
             hs.__setattr__(field, value)
