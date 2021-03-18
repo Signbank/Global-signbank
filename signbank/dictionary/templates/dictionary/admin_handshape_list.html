@@ -17,17 +17,6 @@
     <!--var edit_mode_str = '{% trans "Edit" %}'-->
     <!--var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'-->
     var saving_str = '{% trans "Saving..." %}'
-    var current_language_code = '{{ request.LANGUAGE_CODE }}'
-    if (current_language_code == 'nl') {
-        current_language_code = 'dutch'
-    }
-    else if (current_language_code == 'zh-hans') {
-        current_language_code = 'chinese'
-    }
-    else {
-        current_language_code = 'english'
-
-    }
 
     var choice_lists = {{choice_lists|safe}};
     <!--console.log(JSON.stringify(choice_lists));-->
