@@ -488,13 +488,11 @@
 					{% with d.2|stringformat:"s" as field_value %}
 					{% with d.3|stringformat:"s" as other_field_value %}
 					{% with request.LANGUAGE_CODE as language %}
-					{% with field_category|add:language as args %}
 					<td colspan="2">{% trans d.0 %}</td>
 					<td colspan="2">{% if d.4 == "check" and d.2 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
-							{% else %}{{ field_value|machine_field_translate:args }}{% endif %}</td>
+							{% else %}{{ field_value }}{% endif %}</td>
 					<td colspan="2">{% if d.4 == "check" and d.3 %}{% trans "Yes" %}{% elif d.4 == "check" %}{% trans "No" %}
-							{% else %}{{ other_field_value|machine_field_translate:args }}{% endif %}</td>
-					{% endwith %}
+							{% else %}{{ other_field_value }}{% endif %}</td>
 					{% endwith %}
 					{% endwith %}
 					{% endwith %}
