@@ -580,9 +580,6 @@ function do_adminsearch(el) {
 
     </thead>
     <tbody>
-
-    {% with request.LANGUAGE_CODE as language %}
-
     {% for gloss in object_list %}
 
     <tr>
@@ -605,24 +602,12 @@ function do_adminsearch(el) {
         <td>{{ gloss.dataset.name }}</td>
 
             {% load field_choice %}
-
-            {% if request.LANGUAGE_CODE == 'nl' %}
-                <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
-                <td>{{ gloss.domhndsh|translate_to_dutch:"Handshape" }}</td>
-                <td>{{ gloss.subhndsh|translate_to_dutch:"Handshape" }}</td>
-            {% elif request.LANGUAGE_CODE == 'zh-hans' %}
-                <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
-                <td>{{ gloss.domhndsh|translate_to_chinese:"Handshape" }}</td>
-                <td>{{ gloss.subhndsh|translate_to_chinese:"Handshape" }}</td>
-            {% else %}
-                <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
-                <td>{{ gloss.domhndsh|translate_to_english:"Handshape" }}</td>
-                <td>{{ gloss.subhndsh|translate_to_english:"Handshape" }}</td>
-            {% endif %}
+                <td>{{ gloss.handedness.name }}</td>
+                <td>{{ gloss.domhndsh.name }}</td>
+                <td>{{ gloss.subhndsh.name }}</td>
 
     </tr>
     {% endfor %}
-    {% endwith %}
   </tbody>
 </table>
 
