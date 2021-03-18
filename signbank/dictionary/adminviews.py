@@ -3282,21 +3282,12 @@ class HandshapeListView(ListView):
                 if isinstance(Handshape._meta.get_field(fieldname), NullBooleanField):
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]
 
-
-                if self.request.LANGUAGE_CODE == 'nl' and fieldname == 'dutch_name' and val != '':
-                    query = Q(dutch_name__icontains=val)
-                    qs = qs.filter(query)
-
-                if self.request.LANGUAGE_CODE == 'zh-hans' and fieldname == 'chinese_name' and val != '':
-                    query = Q(chinese_name__icontains=val)
-                    qs = qs.filter(query)
-
                 if fieldname == 'name' and val != '':
                     query = Q(name__icontains=val)
                     qs = qs.filter(query)
 
 
-                if val != '' and fieldname != 'hsNumSel' and fieldname != 'dutch_name' and fieldname != 'chinese_name' and fieldname != 'name':
+                if val != '' and fieldname != 'hsNumSel' and fieldname != 'name':
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
 
