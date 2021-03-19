@@ -4325,21 +4325,24 @@ class DatasetManagerView(ListView):
                 else:
                     row.append("")
 
-            hyperlink_domain = settings.URL + settings.PREFIX_URL
-            protected_media_url = os.path.join('dictionary','protected_media').encode('utf-8')
-            gloss_image_path = gloss.get_image_url()
-            gloss_video_path = gloss.get_video_url()
-            if gloss_image_path:
-                gloss_image_path = gloss_image_path.encode('utf-8')
-                gloss_image_path = os.path.join(protected_media_url,gloss_image_path)
-                gloss_image_path = hyperlink_domain + gloss_image_path.decode()
-            if gloss_video_path:
-                gloss_video_path = gloss_video_path.encode('utf-8')
-                gloss_video_path = os.path.join(protected_media_url,gloss_video_path)
-                gloss_video_path = hyperlink_domain + gloss_video_path.decode()
+            def form_full_url(path):
+                hyperlink_domain = settings.URL + settings.PREFIX_URL
+                protected_media_url = os.path.join('dictionary','protected_media').encode('utf-8')
+                return hyperlink_domain + os.path.join(protected_media_url, path.encode('utf-8')).decode()
 
-            row.append(gloss_video_path)
-            row.append(gloss_image_path)
+            gloss_video_path = gloss.get_video_url()
+            if gloss_video_path:
+                full_url = form_full_url(gloss_video_path)
+                row.append(full_url)
+            else:
+                row.append(gloss_video_path)
+
+            gloss_image_path = gloss.get_image_url()
+            if gloss_image_path:
+                full_url = form_full_url(gloss_image_path)
+                row.append(full_url)
+            else:
+                row.append(gloss_image_path)
 
             #Make it safe for weird chars
             safe_row = []
