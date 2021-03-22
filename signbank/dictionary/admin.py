@@ -239,6 +239,7 @@ class FieldChoiceAdmin(VersionAdmin):
             self.exclude = ('field_color')
 
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
+        form_base_fields = form.__dict__['base_fields']
         if not obj:
             # a new field choice is being created
             # see if the user is inside a category
@@ -250,8 +251,8 @@ class FieldChoiceAdmin(VersionAdmin):
             query_params = dict(parse_qsl(changelist_filters))
             if query_params:
                 new_field_category = query_params.get('field')
-                form.__dict__['base_fields']['field'].initial = new_field_category
-                form.__dict__['base_fields']['field'].disabled = True
+                form_base_fields['field'].initial = new_field_category
+                form_base_fields['field'].disabled = True
             else:
                 # restrict categories to those already existing
                 # categories are determined by the fields in the Models, the user does not create categories
@@ -259,16 +260,16 @@ class FieldChoiceAdmin(VersionAdmin):
                 field_choice_categories = [ f['field'] for f in field_choice_categories]
                 field_choice_categories = sorted(list(set(field_choice_categories)))
                 field_choices = [(f, f) for f in field_choice_categories]
-                form.__dict__['base_fields']['field'].widget = forms.Select(choices=field_choices)
+                form_base_fields['field'].widget = forms.Select(choices=field_choices)
 
         if self.show_field_choice_colors:
             # SHOW_FIELD_COLORS
             # set up the HTML color picker widget
-            form.__dict__['base_fields']['field_color'].widget = forms.TextInput(attrs={'type': 'color' })
+            form_base_fields['field_color'].widget = forms.TextInput(attrs={'type': 'color' })
 
             # in the model, the default value is ffffff
             # in the admin, the default value is a display value, so needs the #
-            form.__dict__['base_fields']['field_color'].initial = '#ffffff'
+            form_base_fields['field_color'].initial = '#ffffff'
 
         return form
 
