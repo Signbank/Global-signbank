@@ -605,15 +605,11 @@ option:not(:checked) {
                     {% endif %}
 
                     {% if gloss.parent_glosses.all.count > 0 %}
-                    {% with gloss.parent_glosses.all as components %}
-                    {% with components|dictsort:"role" as sorted_components %}
-                    {% for component in sorted_components %}
+                    {% for component in gloss.parent_glosses.all|dictsort:"role" %}
                     <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component.morpheme.pk %}'>
                         {% value component.morpheme|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %} + {% endif %}
                     </span>
                     {% endfor %}
-                    {% endwith %}
-                    {% endwith %}
                     {% endif %}
                 </td>
             </tr>
