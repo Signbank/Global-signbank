@@ -596,7 +596,7 @@ option:not(:checked) {
                         {% else %}
                             <!-- Number of morphemes is [1-2] -->
                             {% for morphdef in gloss.simultaneous_morphology.all %}
-                            <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.pk %}'>
+                            <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.morpheme.pk %}'>
                                 {% value morphdef.morpheme|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %}, {% endif %}
                             </span>
                             {% endfor %}
