@@ -18,7 +18,6 @@
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
     var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
     var last_used_dataset = '{{last_used_dataset}}';
-<!--    console.log('last_used_dataset: ', last_used_dataset);-->
 </script>
 
 <style>
@@ -104,7 +103,6 @@ var objects_on_this_page = {{objects_on_page|safe}};
 var view_type = '{{view_type}}';
 var paginate_by = '{{paginate_by}}';
 
-<!--console.log(objects_on_this_page);-->
 
 
 $(document).ready(function() {
@@ -140,17 +138,12 @@ $(document).ready(function() {
 
      function addOptionColor(optionNode) {
         var color_text = optionNode.text;
-<!--        console.log(color_text);-->
-<!--        console.log(JSON.stringify(optionNode));-->
 
         // pattern of resultId: "select2-id_handedness-result-58e8-0"
 
         if (optionNode._resultId) {
-<!--            console.log(JSON.stringify(optionNode._resultId));-->
             var resultString = optionNode._resultId
             splitPattern = resultString.split('-');
-<!--            console.log(splitPattern);-->
-<!--            console.log(splitPattern[1], splitPattern[4]);-->
             var fieldId = splitPattern[1];
             var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
             var this_code = splitPattern[4];
@@ -158,7 +151,6 @@ $(document).ready(function() {
             var pulldown_lookup = JSON.parse(pulldown_colors_str);
             var this_color = pulldown_lookup[this_code];
             var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;background-color:#"+this_color+"'>"+color_text+"</span>");
-<!--            console.log($color_text_node);-->
             return $color_text_node
         } else {
             return color_text;
@@ -227,7 +219,6 @@ $(document).ready(function() {
                 success : function(result) {
                     var elem = $(result);
                     var parsed = $.parseHTML(result);
-    <!--                console.log(parsed);-->
                     $(lookup).find('#glosslist_table_header').before(result);
                 }
 
@@ -238,18 +229,14 @@ $(document).ready(function() {
                 datatype: "json",
                 async: true,
                 success : function(result) {
-                    <!--console.log(result);-->
                     var elem = $(result);
                     var parsed = $.parseHTML(result);
-                    <!--console.log(parsed);-->
                     $.each( parsed, function(i, el ) {
                         nodename = el.nodeName;
-                        <!--console.log(nodename);-->
                         if (nodename == 'TR') {
                             id_of_row = $(el).attr('id');
                             res = id_of_row.split("_");
                             id_of_gloss = res[1];
-                            <!--console.log(id_of_gloss);-->
                             focus_gloss_lookup = '#focusgloss_' + id_of_gloss;
                             $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
                             video_lookup = '#glossvideo_' + id_of_gloss;
@@ -374,8 +361,6 @@ function ready_videos(el) {
 function do_set_lemma_language(el) {
   if (user_can_add_gloss) {
       var dataset_language_id = $(el).attr('value');
-    <!--  console.log('lemma_language');-->
-    <!--  console.log(dataset_language_id);-->
       $("#selected_lemma_language").attr('value',dataset_language_id);
       language_code = dataset_language_id;
       set_lemma_language();
@@ -385,7 +370,6 @@ function do_set_lemma_language(el) {
 // This function toggles the different language columns for Annotations, Lemmas, and Translations
 function do_toggle_annotation(el) {
     var dataset_language_id = $(el).attr('value');
-    console.log('toggle column annotation '+dataset_language_id);
     var annotation_column_id = '.annotation_' + dataset_language_id;
     var lemma_column_id = '.lemma_' + dataset_language_id;
     var translation_column_id = '.translation_' + dataset_language_id;
