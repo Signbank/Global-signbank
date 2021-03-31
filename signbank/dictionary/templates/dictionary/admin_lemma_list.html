@@ -8,12 +8,144 @@
 
 {% load annotation_idgloss_translation %}
 
+<script type='text/javascript'>
+var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+var csrf_token = '{{csrf_token}}';
+var page_number = {{ page_number }};
+var objects_on_this_page = {{objects_on_page|safe}};
+var paginate_by = '{{paginate_by}}';
+
+
+ /**
+ * @param {string} field_name - name of the field to sort on
+ * @param {string} action     - one of: desc, asc, del
+ * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
+ * @returns {void}
+ */
+function do_sort_column(field_name, action, frmName) {
+  // Combine @field_name and @action into [sOrder]
+  var sOrder = field_name;
+  if (action == 'desc') {
+    // Descending sort order is signified by a '-' prefix
+    sOrder = '-' + sOrder;
+  } else if (action == 'del') {
+    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
+    sOrder = '';
+  }
+  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
+  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
+
+  // Submit the form with the indicated name
+
+  $("#" + frmName).submit();
+
+}
+
+/**
+ * @returns {void}
+ */
+function do_adminsearch(el) {
+ var sSearchType = $(el).attr('value');
+  $("#adminsearch input[name='search_type']").val(sSearchType);
+  switch(sSearchType) {
+    case "lemma":
+        $("#adminsearch").attr('action', ' {{PREFIX_URL}}/dictionary/lemma/');
+        break;
+  }
+  document.getElementById('adminsearch').submit();
+}
+</script>
+
+
 {% block content %}
 
-<h3>{% trans "Lemmas" %}</h3>
+<div id="definitionblock">
+{% url 'dictionary:protected_media' '' as protected_media_url %}
 
-{% if object_list %}
-<form id="export">
+<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/dictionary/lemma/'>
+<div class="panel panel-default">
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
+            <span class="hasTooltip">
+                <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                  title=""></span>
+                <span class="isTooltip">In many text fields, you can use patterns as follows:
+                  <table>
+                    <tr>
+                        <td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+                    </tr>
+                    <tr>
+                        <td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+                    </tr>
+                  </table>
+                </span>
+            </span>
+    </div>
+
+    <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+        <div id='searchformwell' class='well search-results-collapsable'>
+
+                <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
+                        <!-- this is empty as an initial value because the view python code sets it -->
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='' >
+                    <input name='search_type' class='form-control' value='{{search_type}}'>
+                </div>
+                <div>
+                    <table class='table' id='searchfields'>
+                        {% for dataset_lang in dataset_languages %}
+
+                        <tr>
+                            {% with searchform|get_lemma_field_for_language:dataset_lang as lemma_field %}
+                            <td><div class='input-group'>
+
+                                <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
+                                    {{lemma_field.label}}
+                                </label>
+                                <input name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
+                            </td>
+                            {% endwith %}
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+        </div>
+
+    </div>
+
+</div>
+
+    <div class='btn-group' style="margin-bottom: 20px">
+       <input class="btn btn-primary" type="submit" name="search_lemma" value='{% trans "Search lemma" %}'/>
+
+       <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
+               value='{% trans "Reset" %}'>
+    </div>
+
+    <h3>{% trans "Lemmas" %}</h3>
+
+    <div>
+    {% trans "Number of matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{lemma_count}}.
+
+        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
+        {% trans "Datasets:" %}
+        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <br/>
 <div class='btn-group' style="margin-bottom: 20px">
     {% if perms.dictionary.add_lemmaidgloss %}
     <a class="btn btn-primary" href="{% url 'dictionary:create_lemma' %}">{% trans "Create New Lemma" %}</a>
@@ -24,6 +156,9 @@
 
 </div>
 </form>
+
+
+{% if object_list %}
 
 <table class='table table-condensed'>
     <thead>
@@ -41,7 +176,7 @@
         <tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             <td>
-                <a href="{{PREFIX_URL}}/datasets/{{lemma.dataset.acronym}}" >{{ lemma.dataset.acronym }}</a>
+                {{ lemma.dataset.acronym }}
             </td>
             {% endif %}
             {% for dataset_lang in dataset_languages %}
@@ -148,6 +283,7 @@
 {% trans "No lemmas found." %}
 {% endif %}
 
+</div>
 {% endblock content %}
 
 {% block extrajs %}
@@ -163,5 +299,46 @@ $(document).ready(function(){
             placement : 'bottom'
         });
 });
+
+// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
+function clearForm(myFormElement) {
+
+  var elements = myFormElement.elements;
+  console.log(elements.length);
+  myFormElement.reset();
+
+  for(i=0; i<elements.length; i++) {
+
+      field_type = elements[i].type.toLowerCase();
+      console.log('type :'+field_type);
+
+      switch(field_type) {
+        case "text":
+        case "password":
+        case "textarea":
+        case "hidden":
+
+          elements[i].value = "";
+          break;
+
+        case "radio":
+        case "checkbox":
+          if (elements[i].checked) {
+              elements[i].checked = false;
+          }
+          break;
+
+        case "select-one":
+        case "select-multiple":
+          elements[i].selectedIndex = -1;
+          break;
+
+        default:
+          break;
+      }
+    }
+    return(false);
+}
+
 </script>
 {% endblock %}

@@ -68,6 +68,9 @@
                     </tr>
                   </table>
               </span></div></th>
+          <th style="width:200px;">
+              <div class="text-container"><p>{% trans "Hyperlinks" %}</p></div>
+          </th>
           <th style="width:200px;">{% trans "EAF Files" %}</th>
       </tr>
     </thead>
@@ -254,6 +257,18 @@
           </form>
           </div>
           </td>
+            <td>
+              <div >
+                  <form id="export_links_{{dataset.acronym}}" method="get" action='{{PREFIX_URL}}/datasets/manager' enctype="multipart/form-data">
+                      {% csrf_token %}
+                    <div class="hidden">
+                        <input type='hidden' name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                    </div>
+<!--                        <input name='dataset_acronym' id='dataset_acronym' class='form-control' value='{{dataset.acronym}}' type="hidden">-->
+                        <input class='btn btn-default' type='submit' name='format' id='format' value='CSV' >
+                  </form>
+              </div>
+            </td>
           <td>
               <div data-toggle="collapse" href="#dataset_{{dataset.acronym}}_view_eafs" data-target=".multi-collapse-{{dataset.pk}}">
                   <button>{% trans "Manage" %}</button>

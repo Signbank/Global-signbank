@@ -1,6 +1,8 @@
 {% extends 'baselayout.html' %}
 {% load i18n %}
 {% load stylesheet %}
+{% load annotation_idgloss_translation %}
+
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}
@@ -12,9 +14,6 @@
 {% endblock %}
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
 
@@ -22,8 +21,6 @@
 
     {% include "dictionary/search_result_bar.html" %}	
 
-    var choice_lists = {{ choice_lists | safe }};
-	
     </script>
 {% endblock %}
 
@@ -80,10 +77,6 @@
 </div>
 
 <div id="definitionblock">
-
-	{% if gloss.annotation_idgloss %}
-	<a class='btn btn-default navbar-btn' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
-	{% endif %}
 
 	<div  class="panel panel-default">
 
@@ -604,7 +597,58 @@
 		</tbody>
 
 		 {% endif %}
-		 
+
+		{% if compounds %}
+		<thead>
+		   <tr>
+			   <th style="width:8em; color:darkred">{% trans "Compounds" %}</th>
+
+			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
+			   <th colspan="2" style='width:12em'>{% trans "Sequential morphology" %}</th>
+
+		   </tr>
+		</thead>
+		<tbody>
+		{% for c, c_display in compounds %}
+		<tr>
+			  <td>{%if c.get_image_path %}
+				  <div class="thumbnail_container">
+				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{c.pk}}/">
+					  <img class="thumbnail" src="{{protected_media_url}}{{c.get_image_path}}">
+				  </a>
+				  </div>
+				  {% endif %}
+			  </td>
+			  {% with request.LANGUAGE_CODE as lang %}
+			  <td id='comp_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=c.pk %}'>{{c|translated_annotationidgloss:lang}}</a></td>
+			  {% endwith %}
+			  <td colspan="2" id='comp_dataset'>
+                    {% if c.parent_glosses.all.count > 0 %}
+				  	{% with request.LANGUAGE_CODE as lang %}
+                    {% with c.parent_glosses.all as components %}
+                    {% with components|dictsort:"role" as sorted_components %}
+                    {% for component in sorted_components %}
+				    {% with component.morpheme as comp %}
+                    <span>
+						<a href='{% url "dictionary:admin_gloss_view" pk=component.morpheme.pk %}'>
+							{% if comp.pk == gloss.pk %}<strong>{% endif %}
+							{{comp|translated_annotationidgloss:lang}}</a>{% if comp.pk == gloss.pk %}</strong>{% endif %}
+						{% if not forloop.last %} + {% endif %}
+                    </span>
+				    {% endwith %}
+                    {% endfor %}
+                    {% endwith %}
+                    {% endwith %}
+				    {% endwith %}
+                    {% endif %}
+			  </td>
+
+		</tr>
+		{% endfor %}
+
+		</tbody>
+		{% endif %}
+
 	</table>
 
 	</div>

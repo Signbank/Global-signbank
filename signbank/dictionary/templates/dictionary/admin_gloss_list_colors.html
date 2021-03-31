@@ -18,31 +18,110 @@
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
     var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
     var last_used_dataset = '{{last_used_dataset}}';
-<!--    console.log('last_used_dataset: ', last_used_dataset);-->
 </script>
+
+<style>
+.preview {
+    background-color: white !important;
+    height: 40;
+    padding: 0 0 0 0 !important;
+}
+
+select option {
+    background-color: '#FFFFFF';
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.hasTooltip:hover .isTooltip {
+    display: block;
+    background-color: white;
+    border-radius: 5px;
+    color: black;
+    box-shadow: 1px 1px 3px gray;
+    position: absolute;
+    padding: 5px;
+    top: 3em;
+    left: 0px;
+    max-width: 360px;
+    min-width: 300px;
+    font-size: 12px;
+    z-index: 9999;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.bootstrap-select.btn-group .dropdown-menu li a:hover {
+    color: blue !important;
+    background-color: #ffffff !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default.active, .open .dropdown-toggle.btn-default {
+
+background-color: #2F3E48;
+-webkit-appearance: none;
+-moz-appearance: none;
+color:#FFF;
+
+border-color: #31347B;
+
+}
+
+input[type="color"] {
+    width: 4rem;
+    height: 4rem;
+    padding: .4rem;
+    background-color: #ffffff !important;
+    border: solid 1px #ddd !important;
+    border-radius: 0;
+}
+
+.select2-results__option--highlighted {
+    color: black !important;
+    font-weight: bold;
+}
+
+</style>
+
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+<!--<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/select2-colors-full.css">-->
+<!--<script type="text/javascript" src="{{ STATIC_URL }}js/select2-colors-full.js"></script>-->
+<!--https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js-->
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var field_colors = {{field_colors|safe}};
 var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};
 var objects_on_this_page = {{objects_on_page|safe}};
 var view_type = '{{view_type}}';
 var paginate_by = '{{paginate_by}}';
 
-<!--console.log(objects_on_this_page);-->
 
 
 $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
 
+    function selectColors(fieldId) {
+        var target_pulldown = document.getElementById(fieldId);
+        var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
+        var pulldown_colors_str = new String(pulldown_colors);
+        var pulldown_lookup = JSON.parse(pulldown_colors_str);
+        $('option',target_pulldown).each(function(){
+            var this_code = $(this).attr('value');
+            var this_color = pulldown_lookup[this_code];
+            $(this).attr('style','background-color:#'+this_color);
+        });
+    }
+
     function makeMultipleSelect(fieldId,fieldVar) {
-        console.log('makeMultipleSelect '+fieldId+' '+fieldVar);
         var target_pulldown = document.getElementById(fieldId);
         target_pulldown.setAttribute('multiple','multiple');
         target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
@@ -52,29 +131,45 @@ $(document).ready(function() {
 
      for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = 'id_' + multiple_select_fields[i];
+        selectColors(this_id);
         var this_var = multiple_select_fields[i] + '[]';
         makeMultipleSelect(this_id, this_var);
      }
 
-     $('.js-example-basic-multiple').select2({
-        allowClear: true,
-        dropdownAutoWidth: true,
-        width: 'resolve'
+     function addOptionColor(optionNode) {
+        var color_text = optionNode.text;
+
+        // pattern of resultId: "select2-id_handedness-result-58e8-0"
+
+        if (optionNode._resultId) {
+            var resultString = optionNode._resultId
+            splitPattern = resultString.split('-');
+            var fieldId = splitPattern[1];
+            var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
+            var this_code = splitPattern[4];
+            var pulldown_colors_str = new String(pulldown_colors);
+            var pulldown_lookup = JSON.parse(pulldown_colors_str);
+            var this_color = pulldown_lookup[this_code];
+            var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;background-color:#"+this_color+"'>"+color_text+"</span>");
+            return $color_text_node
+        } else {
+            return color_text;
+        };
+     }
+
+     $('.js-example-basic-multiple').each(function() {
+         var thisId = this.id;
+         $(this).select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve',
+            placeholder: '',
+            templateResult: addOptionColor
+         });
      });
+
      $('.js-example-basic-multiple').val(null).trigger('change');
 
-
-    $('#id_handedness option').each(function(){
-        var this_node_str = $(this).html();
-        console.log(this_node_str);
-        $(this).css({'color': 'red' });
-<!--        for(k = 0; k < optionValues.length; k++) {-->
-<!--            console.log(k+' '+optionValues[k]);-->
-<!--            if (this_node_str.startsWith(optionValues[k])) {-->
-<!--                $(this).removeAttr('disabled');-->
-<!--            }-->
-<!--        };-->
-    });
 
      <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
      <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
@@ -87,7 +182,8 @@ $(document).ready(function() {
      $('#id_signLanguage').select2({
         allowClear: true,
         dropdownAutoWidth: true,
-        width: 'resolve'
+        width: 'resolve',
+        placeholder: ''
      });
      $('#id_signLanguage').val(null).trigger('change');
 
@@ -102,7 +198,8 @@ $(document).ready(function() {
      $('#id_dialects').select2({
         allowClear: true,
         dropdownAutoWidth: true,
-        width: 'resolve'
+        width: 'resolve',
+        placeholder: ''
      });
      $('#id_dialects').val(null).trigger('change');
 
@@ -122,7 +219,6 @@ $(document).ready(function() {
                 success : function(result) {
                     var elem = $(result);
                     var parsed = $.parseHTML(result);
-    <!--                console.log(parsed);-->
                     $(lookup).find('#glosslist_table_header').before(result);
                 }
 
@@ -133,18 +229,14 @@ $(document).ready(function() {
                 datatype: "json",
                 async: true,
                 success : function(result) {
-                    <!--console.log(result);-->
                     var elem = $(result);
                     var parsed = $.parseHTML(result);
-                    <!--console.log(parsed);-->
                     $.each( parsed, function(i, el ) {
                         nodename = el.nodeName;
-                        <!--console.log(nodename);-->
                         if (nodename == 'TR') {
                             id_of_row = $(el).attr('id');
                             res = id_of_row.split("_");
                             id_of_gloss = res[1];
-                            <!--console.log(id_of_gloss);-->
                             focus_gloss_lookup = '#focusgloss_' + id_of_gloss;
                             $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
                             video_lookup = '#glossvideo_' + id_of_gloss;
@@ -269,8 +361,6 @@ function ready_videos(el) {
 function do_set_lemma_language(el) {
   if (user_can_add_gloss) {
       var dataset_language_id = $(el).attr('value');
-    <!--  console.log('lemma_language');-->
-    <!--  console.log(dataset_language_id);-->
       $("#selected_lemma_language").attr('value',dataset_language_id);
       language_code = dataset_language_id;
       set_lemma_language();
@@ -280,7 +370,6 @@ function do_set_lemma_language(el) {
 // This function toggles the different language columns for Annotations, Lemmas, and Translations
 function do_toggle_annotation(el) {
     var dataset_language_id = $(el).attr('value');
-    console.log('toggle column annotation '+dataset_language_id);
     var annotation_column_id = '.annotation_' + dataset_language_id;
     var lemma_column_id = '.lemma_' + dataset_language_id;
     var translation_column_id = '.translation_' + dataset_language_id;
@@ -288,6 +377,8 @@ function do_toggle_annotation(el) {
     $(lemma_column_id).toggle();
     $(translation_column_id).toggle();
 };
+
+
 
 </script>
 
@@ -633,7 +724,7 @@ function do_toggle_annotation(el) {
     <div class='btn-group' style="margin-bottom: 20px">
         <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
 
-        <input class="btn btn-primary" type="submit" name="search_type" value='{% trans "Search sign" %}'/>
+        <input class="btn btn-primary" type="submit" value='{% trans "Search sign" %}'/>
 
         <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
                value='{% trans "Reset" %}'>

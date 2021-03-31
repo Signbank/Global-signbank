@@ -15,15 +15,12 @@ function toggle_preview(e) {
 
 function update_view_and_remember_original_color(change_summary)
 {
-//    console.log('inside callback');
 	split_values_count = change_summary.split('\t').length - 1;
 	if (split_values_count > 0)
 	{
         split_values = change_summary.split('\t');
-//        console.log(split_values);
         category = split_values[0];
         fieldid = split_values[1];
-//        console.log('field '+category+' '+fieldid);
         original_value = split_values[2];
         new_value = split_values[3];
         choice_id = split_values[4];
@@ -34,14 +31,12 @@ function update_view_and_remember_original_color(change_summary)
         var field_choice_column = document.getElementById(field_choice_td_id+'_display');
         field_choice_column.setAttribute("style", "background-color:#"+new_value+"; width:600px; vertical-align: middle;");
         var search_selected_item = 'select_items_'+category+'_'+choice_id;
-//        console.log(search_selected_item);
         var field_choice_preview = document.getElementById(search_selected_item);
         field_choice_preview.style.backgroundColor = "#"+new_value;
 
         var this_class = field_choice_preview.getAttribute("class");
         if (this_class == "same-as-selected") {
             var search_same_as_selected = "select_selected_"+category;
-//            console.log(search_same_as_selected);
             var search_selected_preview = document.getElementById(search_same_as_selected);
             search_selected_preview.style.backgroundColor = "#"+new_value;
         }
@@ -80,11 +75,8 @@ $(document).ready(function(){
         var split_label = label.split('_');
         var category = split_label[2];
         var choice_id = split_label[3];
-    <!--    console.log(category+' '+choice_id);-->
         var action_link = $(this).attr("action");
-    <!--    console.log(action_link);-->
         var new_color = $(this).children('input[name="field_color"]').val();
-    <!--    console.log(new_color);-->
         $(this).on('submit', function(e) {
             e.preventDefault();
 
@@ -104,7 +96,6 @@ header_elt_l = header_elt.length;
 for (i = 0; i < header_elt_l; i++) {
     header_color_field_choices = header_elt[i];
     second_column = header_color_field_choices.getElementsByTagName("th")[1]
-<!--    console.log('found element');-->
     second_column.style.width = "400px";
 }
 
@@ -114,7 +105,6 @@ x = document.getElementsByClassName("custom-select");
 l = x.length;
 for (i = 0; i < l; i++) {
   category_xi = x[i].getAttribute("id");
-<!--  console.log(category_xi);-->
   selElmnt = x[i].getElementsByTagName("select")[0];
   ll = selElmnt.length;
   /* For each element, create a new DIV that will act as the selected item: */
@@ -130,7 +120,6 @@ for (i = 0; i < l; i++) {
   b.setAttribute("class", "select-items select-hide");
   b.style.overflow = "scroll";
   b.style.width = "392px";
-<!--  console.log('scroll set');-->
   for (j = 0; j < ll; j++) {
     /* For each option in the original select element,
     create a new DIV that will act as an option item: */
@@ -155,7 +144,6 @@ for (i = 0; i < l; i++) {
             h.innerHTML = this.innerHTML;
             y = this.parentNode.getElementsByClassName("same-as-selected");
             var selected_color = this.style.backgroundColor;
-<!--            console.log(selected_color);-->
             yl = y.length;
             for (k = 0; k < yl; k++) {
               y[k].removeAttribute("class");

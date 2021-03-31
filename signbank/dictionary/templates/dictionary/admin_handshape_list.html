@@ -12,7 +12,8 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ URL }}'
+    var url = '{{PREFIX_URL}}';
+    var language_code = '{{ LANGUAGE_CODE }}';
 
     <!--var edit_mode_str = '{% trans "Edit" %}'-->
     <!--var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'-->
@@ -417,13 +418,7 @@ function do_adminsearch(el) {
     <thead>
       <tr>
           <th>{% trans "Handshape" %}</th>
-          {% if language == 'nl' %}
-          <th>{% trans "Dutch name" %}</th>
-        {% elif language == 'zh-hans' %}
-          <th>{% trans "Chinese name" %}</th>
-        {% else %}
-          <th>{% trans "English name" %}</th>
-        {% endif %}
+          <th>{% trans "Name" %}</th>
           <th>{% trans "Finger selection" %}</th>
           <th>{% trans "Finger configuration" %}</th>
           <th>{% trans "Finger selection 2" %}</th>

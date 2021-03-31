@@ -723,6 +723,28 @@ class Gloss(models.Model):
         except:
             return str(self.id)
 
+    def annotation_idgloss(self, language_code):
+        # this function is used in Relations View to dynamically get the Annotation of related glosses
+        # it is called by a template tag on the gloss using the interface language code
+
+        from signbank.tools import convert_language_code_to_language_minus_locale
+        # take care of zh-hans
+        language_code = convert_language_code_to_language_minus_locale(language_code)
+
+        interface_language = Language.objects.get(language_code_2char=language_code)
+
+        dataset_languages = self.lemma.dataset.translation_languages.all()
+
+        if interface_language not in dataset_languages:
+            # use English
+            language = Language.objects.get(language_code_2char=settings.LANGUAGE_CODE)
+        else:
+            language = interface_language
+        try:
+            return self.annotationidglosstranslation_set.get(language=language).text
+        except:
+            return str(self.id)
+
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
 

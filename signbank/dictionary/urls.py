@@ -67,6 +67,7 @@ urlpatterns = [
     url(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),
     url(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),
     url(r'^ajax/handshapesearchresults/$', signbank.dictionary.adminviews.handshape_ajax_search_results, name='handshape_ajax_search_results'),
+    url(r'^ajax/lemmasearchresults/$', signbank.dictionary.adminviews.lemma_ajax_search_results, name='lemma_ajax_search_results'),
     url(r'^ajax/lemma/(?P<dataset_id>.*)/(?P<language_code>.*)/(?P<q>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.lemma_ajax_complete), name='lemma_complete'),
     url(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete, name='homonyms_ajax_complete'),
     url(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete, name='minimalpairs_ajax_complete'),
@@ -80,7 +81,7 @@ urlpatterns = [
 
     url(r'^import_images/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':False}),
     url(r'^import_videos/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':True}),
-    url(r'^import_other_media/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_other_media)),
+    # url(r'^import_other_media/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_other_media)),
 
     url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
 
@@ -122,8 +123,6 @@ urlpatterns = [
     url(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
     url(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
     url(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
-    url(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()),
-        name='update_lemma'),
 
     url(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples),
 

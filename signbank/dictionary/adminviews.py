@@ -310,8 +310,11 @@ class GlossListView(ListView):
 
         # If the menu bar search form was used, populate the search form with the query string
         # for all languages for which results were found.
+        import json # for some reason this is needed here, perhaps removed from a previous import?
         if 'search' in self.request.GET and self.request.GET['search'] != '':
             val = self.request.GET['search']
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(val)
             context['gloss_fields_to_populate'] = json.dumps([
                 language[0] for language in
                 AnnotationIdglossTranslation.objects.filter(text__iregex=val,
@@ -341,6 +344,17 @@ class GlossListView(ListView):
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
+        multiple_select_gloss_categories = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+
+        choices_colors = {}
+        for (fieldname, field_category) in multiple_select_gloss_categories:
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors
+            import json
+            choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+
+        context['field_colors'] = choices_colors
 
         if hasattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'):
             context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = settings.DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
@@ -818,6 +832,8 @@ class GlossListView(ListView):
         #If not, we will go trhough a long list of filters
         if 'search' in get and get['search'] != '':
             val = get['search']
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(val)
             query = Q(annotationidglosstranslation__text__iregex=val)
 
             if re.match('^\d+$', val):
@@ -1023,14 +1039,8 @@ class GlossListView(ListView):
             morpheme_type = get['hasMorphemeOfType']
             # Get all Morphemes of the indicated mrpType
             target_morphemes = Morpheme.objects.filter(mrpType__exact=morpheme_type)
-            sim_morphemes = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__in=target_morphemes)
-            # Get all glosses that have one of the morphemes in this set
-            glosses_with_correct_mrpType = Gloss.objects.filter(simultaneous_morphology__in=sim_morphemes)
 
-            # Turn this into a list with pks
-            pks_for_glosses_with_correct_mrpType = [glossdef.pk for glossdef in glosses_with_correct_mrpType]
-
-            qs = qs.filter(pk__in=pks_for_glosses_with_correct_mrpType)
+            qs = qs.filter(id__in=target_morphemes)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
 
@@ -1856,6 +1866,15 @@ class GlossRelationsDetailView(DetailView):
             minimalpairs.append((mpg,dict,minpar_display))
 
         context['minimalpairs'] = minimalpairs
+
+        morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
+        compounds = []
+        reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl.id)
+        for rm in reverse_morphdefs:
+            translated_role = machine_value_to_translated_human_value(rm.role,morphdef_roles,self.request.LANGUAGE_CODE)
+
+            compounds.append((rm.parent_gloss, translated_role))
+        context['compounds'] = compounds
 
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
@@ -3584,9 +3603,10 @@ class HandshapeListView(ListView):
             # Get and save the choice list for this field
             if hasattr(handshape_field, 'field_choice_category'):
                 fieldchoice_category = handshape_field.field_choice_category
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
             else:
                 fieldchoice_category = field
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
+                choice_list = []
 
             if len(choice_list) > 0:
                 choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,
@@ -3613,6 +3633,12 @@ class HandshapeListView(ListView):
         qs = Handshape.objects.all().order_by('machine_value')
 
         if show_all:
+            if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
+                # User has toggled the sort order for the column
+                qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
+            else:
+                # The default is to order the signs alphabetically by whether there is an angle bracket
+                qs = order_handshape_by_angle(qs, self.request.LANGUAGE_CODE)
             return qs
 
         handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
@@ -3973,6 +3999,8 @@ class DatasetManagerView(ListView):
             return self.render_to_add_user_response(context)
         elif 'default_language' in self.request.GET:
             return self.render_to_set_default_language()
+        elif 'format' in self.request.GET:
+            return self.render_to_csv_response()
         else:
             return super(DatasetManagerView, self).render_to_response(context)
 
@@ -4253,6 +4281,80 @@ class DatasetManagerView(ListView):
         # the code doesn't seem to get here. if somebody puts something else in the url (else case), there is no (hidden) csrf token.
         messages.add_message(self.request, messages.ERROR, ('Unrecognised argument to dataset manager url.'))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+    def render_to_csv_response(self):
+
+        if not self.request.user.has_perm('dictionary.export_csv'):
+            raise PermissionDenied
+
+        if not self.request.user.is_authenticated():
+            raise PermissionDenied
+
+        dataset_object, response = self.get_dataset_from_request()
+        if response:
+            return response
+
+        response = self.check_user_permissions_for_managing_dataset(dataset_object)
+        if response:
+            return response
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+
+        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in
+                                               dataset_languages]
+
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="dictionary-dataset_links.csv"'
+        writer = csv.writer(response)
+
+        with override(LANGUAGE_CODE):
+            header = ['Signbank ID', 'Dataset'] + annotationidglosstranslation_fields + ['glossvideo url', 'glossimage url']
+
+        writer.writerow(header)
+        queryset = Gloss.objects.filter(lemma__dataset_id=dataset_object.id)
+        for gloss in queryset:
+            row = [str(gloss.pk), gloss.lemma.dataset.acronym]
+
+            for language in dataset_languages:
+                annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+                if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
+                    row.append(annotationidglosstranslations[0].text)
+                else:
+                    row.append("")
+
+            def form_full_url(path):
+                hyperlink_domain = settings.URL + settings.PREFIX_URL
+                protected_media_url = os.path.join('dictionary','protected_media').encode('utf-8')
+                return hyperlink_domain + os.path.join(protected_media_url, path.encode('utf-8')).decode()
+
+            gloss_video_path = gloss.get_video_url()
+            if gloss_video_path:
+                full_url = form_full_url(gloss_video_path)
+                row.append(full_url)
+            else:
+                row.append(gloss_video_path)
+
+            gloss_image_path = gloss.get_image_url()
+            if gloss_image_path:
+                full_url = form_full_url(gloss_image_path)
+                row.append(full_url)
+            else:
+                row.append(gloss_image_path)
+
+            #Make it safe for weird chars
+            safe_row = []
+            for column in row:
+                try:
+                    safe_row.append(column.encode('utf-8').decode())
+                except AttributeError:
+                    safe_row.append(None)
+
+            writer.writerow(row)
+
+        return response
 
     def get_queryset(self):
         user = self.request.user
@@ -5172,6 +5274,14 @@ def handshape_ajax_search_results(request):
     else:
         return HttpResponse(json.dumps(None))
 
+def lemma_ajax_search_results(request):
+    """Returns a JSON list of handshapes that match the previous search stored in sessions"""
+    if 'search_type' in request.session.keys() and request.session['search_type'] == 'lemma':
+        return HttpResponse(json.dumps(request.session['search_results']))
+    else:
+        print('lemma ajax search results: search type not in session')
+        return HttpResponse(json.dumps(None))
+
 def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
@@ -5665,14 +5775,46 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
 class LemmaListView(ListView):
     model = LemmaIdgloss
     template_name = 'dictionary/admin_lemma_list.html'
-    paginate_by = 100
+    paginate_by = 50
+    show_all = False
+    search_type = 'lemma'
+
+    def get_paginate_by(self, queryset):
+        """
+        Paginate by specified value in querystring, or use default class property value.
+        """
+        return self.request.GET.get('paginate_by', self.paginate_by)
 
     def get_queryset(self, **kwargs):
-        queryset = super(LemmaListView, self).get_queryset(**kwargs)
+
+        get = self.request.GET
+
+        #First check whether we want to show everything or a subset
+        try:
+            if self.kwargs['show_all']:
+                show_all = True
+        except (KeyError,TypeError):
+            show_all = False
+
+        queryset = LemmaIdgloss.objects.all()
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        return queryset.filter(dataset__in=selected_datasets).annotate(num_gloss=Count('gloss'))
+        qs = queryset.filter(dataset__in=selected_datasets)
+
+        if show_all:
+            return qs.annotate(num_gloss=Count('gloss'))
+        else:
+            # There are only Lemma ID Gloss fields
+            for get_key, get_value in get.items():
+                if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
+                    language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
+                    language = Language.objects.filter(language_code_2char=language_code_2char)
+                    qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
+                                   lemmaidglosstranslation__language=language)
+
+        return qs.annotate(num_gloss=Count('gloss'))
 
     def get_context_data(self, **kwargs):
+
         context = super(LemmaListView, self).get_context_data(**kwargs)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -5684,6 +5826,46 @@ class LemmaListView(ListView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
+
+        context['page_number'] = context['page_obj'].number
+
+        context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
+
+        context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
+
+        context['lemma_count'] = LemmaIdgloss.objects.filter(dataset__in=selected_datasets).count()
+
+        search_form = LemmaSearchForm(self.request.GET, languages=dataset_languages, language_code=self.request.LANGUAGE_CODE)
+
+        context['searchform'] = search_form
+
+        context['search_type'] = 'lemma'
+
+        list_of_objects = self.object_list
+
+        from signbank.tools import convert_language_code_to_language_minus_locale
+
+        # to accomodate putting lemma's in the scroll bar in the LemmaUpdateView (aka LemmaDetailView),
+        # look at available translations, choose the Interface language if it is a Dataset language
+        # some legacy lemma's have missing translations,
+        # the language code is used when more than one is available,
+        # otherwise the Default language will be used, if available
+        # otherwise the Lemma ID will be used in the scroll bar
+        display_language_code = convert_language_code_to_language_minus_locale(self.request.LANGUAGE_CODE)
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            lang_code = convert_language_code_to_language_minus_locale(lang.language_code_2char)
+            dataset_display_languages.append(lang_code)
+        if display_language_code in dataset_display_languages:
+            lang_attr_name = display_language_code
+        else:
+            # construct scroll bar
+            # the following retrieves language code for English (or DEFAULT LANGUAGE)
+            # so the sorting of the scroll bar matches the default sorting of the results in Lemma List View
+            lang_attr_name = convert_language_code_to_language_minus_locale(
+                settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
 
         return context
 
@@ -5716,8 +5898,8 @@ class LemmaListView(ListView):
             header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields
 
         writer.writerow(header)
-
-        for lemma in self.get_queryset():
+        queryset = self.get_queryset()
+        for lemma in queryset:
             row = [str(lemma.pk), lemma.dataset.acronym]
 
             for language in dataset_languages:
@@ -5862,9 +6044,41 @@ class LemmaUpdateView(UpdateView):
     fields = []
     gloss_found = False
     gloss_id = ''
+    search_type = 'lemma'
 
     def get_context_data(self, **kwargs):
+        # print('get context lemma update view')
         context = super(LemmaUpdateView, self).get_context_data(**kwargs)
+
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+            # print('search results: ', search_results)
+        else:
+            search_results = []
+        if search_results and len(search_results) > 0:
+            if not self.request.session['search_results'][0]['href_type'] == 'lemma/update':
+                print('not lemma type')
+                self.request.session['search_results'] = None
+        if 'search_type' in self.request.session.keys():
+            if not self.request.session['search_type'] == 'lemma':
+                # search_type is 'handshape'
+                self.request.session['search_results'] = None
+        self.request.session['search_type'] = self.search_type
+
+        # if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
+        #     # there are no handshapes in the scrollbar, put some there
+        #
+        #     queryset = LemmaIdgloss.objects.all()
+        #     selected_datasets = get_selected_datasets_for_user(self.request.user)
+        #     qs = queryset.filter(dataset__in=selected_datasets)
+        #
+        #     from signbank.tools import convert_language_code_to_language_minus_locale
+        #     lang_attr_name = convert_language_code_to_language_minus_locale(
+        #         settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+        #     items = construct_scrollbar(qs, self.search_type, lang_attr_name)
+        #     self.request.session['search_results'] = items
+
+        context['active_id'] = self.object.pk
 
         # this is needed by the menu bar
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -5989,8 +6203,62 @@ class LemmaUpdateView(UpdateView):
                 return HttpResponseRedirect(self.success_url)
 
         else:
+            print('form not valid')
             return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
 
+    def get(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+
+        except Exception as e:
+            # return custom template
+            print(e)
+            messages.add_message(self.request, messages.ERROR, e)
+            # return render(request, 'dictionary/warning.html', status=404)
+            raise Http404()
+
+        datasetid = settings.DEFAULT_DATASET_PK
+        default_dataset = Dataset.objects.get(id=datasetid)
+
+        try:
+            dataset_of_requested_lemma = self.object.dataset
+        except:
+            print('Requested lemma has no dataset: ', self.object.pk)
+            dataset_of_requested_lemma = default_dataset
+
+        # signlanguages_of_requested_gloss = dataset_of_requested_gloss.signlanguage
+        # dialect_of_requested_gloss = self.object.dialect_choices()
+
+        # print('Gloss Detail gloss, dataset, signlanguages: ', self.object.id, dataset_of_requested_gloss, signlanguages_of_requested_gloss)
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            show_dataset_interface = False
+
+        if request.user.is_authenticated():
+            if dataset_of_requested_lemma not in selected_datasets:
+                return render(request, 'dictionary/warning.html',
+                              {'warning': 'The lemma you are trying to view (' + str(
+                                  self.object.id) + ') is not in your selected datasets.',
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': selected_datasets,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            if dataset_of_requested_lemma not in datasets_user_can_view:
+                return render(request, 'dictionary/warning.html',
+                              {'warning': 'The lemma you are trying to view ('+str(self.object.id)+') is not in a dataset you can view.',
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': selected_datasets,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+        else:
+            return HttpResponseRedirect(reverse('registration:auth_login'))
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
 
 class LemmaDeleteView(DeleteView):
     model = LemmaIdgloss
