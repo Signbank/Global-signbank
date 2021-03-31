@@ -1604,12 +1604,9 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
             if field_options:
-                if fieldchoice != 'Handshape':
-                    field_choice_in_use = field_options[2]
-                    self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
-                else:
-                    field_choice_in_use = field_options[2]
-                    self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+                # a different field choice is chosen than that of the test gloss
+                field_choice_in_use = field_options[2]
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
     def test_delete_fieldchoice_handshape(self):
 
@@ -1995,16 +1992,11 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice)
             if field_options:
+                # a different field choice is chosen than that of the test morpheme
                 field_choice_in_use = field_options[2]
-                if fieldchoice != 'Handshape':
-                    print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
+                print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
                           str(field_choice_in_use.english_name), ' (not used)')
-                    self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
-                else:
-                    print('TEST: test whether has_delete_permission is False for ', fieldchoice, ' choice ',
-                          str(field_choice_in_use.english_name), ' (not used)')
-                    self.assertEqual(
-                        self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), False)
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
 
 class testFrequencyAnalysis(TestCase):
 
