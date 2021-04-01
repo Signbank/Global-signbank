@@ -1446,22 +1446,14 @@ class GlossDetailView(DetailView):
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
 
         for other_media in gl.othermedia_set.all():
+            (media_okay, path, other_media_filename) = other_media.get_othermedia_path(gl.id, check_existence=True)
 
             human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
-            path = 'dictionary/protected_media/othermedia/'+other_media.path
-            if '/' in other_media.path:
-                other_media_filename = other_media.path.split('/')[1]
-            else:
-                other_media_filename = other_media.path
-            if other_media_filename.split('.')[-1] == 'mp4':
-                file_type = 'video/mp4'
-            elif other_media_filename.split('.')[-1] == 'png':
-                file_type = 'image/png'
-            else:
-                file_type = ''
+            import mimetypes
+            file_type = mimetypes.guess_type(path, strict=True)[0]
 
-            context['other_media'].append([other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
+            context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
 
             # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
             context['other_media_field_choices'][
@@ -5145,11 +5137,14 @@ class MorphemeDetailView(DetailView):
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
 
         for other_media in gl.othermedia_set.all():
+            (media_okay, path, other_media_filename) = other_media.get_othermedia_path(gl.id, check_existence=True)
 
             human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
-            path = settings.STATIC_URL + 'othermedia/' + other_media.path
-            context['other_media'].append([other_media.pk, path, human_value_media_type, other_media.alternative_gloss])
+            import mimetypes
+            file_type = mimetypes.guess_type(path, strict=True)[0]
+
+            context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
 
             # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
             context['choice_lists'][

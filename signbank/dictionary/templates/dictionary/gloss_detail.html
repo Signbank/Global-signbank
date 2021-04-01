@@ -1349,13 +1349,13 @@
            <table class='table table-condensed'>
               <tr>
                   <th style='width:2em'></th>
-                  <th style='width:12em'>{% trans "Image/Video" %}</th>
-                  <th style='width:12em'>{% trans "File Type" %}</th>
-                  <th style='width:12em'>{% trans "Type" %}</th>
+                  <th style='width:6em'>{% trans "Image/Video" %}</th>
+                  <th style='width:6em'>{% trans "File Type" %}</th>
+                  <th style='width:20em'>{% trans "Type" %}</th>
                   <th style='width:12em'>{% trans "Alternative gloss" %}</th>
               </tr>
 
-               {% for pk,path,file_type,type,alternative_gloss,file_name in other_media %}
+               {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
                <tr>
                    {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                    {% if "change_dataset" in dataset_perms %}
@@ -1390,7 +1390,11 @@
                     {% else %}
                     <td></td>
                     {% endif %}
-                    <td><a download="{{ file_name }}" href="{{ URL }}{{ PREFIX_URL }}{{ path }}">Download</a></td>
+                    <td><a {% if not media_okay %}
+				            disabled onclick="return false;" style="color:rgb(150,150,150);"
+			                {% endif %}
+				            download="{{ file_name }}" href="{{ URL }}{{ PREFIX_URL }}{{ path }}">Download</a>
+                    </td>
                     <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
                     <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
@@ -1409,7 +1413,7 @@
                 {% csrf_token %}
                  <table class='table'>
                     <tr>
-                        <td><input class='form-control' placeholder='{% trans "Upload media" %}' name='file' type='file'></td>
+                        <td>{{othermediaform.file}}</td>
                         <td>{{othermediaform.type}}</td>
                         <td><input class='form-control' placeholder='{% trans "Alternative gloss" %}' name='alternative_gloss' type='text'></td>
                     </tr>

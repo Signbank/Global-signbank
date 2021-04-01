@@ -1,5 +1,6 @@
 from colorfield.fields import ColorWidget
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
@@ -523,13 +524,35 @@ class MorphemeMorphologyForm(forms.ModelForm):
 class OtherMediaForm(forms.ModelForm):
 
     gloss = forms.CharField()
-    file = forms.FileField()
-    type = forms.ChoiceField(choices=build_choice_list('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*'}), required=True)
+    type = forms.ChoiceField(choices=build_choice_list('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     alternative_gloss = forms.TextInput()
 
     class Meta:
         model = OtherMedia
-        fields = ['type']
+        fields = ['type', 'file']
+
+    def __init__(self, *args, **kwargs):
+        super(OtherMediaForm, self).__init__(*args, **kwargs)
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(OtherMediaForm, self).get_form(request, obj, **kwargs)
+        return form
+
+    def clean_type(self):
+        data = self.cleaned_data['type']
+        if data in ['0', '1']:
+            # choice is '-' or 'N/A'
+            raise forms.ValidationError(_("Please choose a type description when uploading other media."))
+        else:
+            return data
+
+    def clean_file(self):
+        data = self.cleaned_data['file']
+        if not data:
+            raise forms.ValidationError(_("Please choose a video or image file to upload."))
+        else:
+            return data
 
 class CSVMetadataForm(forms.Form):
 
