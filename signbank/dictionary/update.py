@@ -1482,7 +1482,7 @@ def add_othermedia(request):
                     print('file already exists')
                 f = open(goal_path, 'wb+')
                 filename_plus_extension = destination_filename
-            except:
+            except (UnicodeEncodeError, IOError, OSError):
                 import urllib.parse
                 quoted_filename = urllib.parse.quote(filename_base, safe='')
                 filename_plus_extension = quoted_filename + '.' + extension
@@ -1492,7 +1492,7 @@ def add_othermedia(request):
                     if os.path.exists(goal_location_str):
                         print('file already exists')
                     f = open(goal_location_str, 'wb+')
-                except:
+                except (UnicodeEncodeError, IOError, OSError):
                     messages.add_message(request, messages.ERROR, _("The destination filename for other media could not be created."))
                     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 

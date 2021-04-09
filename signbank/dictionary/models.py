@@ -2205,12 +2205,12 @@ class OtherMedia(models.Model):
                 writable_location = os.path.join(WRITABLE_FOLDER,'othermedia',self.path)
                 try:
                     imagefile_path_exists = os.path.exists(writable_location)
-                except:
+                except (UnicodeEncodeError, IOError, OSError):
                     # this is needed in case there is something wrong with the permissions
                     imagefile_path_exists = False
                 if not imagefile_path_exists:
                     media_okay = False
-        return (media_okay, path, other_media_filename)
+        return media_okay, path, other_media_filename
 
 class Dataset(models.Model):
     """A dataset, can be public/private and can be of only one SignLanguage"""

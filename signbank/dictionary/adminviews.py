@@ -1446,7 +1446,7 @@ class GlossDetailView(DetailView):
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
 
         for other_media in gl.othermedia_set.all():
-            (media_okay, path, other_media_filename) = other_media.get_othermedia_path(gl.id, check_existence=True)
+            media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
             human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
@@ -5137,7 +5137,7 @@ class MorphemeDetailView(DetailView):
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
 
         for other_media in gl.othermedia_set.all():
-            (media_okay, path, other_media_filename) = other_media.get_othermedia_path(gl.id, check_existence=True)
+            media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
             human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
 
