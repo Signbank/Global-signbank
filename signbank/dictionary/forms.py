@@ -524,7 +524,7 @@ class MorphemeMorphologyForm(forms.ModelForm):
 class OtherMediaForm(forms.ModelForm):
 
     gloss = forms.CharField()
-    file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*'}), required=True)
+    file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*, application/pdf'}), required=True)
     type = forms.ChoiceField(choices=build_choice_list('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     alternative_gloss = forms.TextInput()
 
