@@ -1428,32 +1428,107 @@ def update_handshape(request, handshapeid):
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
 
 def add_othermedia(request):
-    print('add other media')
     if request.method == "POST":
 
         form = OtherMediaForm(request.POST,request.FILES)
 
+        morpheme__or_gloss = Gloss.objects.get(id=request.POST['gloss'])
+        if morpheme__or_gloss.is_morpheme():
+            reverse_url = 'dictionary:admin_morpheme_view'
+        else:
+            reverse_url = 'dictionary:admin_gloss_view'
+
         if form.is_valid():
 
             #Create the folder if needed
-            goal_directory = OTHER_MEDIA_DIRECTORY+request.POST['gloss'] + '/'
-            goal_path = goal_directory + request.FILES['file'].name
-            print('add other media: ', goal_directory, goal_path)
+            import os
+            goal_directory = os.path.join(OTHER_MEDIA_DIRECTORY,request.POST['gloss'])
+
+            filename = request.FILES['file'].name
+            filetype = request.FILES['file'].content_type
+
+            if not filetype:
+                # unrecognised file type has been uploaded
+                messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
+                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+
+            norm_filename = os.path.normpath(filename)
+            split_norm_filename = norm_filename.split('.')
+
+            if len(split_norm_filename) == 1:
+                # file has no extension
+                messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has no extension."))
+                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+
+            extension = split_norm_filename[-1]
+            filename_base = '.'.join(split_norm_filename[:-1])
+
+            if filetype == 'video/mp4':
+                # handle 'm4v' extension
+                extension = 'mp4'
+
             if not os.path.isdir(goal_directory):
                 os.mkdir(goal_directory)
 
-            with open(goal_path, 'wb+') as destination:
+            # use '+' to concatinate
+            # if the source filename is right to left, the extension is at the end
+            destination_filename = filename_base + '.' + extension
+            goal_path = os.path.join(goal_directory, destination_filename)
 
-                #Save the file
-                for chunk in request.FILES['file'].chunks():
-                        destination.write(chunk)
 
-                #Save the database record
-                parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
-                OtherMedia(path=request.POST['gloss']+'/'+request.FILES['file'].name,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
+            # create the destination file
+            try:
+                if os.path.exists(goal_path):
+                    print('file already exists')
+                f = open(goal_path, 'wb+')
+                filename_plus_extension = destination_filename
+            except (UnicodeEncodeError, IOError, OSError):
+                import urllib.parse
+                quoted_filename = urllib.parse.quote(filename_base, safe='')
+                filename_plus_extension = quoted_filename + '.' + extension
+                goal_location_str = os.path.join(goal_directory, filename_plus_extension)
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['gloss']})+'?editothermedia')
+                try:
+                    if os.path.exists(goal_location_str):
+                        print('file already exists')
+                    f = open(goal_location_str, 'wb+')
+                except (UnicodeEncodeError, IOError, OSError):
+                    messages.add_message(request, messages.ERROR, _("The destination filename for other media could not be created."))
+                    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
+            destination = File(f)
+            # Save the file
+            for chunk in request.FILES['file'].chunks():
+                destination.write(chunk)
+            destination.close()
+
+            destination_location = os.path.join(goal_directory,filename_plus_extension)
+
+            import magic
+            magic_file_type = magic.from_buffer(open(destination_location,"rb").read(2040), mime=True)
+
+            if not magic_file_type:
+                # unrecognised file type has been uploaded
+                os.remove(destination_location)
+                messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
+                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+
+            if filetype.split('/')[0] != magic_file_type.split('/')[0]:
+                # the uploaded file extension does not match its type
+                os.remove(destination_location)
+                messages.add_message(request, messages.ERROR, _("Upload other media failed: The file extension does not match its type."))
+                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+
+            #Save the database record
+            parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
+            other_media_path = request.POST['gloss']+'/'+filename_plus_extension
+            OtherMedia(path=other_media_path,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
+
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
+        else:
+            # form is not valid
+            messages.add_message(request, messages.ERROR, _("Please choose a type description when uploading other media."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
     raise Http404('Incorrect request')
 
 def update_morphology_definition(gloss, field, value, language_code = 'en'):

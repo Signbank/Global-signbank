@@ -48,6 +48,7 @@ class RelationInline(admin.TabularInline):
 
 class OtherMediaInline(admin.TabularInline):
     model = OtherMedia
+    readonly_fields = ['path']
     extra = 1
 
 from django.utils.translation import ugettext_lazy as _
