@@ -2319,9 +2319,9 @@ def configure_handshapes(request):
                          '<thead>\n' \
                          '<tr>\n' \
                          '<th style="width:20em; text-align:left;">Machine Value</th>\n' \
-                         '<th style="width:25em; text-align:left;">English Name</th>\n' \
-                         '<th style="width:40em; text-align:left;">Dutch Name</th>\n' \
-                         '<th style="width:40em; text-align:left;">Chinese Name</th>\n' \
+                         '<th style="width:20em; text-align:left;">Name</th>\n' \
+                         + "".join(['<th style="width:40em; text-align:left;">'+language+' Name</th>\n'
+                                    for language in [l[1] for l in LANGUAGES]]) + \
                          '</tr>\n' \
                          '</thead>\n' \
                          '<tbody>\n'
@@ -2349,13 +2349,23 @@ def configure_handshapes(request):
             new_id = o.machine_value
             new_machine_value = o.machine_value
             new_name = o.name
-            new_dutch_name = o.dutch_name
-            new_chinese_name = o.chinese_name
 
-            new_handshape = Handshape(machine_value=new_machine_value, name=new_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
+            # Copy translated FieldChoice fields to translated Handshape fields
+            new_name_translations = dict([
+                (
+                    'name_' + language.replace('-', '_'),
+                    getattr(o, 'name_' + language.replace('-', '_'))
+                )
+                for language in [l[0] for l in LANGUAGES]
+            ])
+
+            new_handshape = Handshape(machine_value=new_machine_value, name=new_name, **new_name_translations)
             new_handshape.save()
 
-            output_string += '<tr><td>' + str(new_machine_value) + '</td><td>' + new_name + '</td><td>' + new_dutch_name + '</td><td>' + new_chinese_name + '</td></tr>\n'
+            output_string += '<tr><td>' + str(new_machine_value) + '</td><td>' + o.name + '</td>' \
+                             + "".join(['<td>' + (name or '-') + '</td>' \
+                                        for name in new_name_translations.values()]) \
+                             + '</tr>\n'
 
         output_string += handshapes_table_suffix
 
