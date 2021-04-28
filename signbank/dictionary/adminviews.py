@@ -3320,7 +3320,7 @@ class HandshapeListView(ListView):
             qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
         else:
             # The default is to order the signs alphabetically by whether there is an angle bracket
-            qs = order_handshape_by_angle(qs, self.request.LANGUAGE_CODE)
+            qs = order_handshape_by_angle(qs)
 
         if self.search_type == 'sign_handshape':
 
@@ -4241,25 +4241,14 @@ def order_handshape_queryset_by_sort_order(get, qs):
     return ordered_handshapes
 
 
-def order_handshape_by_angle(qs, language_code):
+def order_handshape_by_angle(qs):
     # put the handshapes with an angle bracket > in the name after the others
     # the language code is that of the interface
 
-    if language_code == 'nl':
-        qs_no_angle = qs.filter(**{'dutch_name__regex':r'^[^>]+$'})
-        qs_angle = qs.filter(**{'dutch_name__regex':r'^.+>.+$'})
-        ordered = sorted(qs_no_angle, key=lambda x: x.dutch_name)
-        ordered += sorted(qs_angle, key=lambda x: x.dutch_name)
-    elif language_code == 'zh-hans':
-        qs_no_angle = qs.filter(**{'chinese_name__regex':r'^[^>]*$'})
-        qs_angle = qs.filter(**{'chinese_name__regex':r'^.+>.+$'})
-        ordered = sorted(qs_no_angle, key=lambda x: x.chinese_name)
-        ordered += sorted(qs_angle, key=lambda x: x.chinese_name)
-    else:
-        qs_no_angle = qs.filter(**{'name__regex':r'^[^>]+$'})
-        qs_angle = qs.filter(**{'name__regex':r'^.+>.+$'})
-        ordered = sorted(qs_no_angle, key=lambda x: x.name)
-        ordered += sorted(qs_angle, key=lambda x: x.name)
+    qs_no_angle = qs.filter(**{'name__regex':r'^[^>]+$'})
+    qs_angle = qs.filter(**{'name__regex':r'^.+>.+$'})
+    ordered = sorted(qs_no_angle, key=lambda x: x.name)
+    ordered += sorted(qs_angle, key=lambda x: x.name)
 
     return ordered
 
