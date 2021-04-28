@@ -138,7 +138,22 @@ class RegistrationForm(forms.Form):
         """
         if self.cleaned_data.get('tos', True):
             return self.cleaned_data['tos']
-        raise forms.ValidationError()
+        raise forms.ValidationError(_(u'Please consider the Terms of Service.'))
+
+    def __init__(self, request=None, *args, **kwargs):
+        """
+        If request is passed in, the form will validate that cookies are
+        enabled. Note that the request (a HttpRequest object) must have set a
+        cookie with the key TEST_COOKIE_NAME and value TEST_COOKIE_VALUE before
+        running this validation.
+        """
+        self.request = request
+
+        super(RegistrationForm, self).__init__(*args, **kwargs)
+        if request and request.session:
+            if 'requested_datasets' in request.session.keys():
+                import json
+                self.fields['dataset'].initial = json.dumps(request.session['requested_datasets'])
 
     def save(self, profile_callback=None):
         """

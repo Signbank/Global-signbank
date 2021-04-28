@@ -4464,8 +4464,19 @@ class DatasetDetailView(DetailView):
     def render_to_response(self, context):
         if 'add_owner' in self.request.GET:
             return self.render_to_add_owner_response(context)
+        elif 'request_access' in self.request.GET:
+            return self.render_to_request_access(context)
         else:
             return super(DatasetDetailView, self).render_to_response(context)
+
+    def render_to_request_access(self, context):
+        dataset = context['dataset']
+        # check that the user is logged in
+        if self.request.user.is_authenticated() or not dataset.is_public:
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/' + dataset.acronym)
+        else:
+            self.request.session['requested_datasets'] = [dataset.name]
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/accounts/register/')
 
     def render_to_add_owner_response(self, context):
 
