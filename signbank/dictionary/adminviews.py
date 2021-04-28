@@ -33,7 +33,8 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
+from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, \
+    LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP, LANGUAGES
 from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
@@ -3237,11 +3238,17 @@ class HandshapeListView(ListView):
                 new_id = h.machine_value
                 new_machine_value = h.machine_value
                 new_name = h.name
-                new_dutch_name = h.dutch_name
-                new_chinese_name = h.chinese_name
 
-                new_handshape = Handshape(machine_value=new_machine_value, name=new_name,
-                                          dutch_name=new_dutch_name, chinese_name=new_chinese_name)
+                # Copy translated FieldChoice fields to translated Handshape fields
+                names = dict([
+                    (
+                        'name_'+language.replace('-', '_'),
+                        getattr(h, 'name_'+language.replace('-', '_'))
+                    )
+                    for language in [l[0] for l in LANGUAGES]
+                ])
+
+                new_handshape = Handshape(machine_value=new_machine_value, name=new_name, **names)
                 new_handshape.save()
                 new_handshape_created = 1
 
@@ -3250,7 +3257,7 @@ class HandshapeListView(ListView):
 
             qs = Handshape.objects.all().order_by('machine_value')
 
-        fieldnames = ['machine_value', 'name', 'dutch_name', 'chinese_name']+FIELDS['handshape']
+        fieldnames = ['machine_value', 'name']+FIELDS['handshape']
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
@@ -3304,12 +3311,7 @@ class HandshapeListView(ListView):
             items = []
 
             for item in qs:
-                if self.request.LANGUAGE_CODE == 'nl':
-                    items.append(dict(id = item.machine_value, handshape = item.dutch_name))
-                elif self.request.LANGUAGE_CODE == 'zh-hans':
-                    items.append(dict(id = item.machine_value, handshape = item.chinese_name))
-                else:
-                    items.append(dict(id = item.machine_value, handshape = item.name))
+                items.append(dict(id = item.machine_value, handshape = item.name))
 
             self.request.session['search_results'] = items
 
