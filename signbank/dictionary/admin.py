@@ -1,8 +1,10 @@
 from colorfield.fields import ColorWidget
 from django import forms
+from django.forms import TextInput, Textarea, CharField
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
+from signbank.dictionary.forms import DefinitionForm
 from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
 from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
@@ -16,40 +18,205 @@ class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
     list_display = ('name', 'is_public', 'signlanguage',)
 
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
 class KeywordAdmin(VersionAdmin):
     search_fields = ['^text']
-    
-    
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def has_add_permission(self, request):
+        return False
+
 class TranslationInline(admin.TabularInline):
     model = Translation
-    extra = 1
-    raw_id_fields = ['translation']
+    readonly_fields = ['id', 'language', 'translation', 'index']
+    list_display = ['id', 'language', 'translation', 'index']
+    fields = ['id', 'language', 'translation', 'index']
+    raw_id_fields = ['id']
+    extra = 0
 
-class RelationToOtherSignInline(admin.TabularInline):
-    model = Relation
-    extra = 1
-    
 class RelationToForeignSignInline(admin.TabularInline):
     model = RelationToForeignSign
-    extra = 1
-#    raw_id_fields = ['other_lang_gloss']
-    
+    readonly_fields = ['id', 'loan', 'other_lang', 'other_lang_gloss']
+    list_display = ['id', 'loan', 'other_lang', 'other_lang_gloss']
+    fields = ['id', 'loan', 'other_lang', 'other_lang_gloss']
+    raw_id_fields = ['id']
+    extra = 0
+
 class DefinitionInline(admin.TabularInline):
-    model = Definition  
-    extra = 1
-    
+    model = Definition
+    readonly_fields = ['id', 'text', 'note', 'count', 'published']
+    list_display = ['id', 'text', 'note', 'count', 'published', 'sction_checkbox']
+    fields = ['id', 'text', 'note', 'count', 'published']
+    raw_id_fields = ['id']
+    fk_name = 'gloss'
+    extra = 0
+
+    # this is done once at initialization
+    choice_list = FieldChoice.objects.filter(field__iexact='NoteType')
+
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+    }
+
+    def note(self, obj):
+        try:
+            this_role = int(obj.role)
+            this_choice = self.choice_list.filter(machine_value=this_role)[0]
+            # just choose English for now
+            human_value = getattr(this_choice, 'english_name')
+        except (TypeError, ValueError, AttributeError):
+            human_value = '-'
+        return human_value
+
+    def get_queryset(self, request):
+        # this looks sloppy
+        this_object = request.environ['PATH_INFO'].split('/')[-3]
+
+        qs = super(DefinitionInline, self).get_queryset(request)
+        filtered_queryset = qs.filter(gloss=this_object)
+        return filtered_queryset
+
 class RelationInline(admin.TabularInline):
     model = Relation
+    readonly_fields = ['id', 'role', 'target']
     fk_name = 'source' 
-    raw_id_fields = ['source', 'target']
+    raw_id_fields = ['id', 'target']
+    fields = ['id', 'role', 'target']
     verbose_name_plural = "Relations to other Glosses"
-    extra = 1
+    extra = 0
 
 class OtherMediaInline(admin.TabularInline):
     model = OtherMedia
-    readonly_fields = ['path']
-    extra = 1
+    readonly_fields = ['id', 'path', 'type', 'alternative_gloss']
+    list_display = ['id', 'path', 'type', 'alternative_gloss']
+    fields = ['id', 'path', 'type', 'alternative_gloss']
+    raw_id_fields = ['id']
+    extra = 0
+
+class AnnotationIdglossTranslationInline(admin.TabularInline):
+    model = AnnotationIdglossTranslation
+
+    list_display = ['id', 'language', 'text']
+    readonly_fields = ['id', 'language', 'text']
+    fields = ['id', 'language', 'text']
+
+    raw_id_fields = ['id']
+    extra = 0
+
+class LemmaIdglossTranslationForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(LemmaIdglossTranslationForm, self).__init__(*args, **kwargs)
+
+        if self.instance.id:
+            if hasattr(self.fields['language'], '_queryset'):
+                qs = self.fields['language']._queryset
+                number_of_translations = qs.count()
+                try:
+                    language_of_translation = self.instance.lemma.dataset.translation_languages.all()
+                except (AttributeError, ObjectDoesNotExist, MultipleObjectsReturned, ValueError):
+                    language_of_translation = Language.objects.none()
+                if number_of_translations > language_of_translation.count():
+                    self.fields['language']._queryset = language_of_translation
+
+                self.fields['language'].initial = self.instance.language
+                self.fields['language'].disabled = True
+                self.fields['language'].widget.can_change_related = False
+                self.fields['language'].widget.can_add_related = False
+        else:
+            self.fields['language'].widget = forms.Select(choices=self.fields['language'].limit_choices_to)
+
+    class Meta:
+        model = LemmaIdglossTranslation
+        fields = ['id', 'lemma', 'language', 'text']
+
+    class Media:
+        css = {
+            'all': ('css/custom_admin.css',)
+        }
+
+
+class LemmaIdglossTranslationInline(admin.TabularInline):
+    model = LemmaIdglossTranslation
+
+    list_display = ['id', 'language', 'text']
+    fields = ['id', 'lemma', 'language', 'text']
+
+    raw_id_fields = ['id']
+
+    form = LemmaIdglossTranslationForm
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj is not None:
+            if obj.dataset is None:
+                return ['id', 'lemma']
+            else:
+                return ['id']
+        else:
+            return []
+
+    def get_extra(self, request, obj=None, **kwargs):
+        if obj is not None:
+            return 0
+        else:
+            return 1
+
+    def __init__(self, *args, **kwargs):
+        super(LemmaIdglossTranslationInline, self).__init__(*args, **kwargs)
+
+    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+        field = super(LemmaIdglossTranslationInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        return field
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super(LemmaIdglossTranslationInline, self).get_formset(request, obj, **kwargs)
+        if obj:
+            translation_languages = []
+            for translation in obj.lemmaidglosstranslation_set.all():
+                translation_languages.append(translation.language)
+            if obj.dataset:
+                dataset_languages = obj.dataset.translation_languages.all()
+                limited_choices = { f for f in dataset_languages if f not in translation_languages }
+                language_choices = [(str(f.id), f.name) for f in limited_choices]
+                formset.form.base_fields['language'].limit_choices_to = language_choices
+        else:
+            # creating new lemma translation
+            languages = Language.objects.all()
+            language_choices = [(str(f.id), f.name) for f in languages]
+            formset.form.base_fields['language'].limit_choices_to = language_choices
+        return formset
+
+    def get_max_num(self, request, obj=None, **kwargs):
+
+        maximum = super(LemmaIdglossTranslationInline, self).get_max_num(request, obj, **kwargs)
+
+        if obj:
+            if obj.dataset:
+                dataset_languages = obj.dataset.translation_languages.all()
+                maximum = len(dataset_languages)
+            else:
+                maximum = 0
+        return maximum
+
+class LanguageInline(admin.TabularInline):
+    model = Language
+
+    list_display = ['id', 'name', 'description']
+    readonly_fields = ['id', 'name', 'description']
+    fields = ['id', 'name', 'description']
+
+    raw_id_fields = ['id']
+    extra = 0
 
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import SimpleListFilter
@@ -88,38 +255,168 @@ class SenseNumberListFilter(SimpleListFilter):
         
         
 
+class GlossAdminForm(forms.ModelForm):
+    readonly_fields = ['id', 'lemma', 'signlanguage', 'dialect'] + FIELDS['main'] \
+                      + FIELDS['phonology'] \
+                      + FIELDS['frequency'] \
+                      + FIELDS['semantics'] \
+                      + ['inWeb', 'isNew', 'creator','creationDate','alternative_id']
+
+    def __init__(self, *args, **kwargs):
+        super(GlossAdminForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = Gloss
+        fields = ['id', 'lemma']
+
+    class Media:
+        css = {
+            'all': ('css/custom_admin.css',)
+        }
+
+    def get_form(self, request, obj=None, **kwargs):
+
+        form = super(GlossAdminForm, self).get_form(request, obj, **kwargs)
+        return form
+
+
 class GlossAdmin(VersionAdmin):
 
-    idgloss_fields = ['lemma']
+    readonly_fields = ['id', 'lemma', 'signlanguage', 'dialect'] + FIELDS['main'] \
+                      + FIELDS['phonology'] \
+                      + FIELDS['frequency'] \
+                      + FIELDS['semantics'] \
+                      + ['inWeb', 'isNew', 'creator','creationDate','alternative_id']
+
+    idgloss_fields = ['id', 'lemma']
+
+    actions = []
+
+    raw_id_fields = ['lemma']
 
     fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('signlanguage', 'dialect')}, ),
                  ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate','alternative_id'),
                                        'classes': ('collapse',)}, ),
                  ('Phonology', {'fields': FIELDS['phonology'], 'classes': ('collapse',)}, ),
                  ('Semantics', {'fields': FIELDS['semantics'], 'classes': ('collapse',)}),
-                 ('Frequency', {'fields': FIELDS['frequency'], 'classes': ('collapse',)}),
-                ('Obsolete Fields', {'fields': ('inittext', ), 'classes': ('collapse',)}),
               )
     save_on_top = True
     save_as = True
 
-    list_display = ['lemma']
+    list_display = ['id', 'lemma', 'inWeb']
 
-    list_display += ['morph', 'sense', 'sn']
-    search_fields = ['^lemma__lemmaidglosstranslation__text', '=sn']
-    list_filter = ['signlanguage', 'dialect', SenseNumberListFilter, 'inWeb', 'domhndsh']
-    inlines = [ RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
+    search_fields = ['^lemma__lemmaidglosstranslation__text', 'id']
+    inlines = [ AnnotationIdglossTranslationInline, RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
 
     history_latest_first = True
 
+
+    model = Gloss
+    form = GlossAdminForm
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def get_form(self, request, obj=None, **kwargs):
+
+        form = super(GlossAdmin, self).get_form(request, obj, **kwargs)
+        return form
+
+    def __init__(self, *args, **kwargs):
+        super(GlossAdmin, self).__init__(*args, **kwargs)
+
+
+class MorphologyDefinitionAdmin(VersionAdmin):
+    model = MorphologyDefinition
+
+    list_display = ['id', 'morpheme', 'parent_gloss_id', 'parent_gloss_translations', 'role']
+    readonly_fields = ['id', 'morpheme', 'role', 'parent_gloss']
+    fields = ['id', 'morpheme', 'parent_gloss', 'role']
+
+    ordering = ['morpheme', 'parent_gloss_id', 'role']
+
+    search_fields = ['^morpheme__lemma__lemmaidglosstranslation__text', '^parent_gloss__lemma__lemmaidglosstranslation__text', 'id']
+
+    raw_id_fields = ['morpheme']
+    extra = 0
+
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+    }
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def parent_gloss_translations(self, obj=None):
+        if obj is None:
+            return ""
+        translations = []
+        count_dataset_languages = obj.parent_gloss.dataset.translation_languages.all().count() if obj.parent_gloss.dataset else 0
+        for translation in obj.parent_gloss.lemma.lemmaidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations)
+
+class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
+    model = MorphologyDefinition
+
+    list_display = ['id', 'morpheme', 'parent_gloss_id', 'parent_gloss_translations', 'role']
+    readonly_fields = ['id', 'morpheme', 'role', 'parent_gloss']
+    fields = ['id', 'morpheme', 'parent_gloss', 'role']
+
+    ordering = ['morpheme', 'parent_gloss_id', 'role']
+
+    search_fields = ['^morpheme__lemma__lemmaidglosstranslation__text', '^parent_gloss__lemma__lemmaidglosstranslation__text', 'id']
+
+    raw_id_fields = ['morpheme']
+    extra = 0
+
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+    }
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def parent_gloss_translations(self, obj=None):
+        if obj is None:
+            return ""
+        translations = []
+        count_dataset_languages = obj.parent_gloss.dataset.translation_languages.all().count() if obj.parent_gloss.dataset else 0
+        for translation in obj.parent_gloss.lemma.lemmaidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations)
 
 class HandshapeAdmin(VersionAdmin):
 
     list_display = ['machine_value', 'english_name', 'dutch_name']
 
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
 class GlossRevisionAdmin(VersionAdmin):
 
     model = GlossRevision
+
+    def has_add_permission(self, request):
+        return False
 
 class RegistrationProfileAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'activation_key_expired', )
@@ -128,13 +425,58 @@ class RegistrationProfileAdmin(admin.ModelAdmin):
 class DialectInline(admin.TabularInline):
     
     model = Dialect
+    fields = ['id', 'signlanguage', 'name', 'description']
+    extra = 0
+
+    class Media:
+        css = {
+            'all': ('css/custom_admin.css',)
+        }
+
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+    }
 
 class DialectAdmin(VersionAdmin):
     model = Dialect
- 
+
+    list_display = ['id', 'signlanguage', 'name', 'description']
+    readonly_fields = ['id', 'signlanguage', 'name']
+    fields = ['id', 'signlanguage', 'name', 'description']
+    list_filter = ['signlanguage']
+
+    raw_id_fields = ['id']
+    extra = 0
+
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+    }
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
 class SignLanguageAdmin(VersionAdmin):
     model = SignLanguage
     inlines = [DialectInline]
+    list_display = ['id', 'name', 'description']
+    readonly_fields = ['id', 'name']
+    fields = ['id', 'name', 'description']
+
+    raw_id_fields = ['id']
+    extra = 0
+
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+    }
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
 # Define an inline admin descriptor for UserProfile model
 # which acts a bit like a singleton
@@ -413,15 +755,140 @@ class FieldChoiceAdmin(VersionAdmin):
         obj.save()
 
 class LanguageAdmin(TranslationAdmin):
-    pass
 
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+class LemmaIdglossAdminForm(forms.ModelForm):
+
+    fields = ['dataset', 'id']
+    readonly_fields = ['id']
+
+    base_fields = []
+
+    lemma_create_field_prefix = 'lemmacreate_'
+
+    class Media:
+        css = {
+            'all': ('css/custom_admin.css',)
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        super(LemmaIdglossAdminForm, self).__init__(*args, **kwargs)
+
+        if self.instance:
+            if self.instance.dataset:
+                dataset_acronym = self.instance.dataset.acronym
+                self.fields['dataset'].initial = dataset_acronym
+                self.fields['dataset'].disabled = True
+                self.fields['dataset'].widget.can_change_related = False
+                self.fields['dataset'].widget.can_add_related = False
+            else:
+                # dataset is not set
+                if self.instance.id:
+                    # if we are editing a lemma without a dataset, do not allow setting the dataset
+                    self.fields['dataset'].disabled = True
+                    self.fields['dataset'].widget.can_change_related = False
+                    self.fields['dataset'].widget.can_add_related = False
+                else:
+                    datasets = Dataset.objects.all()
+                    dataset_choices = [(str(f.id), f.acronym) for f in datasets]
+                    self.fields['dataset'].widget = forms.Select(choices=dataset_choices)
+                    self.fields['dataset'].limit_choices_to = dataset_choices
+                    self.fields['dataset'].widget.can_change_related = False
+                    self.fields['dataset'].widget.can_add_related = False
 
 class LemmaIdglossAdmin(VersionAdmin):
-    pass
+
+    list_display = ['id', 'dataset', 'lemmaidgloss']
+    fields = ['dataset']
+    list_filter = ['dataset']
+
+    search_fields = ['lemmaidglosstranslation__text']
+
+    history_latest_first = True
+
+    actions = []
+
+    inlines = [LemmaIdglossTranslationInline, ]
+
+    model = LemmaIdgloss
+    form = LemmaIdglossAdminForm
+
+    lemma_create_field_prefix = 'lemmacreate_'
+
+    def lemmaidgloss(self, obj=None):
+        if obj is None:
+            return ""
+        translations = []
+        count_dataset_languages = obj.dataset.translation_languages.all().count() if obj.dataset else 0
+        for translation in obj.lemmaidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations)
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def change_view(self, request, object_id, form_url='', extra_content=None):
+        if extra_content is None:
+            extra_content = {}
+        extra_content['title'] = _('Make changes') + ' lemma idgloss ' + str(object_id)
+        view = super(LemmaIdglossAdmin, self).change_view(request, object_id, form_url, extra_content)
+        return view
+
+    def __init__(self, *args, **kwargs):
+        super(LemmaIdglossAdmin, self).__init__(*args, **kwargs)
+
+    def has_add_permission(self, request):
+        return False
 
 class LemmaIdglossTranslationAdmin(VersionAdmin):
-    pass
+    readonly_fields = ['lemma', 'language', 'text']
+    fields = ['lemma', 'language', 'text']
 
+    list_display = ['id', 'lemma', 'language', 'text']
+    list_filter = ['language']
+
+    search_fields = ['text']
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def change_view(self, request, object_id, form_url='', extra_content=None):
+        if extra_content is None:
+            extra_content = {}
+        extra_content['title'] = _('Make changes') + ' lemma idgloss translation ' + str(object_id)
+        view = super(LemmaIdglossTranslationAdmin, self).change_view(request, object_id, form_url, extra_content)
+        return view
+
+    def get_queryset(self, request):
+        qs = super(LemmaIdglossTranslationAdmin, self).get_queryset(request)
+        return qs
+
+    def get_search_results(self, request, queryset, search_term):
+        use_distinct = False
+        if queryset:
+            pass
+        else:
+            queryset = super(LemmaIdglossTranslationAdmin, self).get_queryset(request)
+        new_queryset = queryset.filter(Q(text__iregex=search_term))
+        return (new_queryset, use_distinct)
+
+    def has_add_permission(self, request):
+        return False
 
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
@@ -429,8 +896,8 @@ admin.site.register(Gloss, GlossAdmin)
 admin.site.register(Morpheme, GlossAdmin)
 admin.site.register(Keyword, KeywordAdmin)
 admin.site.register(FieldChoice,FieldChoiceAdmin)
-admin.site.register(MorphologyDefinition)
-admin.site.register(SimultaneousMorphologyDefinition)
+admin.site.register(MorphologyDefinition,MorphologyDefinitionAdmin)
+admin.site.register(SimultaneousMorphologyDefinition, SimultaneousMorphologyDefinitionAdmin)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 admin.site.register(Handshape, HandshapeAdmin)
