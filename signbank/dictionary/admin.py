@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
 from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
-from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
+from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGES
 from modeltranslation.admin import TranslationAdmin
 from guardian.admin import GuardedModelAdmin
 from django.contrib.auth import get_permission_codename
@@ -152,7 +152,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
         show_english_only = True
         list_display = ['name', 'machine_value','field']
     else:
-        list_display = ['name', 'name_nl', 'dutch_name', 'machine_value', 'field']
+        list_display = ['name'] \
+                       + ['name_'+ language.replace('-', '_') for language in [l[0] for l in LANGUAGES]] \
+                       + ['machine_value', 'field']
         show_english_only = False
     list_filter = ['field']
 
