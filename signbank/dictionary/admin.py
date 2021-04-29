@@ -41,7 +41,6 @@ class TranslationInline(admin.TabularInline):
     readonly_fields = ['id', 'language', 'translation', 'index']
     list_display = ['id', 'language', 'translation', 'index']
     fields = ['id', 'language', 'translation', 'index']
-    raw_id_fields = ['id']
     extra = 0
 
 class RelationToForeignSignInline(admin.TabularInline):
@@ -49,7 +48,6 @@ class RelationToForeignSignInline(admin.TabularInline):
     readonly_fields = ['id', 'loan', 'other_lang', 'other_lang_gloss']
     list_display = ['id', 'loan', 'other_lang', 'other_lang_gloss']
     fields = ['id', 'loan', 'other_lang', 'other_lang_gloss']
-    raw_id_fields = ['id']
     extra = 0
 
 class DefinitionInline(admin.TabularInline):
@@ -57,7 +55,6 @@ class DefinitionInline(admin.TabularInline):
     readonly_fields = ['id', 'text', 'note', 'count', 'published']
     list_display = ['id', 'text', 'note', 'count', 'published', 'sction_checkbox']
     fields = ['id', 'text', 'note', 'count', 'published']
-    raw_id_fields = ['id']
     fk_name = 'gloss'
     extra = 0
 
@@ -90,7 +87,7 @@ class RelationInline(admin.TabularInline):
     model = Relation
     readonly_fields = ['id', 'role', 'target']
     fk_name = 'source' 
-    raw_id_fields = ['id', 'target']
+    raw_id_fields = ['target']
     fields = ['id', 'role', 'target']
     verbose_name_plural = "Relations to other Glosses"
     extra = 0
@@ -100,7 +97,6 @@ class OtherMediaInline(admin.TabularInline):
     readonly_fields = ['id', 'path', 'type', 'alternative_gloss']
     list_display = ['id', 'path', 'type', 'alternative_gloss']
     fields = ['id', 'path', 'type', 'alternative_gloss']
-    raw_id_fields = ['id']
     extra = 0
 
 class AnnotationIdglossTranslationInline(admin.TabularInline):
@@ -110,7 +106,6 @@ class AnnotationIdglossTranslationInline(admin.TabularInline):
     readonly_fields = ['id', 'language', 'text']
     fields = ['id', 'language', 'text']
 
-    raw_id_fields = ['id']
     extra = 0
 
 class LemmaIdglossTranslationForm(forms.ModelForm):
@@ -151,8 +146,6 @@ class LemmaIdglossTranslationInline(admin.TabularInline):
 
     list_display = ['id', 'language', 'text']
     fields = ['id', 'lemma', 'language', 'text']
-
-    raw_id_fields = ['id']
 
     form = LemmaIdglossTranslationForm
 
@@ -215,7 +208,6 @@ class LanguageInline(admin.TabularInline):
     readonly_fields = ['id', 'name', 'description']
     fields = ['id', 'name', 'description']
 
-    raw_id_fields = ['id']
     extra = 0
 
 from django.utils.translation import ugettext_lazy as _
@@ -445,7 +437,6 @@ class DialectAdmin(VersionAdmin):
     fields = ['id', 'signlanguage', 'name', 'description']
     list_filter = ['signlanguage']
 
-    raw_id_fields = ['id']
     extra = 0
 
     formfield_overrides = {
@@ -465,7 +456,6 @@ class SignLanguageAdmin(VersionAdmin):
     readonly_fields = ['id', 'name']
     fields = ['id', 'name', 'description']
 
-    raw_id_fields = ['id']
     extra = 0
 
     formfield_overrides = {
