@@ -1,0 +1,18 @@
+.inline-group .tabular tr.has_original td {
+    padding-top: 0px;
+}
+
+.original {
+    display: none;
+}
+
+.delete {
+    text-indent: 10px;
+}
+
+input[type="checkbox"] {
+    outline-style: solid;
+    outline-color: black;
+    outline-width: 1px;
+}
+
