@@ -11,6 +11,12 @@
     var url = '{{URL}}{{PREFIX_URL}}';
     var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 
+    {% if request and request.session and request.session.requested_datasets %}
+    var chosen_datasets = {{ request.session.requested_datasets|safe }};
+    {% else %}
+    var chosen_datasets = [];
+    {% endif %}
+
      $(document).ready(function(){
 
          $('#id_dataset').attr('multiple','multiple');
@@ -22,8 +28,11 @@
             dropdownAutoWidth: true,
             width: 'resolve'
          });
-         $('#id_dataset').val(null).trigger('change');
-
+         if (chosen_datasets) {
+            $('#id_dataset').val(chosen_datasets).trigger('change');
+         } else {
+            $('#id_dataset').val(null).trigger('change');
+         };
          $('#id_motivation').attr('name','motivation_for_use');
          $('#id_motivation').attr('required',"");
          $('#id_motivation').val(null).trigger('change');

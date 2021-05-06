@@ -106,4 +106,17 @@
             <td class='edit edit_area' id='reference' name='reference'
                 placeholder='{% trans "Reference" %}' value="{{datasetform.reference.value|default:''}}">{{dataset.reference}}</td></tr>
     </table>
+
+    <div>
+        {% if dataset.is_public and user.is_anonymous %}
+        <br/>
+        <h4>{% trans "To view this dataset, please create an account or login." %}</h4>
+        <form name='reuqest_access_form' id='reuqest_access_form' method='get'>
+            <div class="hidden">
+                <input name='request_access' id='request_access' class='form-control' value='{{dataset.acronym}}' >
+            </div>
+            <button class='btn btn-primary navbar-btn' type='submit'>{% trans "Request Access" %}</button>
+        </form>
+        {% endif %}
+    </div>
 {% endblock %}

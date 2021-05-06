@@ -164,7 +164,8 @@ def register(request, success_url=settings.URL + settings.PREFIX_URL + '/account
             # create a new empty form, this deletes the erroneous fields
             # form = form_class()
     else:
-        form = form_class()
+        # this insures that a preselected dataset is available if we got here from Dataset Detail view
+        form = form_class(request=request)
     return render(request,template_name,{ 'form': form })
 
 # a copy of the login view since we need to change the form to allow longer
