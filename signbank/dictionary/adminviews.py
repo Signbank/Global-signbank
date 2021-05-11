@@ -5809,34 +5809,52 @@ class LemmaListView(ListView):
 
         get = self.request.GET
 
-        #First check whether we want to show everything or a subset
-        try:
-            if self.kwargs['show_all']:
-                show_all = True
-        except (KeyError,TypeError):
-            show_all = False
+        queryset = super(LemmaListView, self).get_queryset()
 
-        queryset = LemmaIdgloss.objects.all()
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         qs = queryset.filter(dataset__in=selected_datasets)
 
-        if show_all:
-            return qs.annotate(num_gloss=Count('gloss'))
-        else:
-            # There are only Lemma ID Gloss fields
-            for get_key, get_value in get.items():
-                if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
-                    language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
-                    language = Language.objects.filter(language_code_2char=language_code_2char)
-                    qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
-                                   lemmaidglosstranslation__language=language)
+        if len(get) == 0:
+            # show all if there are no query parameters
+            return qs
 
-        return qs.annotate(num_gloss=Count('gloss'))
+        # There are only Lemma ID Gloss fields
+        for get_key, get_value in get.items():
+            if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
+                language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
+                               lemmaidglosstranslation__language=language)
+
+        return qs
+
+    def get_annotated_queryset(self, **kwargs):
+        # this method adds a gloss count column to the results for display
+        get = self.request.GET
+
+        qs = self.get_queryset()
+
+        if len(get) == 0:
+            return qs.annotate(num_gloss=Count('gloss'))
+
+        only_show_no_glosses = False
+        only_show_has_glosses = False
+
+        for get_key, get_value in get.items():
+            if get_key == 'no_glosses' and get_value == '1':
+                only_show_no_glosses = True
+            if get_key == 'has_glosses' and get_value == '1':
+                only_show_has_glosses = True
+
+        results = qs.annotate(num_gloss=Count('gloss'))
+        if only_show_no_glosses and not only_show_has_glosses:
+            results = results.filter(num_gloss=0)
+        elif only_show_has_glosses and not only_show_no_glosses:
+            results = results.filter(num_gloss__gt=0)
+        return results
 
     def get_context_data(self, **kwargs):
-
         context = super(LemmaListView, self).get_context_data(**kwargs)
-
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -5853,12 +5871,14 @@ class LemmaListView(ListView):
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
+        context['search_results'] = self.get_annotated_queryset()
         context['lemma_count'] = LemmaIdgloss.objects.filter(dataset__in=selected_datasets).count()
+
+        context['search_matches'] = context['search_results'].count()
 
         search_form = LemmaSearchForm(self.request.GET, languages=dataset_languages, language_code=self.request.LANGUAGE_CODE)
 
         context['searchform'] = search_form
-
         context['search_type'] = 'lemma'
 
         list_of_objects = self.object_list
@@ -5889,8 +5909,7 @@ class LemmaListView(ListView):
 
         return context
 
-    def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
+    def render_to_response(self, context, **kwargs):
         if self.request.GET.get('format') == 'CSV':
             return self.render_to_csv_response(context)
         else:
@@ -5901,10 +5920,6 @@ class LemmaListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export-lemmas.csv"'
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
         lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
@@ -5912,23 +5927,17 @@ class LemmaListView(ListView):
         lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                           for language in dataset_languages]
 
-        writer = csv.writer(response)
-
-        with override(LANGUAGE_CODE):
-            header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields
-
-        writer.writerow(header)
-        queryset = self.get_queryset()
+        rows = []
+        queryset = self.get_annotated_queryset()
         for lemma in queryset:
             row = [str(lemma.pk), lemma.dataset.acronym]
-
             for language in dataset_languages:
                 lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
                 if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
                     row.append(lemmaidglosstranslations[0].text)
                 else:
                     row.append("")
-
+            row.append(str(lemma.num_gloss))
             #Make it safe for weird chars
             safe_row = []
             for column in row:
@@ -5936,10 +5945,46 @@ class LemmaListView(ListView):
                     safe_row.append(column.encode('utf-8').decode())
                 except AttributeError:
                     safe_row.append(None)
+            rows.append(safe_row)
 
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="dictionary-export-lemmas.csv"'
+
+        writer = csv.writer(response)
+
+        with override(LANGUAGE_CODE):
+            header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields + ['Number of glosses']
+
+        writer.writerow(header)
+
+        for row in rows:
             writer.writerow(row)
 
         return response
+
+    def post(self, request, *args, **kwargs):
+        # this method deletes lemmas in the query that have no glosses
+        # plus their dependent translations
+        get = self.request.POST
+        # nothing is done with the post parameters
+        if not self.request.user.is_authenticated():
+            # this code should not be reached
+            messages.add_message(self.request, messages.ERROR, ('You must be logged in to use this functionality.'))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+        if not self.request.user.has_perm('dictionary.delete_lemmaidgloss'):
+            # the button should not have been displayed in the template
+            messages.add_message(self.request, messages.ERROR, ('No permission to delete lemmas.'))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+        queryset = self.get_annotated_queryset()
+        for lemma in queryset:
+            if lemma.num_gloss == 0:
+                lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
+                for trans in lemma_translation_objects:
+                    trans.delete()
+                lemma.delete()
+        return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+
 
 class LemmaCreateView(CreateView):
     model = LemmaIdgloss
@@ -5963,7 +6008,6 @@ class LemmaCreateView(CreateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        print(request.POST)
         dataset = None
         if 'dataset' in request.POST and request.POST['dataset'] is not None:
             dataset = Dataset.objects.get(pk=request.POST['dataset'])
@@ -6067,36 +6111,20 @@ class LemmaUpdateView(UpdateView):
     search_type = 'lemma'
 
     def get_context_data(self, **kwargs):
-        # print('get context lemma update view')
         context = super(LemmaUpdateView, self).get_context_data(**kwargs)
 
         if 'search_results' in self.request.session.keys():
             search_results = self.request.session['search_results']
-            # print('search results: ', search_results)
         else:
             search_results = []
         if search_results and len(search_results) > 0:
             if not self.request.session['search_results'][0]['href_type'] == 'lemma/update':
-                print('not lemma type')
                 self.request.session['search_results'] = None
         if 'search_type' in self.request.session.keys():
             if not self.request.session['search_type'] == 'lemma':
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
         self.request.session['search_type'] = self.search_type
-
-        # if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
-        #     # there are no handshapes in the scrollbar, put some there
-        #
-        #     queryset = LemmaIdgloss.objects.all()
-        #     selected_datasets = get_selected_datasets_for_user(self.request.user)
-        #     qs = queryset.filter(dataset__in=selected_datasets)
-        #
-        #     from signbank.tools import convert_language_code_to_language_minus_locale
-        #     lang_attr_name = convert_language_code_to_language_minus_locale(
-        #         settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
-        #     items = construct_scrollbar(qs, self.search_type, lang_attr_name)
-        #     self.request.session['search_results'] = items
 
         context['active_id'] = self.object.pk
 
@@ -6120,8 +6148,13 @@ class LemmaUpdateView(UpdateView):
                 m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
                 gloss_id_pattern = m.group(1)
                 self.gloss_id = gloss_id_pattern
-            except:
+            except Exception as e:
+                # it is unknown what gloss we were looking at, something went wrong with pattern matching on the url
+                print(e)
                 print('LemmaUpdateView get_context_data gloss id match failed: ', path_parms[0])
+                # restore callback to lemma list
+                context['caller'] = 'lemma_list'
+                self.gloss_found = False
         else:
             context['caller'] = 'lemma_list'
         # These are needed for return to the Gloss Detail View
@@ -6155,7 +6188,6 @@ class LemmaUpdateView(UpdateView):
             lemma_group_list.append((lemma, annotation_idgloss))
         context['lemma_group_count'] = lemma_group_count
         context['lemma_group_list'] = lemma_group_list
-        # print('lemma group: ', lemma_group_list)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -6204,7 +6236,8 @@ class LemmaUpdateView(UpdateView):
                 form.save()
                 messages.add_message(request, messages.INFO, _("The changes to the lemma have been saved."))
 
-            except:
+            except Exception as e:
+                print(e)
                 # a specific message is put into the messages frmaework rather than the message caught in the exception
                 # if it's not done this way, it gives a runtime error
                 if self.page_in_lemma_list:
@@ -6223,7 +6256,6 @@ class LemmaUpdateView(UpdateView):
                 return HttpResponseRedirect(self.success_url)
 
         else:
-            print('form not valid')
             return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
 
     def get(self, request, *args, **kwargs):
@@ -6243,7 +6275,8 @@ class LemmaUpdateView(UpdateView):
 
         try:
             dataset_of_requested_lemma = self.object.dataset
-        except:
+        except Exception as e:
+            print(e)
             print('Requested lemma has no dataset: ', self.object.pk)
             dataset_of_requested_lemma = default_dataset
 
