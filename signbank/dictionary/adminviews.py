@@ -2773,16 +2773,30 @@ class MinimalPairsListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
+        # this ends up being English for Global Signbank
+        language_code = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+
+        rows = write_csv_for_minimalpairs(self, language_code=language_code)
+
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="dictionary-export-minimalpairs.csv"'
 
-        # this ends up being English for Global Signbank
-        language_code = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+        import csv
+        csvwriter = csv.writer(response)
 
-        writer = csv.writer(response)
+        # write the actual file
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            header = ['Dataset', 'Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
+                      'Contrasting Sign Value']
+        else:
+            header = ['Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
+                      'Contrasting Sign Value']
 
-        writer = write_csv_for_minimalpairs(self, writer, language_code=language_code)
+        csvwriter.writerow(header)
+
+        for row in rows:
+            csvwriter.writerow(row)
 
         return response
 
