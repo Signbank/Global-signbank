@@ -5823,9 +5823,8 @@ class LemmaListView(ListView):
             if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
-                qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
+                qs = qs.filter(lemmaidglosstranslation__text__iregex=get_value,
                                lemmaidglosstranslation__language=language)
-
         return qs
 
     def get_annotated_queryset(self, **kwargs):
