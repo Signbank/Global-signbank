@@ -5966,16 +5966,16 @@ class LemmaListView(ListView):
     def post(self, request, *args, **kwargs):
         # this method deletes lemmas in the query that have no glosses
         # plus their dependent translations
-        get = self.request.POST
-        # nothing is done with the post parameters
         if not self.request.user.is_authenticated():
             # this code should not be reached
-            messages.add_message(self.request, messages.ERROR, ('You must be logged in to use this functionality.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+            raise PermissionDenied
         if not self.request.user.has_perm('dictionary.delete_lemmaidgloss'):
             # the button should not have been displayed in the template
-            messages.add_message(self.request, messages.ERROR, ('No permission to delete lemmas.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+            raise PermissionDenied
+        delete_lemmas_confirmed = self.request.POST.get('delete_lemmas', 'false')
+        if delete_lemmas_confirmed != 'delete_lemmas':
+            # the template sets POST value 'delete_lemmas' to value 'delete_lemmas'
+            raise PermissionDenied
         queryset = self.get_annotated_queryset()
         for lemma in queryset:
             if lemma.num_gloss == 0:
