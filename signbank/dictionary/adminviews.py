@@ -516,7 +516,7 @@ class GlossListView(ListView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
@@ -524,13 +524,13 @@ class GlossListView(ListView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         try:
             dataset_object = Dataset.objects.get(name=self.dataset_name)
         except:
-            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            messages.add_message(self.request, messages.ERROR, _('No dataset with name '+self.dataset_name+' found.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # make sure the user can write to this dataset
@@ -540,7 +540,7 @@ class GlossListView(ListView):
         if user_change_datasets and dataset_object in user_change_datasets:
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
+            messages.add_message(self.request, messages.ERROR, _('No permission to export dataset.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # if we get to here, the user is authenticated and has permission to export the dataset
@@ -561,10 +561,6 @@ class GlossListView(ListView):
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="dictionary-export.csv"'
-
-
-#        fields = [f.name for f in Gloss._meta.fields]
-        #We want to manually set which fields to export here
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
 
@@ -862,8 +858,6 @@ class GlossListView(ListView):
         if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']
             qs = qs.filter(translation__translation__text__iregex=val)
-
-        # NULLBOOLEANCHOICES = [(0, '---------'), (1, 'Unknown'), (2, 'True'), (3, 'False')]
 
         if 'inWeb' in get and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
@@ -3806,7 +3800,7 @@ class DatasetListView(ListView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
@@ -3814,7 +3808,7 @@ class DatasetListView(ListView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         try:
@@ -3831,7 +3825,7 @@ class DatasetListView(ListView):
             pass
         else:
             # this should not happen from the html page. the check is made to catch a user adding a parameter to the url
-            messages.add_message(self.request, messages.INFO, ('You can already view this dataset.'))
+            messages.add_message(self.request, messages.INFO, _('You can already view this dataset.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         motivation = ''
@@ -3887,7 +3881,7 @@ class DatasetListView(ListView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
@@ -3895,7 +3889,7 @@ class DatasetListView(ListView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         try:
@@ -3910,7 +3904,7 @@ class DatasetListView(ListView):
         if user_change_datasets and dataset_object in user_change_datasets:
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
+            messages.add_message(self.request, messages.ERROR, _('No permission to export dataset.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         # make sure the dataset is non-empty, don't create an empty ecv file
@@ -4019,7 +4013,7 @@ class DatasetManagerView(ListView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         # check if the user can manage this dataset
@@ -4028,13 +4022,13 @@ class DatasetManagerView(ListView):
         try:
             group_manager = Group.objects.get(name='Dataset_Manager')
         except:
-            messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+            messages.add_message(self.request, messages.ERROR, _('No group Dataset_Manager found.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         groups_of_user = self.request.user.groups.all()
         if not group_manager in groups_of_user:
             messages.add_message(self.request, messages.ERROR,
-                                 ('You must be in group Dataset Manager to modify dataset permissions.'))
+                                 _('You must be in group Dataset Manager to modify dataset permissions.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         # make sure the user can write to this dataset
@@ -4044,7 +4038,7 @@ class DatasetManagerView(ListView):
         if user_change_datasets and dataset_object in user_change_datasets:
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('No permission to modify dataset permissions.'))
+            messages.add_message(self.request, messages.ERROR, _('No permission to modify dataset permissions.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         # Everything is alright
@@ -4060,7 +4054,7 @@ class DatasetManagerView(ListView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return None, HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         try:
@@ -4285,7 +4279,7 @@ class DatasetManagerView(ListView):
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
         # the code doesn't seem to get here. if somebody puts something else in the url (else case), there is no (hidden) csrf token.
-        messages.add_message(self.request, messages.ERROR, ('Unrecognised argument to dataset manager url.'))
+        messages.add_message(self.request, messages.ERROR, _('Unrecognised argument to dataset manager url.'))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     def render_to_csv_response(self):
@@ -4382,12 +4376,12 @@ class DatasetManagerView(ListView):
             try:
                 group_manager = Group.objects.get(name='Dataset_Manager')
             except:
-                messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+                messages.add_message(self.request, messages.ERROR, _('No group Dataset_Manager found.'))
                 return None
 
             groups_of_user = self.request.user.groups.all()
             if not group_manager in groups_of_user:
-                messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset_Manager to use the requested functionality.'))
+                messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
             from django.db.models import Prefetch
@@ -4498,7 +4492,7 @@ class DatasetDetailView(DetailView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # check if the user can manage this dataset
@@ -4507,12 +4501,12 @@ class DatasetDetailView(DetailView):
         try:
             group_manager = Group.objects.get(name='Dataset_Manager')
         except:
-            messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+            messages.add_message(self.request, messages.ERROR, _('No group Dataset_Manager found.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         groups_of_user = self.request.user.groups.all()
         if not group_manager in groups_of_user:
-            messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset Manager to modify dataset permissions.'))
+            messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset Manager to modify dataset permissions.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
@@ -4520,7 +4514,7 @@ class DatasetDetailView(DetailView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         try:
@@ -4533,7 +4527,7 @@ class DatasetDetailView(DetailView):
         if 'username' in get:
             username = get['username']
         if username == '':
-            messages.add_message(self.request, messages.ERROR, ('Username must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Username must be non-empty.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         try:
@@ -4678,12 +4672,12 @@ class DatasetFieldChoiceView(ListView):
             try:
                 group_manager = Group.objects.get(name='Dataset_Manager')
             except:
-                messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+                messages.add_message(self.request, messages.ERROR, _('No group Dataset_Manager found.'))
                 return None
 
             groups_of_user = self.request.user.groups.all()
             if not group_manager in groups_of_user:
-                messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset_Manager to use the requested functionality.'))
+                messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
             from django.db.models import Prefetch
@@ -4705,7 +4699,7 @@ class DatasetFieldChoiceView(ListView):
             return qs
         else:
             # User is not authenticated
-            messages.add_message(self.request, messages.ERROR, ('Please login to use the requested functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use the requested functionality.'))
             return None
 
 class FieldChoiceView(ListView):
@@ -4849,11 +4843,11 @@ class FieldChoiceView(ListView):
             else:
                 # User is not authenticated
                 messages.add_message(self.request, messages.ERROR,
-                                     ('You must be superuser to use the requested functionality.'))
+                                     _('You must be superuser to use the requested functionality.'))
                 return None
         else:
             # User is not authenticated
-            messages.add_message(self.request, messages.ERROR, ('Please login to use the requested functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use the requested functionality.'))
             return None
 
 def order_handshape_queryset_by_sort_order(get, qs):
@@ -5410,7 +5404,7 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
     if request.user.is_authenticated():
         pass
     else:
-        messages.add_message(request, messages.ERROR, ('Please login to use this functionality.'))
+        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
     # the following code allows for specifying a language for the dataset in the add_gloss.html template
@@ -5965,17 +5959,27 @@ class LemmaListView(ListView):
     def post(self, request, *args, **kwargs):
         # this method deletes lemmas in the query that have no glosses
         # plus their dependent translations
-        if not self.request.user.is_authenticated():
-            # this code should not be reached
-            raise PermissionDenied
         if not self.request.user.has_perm('dictionary.delete_lemmaidgloss'):
-            # the button should not have been displayed in the template
-            raise PermissionDenied
+            messages.add_message(request, messages.WARNING, _("You have no permission to delete lemmas."))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
         delete_lemmas_confirmed = self.request.POST.get('delete_lemmas', 'false')
         if delete_lemmas_confirmed != 'delete_lemmas':
             # the template sets POST value 'delete_lemmas' to value 'delete_lemmas'
-            raise PermissionDenied
+            messages.add_message(request, messages.WARNING, _("Incorrect deletion code."))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+        datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
         queryset = self.get_annotated_queryset()
+        # check permissions, if fails, do nothing and show error message
+        for lemma in queryset:
+            if lemma.num_gloss == 0:
+                # the get_annotated_queryset which in turn calls get_queryset has already filtered on lemma's in the selected dataset
+                dataset_of_requested_lemma = lemma.dataset
+                if dataset_of_requested_lemma not in datasets_user_can_change:
+                    messages.add_message(request, messages.WARNING,
+                                         _("You do not have change permission on the dataset of the lemma you are atteempting to delete."))
+                    return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
         for lemma in queryset:
             if lemma.num_gloss == 0:
                 lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()

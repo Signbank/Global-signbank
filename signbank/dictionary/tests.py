@@ -1368,6 +1368,131 @@ class ManageDatasetTests(TestCase):
         self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
                                                             language.name, self.test_dataset.acronym))
 
+class LemmaTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        assign_perm('dictionary.search_gloss', self.user)
+        self.user.save()
+
+        #Create the glosses
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        default_language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="lemma_with_gloss",
+                                                              lemma=new_lemma, language=default_language)
+        new_lemmaidglosstranslation.save()
+
+
+        # Create a second lemma
+        new_lemma2 = LemmaIdgloss(dataset=test_dataset)
+        new_lemma2.save()
+
+        # Create a lemma idgloss translation
+        new_lemmaidglosstranslation2 = LemmaIdglossTranslation(text="lemma_without_gloss",
+                                                              lemma=new_lemma2, language=default_language)
+        new_lemmaidglosstranslation2.save()
+
+        # Create a second lemma
+        new_lemma3 = LemmaIdgloss(dataset=test_dataset)
+        new_lemma3.save()
+
+        # Create a lemma idgloss translation
+        new_lemmaidglosstranslation3 = LemmaIdglossTranslation(text="lemma_that_does_not_match",
+                                                              lemma=new_lemma3, language=default_language)
+        new_lemmaidglosstranslation3.save()
+
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # make some annotations for the new gloss
+        test_annotation_translation_index = '1'
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporarytestgloss' + test_annotation_translation_index
+            annotationIdgloss.save()
+
+    def test_QueryLemmasWithoutGlosses(self):
+        all_glosses = Gloss.objects.all()
+        print('LemmaTests glosses: ', all_glosses)
+
+        all_lemmas = LemmaIdgloss.objects.all()
+        print('LemmaTests lemmas: ', all_lemmas)
+
+        all_lemma_translations = LemmaIdglossTranslation.objects.all()
+        print('LemmaTests translations: ', all_lemma_translations)
+
+        client = Client(enforce_csrf_checks=False)
+        client.login(username='test-user', password='test-user')
+
+        #Get a dataset
+        dataset_name = settings.DEFAULT_DATASET
+
+        # Give the test user permission to change a dataset
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        self.user.save()
+
+        # search for the lemma without glosses: test_lemma_without_gloss
+        response = client.get('/dictionary/lemma/?lemma_en=without', follow=True)
+        self.assertEqual(len(response.context['search_results']), 1)
+
+        #Search lemmas with no glosses (no_glosses=1 is set to true aka 1), there are 2
+        response = client.get('/dictionary/lemma/?no_glosses=1', follow=True)
+        self.assertEqual(len(response.context['search_results']), 2)
+
+        #Search lemmas that have glosses, there is only one
+        response = client.get('/dictionary/lemma/?has_glosses=1', follow=True)
+        self.assertEqual(len(response.context['search_results']), 1)
+
+        response = client.post('/dictionary/lemma/', {'delete_lemmas': 'confirmed'}, follow=True)
+
+        self.assertContains(response, 'You have no permission to delete lemmas.')
+
+        assign_perm('dictionary.delete_lemmaidgloss', self.user)
+        self.user.save()
+
+        response = client.post('/dictionary/lemma/', {'delete_lemmas': 'confirmed'}, follow=True)
+        self.assertContains(response, 'Incorrect deletion code.')
+
+        response = client.post('/dictionary/lemma/', {'delete_lemmas': 'delete_lemmas'}, follow=True)
+        self.assertContains(response, 'You do not have change permission on the dataset of the lemma you are atteempting to delete.')
+
+        assign_perm('change_dataset', self.user, test_dataset)
+        self.user.save()
+
+        response = client.post('/dictionary/lemma/?lemma_en=without', {'delete_lemmas': 'delete_lemmas'}, follow=True)
+        self.assertEqual(response.status_code,200)
+
+        response = client.get('/dictionary/lemma/?lemma_en=without', follow=True)
+        self.assertEqual(len(response.context['search_results']), 0)
+
+        response = client.get('/dictionary/lemma/?lemma_en=does_not_match', follow=True)
+        self.assertEqual(len(response.context['search_results']), 1)
+
+        # delete the remaining lemma without glosses
+        response = client.post('/dictionary/lemma/', {'delete_lemmas': 'delete_lemmas'}, follow=True)
+        self.assertEqual(response.status_code,200)
+
+        response = client.get('/dictionary/lemma/?no_glosses=1', follow=True)
+        self.assertEqual(len(response.context['search_results']), 0)
+
+        all_lemmas = LemmaIdgloss.objects.all()
+        print('LemmaTests lemmas after delete: ', all_lemmas)
+
+        all_lemma_translations = LemmaIdglossTranslation.objects.all()
+        print('LemmaTests translations after delete: ', all_lemma_translations)
 
 class HandshapeTests(TestCase):
 
