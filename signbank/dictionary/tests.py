@@ -1390,18 +1390,14 @@ class HandshapeTests(TestCase):
 
             # create two arbitrary new Handshapes
 
-            self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1',
-                                                                                    dutch_name='thisisatemporarytesthandshape1',
-                                                                                    chinese_name='thisisatemporarytesthandshape1')
+            self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1')
             self.test_handshape1.save()
 
-            self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2',
-                                                                                    dutch_name='thisisatemporarytesthandshape2',
-                                                                                    chinese_name='thisisatemporarytesthandshape2')
+            self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2')
             self.test_handshape2.save()
 
-            print('New handshape ', self.test_handshape1.machine_value, ' created: ', self.test_handshape1.name, self.test_handshape1.dutch_name)
-            print('New handshape ', self.test_handshape2.machine_value, ' created: ', self.test_handshape2.name, self.test_handshape2.dutch_name)
+            print('New handshape ', self.test_handshape1.machine_value, ' created: ', self.test_handshape1.name)
+            print('New handshape ', self.test_handshape2.machine_value, ' created: ', self.test_handshape2.name)
 
     def create_handshape(self):
 
@@ -1410,12 +1406,11 @@ class HandshapeTests(TestCase):
         print('max_used_machine_value: ', max_used_machine_value)
         new_machine_value = max_used_machine_value + 1
         new_name = 'thisisanewtesthandshape_en'
-        new_dutch_name = 'thisisanewtesthandshape_nl'
 
-        new_handshape = Handshape(machine_value=new_machine_value, name=new_name, dutch_name=new_dutch_name)
+        new_handshape = Handshape(machine_value=new_machine_value, name=new_name)
         new_handshape.save()
 
-        print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.name, new_handshape.dutch_name)
+        print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.name)
 
         return new_handshape
 
@@ -1438,15 +1433,6 @@ class HandshapeTests(TestCase):
             self.client.session['datasetid'] = test_dataset.pk
             self.client.session['search_results'] = None
             self.client.session.save()
-
-            # new_machine_value = 588
-            # new_name = 'thisisanewtesthandshape_en'
-            # new_dutch_name = 'thisisanewtesthandshape_nl'
-            #
-            # new_handshape = Handshape(machine_value=new_machine_value, name=new_name, dutch_name=new_dutch_name)
-            # new_handshape.save()
-            #
-            # print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.name, new_handshape.dutch_name)
 
             new_handshape = self.create_handshape()
             #We can now request a detail view
@@ -1617,8 +1603,7 @@ class FieldChoiceTests(TestCase):
         fields_with_choices_handshapes = fields_with_choices_handshapes()
 
         #Create the handshape
-        new_handshape = Handshape(name="thisisatemporarytesthandshape",
-                                  dutch_name="thisisatemporarytesthandshape", chinese_name="thisisatemporarytesthandshape")
+        new_handshape = Handshape(name="thisisatemporarytesthandshape")
         new_handshape.save()
 
         new_handshape.machine_value = new_handshape.pk
@@ -1644,7 +1629,7 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 for fieldname in fields_with_choices_handshapes[fieldchoice]:
-                    setattr(new_handshape, fieldname, field_choice_in_use.machine_value)
+                    setattr(new_handshape, fieldname, field_choice_in_use)
                 # for FingerSelection, set the Boolean fields of the fingers
                 if fieldchoice == 'FingerSelection':
                     new_handshape.set_fingerSelection_display()
@@ -2016,14 +2001,10 @@ class testFrequencyAnalysis(TestCase):
 
         # create two arbitrary new Handshapes
 
-        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1',
-                                                                                dutch_name='thisisatemporarytesthandshape1',
-                                                                                chinese_name='thisisatemporarytesthandshape1')
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1')
         self.test_handshape1.save()
 
-        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2',
-                                                                                dutch_name='thisisatemporarytesthandshape2',
-                                                                                chinese_name='thisisatemporarytesthandshape2')
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2')
         self.test_handshape2.save()
 
     def test_analysis_frequency(self):
@@ -2364,9 +2345,7 @@ class RevisionHistoryTests(TestCase):
                 new_human_value = 'fieldchoice_' + fc_category + '_500'
                 this_field_choice = FieldChoice(machine_value=new_machine_value,
                                                 field=fc_category,
-                                                name=new_human_value,
-                                                dutch_name=new_human_value,
-                                                chinese_name=new_human_value)
+                                                name=new_human_value)
                 this_field_choice.save()
 
         for f in gloss_fields:
@@ -2468,14 +2447,10 @@ class MinimalPairsTests(TestCase):
 
         # create two arbitrary new Handshapes
 
-        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1',
-                                                                                dutch_name='thisisatemporarytesthandshape1',
-                                                                                chinese_name='thisisatemporarytesthandshape1')
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1')
         self.test_handshape1.save()
 
-        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2',
-                                                                                dutch_name='thisisatemporarytesthandshape2',
-                                                                                chinese_name='thisisatemporarytesthandshape2')
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2')
         self.test_handshape2.save()
 
     def test_analysis_minimalpairs(self):
