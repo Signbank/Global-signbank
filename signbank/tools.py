@@ -326,7 +326,6 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
     note_reverse_translation = {}
     for nrc in note_role_choices:
         note_reverse_translation[nrc.name] = nrc.machine_value
-        note_reverse_translation[nrc.dutch_name] = nrc.machine_value
         # probably not a good idea because of character set
         # note_reverse_translation[nrc.chinese_name] = nrc.id
     note_translations = {}
