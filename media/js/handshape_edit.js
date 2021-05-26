@@ -30,8 +30,6 @@ var original_values_for_changes_made = new Array();
 		rewind();
 	});
 
-    handshapetypeahead($('.handshapetypeahead'));
-
     // setup requried for Ajax POST
     function csrfSafeMethod(method) {
         // these HTTP methods do not require CSRF protection
@@ -233,42 +231,6 @@ function update_view_and_remember_original_value(change_summary)
         }
     }
 }
-
-var handshape_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/handshape/%QUERY'
-    });
-
-handshape_bloodhound.initialize();
-
-function handshapetypeahead(target) {
-
-     $(target).typeahead(null, {
-          name: 'dutch_name',
-          displayKey: 'machine_value',
-          source: handshape_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(handshape) {
-                  return("<p><strong>" + handshape.dutch_name +  "</strong></p>");
-              }
-          }
-      });
-};
-
-
-$.editable.addInputType('handshapetypeahead', {
-
-   element: function(settings, original) {
-      var input = $('<input type="text" class="handshapetypeahead">');
-      $(this).append(input);
-
-      handshapetypeahead(input);
-
-      return (input);
-   },
-});
-
 
 /*
  * http://stackoverflow.com/questions/1597756/is-there-a-jquery-jeditable-multi-select-plugin
