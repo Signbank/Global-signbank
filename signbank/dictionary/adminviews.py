@@ -5828,7 +5828,9 @@ class LemmaListView(ListView):
         qs = self.get_queryset()
 
         if len(get) == 0:
-            return qs.annotate(num_gloss=Count('gloss'))
+            results = qs.annotate(num_gloss=Count('gloss'))
+            num_gloss_zero_matches = results.filter(num_gloss=0).count()
+            return (results, num_gloss_zero_matches)
 
         only_show_no_glosses = False
         only_show_has_glosses = False
@@ -5842,9 +5844,13 @@ class LemmaListView(ListView):
         results = qs.annotate(num_gloss=Count('gloss'))
         if only_show_no_glosses and not only_show_has_glosses:
             results = results.filter(num_gloss=0)
+            num_gloss_zero_matches = results.count()
         elif only_show_has_glosses and not only_show_no_glosses:
             results = results.filter(num_gloss__gt=0)
-        return results
+            num_gloss_zero_matches = 0
+        else:
+            num_gloss_zero_matches = results.filter(num_gloss=0).count()
+        return (results,num_gloss_zero_matches)
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
@@ -5864,7 +5870,9 @@ class LemmaListView(ListView):
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
-        context['search_results'] = self.get_annotated_queryset()
+        (results, num_gloss_zero_matches) = self.get_annotated_queryset()
+        context['search_results'] = results
+        context['num_gloss_zero_matches'] = num_gloss_zero_matches
         context['lemma_count'] = LemmaIdgloss.objects.filter(dataset__in=selected_datasets).count()
 
         context['search_matches'] = context['search_results'].count()
@@ -5921,7 +5929,7 @@ class LemmaListView(ListView):
                                           for language in dataset_languages]
 
         rows = []
-        queryset = self.get_annotated_queryset()
+        (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
         for lemma in queryset:
             row = [str(lemma.pk), lemma.dataset.acronym]
             for language in dataset_languages:
@@ -5970,7 +5978,7 @@ class LemmaListView(ListView):
         datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        queryset = self.get_annotated_queryset()
+        (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
         # check permissions, if fails, do nothing and show error message
         for lemma in queryset:
             if lemma.num_gloss == 0:
