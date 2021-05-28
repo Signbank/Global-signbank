@@ -516,7 +516,7 @@ class GlossListView(ListView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
@@ -524,13 +524,13 @@ class GlossListView(ListView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         try:
             dataset_object = Dataset.objects.get(name=self.dataset_name)
         except:
-            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            messages.add_message(self.request, messages.ERROR, _('No dataset with name '+self.dataset_name+' found.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # make sure the user can write to this dataset
@@ -540,7 +540,7 @@ class GlossListView(ListView):
         if user_change_datasets and dataset_object in user_change_datasets:
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
+            messages.add_message(self.request, messages.ERROR, _('No permission to export dataset.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # if we get to here, the user is authenticated and has permission to export the dataset
@@ -561,10 +561,6 @@ class GlossListView(ListView):
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="dictionary-export.csv"'
-
-
-#        fields = [f.name for f in Gloss._meta.fields]
-        #We want to manually set which fields to export here
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
 
@@ -862,8 +858,6 @@ class GlossListView(ListView):
         if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']
             qs = qs.filter(translation__translation__text__iregex=val)
-
-        # NULLBOOLEANCHOICES = [(0, '---------'), (1, 'Unknown'), (2, 'True'), (3, 'False')]
 
         if 'inWeb' in get and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
@@ -2773,16 +2767,30 @@ class MinimalPairsListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
+        # this ends up being English for Global Signbank
+        language_code = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+
+        rows = write_csv_for_minimalpairs(self, language_code=language_code)
+
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="dictionary-export-minimalpairs.csv"'
 
-        # this ends up being English for Global Signbank
-        language_code = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+        import csv
+        csvwriter = csv.writer(response)
 
-        writer = csv.writer(response)
+        # write the actual file
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            header = ['Dataset', 'Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
+                      'Contrasting Sign Value']
+        else:
+            header = ['Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
+                      'Contrasting Sign Value']
 
-        writer = write_csv_for_minimalpairs(self, writer, language_code=language_code)
+        csvwriter.writerow(header)
+
+        for row in rows:
+            csvwriter.writerow(row)
 
         return response
 
@@ -3792,7 +3800,7 @@ class DatasetListView(ListView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
@@ -3800,7 +3808,7 @@ class DatasetListView(ListView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         try:
@@ -3817,7 +3825,7 @@ class DatasetListView(ListView):
             pass
         else:
             # this should not happen from the html page. the check is made to catch a user adding a parameter to the url
-            messages.add_message(self.request, messages.INFO, ('You can already view this dataset.'))
+            messages.add_message(self.request, messages.INFO, _('You can already view this dataset.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         motivation = ''
@@ -3873,7 +3881,7 @@ class DatasetListView(ListView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
@@ -3881,7 +3889,7 @@ class DatasetListView(ListView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         try:
@@ -3896,7 +3904,7 @@ class DatasetListView(ListView):
         if user_change_datasets and dataset_object in user_change_datasets:
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('No permission to export dataset.'))
+            messages.add_message(self.request, messages.ERROR, _('No permission to export dataset.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         # make sure the dataset is non-empty, don't create an empty ecv file
@@ -4005,7 +4013,7 @@ class DatasetManagerView(ListView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         # check if the user can manage this dataset
@@ -4014,13 +4022,13 @@ class DatasetManagerView(ListView):
         try:
             group_manager = Group.objects.get(name='Dataset_Manager')
         except:
-            messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+            messages.add_message(self.request, messages.ERROR, _('No group Dataset_Manager found.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         groups_of_user = self.request.user.groups.all()
         if not group_manager in groups_of_user:
             messages.add_message(self.request, messages.ERROR,
-                                 ('You must be in group Dataset Manager to modify dataset permissions.'))
+                                 _('You must be in group Dataset Manager to modify dataset permissions.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         # make sure the user can write to this dataset
@@ -4030,7 +4038,7 @@ class DatasetManagerView(ListView):
         if user_change_datasets and dataset_object in user_change_datasets:
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('No permission to modify dataset permissions.'))
+            messages.add_message(self.request, messages.ERROR, _('No permission to modify dataset permissions.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         # Everything is alright
@@ -4046,7 +4054,7 @@ class DatasetManagerView(ListView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return None, HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         try:
@@ -4271,7 +4279,7 @@ class DatasetManagerView(ListView):
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
         # the code doesn't seem to get here. if somebody puts something else in the url (else case), there is no (hidden) csrf token.
-        messages.add_message(self.request, messages.ERROR, ('Unrecognised argument to dataset manager url.'))
+        messages.add_message(self.request, messages.ERROR, _('Unrecognised argument to dataset manager url.'))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     def render_to_csv_response(self):
@@ -4368,12 +4376,12 @@ class DatasetManagerView(ListView):
             try:
                 group_manager = Group.objects.get(name='Dataset_Manager')
             except:
-                messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+                messages.add_message(self.request, messages.ERROR, _('No group Dataset_Manager found.'))
                 return None
 
             groups_of_user = self.request.user.groups.all()
             if not group_manager in groups_of_user:
-                messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset_Manager to use the requested functionality.'))
+                messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
             from django.db.models import Prefetch
@@ -4484,7 +4492,7 @@ class DatasetDetailView(DetailView):
         if self.request.user.is_authenticated():
             pass
         else:
-            messages.add_message(self.request, messages.ERROR, ('Please login to use this functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # check if the user can manage this dataset
@@ -4493,12 +4501,12 @@ class DatasetDetailView(DetailView):
         try:
             group_manager = Group.objects.get(name='Dataset_Manager')
         except:
-            messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+            messages.add_message(self.request, messages.ERROR, _('No group Dataset_Manager found.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         groups_of_user = self.request.user.groups.all()
         if not group_manager in groups_of_user:
-            messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset Manager to modify dataset permissions.'))
+            messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset Manager to modify dataset permissions.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
@@ -4506,7 +4514,7 @@ class DatasetDetailView(DetailView):
         if 'dataset_name' in get:
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, ('Dataset name must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         try:
@@ -4519,7 +4527,7 @@ class DatasetDetailView(DetailView):
         if 'username' in get:
             username = get['username']
         if username == '':
-            messages.add_message(self.request, messages.ERROR, ('Username must be non-empty.'))
+            messages.add_message(self.request, messages.ERROR, _('Username must be non-empty.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         try:
@@ -4664,12 +4672,12 @@ class DatasetFieldChoiceView(ListView):
             try:
                 group_manager = Group.objects.get(name='Dataset_Manager')
             except:
-                messages.add_message(self.request, messages.ERROR, ('No group Dataset_Manager found.'))
+                messages.add_message(self.request, messages.ERROR, _('No group Dataset_Manager found.'))
                 return None
 
             groups_of_user = self.request.user.groups.all()
             if not group_manager in groups_of_user:
-                messages.add_message(self.request, messages.ERROR, ('You must be in group Dataset_Manager to use the requested functionality.'))
+                messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
             from django.db.models import Prefetch
@@ -4691,7 +4699,7 @@ class DatasetFieldChoiceView(ListView):
             return qs
         else:
             # User is not authenticated
-            messages.add_message(self.request, messages.ERROR, ('Please login to use the requested functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use the requested functionality.'))
             return None
 
 class FieldChoiceView(ListView):
@@ -4835,11 +4843,11 @@ class FieldChoiceView(ListView):
             else:
                 # User is not authenticated
                 messages.add_message(self.request, messages.ERROR,
-                                     ('You must be superuser to use the requested functionality.'))
+                                     _('You must be superuser to use the requested functionality.'))
                 return None
         else:
             # User is not authenticated
-            messages.add_message(self.request, messages.ERROR, ('Please login to use the requested functionality.'))
+            messages.add_message(self.request, messages.ERROR, _('Please login to use the requested functionality.'))
             return None
 
 def order_handshape_queryset_by_sort_order(get, qs):
@@ -5396,7 +5404,7 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
     if request.user.is_authenticated():
         pass
     else:
-        messages.add_message(request, messages.ERROR, ('Please login to use this functionality.'))
+        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
     # the following code allows for specifying a language for the dataset in the add_gloss.html template
@@ -5795,34 +5803,57 @@ class LemmaListView(ListView):
 
         get = self.request.GET
 
-        #First check whether we want to show everything or a subset
-        try:
-            if self.kwargs['show_all']:
-                show_all = True
-        except (KeyError,TypeError):
-            show_all = False
+        queryset = super(LemmaListView, self).get_queryset()
 
-        queryset = LemmaIdgloss.objects.all()
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         qs = queryset.filter(dataset__in=selected_datasets)
 
-        if show_all:
-            return qs.annotate(num_gloss=Count('gloss'))
-        else:
-            # There are only Lemma ID Gloss fields
-            for get_key, get_value in get.items():
-                if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
-                    language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
-                    language = Language.objects.filter(language_code_2char=language_code_2char)
-                    qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
-                                   lemmaidglosstranslation__language=language)
+        if len(get) == 0:
+            # show all if there are no query parameters
+            return qs
 
-        return qs.annotate(num_gloss=Count('gloss'))
+        # There are only Lemma ID Gloss fields
+        for get_key, get_value in get.items():
+            if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
+                language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(lemmaidglosstranslation__text__iregex=get_value,
+                               lemmaidglosstranslation__language=language)
+        return qs
+
+    def get_annotated_queryset(self, **kwargs):
+        # this method adds a gloss count column to the results for display
+        get = self.request.GET
+
+        qs = self.get_queryset()
+
+        if len(get) == 0:
+            results = qs.annotate(num_gloss=Count('gloss'))
+            num_gloss_zero_matches = results.filter(num_gloss=0).count()
+            return (results, num_gloss_zero_matches)
+
+        only_show_no_glosses = False
+        only_show_has_glosses = False
+
+        for get_key, get_value in get.items():
+            if get_key == 'no_glosses' and get_value == '1':
+                only_show_no_glosses = True
+            if get_key == 'has_glosses' and get_value == '1':
+                only_show_has_glosses = True
+
+        results = qs.annotate(num_gloss=Count('gloss'))
+        if only_show_no_glosses and not only_show_has_glosses:
+            results = results.filter(num_gloss=0)
+            num_gloss_zero_matches = results.count()
+        elif only_show_has_glosses and not only_show_no_glosses:
+            results = results.filter(num_gloss__gt=0)
+            num_gloss_zero_matches = 0
+        else:
+            num_gloss_zero_matches = results.filter(num_gloss=0).count()
+        return (results,num_gloss_zero_matches)
 
     def get_context_data(self, **kwargs):
-
         context = super(LemmaListView, self).get_context_data(**kwargs)
-
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -5839,12 +5870,16 @@ class LemmaListView(ListView):
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
+        (results, num_gloss_zero_matches) = self.get_annotated_queryset()
+        context['search_results'] = results
+        context['num_gloss_zero_matches'] = num_gloss_zero_matches
         context['lemma_count'] = LemmaIdgloss.objects.filter(dataset__in=selected_datasets).count()
+
+        context['search_matches'] = context['search_results'].count()
 
         search_form = LemmaSearchForm(self.request.GET, languages=dataset_languages, language_code=self.request.LANGUAGE_CODE)
 
         context['searchform'] = search_form
-
         context['search_type'] = 'lemma'
 
         list_of_objects = self.object_list
@@ -5875,8 +5910,7 @@ class LemmaListView(ListView):
 
         return context
 
-    def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
+    def render_to_response(self, context, **kwargs):
         if self.request.GET.get('format') == 'CSV':
             return self.render_to_csv_response(context)
         else:
@@ -5887,10 +5921,6 @@ class LemmaListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export-lemmas.csv"'
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
         lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
@@ -5898,23 +5928,17 @@ class LemmaListView(ListView):
         lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                           for language in dataset_languages]
 
-        writer = csv.writer(response)
-
-        with override(LANGUAGE_CODE):
-            header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields
-
-        writer.writerow(header)
-        queryset = self.get_queryset()
+        rows = []
+        (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
         for lemma in queryset:
             row = [str(lemma.pk), lemma.dataset.acronym]
-
             for language in dataset_languages:
                 lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
                 if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
                     row.append(lemmaidglosstranslations[0].text)
                 else:
                     row.append("")
-
+            row.append(str(lemma.num_gloss))
             #Make it safe for weird chars
             safe_row = []
             for column in row:
@@ -5922,10 +5946,56 @@ class LemmaListView(ListView):
                     safe_row.append(column.encode('utf-8').decode())
                 except AttributeError:
                     safe_row.append(None)
+            rows.append(safe_row)
 
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="dictionary-export-lemmas.csv"'
+
+        writer = csv.writer(response)
+
+        with override(LANGUAGE_CODE):
+            header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields + ['Number of glosses']
+
+        writer.writerow(header)
+
+        for row in rows:
             writer.writerow(row)
 
         return response
+
+    def post(self, request, *args, **kwargs):
+        # this method deletes lemmas in the query that have no glosses
+        # plus their dependent translations
+        if not self.request.user.has_perm('dictionary.delete_lemmaidgloss'):
+            messages.add_message(request, messages.WARNING, _("You have no permission to delete lemmas."))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+        delete_lemmas_confirmed = self.request.POST.get('delete_lemmas', 'false')
+        if delete_lemmas_confirmed != 'delete_lemmas':
+            # the template sets POST value 'delete_lemmas' to value 'delete_lemmas'
+            messages.add_message(request, messages.WARNING, _("Incorrect deletion code."))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+        datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
+        # check permissions, if fails, do nothing and show error message
+        for lemma in queryset:
+            if lemma.num_gloss == 0:
+                # the get_annotated_queryset which in turn calls get_queryset has already filtered on lemma's in the selected dataset
+                dataset_of_requested_lemma = lemma.dataset
+                if dataset_of_requested_lemma not in datasets_user_can_change:
+                    messages.add_message(request, messages.WARNING,
+                                         _("You do not have change permission on the dataset of the lemma you are atteempting to delete."))
+                    return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+        for lemma in queryset:
+            if lemma.num_gloss == 0:
+                lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
+                for trans in lemma_translation_objects:
+                    trans.delete()
+                lemma.delete()
+        return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+
 
 class LemmaCreateView(CreateView):
     model = LemmaIdgloss
@@ -5949,7 +6019,6 @@ class LemmaCreateView(CreateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        print(request.POST)
         dataset = None
         if 'dataset' in request.POST and request.POST['dataset'] is not None:
             dataset = Dataset.objects.get(pk=request.POST['dataset'])
@@ -6053,36 +6122,20 @@ class LemmaUpdateView(UpdateView):
     search_type = 'lemma'
 
     def get_context_data(self, **kwargs):
-        # print('get context lemma update view')
         context = super(LemmaUpdateView, self).get_context_data(**kwargs)
 
         if 'search_results' in self.request.session.keys():
             search_results = self.request.session['search_results']
-            # print('search results: ', search_results)
         else:
             search_results = []
         if search_results and len(search_results) > 0:
             if not self.request.session['search_results'][0]['href_type'] == 'lemma/update':
-                print('not lemma type')
                 self.request.session['search_results'] = None
         if 'search_type' in self.request.session.keys():
             if not self.request.session['search_type'] == 'lemma':
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
         self.request.session['search_type'] = self.search_type
-
-        # if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
-        #     # there are no handshapes in the scrollbar, put some there
-        #
-        #     queryset = LemmaIdgloss.objects.all()
-        #     selected_datasets = get_selected_datasets_for_user(self.request.user)
-        #     qs = queryset.filter(dataset__in=selected_datasets)
-        #
-        #     from signbank.tools import convert_language_code_to_language_minus_locale
-        #     lang_attr_name = convert_language_code_to_language_minus_locale(
-        #         settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
-        #     items = construct_scrollbar(qs, self.search_type, lang_attr_name)
-        #     self.request.session['search_results'] = items
 
         context['active_id'] = self.object.pk
 
@@ -6106,8 +6159,13 @@ class LemmaUpdateView(UpdateView):
                 m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
                 gloss_id_pattern = m.group(1)
                 self.gloss_id = gloss_id_pattern
-            except:
+            except Exception as e:
+                # it is unknown what gloss we were looking at, something went wrong with pattern matching on the url
+                print(e)
                 print('LemmaUpdateView get_context_data gloss id match failed: ', path_parms[0])
+                # restore callback to lemma list
+                context['caller'] = 'lemma_list'
+                self.gloss_found = False
         else:
             context['caller'] = 'lemma_list'
         # These are needed for return to the Gloss Detail View
@@ -6141,7 +6199,6 @@ class LemmaUpdateView(UpdateView):
             lemma_group_list.append((lemma, annotation_idgloss))
         context['lemma_group_count'] = lemma_group_count
         context['lemma_group_list'] = lemma_group_list
-        # print('lemma group: ', lemma_group_list)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -6190,7 +6247,8 @@ class LemmaUpdateView(UpdateView):
                 form.save()
                 messages.add_message(request, messages.INFO, _("The changes to the lemma have been saved."))
 
-            except:
+            except Exception as e:
+                print(e)
                 # a specific message is put into the messages frmaework rather than the message caught in the exception
                 # if it's not done this way, it gives a runtime error
                 if self.page_in_lemma_list:
@@ -6209,7 +6267,6 @@ class LemmaUpdateView(UpdateView):
                 return HttpResponseRedirect(self.success_url)
 
         else:
-            print('form not valid')
             return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
 
     def get(self, request, *args, **kwargs):
@@ -6229,7 +6286,8 @@ class LemmaUpdateView(UpdateView):
 
         try:
             dataset_of_requested_lemma = self.object.dataset
-        except:
+        except Exception as e:
+            print(e)
             print('Requested lemma has no dataset: ', self.object.pk)
             dataset_of_requested_lemma = default_dataset
 

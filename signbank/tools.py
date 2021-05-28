@@ -2302,15 +2302,10 @@ def construct_scrollbar(qs, search_type, language_code):
 
     return items
 
-def write_csv_for_minimalpairs(minimalpairslistview, csvwriter, language_code):
+def write_csv_for_minimalpairs(minimalpairslistview, language_code):
 #  called from the MinimalPairsListView
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        header = ['Dataset', 'Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value', 'Contrasting Sign Value']
-    else:
-        header = ['Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value', 'Contrasting Sign Value']
-
-    csvwriter.writerow(header)
+    rows = []
 
     minimalpairs_list = minimalpairslistview.get_queryset()
     # for debug purposes use a count, otherwise this is extremely slow if all glosses are shown
@@ -2352,7 +2347,7 @@ def write_csv_for_minimalpairs(minimalpairslistview, csvwriter, language_code):
                     except AttributeError:
                         safe_row.append(None)
 
-                csvwriter.writerow(safe_row)
+                rows.append(safe_row)
         else:
             # Make it safe for weird chars
             safe_row = []
@@ -2362,8 +2357,9 @@ def write_csv_for_minimalpairs(minimalpairslistview, csvwriter, language_code):
                 except AttributeError:
                     safe_row.append(None)
 
-            csvwriter.writerow(safe_row)
-    return csvwriter
+            rows.append(safe_row)
+
+    return rows
 
 def minimalpairs_focusgloss(gloss_id, language_code):
 

@@ -8,6 +8,8 @@
 
 {% load annotation_idgloss_translation %}
 
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var csrf_token = '{{csrf_token}}';
@@ -15,45 +17,6 @@ var page_number = {{ page_number }};
 var objects_on_this_page = {{objects_on_page|safe}};
 var paginate_by = '{{paginate_by}}';
 
-
- /**
- * @param {string} field_name - name of the field to sort on
- * @param {string} action     - one of: desc, asc, del
- * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
- * @returns {void}
- */
-function do_sort_column(field_name, action, frmName) {
-  // Combine @field_name and @action into [sOrder]
-  var sOrder = field_name;
-  if (action == 'desc') {
-    // Descending sort order is signified by a '-' prefix
-    sOrder = '-' + sOrder;
-  } else if (action == 'del') {
-    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
-    sOrder = '';
-  }
-  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
-  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
-
-  // Submit the form with the indicated name
-
-  $("#" + frmName).submit();
-
-}
-
-/**
- * @returns {void}
- */
-function do_adminsearch(el) {
- var sSearchType = $(el).attr('value');
-  $("#adminsearch input[name='search_type']").val(sSearchType);
-  switch(sSearchType) {
-    case "lemma":
-        $("#adminsearch").attr('action', ' {{PREFIX_URL}}/dictionary/lemma/');
-        break;
-  }
-  document.getElementById('adminsearch').submit();
-}
 </script>
 
 
@@ -93,11 +56,8 @@ function do_adminsearch(el) {
             </span>
     </div>
 
-    <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+    <div id='query-area' class='collapse {% if request.GET|length == 0 %} in {% endif %}'>
         <div id='searchformwell' class='well search-results-collapsable'>
-
-                <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
-                        <!-- this is empty as an initial value because the view python code sets it -->
                 <div class="hidden">
                     <input name='sortOrder' class='form-control' value='' >
                     <input name='search_type' class='form-control' value='{{search_type}}'>
@@ -118,6 +78,25 @@ function do_adminsearch(el) {
                             {% endwith %}
                         </tr>
                         {% endfor %}
+
+                        <tr id="lemma_with_no_glosses">
+                            <td>
+                                <div class='input-group'>
+                                <label class='input-group-addon' for='id_no_glosses'>{{searchform.no_glosses.label}}</label>
+                                {{searchform.no_glosses}}
+                                </div>
+                            </td>
+                         </tr>
+
+                         <tr id="lemma_with_glosses">
+                            <td>
+                                <div class='input-group'>
+                                <label class='input-group-addon' for='id_has_glosses'>{{searchform.has_glosses.label}}</label>
+                                {{searchform.has_glosses}}
+                                </div>
+                            </td>
+                         </tr>
+
                     </table>
                 </div>
         </div>
@@ -136,7 +115,7 @@ function do_adminsearch(el) {
     <h3>{% trans "Lemmas" %}</h3>
 
     <div>
-    {% trans "Number of matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{lemma_count}}.
+    {% trans "Number of matches:" %} {{search_matches}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{lemma_count}}.
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         {% trans "Datasets:" %}
@@ -146,19 +125,27 @@ function do_adminsearch(el) {
     </div>
 
     <br/>
-<div class='btn-group' style="margin-bottom: 20px">
+<div class='clearfix' style="margin-bottom: 20px">
+    <div class='btn-group'>
     {% if perms.dictionary.add_lemmaidgloss %}
     <a class="btn btn-primary" href="{% url 'dictionary:create_lemma' %}">{% trans "Create New Lemma" %}</a>
     {% endif %}
     {% if perms.dictionary.export_csv %}
     <input class='btn btn-default' type='submit' name='format' value='CSV'>
     {% endif %}
+    </div>
+    {% if perms.dictionary.delete_lemmaidgloss and num_gloss_zero_matches %}
+        <button id='delete_lemmas' type="button"
+                data-toggle="modal" data-target="#deleteNoGlossesModal"
+                data-keyboard="false" data-backdrop="static"
+                class='btn btn-danger pull-right'>{% trans "Delete Lemma's with No Glosses" %}</button>
 
+    {% endif %}
 </div>
 </form>
 
 
-{% if object_list %}
+{% if search_results %}
 
 <table class='table table-condensed'>
     <thead>
@@ -172,7 +159,7 @@ function do_adminsearch(el) {
       </tr>
     </thead>
     <tbody>
-      {% for lemma in object_list %}
+      {% for lemma in search_results %}
         <tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             <td>
@@ -276,6 +263,32 @@ function do_adminsearch(el) {
     </div>
 
   </div>
+</div>
+
+<div class="modal" id="deleteNoGlossesModal" role="dialog" >
+     <div class="modal-dialog">
+        <div class="modal-content">
+            <div class='modal-header'>
+                <h2 id='modalTitleDelete'>{% trans "Delete Lemmas with No Glosses" %}</h2>
+            </div>
+            <div class='modal-body'>
+                <p>{% trans "This action will delete all lemmas without glosses and all associated translations belonging to those lemma's. It cannot be undone." %}</p>
+                <p>{% trans "You have chosen to delete" %} {{num_gloss_zero_matches}} {% trans "lemma's." %}</p>
+             </div>
+          <div class="modal-footer">
+          <form id="delete-no-glosses-form" action='' method="POST">
+              {% csrf_token %}
+              <input type='hidden' value='delete_lemmas' name='delete_lemmas'>
+                  <div class='btn-group'>
+                    <button type="button" class="btn btn-success" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button class="btn btn-danger"
+                           onclick="document.getElementById('delete-no-glosses').submit(); return false">{% trans "Confirm Delete" %}</button>
+                  </div>
+          </form>
+          </div>
+
+        </div>
+    </div>
 </div>
 
 
