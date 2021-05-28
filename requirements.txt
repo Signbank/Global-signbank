@@ -9,7 +9,7 @@ django-reversion==2.0.8
 django-summernote==0.8.6
 django-tagging==0.4.5
 lxml==3.7.3
-py==1.5.2
+py==1.10.0
 pytz==2017.2
 six==1.10.0
 sqlparse==0.2.4
