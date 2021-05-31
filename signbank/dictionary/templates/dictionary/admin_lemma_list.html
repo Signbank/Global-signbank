@@ -258,7 +258,7 @@ var paginate_by = '{{paginate_by}}';
         </form>
         <a class="btn btn-danger" href="" id="delete-link"
                onclick="document.getElementById('delete-form').submit(); return false;">{% trans "Yes" %}</a>
-        <button type="button" class="btn btn-success" data-dismiss="modal">{% trans "No" %}</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "No" %}</button>
       </div>
     </div>
 
@@ -280,7 +280,7 @@ var paginate_by = '{{paginate_by}}';
               {% csrf_token %}
               <input type='hidden' value='delete_lemmas' name='delete_lemmas'>
                   <div class='btn-group'>
-                    <button type="button" class="btn btn-success" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                     <button class="btn btn-danger"
                            onclick="document.getElementById('delete-no-glosses').submit(); return false">{% trans "Confirm Delete" %}</button>
                   </div>
