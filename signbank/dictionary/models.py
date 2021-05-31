@@ -1731,8 +1731,6 @@ class Gloss(models.Model):
     def handedness_weak_drop_prop_json(self):
         """Return JSON for the etymology choice list"""
 
-        # NEUTRALBOOLEANCHOICES = [('None', 'Neutral'), ('True', 'Yes'), ('False', 'No')]
-
         NEUTRALBOOLEANCHOICES = [('None', _('Neutral')), ('True', _('Yes')), ('False', _('No'))]
 
         return self.options_to_json(NEUTRALBOOLEANCHOICES)
@@ -1740,17 +1738,12 @@ class Gloss(models.Model):
     def handedness_weak_drop_reverse_prop_json(self):
         """Return JSON for the etymology choice list"""
 
-        # NEUTRALBOOLEANCHOICES = [('None', 'Neutral'), ('True', 'Yes'), ('False', 'No')]
-
-        # NEUTRALBOOLEANCHOICES = [('None', '1'), ('True', '2'), ('False', '3')]
         NEUTRALBOOLEANCHOICES = [('1', _('Neutral')), ('2', _('Yes')), ('3', _('No'))]
 
         return self.options_to_json(NEUTRALBOOLEANCHOICES)
 
     def handedness_weak_drop_json(self):
         """Return JSON for the etymology choice list"""
-
-        # NEUTRALBOOLEANCHOICES = [('None', 'Neutral'), ('True', 'Yes'), ('False', 'No')]
 
         NEUTRALBOOLEANCHOICES = [(_('Neutral'), '1'), (_('Yes'), '2'), (_('No'), '3')]
 
