@@ -193,7 +193,6 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
 class GlossListView(ListView):
 
     model = Gloss
-    # template_name = 'dictionary/admin_gloss_list_colors.html'
     paginate_by = 100
     only_export_ecv = False #Used to call the 'export ecv' functionality of this view without the need for an extra GET parameter
     search_type = 'sign'
@@ -1354,8 +1353,6 @@ class GlossDetailView(DetailView):
                         phonology_list_kinds.append(field)
                     context[topic+'_fields'].append([human_value,field,labels[field],kind])
 
-        # print('static choice lists: ', context['static_choice_lists'].keys())
-        # print('static choice colors: ', context['static_choice_list_colors'].keys())
         context['gloss_phonology'] = gloss_phonology
         context['phonology_list_kinds'] = phonology_list_kinds
 
@@ -1962,6 +1959,7 @@ class MorphemeListView(ListView):
             oChoiceLists['mrpType'] = {}
 
         # Make all choice lists available in the context (currently only mrpType)
+        import json
         context['choice_lists'] = json.dumps(oChoiceLists)
 
         context['input_names_fields_and_labels'] = {}
@@ -2022,6 +2020,18 @@ class MorphemeListView(ListView):
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
         context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = multiple_select_morpheme_fields
+
+
+        multiple_select_morpheme_categories = [(field.name, field.field_choice_category) for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+
+        choices_colors = {}
+        for (fieldname, field_category) in multiple_select_morpheme_categories:
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors
+            import json
+            choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+
+        context['field_colors'] = choices_colors
 
         return context
 
