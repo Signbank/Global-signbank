@@ -2201,7 +2201,7 @@ class MorphemeListView(ListView):
                 tags.extend(Tag.objects.filter(name=t))
 
             # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
+            tqs = TaggedItem.objects.get_intersection_by_model(Morpheme, tags)
 
             # intersection
             qs = qs & tqs

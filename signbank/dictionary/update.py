@@ -1986,7 +1986,7 @@ def add_morphemetag(request, morphemeid):
                 response = HttpResponse('deleted', {'content-type': 'text/plain'})
             else:
                 # we need to wrap the tag name in quotes since it might contain spaces
-                Tag.objects.add_morphemetag(thismorpheme, '"%s"' % tag)
+                Tag.objects.add_tag(thismorpheme, '"%s"' % tag)
                 # response is new HTML for the tag list and form
                 response = render(request,'dictionary/morphemetags.html',
                                               {'morpheme': thismorpheme,
