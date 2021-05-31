@@ -675,12 +675,17 @@ class ImageUploadForHandshapeForm(forms.Form):
     handshape_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
 
+
+NO_GLOSS_SELECTION = [(0,'False'),(1,'True')]
+
 class LemmaSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Lemma"))
     sortOrder = forms.CharField(label=_("Sort Order"))
     lemma_search_field_prefix = "lemma_"
+    no_glosses = forms.ChoiceField(label=_(u'Only show results without glosses'),choices=NO_GLOSS_SELECTION)
+    has_glosses = forms.ChoiceField(label=_(u'Only show results with glosses'),choices=NO_GLOSS_SELECTION)
 
     class Meta:
 
