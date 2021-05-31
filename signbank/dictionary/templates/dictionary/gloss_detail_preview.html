@@ -222,38 +222,6 @@ select option {
     -webkit-appearance: none;
     -moz-appearance: none;
 }
-
-.color-picker {
-    padding: 0 0 0 0;
-    color: black !important;
-    background-color: white !important;
-    display: visible;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-.color-picker select {
-    color: black !important;
-    background-color: white !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-.color-picker select option {
-    color: black !important;
-    background-color: white !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-input[type="color"] {
-    width: 3rem;
-    height: 3rem;
-    padding: .5rem;
-    background-color: #ffffff !important;
-    border: 0;
-    border-radius: 100%;
-}
 </style>
 <style>
 .form-group {
@@ -910,7 +878,7 @@ option:not(:checked) {
 		    {% for value,name,label,kind in phonology_fields %}
                 {% if name == 'handedness' %}
                     <tr class="empty_row">
-                        <th/><th/><th>WD</th><th>WP</th>
+                        <th/><th style="width:500px;"></th><th>WD</th><th>WP</th>
                     </tr>
                     {% if value == '-' or value == ' ' or value == '' or value == None %}
                     <tr class="empty_row">

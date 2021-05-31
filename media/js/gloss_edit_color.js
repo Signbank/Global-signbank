@@ -360,8 +360,8 @@ function configure_edit() {
     $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">Ok</button>';
     $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" type="cancel">Cancel</button>';
     $.fn.editable.defaults['cssclass'] = 'preview';
-    $.fn.editable.defaults['width'] = 'none';
-    $.fn.editable.defaults['height'] = 'none';
+    $.fn.editable.defaults['width'] = 'auto';
+    $.fn.editable.defaults['height'] = 'auto';
     $.fn.editable.defaults['submitdata'] = {'csrfmiddlewaretoken': csrf_token};
     $.fn.editable.defaults['onerror']  = function(settings, original, xhr)
                         {
