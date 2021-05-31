@@ -5,7 +5,7 @@
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Revision history for {{ gloss }}{% endblocktrans %}
+{% blocktrans %}Revision History for {{ gloss }}{% endblocktrans %}
 {% endblock %}
 
 {% load guardian_tags %}
@@ -62,7 +62,7 @@
         </li>
         {% endif %}
         <li class="nav-item">
-            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision history" %}</a>
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
         </li>
     </ul>
 

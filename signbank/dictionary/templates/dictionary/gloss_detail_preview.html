@@ -43,14 +43,11 @@
     var handedness_weak_choices = {{gloss.handedness_weak_drop_reverse_prop_json|safe}};
     var handedness_weak_choices_colors = '{}';
     for (var key in handedness_weak_choices) {
-        //console.log('handedness_weak_choices: '+key+' '+handedness_weak_choices[key]);
         handedness_weak_choices_colors[key] = 'ffffff';
     };
     var handedness_weak_drop_reverse = {{gloss.handedness_weak_drop_prop_json|safe}};
     var handedness_weakdrop = handedness_weak_drop_reverse['{{gloss.weakdrop}}'];
     var handedness_weakprop = handedness_weak_drop_reverse['{{gloss.weakprop}}'];
-    //console.log('weakdrop: '+handedness_weakdrop);
-    //console.log('weakprop: '+handedness_weakprop);
     var dialects = {{gloss.dialect_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
@@ -63,9 +60,7 @@
 
     var choice_lists = [];
     var static_choice_lists = {{static_choice_lists|safe}};
-//    console.log('static choices: '+static_choice_lists);
     var static_choice_list_colors = {{static_choice_list_colors|safe}};
-//    console.log('static colors: '+static_choice_list_colors);
 
     var generate_translated_choice_list_table = {{generate_translated_choice_list_table|safe}};
 
@@ -203,24 +198,6 @@ select option {
     -moz-appearance: none;
 }
 
-.hasTooltip:hover .isTooltip {
-    display: block;
-    background-color: white;
-    border-radius: 5px;
-    color: black;
-    box-shadow: 1px 1px 3px gray;
-    position: absolute;
-    padding: 5px;
-    top: 3em;
-    left: 0px;
-    max-width: 360px;
-    min-width: 300px;
-    font-size: 12px;
-    z-index: 9999;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
 .bootstrap-select.btn-group .dropdown-menu li a:hover {
     color: blue !important;
     background-color: white !important;
@@ -340,7 +317,7 @@ option:not(:checked) {
         </li>
         {% endif %}
         <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision history" %}</a>
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
         </li>
     </ul>
 
