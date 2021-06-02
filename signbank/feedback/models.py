@@ -216,9 +216,9 @@ repetitionChoices = ((0, 'None'),
 class MissingSignFeedbackForm(forms.Form):
     handform = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDEDNESS),
                                       required=False, label='How many hands are used to make this sign?')
-    handshape = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDSHAPE),
+    handshape = forms.ModelChoiceField(queryset=Handshape.objects.filter(),
                                        required=False, label='What is the handshape?')
-    althandshape = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDSHAPE),
+    althandshape = forms.ModelChoiceField(queryset=Handshape.objects.filter(),
                                           required=False, label='What is the handshape of the left hand?')
     location = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.LOCATION),
                                       required=False, label='Choose the location of the sign on, or near the body')
