@@ -258,11 +258,17 @@ class MissingSignFeedback(models.Model):
                                      verbose_name=_("Handshape"),
                                      related_name="Handshape")
 
+    handshape_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                              verbose_name=_("Handshape"), related_name="Handshape_handshapefk")
+
     althandshape = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.HANDSHAPE},
                                             field_choice_category=FieldChoice.HANDSHAPE,
                                             verbose_name=_("AltHandshape"),
                                             related_name="AltHandshape")
+
+    althandshape_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                                 verbose_name=_("AltHandshape"), related_name="AltHandshape_handshapefk")
 
     location = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.LOCATION},

@@ -627,11 +627,19 @@ class Gloss(models.Model):
                                           verbose_name=_("Strong Hand"),
                                            related_name="strong_hand")
 
+    domhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                             verbose_name=_("Strong Hand"),
+                                             related_name="strong_hand_handshapefk")
+
     subhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDSHAPE},
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Weak Hand"),
                                            related_name="weak_hand")
+
+    subhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                             verbose_name=_("Weak Hand"),
+                                             related_name="weak_hand_handshapefk")
 
 
     # Support for handshape etymology
@@ -646,11 +654,19 @@ class Gloss(models.Model):
                                           verbose_name=_("Final Dominant Handshape"),
                                            related_name="final_dominant_handshape")
 
+    final_domhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                                   verbose_name=_("Final Dominant Handshape"),
+                                                   related_name="final_dominant_handshape_handshapefk")
+
     final_subhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDSHAPE},
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Final Subordinate Handshape"),
                                            related_name="final_subordinate_handshape")
+
+    final_subhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                                   verbose_name=_("Final Subordinate Handshape"),
+                                                   related_name="final_subordinate_handshape_handshapefk")
 
 
     locprim = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
