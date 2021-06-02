@@ -8,7 +8,7 @@ import json
 import re
 from urllib.parse import quote
 
-from django.utils.translation import override
+from django.utils.translation import override, activate
 
 from signbank.dictionary.models import *
 from django.utils.dateformat import format
@@ -1776,25 +1776,17 @@ def write_ecv_file_for_dataset(dataset_name):
     return ecv_file
 
 def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies=False):
+    activate(lang)
+
     desc = ""
     if include_phonology_and_frequencies:
-        fields_data = []
-        for field in Gloss._meta.fields:
-            if field.name in ECV_SETTINGS['description_fields']:
-                if hasattr(field, 'field_choice_category'):
-                    fc_category = field.field_choice_category
-                else:
-                    fc_category = None
-                fields_data.append((field.name, fc_category))
+        fields_data = [field.name for field in Gloss._meta.fields
+                       if field.name in ECV_SETTINGS['description_fields']]
 
-        for (f, fieldchoice_category) in fields_data:
-
-            if fieldchoice_category:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                machine_value = getattr(gloss, f)
-                value = machine_value_to_translated_human_value(machine_value, choice_list, lang)
-                if value is None:
-                    value = ' '
+        for f in fields_data:
+            gloss_field = getattr(gloss, f)
+            if isinstance(gloss_field, FieldChoice) or isinstance(gloss_field, Handshape):
+                value = getattr(gloss, f).name
             else:
                 value = get_value_for_ecv(gloss, f)
 
