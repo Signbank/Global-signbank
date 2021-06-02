@@ -623,11 +623,11 @@ class Gloss(models.Model):
 
     domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                              verbose_name=_("Strong Hand"),
-                                             related_name="strong_hand_handshapefk")
+                                             related_name="strong_hand")
 
     subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                              verbose_name=_("Weak Hand"),
-                                             related_name="weak_hand_handshapefk")
+                                             related_name="weak_hand")
 
 
     # Support for handshape etymology
@@ -638,11 +638,11 @@ class Gloss(models.Model):
 
     final_domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                                    verbose_name=_("Final Dominant Handshape"),
-                                                   related_name="final_dominant_handshape_handshapefk")
+                                                   related_name="final_dominant_handshape")
 
     final_subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                                    verbose_name=_("Final Subordinate Handshape"),
-                                                   related_name="final_subordinate_handshape_handshapefk")
+                                                   related_name="final_subordinate_handshape")
 
 
     locprim = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
