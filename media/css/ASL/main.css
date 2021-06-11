@@ -14,9 +14,9 @@ html {
 }
 
  #header {
-		background-image: url(../../images/global/black_02.gif); 
+
         padding:0;
-        background:rgb(27, 38, 119);
+        background:rgb(0, 128, 128);
         height:110px;
         clear:both;
         position:relative;
@@ -24,19 +24,26 @@ html {
         width: 100%;
 }
 
-#header h1 {
+#header h1 
+{
     height: 110px;
     width: 300px;
-    background-image: url(../../images/ASL/logo.jpg);
     background-position: 20px 20px;
     background-repeat: no-repeat;
-    text-indent: -9000px;
+    color: hsla(0,0%,100%,0.75);
+    font-family: 'Nunito', sans-serif;
+    font-size: 40px;
+    padding: 19px;
+    padding-left: 30px;
     margin: 0px;
+    display: flex;
+    float: left;
 }
 
-#second-title-part {
-    color: lightgrey;
-    margin-left: -92px;
+#second-title-part 
+{
+    color: white;
+    margin-left: -47px;
     line-height: 2.5;
 }
 
