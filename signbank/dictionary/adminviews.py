@@ -39,7 +39,9 @@ from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
-    choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors
+    choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors, \
+    choicelist_queryset_to_field_colors
+
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
@@ -348,7 +350,6 @@ class GlossListView(ListView):
         choices_colors = {}
         for (fieldname, field_category) in multiple_select_gloss_categories:
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors
             choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
 
         context['field_colors'] = choices_colors
@@ -2024,7 +2025,6 @@ class MorphemeListView(ListView):
         choices_colors = {}
         for (fieldname, field_category) in multiple_select_morpheme_categories:
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors
             choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
 
         context['field_colors'] = choices_colors
