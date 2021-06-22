@@ -58,6 +58,7 @@
 				if (false === onedit.apply(this,[settings, self])) {
 					return;
 				}
+				hide_other_forms(this.id);
 				e.preventDefault();
 				e.stopPropagation();
 				if (settings.tooltip) {

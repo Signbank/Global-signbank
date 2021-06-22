@@ -120,16 +120,6 @@
 
 <script type='text/javascript'>
 
-var defaultText = '------';
-function nextPhonologyField(e) {
-    var input = $(e.target),
-        label = input && input.prev();
-    label.text(input.val() === '' ? defaultText : input.val());
-    input.hide();
-    label.show();
-};
-
-
 //Keyboard shortcuts
 document.onkeydown = checkKey;
 
