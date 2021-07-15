@@ -64,7 +64,7 @@ class RegistrationManager(models.Manager):
     
     def create_inactive_user(self, username, password, email,
                              firstname="", lastname="", agree=True,
-                             send_email=True, profile_callback=None):
+                             send_email=True):
         """
         Creates a new, inactive ``User``, generates a
         ``RegistrationProfile`` and emails its activation key to the
@@ -97,9 +97,6 @@ class RegistrationManager(models.Manager):
 
         # print('activation key: ', registration_profile.activation_key)
 
-        if profile_callback is not None:
-            profile_callback(user=new_user)
-        
         if send_email:
             from django.core.mail import send_mail
             signbank_name = settings.LANGUAGE_NAME + ' Signbank'
