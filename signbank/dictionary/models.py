@@ -1097,112 +1097,6 @@ class Gloss(models.Model):
 
         return (other_relations, variant_relations)
 
-    def empty_non_empty_phonology(self):
-
-        non_empty_phonology = []
-        empty_phonology = []
-
-        fieldLabel = dict()
-        for field in FIELDS['phonology']:
-            field_label = Gloss._meta.get_field(field).verbose_name
-            fieldLabel[field] = field_label.encode('utf-8').decode()
-
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
-
-        for field in settings.MINIMAL_PAIRS_FIELDS:
-            gloss_field = gloss_fields[field]
-            if isinstance(gloss_field, models.NullBooleanField):
-                machine_value = getattr(self, field)
-                label = fieldLabel[field]
-                if machine_value:
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
-                else:
-                    empty_phonology = empty_phonology + [(field, str(label))]
-            else:
-                # Get and save the choice list for this field
-                if hasattr(gloss_field, 'field_choice_category'):
-                    fieldchoice_category = gloss_field.field_choice_category
-                    if fieldchoice_category == 'Handshape':
-                        choice_list = Handshape.objects.all()
-                    else:
-                        choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                else:
-                    choice_list = []
-                # Take the human value in the language we are using
-                machine_value = getattr(self, field)
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
-                label = fieldLabel[field]
-                if (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                    empty_phonology = empty_phonology + [(field, str(label))]
-                else:
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
-
-
-        for field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-            machine_value = getattr(self, field)
-            label = fieldLabel[field]
-            if machine_value is not None:
-                if machine_value:
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
-                else:
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('False'))]
-
-            else:
-                # value is Neutral or Null
-                empty_phonology = empty_phonology + [(field, str(label))]
-
-        return (empty_phonology, non_empty_phonology)
-
-    def non_empty_phonology(self):
-
-        fieldLabel = dict()
-        for field in FIELDS['phonology']:
-            field_label = Gloss._meta.get_field(field).verbose_name
-            fieldLabel[field] = field_label.encode('utf-8').decode()
-
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
-
-        non_empty_phonology = []
-
-        for field in settings.MINIMAL_PAIRS_FIELDS:
-            gloss_field = gloss_fields[field]
-            if isinstance(gloss_field, models.NullBooleanField):
-                machine_value = getattr(self, field)
-                label = fieldLabel[field]
-                if machine_value:
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
-            else:
-                if hasattr(gloss_field, 'field_choice_category'):
-                    fieldchoice_category = gloss_field.field_choice_category
-                    if fieldchoice_category == 'Handshape':
-                        choice_list = Handshape.objects.all()
-                    else:
-                        choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                else:
-                    choice_list = []
-                machine_value = getattr(self, field)
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
-                label = fieldLabel[field]
-
-                if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str(human_value))]
-
-        for field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-            machine_value = getattr(self, field)
-            label = fieldLabel[field]
-            if machine_value is not None:
-
-                if machine_value:
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('True'))]
-                else:
-                    non_empty_phonology = non_empty_phonology + [(field, str(label), str('False'))]
-
-        return non_empty_phonology
-
 
     def phonology_matrix_homonymns(self):
         # this method uses string representations for Boolean values
@@ -1253,51 +1147,31 @@ class Gloss(models.Model):
 
         return phonology_dict
 
-    def phonology_matrix_minimalpairs(self):
-        # this method only retrieves the fiels used for minimal pairs
-        # in contrast to the similar method of homonyms, this method leaves Boolean values in their machine value form
+    def minimal_pairs_tuple(self):
 
-        phonology_dict = dict()
-
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
-        for field in settings.MINIMAL_PAIRS_FIELDS:
-            phonology_dict[field] = None
-            machine_value = getattr(self, field)
-            gloss_field = gloss_fields[field]
-            if hasattr(gloss_field, 'field_choice_category'):
-                fieldchoice_category = gloss_field.field_choice_category
-                if fieldchoice_category == 'Handshape':
-                    choice_list = Handshape.objects.all()
-                else:
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
-                if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                    phonology_dict[field] = machine_value
-                else:
-                    phonology_dict[field] = None
+        values_list = []
+        for f in settings.MINIMAL_PAIRS_FIELDS:
+            field_value = getattr(self,f)
+            # print('minimal_pairs_tuple ', f, field_value)
+            if f not in ['altern', 'repeat'] and field_value in ['0']:
+                values_list.append(None)
+            #     print(f, ' changed to None')
             else:
-                phonology_dict[field] = machine_value
+                values_list.append(field_value)
+        values_tuple = tuple(values_list)
 
-        return phonology_dict
-
+        return values_tuple
 
     def minimalpairs_objects(self):
-
         minimalpairs_objects_list = []
 
         if not self.lemma or not self.lemma.dataset:
             # take care of glosses without a dataset
             return minimalpairs_objects_list
 
-        phonology_for_gloss = self.phonology_matrix_minimalpairs()
-
-        if 'handedness' in phonology_for_gloss.keys():
-            handedness_of_this_gloss = phonology_for_gloss['handedness']
-        else:
-            handedness_of_this_gloss = None
+        focus_gloss_values_tuple = self.minimal_pairs_tuple()
+        index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
+        handedness_of_this_gloss = focus_gloss_values_tuple[index_of_handedness]
 
         minimalpairs_objects_list = []
 
@@ -1306,23 +1180,30 @@ class Gloss(models.Model):
             handedness_X = str(
                 FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
         except:
-            handedness_X = ''
+            # We want to ignore handshape X, so return an empty value if it doesn't exist since empty is also ignored
+            handedness_X = '0'
 
+        # not sure whether these things appear in the database
         # there are lots of different values for undefined, this handles legacy values
-        if (handedness_of_this_gloss == 'None' or handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
-                handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
+        # if handedness is not defined, do not compute minimal pairs for this gloss
+
+        if handedness_of_this_gloss in [None, '0', handedness_X, '-', '', 'None', 0]:
             return minimalpairs_objects_list
 
+        # the next few lines to determine the initial minimal_pairs_fields_qs look long-winded
+        finger_spelling_glosses = [a_idgloss_trans.gloss_id for a_idgloss_trans in
+                                   AnnotationIdglossTranslation.objects.filter(text__startswith="#")]
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
-        minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(id=self.id).filter(q)
+        minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(
+                id__in=finger_spelling_glosses).exclude(id=self.id).filter(q)
 
         from django.db.models import When, Case, NullBooleanField, IntegerField
         gloss_fields = {}
         for f in Gloss._meta.fields:
             gloss_fields[f.name] = f
-        for field in settings.MINIMAL_PAIRS_FIELDS:
-            value_of_this_field = phonology_for_gloss.get(field)
+        zipped_tuples = zip(settings.MINIMAL_PAIRS_FIELDS, focus_gloss_values_tuple)
+        for (field, value_of_this_field) in zipped_tuples:
             gloss_field = gloss_fields[field]
 
             if hasattr(gloss_field, 'field_choice_category'):
@@ -1382,9 +1263,9 @@ class Gloss(models.Model):
 
     def minimal_pairs_dict(self):
 
-        minimal_pairs_fields = dict()
+        focus_gloss_values_tuple = self.minimal_pairs_tuple()
 
-        # TO DO: test that these two checks catch all the empty values
+        minimal_pairs_fields = dict()
 
         # If handedness is not defined for this gloss, don't bother to look up minimal pairs
         if (self.handedness is None or self.handedness == '0'):
@@ -1394,59 +1275,17 @@ class Gloss(models.Model):
         if (self.domhndsh is None or self.domhndsh == '0'):
             return minimal_pairs_fields
 
-        (ep, nep) = self.empty_non_empty_phonology()
-
-        phonology_for_this_gloss = self.phonology_matrix_minimalpairs()
-
-        # only consider minimal pairs if this gloss has more fields defined than handedness and strong hand
-        if (len(nep) < 2):
-            return minimal_pairs_fields
-
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
-
-        mpos =  self.minimalpairs_objects()
+        mpos = self.minimalpairs_objects()
 
         for o in mpos:
-            different_fields = dict()
-            onep = o.non_empty_phonology()
-            phonology_for_other_gloss = o.phonology_matrix_minimalpairs()
-
-            for f, n, v in onep:
-                gloss_field = gloss_fields[f]
-                if hasattr(gloss_field, 'field_choice_category'):
-                    fc = gloss_field.field_choice_category
-                else:
-                    fc = f
-                # use the phonology matrix to account for Neutral values
-                self_value_f = phonology_for_this_gloss.get(f)
-                other_value_f = phonology_for_other_gloss.get(f)
-                if self_value_f != other_value_f:
-                    different_fields[f] = (n, fc, self_value_f, other_value_f, fieldname_to_kind(f))
-
-            different_fields_keys = different_fields.keys()
-
-            if (len(list(different_fields_keys)) == 0):
-                for sf, sn, sv in nep:
-                    s_gloss_field = gloss_fields[sf]
-                    if hasattr(s_gloss_field, 'field_choice_category'):
-                        sfc = s_gloss_field.field_choice_category
-                    else:
-                        sfc = sf
-                    # need to look these up in nep
-                    self_value_sf = phonology_for_this_gloss.get(sf)
-                    other_value_sf = phonology_for_other_gloss.get(sf)
-                    if other_value_sf != self_value_sf:
-                        # the value of other_value_sf was '0' because it assumed it was empty since not in onep,
-                        # but if it is the field 'altern' or 'repeat' and it's false, then it is False, not '0'
-                        different_fields[sf] = (sn, sfc, self_value_sf, other_value_sf, fieldname_to_kind(sf))
-
-            if (len(list(different_fields.keys())) != 1):
-                # if too many differing fields were found, skip this gloss
-                continue
-            else:
-                minimal_pairs_fields[o] = different_fields
+            other_gloss_values_tuple = o.minimal_pairs_tuple()
+            zipped_tuples = zip(settings.MINIMAL_PAIRS_FIELDS, focus_gloss_values_tuple, other_gloss_values_tuple)
+            for (field_name, field_value, other_field_value) in zipped_tuples:
+                if field_value in [None, '0'] and other_field_value in [None,'0']:
+                    continue
+                if field_value != other_field_value:
+                    field_label = Gloss._meta.get_field(field_name).verbose_name
+                    minimal_pairs_fields[o] = { field_name: (field_label, field_name, field_value, other_field_value, fieldname_to_kind(field_name)) }
 
         return minimal_pairs_fields
 
