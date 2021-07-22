@@ -30,11 +30,20 @@
     var gloss_phonology = {{gloss_phonology|safe}};
 
     var language_code = '{{ LANGUAGE_CODE }}';
-    var edit_mode_str = '{% trans "Edit" %}';
-    var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
-    var delete_this_gloss_str = '{% trans "Delete this gloss" %}';
-    var saving_str = '{% trans "Saving..." %}';
-    var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}';
+
+    {% trans "Edit" as edit_mode_str %} 
+    {% trans "Turn off edit mode" as turn_off_edit_mode_str %} 
+    {% trans "Delete this gloss" as delete_this_gloss_str %} 
+    {% trans "Saving..." as saving_str %} 
+    {% trans "This idgloss already exists" as idgloss_already_exists_str %} 
+
+    var edit_mode_str = '{{edit_mode_str|escapejs}}';
+    var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
+    var delete_this_gloss_str = '{{delete_this_gloss_str|escapejs}}';
+    var saving_str = '{{saving_str|escapejs}}';
+    var idgloss_already_exists_str = '{{idgloss_already_exists_str|escapejs}}';
+
+
     var yes_str = '{% trans "Yes" %}'
     var no_str = '{% trans "No" %}'
     var original_strong_hand = '{{StrongHand}}';
