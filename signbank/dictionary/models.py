@@ -1629,7 +1629,7 @@ class Gloss(models.Model):
         # Create a new GlossVideo object
         if isinstance(videofile, File):
             video = GlossVideo(gloss=self)
-            video.videofile.save(get_video_file_path(video, ''), videofile)
+            video.videofile.save(get_video_file_path(video, str(videofile)), videofile)
         else:
             video = GlossVideo(videofile=videofile, gloss=self)
         video.save()

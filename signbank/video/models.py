@@ -6,7 +6,7 @@ from django.db import models
 from django.conf import settings
 import sys, os, time, shutil
 
-from signbank.video.convertvideo import extract_frame, convert_video, ffmpeg
+from signbank.video.convertvideo import extract_frame, convert_video, ffmpeg, probe_format
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
@@ -169,6 +169,7 @@ def get_video_file_path(instance, filename, version=0):
     :return: 
     """
 
+    (base, ext) = os.path.splitext(filename)
     idgloss = instance.gloss.idgloss
 
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
@@ -177,7 +178,7 @@ def get_video_file_path(instance, filename, version=0):
     except:
         dataset_dir = ""
     two_letter_dir = signbank.tools.get_two_letter_dir(idgloss)
-    filename = idgloss + '-' + str(instance.gloss.id) + '.mp4' + (version * ".bak")
+    filename = idgloss + '-' + str(instance.gloss.id) + ext + (version * ".bak")
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -199,7 +200,7 @@ def add_small_appendix(path, reverse=False):
 
 
 def validate_file_extension(value):
-    if value.file.content_type != 'video/mp4':
+    if value.file.content_type not in [ 'video/mp4','video/quicktime']:
         raise ValidationError(u'Error message')
 
 
@@ -215,6 +216,10 @@ class GlossVideo(models.Model):
     # we will increment the version (via reversion) if a new video is added
     # for this gloss
     version = models.IntegerField("Version", default=0)
+
+    def save(self, *args, **kwargs):
+        self.ensure_mp4()
+        super(GlossVideo, self).save(*args, **kwargs)
 
     def process(self):
         """The clean method will try to validate the video
@@ -262,13 +267,14 @@ class GlossVideo(models.Model):
         # create a temporary copy in the new format
         # then move it into place
 
-        # print "ENSURE: ", self.videofile.path
-
         (basename, ext) = os.path.splitext(self.videofile.path)
-        tmploc = basename + "-conv.mp4"
-        err = convert_video(self.videofile.path, tmploc, force=True)
-        # print tmploc
-        shutil.move(tmploc, self.videofile.path)
+
+        if ext == '.mov':
+            oldloc = self.videofile.path
+            newloc = basename + ".mp4"
+            err = convert_video(oldloc, newloc, force=True)
+            self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
+            os.remove(oldloc)
 
     def small_video(self, use_name=False):
         """Return the URL of the small version for this video
