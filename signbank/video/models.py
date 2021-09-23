@@ -377,7 +377,7 @@ class GlossVideo(models.Model):
         # code has been introduced elsewhere to make sure paths are the correct encoding
         return self.videofile.name
 
-    def move_video(self, move_files_on_disk=True):
+    def move_video(self, move_files_on_disk=False):
         """
         Calculates the new path, moves the video file to the new path and updates the videofile field
         :return: 
@@ -457,7 +457,7 @@ def process_dataset_changes(sender, instance, **kwargs):
         # Move all media
         glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
         for glossvideo in glossvideos:
-            glossvideo.move_video(move_files_on_disk=True)
+            glossvideo.move_video(move_files_on_disk=False)
 
         # Make sure that _initial reflect the database for the dataset object
         dataset._initial['default_language'] = dataset.default_language
@@ -475,7 +475,7 @@ def process_lemmaidglosstranslation_changes(sender, instance, **kwargs):
     lemmaidglosstranslation = instance
     glossvideos = GlossVideo.objects.filter(gloss__lemma__lemmaidglosstranslation=lemmaidglosstranslation)
     for glossvideo in glossvideos:
-        glossvideo.move_video(move_files_on_disk=True)
+        glossvideo.move_video(move_files_on_disk=False)
 
 
 @receiver(models.signals.post_save, sender=Gloss)
@@ -491,7 +491,7 @@ def process_gloss_changes(sender, instance, **kwargs):
     gloss = instance
     glossvideos = GlossVideo.objects.filter(gloss=gloss)
     for glossvideo in glossvideos:
-        glossvideo.move_video(move_files_on_disk=True)
+        glossvideo.move_video(move_files_on_disk=False)
 
 
 @receiver(models.signals.pre_delete, sender=GlossVideo)
