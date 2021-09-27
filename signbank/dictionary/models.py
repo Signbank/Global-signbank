@@ -1027,27 +1027,37 @@ class Gloss(models.Model):
 
         # Build query
         this_sign_stems = self.get_stems()
+
         this_sign_dataset = self.lemma.dataset
         this_sign_language = self.lemma.dataset.default_language
         queries = []
         for this_sign_stem in this_sign_stems:
-            this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
-            queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
-                             lemma__dataset=this_sign_dataset, annotationidglosstranslation__language=this_sign_language))
+            this_matches = r'^' + re.escape(this_sign_stem[1]) + r'$'
+            queries.append(Q(annotationidglosstranslation__text__regex=this_matches, annotationidglosstranslation__language=this_sign_language,
+                             lemma__dataset=this_sign_dataset))
+            this_also_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
+            queries.append(Q(annotationidglosstranslation__text__regex=this_also_matches, annotationidglosstranslation__language=this_sign_language,
+                             lemma__dataset=this_sign_dataset))
+            this_even_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[1-9]$'
+            queries.append(Q(annotationidglosstranslation__text__regex=this_even_matches, annotationidglosstranslation__language=this_sign_language,
+                             lemma__dataset=this_sign_dataset))
         if len(queries) > 1:
             query = queries.pop()
             for q in queries:
                 query |= q
         else:
-            query = queries[0]
+            try:
+                query = queries[0]
+            except:
+                query = []
 
         other_relations_of_sign = self.other_relations()
-        other_relation_objects = [x.target for x in other_relations_of_sign]
+        other_relation_objects = [x.target.id for x in other_relations_of_sign]
 
         if queries:
-            pattern_variants = Gloss.objects.filter(query).exclude(id__in=other_relation_objects)
+            pattern_variants = Gloss.objects.filter(query).exclude(id__in=other_relation_objects).distinct()
         else:
-            pattern_variants = []
+            pattern_variants = [ self ]
         return pattern_variants
 
     def other_relations(self):
@@ -1085,7 +1095,9 @@ class Gloss(models.Model):
 
     def get_stems(self):
 
-        stems = [(x.language, x.text[:-2]) for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-']
+        this_sign_language = self.lemma.dataset.default_language
+        stems = [(x.language, x.text[:-2])
+                 for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-' and x.language == this_sign_language ]
 
         return stems
 

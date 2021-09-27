@@ -1480,12 +1480,12 @@ class GlossDetailView(DetailView):
 
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        if gl.dataset:
-            for language in gl.dataset.translation_languages.all():
-                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
+        for language in gl.dataset.translation_languages.all():
+            try:
+                annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
+            except (ObjectDoesNotExist):
+                annotation_text = ''
+            context['annotation_idgloss'][language] = annotation_text
 
         # Put translations (keywords) per language in the context
         context['translations_per_language'] = {}
@@ -1665,23 +1665,17 @@ class GlossRelationsDetailView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(GlossRelationsDetailView, self).get_context_data(**kwargs)
-        # Add in a QuerySet of all the books
-        context['tagform'] = TagUpdateForm()
-        context['videoform'] = VideoUploadForGlossForm()
-        context['imageform'] = ImageUploadForGlossForm()
-        context['definitionform'] = DefinitionForm()
-        context['relationform'] = RelationForm()
 
-        context['morphologyform'] = GlossMorphologyForm()
-        context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-            choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
-                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''), required=True)
+        if self.request.LANGUAGE_CODE == 'zh-hans':
+            languages = Language.objects.filter(language_code_2char='zh')
+        else:
+            languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
+        if languages:
+            context['language'] = languages[0]
+        else:
+            context['language'] = Language.objects.get(id=get_default_language_id())
 
-        context['morphemeform'] = GlossMorphemeForm()
-        context['blendform'] = GlossBlendForm()
-        context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
-        context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
 
         #Pass info about which fields we want to see
@@ -1760,7 +1754,6 @@ class GlossRelationsDetailView(DetailView):
                 context['lemma_group'] = False
                 context['lemma_group_url'] = ''
         except:
-            print("lemma_group_count: except")
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
@@ -1790,8 +1783,7 @@ class GlossRelationsDetailView(DetailView):
         otherrelations = []
 
         if gl.relation_sources:
-            for oth_rel in gl.relation_sources.all():
-
+            for oth_rel in gl.relation_sources.all().distinct():
                 other_relations_dict = {}
                 if oth_rel.target.dataset:
                     for language in oth_rel.target.dataset.translation_languages.all():
@@ -1809,7 +1801,20 @@ class GlossRelationsDetailView(DetailView):
 
         context['otherrelations'] = otherrelations
 
-        has_variants = gl.has_variants()
+
+        try:
+            pattern_variants = gl.pattern_variants()
+        except:
+            pattern_variants = []
+        pattern_variants = [ v for v in pattern_variants if not v.id == gl.id ]
+        try:
+            other_variants = gl.has_variants()
+        except:
+            other_variants = []
+
+        all_variants = pattern_variants + [ ov for ov in other_variants if ov not in pattern_variants ]
+
+        has_variants = all_variants
         variants = []
 
         if has_variants:
@@ -1864,12 +1869,12 @@ class GlossRelationsDetailView(DetailView):
 
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        if gl.dataset:
-            for language in gl.dataset.translation_languages.all():
-                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
+        for language in gl.dataset.translation_languages.all():
+            try:
+                annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
+            except (ObjectDoesNotExist):
+                annotation_text = ''
+            context['annotation_idgloss'][language] = annotation_text
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
