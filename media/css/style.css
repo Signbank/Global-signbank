@@ -692,12 +692,12 @@ canvas{
 }
 
 .chart-short-container {
-    width: 600px;
-    height: 300px;
+    width: 500px;
+    height: auto;
 }
 
 .chart-horizontal-single-bar-container {
-    width: 400px;
+    width: auto;
     height: 50px;
 }
 

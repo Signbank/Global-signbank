@@ -3140,7 +3140,7 @@ class GlossFrequencyView(DetailView):
         context['dataset_ids'] = [ ds.id for ds in selected_datasets]
         context['dataset_names'] = [ds.acronym for ds in selected_datasets]
 
-        context['frequency_regions'] = settings.FREQUENCY_REGIONS
+        context['frequency_regions'] = gl.dataset.frequency_regions()
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
@@ -3152,9 +3152,18 @@ class GlossFrequencyView(DetailView):
                     dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
-        context['data_datasets'] = gl.data_datasets()
+        corpus_name = gl.dataset.acronym
+        corpus = Corpus.objects.get(name=corpus_name)
+        context['corpus'] = corpus
+        total_occurrences, data_datasets = gl.data_datasets()
+        context['data_datasets'] = data_datasets
+        context['num_occurrences'] = total_occurrences
 
+        # has_frequency_data returns a count of the number of GlossFrequency objects for this gloss
         context['has_frequency_data'] = gl.has_frequency_data()
+
+        age_range_labels = []
+
         speakers_summary = gl.speaker_age_data()
         speaker_age_data = []
         for i in range(1, 100):
@@ -3162,12 +3171,18 @@ class GlossFrequencyView(DetailView):
             if i_key in speakers_summary.keys():
                 i_value = speakers_summary[i_key]
                 speaker_age_data.append(i_value)
+                age_range_labels.append(i_key)
             else:
                 speaker_age_data.append(0)
 
         context['speaker_age_data'] = speaker_age_data
 
+        # print('call speaker_data on gl')
+
         context['speaker_data'] = gl.speaker_data()
+
+        speakers_of_corpus = corpus_speakers(gl.dataset.acronym)
+        context['num_signers'] = len(speakers_of_corpus)
 
         # incorporates legacy relations
         # a variant pattern is only a variant if there are no other relations between the focus gloss and other glosses under consideration
@@ -3179,25 +3194,34 @@ class GlossFrequencyView(DetailView):
         # for the purposes of frequency charts in the template, the focus gloss is included in the variants
         # this simplifies generating tables for variants inside of a loop in the javascript
         try:
-            variants = gl.pattern_variants()
+            pattern_variants = gl.pattern_variants()
         except:
-            try:
-                variants = gl.has_variants()
-            except:
-                variants = []
+            pattern_variants = []
+        pattern_variants = [ v for v in pattern_variants]
+        try:
+            other_variants = gl.has_variants()
+        except:
+            other_variants = []
+
+        variants = pattern_variants + [ ov for ov in other_variants if ov not in pattern_variants ]
+
         context['variants'] = variants
+        # the gloss itself is included among the variants, check that there are other glosses in the list
+        context['has_variants'] = len(variants) > 1
 
         variants_with_keys = []
-        for gl in variants:
-            # get the annotation explicitly
-            # do not use the __str__ property idgloss
-            gl_idgloss = gl.annotationidglosstranslation_set.get(language=gl.lemma.dataset.default_language).text
-            variants_with_keys.append((gl_idgloss, gl))
+        if len(variants) > 1:
+            for v in variants:
+                # get the annotation explicitly
+                # do not use the __str__ property idgloss
+                v_idgloss = v.annotationidglosstranslation_set.get(language=v.lemma.dataset.default_language).text
+                variants_with_keys.append((v_idgloss, v))
         sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
         sorted_variant_keys = sorted([og_idgloss for (og_idgloss, og) in variants_with_keys])
         variants_data_quick_access = {}
         variants_data = []
         for (og_idgloss, variant_of_gloss) in sorted_variants_with_keys:
+            # print('call speaker_data on variant_of_gloss first loop')
             variants_speaker_data = variant_of_gloss.speaker_data()
             variants_data.append((og_idgloss, variants_speaker_data))
             variants_data_quick_access[og_idgloss] = variants_speaker_data
@@ -3215,12 +3239,16 @@ class GlossFrequencyView(DetailView):
                 if i_key in variant_speaker_age_data_v.keys():
                     i_value = variant_speaker_age_data_v[i_key]
                     speaker_age_data_v.append(i_value)
+                    if i_key not in age_range_labels:
+                        age_range_labels.append(i_key)
                 else:
                     speaker_age_data_v.append(0)
 
             variants_age_distribution_data[variant_idgloss] = speaker_age_data_v
 
         context['variants_age_distribution_data'] = variants_age_distribution_data
+
+        context['age_range_labels'] = age_range_labels
 
         variants_sex_distribution_data = {}
         variants_sex_distribution_data_percentage = {}
@@ -3237,7 +3265,8 @@ class GlossFrequencyView(DetailView):
         for i_key in ['Female', 'Male']:
             total_gender_across_variants = variants_sex_distribution_data_totals[i_key]
             for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-                variant_speaker_data_v = variant_of_gloss.speaker_data()
+                variant_speaker_data_v = variants_data_quick_access[variant_idgloss]
+                # print('type of variant id gloss: ', type(variant_idgloss))
                 i_value = variant_speaker_data_v[i_key]
 
                 speaker_data_v = i_value
@@ -3269,8 +3298,8 @@ class GlossFrequencyView(DetailView):
         for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
             total_age_across_variants = variants_age_distribution_cat_totals[i_key]
             for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-
-                variant_age_data_v = variant_of_gloss.speaker_data()
+                # print('call speaker_data on variant_of_gloss: ', type(variant_idgloss), type(variant_of_gloss), type(variants_data_quick_access))
+                variant_age_data_v = variants_data_quick_access[variant_idgloss]
                 i_value = variant_age_data_v[i_key]
 
                 speaker_data_v = i_value
@@ -3302,18 +3331,18 @@ class GlossFrequencyView(DetailView):
 
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        if gl.dataset:
-            for language in gl.dataset.translation_languages.all():
-                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
+        for language in gl.dataset.translation_languages.all():
+            try:
+                annotation_translation = gl.annotationidglosstranslation_set.get(language=language).text
+            except (ValueError):
+                annotation_translation = ''
+            context['annotation_idgloss'][language] = annotation_translation
 
         if interface_language in context['annotation_idgloss'].keys():
             gloss_idgloss = context['annotation_idgloss'][interface_language]
         else:
             gloss_idgloss = context['annotation_idgloss'][default_language]
-        context['gloss_idgloss'] = gloss_idgloss.text
+        context['gloss_idgloss'] = gloss_idgloss
 
         context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
 
@@ -3369,7 +3398,7 @@ class LemmaFrequencyView(DetailView):
         context['dataset_ids'] = [ ds.id for ds in selected_datasets]
         context['dataset_names'] = [ds.acronym for ds in selected_datasets]
 
-        context['frequency_regions'] = settings.FREQUENCY_REGIONS
+        context['frequency_regions'] = gl.dataset.frequency_regions()
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
@@ -3380,8 +3409,6 @@ class LemmaFrequencyView(DetailView):
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
-
-        context['data_datasets'] = gl.data_datasets()
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -3395,19 +3422,17 @@ class LemmaFrequencyView(DetailView):
 
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        if gl.dataset:
-            for language in gl.dataset.translation_languages.all():
-                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
-        print('annotation idgloss per panguage: ', context['annotation_idgloss'])
-
+        for language in gl.dataset.translation_languages.all():
+            try:
+                annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
+            except (ObjectDoesNotExist):
+                annotation_text = ''
+            context['annotation_idgloss'][language] = annotation_text
         if interface_language in context['annotation_idgloss'].keys():
             gloss_idgloss = context['annotation_idgloss'][interface_language]
         else:
             gloss_idgloss = context['annotation_idgloss'][default_language]
-        context['gloss_idgloss'] = gloss_idgloss.text
+        context['gloss_idgloss'] = gloss_idgloss
 
         lemma_group_count = 0
         try:
@@ -3433,6 +3458,7 @@ class LemmaFrequencyView(DetailView):
         lemma_group_glosses = gl.lemma.gloss_set.all()
         glosses_in_lemma_group = []
 
+        total_occurrences = 0
         data_lemmas = []
         if lemma_group_glosses:
             for gl_lem in lemma_group_glosses:
@@ -3452,12 +3478,17 @@ class LemmaFrequencyView(DetailView):
 
                 glosses_in_lemma_group.append((gl_lem,gl_lem_display))
                 data_lemmas_dict['label'] = gl_lem_display
-                gl_lem_data_datasets_dict = gl_lem.data_datasets()
+                total_occurrences_lemma, gl_lem_data_datasets_dict = gl_lem.data_datasets()
                 # The first entry of the dictionary is Occurrences
+                total_occurrences += total_occurrences_lemma
+                # map_to_NA = list(map (lambda x: 0 if x == 0 else x, gl_lem_data_datasets_dict[0]['data']))
+                # print('map: ', map_to_NA)
                 data_lemmas_dict['data'] = gl_lem_data_datasets_dict[0]['data']
                 data_lemmas.append(data_lemmas_dict)
 
         context['data_lemmas'] = json.dumps(data_lemmas)
+
+        context['num_occurrences'] = total_occurrences
 
         context['glosses_in_lemma_group'] = glosses_in_lemma_group
 
@@ -6159,9 +6190,8 @@ class LemmaUpdateView(UpdateView):
                 m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
                 gloss_id_pattern = m.group(1)
                 self.gloss_id = gloss_id_pattern
-            except Exception as e:
+            except (AttributeError):
                 # it is unknown what gloss we were looking at, something went wrong with pattern matching on the url
-                print(e)
                 print('LemmaUpdateView get_context_data gloss id match failed: ', path_parms[0])
                 # restore callback to lemma list
                 context['caller'] = 'lemma_list'

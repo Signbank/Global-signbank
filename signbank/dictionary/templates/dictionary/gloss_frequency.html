@@ -9,11 +9,8 @@
 {% endblock %}
 
 {% block extrajs %}
-<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
 <script type='text/javascript'>
     var url = '{{PREFIX_URL}}';
@@ -44,8 +41,8 @@ var variant_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H
 
 // shades of grey
 // if we get too many variants bright colours are shown
-var variant_colors = [ 'hsl(0, 0%, 10%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 70%)', 'hsl(0, 0%, 20%)', 'hsl(0, 0%, 50%)', 'hsl(0, 0%, 80%)',
-                        'hsl(0, 0%, 30%)', 'hsl(0, 0%, 60%)', 'hsl(0, 0%, 90%)', 'hsl(0, 0%, 5%)', 'hsl(0, 0%, 35%)', 'hsl(0, 0%, 65%)',
+var variant_colors = [ 'hsl(0, 0%, 30%)', 'hsl(0, 0%, 50%)', 'hsl(0, 0%, 70%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 60%)', 'hsl(0, 0%, 80%)',
+                        'hsl(0, 0%, 30%)', 'hsl(0, 0%, 60%)', 'hsl(0, 0%, 90%)', 'hsl(0, 0%, 25%)', 'hsl(0, 0%, 45%)', 'hsl(0, 0%, 65%)',
                         'Blue', 'Khaki', 'Chartreuse', 'Coral', 'Brown', 'BlueViolet', 'DarkCyan', 'Aqua', 'DarkRed', 'DarkOrange',
                         'DarkSeaGreen', 'DeepPink', 'Gold', 'Indigo' ];
 
@@ -56,23 +53,33 @@ var gender_hover_colors = { 'Female': 'hsl(0,0%,83%)', 'Male': 'hsl(0,0%,28%)' }
 var gender_colors = { 'Female': 'hsl(0,0%,75%)', 'Male': 'hsl(0,0%,50%)' };
 
 // shades of grey
-var ages_colors = [ 'hsl(0, 0%, 80%)', 'hsl(0, 0%, 60%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 20%)' ];
+var ages_colors = [ 'hsl(0, 0%, 80%)', 'hsl(0, 0%, 60%)', 'hsl(0, 0%, 45%)', 'hsl(0, 0%, 30%)' ];
 var ages_hover_colors = [ 'hsl(0, 0%, 70%)', 'hsl(0, 0%, 50%)', 'hsl(0, 0%, 30%)', 'hsl(0, 0%, 10%)' ];
 
 var frequency_regions = {{frequency_regions|safe}};
 var data_datasets = {{data_datasets|safe}};
+var number_of_regions = frequency_regions.length;
 var speaker_age_data = {{speaker_age_data|safe}};
+var age_range_labels = {{age_range_labels|safe}};
+var age_range_labels_array = [];
+for (age in age_range_labels) {
+    var age_label = age_range_labels[age];
+    age_range_labels_array.push(age_label);
+};
+
 var speaker_data = {{speaker_data|safe}};
+var num_signers = {{num_signers|safe}};
+var num_occurrences = {{num_occurrences|safe}};
+var max_regions = (num_occurrences > num_signers) ? num_occurrences : num_signers ;
 var variants_data = {{variants_data|safe}};
 var variants_data_quick_access = {{variants_data_quick_access|safe}};
 var variants_age_distribution_data = {{variants_age_distribution_data|safe}};
 var variants_age_distribution_cat_data = {{variants_age_distribution_cat_data|safe}};
 var variants_age_distribution_cat_percentage = {{variants_age_distribution_cat_percentage|safe}};
 var age_distribution_labels = [ '{{gloss.idgloss}}' ];
-var gloss_idgloss = '{{gloss.idgloss}}';
 var variant_labels = {{variant_labels|safe}};
-var variants_sex_distribution_data = {{variants_sex_distribution_data|safe}};
-var variants_sex_distribution_data_percentage = {{variants_sex_distribution_data_percentage|safe}};
+const variants_sex_distribution_data = {{variants_sex_distribution_data|safe}};
+const variants_sex_distribution_data_percentage = {{variants_sex_distribution_data_percentage|safe}};
 var variant_0_speaker_data = [ speaker_data['Female'], speaker_data['Male'] ];
 var ages_labels = ['< 25', '25 - 35', '36 - 65', '> 65'];
 var gender_labels = ['Female', 'Male'];
@@ -82,11 +89,15 @@ var view_type = '{{view_type}}';
 
 var age_distribution_labels = [];
 
+
+
 var datasets_age_distribution_list = [];
 
-var total_variants_age = [];
+<!--console.log('variant_labels: '+variant_labels);-->
+var total_variants_age = {};
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
+<!--    console.log('variant_idgloss: '+variant_idgloss);-->
     var k_total_age = 0;
     for (i in variants_age_distribution_data[variant_idgloss]) {
         k_total_age += variants_age_distribution_data[variant_idgloss][i];
@@ -98,48 +109,74 @@ for (k in variant_labels) {
                                             backgroundColor: variant_colors[k] } );
     age_distribution_labels.push(variant_idgloss);
 };
+<!--for (var key in total_variants_age) {-->
+<!--    console.log('total_variants_age line 110: '+key+' '+total_variants_age[key]);-->
+<!--};-->
+
+<!--console.log('variants_sex_distribution_data: '+JSON.stringify(variants_sex_distribution_data));-->
 
 var sex_distribution_labels = [];
 
 var variants_sex_distribution_list = [];
 
-var total_variants_sex = [];
+<!--console.log('variants_sex_distribution_data_percentage: '+JSON.stringify(variants_sex_distribution_data_percentage));-->
+var total_variants_sex = {};
 
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
     var k_total_sex = 0;
     var gender_data_variant = [];
     for (idx in gender_labels) {
-        gender_label = gender_labels[idx];
-        k_total_sex += parseInt(variants_sex_distribution_data[gender_label][variant_idgloss]);
+        var gender_label = gender_labels[idx];
+        var count_variant_gender = parseInt(variants_sex_distribution_data[gender_label][variant_idgloss]);
+<!--        console.log('count variant gender: '+variant_idgloss+' '+gender_label+' '+variants_sex_distribution_data[gender_label][variant_idgloss]);-->
+        k_total_sex += count_variant_gender;
         gender_data_variant.push(variants_sex_distribution_data_percentage[gender_label][variant_idgloss]);
     };
     total_variants_sex[variant_idgloss] = k_total_sex;
     variants_sex_distribution_list.push( {
                                             label: variant_idgloss,
                                             data: gender_data_variant,
-                                            barThickness: 20,
+                                            barThickness: 15,
                                             backgroundColor: variant_colors[k] } );
     sex_distribution_labels.push(variant_idgloss);
 };
+<!--console.log('variants_sex_distribution_list: '+JSON.stringify(variants_sex_distribution_list));-->
+
+
+
+var total_all_variants_all_sex = 0;
+for (var key in total_variants_sex) {
+<!--    console.log('total_variants_sex: '+key+' '+total_variants_sex[key]);-->
+    total_all_variants_all_sex += total_variants_sex[key];
+};
+<!--console.log('total_all_variants_all_sex: '+total_all_variants_all_sex);-->
 
 var age_distribution_labels_cat = [];
 
 var variants_age_distribution_list_cat = [];
 
-var total_variants_age_cat = [];
+var total_variants_age_cat = {};
 
 for (i in ages_labels) {
-    next_age_category = ages_labels[i];
+    var next_age_category = ages_labels[i];
     var k_total_age_cat = 0;
 
     for (k in variant_labels) {
         var variant_idgloss = variant_labels[k];
-        variant_gloss_age_category = variants_age_distribution_cat_data[next_age_category][variant_idgloss];
+        var variant_gloss_age_category = variants_age_distribution_cat_data[next_age_category][variant_idgloss];
+<!--        console.log('count variant age category: '+variant_idgloss+' '+next_age_category+' '+variant_gloss_age_category);-->
         k_total_age_cat += parseInt(variant_gloss_age_category);
     };
     total_variants_age_cat[next_age_category] = k_total_age_cat;
 };
+
+var total_all_variants_all_age_cat = 0;
+for (var key in total_variants_age_cat) {
+<!--    console.log('total_variants_age_cat: '+key+' '+total_variants_age_cat[key]);-->
+    total_all_variants_all_age_cat += total_variants_age_cat[key];
+};
+<!--console.log('total_all_variants_all_age_cat: '+total_all_variants_all_age_cat);-->
 
 for (k in variant_labels) {
     var variant_idgloss = variant_labels[k];
@@ -153,44 +190,104 @@ for (k in variant_labels) {
     variants_age_distribution_list_cat.push( {
                                             label: variant_idgloss,
                                             data: variant_percentage_data,
-                                            barThickness: 20,
+                                            barThickness: 15,
                                             backgroundColor: variant_colors[k] } );
     age_distribution_labels_cat.push(variant_idgloss);
 };
 </script>
 
 <script type="text/javascript">
-Chart.defaults.global.elements.arc.borderWidth = 0;
+Chart.register(ChartDataLabels);
 
 var ctx = document.getElementById('myChart').getContext('2d');
 var chart = new Chart(ctx, {
-    type: 'horizontalBar',
-
+    type: 'bar',
     data: {
         labels: frequency_regions,
-        datasets: data_datasets
+        datasets: data_datasets,
+        minBarLength: 0
     },
+    options: {
+        responsize: true,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                right: 120
+            }
+        },
+        plugins: {
+            datalabels: {
+                anchor: 'end',
+                clamp: true,
+                align: 'right',
+                offset: 0,
+                labels: {
+                    value: {
+                        color: 'Black'
+                    }
+                },
+                formatter: (value, context) => {
+                    return value + ' ' + context.dataset.label;
+                }
+            },
+            legend: {
+                position: 'top',
+                labels: {
+                    size: 10,
+                    color: 'Black'
+                }
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0,
+                    size: 10,
+                    color: 'Black'
+                }
+            },
+            y: {
+                type: 'category',
+                labels: frequency_regions,
+                ticks: {
+                    color: 'Black',
+                    stepSize: 20
+                },
+                offset: true,
+                barThickness: 20,
+                maxBarThickness: 20,
+                categoryPercentage: 0.5,
+                barPercentage: 0.5,
+                grid: {
+                    offset: true
+                },
+                gridLines: {
+                    display: false
+                }
+            }
+        },
+        elements: {
+            point: {
+                radius: 20,
+            },
+            bar: {
+                borderWidth: 2
+            }
+        }
+    }
 });
 
-chart.options.scales.yAxes[0].ticks.fontSize = 12;
-chart.options.scales.yAxes[0].ticks.fontColor = 'Black';
-chart.options.scales.yAxes[0].ticks.precision = 0;
-chart.options.scales.xAxes[0].ticks.fontSize = 12;
-chart.options.scales.xAxes[0].ticks.fontColor = 'Black';
-chart.options.scales.xAxes[0].ticks.precision = 0;
-chart.options.legend.labels.fontSize = 12;
-chart.options.legend.labels.fontColor = 'Black';
-chart.options.legend.position = 'top';
 chart.data.datasets[0].backgroundColor = ages_colors[0];
 chart.data.datasets[1].backgroundColor = ages_colors[3];
-chart.options.tooltips.titleFontSize = 12;
-chart.options.tooltips.bodyFontSize = 12;
-chart.options.title.display = false;
-chart.options.title.position = 'bottom';
-chart.options.title.fontSize = 12;
-chart.options.title.text = "Title of chart";
+
+chart.options.plugins.title.display = false;
+chart.options.plugins.title.position = 'bottom';
+chart.options.plugins.title.fontSize = 12;
+chart.options.plugins.title.text = "Gloss Regions";
 chart.update();
 
+{% if has_variants %}
 var range_line = Array.from(Array(100), (x,i) => i);
 var cty = document.getElementById('speakerChart').getContext('2d');
 var speakerchart = new Chart(cty, {
@@ -204,20 +301,87 @@ var speakerchart = new Chart(cty, {
     options: {
         showLines: true,
         scales: {
-            xAxes: [{ stacked: true }],
-            yAxes: [{ stacked: true }]
-        }
+            x: { stacked: true,
+                 type: 'linear',
+                 min: 0,
+                 ticks: {
+                    precision: 0,
+                    autoskip: false,
+                    color: 'Black',
+                    size: 6,
+                    stepSize: 1,
+                    maxRotation: 90,
+                    maxTicksLimit: 100,
+                    barThickness: 10,
+                    callback: function(value,index, values) {
+                        var index_in_range = false;
+                        for (i in age_range_labels_array) {
+                            if (value+1 == age_range_labels_array[i]) {
+                                index_in_range = true;
+                                break;
+                            }
+                        }
+                        return index_in_range ? value : '';
+                    }
+                 }
+                  },
+            y: { stacked: true,
+                 ticks: {
+                    precision: 0
+                 }
+               }
+        },
+        plugins: {
+            tooltip: {
+                mode: 'point',
+                yAlign: 'center',
+                xAlign: 'center',
+                fontSize: 10,
+                titleFontSize: 10,
+                callbacks: {
+                    label: function(context) {
+                        var label = context.label || '';
+                        var value = context.raw || 0;
+                        var variant = context.dataset.label || '';
+                        if (variant) {
+                            label = variant + ' : ' + value;
+                        };
+<!--                        console.log('label for speakerchart: '+label);-->
+                        return label;
+                    }
+                },
+            },
+            datalabels: {
+                anchor: 'end',
+                clamp: true,
+                align: 'right',
+                offset: 0,
+                labels: {
+                    value: {
+                        color: 'Black'
+                    }
+                },
+                formatter: (value, context) => {
+                    if (value == 0) {
+                        return '';
+                    };
+                    return value;
+                }
+            },
+            legend: {
+                position: 'top',
+                labels: {
+                    size: 10,
+                    color: 'Black'
+                }
+            }
+        },
     }
 });
 
-speakerchart.options.scales.yAxes[0].ticks.precision = 0;
-speakerchart.options.scales.yAxes[0].ticks.fontSize = 12;
 
-speakerchart.options.scales.xAxes[0].ticks.precision = 0;
-speakerchart.options.scales.xAxes[0].ticks.fontSize = 12;
-
-speakerchart.options.legend.labels.fontSize = 12;
 speakerchart.update();
+{% endif %}
 
 // these variables are used specifically to switch between percentage and raw values in the dataset
 // when the display toggle is invoked
@@ -257,50 +421,74 @@ var genderchart = new Chart(ctz, {
             },
             align: 'start'
         },
-        tooltips: {
-            mode: 'point',
-            yAlign: 'center',
-            xAlign: 'center',
-            fontSize: 10,
-            titleFontSize: 10,
-            callbacks: {
-                label: function(tooltipItem, data) {
-                    var value = data.datasets[0].data[tooltipItem.index] || 0;
-                    var label = data.labels[tooltipItem.index] || '';
-                    if (label) {
-                        label += ' : ';
+        plugins: {
+            tooltip: {
+                mode: 'point',
+                yAlign: 'center',
+                xAlign: 'center',
+                fontSize: 10,
+                titleFontSize: 10,
+                callbacks: {
+                    label: function(context) {
+                        var label = context.label || '';
+                        var value = display_percentage ? Math.round(context.raw * 100) : context.raw;
+                        if (label) {
+                            label += ' : ';
+                        };
+                        if (display_percentage) {
+                            label += value + ' %';
+                        } else {
+                            label += value;
+                        };
+<!--                        console.log('label for genderchart: '+label);-->
+                        return label;
+                    }
+                }
+            },
+            legend: {
+                labels: {
+                    size: 10,
+                    style: 'Bold',
+                    usePointStyle: true,
+                    boxWidth: 10,
+                    padding: 10
+                },
+                fullWidth: true,
+                position: 'left',
+                align: 'middle',
+                onClick: null
+            },
+            datalabels: {
+                anchor: 'center',
+                clamp: true,
+                align: 'center',
+                offset: 0,
+                labels: {
+                    value: {
+                        color: 'Black'
+                    }
+                },
+                formatter: (value, context) => {
+                    if (value == 0) {
+                        return '';
                     };
-                    if (display_percentage) {
-                        label += Math.round(value * 100) + ' %';
-                    } else {
-                        label += value;
-                    };
-                    return label;
+                    var label = context.chart.data.labels[context.dataIndex];
+                    var display_value = display_percentage ? Math.round(value * 100) : value;
+                    var display_label = display_percentage ? '% ' + label : ' ' + label;
+                    return display_value + display_label;
                 }
             }
-        },
-        legend: {
-            labels: {
-                fontSize: 10,
-                fontStyle: 'bold',
-                usePointStyle: true,
-                boxWidth: 10,
-                padding: 10
-            },
-            fullWidth: true,
-            position: 'left',
-            align: 'middle'
         }
     }
 });
 
-genderchart.options.title.display = true;
-genderchart.options.title.fontSize = 12;
-genderchart.options.title.fontStyle = 'bold';
-genderchart.options.title.fontColor = 'black';
-genderchart.options.title.position = 'left';
-genderchart.options.title.align = 'start';
-genderchart.options.title.text = "Gender";
+genderchart.options.plugins.title.display = true;
+genderchart.options.plugins.title.size = 12;
+genderchart.options.plugins.title.style = 'Bold';
+genderchart.options.plugins.title.color = 'Black';
+genderchart.options.plugins.title.position = 'left';
+genderchart.options.plugins.title.align = 'start';
+genderchart.options.plugins.title.text = "Gender";
 genderchart.update();
 
 var age_data_percentage = [ speaker_data['< 25']/speaker_data['Total'],
@@ -344,65 +532,94 @@ var agechart = new Chart(ctw, {
             },
             align: 'start'
         },
-        tooltips: {
-            mode: 'point',
-            yAlign: 'center',
-            xAlign: 'center',
-            fontSize: 10,
-            titleFontSize: 10,
-            callbacks: {
-                label: function(tooltipItem, data) {
-                    var value = data.datasets[0].data[tooltipItem.index] || 0;
-                    var label = data.labels[tooltipItem.index] || '';
-                    if (label) {
-                        label += ' : ';
+        plugins: {
+            tooltip: {
+                mode: 'point',
+                yAlign: 'center',
+                xAlign: 'center',
+                fontSize: 10,
+                titleFontSize: 10,
+                callbacks: {
+                    label: function(context) {
+                        var label = context.label || '';
+                        var value = display_percentage ? Math.round(context.raw * 100) : context.raw;
+                        if (label) {
+                            label += ' : ';
+                        };
+                        if (display_percentage) {
+                            label += value + ' %';
+                        } else {
+                            label += value;
+                        };
+<!--                        console.log('label for agechart: '+label);-->
+                        return label;
+                    }
+                }
+            },
+            legend: {
+                labels: {
+                    size: 10,
+                    style: 'Bold',
+                    usePointStyle: true,
+                    boxWidth: 10,
+                    padding: 10
+                },
+                fullWidth: true,
+                position: 'left',
+                align: 'top',
+                onClick: null
+            },
+            datalabels: {
+                anchor: 'center',
+                clamp: true,
+                align: 'center',
+                offset: 0,
+                labels: {
+                    value: {
+                        color: 'Black'
+                    }
+                },
+                formatter: (value, context) => {
+                    if (value == 0) {
+                        return '';
                     };
-                    if (display_percentage) {
-                        label += Math.round(value * 100) + ' %';
-                    } else {
-                        label += value;
-                    };
-                    return label;
+                    var label = context.chart.data.labels[context.dataIndex];
+                    var display_value = display_percentage ? Math.round(value * 100) : value;
+                    var display_label = display_percentage ? '% ' + label : ' ' + label;
+                    return display_value + display_label;
                 }
             }
-        },
-        legend: {
-            labels: {
-                fontSize: 10,
-                fontStyle: 'bold',
-                usePointStyle: true,
-                boxWidth: 10,
-                padding: 10
-            },
-            fullWidth: true,
-            position: 'left',
-            align: 'middle'
         }
     }
 });
 
-agechart.options.title.display = true;
-agechart.options.title.fontSize = 12;
-agechart.options.title.fontStyle = 'bold';
-agechart.options.title.fontColor = 'black';
-agechart.options.title.position = 'left';
-agechart.options.title.align = 'start';
-agechart.options.title.text = "Age";
+agechart.options.plugins.title.display = true;
+agechart.options.plugins.title.size = 12;
+agechart.options.plugins.title.style = 'Bold';
+agechart.options.plugins.title.color = 'Black';
+agechart.options.plugins.title.position = 'left';
+agechart.options.plugins.title.align = 'start';
+agechart.options.plugins.title.text = "Age";
 agechart.update();
 
+{% if has_variants %}
+<!--console.log('prepare glossvariantsSexChart');-->
 var ctgs = document.getElementById('glossvariantsSexChart').getContext('2d');
 var glossvariantsSexChart = new Chart(ctgs, {
-    type: 'horizontalBar',
+    type: 'bar',
     maintainAspectRation: false,
     responsive: true,
     barDatasetSpacing: 1,
     barValueSpacing: 1,
 
     data: {
-        datasets: variants_sex_distribution_list,
+        labels: variant_labels,
+        datasets:
+            variants_sex_distribution_list
     },
 
     options: {
+        indexAxis: 'y',
         layout: {
             padding: {
                 top: 0,
@@ -410,41 +627,59 @@ var glossvariantsSexChart = new Chart(ctgs, {
                 bottom: 100
             }
         },
-        legend: {
-            labels: {
-                fontSize: 10,
-                usePointStyle: true,
-                boxWidth: 10
+        plugins: {
+            tooltip: {
+                mode: 'point',
+                enabled: true,
+                yAlign: 'center',
+                xAlign: 'center',
+                callbacks: {
+                    label: function(context) {
+<!--                        console.log('callback: '+JSON.stringify(context.label));-->
+                        var label = context.dataset.label || '';
+                        var value = display_percentage ? Math.round(context.raw * 100) : context.raw;
+                        if (label) {
+                            label += ' : ';
+                        };
+                        if (display_percentage) {
+                            label += value + '%';
+                        } else {
+                            label += value;
+                        };
+<!--                        console.log('label for glossvariantsSexChart: '+label);-->
+                        return label;
+                    }
+                },
+                caretPadding: 10
             },
-            display: true,
-            fullWidth: true,
-            position: 'bottom',
-            padding: 0
-        },
-        tooltips: {
-            enabled: true,
-            mode: 'point',
-            yAlign: 'center',
-            xAlign: 'center',
-            callbacks: {
-                label: function(tooltipItem, data) {
-                    var label = data.datasets[tooltipItem.datasetIndex].label || '';
-                    var value = tooltipItem.xLabel;
-                    if (label) {
-                        label += ' : ';
+            datalabels: {
+                anchor: 'center',
+                clamp: true,
+                align: 'center',
+                offset: 0,
+                labels: {
+                    value: {
+                        color: 'Black'
+                    }
+                },
+                formatter: (value, context) => {
+                    if (value == 0) {
+                        return '';
                     };
-                    if (display_percentage) {
-                        label += Math.round(value * 100) + ' %';
-                    } else {
-                        label += value;
-                    };
-                    return label;
+                    var display_value = display_percentage ? Math.round(value * 100) : value;
+                    var display_label = display_percentage ? '%'  : '' ;
+                    var display_str = display_value + display_label;
+<!--                    console.log('formatter display_str for glossvariantsSexChart: '+display_str);-->
+                    return display_str;
                 }
             },
-            caretPadding: 10
+            legend: {
+                onClick: null,
+                position: 'bottom'
+            }
         },
         scales: {
-            xAxes: [{ stacked: true,
+            x: { stacked: true,
                       display: true,
                       labels: sex_distribution_labels,
                       ticks: {
@@ -454,8 +689,8 @@ var glossvariantsSexChart = new Chart(ctgs, {
                         drawBorder: false,
                         display: false
                       }
-            }],
-            yAxes: [{ stacked: true,
+            },
+            y: { stacked: true,
                         display: true,
                         labels: gender_labels,
                         gridLines: {
@@ -463,22 +698,19 @@ var glossvariantsSexChart = new Chart(ctgs, {
                             display: false
                         },
                         ticks: { fontSize: 10,
-                                 fontStyle: 'bold' },
-                        afterFit: function(scaleInstance) {
-                            scaleInstance.width = 100;
-                        }
-            }]
+                                 fontStyle: 'bold' }
+            }
         },
         showLines: false,
     }
 });
 
-glossvariantsSexChart.options.title.display = false;
 glossvariantsSexChart.update();
+<!--console.log(JSON.stringify(glossvariantsSexChart.data));-->
 
 var ctga = document.getElementById('glossvariantsAgeChart').getContext('2d');
 var glossvariantsAgeChart = new Chart(ctga, {
-    type: 'horizontalBar',
+    type: 'bar',
     maintainAspectRation: false,
     responsive: true,
 
@@ -487,47 +719,66 @@ var glossvariantsAgeChart = new Chart(ctga, {
     },
 
     options: {
+        indexAxis: 'y',
         layout: {
             padding: {
                 top: 10,
                 bottom: 10
             }
         },
-        tooltips: {
-            enabled: true,
-            mode: 'point',
-            yAlign: 'center',
-            xAlign: 'center',
-            callbacks: {
-                label: function(tooltipItem, data) {
-                    var label = data.datasets[tooltipItem.datasetIndex].label || '';
-                    var value = tooltipItem.xLabel;
-                    if (label) {
-                        label += ' : ';
-                    };
-                    if (display_percentage) {
-                        label += Math.round(value * 100) + ' %';
-                    } else {
-                        label += value;
-                    };
-                    return label;
+        plugins: {
+            tooltip: {
+                mode: 'point',
+                enabled: true,
+                mode: 'point',
+                yAlign: 'center',
+                xAlign: 'center',
+                callbacks: {
+                    label: function(context) {
+<!--                        console.log('callback: '+JSON.stringify(context.label));-->
+                        var label = context.dataset.label || '';
+                        var value = display_percentage ? Math.round(context.raw * 100) : context.raw;
+                        if (label) {
+                            label += ' : ';
+                        };
+                        if (display_percentage) {
+                            label += value + '%';
+                        } else {
+                            label += value;
+                        };
+<!--                        console.log('label for glossvariantsAgeChart: '+label);-->
+                        return label;
+                    }
                 }
+            },
+            datalabels: {
+                anchor: 'center',
+                clamp: true,
+                align: 'center',
+                offset: 0,
+                labels: {
+                    value: {
+                        color: 'Black'
+                    }
+                },
+                formatter: (value, context) => {
+                    if (value == 0) {
+                        return '';
+                    };
+                    var display_value = display_percentage ? Math.round(value * 100) : value;
+                    var display_label = display_percentage ? '%'  : '' ;
+                    var display_str = display_value + display_label;
+<!--                    console.log('formatter display_str for glossvariantsAgeChart: '+display_str);-->
+                    return display_str;
+                }
+            },
+            legend: {
+                onClick: null,
+                position: 'bottom'
             }
         },
-        legend: {
-            labels: {
-                fontSize: 10,
-                usePointStyle: true,
-                boxWidth: 10
-            },
-            display: true,
-            fullWidth: true,
-            fullHeight: true,
-            position: 'bottom',
-            padding: 0
-        },
         scales: {
-            xAxes: [{ stacked: true,
+            x: { stacked: true,
                       display: true,
                       ticks: {
                          display: false
@@ -536,27 +787,28 @@ var glossvariantsAgeChart = new Chart(ctga, {
                         drawBorder: false,
                         display: false
                       }
-                    }],
-            yAxes: [{ stacked: true,
-                        display: true,
-                        labels: ages_labels,
-                        type: 'category',
-                        gridLines: {
-                            drawBorder: false,
-                            display: false
-                        },
-                        ticks: { fontSize: 10,
-                                 fontStyle: 'bold' },
-                        afterFit: function(scaleInstance) {
-                            scaleInstance.width = 100;
-                        }
-            }]
+                    },
+            y: { stacked: true,
+                 display: true,
+                 labels: ages_labels,
+                 type: 'category',
+                 gridLines: {
+                     drawBorder: false,
+                     display: false
+                 },
+                 ticks: {
+                    fontSize: 10,
+                    fontStyle: 'bold'
+                 }
+<!--                 afterFit: function(scaleInstance) {-->
+<!--                    scaleInstance.width = 100;-->
+<!--                 }-->
+            }
         },
         showLines: false,
     }
 });
 
-glossvariantsAgeChart.options.title.display = false;
 glossvariantsAgeChart.update();
 
 var ids_variant_gender_charts = [];
@@ -574,7 +826,7 @@ for (k in variant_labels) {
 var variants_gender_charts = [];
 var variants_age_charts = [];
 
-var defaultLegendClickHandler = Chart.defaults.global.legend.onClick;
+var defaultLegendClickHandler = Chart.defaults.plugins.legend.onClick;
 var newLegendClickHandler = function(e, legendItem) {
     var index = legendItem.datasetIndex;
     var chartlist = [ this.chart ];
@@ -601,59 +853,91 @@ for (k in variant_labels) {
     for (idx in gender_labels) {
         var data_gender_idx = variants_data_quick_access[variant_key][gender_labels[idx]];
         var total_gender_idx = total_variants_sex[ variant_key ];
+<!--        console.log('total_gender_idx: '+variant_key+' '+total_gender_idx);-->
         var data_gender_idx_percentage = Math.round(total_gender_idx == 0 ? 0 : (data_gender_idx/total_gender_idx));
         flattened_genders_vk.push( {
                                 label: gender_labels[idx],
                                 data: [ total_gender_idx == 0 ? 0 : (data_gender_idx/total_gender_idx) ],
                                 hoverBackgroundColor: gender_hover_colors[gender_labels[idx]],
                                 backgroundColor: gender_colors[gender_labels[idx]],
-                                barThickness: 20
+                                barThickness: 15
                                 });
     };
 
     var variant_k_chart = new Chart(ctk, {
-        type: 'horizontalBar',
+        type: 'bar',
         responsive: true,
-        maintainAspectRation: false,
+        maintainAspectRation: true,
         data: {
             labels: [ variant_key ],
             datasets: flattened_genders_vk,
         },
 
         options: {
-            legend: {
-                display: false
-            },
-            tooltips: {
-                mode: 'point',
-                yAlign: 'center',
-                xAlign: 'center',
-                fontSize: 10,
-                titleFontSize: 10,
-                callbacks: {
-                    label: function(tooltipItem, data) {
-                        var label = data.datasets[tooltipItem.datasetIndex].label || '';
-                        if (label) {
-                            label += ' : ';
-                        };
-                        if (display_percentage) {
-                            label += Math.round(tooltipItem.xLabel * 100) + ' %';
-                        } else {
-                            label += tooltipItem.xLabel;
-                        };
-                        return label;
+            indexAxis: 'y',
+            plugins: {
+                tooltip: {
+                    mode: 'point',
+                    yAlign: 'center',
+                    xAlign: 'center',
+                    fontSize: 10,
+                    titleFontSize: 10,
+                    callbacks: {
+                        label: function(context) {
+                            var label = context.dataset.label || '';
+                            var value = display_percentage ? Math.round(context.raw * 100) : context.raw;
+                            if (label) {
+                                label += ' : ';
+                            };
+                            if (display_percentage) {
+                                label += value + ' %';
+                            } else {
+                                label += value;
+                            };
+<!--                            console.log('label for variantsGenderChart_'+variant_key+': '+label);-->
+                            return label;
+                        }
                     }
+                },
+                datalabels: {
+                    anchor: 'center',
+                    clamp: true,
+                    align: 'center',
+                    offset: 0,
+                    labels: {
+                        value: {
+                            color: 'Black'
+                        }
+                    },
+                    formatter: (value, context) => {
+                        if (value == 0) {
+                            return '';
+                        };
+                        var display_value = display_percentage ? Math.round(value * 100) : value;
+                        var display_label = display_percentage ? '%'  : '' ;
+                        var display_str = display_value + display_label;
+                        return display_str;
+                    }
+                },
+                legend: {
+                    display: (k == variant_labels.length-1) ? true : false,
+                    position: 'bottom',
+                    labels: {
+                        size: 10,
+                        color: 'Black'
+                    },
+                    onClick: null
                 }
             },
             scales: {
-                xAxes: [{ stacked: true,
+                x: { stacked: true,
                             display: false,
                               ticks: {
                                 display: false,
                                 max: 1
                               }
-                }],
-                yAxes: [{ stacked: true,
+                },
+                y: { stacked: true,
                             display: true,
                             gridLines: {
                                 drawBorder: false,
@@ -661,7 +945,7 @@ for (k in variant_labels) {
                             },
                             ticks: { fontSize: 10,
                                      fontStyle: 'bold' }
-                }]
+                }
             },
             showLines: true
         }
@@ -688,11 +972,11 @@ for (k in variant_labels) {
                                 data: [ data_category_percentage ],
                                 hoverBackgroundColor: ages_hover_colors[idx],
                                 backgroundColor: ages_colors[idx],
-                                barThickness: 20
+                                barThickness: 15
                                 });
     };
     var variant_m_chart = new Chart(ctm, {
-        type: 'horizontalBar',
+        type: 'bar',
         responsive: true,
         maintainAspectRation: false,
         data: {
@@ -700,39 +984,70 @@ for (k in variant_labels) {
             datasets: flattened_ages_vk,
         },
         options: {
-            legend: {
-                display: false
-            },
-            tooltips: {
-                mode: 'point',
-                yAlign: 'center',
-                xAlign: 'center',
-                fontSize: 10,
-                titleFontSize: 10,
-                callbacks: {
-                    label: function(tooltipItem, data) {
-                        var label = data.datasets[tooltipItem.datasetIndex].label || '';
-                        if (label) {
-                            label += ' : ';
-                        };
-                        if (display_percentage) {
-                            label += Math.round(tooltipItem.xLabel * 100) + ' %';
-                        } else {
-                            label += tooltipItem.xLabel;
-                        };
-                        return label;
+            indexAxis: 'y',
+            plugins: {
+                tooltip: {
+                    mode: 'point',
+                    yAlign: 'center',
+                    xAlign: 'center',
+                    fontSize: 10,
+                    titleFontSize: 10,
+                    callbacks: {
+                        label: function(context) {
+                            var label = context.dataset.label || '';
+                            var value = display_percentage ? Math.round(context.raw * 100) : context.raw;
+                            if (label) {
+                                label += ' : ';
+                            };
+                            if (display_percentage) {
+                                label += value + ' %';
+                            } else {
+                                label += value;
+                            };
+<!--                            console.log('label for variantsAgeChart_'+variant_key+': '+label);-->
+                            return label;
+                        }
                     }
+                },
+                datalabels: {
+                    anchor: 'center',
+                    clamp: true,
+                    align: 'center',
+                    offset: 0,
+                    labels: {
+                        value: {
+                            color: 'Black'
+                        }
+                    },
+                    formatter: (value, context) => {
+                        if (value == 0) {
+                            return '';
+                        };
+                        var display_value = display_percentage ? Math.round(value * 100) : value;
+                        var display_label = display_percentage ? '%'  : '' ;
+                        var display_str = display_value + display_label;
+                        return display_str;
+                    }
+                },
+                legend: {
+                    display: (k == variant_labels.length-1) ? true : false,
+                    position: 'bottom',
+                    labels: {
+                        size: 10,
+                        color: 'Black'
+                    },
+                    onClick: null
                 }
             },
             scales: {
-                xAxes: [{ stacked: true,
+                x: { stacked: true,
                           display: false,
                           ticks: {
                              display: false,
                              max: 1
                           }
-                }],
-                yAxes: [{ stacked: true,
+                },
+                y: { stacked: true,
                             display: true,
                             ticks: {
                                 fontSize: 10,
@@ -742,7 +1057,7 @@ for (k in variant_labels) {
                                 drawBorder: false,
                                 display: false
                             }
-                }]
+                }
             },
             showLines: true
         }
@@ -751,6 +1066,12 @@ for (k in variant_labels) {
     variant_m_chart.update();
     variants_age_charts[canvasId] = variant_m_chart;
 };
+{% else %}
+var ids_variant_gender_charts = [];
+var ids_variant_age_charts = [];
+var variants_gender_charts = [];
+var variants_age_charts = [];
+{% endif %}
 
 </script>
 
@@ -760,11 +1081,28 @@ for (k in variant_labels) {
  * toggle between percentage view and raw view
  */
 function do_toggle_display(el) {
+  var button_id = el.id;
+  var other_button_id = button_id;
+  if (button_id == 'speakers_button') {
+    other_button_id = '#variants_speakers_button';
+  } else {
+    other_button_id = '#speakers_button';
+  };
   var sViewType = $(el).attr('value');
   switch(sViewType) {
     case "raw":
+<!--        console.log('toggle to raw');-->
+<!--        console.log('labels: '+JSON.stringify(glossvariantsAgeChart.data.labels));-->
+<!--        console.log('datasets: '+JSON.stringify(glossvariantsAgeChart.data.datasets));-->
+<!--        for (key in glossvariantsAgeChart.data.labels) {-->
+<!--            console.log('datasets key: '+JSON.stringify(glossvariantsAgeChart.data.datasets[key]));-->
+<!--        };-->
+
+<!--        console.log(JSON.stringify(glossvariantsAgeChart.options.scales.x));-->
         $(el).val('percentage');
         $(el).html("Percentage View");
+        $(other_button_id).val('percentage');
+        $(other_button_id).html('Percentage View');
         display_percentage = false;
         genderchart.data.datasets[0].data.pop();
         genderchart.data.datasets[0].data.pop();
@@ -777,12 +1115,13 @@ function do_toggle_display(el) {
         genderchart.data.labels.length = 2;
         genderchart.update();
 
+        {% if has_variants %}
         var total_sex_data = 0;
         for (idv in variant_labels) {
             var variant_idgloss = variant_labels[idv];
             total_sex_data += total_variants_sex[ variant_idgloss ];
         };
-
+<!--        console.log('total_sex_data: '+total_sex_data);-->
         for (idx in ids_variant_gender_charts) {
             var variant_idgloss = variant_labels[idx];
             var next_gender_chart = variants_gender_charts[ids_variant_gender_charts[idx]];
@@ -790,34 +1129,45 @@ function do_toggle_display(el) {
             for (idy in gender_labels) {
                 var gender_category_label = gender_labels[idy];
                 var next_raw = variants_sex_distribution_data[gender_category_label][variant_idgloss];
+<!--                console.log('next_raw: '+next_raw);-->
                 next_gender_chart.data.datasets[idy].data.pop();
                 next_gender_chart.data.datasets[idy].data.push(next_raw);
             };
-            next_gender_chart.options.scales.xAxes[0].ticks.max = total_sex_data;
+<!--            console.log('total_all_variants_all_sex: '+total_all_variants_all_sex);-->
+            next_gender_chart.options.scales.x.max = total_all_variants_all_sex;
             next_gender_chart.update();
         };
 
         // glossvariantsSexChart one dataset per variant
         // first pop off old data
+<!--        console.log('toggle raw: '+JSON.stringify(glossvariantsSexChart.data));-->
         var max_ticks = 0;
         for (idx in variant_labels) {
             var variant_idgloss = variant_labels[idx];
             // pop off Female and Male data for each variant's dataset
-            glossvariantsSexChart.data.datasets[idx].data.pop();
-            glossvariantsSexChart.data.datasets[idx].data.pop();
+<!--            while (glossvariantsSexChart.data.datasets[idx].data.length > 0) {-->
+<!--                glossvariantsSexChart.data.datasets[idx].data.pop();-->
+<!--            };-->
+            glossvariantsSexChart.data.datasets[idx].data = [];
             max_ticks += total_variants_sex[variant_idgloss]
         };
-        for (idy in gender_labels) {
-            var gender_label = gender_labels[idy];
-            for (idx in variant_labels) {
-                var variant_idgloss = variant_labels[idx];
+<!--        console.log('glossvariantsSexChart toggle raw after popping: '+JSON.stringify(glossvariantsSexChart.data));-->
+<!--        console.log('toggle raw: '+max_ticks);-->
+        for (idx in variant_labels) {
+            var variant_idgloss = variant_labels[idx];
+            for (idy in gender_labels) {
+                var gender_label = gender_labels[idy];
                 // push for each dataset the next sex data
-                var next_raw = variants_sex_distribution_data[gender_label][variant_idgloss];
+                var next_raw = parseInt(variants_sex_distribution_data[gender_label][variant_idgloss]);
                 glossvariantsSexChart.data.datasets[idx].data.push(next_raw);
+<!--                console.log('toggle raw after pushing: '+variant_idgloss+JSON.stringify(glossvariantsSexChart.data));-->
             };
         };
-        glossvariantsSexChart.options.scales.xAxes[0].ticks.max = max_ticks;
+        glossvariantsSexChart.options.scales.x.max = max_ticks;
         glossvariantsSexChart.update();
+<!--        console.log('glossvariantsSexChart toggle raw after update: '+variant_idgloss+JSON.stringify(glossvariantsSexChart.data));-->
+
+        {% endif %}
 
         agechart.data.datasets[0].data.pop();
         agechart.data.datasets[0].data.pop();
@@ -832,11 +1182,14 @@ function do_toggle_display(el) {
         agechart.data.labels.length = 4;
         agechart.update();
 
+
+        {% if has_variants %}
         var total_age_data = 0;
         for (idv in variant_labels) {
             var variant_idgloss = variant_labels[idv];
             total_age_data += total_variants_age[ variant_idgloss ];
         };
+<!--        console.log('total age data line 1128: '+total_age_data);-->
         for (idx in ids_variant_age_charts) {
             var variant_idgloss = variant_labels[idx];
             var next_age_chart = variants_age_charts[ids_variant_age_charts[idx]];
@@ -847,7 +1200,8 @@ function do_toggle_display(el) {
                 next_age_chart.data.datasets[idy].data.pop();
                 next_age_chart.data.datasets[idy].data.push(next_age_data_raw);
             };
-            next_age_chart.options.scales.xAxes[0].ticks.max = total_age_data;
+<!--            console.log('total age data line 1158: '+total_age_data);-->
+            next_age_chart.options.scales.x.max = total_all_variants_all_age_cat;
             next_age_chart.update();
         };
 
@@ -857,11 +1211,12 @@ function do_toggle_display(el) {
         for (idx in variant_labels) {
             var variant_idgloss = variant_labels[idx];
             // pop off age catetories data for each variant's dataset
-            glossvariantsAgeChart.data.datasets[idx].data.pop();
-            glossvariantsAgeChart.data.datasets[idx].data.pop();
-            glossvariantsAgeChart.data.datasets[idx].data.pop();
-            glossvariantsAgeChart.data.datasets[idx].data.pop();
-            max_ticks += total_variants_age[variant_idgloss]
+<!--            glossvariantsAgeChart.data.datasets[idx].data.pop();-->
+<!--            glossvariantsAgeChart.data.datasets[idx].data.pop();-->
+<!--            glossvariantsAgeChart.data.datasets[idx].data.pop();-->
+<!--            glossvariantsAgeChart.data.datasets[idx].data.pop();-->
+                glossvariantsAgeChart.data.datasets[idx].data = [];
+            max_ticks += total_variants_age[variant_idgloss];
         };
         for (idy in ages_labels) {
             var age_category_label = ages_labels[idy];
@@ -871,12 +1226,19 @@ function do_toggle_display(el) {
                 glossvariantsAgeChart.data.datasets[idx].data.push(next_raw);
             };
         };
-        glossvariantsAgeChart.options.scales.xAxes[0].ticks.max = max_ticks;
+        glossvariantsAgeChart.options.scales.x.max = total_all_variants_all_age_cat;
         glossvariantsAgeChart.update();
+        {% endif %}
+
         break;
     case "percentage":
+<!--        console.log('toggle to percentage');-->
+<!--        console.log(JSON.stringify(glossvariantsAgeChart.data.datasets));-->
+<!--        console.log(JSON.stringify(glossvariantsAgeChart.options.scales.x));-->
         $(el).val('raw');
         $(el).html("Raw View");
+        $(other_button_id).val('raw');
+        $(other_button_id).html('Raw View');
         display_percentage = true;
         genderchart.data.datasets[0].data.pop();
         genderchart.data.datasets[0].data.pop();
@@ -889,59 +1251,80 @@ function do_toggle_display(el) {
         genderchart.data.labels.length = 2;
         genderchart.update();
 
+        {% if has_variants %}
         for (idx in ids_variant_gender_charts) {
             var variant_idgloss = variant_labels[idx];
             var next_gender_chart = variants_gender_charts[ids_variant_gender_charts[idx]];
 
             for (idy in gender_labels) {
                 var gender_category_label = gender_labels[idy];
-                var next_data = variants_sex_distribution_data[gender_category_label][variant_idgloss];
+<!--                console.log('gender_category_label: '+gender_category_label);-->
+                var next_data = parseInt(variants_sex_distribution_data[gender_category_label][variant_idgloss]);
+<!--                console.log('next_data: '+next_data);-->
                 var next_percentage = next_data / total_variants_sex[variant_idgloss];
+<!--                console.log('next_percentage: '+next_percentage);-->
                 next_gender_chart.data.datasets[idy].data.pop();
                 next_gender_chart.data.datasets[idy].data.push(next_percentage);
             };
-            next_gender_chart.options.scales.xAxes[0].ticks.max = 1;
+            next_gender_chart.options.scales.x.max = 1;
             next_gender_chart.update();
         };
 
         // glossvariantsSexChart one dataset per variant
         // first pop off old data
+<!--        console.log('glossvariantsSexChart toggle percentage before: '+glossvariantsSexChart.labels+JSON.stringify(glossvariantsSexChart.data));-->
+<!--        for (idy in gender_labels) {-->
+<!--            for (idx in variant_labels) {-->
+<!--                // pop off gender data for each variant's dataset-->
+<!--                glossvariantsSexChart.data.datasets[idx].data.pop();-->
+<!--            }-->
+<!--        };-->
         for (idx in variant_labels) {
-            // pop off Female and Male data for each variant's dataset
-            glossvariantsSexChart.data.datasets[idx].data.pop();
-            glossvariantsSexChart.data.datasets[idx].data.pop();
-        };
-        for (idy in gender_labels) {
-            var gender_label = gender_labels[idy];
-            for (idx in variant_labels) {
-                var variant_idgloss = variant_labels[idx];
+            var variant_idgloss = variant_labels[idx];
+<!--            console.log('variant_idgloss: '+variant_idgloss);-->
+
+            glossvariantsSexChart.data.datasets[idx].data = [];
+<!--            console.log('toggle percentage after popping: '+variant_idgloss+JSON.stringify(glossvariantsSexChart.data));-->
+            for (idy in gender_labels) {
+                var gender_label = gender_labels[idy];
+<!--                console.log('gender_label: '+gender_label);-->
+
                 // push for each dataset the next sex data
                 var next_percentage = variants_sex_distribution_data_percentage[gender_label][variant_idgloss];
+<!--                console.log('next_percentage: '+variant_idgloss+gender_label+next_percentage);-->
                 glossvariantsSexChart.data.datasets[idx].data.push(next_percentage);
-            };
-        };
-        glossvariantsSexChart.options.scales.xAxes[0].ticks.max = 1;
-        glossvariantsSexChart.update();
+<!--                console.log('toggle percentage after pushing: '+variant_idgloss+JSON.stringify(glossvariantsSexChart.data));-->
 
+            };
+            glossvariantsSexChart.data.datasets[idx].data.label = variant_idgloss;
+        };
+        glossvariantsSexChart.options.scales.x.max = 1;
+        glossvariantsSexChart.update();
+<!--        console.log('glossvariantsSexChart toggle percentage after update: '+JSON.stringify(glossvariantsSexChart.data));-->
+
+<!--        console.log(JSON.stringify(glossvariantsAgeChart.data.datasets));-->
         // glossvariantsAgeChart one dataset per variant
         // first pop off old data
         for (idx in variant_labels) {
             // pop off age catetories data for each variant's dataset
-            glossvariantsAgeChart.data.datasets[idx].data.pop();
-            glossvariantsAgeChart.data.datasets[idx].data.pop();
-            glossvariantsAgeChart.data.datasets[idx].data.pop();
-            glossvariantsAgeChart.data.datasets[idx].data.pop();
+            glossvariantsAgeChart.data.datasets[idx].data = [];
         };
+<!--        console.log(JSON.stringify(glossvariantsAgeChart.data.datasets));-->
         for (idy in ages_labels) {
             var age_category_label = ages_labels[idy];
             for (idx in variant_labels) {
                 var variant_idgloss = variant_labels[idx];
+                var total_variant = total_variants_age[ variant_idgloss ];
+<!--                console.log('total variant glossvariantsAgeChart: '+total_variant);-->
                 var next_percentage = variants_age_distribution_cat_percentage[age_category_label][variant_idgloss];
+<!--                console.log('variants_age_distribution_cat_percentage: '+age_category_label+' '+variant_idgloss+' '+next_percentage);-->
                 glossvariantsAgeChart.data.datasets[idx].data.push(next_percentage);
             };
         };
-        glossvariantsAgeChart.options.scales.xAxes[0].ticks.max = 1;
+        glossvariantsAgeChart.options.scales.x.max = 1;
         glossvariantsAgeChart.update();
+<!--        console.log(JSON.stringify(glossvariantsAgeChart.data.datasets));-->
+        {% endif %}
 
         agechart.data.datasets[0].data.pop();
         agechart.data.datasets[0].data.pop();
@@ -956,23 +1339,34 @@ function do_toggle_display(el) {
         agechart.data.labels.length = 4;
         agechart.update();
 
+        {% if has_variants %}
         for (idx in ids_variant_age_charts) {
             var variant_idgloss = variant_labels[idx];
             var next_age_chart = variants_age_charts[ids_variant_age_charts[idx]];
 
             for (idy in ages_labels) {
                 var age_category_label = ages_labels[idy];
-                total_variant = total_variants_age[ variant_idgloss ];
+                var total_variant = total_variants_age[ variant_idgloss ];
+<!--                console.log('total variant line 1260: '+total_variant);-->
                 var next_age_data_percentage = variants_age_distribution_cat_data[age_category_label][variant_idgloss] / total_variant;
                 next_age_chart.data.datasets[idy].data.pop();
                 next_age_chart.data.datasets[idy].data.push(next_age_data_percentage);
             };
-            next_age_chart.options.scales.xAxes[0].ticks.max = 1;
+            next_age_chart.options.scales.x.max = 1;
             next_age_chart.update();
         };
+        {% endif %}
+
         break;
   }
 }
+
+$(document).ready(function() {
+    var region_chart = document.getElementById('regions');
+    var height_string = "height:"+((number_of_regions * 20) + "px !important; width:50%;");
+    region_chart.setAttribute("style", height_string);
+    chart.render();
+});
     </script>
 {% endblock %}
 
@@ -1009,100 +1403,128 @@ function do_toggle_display(el) {
 
 </div>
 
-
 <div id="definitionblock" style="z-index:0;padding-top: 100px;">
+    <div class='panel-heading'>
+        <div class='panel-title' style="width:9em; color:darkred">
+            <p>{% trans "Source Sign" %}</p>
+        </div>
+    </div>
+    <div id='gloss_info' class='container' >
+    <table class='table table-condensed'>
+            {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
+            <tr>
+                <th style="width: 300px;">{% trans "Annotation ID Gloss" %} ({{ lang }})</th>
+                <td id='annotation_idgloss_{{ lang.language_code_2char }}' >{{ annotation_idgloss_translation }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <th style="width: 300px;">{% trans "Corpus" %}</th>
+                <td>{{ corpus.name }}</td>
+            </tr>
+    </table>
+    </div>
 <hr>
         {% if has_frequency_data %}
 
             <div class='panel-heading'>
-                <div class='panel-title'>
+                <div class='panel-title' style="width:9em; color:darkred">
                     <a data-toggle='collapse' data-parent='#regionschart' data-target='#regions'>{% trans "Gloss Regions" %}</a>
                 </div>
             </div>
-            <div id='regions' class='collapse' style="width:60%;">
+            <div id='regions' class='collapse panel-body' style="width:40%; padding-left:20px;">
                 <div class="chart-container">
                 <canvas id="myChart"></canvas>
                 </div>
             </div>
+
+           <div class='panel-heading'>
+                <div class='panel-title' style="width:9em; color:darkred">
+                    <a data-toggle='collapse' data-parent='#speakerschart' data-target='#speakers'>{% trans "Speakers" %}</a>
+                </div>
+
+            </div>
+                <div id='speakers' class='collapse row justify-content-center' style="width:50%;">
+                <div class="col-lg-2" style="margin-top:50px;">
+                    <div class="container" >
+                    <button id="speakers_button" class="btn btn-primary" type="submit" name="view_type"
+                            onclick="do_toggle_display(this);" value='raw'>{% trans "Raw View" %}</button>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                <div class="chart-container">
+                <canvas id="genderChart" width="100"></canvas>
+                </div>
+                </div>
+                <div class="col-lg-5">
+                <div class="chart-container" >
+                <canvas id="ageChart" width="100"></canvas>
+                </div>
+                </div>
+                </div>
             <hr>
 <div class="clearfix"></div>
-             <div class='panel-heading'>
-                <div class='panel-title hasTooltip'>
+          {% if has_variants %}
+           <div class='panel-heading'>
+                <div class='panel-title' style="width:9em; color:darkred">
+                    <a data-toggle='collapse' data-parent='#speakerschart' data-target='#variants'>{% trans "Variants" %}</a>
+                </div>
+
+            </div>
+            <div id='variants' class='collapse row' style="width:100%;" >
+             <div class='panel-heading col-lg-2'>
+                <div class='panel-title hasTooltip' style="padding-left:50px;">
                     <a data-toggle='collapse' data-parent='#ageschart' data-target='#ages'>
-                        {% if variants %}
-                            {% trans "Age Distribution Variants" %}
-                        {% else %}
                             {% trans "Age Distribution" %}
-                        {% endif %}
-                    </a>{% if variants %}<div class="text-container">
+                    </a>{% if has_variants %}<div class="text-container">
                                             <span class="isTooltip">Age distribution of variants can be toggled by clicking on the gloss identifiers.</span>
                                         </div>
                     {% endif %}
                 </div>
             </div>
-            <div id='ages' class='collapse' style="width:60%;">
+            <div id='ages' class='collapse col-lg-10' >
                 <div class="chart-container">
-                <canvas id="speakerChart"></canvas>
+                <canvas id="speakerChart" height="80"></canvas>
                 </div>
             </div>
+
             <hr>
 <div class="clearfix"></div>
             <div class='panel-heading'>
-                <div class='panel-title'>
-                    <a data-toggle='collapse' data-parent='#speakerchart' data-target='#speaker'>{% trans "Speaker Data" %}</a>
+                <div class='panel-title' style="padding-left:50px;">
+                    <a data-toggle='collapse' data-target='#speaker'>{% trans "Speakers" %}</a>
                 </div>
             </div>
-            <div id='speaker' class='container-fluid collapse in'>
-                <div style="float:left; width:100%;">
-                    <button class="btn btn-primary" type="submit" name="view_type" onclick="do_toggle_display(this);" value='raw'/>{% trans "Raw View" %}</button>
-                </div>
-                <div class="row" style="float:left; width:100%;">
-<!--                    <div class="col-lg-12">-->
-                <div class="col-lg-3">
-                <div class="chart-container">
-                <canvas id="genderChart" width="400"></canvas>
-                </div>
-                </div>
-                <div class="col-lg-4">
-                {% if variants %}
+
+                <div id='speaker' class='container-fluid collapse' style="padding-left:100px">
+                    <div class="row">
+                        <div class="col-lg-12">
+                        <button id="variants_speakers_button" class="btn btn-primary" type="submit" name="view_type"
+                                onclick="do_toggle_display(this);" value='raw'>{% trans "Raw View" %}</button>
+                        </div>
+                    </div>
+                <div class="row">
+                <div class="col-lg-1" style="margin-top:56px;">{% trans "Gender" %}</div>
+                <div class="col-lg-5">
                 <div class="chart-multichart-enclosure-container" >
-                {% else %}
-                <div class="chart-multichart-enclosure-container" style="display:none;" >
-                {% endif %}
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
-                <canvas id="variantsGenderChart_{{key}}" height="50" width="400"></canvas>
+                <canvas id="variantsGenderChart_{{key}}" height="50" ></canvas>
                 </div>
                 {% endfor %}
                 </div>
                 </div>
-                <div class="col-lg-4" style="float:right;">
-                {% if variants %}
-                <div class="chart-multichart-enclosure-container" style="float:right;" >
-                {% else %}
-                <div class="chart-multichart-enclosure-container" style="float:right; display:none;" >
-                {% endif %}
-                <div class="chart-short-container" style="float:right;">
-                <canvas id="glossvariantsSexChart" width="400" ></canvas>
-                </div>
-                </div>
-                </div>
-                    <!--                </div>-->
-                </div>
-                <div class="clearfix"></div>
-                <div class="row" style="float:left; width:100%;">
-<!--                    <div class="col-lg-12">-->
-                <div class="col-lg-3">
-                <div class="chart-container" >
-                <canvas id="ageChart" width="400"></canvas>
-                </div>
-                </div>
-                <div class="col-lg-4">
-                {% if variants %}
+                <div class="col-lg-6" >
                 <div class="chart-multichart-enclosure-container" >
-                {% else %}
-                <div class="chart-multichart-enclosure-container" style="display:none;" >
-                {% endif %}
+                <div class="chart-short-container" >
+                <canvas id="glossvariantsSexChart" width="100" ></canvas>
+                </div>
+                </div>
+                </div>
+                </div>
+                <div class="row" >
+                <div class="col-lg-1" style="margin-top:100px;">{% trans "Age" %}</div>
+                <div class="col-lg-5">
+                <div class="chart-multichart-enclosure-container" >
                 {% for key, value in variants_data %}
                 <div class="chart-horizontal-single-bar-container">
                 <canvas id="variantsAgeChart_{{key}}" height="50"></canvas>
@@ -1110,19 +1532,17 @@ function do_toggle_display(el) {
                 {% endfor %}
                 </div>
                 </div>
-                <div class="col-lg-4" style="float:right;">
-                {% if variants %}
-                <div class="chart-multichart-enclosure-container" style="float:right;" >
-                {% else %}
-                <div class="chart-multichart-enclosure-container" style="float:right; display:none;" >
-                {% endif %}
-                <div class="chart-short-container" style="float:right;">
-                <canvas id="glossvariantsAgeChart" width="400" ></canvas>
+                <div class="col-lg-6" >
+                <div class="chart-multichart-enclosure-container" >
+                <div class="chart-short-container" >
+                <canvas id="glossvariantsAgeChart" width="100" ></canvas>
                 </div>
                 </div>
                 </div>
                 </div>
             </div>
+        </div>
+        {% endif %}
         {% else %}
         <p>{% trans "There is no frequency data available for this gloss in dataset" %} {{gloss.lemma.dataset}}</p>
         {% endif %}

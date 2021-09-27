@@ -865,19 +865,58 @@ class Gloss(models.Model):
     def data_datasets(self):
         # for use in displaying frequency for a gloss in chart format in the frequency templates
         # the frequency fields are put into a dictionary structure
+
+        total_occuurences = 0
         data_datasets = []
+
+        try:
+            frequency_regions = self.lemma.dataset.frequency_regions()
+        except (ObjectDoesNotExist, AttributeError):
+            return (total_occuurences, data_datasets)
+
+        gf_objects = GlossFrequency.objects.filter(gloss=self)
+
+        signers_per_region = {}
+        frequency_per_region = {}
+        gfs_per_region = {}
+        for r in frequency_regions:
+            speaker_location = gf_objects.filter(speaker__location=r)
+            gfs_per_region[r] = speaker_location
+            signers_per_region[r] = speaker_location.count()
+            frequency_per_region[r] = 0
+            for sl in speaker_location:
+                # print('r sl: ', r, sl.__dict__)
+                frequency_per_region[r] += sl.frequency
+        speakers_per_region = {}
+        for r in frequency_regions:
+            speakers_per_region[r] = []
+            for gfo in gfs_per_region[r]:
+                gfo_speaker = gfo.speaker.identifier
+                if gfo_speaker not in speakers_per_region[r]:
+                    speakers_per_region[r].append(gfo_speaker)
+                # print('region: ', r, ' frequency: ', gfo.frequency, ' speaker: ', gfo.speaker.identifier)
+        # print('speakers_per_region: ', speakers_per_region)
         for c in settings.FREQUENCY_CATEGORIES:
-            dataset_dict = {}
-            dataset_dict['label'] = c
-            dataset_dict['data'] = []
-            for r in settings.FREQUENCY_REGIONS:
-                field_r_c = settings.FREQUENCY_FIELDS[r][c]
-                k_value = getattr(self, field_r_c)
-                if k_value == None:
-                    k_value = 0
-                dataset_dict['data'].append(k_value)
-            data_datasets.append(dataset_dict)
-        return data_datasets
+            if c == "Occurences":
+                dataset_dict = {}
+                dataset_dict['label'] = c
+                dataset_dict['data'] = []
+                for r in frequency_regions:
+                    k_value = frequency_per_region[r]
+                    dataset_dict['data'].append(k_value)
+                    total_occuurences += k_value
+                data_datasets.append(dataset_dict)
+            elif c == "Signers":
+                dataset_dict = {}
+                dataset_dict['label'] = c
+                dataset_dict['data'] = []
+                for r in frequency_regions:
+                    k_value = len(speakers_per_region[r])
+                    dataset_dict['data'].append(k_value)
+                data_datasets.append(dataset_dict)
+        # print('data_datasets: ', data_datasets)
+        # print('total_occuurences: ', total_occuurences)
+        return (total_occuurences, data_datasets)
 
     def has_frequency_data(self):
 
@@ -887,15 +926,11 @@ class Gloss(models.Model):
 
     def speaker_data(self):
 
-        glossfrequency_objects = self.glossfrequency_set.all()
-
+        glossfrequency_objects = self.glossfrequency_set.values('speaker').distinct()
         # this is a list with duplicates
-        speakers_with_gloss = [ gfo.speaker for gfo in glossfrequency_objects ]
-
         # for the results, Other and Unknown Age are also tallied so that
         # the total number of speakers for the gloss is the same for gender and age
         # the interface needs this for showing percentages as well as raw data
-
         speaker_data = {}
         speaker_data['Male'] = 0
         speaker_data['Female'] = 0
@@ -907,7 +942,8 @@ class Gloss(models.Model):
         speaker_data['Unknown Age'] = 0
         speaker_data['Total'] = 0
 
-        for speaker in speakers_with_gloss:
+        for swg in glossfrequency_objects:
+            speaker = Speaker.objects.get(id=swg['speaker'])
             if speaker.gender == 'm':
                 speaker_data['Male'] += 1
             elif speaker.gender == 'f':
@@ -2165,6 +2201,14 @@ class Dataset(models.Model):
                     users_who_can_change_dataset.append(user)
 
         return users_who_can_change_dataset
+
+    def frequency_regions(self):
+
+        gf_objects = GlossFrequency.objects.filter(gloss__lemma__dataset=self)
+        regions = gf_objects.values('speaker__location').distinct()
+        frequency_regions = [ v['speaker__location'] for v in regions ]
+        # the order of the reqions needs to be constant everywhere in the code. How?
+        return frequency_regions
 
     def generate_frequency_dict(self, language_code):
 
