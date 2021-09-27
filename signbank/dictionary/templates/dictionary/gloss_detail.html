@@ -475,12 +475,12 @@
 
             </tr>
 
-            {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+            {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
             <tr>
                 <th>
                     {% trans "Annotation ID Gloss" %} ({{ lang }})
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translations.0.text|safe }}</td>
+                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translation }}</td>
                 <td>
                     {% if gloss.simultaneous_morphology.all.count > 0 %}
 
