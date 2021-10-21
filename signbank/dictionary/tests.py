@@ -2529,7 +2529,10 @@ class RevisionHistoryTests(TestCase):
             self.assertTrue(f in updated_fields)
 
 
-class CNGT_Tests(TestCase):
+class Corpus_Tests(TestCase):
+
+    # corpus speakers are only imported once, importing a metadata file a second time updates speakers
+    # importing an eaf file only creates GlossFrequency objects for the designated corpus
 
     def setUp(self):
 
@@ -2539,16 +2542,106 @@ class CNGT_Tests(TestCase):
         assign_perm('dictionary.change_gloss', self.user)
         self.user.save()
 
+        dataset_name = settings.DEFAULT_DATASET
+        self.test_dataset = Dataset.objects.get(name=dataset_name)
+        language = self.test_dataset.default_language
+
+        # Create 10 lemmas for use in testing
+        lemmas = {}
+        for lemma_id in range(1,128):
+            new_lemma = LemmaIdgloss(dataset=self.test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="testlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
+
+        # Create 10 glosses that start out being the same
+        gloss_ids_to_create = [2599, 2688, 2086, 2932, 2840, 3729, 1291, 472, 919, 520, 375, 2969, 2442, 2352,
+                               1573, 2807, 1876, 2109, 2707, 1879, 2111, 365, 1192, 3459, 2775, 903, 1205, 2549, 2354, 1777, 889,
+                               2934, 2954, 1724, 1738, 1150, 41929, 17, 789, 2872, 902, 2654, 1436, 642, 2093, 795, 3354, 826,
+                               1861, 1068, 328, 175, 1664, 2676, 2407, 1313, 20, 2487, 2001, 2328, 2780, 2781, 2782, 2783, 2784,
+                               2785, 2786, 2787, 2788, 2789, 2790, 2791, 2792, 2793, 2794, 2795, 2796, 2797, 2798, 2799, 2800, 2801,
+                               2802, 2803, 2804, 2805, 2806, 2898, 2808, 2809, 2810, 2811, 2812, 2813, 2814, 2815, 2816, 2817, 2818,
+                               2819, 2820, 2821, 2822, 2823, 2824, 2825, 2826, 2827, 2828, 2829, 2830, 2831, 2832, 2833, 2834, 2835,
+                               2836, 2837, 2838, 2839, 2890, 2891, 2892, 2893, 2894, 2895, 2896, 2897]
+        gloss_annotations_to_create = ['AANHALINGSTEKENS', 'GELUKKIG', 'ECHT-A', 'EMOTIE-B', 'ERG-A', 'EVEN', 'FIETSEN', 'GEK-A', 'GOED-B', 'GOOIEN-A', 'GRAAG-B',
+                                       'HANDEN-WRIJVEN-B', 'HAREN', 'HEBBEN-A', 'HEE', 'HOND-A', 'HOND-C', 'HOP', 'HOUDEN-VAN', 'INTERNAAT-C',
+                                       'JAM-A', 'JONGEN-A', 'KAART-A', 'KAPOT', 'KIJKEN-A', 'KLAAR-A', 'KLAAR-B', 'KLEREN-B', 'KOMEN-A',
+                                       'KUNNEN-NIET-A', 'KWAST', 'LAAT-MAAR', 'LAATSTE-A', 'LACHEN-B', 'LICHAAM-B', 'LOPEN-B', 'LOPEN-D', 'MEE',
+                                       'MEISJE-A', 'MOETEN-A', 'NAGELBIJTEN', 'NEE-C', 'NETJES-B', 'NOG-NIET',
+                                       'VERANDEREN-E', 'WEGGOOIEN-A', 'WEG-C', 'HELPEN-A', 'LICHAAM-A', 'PROBLEEM-A', 'OUDER-B', 'GEBOREN-B', 'STEM-A',
+                                       'ANDERS-B', 'VERSTAND', 'SCHRIJVEN-C', 'GELUK-B', 'ZO', 'SCHRIJVEN-D', 'AF-A', 'STRAKS-A', 'SCHOOL-D',
+                                       'KLEINDOCHTER', 'SLECHT-B', 'SLECHTHOREND-B', 'ROEPEN-B', 'KLEIN-HORIZONTAAL-A', 'PRATEN-C', 'SOMS-A',
+                                       'VERZOEKEN', 'NAAM-C', 'LIEF-B', 'MAAT-HORIZONTAAL-C', 'PERFECT-A', 'GROOT-VERTICAAL-F', 'MENS',
+                                       'KLEIN-HORIZONTAAL-C', 'ONDERWIJS-A', 'OOK-A', 'OUD-A', 'KOMEN-B', 'BEGINNEN-A', 'GEHANDICAPT-B',
+                                       'OVERDRIJVEN', 'GEBAREN-A', 'GAUW', 'LOGOPEDIE-A', 'VOOR-D', 'ORAAL-B', 'WAT-A', 'ORAAL-A', 'MAMA',
+                                       'MOEILIJK-A', 'VROUW-A', 'NEE-A', 'LACHEN-A', 'ZUS-B', 'ROTTERDAM-B', 'SORRY-A', 'JAAR-B',
+                                       'LIEGEN', 'PROCENT-A', 'GAAN-NAAR-A', 'PLOTSELING-A', 'PRATEN-E', 'NOG', 'VERLEGEN-A',
+                                       'WEG-B', 'NAAMGEBAAR', 'ROEPEN:1', 'GENOEG', 'LANGZAAM', 'TEVREDEN-B', 'PRATEN-D', 'CULTUUR',
+                                       'VANDAAR-A', 'BINNEN', 'HALLO', 'TOEVALLIG-B', 'PUNT-A', 'VERTELLEN', 'WAAR-A', 'KLOPT-D',
+                                       'BESTEMPELEN-A', 'ALLES-A', 'VERVELEN-A', 'KIJKEN-B', 'VRAGEN-A', 'NIEUW-A', '~ZEGGEN', 'STOK-A',
+                                       'VERBAASD-A', 'GOED-B', 'DURVEN', 'GEK-A', 'CANADA', 'CONGRES-A', 'VEEL-A', 'BUITENLAND', 'EUROPA-C',
+                                       'ENGELAND-B', 'TAAL-D', 'AFRIKA-B', 'BELGIE-B',
+                                       'HELE', 'PRIMA', 'COMMUNICEREN', 'ALLEMAAL-A', 'BEETJE', 'HOEVEEL', 'CONTROLEREN',
+                                       'DISCUSSIEREN', 'GROEP-A', 'AL', 'NIET-A', 'EVEN', 'BIJ-D', 'ROLSTOEL-C', 'REGERING-A', 'AANSLUITEN', 'WERKEN-A']
+
+        glosses = {}
+        for next_id in range(1, 128):
+            glosses[next_id] = gloss_ids_to_create[next_id-1]
+
+        for gloss_id in range(1,128):
+            this_id = gloss_id - 1
+            gloss_data = {
+                'id': glosses[gloss_id],
+                'lemma' : lemmas[gloss_id],
+                'handedness': 2,
+                'tokNo': 0,
+                'tokNoSgnr': 0
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = gloss_annotations_to_create[this_id]
+            # The last created objects had their id set manually
+            # Start creating objects with a new initial id
+            if not AnnotationIdglossTranslation.objects.count():
+                annotationIdgloss.id = 50000
+            else:
+                annotationIdgloss.id = AnnotationIdglossTranslation.objects.last().id + 1
+            annotationIdgloss.save()
+
+        # make some speakers
+        speaker_1 = Speaker()
+        speaker_1.identifier = 'test_speaker' + '_' + 'OtherCorpus'
+        speaker_1.location = 'Disneyworld'
+        speaker_1.age = 12
+        speaker_1.gender = 'o'
+        speaker_1.handedness = 'a'
+        speaker_1.save()
+
     def test_metadata_file(self):
         # this imports the Speaker data to the test database
         from signbank.tools import import_corpus_speakers
 
-        import_corpus_speakers()
+        dataset_acronym = self.test_dataset.acronym
 
-        count_known_speakers = Speaker.objects.all().count()
+        metadata_location = settings.WRITABLE_FOLDER + settings.DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
+
+        count_known_speakers0 = Speaker.objects.filter(identifier__endswith='_'+dataset_acronym).count()
+        #There are initially no speakers
+        self.assertEqual(count_known_speakers0, 0)
+        ### CORPUS FUNCTION
+        errors1 = import_corpus_speakers(dataset_acronym)
+        self.assertEqual(errors1, [])
+
+        count_known_speakers1 = Speaker.objects.filter(identifier__endswith='_'+dataset_acronym).count()
 
         # find out how many entries are in the meta data file
-        get_wc = "wc " + settings.METADATA_LOCATION
+        get_wc = "wc " + metadata_location
 
         import subprocess
         wc_output = subprocess.check_output(get_wc, shell=True)
@@ -2558,13 +2651,148 @@ class CNGT_Tests(TestCase):
             number_of_entries = int(wc_output_values[0]) - 1
         else:
             number_of_entries = 0
-
-        self.assertEqual(count_known_speakers, number_of_entries)
+        self.assertEqual(count_known_speakers1, number_of_entries)
 
         # try to read file again, make sure no new entries are created
-        import_corpus_speakers()
-        count_known_speakers2 = Speaker.objects.all().count()
-        self.assertEqual(count_known_speakers2, number_of_entries)
+        ### CORPUS FUNCTION
+        errors2 = import_corpus_speakers(dataset_acronym)
+        self.assertEqual(errors2, [])
+        count_known_speakers2 = Speaker.objects.filter(identifier__endswith='_'+dataset_acronym).count()
+        #After importing the metadata file a second time, the same number of speakers exist
+        self.assertEqual(count_known_speakers2, count_known_speakers1)
+
+
+    def test_corpus_creation(self):
+        # this imports the Speaker data to the test database
+        from signbank.tools import import_corpus_speakers, configure_corpus_documents, glosses_X_speakers, gloss_to_speakers, \
+            documents_X_glosses, documents_X_speakers, glosses_X_documents, document_to_speakers, document_to_glosses, \
+            gloss_to_documents, speaker_to_glosses, speakers_X_glosses, speakers_X_documents, speaker_to_documents, \
+            get_corpus_speakers, gloss_frequency_tokNo, gloss_frequency_tokNoSgnr
+
+        dataset_acronym = self.test_dataset.acronym
+        ### CORPUS FUNCTION
+        errors = import_corpus_speakers(dataset_acronym)
+        self.assertEqual(errors, [])
+
+        count_known_documents0 = Document.objects.all().count()
+        #There are initially no documents
+        self.assertEqual(count_known_documents0, 0)
+
+        ### CORPUS FUNCTION
+        print('CONFIGURE CORPUS')
+        configure_corpus_documents(dataset_acronym, testing=True)
+
+
+        glosses = Gloss.objects.filter(lemma__dataset=self.test_dataset)
+        gloss_ids = [ g.id for g in glosses ]
+        speakers = Speaker.objects.all()
+        speaker_ids = [ s.identifier for s in speakers ]
+
+        participants = get_corpus_speakers(dataset_acronym)
+        for p in participants:
+            self.assertIn(p, speakers)
+
+        gloss_frequency = GlossFrequency.objects.filter(document__corpus__name=self.test_dataset.acronym)
+        gloss_frequency_table_1 = {}
+        for gf in gloss_frequency:
+            gloss_frequency_table_1[gf.gloss.id] = gf.frequency
+            self.assertIn(gf.gloss.id, gloss_ids)
+            self.assertIn(gf.speaker.identifier, speaker_ids)
+
+        # test Gloss fields tokNo and tokNoSgnr that the methods that compute them correspond to the stored values
+        glosses_in_dataset = Gloss.objects.filter(lemma__dataset=self.test_dataset)
+        for gl in glosses_in_dataset:
+            tokNoSgnr = gloss_frequency_tokNoSgnr(dataset_acronym, gl.id)
+            self.assertEqual(tokNoSgnr, gl.tokNoSgnr)
+
+            tokNo = gloss_frequency_tokNo(dataset_acronym, gl.id)
+            self.assertEqual(tokNo, gl.tokNo)
+
+        # check helper functions that retrieve data from GlossFrequency objects
+
+        gl_signed_by_speakers = glosses_X_speakers(self.test_dataset.acronym)
+
+        for gid in gl_signed_by_speakers.keys():
+            speakers = gloss_to_speakers(gid)
+            self.assertEqual(gl_signed_by_speakers[gid], speakers)
+
+        gl_per_document = documents_X_glosses(self.test_dataset.acronym)
+
+        for did in gl_per_document.keys():
+            glosses = document_to_glosses(did)
+            self.assertEqual(gl_per_document[did], glosses)
+
+        sp_per_document = documents_X_speakers(self.test_dataset.acronym)
+
+        for did in sp_per_document.keys():
+            speakers = document_to_speakers(did)
+            self.assertEqual(sp_per_document[did], speakers)
+
+        gl_appear_in_documents = glosses_X_documents(self.test_dataset.acronym)
+
+        for gid in gl_appear_in_documents.keys():
+            documents = gloss_to_documents(gid)
+            self.assertEqual(gl_appear_in_documents[gid], documents)
+
+        sp_signs_glosses = speakers_X_glosses(self.test_dataset.acronym)
+
+        for sid in sp_signs_glosses.keys():
+            glosses = speaker_to_glosses(self.test_dataset.acronym, sid)
+            self.assertEqual(sp_signs_glosses[sid], glosses)
+
+        sp_signs_documents = speakers_X_documents(self.test_dataset.acronym)
+
+        for sid in sp_signs_documents.keys():
+            documents = speaker_to_documents(self.test_dataset.acronym, sid)
+            self.assertEqual(sp_signs_documents[sid], documents)
+
+        # test that the number of speakers for the corpus corresponds to those stored in the GlossFrequency objects
+        # the speaker identifiers inside the corpus have the Dataset postfixed on the participant identifier of the eaf files
+        glosses_frequenciesXdataset = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym)
+
+        glosses_frequenciesXspeaker = GlossFrequency.objects.filter(speaker__identifier__endswith='_' + dataset_acronym)
+
+        glosses_frequenciesXdatasetXspeaker = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym,
+                                                            speaker__identifier__endswith='_' + dataset_acronym)
+
+        self.assertEqual(len(glosses_frequenciesXdataset), len(glosses_frequenciesXdatasetXspeaker))
+
+        self.assertEqual(len(glosses_frequenciesXspeaker), len(glosses_frequenciesXdatasetXspeaker))
+
+        # modify a creation time of a document in order to update it
+        try:
+            document_to_update = Document.objects.get(corpus__name=self.test_dataset.acronym, identifier='CNGT1008')
+            print('document to update: ', document_to_update.identifier)
+            from datetime import datetime
+            from django.utils.timezone import get_current_timezone
+            document_to_update.creation_time = datetime(2000, 8, 23, tzinfo=get_current_timezone())
+            document_to_update.save()
+        except ObjectDoesNotExist:
+            print('update_corpus_counts: Update corpus not tested, needs EAF file CNGT1008.')
+            return
+
+        print('UPDATE CORPUS')
+        update_corpus_counts(dataset_acronym, testing=True)
+
+        gloss_frequency_2 = GlossFrequency.objects.filter(document__corpus__name=self.test_dataset.acronym)
+        gloss_frequency_table_2 = {}
+        for gf in gloss_frequency_2:
+            gloss_frequency_table_2[gf.gloss.id] = gf.frequency
+            self.assertIn(gf.gloss.id, gloss_ids)
+            self.assertIn(gf.speaker.identifier, speaker_ids)
+
+        self.assertEqual(gloss_frequency_table_1.keys(), gloss_frequency_table_2.keys())
+
+        for gid in gloss_frequency_table_2.keys():
+            self.assertEqual(gloss_frequency_table_1[gid], gloss_frequency_table_2[gid])
+
+        glosses_in_dataset = Gloss.objects.filter(lemma__dataset=self.test_dataset)
+        for gl in glosses_in_dataset:
+            tokNoSgnr = gloss_frequency_tokNoSgnr(dataset_acronym, gl.id)
+            self.assertEqual(tokNoSgnr, gl.tokNoSgnr)
+
+            tokNo = gloss_frequency_tokNo(dataset_acronym, gl.id)
+            self.assertEqual(tokNo, gl.tokNo)
 
 
 class MinimalPairsTests(TestCase):
@@ -2763,6 +2991,8 @@ class MinimalPairsTests(TestCase):
                 'handedness': 2,
                 'domhndsh' : self.test_handshape1.machine_value,
                 'locprim': 7,
+                'tokNo': 0,
+                'tokNoSgnr': 0
             }
             new_gloss = Gloss(**gloss_data)
             new_gloss.save()

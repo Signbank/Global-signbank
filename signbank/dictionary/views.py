@@ -2392,29 +2392,41 @@ def configure_handshapes(request):
 
         return HttpResponse(output_string)
 
-def configure_speakers(request):
+def configure_speakers_dataset(request,datasetid):
+    try:
+        dataset = get_object_or_404(Dataset, pk=datasetid)
+    except ObjectDoesNotExist:
+        return HttpResponse('<p>Dataset unknown.</p>')
 
     if request.user.has_perm('dictionary.change_gloss'):
 
-        import_corpus_speakers()
+        errors = import_corpus_speakers(dataset.acronym)
 
-        return HttpResponse('<p>Speakers have been configured.</p>')
-
+        if len(errors) == 0:
+            return HttpResponse('<p>Speakers have been configured.</p>')
+        else:
+            return HttpResponse('<p>Problem importing speakers.</p>')
     else:
 
         return HttpResponse('<p>You do not have permission to configure speakers.</p>')
 
-def configure_corpus_documents_ngt(request):
+
+def configure_corpus_documents_dataset(request, datasetid):
+    try:
+        dataset = get_object_or_404(Dataset, pk=datasetid)
+    except ObjectDoesNotExist:
+        return HttpResponse('<p>Dataset unknown.</p>')
 
     if request.user.has_perm('dictionary.change_gloss'):
 
-        configure_corpus_documents()
+        configure_corpus_documents(dataset.acronym)
 
-        return HttpResponse('<p>Corpus NGT has been configured.</p>')
+        return HttpResponse('<p>Corpus ' + dataset.acronym + ' has been configured.</p>')
 
     else:
 
-        return HttpResponse('<p>You do not have permission to configure the corpus NGT.</p>')
+        return HttpResponse('<p>You do not have permission to configure a corpus.</p>')
+
 
 def get_unused_videos(request):
     file_not_in_glossvideo_object = []

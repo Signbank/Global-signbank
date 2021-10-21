@@ -18,6 +18,7 @@ SIGNBANK_PACKAGES_FOLDER = 'packages/'
 EAF_FILES_LOCATION = 'eaf/'
 DATASET_EAF_DIRECTORY = 'eafs'
 DATASET_METADATA_DIRECTORY = 'metadata_eafs'
+TEST_DATA_DIRECTORY = 'test_data'
 
 #Tmp folder to use
 TMP_DIR = '/tmp'

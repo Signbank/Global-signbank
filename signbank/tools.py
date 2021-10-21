@@ -7,8 +7,11 @@ from zipfile import ZipFile
 import json
 import re
 from urllib.parse import quote
+import csv
 
 from django.utils.translation import override
+
+from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.dictionary.models import *
 from django.utils.dateformat import format
@@ -18,6 +21,8 @@ from django.core.urlresolvers import reverse
 from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
+
+from CNGT_scripts.python.signCounter import SignCounter
 
 
 def get_two_letter_dir(idgloss):
@@ -1969,144 +1974,426 @@ def get_users_who_can_view_dataset(dataset_name):
 
     return users_who_can_view_dataset
 
-def update_cngt_counts(folder_index=None):
+def get_gloss_from_frequency_dict(dataset_acronym, gloss_id_or_value):
 
-    #Run the counter script
+    dataset = Dataset.objects.get(acronym=dataset_acronym)
+    language = dataset.default_language.id
     try:
-        from CNGT_scripts.python.signCounter import SignCounter
-    except ImportError:
-        return HttpResponse('Counter script not present')
+        if gloss_id_or_value.isnumeric():
+            gloss = Gloss.objects.get(id=int(gloss_id_or_value), lemma__dataset__acronym=dataset_acronym)
+        else:
+            raise ValueError
+    except (ObjectDoesNotExist, ValueError):
+        try:
+            query = Q(annotationidglosstranslation__text__iexact=gloss_id_or_value,
+                      annotationidglosstranslation__language=language)
+            qs = Gloss.objects.filter(query).distinct()
+            if qs and qs.count() == 1:
+                gloss = qs[0]
+            else:
+                raise ValueError
+        except (ObjectDoesNotExist, ValueError):
+            gloss = None
+    return gloss
 
-    folder_paths = []
+def remove_document_from_corpus(dataset_acronym, document_identifier):
+    try:
+        d_obj = Document.objects.get(corpus__name=dataset_acronym, identifier=document_identifier)
+        gloss_freeuency_objects = d_obj.glossfrequency_set.all()
+        glosses_to_update = {}
+        for gf in gloss_freeuency_objects:
+            if gf.gloss.id not in glosses_to_update.keys():
+                glosses_to_update[gf.gloss.id] = gf.gloss
+            gf.delete()
+        d_obj.delete()
+        # update frequency counts stored in gloss fields tokNo and tokNoSgnr
+        for gid in glosses_to_update.keys():
+            glosses_to_update[gid].tokNo = gloss_frequency_tokNo(dataset_acronym, gid)
+            glosses_to_update[gid].tokNoSgnr = gloss_frequency_tokNoSgnr(dataset_acronym, gid)
+            glosses_to_update[gid].save()
+        return
+    except ObjectDoesNotExist:
+        print('remove_document_from_corpus: not found: ', dataset_acronym, document_identifier)
+        return
 
-    for foldername in os.listdir(settings.EAF_FILES_LOCATION):
-        if '.xml' not in foldername:
-            folder_paths.append(settings.EAF_FILES_LOCATION+foldername+'/')
+def gloss_frequency_tokNo(dataset_acronym, gloss_id):
 
-    if folder_index != None:
-        folder_paths = [folder_paths[int(folder_index)]]
+    gf_objects = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym, gloss__id=gloss_id)
+    total_occurrences = 0
+    for gf in gf_objects:
+        total_occurrences += gf.frequency
+
+    return total_occurrences
+
+def gloss_frequency_tokNoSgnr(dataset_acronym, gloss_id):
+
+    gf_objects = GlossFrequency.objects.filter(speaker__identifier__endswith='_'+dataset_acronym,
+                                               document__corpus__name=dataset_acronym, gloss__id=gloss_id)
+
+    speakers = [ fg.speaker.participant() for fg in gf_objects]
+    speakers = sorted(list(set(speakers)))
+
+    total_speakers = len(speakers)
+    return total_speakers
+
+def speaker_to_glosses(dataset_acronym, speaker_id):
+    # maps a speaker id to glosses that occur in frequency data
+    # the corpus name is also a parameter because the speaker identifiers are suffixed with it
+    glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym,
+                                                        speaker__identifier__endswith='_'+dataset_acronym)
+    glosses_frequencies_filtered_per_speaker_id = glosses_frequencies.filter(speaker__identifier__startswith=speaker_id)
+    glosses = [ fg.gloss.id for fg in glosses_frequencies_filtered_per_speaker_id ]
+    glosses = sorted(list(set(glosses)))
+    return glosses
+
+def speakers_X_glosses(dataset_acronym):
+
+    glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym)
+
+    flattened_gfs = [(fg.speaker.participant(), fg.gloss.id) for fg in glosses_frequencies]
+
+    speakers = [ sid for (sid, gid) in flattened_gfs ]
+    speakers = sorted(list(set(speakers)))
+
+    speakers_sign_glosses = {}
+    for speaker_id in speakers:
+
+        glosses_signed = [ gid for (sid, gid) in flattened_gfs if speaker_id == sid ]
+        glosses_signed = sorted(list(set(glosses_signed)))
+
+        if speaker_id not in speakers_sign_glosses.keys():
+            speakers_sign_glosses[speaker_id] = glosses_signed
+        else:
+            print('speakers_X_glosses: speaker already processed: ', speaker_id)
+    return speakers_sign_glosses
+
+def speaker_to_documents(dataset_acronym, speaker_id):
+    # maps a speaker id to corpus documents that occur in frequency data
+    # the corpus name is also a parameter because the speaker identifiers are suffixed with it
+    glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym,
+                                                        speaker__identifier__endswith='_'+dataset_acronym)
+    glosses_frequencies_filtered_per_speaker_id = glosses_frequencies.filter(speaker__identifier__startswith=speaker_id)
+    documents = [ fg.document.identifier for fg in glosses_frequencies_filtered_per_speaker_id ]
+    documents = sorted(list(set(documents)))
+    return documents
+
+def speakers_X_documents(dataset_acronym):
+
+    glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym)
+
+    flattened_gfs = [(fg.speaker.participant(), fg.document.identifier) for fg in glosses_frequencies]
+
+    speakers = [ sid for (sid, did) in flattened_gfs ]
+    speakers = sorted(list(set(speakers)))
+
+    speakers_sign_in_documents = {}
+    for speaker_id in speakers:
+
+        documents = [ did for (sid, did) in flattened_gfs if speaker_id == sid ]
+        documents = sorted(list(set(documents)))
+
+        if speaker_id not in speakers_sign_in_documents.keys():
+            speakers_sign_in_documents[speaker_id] = documents
+        else:
+            print('speakers_X_documents: speaker already processed: ', speaker_id)
+    return speakers_sign_in_documents
+
+def gloss_to_speakers(gloss_id):
+    # maps a gloss id to speakers that occur in frequency data for the gloss
+    glosses_frequencies = GlossFrequency.objects.filter(gloss__id=gloss_id)
+    speakers = [ fg.speaker.participant() for fg in glosses_frequencies]
+    speakers = sorted(list(set(speakers)))
+    return speakers
+
+def glosses_X_speakers(dataset_acronym):
+    # maps a corpus name to a dictionary that maps gloss ids to speakers that occur in frequency data for that gloss
+
+    # get all frequency data for this corpus
+    glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym)
+
+    flattened_gfs = [(fg.speaker.participant(), fg.gloss.id) for fg in glosses_frequencies]
+
+    glosses = [ gid for (sid, gid) in flattened_gfs ]
+    # remove duplicates
+    glosses = sorted(list(set(glosses)))
+
+    glosses_signed_by_speakers = {}
+    for gid in glosses:
+        speakers_who_sign = [ speaker_id for (speaker_id, gloss_id) in flattened_gfs if gloss_id == gid ]
+        # remove duplicates
+        speakers = sorted(list(set(speakers_who_sign)))
+        if gid not in glosses_signed_by_speakers.keys():
+            glosses_signed_by_speakers[gid] = speakers
+        else:
+            print('glosses_X_speakers: gloss already processed: ', gid)
+    return glosses_signed_by_speakers
+
+def gloss_to_documents(gloss_id):
+    # maps a gloss id to documents that occur in frequency data for the gloss
+    glosses_frequencies = GlossFrequency.objects.filter(gloss__id=gloss_id)
+    documents = [ fg.document.identifier for fg in glosses_frequencies]
+    documents = sorted(list(set(documents)))
+    return documents
+
+def glosses_X_documents(dataset_acronym):
+
+    glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym)
+
+    flattened_gfs = [(fg.document.identifier, fg.gloss.id) for fg in glosses_frequencies]
+
+    glosses = [ gid for (did, gid) in flattened_gfs ]
+    glosses = sorted(list(set(glosses)))
+
+    glosses_appear_in_documents = {}
+    for gloss_id in glosses:
+
+        documents = [ did for (did, gid) in flattened_gfs if gloss_id == gid ]
+        documents = sorted(list(set(documents)))
+
+        if gloss_id not in glosses_appear_in_documents.keys():
+            glosses_appear_in_documents[gloss_id] = documents
+        else:
+            print('glosses_X_documents: gloss already processed: ', gloss_id)
+    return glosses_appear_in_documents
+
+def document_to_glosses(document_id):
+    glosses_frequencies = GlossFrequency.objects.filter(document__identifier=document_id)
+    glosses = [ fg.gloss.id for fg in glosses_frequencies]
+    glosses = sorted(list(set(glosses)))
+    return glosses
+
+def documents_X_glosses(dataset_acronym):
+
+    glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym)
+
+    flattened_gfs = [(fg.document.identifier, fg.gloss.id) for fg in glosses_frequencies]
+
+    document_identifiers = [ did for (did, gid) in flattened_gfs ]
+    document_identifiers = sorted(list(set(document_identifiers)))
+
+    documents_contain_glosses = {}
+    for did in document_identifiers:
+
+        glosses_signed = [ gloss_id for (document_id, gloss_id) in flattened_gfs if document_id == did ]
+        glosses_signed = sorted(list(set(glosses_signed)))
+
+        if did not in documents_contain_glosses.keys():
+            documents_contain_glosses[did] = glosses_signed
+        else:
+            print('documents_X_glosses: document already processed: ', did)
+    return documents_contain_glosses
+
+
+def document_to_speakers(document_id):
+    glosses_frequencies = GlossFrequency.objects.filter(document__identifier=document_id)
+    speakers = [ fg.speaker.participant() for fg in glosses_frequencies]
+    speakers = sorted(list(set(speakers)))
+    return speakers
+
+def documents_X_speakers(dataset_acronym):
+
+    glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym)
+
+    flattened_gfs = [(fg.document.identifier, fg.speaker.participant()) for fg in glosses_frequencies]
+
+    document_identifiers = [ did for (did, sid) in flattened_gfs ]
+    document_identifiers = sorted(list(set(document_identifiers)))
+
+    documents_contain_speakers = {}
+    for document_id in document_identifiers:
+
+        speakers = [ sid for (did, sid) in flattened_gfs if document_id == did ]
+
+        speakers = sorted(list(set(speakers)))
+
+        if document_id not in documents_contain_speakers.keys():
+            documents_contain_speakers[document_id] = speakers
+        else:
+            print('documents_X_speakers: document already processed: ', document_id)
+    return documents_contain_speakers
+
+
+def update_corpus_counts(dataset_acronym, **kwargs):
+
+    if 'testing' in kwargs.keys():
+        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
+        metadata_location = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY, settings.DATASET_METADATA_DIRECTORY,dataset_acronym + '_metadata.csv')
+    else:
+        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+        metadata_location = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_METADATA_DIRECTORY,dataset_acronym + '_metadata.csv')
+
+    try:
+        corpus = Corpus.objects.get(name=dataset_acronym)
+    except (ObjectDoesNotExist):
+        print('update_corpus_counts: corpus does not exist: ', dataset_acronym)
+        return
+
+    speaker_objects = {}
+    speaker_identifiers = []
+    for speaker in Speaker.objects.filter(identifier__endswith='_'+dataset_acronym):
+        speaker_identifier = speaker.participant()
+        # to speed up processing later, speaker objects are stored in a dict by their identifier
+        speaker_objects[speaker_identifier] = speaker
+        speaker_identifiers += [speaker_identifier]
+
+    if not speaker_objects:
+        # this would be very weird if this error happened
+        print('No speaker objects found for corpus ', dataset_acronym)
+        return
 
     eaf_file_paths = []
+    eaf_file_paths_large_files = []
+    for filename in os.listdir(dataset_eaf_folder):
+        filesize = os.path.getsize(dataset_eaf_folder + os.sep + str(filename))
+        if filesize > 50000:
+            eaf_file_paths_large_files.append(dataset_eaf_folder + os.sep + str(filename))
+        else:
+            eaf_file_paths.append(dataset_eaf_folder + os.sep + str(filename))
 
-    for folder_path in folder_paths:
-        eaf_file_paths += [folder_path + f for f in os.listdir(folder_path)]
+    existing_documents = Document.objects.filter(corpus__name=dataset_acronym)
+    existing_documents_identifiers = [ d.identifier for d in existing_documents ]
+    existing_documents_creation_dates = {}
+    for d in existing_documents:
+        existing_documents_creation_dates[d.identifier] = d.creation_time
 
-    sign_counter = SignCounter(settings.METADATA_LOCATION,
-                               eaf_file_paths,
-                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT)
+    from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
+
+    new_document_identifiers = []
+    new_document_creation_dates = {}
+    all_eaf_files = eaf_file_paths + eaf_file_paths_large_files
+    for eaf_path in all_eaf_files:
+        file_basename = os.path.basename(eaf_path)
+        basename = os.path.splitext(file_basename)[0]
+        new_document_identifiers += [basename]
+        new_document_creation_dates[basename] = get_creation_time(eaf_path)
+
+    documents_to_process = []
+    for did in existing_documents_identifiers:
+        if did not in new_document_identifiers:
+            remove_document_from_corpus(dataset_acronym, did)
+        elif new_document_creation_dates[did] > existing_documents_creation_dates[did]:
+            documents_to_process += [did]
+
+    document_objects = {}
+    for document_id in new_document_identifiers:
+        if document_id in existing_documents_identifiers:
+            document = Document.objects.get(corpus__name=dataset_acronym, identifier=document_id)
+        else:
+            document = Document()
+            document.identifier = document_id
+            document.corpus = corpus
+            document.creation_time = new_document_creation_dates[document_id]
+            document.save()
+        # to speed up processing later, document objects are already looked up
+        document_objects[document_id] = document
+
+    update_eaf_files = []
+    for eaf_path in eaf_file_paths:
+        file_basename = os.path.basename(eaf_path)
+        basename = os.path.splitext(file_basename)[0]
+        if basename in documents_to_process:
+            update_eaf_files += [ eaf_path ]
+
+    update_large_eaf_files = []
+    for eaf_path in eaf_file_paths_large_files:
+        file_basename = os.path.basename(eaf_path)
+        basename = os.path.splitext(file_basename)[0]
+        if basename in documents_to_process:
+            update_large_eaf_files += [ eaf_path ]
+
+    sign_counter = SignCounter(metadata_location,
+                               update_eaf_files,
+                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
 
     sign_counter.run()
 
-    counts = sign_counter.get_result()
+    try:
+        frequencies_per_speaker = sign_counter.freqsPerPerson
+    except:
+        frequencies_per_speaker = {}
 
-    #Save the results to Signbank
-    location_to_fieldname_letter = {'Amsterdam': 'A', 'Voorburg': 'V', 'Rotterdam': 'R',
-                                    'St. Michielsgestel': 'Ge', 'Groningen': 'Gr', 'Other': 'O'}
+    (glosses_not_in_signbank, updated_glosses) = process_frequencies_per_speaker(dataset_acronym, speaker_objects, document_objects, frequencies_per_speaker)
 
-    glosses_not_in_signbank = []
-    updated_glosses = []
+    # process big files
+    for large_eaf_file in update_large_eaf_files:
+        sign_counter = SignCounter(metadata_location,
+                                   [large_eaf_file],
+                                   settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
 
-    for gloss_id, frequency_info in counts.items():
+        sign_counter.run()
 
-        #Collect the gloss needed
+        # this can take a while, print some dots
+        print('.', end='', flush=True)
+
+        # we get the frequencies from the sign_counter object
         try:
-            if gloss_id.startswith("gloss"):
-                gloss_id = gloss_id[5:]
-            gloss = Gloss.objects.get(id=gloss_id)
-        except (ObjectDoesNotExist, ValueError):
+            frequencies_per_speaker_sub = sign_counter.freqsPerPerson
+        except:
+            frequencies_per_speaker_sub = {}
 
-            if gloss_id != None:
-                glosses_not_in_signbank.append(gloss_id)
+        (glosses_not_in_signbank_sub, updated_glosses_sub) = process_frequencies_per_speaker(dataset_acronym, speaker_objects,
+                                                                                     document_objects,
+                                                                                     frequencies_per_speaker_sub)
 
-            continue
+        for gloss_id_or_value in glosses_not_in_signbank_sub:
+            if gloss_id_or_value not in glosses_not_in_signbank:
+                glosses_not_in_signbank.append(gloss_id_or_value)
 
-        #Save general frequency info
-        gloss.tokNo = frequency_info['frequency']
-        gloss.tokNoSgnr = frequency_info['numberOfSigners']
-        updated_glosses.append(gloss.idgloss+' (tokNo,tokNoSgnr)')
+        for gloss_id in updated_glosses_sub.keys():
+            if gloss_id not in updated_glosses.keys():
+                updated_glosses[gloss_id] = updated_glosses_sub[gloss_id]
 
-        #Data for Mixed and Other should be added (1/3)
-        otherFrequency = 0
-        otherNumberofSigners = 0
-
-        #Iterate to them, and add to gloss
-        for region, data in frequency_info['frequenciesPerRegion'].items():
-
-            frequency = data['frequency']
-            numberOfSigners = data['numberOfSigners']
-
-            #Data for Mixed and Other should be added (2/3)
-            if region in ('Mixed', 'Other'):
-                otherFrequency += frequency
-                otherNumberofSigners += numberOfSigners
-            else:
-                try:
-                    attribute_name = 'tokNo' + location_to_fieldname_letter[region]
-                    setattr(gloss,attribute_name,frequency)
-                    updated_glosses.append(gloss.idgloss + ' ('+attribute_name+')')
-
-                    attribute_name = 'tokNoSgnr' + location_to_fieldname_letter[region]
-                    setattr(gloss,attribute_name,numberOfSigners)
-                    updated_glosses.append(gloss.idgloss + ' (' + attribute_name + ')')
-
-                except KeyError:
-                    continue
-
-        #Data for Mixed and Other should be added (3/3)
-        try:
-            attribute_name = 'tokNo' + location_to_fieldname_letter['Other']
-            setattr(gloss,attribute_name,otherFrequency)
-            updated_glosses.append(gloss.idgloss + ' ('+attribute_name+')')
-
-            attribute_name = 'tokNoSgnr' + location_to_fieldname_letter['Other']
-            setattr(gloss,attribute_name,otherNumberofSigners)
-            updated_glosses.append(gloss.idgloss + ' (' + attribute_name + ')')
-
-        except KeyError:
-            continue
-
-        gloss.save()
-
-    print('No glosses were found for these names',glosses_not_in_signbank)
-    print('Updated glosses',updated_glosses)
+    # put a newline after the dots
+    print('', flush=True, sep='\n')
+    # revise the hard coded frequency fields tokNo and tokNoSgnr
+    for gid in updated_glosses.keys():
+        updated_glosses[gid].tokNo = gloss_frequency_tokNo(dataset_acronym, gid)
+        updated_glosses[gid].tokNoSgnr = gloss_frequency_tokNoSgnr(dataset_acronym, gid)
+        updated_glosses[gid].save()
 
 
-def import_corpus_speakers():
-    import csv
-
+def import_corpus_speakers(dataset_acronym):
     errors = []
 
+    metadata_location = settings.WRITABLE_FOLDER + settings.DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
     #First do some checks
-    if not os.path.isfile(settings.METADATA_LOCATION):
-        if settings.METADATA_LOCATION:
-            errors.append('The required file ' + settings.METADATA_LOCATION + ' is not present')
-        else:
-            errors.append('The required setting METADATA_LOCATION for corpus speakers is not defined.')
+    if not os.path.isfile(metadata_location):
+        errors.append('The required file ' + metadata_location + ' is not present')
     else:
 
-        for n,row in enumerate(csv.reader(open(settings.METADATA_LOCATION), delimiter='\t')):
+        csvfile = open(metadata_location)
+        dialect = csv.Sniffer().sniff(csvfile.readline())
+        csvfile.seek(0)
+        reader = csv.reader(csvfile, dialect=dialect)
+        for n,row in enumerate(reader):
 
             #Skip the header
             if n == 0:
                 if row == ['Participant','Metadata region','Age at time of recording','Gender','Preference hand']:
                     continue
+                elif row == ['Participant','Region','Age','Gender','Handedness']:
+                    continue
                 else:
                     errors.append('The header of '+ settings.METADATA_LOCATION + ' is not Participant,Metadata region,Age at time of recording,Gender,Preference hand')
                     continue
 
-            #Create an other video for this
             try:
                 participant, location, age, gender, hand = row
-            except:
+            except (ValueError):
                 errors.append('Line '+str(n)+' does not seem to have the correct amount of items')
                 continue
 
             # we use this syntax because we process the fields one at a time
             try:
+                # if the speaker exists with the original participant as identifier (i.e., CNGT eaf files), add the dataset acronym
                 speaker = Speaker.objects.get(identifier=participant)
-            except:
-                speaker = Speaker()
-                speaker.identifier = participant
+                speaker.identifier = speaker.identifier+'_'+dataset_acronym
+            except (ObjectDoesNotExist):
+                try:
+                    speaker = Speaker.objects.get(identifier=participant+'_'+dataset_acronym)
+                except (ObjectDoesNotExist):
+                    speaker = Speaker()
+                    speaker.identifier = participant+'_'+dataset_acronym
             speaker.location = location
             gender_lower = gender.lower()
             if gender_lower in ['female', 'f', 'v']:
@@ -2130,131 +2417,184 @@ def import_corpus_speakers():
                 speaker.handedness = ''
             try:
                 speaker.age = int(age)
-            except:
+            except (ValueError):
                 # might need to do some checking here if other data has been found
                 errors.append('Line '+str(n)+' has an incorrect age format')
                 pass
             # field Preference hand is ignored
             speaker.save()
+    return errors
 
-def configure_corpus_documents():
+def get_corpus_speakers(dataset_acronym):
 
-    corpus_name = 'NGT'
-
-    # create a Corpus object if it does not exist
     try:
-        corpus = Corpus.objects.get(name=corpus_name)
-    except:
-        corpus = Corpus()
-        corpus.name = corpus_name
-        corpus.description = 'Corpus NGT'
-        corpus.speakers_are_cross_referenced = True
-        corpus.save()
+        corpus = Corpus.objects.get(name=dataset_acronym)
+    except ObjectDoesNotExist:
+        return []
 
-    existing_documents = [ d.identifier for d in  Document.objects.all() ]
+    frequencies = GlossFrequency.objects.filter(document__corpus=corpus)
 
-    # create Document objects for the EAF files
-    folder_paths = []
+    speakers_in_corpus = frequencies.values('speaker__identifier').distinct()
+    speaker_indentifiers = []
+    for s in speakers_in_corpus:
+        speaker_indentifiers.append(s['speaker__identifier'])
 
-    for foldername in os.listdir(settings.EAF_FILES_LOCATION):
-        if '.xml' not in foldername:
-            folder_paths.append(settings.EAF_FILES_LOCATION + foldername + '/')
+    speaker_objects = Speaker.objects.filter(identifier__in=speaker_indentifiers).order_by('identifier')
 
-    eaf_file_paths = []
+    speakers = [ s for s in speaker_objects ]
+    return speakers
 
-    for folder_path in folder_paths:
-        eaf_file_paths += [folder_path + f for f in os.listdir(folder_path)]
 
-    # get filenames out of paths to use as document identifiers
-
-    from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
-
-    document_identifiers = []
-    document_creation_dates = {}
-    for eaf_path in eaf_file_paths:
-        file_basename = os.path.basename(eaf_path)
-        basename = os.path.splitext(file_basename)[0]
-        if basename in document_identifiers:
-            print('configure_corpus_documents: Duplicate document identifier found: ', basename, '. No Document object created for file: ', eaf_path)
-        else:
-            document_identifiers += [basename]
-            document_creation_dates[basename] = get_creation_time(eaf_path)
-
-    for d in existing_documents:
-        if d in document_identifiers:
-            continue
-        else:
-            # document has been deleted, delete this document from the corpus
-            try:
-                d_obj = Document.objects.get(identifier=d)
-                d_obj.glossfrequency_set.all().delete()
-                d_obj.delete()
-            except:
-                print('configure_corpus_documents: Unknown error cleaning up corpus document ', d)
-                continue
-
-    document_objects = {}
-    # create Document objects if it does not exist
-    for document_id in document_identifiers:
-        try:
-            document = Document.objects.get(identifier=document_id)
-        except:
-            document = Document()
-            document.identifier = document_id
-            document.corpus = corpus
-            document.creation_time = document_creation_dates[document_id]
-            document.save()
-        # to speed up processing later, document objects are already looked up
-        document_objects[document_id] = document
-
-    speaker_objects = {}
-    for speaker in Speaker.objects.all():
-        speaker_objects[speaker.identifier] = speaker
-
-    from CNGT_scripts.python.signCounter import SignCounter
-
-    sign_counter = SignCounter(settings.METADATA_LOCATION,
-                               eaf_file_paths,
-                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS_IN_CNGT)
-
-    sign_counter.run()
-
-    # we get the frequencies from the sign_counter object, not from get_result as was done previously
-    try:
-        # this is inside a try to make sure the newest version of signCounter is used
-        frequencies_per_speaker = sign_counter.freqsPerPerson
-    except:
-        frequencies_per_speaker = {}
-
-    # dict person document gloss freq
+def process_frequencies_per_speaker(dataset_acronym, speaker_objects, document_objects, frequencies_per_speaker):
+    updated_glosses = {}
     glosses_not_in_signbank = []
-
     for pers in frequencies_per_speaker.keys():
         for doc in frequencies_per_speaker[pers].keys():
-            for gloss_id, cnt in frequencies_per_speaker[pers][doc].items():
+            gloss_frequency_list = sorted(frequencies_per_speaker[pers][doc].items())
+            for gloss_id_or_value, cnt in gloss_frequency_list:
                 # Collect the gloss needed
-                try:
-                    if gloss_id.startswith("gloss"):
-                        gloss_id = gloss_id[5:]
-                    gloss_id = int(gloss_id)
-                    gloss = Gloss.objects.get(id=gloss_id)
-                except (ObjectDoesNotExist, ValueError):
-                    if gloss_id != None:
-                        glosses_not_in_signbank.append(gloss_id)
-
+                gloss = get_gloss_from_frequency_dict(dataset_acronym, gloss_id_or_value)
+                if gloss == None:
+                    if gloss_id_or_value not in glosses_not_in_signbank:
+                        glosses_not_in_signbank.append(gloss_id_or_value)
                     continue
+
+                if gloss.id not in updated_glosses.keys():
+                    updated_glosses[gloss.id] = gloss
 
                 try:
                     gloss_frequency = GlossFrequency.objects.get(speaker=speaker_objects[pers], document=document_objects[doc], gloss=gloss)
-                except:
+                except (KeyError, ObjectDoesNotExist, ValueError):
+                    # first time speaker seen in document
                     gloss_frequency = GlossFrequency()
                     gloss_frequency.speaker = speaker_objects[pers]
                     gloss_frequency.document = document_objects[doc]
                     gloss_frequency.gloss = gloss
+                # if we're updating, this only modifies the frequency
                 gloss_frequency.frequency = int(cnt)
                 gloss_frequency.save()
+    return (glosses_not_in_signbank, updated_glosses)
 
-    print('configure_corpus_documents: No glosses were found for these names: ', glosses_not_in_signbank)
+def configure_corpus_documents(dataset_acronym, **kwargs):
+
+    if 'testing' in kwargs.keys():
+        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+        metadata_location = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
+    else:
+        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER, settings.DATASET_EAF_DIRECTORY, dataset_acronym)
+        metadata_location = os.path.join(settings.WRITABLE_FOLDER, settings.DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
+
+    # create a Corpus object if it does not exist
+    try:
+        corpus = Corpus.objects.get(name=dataset_acronym)
+        print('configure_corpus_documents: corpus already exists: ', corpus)
+        return
+    except (ObjectDoesNotExist):
+        print('configure_corpus_documents: create a new corpus: ', dataset_acronym)
+        corpus = Corpus()
+        corpus.name = dataset_acronym
+        corpus.description = 'Corpus ' + dataset_acronym
+        corpus.speakers_are_cross_referenced = True
+        corpus.save()
+
+    speaker_objects = {}
+    speaker_identifiers = []
+    for speaker in Speaker.objects.filter(identifier__endswith='_'+dataset_acronym):
+        speaker_identifier = speaker.participant()
+        # to speed up processing later, speaker objects are stored in a dict by their identifier
+        speaker_objects[speaker_identifier] = speaker
+        speaker_identifiers += [speaker_identifier]
+
+    if not speaker_objects:
+        print('No speaker objects found for corpus ', dataset_acronym)
+        return
+
+    # create Document objects for the EAF files
+    eaf_file_paths = []
+    eaf_file_paths_large_files = []
+    for filename in os.listdir(dataset_eaf_folder):
+        filesize = os.path.getsize(dataset_eaf_folder + os.sep + str(filename))
+        if filesize > 50000:
+            eaf_file_paths_large_files.append(dataset_eaf_folder + os.sep + str(filename))
+        else:
+            eaf_file_paths.append(dataset_eaf_folder + os.sep + str(filename))
+
+    from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
+
+    # fetch document identifiers and creation dates for all eaf files
+    # get filenames out of paths to use as document identifiers
+    document_identifiers = []
+    document_creation_dates = {}
+    for eaf_path in eaf_file_paths + eaf_file_paths_large_files:
+        file_basename = os.path.basename(eaf_path)
+        basename = os.path.splitext(file_basename)[0]
+        document_identifiers += [basename]
+        document_creation_dates[basename] = get_creation_time(eaf_path)
+
+    # create document objects for all document identifiers
+    document_objects = {}
+    for document_id in document_identifiers:
+        document = Document()
+        document.identifier = document_id
+        document.corpus = corpus
+        document.creation_time = document_creation_dates[document_id]
+        document.save()
+        # to speed up processing later, document objects are stored in a dict by their identifier
+        document_objects[document_id] = document
+
+
+    updated_glosses = {}
+    glosses_not_in_signbank = []
+    sign_counter = SignCounter(metadata_location,
+                               eaf_file_paths,
+                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
+
+    sign_counter.run()
+    # we get the frequencies from the sign_counter object
+    try:
+        frequencies_per_speaker = sign_counter.freqsPerPerson
+        (glosses_not_in_signbank, updated_glosses) = process_frequencies_per_speaker(dataset_acronym, speaker_objects,
+                                                                                     document_objects,
+                                                                                     frequencies_per_speaker)
+    except:
+        pass
+
+    # process big files
+    for large_eaf_file in eaf_file_paths_large_files:
+        sign_counter = SignCounter(metadata_location,
+                                   [large_eaf_file],
+                                   settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
+
+        sign_counter.run()
+
+        # this can take a while, print some dots
+        print('.', end='', flush=True)
+
+        # we get the frequencies from the sign_counter object
+        try:
+            frequencies_per_speaker_sub = sign_counter.freqsPerPerson
+        except:
+            continue
+
+        (glosses_not_in_signbank_sub, updated_glosses_sub) = process_frequencies_per_speaker(dataset_acronym, speaker_objects,
+                                                                                     document_objects,
+                                                                                     frequencies_per_speaker_sub)
+        for gloss_id_or_value in glosses_not_in_signbank_sub:
+            if gloss_id_or_value not in glosses_not_in_signbank:
+                glosses_not_in_signbank.append(gloss_id_or_value)
+
+        for gloss_id in updated_glosses_sub.keys():
+            if gloss_id not in updated_glosses.keys():
+                updated_glosses[gloss_id] = updated_glosses_sub[gloss_id]
+
+    # put a newline after the dots
+    print('', flush=True, sep='\n')
+    # after processing GlossFreqyency data for all glosses in the EAF files, calculate the relevant info per gloss
+    for gid in updated_glosses.keys():
+        updated_glosses[gid].tokNo = gloss_frequency_tokNo(dataset_acronym, gid)
+        updated_glosses[gid].tokNoSgnr = gloss_frequency_tokNoSgnr(dataset_acronym, gid)
+        updated_glosses[gid].save()
+
 
 def construct_scrollbar(qs, search_type, language_code):
     items = []

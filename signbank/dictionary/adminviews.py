@@ -43,7 +43,8 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
-    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages
+    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, import_corpus_speakers, \
+    configure_corpus_documents, update_corpus_counts
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -4849,6 +4850,191 @@ class FieldChoiceView(ListView):
             # User is not authenticated
             messages.add_message(self.request, messages.ERROR, _('Please login to use the requested functionality.'))
             return None
+
+class DatasetFrequencyView(DetailView):
+
+    model = Dataset
+    context_object_name = 'dataset'
+    template_name = 'dictionary/dataset_frequency.html'
+
+    #Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+        # except Http404:
+        except:
+            # return custom template
+            # return render(request, 'dictionary/warning.html', status=404)
+            raise Http404()
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DatasetFrequencyView, self).get_context_data(**kwargs)
+
+        dataset = context['dataset']
+
+        context['default_language_choice_list'] = {}
+        translation_languages = dataset.translation_languages.all()
+        default_language_choice_dict = dict()
+        for language in translation_languages:
+            default_language_choice_dict[language.name] = language.name
+        context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
+
+        datasetform = DatasetUpdateForm(languages=context['default_language_choice_list'])
+        context['datasetform'] = datasetform
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        nr_of_glosses = 0
+        nr_of_public_glosses = 0
+
+        for gloss in Gloss.objects.filter(lemma__dataset=dataset):
+
+            nr_of_glosses += 1
+
+            if gloss.inWeb:
+                nr_of_public_glosses += 1
+
+        context['nr_of_glosses'] = nr_of_glosses
+        context['nr_of_public_glosses'] = nr_of_public_glosses
+
+        corpus_name = dataset.acronym
+        # create a Corpus object if it does not exist
+        try:
+            corpus = Corpus.objects.get(name=corpus_name)
+        except:
+            corpus = None
+        context['corpus'] = corpus
+
+        document_objects = Document.objects.filter(corpus=corpus).order_by('identifier')
+        document_tuples = []
+        for do in document_objects:
+            document_tuples.append((do.corpus.name, do.identifier, do.creation_time.date))
+        context['documents'] = document_tuples
+
+        frequencies = GlossFrequency.objects.filter(document__in=document_objects)
+
+        speakers_in_corpus = frequencies.values('speaker__identifier').distinct()
+        speaker_indentifiers = []
+        for s in speakers_in_corpus:
+            speaker_indentifiers.append(s['speaker__identifier'])
+
+        speaker_objects = Speaker.objects.filter(identifier__in=speaker_indentifiers).order_by('identifier')
+
+        GENDER_MAPPING = { 'm': _('Male'), 'f': _('Female'), 'o': _('Other') }
+        HANDEDNESS_MAPPING = {'r': _('Right'), 'l': _('Left'), 'a': _('Ambidextrous'), '': _('Unknown') }
+        speaker_tuples = []
+        for so in speaker_objects:
+            speaker_tuples.append((so.participant, GENDER_MAPPING[so.gender], so.age, so.location, HANDEDNESS_MAPPING[so.handedness]))
+        context['speakers'] = speaker_tuples
+
+        return context
+
+    def render_to_response(self, context):
+        if self.request.GET.get('create_corpus') == self.object.acronym:
+            return self.render_to_create_corpus_response(context)
+        elif self.request.GET.get('update_corpus') == self.object.acronym:
+            return self.render_to_update_corpus_response(context)
+        else:
+            return super(DatasetFrequencyView, self).render_to_response(context)
+
+    def render_to_create_corpus_response(self, context):
+
+        # check that the user is logged in
+        if self.request.user.is_authenticated():
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        try:
+            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # make sure the user can write to this dataset
+        # from guardian.shortcuts import get_objects_for_user
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        if user_change_datasets and dataset_object in user_change_datasets:
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, _('No permission to create a corpus for this dataset.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # configure the speakers
+        errors = import_corpus_speakers(dataset_object.acronym)
+
+        configure_corpus_documents(dataset_object.acronym)
+
+        if len(errors) == 0:
+            messages.add_message(self.request, messages.INFO, ('Corpus ' + self.dataset_name + ' successfully created.'))
+        else:
+            messages.add_message(self.request, messages.INFO, ('No corpus created for ' + self.dataset_name))
+        return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
+
+    def render_to_update_corpus_response(self, context):
+
+        # check that the user is logged in
+        if self.request.user.is_authenticated():
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        try:
+            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
+        except:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # make sure the user can write to this dataset
+        # from guardian.shortcuts import get_objects_for_user
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        if user_change_datasets and dataset_object in user_change_datasets:
+            pass
+        else:
+            messages.add_message(self.request, messages.ERROR, _('No permission to update the corpus for this dataset.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # importing updates the speakers
+        errors = import_corpus_speakers(dataset_object.acronym)
+
+        update_corpus_counts(dataset_object.acronym)
+
+        if len(errors) == 0:
+            messages.add_message(self.request, messages.INFO, ('Corpus ' + self.dataset_name + ' successfully updated.'))
+        else:
+            messages.add_message(self.request, messages.INFO, ('No corpus updated for ' + self.dataset_name))
+        return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
+
 
 def order_handshape_queryset_by_sort_order(get, qs):
     """Change the sort-order of the query set, depending on the form field [sortOrder]

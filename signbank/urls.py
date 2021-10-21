@@ -21,7 +21,7 @@ import django_summernote.urls
 from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
                                             HomonymListView, MinimalPairsListView, DatasetManagerView, \
                                             DatasetDetailView, FrequencyListView, DatasetFieldChoiceView, \
-                                            dataset_detail_view_by_acronym, FieldChoiceView
+                                            dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -113,6 +113,7 @@ urlpatterns = [
     url(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
     url(r'^datasets/manager', login_required(DatasetManagerView.as_view()), name='admin_dataset_manager'),
     url(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
+    url(r'^datasets/frequency/(?P<pk>\d+)$', DatasetFrequencyView.as_view(), name='admin_dataset_frequency'),
     url(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
     url(r'^datasets/field_choices/$', login_required(DatasetFieldChoiceView.as_view()),
         name='admin_dataset_field_choices'),
