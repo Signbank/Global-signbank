@@ -866,36 +866,51 @@ class Gloss(models.Model):
         # for use in displaying frequency for a gloss in chart format in the frequency templates
         # the frequency fields are put into a dictionary structure
 
-        total_occuurences = 0
+        # data_datasets is a structure used in the FrequencyView template by chartjs
+        # it takes the form of a list of dictionaries with predefined entries:
+        #      'label' of a category and
+        #      'data' for the category.
+        # the data entry is a list of counts to be shown for the label category across regions
+        # each dictionary in the list contains data to be shown for the regions:
+        # [ { 'label' : 'Occurrences',
+        #     'data' : [ < list of gloss usage occurrences per region > ]
+        #   },
+        #   { 'label' : 'Signers',
+        #     'data' : [ < list of count of signers per regions > ]
+        #    } ]
+
+        # the total_occurrences value is used in the template to size the length of the chart axis
+        # Initialise return variables
         data_datasets = []
+        total_occurrences = 0
+
+        # Prepare counters
+        count_speakers_per_region = {}
+        frequency_per_region = {}
+        gloss_frequency_per_region = {}
+        speakers_per_region = {}
 
         try:
             frequency_regions = self.lemma.dataset.frequency_regions()
         except (ObjectDoesNotExist, AttributeError):
-            return (total_occuurences, data_datasets)
+            return (total_occurrences, data_datasets)
 
-        gf_objects = GlossFrequency.objects.filter(gloss=self)
+        frequency_objects = GlossFrequency.objects.filter(gloss=self)
 
-        signers_per_region = {}
-        frequency_per_region = {}
-        gfs_per_region = {}
+        # the first loop tallies up the frequency data from the gloss frequency objects
         for r in frequency_regions:
-            speaker_location = gf_objects.filter(speaker__location=r)
-            gfs_per_region[r] = speaker_location
-            signers_per_region[r] = speaker_location.count()
+            frequency_objects_at_location = frequency_objects.filter(speaker__location=r)
+            gloss_frequency_per_region[r] = frequency_objects_at_location
+            count_speakers_per_region[r] = frequency_objects_at_location.count()
             frequency_per_region[r] = 0
-            for sl in speaker_location:
-                # print('r sl: ', r, sl.__dict__)
-                frequency_per_region[r] += sl.frequency
-        speakers_per_region = {}
-        for r in frequency_regions:
             speakers_per_region[r] = []
-            for gfo in gfs_per_region[r]:
-                gfo_speaker = gfo.speaker.identifier
-                if gfo_speaker not in speakers_per_region[r]:
-                    speakers_per_region[r].append(gfo_speaker)
-                # print('region: ', r, ' frequency: ', gfo.frequency, ' speaker: ', gfo.speaker.identifier)
-        # print('speakers_per_region: ', speakers_per_region)
+            for frequency_obj_at_location in frequency_objects_at_location:
+                frequency_per_region[r] += frequency_obj_at_location.frequency
+                speaker = frequency_obj_at_location.speaker.identifier
+                if speaker not in speakers_per_region[r]:
+                    speakers_per_region[r].append(speaker)
+
+        # the second loop puts the data in the output structure
         for c in settings.FREQUENCY_CATEGORIES:
             if c == "Occurences":
                 dataset_dict = {}
@@ -904,7 +919,7 @@ class Gloss(models.Model):
                 for r in frequency_regions:
                     k_value = frequency_per_region[r]
                     dataset_dict['data'].append(k_value)
-                    total_occuurences += k_value
+                    total_occurrences += k_value
                 data_datasets.append(dataset_dict)
             elif c == "Signers":
                 dataset_dict = {}
@@ -914,9 +929,7 @@ class Gloss(models.Model):
                     k_value = len(speakers_per_region[r])
                     dataset_dict['data'].append(k_value)
                 data_datasets.append(dataset_dict)
-        # print('data_datasets: ', data_datasets)
-        # print('total_occuurences: ', total_occuurences)
-        return (total_occuurences, data_datasets)
+        return (total_occurrences, data_datasets)
 
     def has_frequency_data(self):
 

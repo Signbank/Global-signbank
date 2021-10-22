@@ -2137,6 +2137,25 @@ def import_corpus_speakers():
             # field Preference hand is ignored
             speaker.save()
 
+def get_corpus_speakers(dataset_acronym):
+
+    try:
+        corpus = Corpus.objects.get(name=dataset_acronym)
+    except ObjectDoesNotExist:
+        return []
+
+    frequencies = GlossFrequency.objects.filter(document__corpus=corpus)
+
+    speakers_in_corpus = frequencies.values('speaker__identifier').distinct()
+    speaker_indentifiers = []
+    for s in speakers_in_corpus:
+        speaker_indentifiers.append(s['speaker__identifier'])
+
+    speaker_objects = Speaker.objects.filter(identifier__in=speaker_indentifiers).order_by('identifier')
+
+    speakers = [ s for s in speaker_objects ]
+    return speakers
+
 def configure_corpus_documents():
 
     corpus_name = 'NGT'

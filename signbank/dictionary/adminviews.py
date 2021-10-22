@@ -43,7 +43,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
-    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages
+    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_corpus_speakers
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -3181,7 +3181,7 @@ class GlossFrequencyView(DetailView):
 
         context['speaker_data'] = gl.speaker_data()
 
-        speakers_of_corpus = corpus_speakers(gl.dataset.acronym)
+        speakers_of_corpus = get_corpus_speakers(gl.dataset.acronym)
         context['num_signers'] = len(speakers_of_corpus)
 
         # incorporates legacy relations
