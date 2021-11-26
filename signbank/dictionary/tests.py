@@ -2625,7 +2625,7 @@ class Corpus_Tests(TestCase):
 
     def test_metadata_file(self):
         # this imports the Speaker data to the test database
-        from signbank.tools import import_corpus_speakers
+        from signbank.frequency import import_corpus_speakers
 
         dataset_acronym = self.test_dataset.acronym
 
@@ -2664,10 +2664,11 @@ class Corpus_Tests(TestCase):
 
     def test_corpus_creation(self):
         # this imports the Speaker data to the test database
-        from signbank.tools import import_corpus_speakers, configure_corpus_documents, glosses_X_speakers, gloss_to_speakers, \
-            documents_X_glosses, documents_X_speakers, glosses_X_documents, document_to_speakers, document_to_glosses, \
-            gloss_to_documents, speaker_to_glosses, speakers_X_glosses, speakers_X_documents, speaker_to_documents, \
-            get_corpus_speakers, gloss_frequency_tokNo, gloss_frequency_tokNoSgnr
+        from signbank.frequency import import_corpus_speakers, configure_corpus_documents, dictionary_glosses_to_speakers, gloss_to_speakers, \
+            dictionary_documents_to_glosses, dictionary_documents_to_speakers, dictionary_glosses_to_documents, \
+            document_to_speakers, document_to_glosses, \
+            gloss_to_documents, speaker_to_glosses, dictionary_speakers_to_glosses, dictionary_speakers_to_documents, speaker_to_documents, \
+            get_corpus_speakers, get_gloss_tokNo, get_gloss_tokNoSgnr
 
         dataset_acronym = self.test_dataset.acronym
         ### CORPUS FUNCTION
@@ -2678,10 +2679,37 @@ class Corpus_Tests(TestCase):
         #There are initially no documents
         self.assertEqual(count_known_documents0, 0)
 
+        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+        eaf_file_paths = []
+        for filename in os.listdir(dataset_eaf_folder):
+            eaf_file_paths.append(dataset_eaf_folder + os.sep + str(filename))
+        if not eaf_file_paths:
+            print('No EAF files found in eaf folder for test dataset: ', dataset_eaf_folder)
+            print('In order to test corpus creation functionality, sample EAF files are needed.')
+            return
+
         ### CORPUS FUNCTION
         print('CONFIGURE CORPUS')
         configure_corpus_documents(dataset_acronym, testing=True)
 
+        try:
+            corpus = Corpus.objects.get(name=dataset_acronym)
+        except ObjectDoesNotExist:
+            corpus = None
+        self.assertNotEqual(corpus, None)
+
+        document_objects = Document.objects.filter(corpus=corpus).order_by('identifier')
+
+        gloss_frequency_objects_per_document = {}
+        documents_without_data = []
+        for d_obj in document_objects:
+            frequency_objects_for_document = GlossFrequency.objects.filter(document=d_obj)
+            if frequency_objects_for_document:
+                gloss_frequency_objects_per_document[d_obj.identifier] = frequency_objects_for_document
+            else:
+                documents_without_data.append(d_obj.identifier)
+
+        print('Test documents without annotations: ', documents_without_data)
 
         glosses = Gloss.objects.filter(lemma__dataset=self.test_dataset)
         gloss_ids = [ g.id for g in glosses ]
@@ -2702,45 +2730,45 @@ class Corpus_Tests(TestCase):
         # test Gloss fields tokNo and tokNoSgnr that the methods that compute them correspond to the stored values
         glosses_in_dataset = Gloss.objects.filter(lemma__dataset=self.test_dataset)
         for gl in glosses_in_dataset:
-            tokNoSgnr = gloss_frequency_tokNoSgnr(dataset_acronym, gl.id)
+            tokNoSgnr = get_gloss_tokNoSgnr(dataset_acronym, gl.id)
             self.assertEqual(tokNoSgnr, gl.tokNoSgnr)
 
-            tokNo = gloss_frequency_tokNo(dataset_acronym, gl.id)
+            tokNo = get_gloss_tokNo(dataset_acronym, gl.id)
             self.assertEqual(tokNo, gl.tokNo)
 
         # check helper functions that retrieve data from GlossFrequency objects
 
-        gl_signed_by_speakers = glosses_X_speakers(self.test_dataset.acronym)
+        gl_signed_by_speakers = dictionary_glosses_to_speakers(self.test_dataset.acronym)
 
         for gid in gl_signed_by_speakers.keys():
             speakers = gloss_to_speakers(gid)
             self.assertEqual(gl_signed_by_speakers[gid], speakers)
 
-        gl_per_document = documents_X_glosses(self.test_dataset.acronym)
+        gl_per_document = dictionary_documents_to_glosses(self.test_dataset.acronym)
 
         for did in gl_per_document.keys():
-            glosses = document_to_glosses(did)
+            glosses = document_to_glosses(self.test_dataset.acronym, did)
             self.assertEqual(gl_per_document[did], glosses)
 
-        sp_per_document = documents_X_speakers(self.test_dataset.acronym)
+        sp_per_document = dictionary_documents_to_speakers(self.test_dataset.acronym)
 
         for did in sp_per_document.keys():
             speakers = document_to_speakers(did)
             self.assertEqual(sp_per_document[did], speakers)
 
-        gl_appear_in_documents = glosses_X_documents(self.test_dataset.acronym)
+        gl_appear_in_documents = dictionary_glosses_to_documents(self.test_dataset.acronym)
 
         for gid in gl_appear_in_documents.keys():
             documents = gloss_to_documents(gid)
             self.assertEqual(gl_appear_in_documents[gid], documents)
 
-        sp_signs_glosses = speakers_X_glosses(self.test_dataset.acronym)
+        sp_signs_glosses = dictionary_speakers_to_glosses(self.test_dataset.acronym)
 
         for sid in sp_signs_glosses.keys():
             glosses = speaker_to_glosses(self.test_dataset.acronym, sid)
             self.assertEqual(sp_signs_glosses[sid], glosses)
 
-        sp_signs_documents = speakers_X_documents(self.test_dataset.acronym)
+        sp_signs_documents = dictionary_speakers_to_documents(self.test_dataset.acronym)
 
         for sid in sp_signs_documents.keys():
             documents = speaker_to_documents(self.test_dataset.acronym, sid)
@@ -2772,7 +2800,7 @@ class Corpus_Tests(TestCase):
             return
 
         print('UPDATE CORPUS')
-        update_corpus_counts(dataset_acronym, testing=True)
+        update_corpus_document_counts(dataset_acronym, 'CNGT1008', testing=True)
 
         gloss_frequency_2 = GlossFrequency.objects.filter(document__corpus__name=self.test_dataset.acronym)
         gloss_frequency_table_2 = {}
@@ -2788,10 +2816,10 @@ class Corpus_Tests(TestCase):
 
         glosses_in_dataset = Gloss.objects.filter(lemma__dataset=self.test_dataset)
         for gl in glosses_in_dataset:
-            tokNoSgnr = gloss_frequency_tokNoSgnr(dataset_acronym, gl.id)
+            tokNoSgnr = get_gloss_tokNoSgnr(dataset_acronym, gl.id)
             self.assertEqual(tokNoSgnr, gl.tokNoSgnr)
 
-            tokNo = gloss_frequency_tokNo(dataset_acronym, gl.id)
+            tokNo = get_gloss_tokNo(dataset_acronym, gl.id)
             self.assertEqual(tokNo, gl.tokNo)
 
 
