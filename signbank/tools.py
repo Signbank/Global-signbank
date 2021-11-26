@@ -2144,17 +2144,15 @@ def get_corpus_speakers(dataset_acronym):
     except ObjectDoesNotExist:
         return []
 
+    # Get all frequencies mentioning this corpus
     frequencies = GlossFrequency.objects.filter(document__corpus=corpus)
 
-    speakers_in_corpus = frequencies.values('speaker__identifier').distinct()
-    speaker_indentifiers = []
-    for s in speakers_in_corpus:
-        speaker_indentifiers.append(s['speaker__identifier'])
+    # Get all speaker identifiers
+    speaker_indentifiers = [ speaker['speaker__identifier'] for speaker in frequencies.values('speaker__identifier').distinct() ]
 
-    speaker_objects = Speaker.objects.filter(identifier__in=speaker_indentifiers).order_by('identifier')
+    # Return the list of speakers correspoonding to those identifiers
+    return Speaker.objects.filter(identifier__in=speaker_indentifiers).order_by('identifier')
 
-    speakers = [ s for s in speaker_objects ]
-    return speakers
 
 def configure_corpus_documents():
 
