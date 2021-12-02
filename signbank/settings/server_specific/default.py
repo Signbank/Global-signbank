@@ -1,5 +1,5 @@
 #Where the Signbank installation lives on your server
-ROOT = '/var/www/signbank/live/'
+ROOT = '/var/www/'
 
 #Where the code is (where you did git clone)
 BASE_DIR = 'repo/'
