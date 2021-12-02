@@ -44,6 +44,10 @@ from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages
+from signbank.frequency import import_corpus_speakers, configure_corpus_documents, update_corpus_counts, \
+    speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
+    dictionary_speakers_to_documents, newly_uploaded_documents, document_has_been_updated, document_to_number_of_glosses, \
+    document_to_glosses
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1206,8 +1210,12 @@ class GlossDetailView(DetailView):
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
         context['handedness'] = (int(self.object.handedness) > 1) if self.object.handedness else 0  # minimal machine value is 2
         context['domhndsh'] = (int(self.object.domhndsh) > 2) if self.object.domhndsh else 0        # minimal machine value -s 3
-        context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
-
+        if self.object.tokNo:
+            # in the model this field can be null or blank, which is not a number
+            # the template compares it to 1
+            context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
+        else:
+            context['tokNo'] = 0
         # check for existence of strong hand and weak hand shapes
         if self.object.domhndsh:
             try:
@@ -4849,6 +4857,250 @@ class FieldChoiceView(ListView):
             # User is not authenticated
             messages.add_message(self.request, messages.ERROR, _('Please login to use the requested functionality.'))
             return None
+
+class DatasetFrequencyView(DetailView):
+
+    model = Dataset
+    context_object_name = 'dataset'
+    template_name = 'dictionary/dataset_frequency.html'
+    dataset_name = ''
+
+    #Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+        except ObjectDoesNotExist:
+            raise Http404()
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DatasetFrequencyView, self).get_context_data(**kwargs)
+
+        dataset = context['dataset']
+
+        context['default_language_choice_list'] = {}
+        translation_languages = dataset.translation_languages.all()
+        default_language_choice_dict = dict()
+        for language in translation_languages:
+            default_language_choice_dict[language.name] = language.name
+        context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
+
+        datasetform = DatasetUpdateForm(languages=context['default_language_choice_list'])
+        context['datasetform'] = datasetform
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        corpus_name = dataset.acronym
+        # create a Corpus object if it does not exist
+        try:
+            corpus = Corpus.objects.get(name=corpus_name)
+        except:
+            corpus = None
+        context['corpus'] = corpus
+
+        document_objects = Document.objects.filter(corpus=corpus).order_by('identifier')
+
+        # some additional data is collected about the eaf files versus the documents in the database
+        gloss_frequency_objects_per_document = {}
+        documents_without_data = []
+        more_recent_eaf_files = []
+        for d_obj in document_objects:
+            has_been_updated = document_has_been_updated(corpus_name, d_obj.identifier)
+            if has_been_updated:
+                more_recent_eaf_files += [d_obj.identifier]
+            frequency_objects_for_document = GlossFrequency.objects.filter(document=d_obj)
+            if frequency_objects_for_document:
+                gloss_frequency_objects_per_document[d_obj.identifier] = frequency_objects_for_document
+            else:
+                documents_without_data.append(d_obj.identifier)
+
+        # what to do with this information? Some eaf files have no useful data
+        # a column is shown in the corpus overview template whether there is frequency data for the document
+        # documents_with_data = gloss_frequency_objects_per_document.keys()
+        # print('gloss_frequency_objects_per_document: ', len(documents_with_data), documents_with_data)
+        # print('documents_without_data: ', len(documents_without_data), documents_without_data)
+
+        context['document_identifiers'] = [ do.identifier for do in document_objects ]
+        context['documents'] = [ (do.identifier, do.creation_time.date,
+                                  document_to_number_of_glosses(corpus_name, do.identifier),
+                                  False) for do in document_objects ]
+
+        frequencies = GlossFrequency.objects.filter(document__in=document_objects)
+
+        speakers_in_corpus = frequencies.values('speaker__identifier').distinct()
+        speaker_indentifiers = []
+        for s in speakers_in_corpus:
+            speaker_indentifiers.append(s['speaker__identifier'])
+        speaker_objects_frequency_objects = Speaker.objects.filter(identifier__in=speaker_indentifiers).order_by('identifier')
+        speaker_objects_corpus = Speaker.objects.filter(identifier__endswith='_'+corpus_name).order_by('identifier')
+
+        # speakers_to_documents = dictionary_speakers_to_documents(corpus_name)
+
+        GENDER_MAPPING = { 'm': _('Male'), 'f': _('Female'), 'o': _('Other') }
+        HANDEDNESS_MAPPING = {'r': _('Right'), 'l': _('Left'), 'a': _('Ambidextrous'), '': _('Unknown') }
+        speaker_tuples = []
+        for so in speaker_objects_corpus:
+            speaker_tuples.append((so.participant, GENDER_MAPPING[so.gender], so.age, so.location, HANDEDNESS_MAPPING[so.handedness]))
+        context['speakers'] = speaker_tuples
+        # the code below ends up being really slow
+        # speaker_tuples_documents = []
+        # for so in speaker_objects_frequency_objects:
+        #     participant = so.participant()
+        #     speaker_tuples_documents.append((participant, speakers_to_documents[participant]))
+        # context['speakers_in_documents'] = speaker_tuples_documents
+
+        # something could be added to the template to indicate this information about the files
+        # (update_eaf_files, new_eaf_files, missing_eaf_files) = get_names_of_updated_eaf_files(corpus_name)
+        newly_uploaded_eafs = newly_uploaded_documents(corpus_name)
+        context['new_eaf_files'] = newly_uploaded_eafs
+
+        return context
+
+    def render_to_response(self, context):
+        if self.request.GET.get('process_speakers') == self.object.acronym:
+            return self.render_to_process_speakers_response(context)
+        elif self.request.GET.get('create_corpus') == self.object.acronym:
+            return self.render_to_create_corpus_response(context)
+        elif self.request.GET.get('update_corpus') == self.object.acronym:
+            return self.render_to_update_corpus_response(context)
+        else:
+            return super(DatasetFrequencyView, self).render_to_response(context)
+
+    def render_to_process_speakers_response(self, context):
+        # check that the user is logged in
+        if not self.request.user.is_authenticated():
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        try:
+            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
+        except ObjectDoesNotExist:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # make sure the user can write to this dataset
+        # from guardian.shortcuts import get_objects_for_user
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        if not user_change_datasets.exists() or dataset_object not in user_change_datasets:
+            messages.add_message(self.request, messages.ERROR, _('No permission to import speakers for this dataset.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # configure the speakers
+        errors = import_corpus_speakers(dataset_object.acronym)
+
+        if errors:
+            messages.add_message(self.request, messages.ERROR, _('Error processing participants meta data for this dataset.'))
+            return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
+        else:
+            messages.add_message(self.request, messages.INFO, _('Speakers successfully processed.'))
+            return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
+
+    def render_to_create_corpus_response(self, context):
+
+        # check that the user is logged in
+        if not self.request.user.is_authenticated():
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        try:
+            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
+        except ObjectDoesNotExist:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # make sure the user can write to this dataset
+        # from guardian.shortcuts import get_objects_for_user
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        if not user_change_datasets.exists() or dataset_object not in user_change_datasets:
+            messages.add_message(self.request, messages.ERROR, _('No permission to create a corpus for this dataset.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # configure the speakers
+        errors = import_corpus_speakers(dataset_object.acronym)
+
+        if errors:
+            messages.add_message(self.request, messages.ERROR, _('Error processing participants meta data for this dataset.'))
+            return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
+
+        configure_corpus_documents(dataset_object.acronym)
+
+        messages.add_message(self.request, messages.INFO, ('Corpus ' + self.dataset_name + ' successfully created.'))
+        return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
+
+    def render_to_update_corpus_response(self, context):
+        # check that the user is logged in
+        if not self.request.user.is_authenticated():
+            messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # if the dataset is specified in the url parameters, set the dataset_name variable
+        get = self.request.GET
+        if 'dataset_name' in get:
+            self.dataset_name = get['dataset_name']
+        if self.dataset_name == '':
+            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        try:
+            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
+        except ObjectDoesNotExist:
+            messages.add_message(self.request, messages.ERROR, ('No dataset with name '+self.dataset_name+' found.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # make sure the user can write to this dataset
+        # from guardian.shortcuts import get_objects_for_user
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        if not user_change_datasets.exists() or dataset_object not in user_change_datasets:
+            messages.add_message(self.request, messages.ERROR, _('No permission to update the corpus for this dataset.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+
+        # importing updates the speakers
+        # check format of spekaer identifiers
+        speakers_have_correct_format = speaker_identifiers_contain_dataset_acronym(dataset_object.acronym)
+
+        if not speakers_have_correct_format:
+            # process speakers again to newest version
+            errors = import_corpus_speakers(dataset_object.acronym)
+            if errors:
+                messages.add_message(self.request, messages.ERROR, _('Error processing participants meta data for this dataset.'))
+                return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
+
+        # (update_eaf_files, new_eaf_files, missing_eaf_files) = get_names_of_updated_eaf_files(dataset_object.acronym)
+
+        update_corpus_counts(dataset_object.acronym)
+
+        # this message doesn't work anymore because this is now an ajax call method
+        messages.add_message(self.request, messages.INFO, ('Corpus ' + self.dataset_name + ' successfully updated.'))
+
+        return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
+
 
 def order_handshape_queryset_by_sort_order(get, qs):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
