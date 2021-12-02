@@ -1,28 +1,15 @@
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template import Context, RequestContext, loader
-from django.http import Http404
-from django.shortcuts import render, render_to_response, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
-from django.conf import settings
-from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from tagging.models import Tag, TaggedItem
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlquote
-from collections import OrderedDict
 from django.contrib import messages
-from django.core.files import File
 from pathlib import Path
 
-import os
-import shutil
 import csv
 import time
-import re
 
-from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
-from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
@@ -31,9 +18,10 @@ import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForGlossForm
-from signbank.tools import *
-from signbank.tools import save_media, compare_valuedict_to_gloss, MachineValueNotFoundError
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
+from signbank.frequency import configure_corpus_documents, import_corpus_speakers
+from signbank.tools import save_media, MachineValueNotFoundError
+from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
 
 import signbank.settings
 from signbank.settings.base import *
@@ -2392,29 +2380,41 @@ def configure_handshapes(request):
 
         return HttpResponse(output_string)
 
-def configure_speakers(request):
+def configure_speakers_dataset(request,datasetid):
+    try:
+        dataset = get_object_or_404(Dataset, pk=datasetid)
+    except ObjectDoesNotExist:
+        return HttpResponse('<p>Dataset unknown.</p>')
 
     if request.user.has_perm('dictionary.change_gloss'):
 
-        import_corpus_speakers()
+        errors = import_corpus_speakers(dataset.acronym)
 
-        return HttpResponse('<p>Speakers have been configured.</p>')
-
+        if len(errors) == 0:
+            return HttpResponse('<p>Speakers have been configured.</p>')
+        else:
+            return HttpResponse('<p>Problem importing speakers.</p>')
     else:
 
         return HttpResponse('<p>You do not have permission to configure speakers.</p>')
 
-def configure_corpus_documents_ngt(request):
+
+def configure_corpus_documents_dataset(request, datasetid):
+    try:
+        dataset = get_object_or_404(Dataset, pk=datasetid)
+    except ObjectDoesNotExist:
+        return HttpResponse('<p>Dataset unknown.</p>')
 
     if request.user.has_perm('dictionary.change_gloss'):
 
-        configure_corpus_documents()
+        configure_corpus_documents(dataset.acronym)
 
-        return HttpResponse('<p>Corpus NGT has been configured.</p>')
+        return HttpResponse('<p>Corpus ' + dataset.acronym + ' has been configured.</p>')
 
     else:
 
-        return HttpResponse('<p>You do not have permission to configure the corpus NGT.</p>')
+        return HttpResponse('<p>You do not have permission to configure a corpus.</p>')
+
 
 def get_unused_videos(request):
     file_not_in_glossvideo_object = []
