@@ -13,7 +13,9 @@ def make_db_small(filename):
                   'dictionary_annotationidglosstranslation', 'dictionary_keyword',
                   'dictionary_relation', 'dictionary_definition', 'dictionary_othermedia',
                   'dictionary_morphologydefinition', 'dictionary_morpheme',
-                  'dictionary_simultaneousmorphologydefinition', 'dictionary_lemmaidgloss', 'dictionary_lemmaidglosstranslation']:
+                  'dictionary_simultaneousmorphologydefinition', 'dictionary_lemmaidgloss', 'dictionary_lemmaidglosstranslation',
+                  'dictionary_speaker', 'dictionary_corpus', 'dictionary_document', 'dictionary_glossfrequency',
+                  'video_glossvideo']:
         c.execute('DELETE FROM ' + table + ';')
 
     c.execute('VACUUM')

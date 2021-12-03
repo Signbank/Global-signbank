@@ -2481,9 +2481,27 @@ class Speaker(models.Model):
     location = models.CharField(max_length=100)
     handedness = models.CharField(blank=True,choices=[('Right','r'),('Left','l'),('Ambidextrous','a')],max_length=1)
 
+    def __str__(self):
+        try:
+            (participant, corpus) = self.identifier.rsplit('_', 1)
+        except:
+            participant = self.identifier
+        return participant
+
+    def participant(self):
+        try:
+            (participant, corpus) = self.identifier.rsplit('_', 1)
+        except:
+            participant = self.identifier
+        return participant
+
 class GlossFrequency(models.Model):
 
     speaker = models.ForeignKey("Speaker")
     document = models.ForeignKey("Document")
     gloss = models.ForeignKey("Gloss")
     frequency = models.IntegerField()
+
+    def __str__(self):
+
+        return str(self.gloss.id) + ' ' + self.document.identifier + ' ' + self.speaker.identifier + ' ' + str(self.frequency)
