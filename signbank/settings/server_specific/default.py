@@ -1,5 +1,5 @@
 #Where the Signbank installation lives on your server
-ROOT = '/var/www/signbank/live/'
+ROOT = '/var/www/'
 
 #Where the code is (where you did git clone)
 BASE_DIR = 'repo/'
@@ -18,6 +18,7 @@ SIGNBANK_PACKAGES_FOLDER = 'packages/'
 EAF_FILES_LOCATION = 'eaf/'
 DATASET_EAF_DIRECTORY = 'eafs'
 DATASET_METADATA_DIRECTORY = 'metadata_eafs'
+TEST_DATA_DIRECTORY = 'test_data'
 
 #Tmp folder to use
 TMP_DIR = '/tmp'

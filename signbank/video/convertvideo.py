@@ -52,9 +52,7 @@ def ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
     ffmpeg = [FFMPEG_PROGRAM, "-y", "-i", sourcefile]
     ffmpeg += options
     ffmpeg += [targetfile]
- 
-    #print " ".join(ffmpeg)
-    
+
     process =  Popen(ffmpeg, stdout=PIPE, stderr=PIPE)
     start = time.time()
     
