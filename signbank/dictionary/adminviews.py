@@ -48,7 +48,8 @@ from signbank.frequency import import_corpus_speakers, configure_corpus_document
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, newly_uploaded_documents, document_has_been_updated, document_to_number_of_glosses, \
     document_to_glosses, get_corpus_speakers
-
+from signbank.dictionary.frequency_display import collect_speaker_age_data, collect_variants_data, collect_variants_age_range_data, \
+                                                    collect_variants_age_sex_raw_percentage, collect_variants_age_cat_data
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
@@ -3172,22 +3173,9 @@ class GlossFrequencyView(DetailView):
         # the following collects the speakers distributed over a range of ages to display on the x axis
         # for display in chartjs, the age labels are stored separately from the number of speakers having that age
         speakers_summary = gl.speaker_age_data()
-        # ages to display data for across the x axis
-        age_range_labels = []
-        speaker_age_data = []
-        for i in range(0, 100):
-            # the age is a string for javascript
-            i_key = str(i)
-            if i_key in speakers_summary.keys():
-                # some speakers have this age
-                # tet the number of speakers with this age
-                i_value = speakers_summary[i_key]
-                speaker_age_data.append(i_value)
-                age_range_labels.append(i_key)
-            else:
-                # no speakers have this age
-                # only show labels for ages that have speakers of that age
-                speaker_age_data.append(0)
+
+        (age_range_labels, speaker_age_data) = collect_speaker_age_data(speakers_summary)
+        # more ages will be added to teh age_range_labels below for variants, so they are not yet stored in the context variables
 
         context['speaker_age_data'] = speaker_age_data
 
@@ -3212,133 +3200,41 @@ class GlossFrequencyView(DetailView):
         # the gloss itself is included among the variants, check that there are other glosses in the list
         context['has_variants'] = len(variants) > 1
 
-        variants_with_keys = []
-        if len(variants) > 1:
-            for v in variants:
-                # get the annotation explicitly
-                # do not use the __str__ property idgloss
-                v_idgloss = v.annotationidglosstranslation_set.get(language=v.lemma.dataset.default_language).text
-                variants_with_keys.append((v_idgloss, v))
-        sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
-        sorted_variant_keys = sorted([og_idgloss for (og_idgloss, og) in variants_with_keys])
-        variants_data_quick_access = {}
-        variants_data = []
-        for (og_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-            variants_speaker_data = variant_of_gloss.speaker_data()
-            variants_data.append((og_idgloss, variants_speaker_data))
-            variants_data_quick_access[og_idgloss] = variants_speaker_data
+        (variants_data, variants_data_quick_access,
+         sorted_variant_keys, sorted_variants_with_keys) = collect_variants_data(variants)
 
         context['variants_data'] = variants_data
         context['variants_data_quick_access'] = variants_data_quick_access
-
-        variants_age_range_distribution_data = {}
-        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-            variant_speaker_age_data_v = variant_of_gloss.speaker_age_data()
-            speaker_age_data_v = []
-            for i in range(0, 100):
-                i_key = str(i)
-                if i_key in variant_speaker_age_data_v.keys():
-                    i_value = variant_speaker_age_data_v[i_key]
-                    speaker_age_data_v.append(i_value)
-                    if i_key not in age_range_labels:
-                        age_range_labels.append(i_key)
-                else:
-                    speaker_age_data_v.append(0)
-            variants_age_range_distribution_data[variant_idgloss] = speaker_age_data_v
-        context['variants_age_range_distribution_data'] = variants_age_range_distribution_data
-        context['age_range_labels'] = age_range_labels
-
-        variants_sex_distribution_data = {}
-        variants_sex_distribution_data_percentage = {}
-        variants_sex_distribution_data_totals = {}
-        variants_sex_distribution_data_totals['Female'] = 0
-        variants_sex_distribution_data_totals['Male'] = 0
-        variants_age_distribution_data = {}
-        variants_age_distribution_data_percentage = {}
-        variants_age_distribution_data_totals = {}
-        variants_age_distribution_data_totals['< 25'] = 0
-        variants_age_distribution_data_totals['25 - 35'] = 0
-        variants_age_distribution_data_totals['36 - 65'] = 0
-        variants_age_distribution_data_totals['> 65'] = 0
-
-        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-            for i_key in ['Female', 'Male']:
-                variants_sex_distribution_data_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
-                variants_sex_distribution_data[i_key] = {}
-                variants_sex_distribution_data_percentage[i_key] = {}
-            for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
-                variants_age_distribution_data_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
-                variants_age_distribution_data[i_key] = {}
-                variants_age_distribution_data_percentage[i_key] = {}
-
-        for i_key in ['Female', 'Male']:
-            total_gender_across_variants = variants_sex_distribution_data_totals[i_key]
-            for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-                variant_speaker_data_v = variants_data_quick_access[variant_idgloss]
-                i_value = variant_speaker_data_v[i_key]
-                speaker_data_v = i_value
-                if total_gender_across_variants > 0:
-                    speaker_data_p = i_value / total_gender_across_variants
-                else:
-                    speaker_data_p = 0
-                variants_sex_distribution_data[i_key][variant_idgloss] = speaker_data_v
-                variants_sex_distribution_data_percentage[i_key][variant_idgloss] = speaker_data_p
-
-        context['variants_sex_distribution_data'] = variants_sex_distribution_data
-        context['variants_sex_distribution_data_percentage'] = variants_sex_distribution_data_percentage
-
-        for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
-            total_age_across_variants = variants_age_distribution_data_totals[i_key]
-            for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-                variant_speaker_data_v = variants_data_quick_access[variant_idgloss]
-                i_value = variant_speaker_data_v[i_key]
-                speaker_data_v = i_value
-                if total_age_across_variants > 0:
-                    speaker_data_p = i_value / total_age_across_variants
-                else:
-                    speaker_data_p = 0
-                variants_age_distribution_data[i_key][variant_idgloss] = speaker_data_v
-                variants_age_distribution_data_percentage[i_key][variant_idgloss] = speaker_data_p
-
-        context['variants_age_distribution_data'] = variants_age_distribution_data
-        context['variants_age_distribution_data_percentage'] = variants_age_distribution_data_percentage
-
-        variants_age_distribution_cat_data = {}
-        variants_age_distribution_cat_percentage = {}
-        variants_age_distribution_cat_totals = {}
-        variants_age_distribution_cat_totals['< 25'] = 0
-        variants_age_distribution_cat_totals['25 - 35'] = 0
-        variants_age_distribution_cat_totals['36 - 65'] = 0
-        variants_age_distribution_cat_totals['> 65'] = 0
-
-        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-            for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
-                variants_age_distribution_cat_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
-                variants_age_distribution_cat_data[i_key] = {}
-                variants_age_distribution_cat_percentage[i_key] = {}
-
-        for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
-            total_age_across_variants = variants_age_distribution_cat_totals[i_key]
-            for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-                variant_age_data_v = variants_data_quick_access[variant_idgloss]
-                i_value = variant_age_data_v[i_key]
-
-                speaker_data_v = i_value
-                if total_age_across_variants > 0:
-                    speaker_data_p = i_value / total_age_across_variants
-                else:
-                    speaker_data_p = i_value
-                variants_age_distribution_cat_data[i_key][variant_idgloss] = speaker_data_v
-                variants_age_distribution_cat_percentage[i_key][variant_idgloss] = speaker_data_p
-
-        context['variants_age_distribution_cat_data'] = variants_age_distribution_cat_data
-        context['variants_age_distribution_cat_percentage'] = variants_age_distribution_cat_percentage
 
         variant_labels = []
         for og_igloss in sorted_variant_keys:
             if og_igloss not in variant_labels:
                 variant_labels.append(og_igloss)
         context['variant_labels'] = variant_labels
+
+        (variants_age_range_distribution_data, age_range_labels) = collect_variants_age_range_data(sorted_variants_with_keys,
+                                                                                                   age_range_labels)
+        context['variants_age_range_distribution_data'] = variants_age_range_distribution_data
+        context['age_range_labels'] = age_range_labels
+
+        (variants_sex_distribution_data,
+         variants_sex_distribution_data_percentage,
+         variants_age_distribution_data,
+         variants_age_distribution_data_percentage) = collect_variants_age_sex_raw_percentage(sorted_variants_with_keys,
+                                                                                              variants_data_quick_access)
+
+        context['variants_sex_distribution_data'] = variants_sex_distribution_data
+        context['variants_sex_distribution_data_percentage'] = variants_sex_distribution_data_percentage
+
+        context['variants_age_distribution_data'] = variants_age_distribution_data
+        context['variants_age_distribution_data_percentage'] = variants_age_distribution_data_percentage
+
+        (variants_age_distribution_cat_data,
+         variants_age_distribution_cat_percentage) = collect_variants_age_cat_data(sorted_variants_with_keys,
+                                                                                   variants_data_quick_access)
+
+        context['variants_age_distribution_cat_data'] = variants_age_distribution_cat_data
+        context['variants_age_distribution_cat_percentage'] = variants_age_distribution_cat_percentage
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
