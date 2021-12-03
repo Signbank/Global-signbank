@@ -46,7 +46,6 @@ class RegistrationForm(forms.Form):
     ``RegistrationProfile.objects.create_inactive_user()``.
 
     """
-    error_css_class = 'error'
 
     username = forms.CharField(max_length=30, required=True,
                                widget=forms.TextInput(attrs=attrs_reqd),
@@ -147,15 +146,11 @@ class RegistrationForm(forms.Form):
         cookie with the key TEST_COOKIE_NAME and value TEST_COOKIE_VALUE before
         running this validation.
         """
-        self.request = request
+        # self.request = request
 
         super(RegistrationForm, self).__init__(*args, **kwargs)
-        if request and request.session:
-            if 'requested_datasets' in request.session.keys():
-                import json
-                self.fields['dataset'].initial = json.dumps(request.session['requested_datasets'])
 
-    def save(self, profile_callback=None):
+    def save(self):
         """
         Creates the new ``User`` and ``RegistrationProfile``, and
         returns the ``User``.
@@ -172,8 +167,7 @@ class RegistrationForm(forms.Form):
                                                                     email=self.cleaned_data['email'],
                                                                     firstname=self.cleaned_data['first_name'],
                                                                     lastname=self.cleaned_data['last_name'],
-                                                                    agree=self.cleaned_data['tos'],
-                                                                    profile_callback=profile_callback)
+                                                                    agree=self.cleaned_data['tos'])
         return new_user
 
 

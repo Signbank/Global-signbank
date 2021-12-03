@@ -56,8 +56,8 @@ def activate(request, activation_key, template_name='registration/activate.html'
                               { 'account': account,
                                 'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS })
 
-def register(request, success_url=settings.URL + settings.PREFIX_URL + '/accounts/register/complete/',
-             form_class=RegistrationForm, profile_callback=None,
+def register(request, success_url=settings.PREFIX_URL + '/accounts/register/complete/',
+             form_class=RegistrationForm,
              template_name='registration/registration_form.html'):
     """
     Allows a new user to register an account.
@@ -94,10 +94,15 @@ def register(request, success_url=settings.URL + settings.PREFIX_URL + '/account
         keyword argument.
     
     """
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
     if request.method == 'POST':
-        form = form_class(request.POST)
+        form = form_class(data=request.POST)
         if form.is_valid():
-            new_user = form.save(profile_callback=profile_callback)
+            new_user = form.save()
             request.session['username'] = new_user.username
             request.session['first_name'] = new_user.first_name
             request.session['last_name'] = new_user.last_name
@@ -166,7 +171,8 @@ def register(request, success_url=settings.URL + settings.PREFIX_URL + '/account
     else:
         # this insures that a preselected dataset is available if we got here from Dataset Detail view
         form = form_class(request=request)
-    return render(request,template_name,{ 'form': form })
+    return render(request,template_name,{ 'form': form,
+                                          'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
 # a copy of the login view since we need to change the form to allow longer
 # userids (> 30 chars) since we're using email addresses
