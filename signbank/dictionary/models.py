@@ -895,7 +895,7 @@ class Gloss(models.Model):
         except (ObjectDoesNotExist, AttributeError):
             return (total_occurrences, data_datasets)
 
-        frequency_objects = GlossFrequency.objects.filter(gloss=self)
+        frequency_objects = self.glossfrequency_set.all()
 
         # the first loop tallies up the frequency data from the gloss frequency objects
         for r in frequency_regions:
@@ -939,24 +939,28 @@ class Gloss(models.Model):
 
     def speaker_data(self):
 
-        glossfrequency_objects = self.glossfrequency_set.values('speaker').distinct()
-        # this is a list with duplicates
+        # returns a dictionary for this gloss of all the speaker details of speakers signing this gloss
+        # in the corpus to which this gloss belongs
+
+        # two extra categories are used that are not currently displayed in the frequency table
+        SEX_CATEGORIES = ['Female', 'Male', 'Other']
+        AGE_CATEGORIES = ['< 25', '25 - 35', '36 - 65', '> 65', 'Unknown Age']
+
+        # get frequency objects for this gloss
+        glossfrequency_objects = self.glossfrequency_set.all()
+        # collect the speakers
+        speakers_with_gloss = [ gfo.speaker for gfo in glossfrequency_objects ]
+        # remove duplicates
+        speakers_with_gloss = list(set(speakers_with_gloss))
+
         # for the results, Other and Unknown Age are also tallied so that
         # the total number of speakers for the gloss is the same for gender and age
         # the interface needs this for showing percentages as well as raw data
         speaker_data = {}
-        speaker_data['Male'] = 0
-        speaker_data['Female'] = 0
-        speaker_data['Other'] = 0
-        speaker_data['< 25'] = 0
-        speaker_data['25 - 35'] = 0
-        speaker_data['36 - 65'] = 0
-        speaker_data['> 65'] = 0
-        speaker_data['Unknown Age'] = 0
-        speaker_data['Total'] = 0
+        for i_key in SEX_CATEGORIES + AGE_CATEGORIES + ['Total']:
+            speaker_data[i_key] = 0
 
-        for swg in glossfrequency_objects:
-            speaker = Speaker.objects.get(id=swg['speaker'])
+        for speaker in speakers_with_gloss:
             if speaker.gender == 'm':
                 speaker_data['Male'] += 1
             elif speaker.gender == 'f':
@@ -980,15 +984,20 @@ class Gloss(models.Model):
 
 
     def speaker_age_data(self):
+        # this method returns a dictionary mapping ages
+        # to number of speakers of that age that sign the gloss
 
+        # get frequency objects for this gloss
         glossfrequency_objects = self.glossfrequency_set.all()
-
-        # this is a list with duplicates
+        # collect the speakers
         speakers_with_gloss = [ gfo.speaker for gfo in glossfrequency_objects ]
+        # remove duplicates
+        speakers_with_gloss = list(set(speakers_with_gloss))
 
         speaker_age_data = {}
 
         for speaker in speakers_with_gloss:
+            # the resulting dictionary is going to be used in javascript so convert to string
             speaker_age = str(speaker.age)
             if speaker_age in speaker_age_data.keys():
                 speaker_age_data[speaker_age] += 1
@@ -1076,6 +1085,8 @@ class Gloss(models.Model):
 
         # Build query
         this_sign_stems = self.get_stems()
+        if not this_sign_stems:
+            return []
         this_sign_dataset = self.lemma.dataset
         this_sign_language = self.lemma.dataset.default_language
         queries = []
@@ -1087,7 +1098,7 @@ class Gloss(models.Model):
             query = queries.pop()
             for q in queries:
                 query |= q
-        else:
+        elif len(queries) == 1:
             query = queries[0]
 
         other_relations_of_sign = self.other_relations()

@@ -49,7 +49,7 @@ from signbank.frequency import import_corpus_speakers, configure_corpus_document
     dictionary_speakers_to_documents, newly_uploaded_documents, document_has_been_updated, document_to_number_of_glosses, \
     document_to_glosses, get_corpus_speakers
 from signbank.dictionary.frequency_display import collect_speaker_age_data, collect_variants_data, collect_variants_age_range_data, \
-                                                    collect_variants_age_sex_raw_percentage, collect_variants_age_cat_data
+                                                    collect_variants_age_sex_raw_percentage
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
@@ -3174,8 +3174,10 @@ class GlossFrequencyView(DetailView):
         # for display in chartjs, the age labels are stored separately from the number of speakers having that age
         speakers_summary = gl.speaker_age_data()
 
-        (age_range_labels, speaker_age_data) = collect_speaker_age_data(speakers_summary)
-        # more ages will be added to teh age_range_labels below for variants, so they are not yet stored in the context variables
+        age_range = [ False for i in range(0, 100)]
+
+        (speaker_age_data, age_range) = collect_speaker_age_data(speakers_summary, age_range)
+        # more ages will be added to age_range below for variants, so they are not yet stored in the context variables
 
         context['speaker_age_data'] = speaker_age_data
 
@@ -3200,41 +3202,31 @@ class GlossFrequencyView(DetailView):
         # the gloss itself is included among the variants, check that there are other glosses in the list
         context['has_variants'] = len(variants) > 1
 
-        (variants_data, variants_data_quick_access,
-         sorted_variant_keys, sorted_variants_with_keys) = collect_variants_data(variants)
+        (variants_data_quick_access, sorted_variants_with_keys) = collect_variants_data(variants)
 
-        context['variants_data'] = variants_data
         context['variants_data_quick_access'] = variants_data_quick_access
 
         variant_labels = []
-        for og_igloss in sorted_variant_keys:
+        for (og_igloss, og) in sorted_variants_with_keys:
             if og_igloss not in variant_labels:
                 variant_labels.append(og_igloss)
         context['variant_labels'] = variant_labels
 
-        (variants_age_range_distribution_data, age_range_labels) = collect_variants_age_range_data(sorted_variants_with_keys,
-                                                                                                   age_range_labels)
+        (variants_age_range_distribution_data, age_range) = collect_variants_age_range_data(sorted_variants_with_keys, age_range)
         context['variants_age_range_distribution_data'] = variants_age_range_distribution_data
-        context['age_range_labels'] = age_range_labels
+        context['age_range'] = json.dumps(age_range)
 
-        (variants_sex_distribution_data,
+        (variants_sex_distribution_data_raw,
          variants_sex_distribution_data_percentage,
-         variants_age_distribution_data,
+         variants_age_distribution_data_raw,
          variants_age_distribution_data_percentage) = collect_variants_age_sex_raw_percentage(sorted_variants_with_keys,
                                                                                               variants_data_quick_access)
 
-        context['variants_sex_distribution_data'] = variants_sex_distribution_data
+        context['variants_sex_distribution_data'] = variants_sex_distribution_data_raw
         context['variants_sex_distribution_data_percentage'] = variants_sex_distribution_data_percentage
 
-        context['variants_age_distribution_data'] = variants_age_distribution_data
+        context['variants_age_distribution_data'] = variants_age_distribution_data_raw
         context['variants_age_distribution_data_percentage'] = variants_age_distribution_data_percentage
-
-        (variants_age_distribution_cat_data,
-         variants_age_distribution_cat_percentage) = collect_variants_age_cat_data(sorted_variants_with_keys,
-                                                                                   variants_data_quick_access)
-
-        context['variants_age_distribution_cat_data'] = variants_age_distribution_cat_data
-        context['variants_age_distribution_cat_percentage'] = variants_age_distribution_cat_percentage
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -4861,12 +4853,6 @@ class DatasetFrequencyView(DetailView):
             else:
                 documents_without_data.append(d_obj.identifier)
 
-        # what to do with this information? Some eaf files have no useful data
-        # a column is shown in the corpus overview template whether there is frequency data for the document
-        # documents_with_data = gloss_frequency_objects_per_document.keys()
-        # print('gloss_frequency_objects_per_document: ', len(documents_with_data), documents_with_data)
-        # print('documents_without_data: ', len(documents_without_data), documents_without_data)
-
         context['document_identifiers'] = [ do.identifier for do in document_objects ]
         context['documents'] = [ (do.identifier, do.creation_time.date,
                                   document_to_number_of_glosses(corpus_name, do.identifier),
@@ -4896,8 +4882,6 @@ class DatasetFrequencyView(DetailView):
         #     speaker_tuples_documents.append((participant, speakers_to_documents[participant]))
         # context['speakers_in_documents'] = speaker_tuples_documents
 
-        # something could be added to the template to indicate this information about the files
-        # (update_eaf_files, new_eaf_files, missing_eaf_files) = get_names_of_updated_eaf_files(corpus_name)
         newly_uploaded_eafs = newly_uploaded_documents(corpus_name)
         context['new_eaf_files'] = newly_uploaded_eafs
 

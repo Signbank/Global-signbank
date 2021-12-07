@@ -60,23 +60,15 @@ var frequency_regions = {{frequency_regions|safe}};
 var data_datasets = {{data_datasets|safe}};
 var number_of_regions = frequency_regions.length;
 var speaker_age_data = {{speaker_age_data|safe}};
-var age_range_labels = {{age_range_labels|safe}};
-var age_range_labels_array = [];
-for (age in age_range_labels) {
-    var age_label = age_range_labels[age];
-    age_range_labels_array.push(age_label);
-};
+var age_range = {{age_range|safe}};
 var speaker_data = {{speaker_data|safe}};
 var num_signers = {{num_signers|safe}};
 var num_occurrences = {{num_occurrences|safe}};
 var max_regions = (num_occurrences > num_signers) ? num_occurrences : num_signers ;
-var variants_data = {{variants_data|safe}};
 var variants_data_quick_access = {{variants_data_quick_access|safe}};
 var variants_age_range_distribution_data = {{variants_age_range_distribution_data|safe}};
 const variants_age_distribution_data = {{variants_age_distribution_data|safe}};
 const variants_age_distribution_data_percentage = {{variants_age_distribution_data_percentage|safe}};
-var variants_age_distribution_cat_data = {{variants_age_distribution_cat_data|safe}};
-var variants_age_distribution_cat_percentage = {{variants_age_distribution_cat_percentage|safe}};
 var age_distribution_labels = [ '{{gloss.idgloss}}' ];
 var variant_labels = {{variant_labels|safe}};
 const variants_sex_distribution_data = {{variants_sex_distribution_data|safe}};
@@ -164,7 +156,7 @@ for (i in ages_labels) {
 
     for (k in variant_labels) {
         var variant_idgloss = variant_labels[k];
-        var variant_gloss_age_category = variants_age_distribution_cat_data[next_age_category][variant_idgloss];
+        var variant_gloss_age_category = variants_age_distribution_data[next_age_category][variant_idgloss];
         k_total_age_cat += parseInt(variant_gloss_age_category);
     };
     total_variants_age_cat[next_age_category] = k_total_age_cat;
@@ -180,7 +172,7 @@ for (k in variant_labels) {
     var variant_percentage_data = [];
     for (i in ages_labels) {
         var next_age_category = ages_labels[i];
-        var next_percentage = variants_age_distribution_cat_percentage[next_age_category][variant_idgloss];
+        var next_percentage = variants_age_distribution_data_percentage[next_age_category][variant_idgloss];
         variant_percentage_data.push(next_percentage);
     };
     variants_age_distribution_list_cat.push( {
@@ -310,14 +302,7 @@ var speakerchart = new Chart(cty, {
                     maxTicksLimit: 100,
                     barThickness: 10,
                     callback: function(value,index, values) {
-                        var index_in_range = false;
-                        for (i in age_range_labels_array) {
-                            if (value == age_range_labels_array[i]) {
-                                index_in_range = true;
-                                break;
-                            }
-                        }
-                        return index_in_range ? value : '';
+                        return age_range[index] ? value : '';
                     }
                  }
                   },
@@ -1155,7 +1140,7 @@ function do_toggle_display(el) {
 
             for (idy in ages_labels) {
                 var age_category_label = ages_labels[idy];
-                var next_age_data_raw = variants_age_distribution_cat_data[age_category_label][variant_idgloss];
+                var next_age_data_raw = variants_age_distribution_data[age_category_label][variant_idgloss];
                 next_age_chart.data.datasets[idy].data.pop();
                 next_age_chart.data.datasets[idy].data.push(next_age_data_raw);
             };
@@ -1176,7 +1161,7 @@ function do_toggle_display(el) {
             var age_category_label = ages_labels[idy];
             for (idx in variant_labels) {
                 var variant_idgloss = variant_labels[idx];
-                var next_raw = variants_age_distribution_cat_data[age_category_label][variant_idgloss];
+                var next_raw = variants_age_distribution_data[age_category_label][variant_idgloss];
                 glossvariantsAgeChart.data.datasets[idx].data.push(next_raw);
             };
         };
@@ -1245,7 +1230,7 @@ function do_toggle_display(el) {
             for (idx in variant_labels) {
                 var variant_idgloss = variant_labels[idx];
                 var total_variant = total_variants_age[ variant_idgloss ];
-                var next_percentage = variants_age_distribution_cat_percentage[age_category_label][variant_idgloss];
+                var next_percentage = variants_age_distribution_data_percentage[age_category_label][variant_idgloss];
                 glossvariantsAgeChart.data.datasets[idx].data.push(next_percentage);
             };
         };
@@ -1274,7 +1259,7 @@ function do_toggle_display(el) {
             for (idy in ages_labels) {
                 var age_category_label = ages_labels[idy];
                 var total_variant = total_variants_age[ variant_idgloss ];
-                var next_age_data_percentage = variants_age_distribution_cat_data[age_category_label][variant_idgloss] / total_variant;
+                var next_age_data_percentage = variants_age_distribution_data[age_category_label][variant_idgloss] / total_variant;
                 next_age_chart.data.datasets[idy].data.pop();
                 next_age_chart.data.datasets[idy].data.push(next_age_data_percentage);
             };
@@ -1432,7 +1417,7 @@ $(document).ready(function() {
                 <div class="col-lg-1" style="margin-top:56px;">{% trans "Gender" %}</div>
                 <div class="col-lg-5">
                 <div class="chart-multichart-enclosure-container" >
-                {% for key, value in variants_data %}
+                {% for key in variant_labels %}
                 <div class="chart-horizontal-single-bar-container">
                 <canvas id="variantsGenderChart_{{key}}" height="50" ></canvas>
                 </div>
@@ -1451,7 +1436,7 @@ $(document).ready(function() {
                 <div class="col-lg-1" style="margin-top:100px;">{% trans "Age" %}</div>
                 <div class="col-lg-5">
                 <div class="chart-multichart-enclosure-container" >
-                {% for key, value in variants_data %}
+                {% for key in variant_labels %}
                 <div class="chart-horizontal-single-bar-container">
                 <canvas id="variantsAgeChart_{{key}}" height="50"></canvas>
                 </div>
