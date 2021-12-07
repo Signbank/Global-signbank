@@ -45,7 +45,7 @@ def collect_variants_data(variants):
                 v_idgloss = v.annotationidglosstranslation_set.get(language=v.lemma.dataset.default_language).text
             except ObjectDoesNotExist:
                 # no translation found for annotation of gloss, display gloss id instead
-                v_idgloss = str(v_idgloss.id)
+                v_idgloss = str(v.id)
             variants_with_keys.append((v_idgloss, v))
     sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
     variants_data_quick_access = {}
