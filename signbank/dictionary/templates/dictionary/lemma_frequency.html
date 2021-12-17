@@ -10,44 +10,60 @@
 
 {% block extrajs %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.3.6/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
 
 <script type='text/javascript'>
+var shades_of_grey = [ 'hsl(0, 0%, 60%)', 'hsl(0, 0%, 35%)', 'hsl(0, 0%, 70%)', 'hsl(0, 0%,10%)', 'hsl(0, 0%, 80%)' ];
+var total_grey_idx = 5;
+
 var frequency_regions = {{frequency_regions|safe}};
 var data_lemmas = {{data_lemmas|safe}};
+
 var gloss_idgloss = '{{gloss_idgloss|safe}}';
+var number_of_regions = frequency_regions.length;
+var num_occurrences = {{num_occurrences|safe}};
 </script>
 
 <script type="text/javascript">
-var ctx = $("#myChart")[0].getContext("2d");
+Chart.defaults.global.elements.arc.borderWidth = 0;
+
+var ctx = document.getElementById('myChart').getContext('2d');
 var chart = new Chart(ctx, {
     type: 'horizontalBar',
-
+    skipNull: true,
     data: {
         labels: frequency_regions,
-        datasets: data_lemmas
+        datasets: data_lemmas,
+        minBarLength: 0
     },
+    options: {
+        scales: {
+            x: {
+                beginAtZero: true
+            },
+            y: {
+                type: 'category'
+            }
+        }
+    }
 });
 
-chart.options.scales.yAxes[0].ticks.fontSize = 16;
+chart.options.scales.yAxes[0].ticks.fontSize = 10;
 chart.options.scales.yAxes[0].ticks.fontColor = 'Black';
-chart.options.scales.yAxes[0].ticks.precision = 0;
-chart.options.scales.xAxes[0].ticks.fontSize = 16;
+chart.options.scales.xAxes[0].ticks.fontSize = 10;
 chart.options.scales.xAxes[0].ticks.fontColor = 'Black';
 chart.options.scales.xAxes[0].ticks.precision = 0;
-chart.options.legend.labels.fontSize = 16;
+chart.options.scales.xAxes[0].ticks.max = num_occurrences;
+chart.options.legend.labels.fontSize = 10;
 chart.options.legend.labels.fontColor = 'Black';
-chart.options.tooltips.titleFontSize = 16;
-chart.options.tooltips.bodyFontSize = 16;
+chart.options.tooltips.titleFontSize = 10;
+chart.options.tooltips.bodyFontSize = 10;
 for(i=0;i<chart.data.datasets.length;i++)
 {
-    chart.data.datasets[i].backgroundColor = 'DarkGrey';
+    grey_idx = (i >= total_grey_idx) ? 0 : i;
+    chart.data.datasets[i].backgroundColor = shades_of_grey[grey_idx];
 };
 chart.update();
-
 
 </script>
 
@@ -88,6 +104,9 @@ chart.update();
         {% endif %}
 </table>
 </div>
-<canvas id="myChart"></canvas>
-
+<div id='regions' class='collapse in' style="width:80%;">
+    <div class="chart-container">
+        <canvas id="myChart" width="600"></canvas>
+    </div>
+</div>
 {% endblock content %}

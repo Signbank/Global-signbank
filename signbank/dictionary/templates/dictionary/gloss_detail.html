@@ -1261,44 +1261,6 @@ option:not(:checked) {
     {% endif %}
 
 
-        <div class="panel panel-default">
-            <div class='panel-heading'>
-                <div class='panel-title'>
-                    <a data-toggle='collapse' href='#frequency'>{% trans "Frequency" %}</a>
-                    {% if tokNo == 1 %}
-                    <div class="pull-right">
-                    <span id="freqency-one-star-icon">
-                        <img id='frequency-one-star' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                    </span>
-                    </div>
-                    {% elif tokNo > 1 and tokNo < 6 %}
-                    <div class="pull-right">
-                    <span id="freqency-two-stars-icon">
-                        <img id='frequency-two-stars_1' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                        <img id='frequency-two-stars_2' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                    </span>
-                    </div>
-                    {% elif tokNo > 5 %}
-                    <div class="pull-right">
-                    <span id="freqency-three-stars-icon">
-                        <img id='frequency-three-stars_1' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                        <img id='frequency-three-stars_2' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                        <img id='frequency-three-stars_3' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                    </span>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            <div id='frequency' class='panel-collapse collapse'>
-                <table class='table table-condensed'>
-                    {% for value,name,label,kind in frequency_fields %}
-                    <tr><th>{{label}}</th><td id='{{name}}'>{% value value %}</td></tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </div>
-
-
     <!-- Publication status -->
     <div class="panel panel-default">
         <div class='panel-heading'>
