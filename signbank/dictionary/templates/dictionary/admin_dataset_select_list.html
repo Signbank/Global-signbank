@@ -45,6 +45,7 @@ function select_no_datasets() {
 
       </tr>
     </thead>
+    {% if not user.is_anonymous %}
     <tbody>
       {% for dataset in object_list %}
           {% get_obj_perms request.user for dataset as "dataset_perms" %}
@@ -61,6 +62,21 @@ function select_no_datasets() {
             {% endif %}
       {% endfor %}
     </tbody>
+    {% else %}
+    <tbody>
+        {% for dataset in object_list %}
+            <tr>
+                <td><input type="checkbox" name="dataset_{{ dataset.name }}" value="true" {% if dataset.checked %}checked{% endif %}/></td>
+                <td>
+                    <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.acronym }}</a>
+                </td>
+                <td>{{ dataset.name }}</td>
+                <td>{{ dataset.description }}</td>
+                <td>{{ dataset.copyright }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    {% endif %}
 </table>
 
 

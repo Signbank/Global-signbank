@@ -1564,6 +1564,15 @@ def generate_still_image(video):
         print("IOError: ", io)
 
 
+def get_datasets_with_public_glosses():
+
+    # Make sure a non-empty set is returned, for anonymous users when no datasets are public
+    # the first query fetches glosses that are public, then obtains those glosses' dataset ids
+    datasets_of_public_glosses = Gloss.objects.filter(inWeb=True).values('lemma__dataset__id').distinct()
+    datasets_with_public_glosses = Dataset.objects.filter(id__in=datasets_of_public_glosses)
+    return datasets_with_public_glosses
+
+
 def get_selected_datasets_for_user(user, readonly=False):
     if user.is_authenticated:
         user_profile = UserProfile.objects.get(user=user)
@@ -1577,11 +1586,7 @@ def get_selected_datasets_for_user(user, readonly=False):
         return selected_datasets
     else:
         # Make sure a non-empty set is returned, for anonymous users when no datasets are public
-        public_datasets = Dataset.objects.filter(is_public=True)
-        if public_datasets:
-            selected_datasets = public_datasets
-        else:
-            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         return selected_datasets
 
 

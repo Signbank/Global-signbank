@@ -2003,25 +2003,42 @@ def change_dataset_selection(request):
 
     if request.method == "POST":
         user = request.user
-        user_profile = UserProfile.objects.get(user=user)
-
-        user_profile.selected_datasets.clear()
-        selected_datasets = []
-        for attribute in request.POST:
-            if attribute[:len(dataset_prefix)] == dataset_prefix:
-                dataset_name = attribute[len(dataset_prefix):]
-                selected_datasets.append(dataset_name)
-
-        if selected_datasets:
+        if user.is_authenticated():
             user_profile = UserProfile.objects.get(user=user)
+
+            user_profile.selected_datasets.clear()
+            selected_datasets = []
+            for attribute in request.POST:
+                if attribute[:len(dataset_prefix)] == dataset_prefix:
+                    dataset_name = attribute[len(dataset_prefix):]
+                    selected_datasets.append(dataset_name)
+
+            if selected_datasets:
+                user_profile = UserProfile.objects.get(user=user)
+                for dataset_name in selected_datasets:
+                    try:
+                        dataset = Dataset.objects.get(name=dataset_name)
+                        user_profile.selected_datasets.add(dataset)
+                    except ObjectDoesNotExist:
+                        print('exception to updating selected datasets')
+                        pass
+                user_profile.save()
+        else:
+            # clear old selection
+            selected_datasets = []
+            for attribute in request.POST:
+                if attribute[:len(dataset_prefix)] == dataset_prefix:
+                    dataset_name = attribute[len(dataset_prefix):]
+                    selected_datasets.append(dataset_name)
+            new_selection = []
             for dataset_name in selected_datasets:
                 try:
                     dataset = Dataset.objects.get(name=dataset_name)
-                    user_profile.selected_datasets.add(dataset)
-                except:
-                    print('exception to updating selected datasets')
+                    new_selection.append(dataset.acronym)
+                except ObjectDoesNotExist:
+                    print('exception to updating selected datasets anonymous user')
                     pass
-            user_profile.save()
+            request.session['selected_datasets'] = new_selection
 
         # check whether the last used dataset is still in the selected datasets
         if 'last_used_dataset' in request.session.keys():

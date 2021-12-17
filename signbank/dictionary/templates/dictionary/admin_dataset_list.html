@@ -49,7 +49,9 @@
                 {% endfor %}
             </td>
             {% if user.is_anonymous %}
-            <td>{{dataset.lemmaidgloss__gloss__count}}</td>
+            {% with nr_of_glosses|keyvalue:dataset as count_glosses %}
+            <td>{{count_glosses}}</td>
+            {% endwith %}
             {% with nr_of_public_glosses|keyvalue:dataset as count_public_glosses %}
             <td>{{count_public_glosses}}</td>
             {% endwith %}

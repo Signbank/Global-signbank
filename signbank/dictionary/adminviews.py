@@ -5,7 +5,7 @@ from django.db.models import Q, F, ExpressionWrapper, IntegerField, Count
 from django.db.models import CharField, TextField, Value as V
 from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Concat
-from django.db.models.fields import NullBooleanField
+from django.db.models.fields import NullBooleanField, BooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
@@ -43,7 +43,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
-    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages
+    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, newly_uploaded_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -330,7 +330,7 @@ class GlossListView(ListView):
 
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and self.request.user.is_authenticated():
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
@@ -3769,18 +3769,28 @@ class DatasetListView(ListView):
         # Call the base implementation first to get a context
         context = super(DatasetListView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        if not self.request.user.is_authenticated():
+            if 'selected_datasets' in self.request.session.keys():
+                selected_datasets = self.request.session['selected_datasets']
+                selected_datasets = Dataset.objects.filter(acronym__in=selected_datasets)
+            else:
+                selected_datasets = get_selected_datasets_for_user(self.request.user)
+                self.request.session['selected_datasets'] = [ ds.acronym for ds in selected_datasets ]
+        else:
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         nr_of_public_glosses = {}
+        nr_of_glosses = {}
+        datasets_with_public_glosses = get_datasets_with_public_glosses()
 
-        for ds in selected_datasets:
-            count_public_glosses = Gloss.objects.filter(lemma__dataset=ds, inWeb=True).count()
-
-            nr_of_public_glosses[ds] = count_public_glosses
+        for ds in datasets_with_public_glosses:
+            nr_of_public_glosses[ds] = Gloss.objects.filter(lemma__dataset=ds, inWeb=True).count()
+            nr_of_glosses[ds] = Gloss.objects.filter(lemma__dataset=ds).count()
 
         context['nr_of_public_glosses'] = nr_of_public_glosses
+        context['nr_of_glosses'] = nr_of_glosses
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -3962,16 +3972,32 @@ class DatasetListView(ListView):
             for dataset in qs:
                 checker.has_perm('view_dataset', dataset)
 
-            qs = qs.annotate(Count('lemmaidgloss__gloss')).order_by('name')
+            qs = qs.annotate(Count('lemmaidgloss__gloss')).order_by('acronym')
 
             return qs
         else:
             # User is not authenticated
+            # check if the session variable has been set
             # this reverts to publically available datasets or the default dataset
-            qs = get_selected_datasets_for_user(self.request.user, readonly=True)
 
-            selected_datasets = qs.annotate(Count('lemmaidgloss__gloss')).order_by('name')
-            return selected_datasets
+            if 'selected_datasets' in self.request.session.keys():
+                selected_dataset_acronyms = self.request.session['selected_datasets']
+                selected_dataset_ids = [ ds.id for ds in Dataset.objects.filter(acronym__in=selected_dataset_acronyms) ]
+            else:
+                # this is the first time the session variable is set, set it to the default via the called function
+                selected_datasets = get_selected_datasets_for_user(self.request.user)
+                self.request.session['selected_datasets'] = [ds.acronym for ds in selected_datasets]
+                selected_dataset_ids = [ ds.id for ds in selected_datasets ]
+
+            datasets_with_public_glosses = get_datasets_with_public_glosses()
+            viewable_datasets = list(
+                set([ds.id for ds in datasets_with_public_glosses]))
+
+            qs = Dataset.objects.filter(id__in=viewable_datasets)
+            datasets_to_choose_from = qs.annotate(checked=ExpressionWrapper(Q(id__in=selected_dataset_ids),
+                                                                            output_field=BooleanField())).order_by('acronym')
+            return datasets_to_choose_from
+
 
 class DatasetManagerView(ListView):
     model = Dataset
