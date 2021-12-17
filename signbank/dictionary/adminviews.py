@@ -47,8 +47,9 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, newly_uploaded_documents, document_has_been_updated, document_to_number_of_glosses, \
-    document_to_glosses
-
+    document_to_glosses, get_corpus_speakers
+from signbank.dictionary.frequency_display import collect_speaker_age_data, collect_variants_data, collect_variants_age_range_data, \
+                                                    collect_variants_age_sex_raw_percentage
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
@@ -3045,7 +3046,6 @@ class GlossFrequencyView(DetailView):
             self.object = self.get_object()
             if self.object.lemma == None:
                 raise Exception("Requested gloss has no lemma.")
-        # except Http404:
         except Exception as e:
             # return custom template
             print(e)
@@ -3113,15 +3113,13 @@ class GlossFrequencyView(DetailView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
+        default_language = Language.objects.get(id=get_default_language_id())
         # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
         from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-        default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
         try:
-            interface_language = Language.objects.get(language_code_2char=language_code)
+            interface_language = Language.objects.get(language_code_2char=convert_language_code_to_2char(self.request.LANGUAGE_CODE))
         except:
-            interface_language = default_language
+            interface_language = Language.objects.get(id=get_default_language_id())
 
         #Pass info about which fields we want to see
         gl = context['gloss']
@@ -3148,7 +3146,7 @@ class GlossFrequencyView(DetailView):
         context['dataset_ids'] = [ ds.id for ds in selected_datasets]
         context['dataset_names'] = [ds.acronym for ds in selected_datasets]
 
-        context['frequency_regions'] = settings.FREQUENCY_REGIONS
+        context['frequency_regions'] = gl.dataset.frequency_regions()
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
@@ -3160,22 +3158,32 @@ class GlossFrequencyView(DetailView):
                     dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
-        context['data_datasets'] = gl.data_datasets()
+        try:
+            context['corpus'] = Corpus.objects.get(name=gl.dataset.acronym)
+        except ObjectDoesNotExist:
+            context['corpus'] = None
 
+        total_occurrences, data_datasets = gl.data_datasets()
+        context['data_datasets'] = data_datasets
+        context['num_occurrences'] = total_occurrences
+
+        # has_frequency_data returns a count of the number of GlossFrequency objects for this gloss
         context['has_frequency_data'] = gl.has_frequency_data()
+
+        # the following collects the speakers distributed over a range of ages to display on the x axis
+        # for display in chartjs, the age labels are stored separately from the number of speakers having that age
         speakers_summary = gl.speaker_age_data()
-        speaker_age_data = []
-        for i in range(1, 100):
-            i_key = str(i)
-            if i_key in speakers_summary.keys():
-                i_value = speakers_summary[i_key]
-                speaker_age_data.append(i_value)
-            else:
-                speaker_age_data.append(0)
+
+        age_range = [ False for i in range(0, 100)]
+
+        (speaker_age_data, age_range) = collect_speaker_age_data(speakers_summary, age_range)
+        # more ages will be added to age_range below for variants, so they are not yet stored in the context variables
 
         context['speaker_age_data'] = speaker_age_data
 
         context['speaker_data'] = gl.speaker_data()
+
+        context['num_signers'] = len(get_corpus_speakers(gl.dataset.acronym))
 
         # incorporates legacy relations
         # a variant pattern is only a variant if there are no other relations between the focus gloss and other glosses under consideration
@@ -3186,117 +3194,39 @@ class GlossFrequencyView(DetailView):
 
         # for the purposes of frequency charts in the template, the focus gloss is included in the variants
         # this simplifies generating tables for variants inside of a loop in the javascript
-        try:
-            variants = gl.pattern_variants()
-        except:
-            try:
-                variants = gl.has_variants()
-            except:
-                variants = []
+        pattern_variants = [ pv for pv in gl.pattern_variants() ]
+        other_variants = gl.has_variants()
+        variants = pattern_variants + [ ov for ov in other_variants if ov not in pattern_variants ]
+
         context['variants'] = variants
+        # the gloss itself is included among the variants, check that there are other glosses in the list
+        context['has_variants'] = len(variants) > 1
 
-        variants_with_keys = []
-        for gl in variants:
-            # get the annotation explicitly
-            # do not use the __str__ property idgloss
-            gl_idgloss = gl.annotationidglosstranslation_set.get(language=gl.lemma.dataset.default_language).text
-            variants_with_keys.append((gl_idgloss, gl))
-        sorted_variants_with_keys = sorted(variants_with_keys, key=lambda tup: tup[0])
-        sorted_variant_keys = sorted([og_idgloss for (og_idgloss, og) in variants_with_keys])
-        variants_data_quick_access = {}
-        variants_data = []
-        for (og_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-            variants_speaker_data = variant_of_gloss.speaker_data()
-            variants_data.append((og_idgloss, variants_speaker_data))
-            variants_data_quick_access[og_idgloss] = variants_speaker_data
+        (variants_data_quick_access, sorted_variants_with_keys) = collect_variants_data(variants)
 
-        context['variants_data'] = variants_data
         context['variants_data_quick_access'] = variants_data_quick_access
 
-        variants_age_distribution_data = {}
-        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-            variant_speaker_age_data_v = variant_of_gloss.speaker_age_data()
-
-            speaker_age_data_v = []
-            for i in range(1, 100):
-                i_key = str(i)
-                if i_key in variant_speaker_age_data_v.keys():
-                    i_value = variant_speaker_age_data_v[i_key]
-                    speaker_age_data_v.append(i_value)
-                else:
-                    speaker_age_data_v.append(0)
-
-            variants_age_distribution_data[variant_idgloss] = speaker_age_data_v
-
-        context['variants_age_distribution_data'] = variants_age_distribution_data
-
-        variants_sex_distribution_data = {}
-        variants_sex_distribution_data_percentage = {}
-        variants_sex_distribution_data_totals = {}
-        variants_sex_distribution_data_totals['Female'] = 0
-        variants_sex_distribution_data_totals['Male'] = 0
-
-        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-            for i_key in ['Female', 'Male']:
-                variants_sex_distribution_data_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
-                variants_sex_distribution_data[i_key] = {}
-                variants_sex_distribution_data_percentage[i_key] = {}
-
-        for i_key in ['Female', 'Male']:
-            total_gender_across_variants = variants_sex_distribution_data_totals[i_key]
-            for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-                variant_speaker_data_v = variant_of_gloss.speaker_data()
-                i_value = variant_speaker_data_v[i_key]
-
-                speaker_data_v = i_value
-                if total_gender_across_variants > 0:
-                    speaker_data_p = i_value / total_gender_across_variants
-                else:
-                    speaker_data_p = 0
-
-                variants_sex_distribution_data[i_key][variant_idgloss] = speaker_data_v
-                variants_sex_distribution_data_percentage[i_key][variant_idgloss] = speaker_data_p
-
-        context['variants_sex_distribution_data'] = variants_sex_distribution_data
-        context['variants_sex_distribution_data_percentage'] = variants_sex_distribution_data_percentage
-
-        variants_age_distribution_cat_data = {}
-        variants_age_distribution_cat_percentage = {}
-        variants_age_distribution_cat_totals = {}
-        variants_age_distribution_cat_totals['< 25'] = 0
-        variants_age_distribution_cat_totals['25 - 35'] = 0
-        variants_age_distribution_cat_totals['36 - 65'] = 0
-        variants_age_distribution_cat_totals['> 65'] = 0
-
-        for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-            for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
-                variants_age_distribution_cat_totals[i_key] += variants_data_quick_access[variant_idgloss][i_key]
-                variants_age_distribution_cat_data[i_key] = {}
-                variants_age_distribution_cat_percentage[i_key] = {}
-
-        for i_key in ['< 25', '25 - 35', '36 - 65', '> 65']:
-            total_age_across_variants = variants_age_distribution_cat_totals[i_key]
-            for (variant_idgloss, variant_of_gloss) in sorted_variants_with_keys:
-
-                variant_age_data_v = variant_of_gloss.speaker_data()
-                i_value = variant_age_data_v[i_key]
-
-                speaker_data_v = i_value
-                if total_age_across_variants > 0:
-                    speaker_data_p = i_value / total_age_across_variants
-                else:
-                    speaker_data_p = i_value
-                variants_age_distribution_cat_data[i_key][variant_idgloss] = speaker_data_v
-                variants_age_distribution_cat_percentage[i_key][variant_idgloss] = speaker_data_p
-
-        context['variants_age_distribution_cat_data'] = variants_age_distribution_cat_data
-        context['variants_age_distribution_cat_percentage'] = variants_age_distribution_cat_percentage
-
         variant_labels = []
-        for og_igloss in sorted_variant_keys:
+        for (og_igloss, og) in sorted_variants_with_keys:
             if og_igloss not in variant_labels:
                 variant_labels.append(og_igloss)
         context['variant_labels'] = variant_labels
+
+        (variants_age_range_distribution_data, age_range) = collect_variants_age_range_data(sorted_variants_with_keys, age_range)
+        context['variants_age_range_distribution_data'] = variants_age_range_distribution_data
+        context['age_range'] = json.dumps(age_range)
+
+        (variants_sex_distribution_data_raw,
+         variants_sex_distribution_data_percentage,
+         variants_age_distribution_data_raw,
+         variants_age_distribution_data_percentage) = collect_variants_age_sex_raw_percentage(sorted_variants_with_keys,
+                                                                                              variants_data_quick_access)
+
+        context['variants_sex_distribution_data'] = variants_sex_distribution_data_raw
+        context['variants_sex_distribution_data_percentage'] = variants_sex_distribution_data_percentage
+
+        context['variants_age_distribution_data'] = variants_age_distribution_data_raw
+        context['variants_age_distribution_data_percentage'] = variants_age_distribution_data_percentage
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -3310,18 +3240,18 @@ class GlossFrequencyView(DetailView):
 
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        if gl.dataset:
-            for language in gl.dataset.translation_languages.all():
-                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
+        for language in gl.dataset.translation_languages.all():
+            try:
+                annotation_translation = gl.annotationidglosstranslation_set.get(language=language).text
+            except (ValueError):
+                annotation_translation = ''
+            context['annotation_idgloss'][language] = annotation_translation
 
         if interface_language in context['annotation_idgloss'].keys():
             gloss_idgloss = context['annotation_idgloss'][interface_language]
         else:
             gloss_idgloss = context['annotation_idgloss'][default_language]
-        context['gloss_idgloss'] = gloss_idgloss.text
+        context['gloss_idgloss'] = gloss_idgloss
 
         context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
 
@@ -3377,7 +3307,7 @@ class LemmaFrequencyView(DetailView):
         context['dataset_ids'] = [ ds.id for ds in selected_datasets]
         context['dataset_names'] = [ds.acronym for ds in selected_datasets]
 
-        context['frequency_regions'] = settings.FREQUENCY_REGIONS
+        context['frequency_regions'] = gl.dataset.frequency_regions()
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
@@ -3388,8 +3318,6 @@ class LemmaFrequencyView(DetailView):
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
-
-        context['data_datasets'] = gl.data_datasets()
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -3403,21 +3331,18 @@ class LemmaFrequencyView(DetailView):
 
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        if gl.dataset:
-            for language in gl.dataset.translation_languages.all():
-                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language).first()
-        print('annotation idgloss per panguage: ', context['annotation_idgloss'])
-
+        for language in gl.dataset.translation_languages.all():
+            try:
+                annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
+            except (ObjectDoesNotExist):
+                annotation_text = ''
+            context['annotation_idgloss'][language] = annotation_text
         if interface_language in context['annotation_idgloss'].keys():
             gloss_idgloss = context['annotation_idgloss'][interface_language]
         else:
             gloss_idgloss = context['annotation_idgloss'][default_language]
-        context['gloss_idgloss'] = gloss_idgloss.text
+        context['gloss_idgloss'] = gloss_idgloss
 
-        lemma_group_count = 0
         try:
             lemma_group_count = gl.lemma.gloss_set.count()
             if lemma_group_count > 1:
@@ -3441,6 +3366,7 @@ class LemmaFrequencyView(DetailView):
         lemma_group_glosses = gl.lemma.gloss_set.all()
         glosses_in_lemma_group = []
 
+        total_occurrences = 0
         data_lemmas = []
         if lemma_group_glosses:
             for gl_lem in lemma_group_glosses:
@@ -3460,12 +3386,14 @@ class LemmaFrequencyView(DetailView):
 
                 glosses_in_lemma_group.append((gl_lem,gl_lem_display))
                 data_lemmas_dict['label'] = gl_lem_display
-                gl_lem_data_datasets_dict = gl_lem.data_datasets()
-                # The first entry of the dictionary is Occurrences
+                total_occurrences_lemma, gl_lem_data_datasets_dict = gl_lem.data_datasets()
+                total_occurrences += total_occurrences_lemma
                 data_lemmas_dict['data'] = gl_lem_data_datasets_dict[0]['data']
                 data_lemmas.append(data_lemmas_dict)
 
         context['data_lemmas'] = json.dumps(data_lemmas)
+
+        context['num_occurrences'] = total_occurrences
 
         context['glosses_in_lemma_group'] = glosses_in_lemma_group
 
@@ -4951,12 +4879,6 @@ class DatasetFrequencyView(DetailView):
             else:
                 documents_without_data.append(d_obj.identifier)
 
-        # what to do with this information? Some eaf files have no useful data
-        # a column is shown in the corpus overview template whether there is frequency data for the document
-        # documents_with_data = gloss_frequency_objects_per_document.keys()
-        # print('gloss_frequency_objects_per_document: ', len(documents_with_data), documents_with_data)
-        # print('documents_without_data: ', len(documents_without_data), documents_without_data)
-
         context['document_identifiers'] = [ do.identifier for do in document_objects ]
         context['documents'] = [ (do.identifier, do.creation_time.date,
                                   document_to_number_of_glosses(corpus_name, do.identifier),
@@ -4986,8 +4908,6 @@ class DatasetFrequencyView(DetailView):
         #     speaker_tuples_documents.append((participant, speakers_to_documents[participant]))
         # context['speakers_in_documents'] = speaker_tuples_documents
 
-        # something could be added to the template to indicate this information about the files
-        # (update_eaf_files, new_eaf_files, missing_eaf_files) = get_names_of_updated_eaf_files(corpus_name)
         newly_uploaded_eafs = newly_uploaded_documents(corpus_name)
         context['new_eaf_files'] = newly_uploaded_eafs
 
@@ -6437,9 +6357,8 @@ class LemmaUpdateView(UpdateView):
                 m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
                 gloss_id_pattern = m.group(1)
                 self.gloss_id = gloss_id_pattern
-            except Exception as e:
+            except (AttributeError):
                 # it is unknown what gloss we were looking at, something went wrong with pattern matching on the url
-                print(e)
                 print('LemmaUpdateView get_context_data gloss id match failed: ', path_parms[0])
                 # restore callback to lemma list
                 context['caller'] = 'lemma_list'
