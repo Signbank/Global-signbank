@@ -34,6 +34,21 @@
             </div>
         </div>
      {% endif %}
+     {% else %}
+        {% if viewable_datasets %}
+        <div class='navbar-text' style="left-margin: 15px;">
+            <div class='taglist ribbon_list'>
+                {% load underscore_to_space %}
+                {% for ds,selected in viewable_datasets %}
+                <a href="{{PREFIX_URL}}/datasets/{{ds.acronym}}">
+                    <div class="ribbon {% if selected %}selected{% endif %}">
+                        {{ds.generate_short_name|underscore_to_space}}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
      {% endif %}
 
     <a href="http://www.ru.nl/sign-lang" id='logoholder' class='visible-lg visible-md visible-sm'></a>
