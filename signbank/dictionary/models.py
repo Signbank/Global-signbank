@@ -1099,21 +1099,17 @@ class Gloss(models.Model):
             this_even_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[1-9]$'
             queries.append(Q(annotationidglosstranslation__text__regex=this_even_matches, annotationidglosstranslation__language=this_sign_language,
                              lemma__dataset=this_sign_dataset))
-        if len(queries) > 1:
-            query = queries.pop()
-            for q in queries:
-                query |= q
-        else:
-            try:
-                query = queries[0]
-            except:
-                query = []
 
-        other_relations_of_sign = self.other_relations()
-        other_relation_objects = [x.target.id for x in other_relations_of_sign]
+        merged_query_expression = []
+        if queries:
+            merged_query_expression = queries.pop()
+            for q in queries:
+                merged_query_expression |= q
 
         if queries:
-            pattern_variants = Gloss.objects.filter(query).exclude(id__in=other_relation_objects).distinct()
+            # exclude glosses that have a relation to this gloss
+            related_gloss_ids = [relation.target.id for relation in self.other_relations()]
+            pattern_variants = Gloss.objects.filter(merged_query_expression).exclude(id__in=related_gloss_ids).distinct()
         else:
             pattern_variants = [ self ]
         return pattern_variants
