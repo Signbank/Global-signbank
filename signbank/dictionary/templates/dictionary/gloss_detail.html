@@ -48,7 +48,7 @@
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
     var relation_delete_choices_colors = '{ "delete" : "ffffff" }';
-    var handedness_weak_choices = {{gloss.handedness_weak_drop_reverse_prop_json|safe}};
+    var handedness_weak_choices = {{gloss.handedness_weak_drop_prop_json|safe}};
     var handedness_weak_choices_colors = '{}';
     for (var key in handedness_weak_choices) {
         handedness_weak_choices_colors[key] = 'ffffff';
@@ -1462,7 +1462,7 @@ option:not(:checked) {
                     <td><a {% if not media_okay %}
 				            disabled onclick="return false;" style="color:rgb(150,150,150);"
 			                {% endif %}
-				            download="{{ file_name }}" href="{{ URL }}{{ PREFIX_URL }}{{ path }}">Download</a>
+				            download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">Download</a>
                     </td>
                     <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>

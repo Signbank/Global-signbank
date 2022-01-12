@@ -83,18 +83,15 @@ var busy_editing = 0;
         });
 
 
-    // a lot of console logging has been added to show events the user presses
     // this is needed to help check different browsers
     for (var i = 0; i < gloss_phonology.length; i++) {
         var field = gloss_phonology[i];
         var field_ref = '#' + gloss_phonology[i];
-//        console.log('setup key listener '+field_ref);
         $(field_ref).on("customEvent", function(e) {
             var target = $(e.target);
             var this_field_name = $(target).attr("id");
             var classname = $(target).attr("class");
             $(target).clearQueue();
-//            console.log('customEvent on '+this_field_name+' type '+e.type+' triggers select on '+this_field_name);
             if (phonology_list_kinds.includes(this_field_name)) {
                 // for phonology pulldown lists do this to get list open
                 $(target).focus().click().click();
@@ -112,8 +109,6 @@ var busy_editing = 0;
             var targetNodeName = e.target.nodeName;
             var this_element = $(this);
             var this_value = $(this_element).attr("value");
-
-//            console.log('field '+field+' key pressed '+e.keyCode+' nodeName '+targetNodeName+' value '+field_value+' option value '+this_value);
             if (e.keyCode === 13) { // 'return'
                 e.preventDefault();
                 if (targetNodeName != 'INPUT') {
@@ -143,7 +138,6 @@ var busy_editing = 0;
  });
 
 function disable_edit() {
-    //$('#affix-bar').show(); // The affix bar appears on top of the Delete modal popup window, so it is hidden during editting
     $('.edit').editable('disable');
     $('.edit').css('color', 'black');
     $('#edit_message').text('');
@@ -160,7 +154,6 @@ function disable_edit() {
                 $('#idgloss').html('<a href="' + original_lemma_group_url + '">' + original_lemma_group_value + '</a>')
             }
         } else {
-//            console.log('lemma group: ' + lemma_group)
             if (lemma_group == 'True') {
                 new_lemma_group_url = url + 'signs/search/?search_type=sign&view_type=lemma_groups&lemmaGloss=%5E' + new_lemma_group + '%24'
                 $('#idgloss').html('<a href="' + new_lemma_group_url + '">' + new_lemma_group + '</a>')
@@ -169,23 +162,19 @@ function disable_edit() {
         if (strong_machine_value == undefined) {
             if (original_strong_hand) {
                 strong_hand_href = url + 'dictionary/handshape/'+ original_strong_hand + '/';
-//                console.log('strong hand ref: ' + strong_hand_href);
                 $('#domhndsh').html('<a id="strong_hand_link" style="color: inherit; display: visible;" href="' + strong_hand_href + '">' + strong_hand + '</a>');
             }
         } else {
             strong_hand_href = url + 'dictionary/handshape/'+ strong_machine_value + '/';
-//            console.log('strong hand ref: ' + strong_hand_href);
             $('#domhndsh').html('<a id="strong_hand_link" style="color: inherit; display: visible;" href="' + strong_hand_href + '">' + strong_hand + '</a>');
         };
         if (weak_machine_value == undefined) {
             if (original_weak_hand) {
                 weak_hand_href = url + 'dictionary/handshape/'+ original_weak_hand + '/';
-//                console.log('weak hand ref: ' + weak_hand_href);
                 $('#subhndsh').html('<a id="weak_hand_link" style="color: inherit; display: visible;" href="' + weak_hand_href + '">' + weak_hand + '</a>');
             }
          } else {
             weak_hand_href = url + 'dictionary/handshape/'+ weak_machine_value + '/';
-//            console.log('weak hand ref: ' + weak_hand_href);
             $('#subhndsh').html('<a id="weak_hand_link" style="color: inherit; display: visible;" href="' + weak_hand_href + '">' + weak_hand + '</a>');
         };
     };
@@ -212,9 +201,6 @@ function disable_edit() {
 
     $('.empty_row').hide();
 
-    // initial setup not in Edit mode
-//    hideLemmaForm($("#lemma"));
-//    $("#lemma a").show();
     $('#edit_lemma_form').hide();
     $("#set_lemma_form").hide();
     $("#add_lemma_form").hide();
@@ -248,7 +234,6 @@ function disable_edit() {
 };
 
 function enable_edit() {
-    //$('#affix-bar').hide(); // The affix bar appears on top of the Delete modal popup window, so it is hidden during editting
     $('.edit').editable('enable');
     $('.edit').css('color', 'red');
     $('#edit_message').text('Click on red text to edit  ');
@@ -256,9 +241,6 @@ function enable_edit() {
     strong_hand = $('#domhndsh').text();
     weak_hand = $('#subhndsh').text();
     lemma_group_text = $('#idgloss').text();
-//    console.log('original lemma group: ' + lemma_group_text);
-//    console.log("original strong hand: " + strong_hand);
-//    console.log("original weak hand: " + weak_hand);
     $('#domhndsh').children().remove();
     $('#domhndsh').html(strong_hand);
     $('#subhndsh').children().remove();
@@ -357,7 +339,7 @@ function configure_edit() {
     $.fn.editable.defaults['indicator'] = saving_str;
     $.fn.editable.defaults['tooltip'] = 'Click to edit...';
     $.fn.editable.defaults['placeholder'] = '-';
-    $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">Ok</button>';
+    $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">OK</button>';
     $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" type="cancel">Cancel</button>';
     $.fn.editable.defaults['cssclass'] = 'preview';
     $.fn.editable.defaults['width'] = 'auto';
@@ -474,7 +456,6 @@ function configure_edit() {
 	     var this_data = $(this).attr('value');
 	     var edit_list_choices = static_choice_lists[$(this).attr('id')];
 	     var edit_list_choice_colors = static_choice_list_colors[$(this).attr('id')];
-
 	     var index_of_modified_field = '_0';
          for (var key in edit_list_choices) {
             var value = edit_list_choices[key];
@@ -556,7 +537,6 @@ function update_view_and_remember_original_value(change_summary)
         new_values_for_changes_made[id] = machine_value;
         if (new_value == '&nbsp;') {
             new_value = 'False';
-//            console.log("new value changed from &nbsp; to False");
         }
 
         if (original_values_for_changes_made[id] == undefined)
@@ -564,7 +544,7 @@ function update_view_and_remember_original_value(change_summary)
             original_values_for_changes_made[id] = original_value;
             $(this).parent().removeClass('empty_row');
             if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).attr("value", new_value);
+                $(this).attr("value", machine_value);
                 if (new_value == '&nbsp;') {
                     $(this).html("------");
                 }
@@ -576,27 +556,25 @@ function update_view_and_remember_original_value(change_summary)
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
                         new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
         {
-//            console.log("new value is empty, new value is: ", new_value);
             if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).attr("value", new_value);
                 $(this).html("------");
             }
             else {
                 if (id == 'idgloss') {
 //                the user tried to erase the Lemma ID Gloss field, reset it in the template to what it was
-//                    console.log('attempt to delete field idgloss');
                     $(this).html(original_value);
                     lemma_group = original_lemma_group;
                 } else {
                     $(this).parent().addClass('empty_row');
-                    $(this).attr("value", new_value);
+                    $(this).attr("value", machine_value);
                     $(this).html("------");
                 }
             }
         }
         if (category_value == 'phonology') {
-//            console.log('phonology modified');
-            $(this).attr("value", new_value);
+            if (id != 'weakprop' && id != 'weakdrop') {
+                $(this).attr("value", new_value);
+            }
             var index_of_modified_field = gloss_phonology.indexOf(id);
             var next_field_index = index_of_modified_field+1;
             if (next_field_index < gloss_phonology.length) {
@@ -605,10 +583,8 @@ function update_view_and_remember_original_value(change_summary)
                 $(next_field_ref).clearQueue();
                 if (phonology_list_kinds.includes(next_field)) {
                     // for lists, do custom event instead of click
-//                    console.log('customEvent on '+next_field_ref);
                     $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
                 } else {
-//                    console.log('click event on '+next_field_ref);
                     $(next_field_ref).click();
                 };
             }
@@ -789,7 +765,6 @@ function update_foreign_delete(change_summary)
     var deleted_relation = deleted_relation_for_gloss.split('_');
     var deleted_relation_id = deleted_relation[1];
     $(this).css("color", "black");
-//    console.log("Delete foreign relation: ", deleted_relation_id);
     var search_id = 'foreign_' + deleted_relation_id;
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');
@@ -802,7 +777,6 @@ function update_relation_delete(change_summary)
     var deleted_relation = deleted_relation_for_gloss.split('_');
     var deleted_relation_id = deleted_relation[1];
     $(this).css("color", "black");
-//    console.log("Delete relation: ", deleted_relation_id);
     var search_id = 'row_' + deleted_relation_id;
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');

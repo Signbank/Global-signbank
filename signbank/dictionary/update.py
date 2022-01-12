@@ -343,28 +343,29 @@ def update_gloss(request, glossid):
 
             #Translate the value if a boolean
             # Language values are needed here!
-
+            newvalue = value
             if isinstance(gloss._meta.get_field(field),NullBooleanField):
                 # value is the html 'value' received during editing
-                newvalue = value
                 # value gets converted to a Boolean by the following statement
-                if field == 'weakdrop' or field == 'weakprop' or field == 'domhndsh_letter' or field == 'domhndsh_number' or \
-                                                    field == 'subhndsh_letter' or field == 'subhndsh_number':
+                if field in ['weakdrop', 'weakprop']:
+                    NEUTRALBOOLEANCHOICES = { 'None': '1', 'True': '2', 'False': '3' }
                     category_value = 'phonology'
-                    if field == 'weakdrop':
-                        value = {'1': None, '2': True, '3': False}[value]
-                        newvalue = {'1': '&nbsp;', '2': '+WD', '3': '-WD'}[newvalue]
+                    if value not in ['1', '2', '3']:
+                        # this code is for the case the user has not selected a value in the list
+                        if value in ['None', 'True', 'False']:
+                            value = NEUTRALBOOLEANCHOICES[value]
+                        else:
+                            # something is wrong, set to None
+                            value = '1'
+                    newvalue = {'1': '&nbsp;', '2': '+WD', '3': '-WD'}[value]
+                    value = {'1': None, '2': True, '3': False}[value]
 
-                    elif field == 'weakprop':
-                        value = {'1': None, '2': True, '3': False}[value]
-                        newvalue = {'1': '&nbsp;', '2': '+WP', '3': '-WP'}[newvalue]
-
-                    else:
-                        value = (value in ['letter', 'number'])
-
+                elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                    newvalue = value
+                    value = (value in ['letter', 'number'])
                 else:
                     value = (value.lower() in [_('Yes').lower(),'true',True,1])
-
+                    newvalue = value
             # special value of 'notset' or -1 means remove the value
             fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
 
@@ -381,11 +382,6 @@ def update_gloss(request, glossid):
                                     if f.name in fieldnames and f.__class__.__name__ == 'CharField'
                                         and not hasattr(f, 'field_choice_category')]
 
-            # print('fields empty null: ', fields_empty_null)
-
-            # print('char fields not null: ', char_fields_not_null)
-            # print('char fields: ', char_fields)
-
             text_fields = [f.name for f in Gloss._meta.fields
                                     if f.name in fieldnames and f.__class__.__name__ == 'TextField' ]
 
@@ -395,19 +391,16 @@ def update_gloss(request, glossid):
             # The following code relies on the order of if else testing
             # The updates ignore Placeholder empty fields of '-' and '------'
             # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-            if (value == None or value == 'notset' or value == -1 or value == '' or value == '-' or value == '------') and field in fields_empty_null:
-                # print('a. field ', field, ' value ', value, ' set to None')
+            if value in ['notset','','-','------'] and field in fields_empty_null:
                 gloss.__setattr__(field, None)
                 gloss.save()
                 newvalue = ''
             elif (field in char_fields or field in text_fields_not_null) and (value == '-' or value == '------'):
-                # print('b. field ', field, ' value ', value, ' set to empty string')
                 value = ''
                 gloss.__setattr__(field, value)
                 gloss.save()
                 newvalue = ''
             elif field in text_fields and (value == '-' or value == '------'):
-                # print('c. field ', field, ' value ', value, ' set to None')
                 # this is to take care of legacy code where some values were set to the empty field display hint
                 gloss.__setattr__(field, None)
                 gloss.save()
@@ -415,7 +408,6 @@ def update_gloss(request, glossid):
             #Regular field updating
             else:
                 # Alert: Note that if field is idgloss, the following code updates it
-                # print('update field of gloss ', gloss.id, field, value)
                 gloss.__setattr__(field,value)
                 gloss.save()
 
@@ -438,10 +430,6 @@ def update_gloss(request, glossid):
 
              category_value = 'phonology'
 
-        # if field == 'domhndsh':
-            # value should be the machine_value representation, please confirm if modifying the above code
-            # print("Strong Hand: ", newvalue, ", ", value)
-
         #This is because you cannot concat none to a string in py3
         if original_value == None:
             original_value = ''
@@ -454,7 +442,6 @@ def update_gloss(request, glossid):
 
         revision = GlossRevision(old_value=original_human_value, new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
         revision.save()
-
         # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
         return HttpResponse(
             str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group),
@@ -1825,7 +1812,6 @@ def update_morpheme(request, morphemeid):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         else:
-
             if not field in [f.name for f in Morpheme._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
@@ -1858,7 +1844,7 @@ def update_morpheme(request, morphemeid):
             char_fields_not_null = [f.name for f in Morpheme._meta.fields
                                     if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
 
-            if (value == 'notset' or value == -1 or value == '') and field not in char_fields_not_null:
+            if value in ['notset',''] and field not in char_fields_not_null:
                 morpheme.__setattr__(field, None)
                 morpheme.save()
                 newvalue = ''

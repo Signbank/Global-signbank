@@ -1347,10 +1347,8 @@ class GlossDetailView(DetailView):
                             context['static_choice_list_colors'][field][key] = this_value
                     else:
                         # otherwise, it's a value, not a choice
-                        field_kind = fieldname_to_kind(field)
                         # take care of different representations of empty text in database
-                        if field_kind == 'text' and (machine_value == '-' or machine_value == ' ' or machine_value == '------' or machine_value == '' or machine_value is None):
-                            # print('gloss detail text field ', field, ' machine value set to empty: ', machine_value)
+                        if fieldname_to_kind(field) == 'text' and (machine_value is None or machine_value in ['-',' ','------','']):
                             human_value = ''
                         else:
                             human_value = machine_value
@@ -2932,8 +2930,7 @@ class FrequencyListView(ListView):
         field_labels = dict()
         for field in FIELDS['phonology']:
             if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                field_kind = fieldname_to_kind(field)
-                if field_kind == 'list':
+                if fieldname_to_kind(field) == 'list':
                     field_label = Gloss._meta.get_field(field).verbose_name
                     field_labels[field] = field_label.encode('utf-8').decode()
 
@@ -2977,8 +2974,7 @@ class FrequencyListView(ListView):
 
         field_labels_semantics = dict()
         for field in FIELDS['semantics']:
-            field_kind = fieldname_to_kind(field)
-            if field_kind == 'list':
+            if fieldname_to_kind(field) == 'list':
                 field_label = Gloss._meta.get_field(field).verbose_name
                 field_labels_semantics[field] = field_label.encode('utf-8').decode()
 
@@ -5327,20 +5323,13 @@ class MorphemeDetailView(DetailView):
                 for (key, value) in display_choice_list_colors.items():
                     this_value = value
                     context['static_choice_list_colors'][field][key] = this_value
-                # for (key, value) in display_choice_list.items():
-                #     this_value = value
-                #     context['choice_lists'][field][key] = this_value
-                # context['choice_lists'][field] = json.dumps(display_choice_list)
             else:
                 # otherwise, it's a value, not a choice
-                field_kind = fieldname_to_kind(field)
                 # take care of different representations of empty text in database
-                if field_kind == 'text' and (machine_value == '-' or machine_value == ' ' or machine_value == '------' or machine_value == '' or machine_value is None):
-                    # print('gloss detail text field ', field, ' machine value set to empty: ', machine_value)
+                if fieldname_to_kind(field) == 'text' and (machine_value is None or machine_value in ['-',' ','------','']):
                     human_value = ''
                 else:
                     human_value = machine_value
-            # print('Morpheme Detail View context, choice list for field ', field, ': ', context['choice_lists'][field])
 
             # And add the kind of field
             kind = fieldname_to_kind(field)
@@ -5348,9 +5337,6 @@ class MorphemeDetailView(DetailView):
                 phonology_list_kinds.append(field)
             context[topic + '_fields'].append([human_value, field, labels[field], kind])
 
-        # print('phonology_fields: ', context['phonology_fields'])
-
-        # print('phonology_list_kinds: ', phonology_list_kinds)
         context['phonology_list_kinds'] = phonology_list_kinds
 
         # Gather the OtherMedia

@@ -94,7 +94,6 @@ var busy_editing = 0;
             var this_field_name = $(target).attr("id");
             var classname = $(target).attr("class");
             $(target).clearQueue();
-//            console.log('customEvent on '+this_field_name+' type '+e.type+' triggers select on '+this_field_name);
             if (phonology_list_kinds.includes(this_field_name)) {
                 // for phonology pulldown lists do this to get list open
                 $(target).focus().click().click();
@@ -113,7 +112,6 @@ var busy_editing = 0;
             var this_element = $(this);
             var this_value = $(this_element).attr("value");
 
-//            console.log('field '+field+' key pressed '+e.keyCode+' nodeName '+targetNodeName+' value '+field_value+' option value '+this_value);
             if (e.keyCode === 13) { // 'return'
                 e.preventDefault();
                 if (targetNodeName != 'INPUT') {
@@ -144,12 +142,10 @@ var busy_editing = 0;
  });
 
 function disable_edit() {
-    //$('#affix-bar').show(); // The affix bar appears on top of the Delete modal popup window, so it is hidden during editting
     $('.edit').editable('disable');
     $('.edit').css('color', 'black');
     $('#edit_message').text('');
     if (busy_editing) {
-//        console.log('stop editing');
         new_lemma_group = $('#idgloss').text();
         new_lemma_group_value = new_values_for_changes_made['idgloss'];
         original_lemma_group_value = original_values_for_changes_made['idgloss'];
@@ -248,7 +244,6 @@ function enable_edit() {
         }
     });
     busy_editing = 1;
-//    console.log('start editing');
     $('#lemma a').hide();
 };
 
@@ -294,7 +289,7 @@ function configure_edit() {
     $.fn.editable.defaults['indicator'] = saving_str;
     $.fn.editable.defaults['tooltip'] = 'Click to edit...';
     $.fn.editable.defaults['placeholder'] = '-';
-    $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">Ok</button>';
+    $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">OK</button>';
     $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" type="cancel">Cancel</button>';
     $.fn.editable.defaults['cssclass'] = 'preview';
     $.fn.editable.defaults['width'] = 'auto';
@@ -389,7 +384,6 @@ function configure_edit() {
 	     var this_data = $(this).attr('value');
 	     var edit_list_choices = static_choice_lists[$(this).attr('id')];
 	     var edit_list_choice_colors = static_choice_list_colors[$(this).attr('id')];
-
 	     var index_of_modified_field = '_0';
          for (var key in edit_list_choices) {
             var value = edit_list_choices[key];
@@ -414,7 +408,6 @@ function configure_edit() {
 
 function openDropdown(elementId) {
     function down() {
-//        console.log('inside down');
         var pos = $(this).offset();
         var len = $(this).find("option").length;
             if(len > 20) {
@@ -428,15 +421,12 @@ function openDropdown(elementId) {
         $(this).focus();
     }
     function up() {
-//        console.log('inside up');
         $(this).css("position", "static");
         $(this).attr("size", "1");
         $(this).unbind("change", up);
         $(this).focus();
     }
-//    console.log('inside openDropdown: ' + elementId);
     $("#" + elementId).focus(down).blur(up).focus();
-//    $(elementId).focus(down).blur(up).focus();
 }
 
 function hide_other_forms(focus_field) {
@@ -461,7 +451,6 @@ function hide_other_forms(focus_field) {
 
 function update_view_and_remember_original_value(change_summary)
 {
-//    console.log('update_view_and_remember_original_value change_summary: '+change_summary);
 	split_values_count = change_summary.split('\t').length - 1;
 	if (split_values_count > 0)
 	{
@@ -487,10 +476,6 @@ function update_view_and_remember_original_value(change_summary)
         new_value = split_values[1];
         machine_value = split_values[2];
         category_value = split_values[3];
-//        console.log('original_value: '+original_value);
-//        console.log('new_value: '+new_value);
-//        console.log('machine_value: '+machine_value);
-//        console.log('category_value: '+category_value);
 
 //        save the original value because the next line intentionally overwrites the variable in the template
         original_lemma_group = lemma_group;
@@ -523,7 +508,6 @@ function update_view_and_remember_original_value(change_summary)
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
                         new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
         {
-//            console.log('new value is empty or False')
             if (id == 'idgloss') {
 //                the user tried to erase the Lemma ID Gloss field, reset it in the template to what it was
                 $(this).html(original_value);
@@ -534,7 +518,6 @@ function update_view_and_remember_original_value(change_summary)
             }
         }
         if (category_value == 'phonology') {
-//            console.log('phonology modified '+id);
            // $(this).change();
             $(this).attr("value", new_value);
             var index_of_modified_field = morpheme_phonology.indexOf(id);
@@ -545,10 +528,8 @@ function update_view_and_remember_original_value(change_summary)
                 $(next_field_ref).clearQueue();
                 if (phonology_list_kinds.includes(next_field)) {
                     // for lists, do custom event instead of click
-//                    console.log('customEvent on '+next_field_ref);
                     $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
                 } else {
-//                    console.log('click event on '+next_field_ref);
                     $(next_field_ref).click();
                 };
             }
