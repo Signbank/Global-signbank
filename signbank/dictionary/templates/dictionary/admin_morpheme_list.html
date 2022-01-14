@@ -12,110 +12,153 @@
 {% load guardian_tags %}
 
 {% block extrajs %}
-    <script type="text/javascript">
-        var url = '{{URL}}{{ PREFIX_URL }}';
-        var language_code = '{{ LANGUAGE_CODE }}';
-        var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
-        var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
-    </script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
-    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
-    <script type='text/javascript'>
-    var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
-    var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
-    var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
-    console.log(multiple_select_fields);
-    var csrf_token = '{{csrf_token}}';
+<script type="text/javascript">
+    var url = '{{ PREFIX_URL }}';
+    var language_code = '{{ LANGUAGE_CODE }}';
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
+    var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
+    var last_used_dataset = '{{last_used_dataset}}';
+</script>
 
-    $(document).ready(function(){
+<style>
+.select2-results__option--highlighted {
+    color: black !important;
+    font-weight: bold;
+}
+</style>
 
-        $('.collapsetoggle').click(function() {
-            if ($(this).text() == 'Show') {
-                $(this).text('Hide');
-            } else {
-                $(this).text('Show');
-            }
-        });
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+<script type='text/javascript'>
+var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
+var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
+var field_colors = {{field_colors|safe}};
+console.log('Multiple select fields: '+multiple_select_fields);
+var csrf_token = '{{csrf_token}}';
 
-        $('[data-toggle="tooltip"]').tooltip();
+$(document).ready(function(){
 
-        if (show_dataset_interface_options && user_can_add_morpheme) {
+    $('[data-toggle="tooltip"]').tooltip();
+
+    if (show_dataset_interface_options && user_can_add_morpheme) {
+        set_annotationidglosslanguages();
+
+        $('#id_dataset').change(function() {
             set_annotationidglosslanguages();
+        });
+    };
 
-            $('#id_dataset').change(function() {
-                set_annotationidglosslanguages();
-            });
+    function selectColors(fieldId) {
+        var target_pulldown = document.getElementById(fieldId);
+        var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
+        var pulldown_colors_str = new String(pulldown_colors);
+        var pulldown_lookup = JSON.parse(pulldown_colors_str);
+        $('option',target_pulldown).each(function(){
+            var this_code = $(this).attr('value');
+            var this_color = pulldown_lookup[this_code];
+            $(this).attr('style','background-color:#'+this_color);
+        });
+    }
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        var target_pulldown = document.getElementById(fieldId);
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        selectColors(this_id);
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     function addOptionColor(optionNode) {
+        var color_text = optionNode.text;
+
+        // pattern of resultId: "select2-id_handedness-result-58e8-0"
+
+        if (optionNode._resultId) {
+            var resultString = optionNode._resultId
+            splitPattern = resultString.split('-');
+            var fieldId = splitPattern[1];
+            var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
+            var this_code = splitPattern[4];
+            var pulldown_colors_str = new String(pulldown_colors);
+            var pulldown_lookup = JSON.parse(pulldown_colors_str);
+            var this_color = pulldown_lookup[this_code];
+            var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;background-color:#"+this_color+"'>"+color_text+"</span>");
+            return $color_text_node
+        } else {
+            return color_text;
         };
+     }
 
-        function makeMultipleSelect(fieldId,fieldVar) {
-            var target_pulldown = document.getElementById(fieldId);
-            target_pulldown.setAttribute('multiple','multiple');
-            target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
-            target_pulldown.setAttribute('name',fieldVar);
-            target_pulldown.style.width = '100%';
-        }
-
-         for (var i = 0; i < multiple_select_fields.length; i++) {
-            var this_id = 'id_' + multiple_select_fields[i];
-            var this_var = multiple_select_fields[i] + '[]';
-            makeMultipleSelect(this_id, this_var);
-         }
-
-         $('.js-example-basic-multiple').select2({
+     $('.js-example-basic-multiple').each(function() {
+         var thisId = this.id;
+         $(this).select2({
             allowClear: true,
             dropdownAutoWidth: true,
-            width: 'resolve'
+            width: 'resolve',
+            placeholder: '',
+            templateResult: addOptionColor
          });
-         $('.js-example-basic-multiple').val(null).trigger('change');
+     });
 
-         <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
-         <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
+     $('.js-example-basic-multiple').val(null).trigger('change');
 
-         <!--Alert: the id for sign language is SIGNLANG, not the same as the model field!-->
-         <!--Django was messing up the template generation otherwise -->
-         <!--The value field is signlanguage[] matches the model)-->
+     <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
+     <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
 
-         makeMultipleSelect('id_SIGNLANG', 'signlanguage[]');
-         $('#id_SIGNLANG').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_SIGNLANG').val(null).trigger('change');
+     <!--Alert: the id for sign language is SIGNLANG, not the same as the model field!-->
+     <!--Django was messing up the template generation otherwise -->
+     <!--The value field is signlanguage[] matches the model)-->
 
-         $('#id_SIGNLANG').change(function() {
-            set_signlanguages_dialects();
-         });
+     makeMultipleSelect('id_SIGNLANG', 'signlanguage[]');
+     $('#id_SIGNLANG').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve',
+        placeholder: ''
+     });
+     $('#id_SIGNLANG').val(null).trigger('change');
 
-         <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
-         <!--Django was messing up the template generation otherwise (without the s at the end)-->
+     $('#id_SIGNLANG').change(function() {
+        set_signlanguages_dialects();
+     });
 
-         makeMultipleSelect('id_dialects', 'dialect[]');
-         $('#id_dialects').select2({
-            allowClear: true,
-            dropdownAutoWidth: true,
-            width: 'resolve'
-         });
-         $('#id_dialects').val(null).trigger('change');
+     <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
+     <!--Django was messing up the template generation otherwise (without the s at the end)-->
 
-    });
+     makeMultipleSelect('id_dialects', 'dialect[]');
+     $('#id_dialects').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve',
+        placeholder: ''
+     });
+     $('#id_dialects').val(null).trigger('change');
 
-    {% if perms.dictionary.change_gloss %}
+});
 
-    var choice_lists = {{choice_lists|safe}};
-    var mrp_data = choice_lists['mrpType'];
-    $("#id_mrptype").html("");
-    $.each(mrp_data, function(key, value) {
-        var number_only = key.substring(1);
-        $("#id_mrptype").append($('<option>', { value : number_only }).text(value));
-    });
-
-    {% endif %}
+{% if perms.dictionary.change_gloss %}
+<!--This id goes inside the Add New Morpheme form. It has no capital letter in id_mrptype-->
+var choice_lists = {{choice_lists|safe}};
+var mrp_data = choice_lists['mrpType'];
+$("#id_mrptype").html("");
+$.each(mrp_data, function(key, value) {
+    var number_only = key.substring(1);
+    $("#id_mrptype").append($('<option>', { value : number_only }).text(value));
+});
+{% endif %}
 
 
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml

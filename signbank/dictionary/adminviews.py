@@ -39,7 +39,9 @@ from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
-    choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors
+    choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors, \
+    choicelist_queryset_to_field_colors
+
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
@@ -198,7 +200,6 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
 class GlossListView(ListView):
 
     model = Gloss
-    # template_name = 'dictionary/admin_gloss_list_colors.html'
     paginate_by = 100
     only_export_ecv = False #Used to call the 'export ecv' functionality of this view without the need for an extra GET parameter
     search_type = 'sign'
@@ -315,7 +316,6 @@ class GlossListView(ListView):
 
         # If the menu bar search form was used, populate the search form with the query string
         # for all languages for which results were found.
-        import json # for some reason this is needed here, perhaps removed from a previous import?
         if 'search' in self.request.GET and self.request.GET['search'] != '':
             val = self.request.GET['search']
             from signbank.tools import strip_control_characters
@@ -355,8 +355,6 @@ class GlossListView(ListView):
         choices_colors = {}
         for (fieldname, field_category) in multiple_select_gloss_categories:
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors
-            import json
             choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
 
         context['field_colors'] = choices_colors
@@ -1349,10 +1347,8 @@ class GlossDetailView(DetailView):
                             context['static_choice_list_colors'][field][key] = this_value
                     else:
                         # otherwise, it's a value, not a choice
-                        field_kind = fieldname_to_kind(field)
                         # take care of different representations of empty text in database
-                        if field_kind == 'text' and (machine_value == '-' or machine_value == ' ' or machine_value == '------' or machine_value == '' or machine_value is None):
-                            # print('gloss detail text field ', field, ' machine value set to empty: ', machine_value)
+                        if fieldname_to_kind(field) == 'text' and (machine_value is None or machine_value in ['-',' ','------','']):
                             human_value = ''
                         else:
                             human_value = machine_value
@@ -1363,8 +1359,6 @@ class GlossDetailView(DetailView):
                         phonology_list_kinds.append(field)
                     context[topic+'_fields'].append([human_value,field,labels[field],kind])
 
-        # print('static choice lists: ', context['static_choice_lists'].keys())
-        # print('static choice colors: ', context['static_choice_list_colors'].keys())
         context['gloss_phonology'] = gloss_phonology
         context['phonology_list_kinds'] = phonology_list_kinds
 
@@ -2031,6 +2025,16 @@ class MorphemeListView(ListView):
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
         context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = multiple_select_morpheme_fields
+
+
+        multiple_select_morpheme_categories = [(field.name, field.field_choice_category) for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+
+        choices_colors = {}
+        for (fieldname, field_category) in multiple_select_morpheme_categories:
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+
+        context['field_colors'] = choices_colors
 
         return context
 
@@ -2926,8 +2930,7 @@ class FrequencyListView(ListView):
         field_labels = dict()
         for field in FIELDS['phonology']:
             if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                field_kind = fieldname_to_kind(field)
-                if field_kind == 'list':
+                if fieldname_to_kind(field) == 'list':
                     field_label = Gloss._meta.get_field(field).verbose_name
                     field_labels[field] = field_label.encode('utf-8').decode()
 
@@ -2971,8 +2974,7 @@ class FrequencyListView(ListView):
 
         field_labels_semantics = dict()
         for field in FIELDS['semantics']:
-            field_kind = fieldname_to_kind(field)
-            if field_kind == 'list':
+            if fieldname_to_kind(field) == 'list':
                 field_label = Gloss._meta.get_field(field).verbose_name
                 field_labels_semantics[field] = field_label.encode('utf-8').decode()
 
@@ -5303,6 +5305,8 @@ class MorphemeDetailView(DetailView):
         for f in Morpheme._meta.fields:
             gloss_fields[f.name] = f
 
+        context['static_choice_lists'] = {}
+        context['static_choice_list_colors'] = {}
         # Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['phonology', 'semantics']:
             context[topic + '_fields'] = []
@@ -5312,9 +5316,6 @@ class MorphemeDetailView(DetailView):
                 topic = 'phonology'
             else:
                 topic = 'semantics'
-            kind = fieldname_to_kind(field)
-            if kind == 'list':
-                phonology_list_kinds.append(field)
 
             choice_list = []
             # Get and save the choice list for this field
@@ -5323,34 +5324,50 @@ class MorphemeDetailView(DetailView):
                 fieldchoice_category = gloss_field.field_choice_category
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-            context['choice_lists'][field] = {}
-            if len(choice_list) > 0:
-                display_choice_list = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
-                for (key, value) in display_choice_list.items():
-                    this_value = value
-                    context['choice_lists'][field][key] = this_value
-                # context['choice_lists'][field] = json.dumps(display_choice_list)
-            # print('Morpheme Detail View context, choice list for field ', field, ': ', context['choice_lists'][field])
+            context['static_choice_lists'][field] = {}
+            context['static_choice_list_colors'][field] = {}
 
             # Take the human value in the language we are using
             machine_value = getattr(gl, field)
             if len(choice_list) > 0:
                 # if there is a choice list, the value stored in the field is a code
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list, self.request.LANGUAGE_CODE)
+                human_value = machine_value_to_translated_human_value(machine_value, choice_list,
+                                                                      self.request.LANGUAGE_CODE)
+
+                # The static_choice_lists structure is used in the Detail View to reverse map in javascript
+                # It's only needed for choice lists.
+                # In the template, choice lists are generated by Ajax calls
+                # But the javascript needs this when generating the page
+                display_choice_list = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
+                display_choice_list_colors = choicelist_queryset_to_colors(choice_list,
+                                                                           self.request.LANGUAGE_CODE)
+                # print('field ', field, ' display chice list: ', display_choice_list)
+                for (key, value) in display_choice_list.items():
+                    this_value = value
+                    context['static_choice_lists'][field][key] = this_value
+
+                for (key, value) in display_choice_list_colors.items():
+                    this_value = value
+                    context['static_choice_list_colors'][field][key] = this_value
             else:
-                # otherwise, it's a value
-                human_value = machine_value
+                # otherwise, it's a value, not a choice
+                # take care of different representations of empty text in database
+                if fieldname_to_kind(field) == 'text' and (machine_value is None or machine_value in ['-',' ','------','']):
+                    human_value = ''
+                else:
+                    human_value = machine_value
+
             # And add the kind of field
             kind = fieldname_to_kind(field)
+            if kind == 'list' and topic == 'phonology':
+                phonology_list_kinds.append(field)
             context[topic + '_fields'].append([human_value, field, labels[field], kind])
 
-        # print('phonology_fields: ', context['phonology_fields'])
-
-        # print('phonology_list_kinds: ', phonology_list_kinds)
         context['phonology_list_kinds'] = phonology_list_kinds
 
         # Gather the OtherMedia
         context['other_media'] = []
+        context['other_media_field_choices'] = {}
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
 
         for other_media in gl.othermedia_set.all():
@@ -5364,13 +5381,15 @@ class MorphemeDetailView(DetailView):
             context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
 
             # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
-            context['choice_lists'][
+            context['other_media_field_choices'][
                 'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(
                 other_media_type_choice_list, self.request.LANGUAGE_CODE)
 
-        context['choice_lists']['morph_type'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphemeType'),self.request.LANGUAGE_CODE)
+        morph_type_list = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphemeType'),self.request.LANGUAGE_CODE)
 
-        context['choice_lists'] = json.dumps(context['choice_lists'])
+        context['morph_type'] = json.dumps(morph_type_list)
+
+        context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 
         # make lemma group empty for Morpheme (ask Onno about this)
         context['lemma_group'] = False
