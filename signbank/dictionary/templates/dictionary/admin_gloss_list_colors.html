@@ -21,68 +21,10 @@
 </script>
 
 <style>
-.preview {
-    background-color: white !important;
-    height: 40;
-    padding: 0 0 0 0 !important;
-}
-
-select option {
-    background-color: '#FFFFFF';
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-.hasTooltip:hover .isTooltip {
-    display: block;
-    background-color: white;
-    border-radius: 5px;
-    color: black;
-    box-shadow: 1px 1px 3px gray;
-    position: absolute;
-    padding: 5px;
-    top: 3em;
-    left: 0px;
-    max-width: 360px;
-    min-width: 300px;
-    font-size: 12px;
-    z-index: 9999;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-.bootstrap-select.btn-group .dropdown-menu li a:hover {
-    color: blue !important;
-    background-color: #ffffff !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-.btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default.active, .open .dropdown-toggle.btn-default {
-
-background-color: #2F3E48;
--webkit-appearance: none;
--moz-appearance: none;
-color:#FFF;
-
-border-color: #31347B;
-
-}
-
-input[type="color"] {
-    width: 4rem;
-    height: 4rem;
-    padding: .4rem;
-    background-color: #ffffff !important;
-    border: solid 1px #ddd !important;
-    border-radius: 0;
-}
-
 .select2-results__option--highlighted {
     color: black !important;
     font-weight: bold;
 }
-
 </style>
 
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
@@ -90,12 +32,10 @@ input[type="color"] {
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
-<!--<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/select2-colors-full.css">-->
-<!--<script type="text/javascript" src="{{ STATIC_URL }}js/select2-colors-full.js"></script>-->
-<!--https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js-->
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+console.log('Multiple select fields: '+multiple_select_fields);
 var field_colors = {{field_colors|safe}};
 var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};

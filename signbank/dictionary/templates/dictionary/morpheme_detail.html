@@ -17,10 +17,61 @@
             position:fixed;
         }
     </style>
+<style>
+.preview {
+    background-color: white !important;
+    height: 40;
+    width: auto;
+    position: relative;
+    padding: 0 0 0 0 !important;
+}
+
+select option {
+    background-color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.bootstrap-select.btn-group .dropdown-menu li a:hover {
+    color: blue !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.dropdown-menu {
+    display: visible !important;
+    z-index: 5;
+    box-shadow: 0 10px 10px #333;
+}
+
+.dropdown-item:active{
+    color: blue;
+    background-color: darkviolet;
+}
+
+.bootstrap-select {
+    color: black !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+</style>
+<style>
+.form-group {
+    background-color: white;
+    color: black;
+}
+option:not(:checked) {
+    background-color: white !important;
+    color: #000;
+}
+</style>
+
 {% endblock %}
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
@@ -50,6 +101,7 @@
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
+    var relation_delete_choices_colors = '{ "delete" : "ffffff" }';
     var dialects = {{morpheme.dialect_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
@@ -61,7 +113,14 @@
     var mrptype_choices = {{morpheme.mrptype_choices|safe}};
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 
-    var choice_lists = {{choice_lists|safe}};
+    var morph_type = {{morph_type|safe}};
+    var morph_type_colors = '{}';
+    for (var key in morph_type) {
+        morph_type_colors[key] = 'ffffff';
+    };
+    var choice_lists = [];
+    var static_choice_lists = {{static_choice_lists|safe}};
+    var static_choice_list_colors = {{static_choice_list_colors|safe}};
 
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id;
@@ -71,19 +130,46 @@
 
     {% include "dictionary/search_result_bar.html" %}
 
+    function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
+        var target_object = document.forms[formId][targetObjectId].value;
+        var this_gloss = document.forms[formId][thisGlossID].value;
+        if (target_object == "") {
+            alert(mustChooseAlert);
+            return false;
+        }
+        if (target_object == this_gloss) {
+            alert(mustBeDifferentAlert);
+            return false;
+        }
+    }
+
+    $('[data-toggle="tooltip"]').tooltip({
+        placement : 'bottom'
+    });
+
+    //Fill choice_lists without frequencies now
+    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{morpheme.lemma.dataset}}").done( function (data)
+    {
+        choice_lists = $.extend(data,{{other_media_field_choices | safe}});
+        console.log("Added field choices");
+    });
+
+    //Fill choice_lists with frequencies later
+    $(document).ready(function() {
+        $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{morpheme.lemma.dataset}}").done( function (data)
+        {
+            choice_lists = $.extend(data,{{other_media_field_choices | safe}});
+
+            // Reload the data in the lists
+            $('.edit_list').unbind('click');
+            configure_edit();
+
+            console.log("Added field choices");
+        });
+    });
     </script>
 
 <script type='text/javascript'>
-
-var defaultText = '------';
-function nextPhonologyField(e) {
-    var input = $(e.target),
-        label = input && input.prev();
-    label.text(input.val() === '' ? defaultText : input.val());
-    input.hide();
-    label.show();
-};
-
 
 //Keyboard shortcuts
 document.onkeydown = checkKey;
@@ -121,7 +207,7 @@ function checkKey(e)
 
 </script>
 
-    <script type='text/javascript' src="{{ STATIC_URL }}js/morpheme_edit.js"></script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/morpheme_edit_color.js"></script>
 
     <script type='text/javascript'>
         $('#searchresults').css({'padding-top': 10});
@@ -326,7 +412,7 @@ function checkKey(e)
 
         <table class='table table-condensed'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
-                <td><span id="lemma">{{ morpheme.lemma }}
+                <td style="width:600px;"><span id="lemma">{{ morpheme.lemma }}
                         {% if lemma_group %}
                             <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
@@ -367,7 +453,7 @@ function checkKey(e)
                         <input class='btn btn-primary' value='{% trans "Add lemma" %}' type='submit'>
                         <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
                     </form>
-                </td>
+                </td><td style="width:200px;"></td>
             </tr>
 
             {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
@@ -375,7 +461,7 @@ function checkKey(e)
                 <th>
                     {% trans "Annotation ID Gloss" %} ({{ lang }})
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translations.0.text|safe }}</td>
+                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}'>{{ annotation_idgloss_translations.0.text|safe }}</td>
 
             </tr>
             {% endfor %}
@@ -385,7 +471,7 @@ function checkKey(e)
                 <th>
                     {% trans "Abstract meaning" %} ({{ lang }})
                 </th>
-                <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' colspan="2">{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}'>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             </tr>
             {% endfor %}
 
@@ -394,7 +480,9 @@ function checkKey(e)
                 <td class='edit edit_mrptype' id='mrpType' value='{{morpheme_type}}'>{{morpheme_type}}</td>
             </tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-            <tr {%if morpheme_dialects|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th><td class='edit edit_dialect' id='dialect' colspan="2">{% for dia in morpheme_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <tr {%if morpheme_dialects|length == 0 %} class="empty_row"{% endif %}>
+                <th>{% trans "Dialect" %}</th>
+                <td class='edit edit_dialect' id='dialect'>{% for dia in morpheme_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
             {% endif %}
         </table>
 
@@ -447,16 +535,14 @@ function checkKey(e)
             </div>
         </div>
         <div id='morphology' class='collapse'>
-
             <!-- Show a read-only list of glosses in which this gloss occurs as compound part(ERK, issue #177) -->
-            {% if appears_in %}
             <table class='table table-condensed'>
+            {% if appears_in %}
                 <tr>
                     <th style='width:2em'></th>
                     <th style='width:12em'>{% trans "Word class" %}</th>
                     <th style='width:12em'>{% trans "Gloss" %}</th>
                 </tr>
-
                 {% for morphgloss,wordclass in appears_in %}
                 <tr>
                     <th style='width:2em'></th>
@@ -464,16 +550,11 @@ function checkKey(e)
                     <td id='morphology-definition-morpheme_{{morphgloss.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphgloss.pk %}'>{{morphgloss}}</a></td>
                 </tr>
                 {% endfor %}
-            </table>
            {% else %}
-            <p>{% trans "This morpheme does not occur in any sign" %}</p>
+            <tr><td colspan="3">{% trans "This morpheme does not occur in any sign" %}</td></tr>
            {% endif %}
-
-           {# spacing div to allow room for typeahead dropdown #}
-           <div style='height: 10em'></div>
-
+            </table>
         </div>
-
     </div>
 
     <!-- Phonology -->
@@ -486,12 +567,12 @@ function checkKey(e)
         <div id='phonology' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in phonology_fields %}
-
-                <tr  {% if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %} />
+                <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %}>
                     <th>{{label}}</th>
                     <td class="edit edit_{{kind}}"
                         id='{{name}}' value='{{value}}' >{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}
                                                                     {% else %}{% value value %}{% endif %}</td>
+                <td></td>
                 </tr>
 
 		{% endfor %}
@@ -631,7 +712,7 @@ function checkKey(e)
 
 
             {% if perms.dictionary.change_morpheme %}
-            <form id='add_definition' action='{% url 'dictionary:add_definition' morpheme.id %}' method="POST">
+            <form id='add_definition' action='{% url "dictionary:add_definition" morpheme.id %}' method="POST">
                 <fieldset>
                 {% csrf_token %}
                  <table class='table'>
@@ -716,7 +797,7 @@ function checkKey(e)
                     <td><a {% if not media_okay %}
 				            disabled onclick="return false;" style="color:rgb(150,150,150);"
 			                {% endif %}
-				            download="{{ file_name }}" href="{{ URL }}{{ PREFIX_URL }}{{ path }}">Download</a>
+				            download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">Download</a>
                     </td>
                     <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}' value='{{type}}' >{{ type }}</td>
