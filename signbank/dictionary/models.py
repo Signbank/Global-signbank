@@ -1084,6 +1084,8 @@ class Gloss(models.Model):
         # the self object is included in the results
 
         # Build query
+        # the stems are language, text pairs
+        # the variant patterns to be searched for have alternative "-<letter> or "-<number>" patterns.
         this_sign_stems = self.get_stems()
 
         this_sign_dataset = self.lemma.dataset
@@ -1100,13 +1102,16 @@ class Gloss(models.Model):
             queries.append(Q(annotationidglosstranslation__text__regex=this_even_matches, annotationidglosstranslation__language=this_sign_language,
                              lemma__dataset=this_sign_dataset))
 
-        merged_query_expression = []
+        merged_query_expression = Q()
         if queries:
+            # queries list is non-empty
+            # remove one Q expression and put it in merged_query_expression
             merged_query_expression = queries.pop()
             for q in queries:
+                # iterate  over the remaining Q expressings or-ing them with the rest
                 merged_query_expression |= q
 
-        if queries:
+        if merged_query_expression:
             # exclude glosses that have a relation to this gloss
             related_gloss_ids = [relation.target.id for relation in self.other_relations()]
             pattern_variants = Gloss.objects.filter(merged_query_expression).exclude(id__in=related_gloss_ids).distinct()
