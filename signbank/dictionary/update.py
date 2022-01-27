@@ -212,6 +212,11 @@ def update_gloss(request, glossid):
 
             return update_dialect(gloss, field, values)
 
+        elif field == 'semanticfield':
+            # expecting possibly multiple values
+
+            return update_semanticfield(gloss, field, values)
+
         elif field == 'dataset':
             original_value = getattr(gloss,field)
 
@@ -582,6 +587,34 @@ def update_dialect(gloss, field, values):
                                       {'content-type': 'text/plain'})
 
     return HttpResponse(str(signlanguage_value) + '\t' + str(new_dialects_value), {'content-type': 'text/plain'})
+
+def update_semanticfield(gloss, field, values):
+    # expecting possibly multiple values
+    print('update semantic field: ', values)
+    semanticfield_choices = json.loads(gloss.semanticfield_choices())
+    numerical_values_converted_to_semanticfields = [ semanticfield_choices[value] for value in values ]
+    error_string_values = ', '.join(numerical_values_converted_to_semanticfields)
+    new_semanticfields_to_save = []
+
+    try:
+        for value in numerical_values_converted_to_semanticfields:
+            semanticfield_objs = SemanticField.objects.filter(name=value)
+            for sf_obj in semanticfield_objs:
+                new_semanticfields_to_save.append(sf_obj)
+
+        # clear the old dialects only after we've parsed and checked the new ones
+        gloss.semFieldShadow.clear()
+        for sf in new_semanticfields_to_save:
+            gloss.semFieldShadow.add(sf)
+        gloss.save()
+
+        new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
+    except:
+        return HttpResponseBadRequest("Semantic Field %s has errors." % error_string_values,
+                                      {'content-type': 'text/plain'})
+
+    return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
+
 
 def update_tags(gloss, field, values):
     # expecting possibly multiple values

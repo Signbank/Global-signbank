@@ -1309,7 +1309,7 @@ class GlossDetailView(DetailView):
             context[topic+'_fields'] = []
             for field in FIELDS[topic]:
                 # the following check will be used when querying is added, at the moment these don't appear in the phonology list
-                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS + ['semField']:
                     if topic == 'phonology':
                         gloss_phonology.append(field)
                     choice_list = []
@@ -1530,6 +1530,23 @@ class GlossDetailView(DetailView):
             gl.dialect.clear()
             for d in gloss_dialects:
                 gl.dialect.add(d)
+
+        gloss_semanticfields = []
+        multiselect_semanticfields = gl.semFieldShadow.all()
+        legacy_semanticfield = gl.semField
+        if legacy_semanticfield and not multiselect_semanticfields:
+
+            new_semanticfield = semanticfield_fieldchoice_to_multiselect(legacy_semanticfield)
+
+            if new_semanticfield:
+                # the following is only done if the legacy value has not been put in the multiselect semantic fields
+                gl.semFieldShadow.add(new_semanticfield)
+                gl.save()
+
+        for sf in gl.semFieldShadow.all():
+            gloss_semanticfields.append(sf)
+
+        context['gloss_semanticfields'] = gloss_semanticfields
 
         simultaneous_morphology = []
         sim_morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
@@ -2602,6 +2619,161 @@ class HandshapeDetailView(DetailView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
         return context
 
+
+class SemanticFieldDetailView(DetailView):
+    model = SemanticField
+    template_name = 'dictionary/semanticfield_detail.html'
+    context_object_name = 'semanticfield'
+
+    class Meta:
+        ordering = ['name']
+
+    #Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+        # Get the machine value in the URL
+        match_machine_value = int(kwargs['pk'])
+        try:
+            self.object = SemanticField.objects.get(machine_value=match_machine_value)
+        except ObjectDoesNotExist:
+            # No SemanticField exists for this machine value
+            # See if there is a fieldChoice for the SemField category with this machine value
+            # check to see if this semantic field has been created in FieldChoice but not yet viewed
+            # if that is the case, create a new SemanticField object and view that,
+            # otherwise return an error
+
+            new_semanticfield = semanticfield_fieldchoice_to_multiselect(match_machine_value)
+
+            if not new_semanticfield:
+
+                return HttpResponse('<p>SemanticField not configured for this machine value.</p>')
+
+        try:
+            # The semantic field object exists, make sure it's in FieldChoices
+            fieldchoice_for_this_object = FieldChoice.objects.get(field__iexact='SemField', machine_value=match_machine_value)
+        except ObjectDoesNotExist:
+            # the semantic field object with the machine value has been either fetched or created and stored in self.object
+            print('field choice not found for SemField with machine value ', match_machine_value)
+            this_semanticfield = self.object
+
+            dutch_language = Language.objects.get(language_code_2char='nl')
+            chinese_language = Language.objects.get(language_code_2char='zh')
+
+            dutch_translation = SemanticFieldTranslation.objects.filter(semField=this_semanticfield, language=dutch_language).first()
+
+            if not dutch_translation:
+                # this SemanticField was created without a translation, use English
+                dutch_translation = this_semanticfield.name
+                dutch_semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield, language=dutch_language,
+                                                             name=dutch_translation)
+                dutch_semanticfieldtranslation.save()
+
+            chinese_translation = SemanticFieldTranslation.objects.filter(semField=this_semanticfield, language=chinese_language).first()
+
+            if not chinese_translation:
+                # this SemanticField was created without a translation, use English
+                chinese_translation = this_semanticfield.name
+                chinese_semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield, language=chinese_language,
+                                                               name=new_chinese_name)
+                chinese_semanticfieldtranslation.save()
+
+            # for the purposes of FieldChoice choice lists, make sure the translations have values
+            this_field_choice = FieldChoice(machine_value=this_semanticfield.machine_value,
+                                            field='SemField',
+                                            english_name=this_semanticfield.name,
+                                            dutch_name=dutch_translation,
+                                            chinese_name=chinese_translation)
+            this_field_choice.save()
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+
+        try:
+            context = super(SemanticFieldDetailView, self).get_context_data(**kwargs)
+        except:
+            # return custom template
+            return HttpResponse('invalid', {'content-type': 'text/plain'})
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+
+        context['translations'] = [ (translation.language.name, translation.name) for translation in self.object.semanticfieldtranslation_set.all() ]
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        return context
+
+
+class SemanticFieldListView(ListView):
+
+    model = SemanticField
+    template_name = 'dictionary/admin_semanticfield_list.html'
+    search_type = 'semanticfield'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(SemanticFieldListView, self).get_context_data(**kwargs)
+
+        context['semanticfieldchoicecount'] = FieldChoice.objects.filter(field__iexact='semField').count()
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+
+        context['semanticfieldcount'] = SemanticField.objects.count()
+
+        # this is needed to avoid crashing the browser if you go to the last page
+        # of an extremely long list and go to Detail View on the objects
+
+        if len(self.object_list) > settings.MAX_SCROLL_BAR:
+            list_of_objects = context['page_obj'].object_list
+        else:
+            list_of_objects = self.object_list
+
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        return context
+
+    def get_queryset(self):
+
+        # get query terms from self.request
+        get = self.request.GET
+
+        qs = SemanticField.objects.all().order_by('name')
+
+        semantic_fields = FieldChoice.objects.filter(field__iexact='semField')
+        # Find out if any SemanticFields exist for which no SemanticField object has been created
+        # this can happen if new semField choices are created in Admin
+
+        existing_semanticfield_objects_machine_values = [ o.machine_value for o in qs ]
+
+        new_semanticfield_created = 0
+
+        for s in semantic_fields:
+            if s.machine_value in existing_semanticfield_objects_machine_values:
+                pass
+            else:
+                # create a new SemanticField object
+                new_semanticfield = semanticfield_fieldchoice_to_multiselect(s.machine_value)
+
+                if new_semanticfield:
+                    new_semanticfield_created = 1
+
+        if new_semanticfield_created: # if a new SemanticField object was created, reload the query result
+
+            qs = SemanticField.objects.all().order_by('name')
+
+        return qs
 
 class HomonymListView(ListView):
     model = Gloss
@@ -6551,3 +6723,46 @@ class LemmaDeleteView(DeleteView):
         else:
             self.object.delete()
         return HttpResponseRedirect(self.get_success_url())
+
+
+def semanticfield_fieldchoice_to_multiselect(machine_value):
+    if not machine_value:
+        return None
+
+    try:
+        # check that there is a SemanticField object defined for the legacy semField FieldChoice of this gloss
+        semanticfield = SemanticField.objects.get(machine_value=machine_value)
+        # already done
+        return semanticfield
+    except ObjectDoesNotExist:
+        # if not, create one
+        # first get the FieldChoice
+        try:
+            semField_fieldchoice = FieldChoice.objects.get(field__iexact='semField', machine_value=machine_value)
+        except ObjectDoesNotExist:
+            # this happens if an invalid machine value is used in the url
+            return None
+
+    new_machine_value = semField_fieldchoice.machine_value
+    new_english_name = semField_fieldchoice.english_name
+    # legacy values
+    new_dutch_name = semField_fieldchoice.dutch_name
+    dutch_language = Language.objects.get(language_code_2char='nl')
+    new_chinese_name = semField_fieldchoice.chinese_name
+    chinese_language = Language.objects.get(language_code_2char='zh')
+
+    new_semanticfield = SemanticField(machine_value=new_machine_value, name=new_english_name)
+    new_semanticfield.save()
+
+    if new_dutch_name:
+        dutch_translation = SemanticFieldTranslation(semField=new_semanticfield, language=dutch_language,
+                                                     name=new_dutch_name)
+        dutch_translation.save()
+
+    if new_chinese_name:
+        chinese_translation = SemanticFieldTranslation(semField=new_semanticfield, language=chinese_language,
+                                                       name=new_chinese_name)
+        chinese_translation.save()
+
+    return new_semanticfield
+

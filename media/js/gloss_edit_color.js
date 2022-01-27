@@ -391,6 +391,12 @@ function configure_edit() {
          data      : dialects,
 		 callback : update_view_and_remember_original_value
      });
+     $('.edit_semanticfield').editable(edit_post_url, {
+         params : { a: 0 },
+         type      : 'multiselect',
+         data      : semanticfield_choices,
+		 callback : update_view_and_remember_original_value
+     });
      $('.edit_check').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'checkbox',
@@ -499,6 +505,7 @@ function hide_other_forms(focus_field) {
 
 function update_view_and_remember_original_value(change_summary)
 {
+    console.log('change summary: '+change_summary);
 	split_values_count = change_summary.split('\t').length - 1;
 	if (split_values_count > 0)
 	{

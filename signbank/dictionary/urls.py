@@ -6,7 +6,7 @@ from signbank.dictionary.forms import *
 
 from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossFrequencyView, GlossRelationsDetailView, MorphemeDetailView, \
     MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView, \
-    create_lemma_for_gloss, LemmaUpdateView
+    create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView
 
 from signbank.dictionary.views import create_citation_image
 
@@ -116,7 +116,8 @@ urlpatterns = [
     url(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     url(r'^morpheme/(?P<pk>\d+)', MorphemeDetailView.as_view(), name='admin_morpheme_view'),
     url(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
-
+    url(r'^semanticfield/(?P<pk>\d+)', SemanticFieldDetailView.as_view(), name='admin_semanticfield_view'),
+    url(r'^semanticfields/$', permission_required('dictionary.search_gloss')(SemanticFieldListView.as_view()), name='admin_semanticfield_list'),
     # Lemma Idgloss views
     url(r'^lemma/$', login_required(LemmaListView.as_view()), name='admin_lemma_list'),
     url(r'^lemma/add/$', permission_required('dictionary.add_lemmaidgloss')(LemmaCreateView.as_view()), name='create_lemma'),
