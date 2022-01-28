@@ -103,6 +103,7 @@ option:not(:checked) {
     var relation_delete_choices = '{ "delete" : "Delete" }';
     var relation_delete_choices_colors = '{ "delete" : "ffffff" }';
     var dialects = {{morpheme.dialect_choices|safe}};
+    var semanticfield_choices = {{morpheme.semanticfield_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
     {% else %}
@@ -590,6 +591,11 @@ function checkKey(e)
         </div>
         <div id='semantics' class='panel-collapse collapse'>
             <table class='table table-condensed'>
+                <tr {%if gloss_semanticfields|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Semantic Field" %}</th>
+                    <td class='edit edit_semanticfield'
+                        id='semanticfield'>{% for sf in gloss_semanticfields %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                    <td/>
+                </tr>
 		{% for value,name,label,kind in semantics_fields %}
 		    <tr><th>{{label}}</th><td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}' >{% value value %}</td></tr>
 		{% endfor %}

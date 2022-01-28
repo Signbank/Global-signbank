@@ -590,7 +590,6 @@ def update_dialect(gloss, field, values):
 
 def update_semanticfield(gloss, field, values):
     # expecting possibly multiple values
-    print('update semantic field: ', values)
     semanticfield_choices = json.loads(gloss.semanticfield_choices())
     numerical_values_converted_to_semanticfields = [ semanticfield_choices[value] for value in values ]
     error_string_values = ', '.join(numerical_values_converted_to_semanticfields)
@@ -1755,6 +1754,11 @@ def update_morpheme(request, morphemeid):
             # expecting possibly multiple values
 
             return update_dialect(morpheme, field, values)
+
+        elif field == 'semanticfield':
+            # expecting possibly multiple values
+
+            return update_semanticfield(morpheme, field, values)
 
         elif field == 'dataset':
             # this has been hidden

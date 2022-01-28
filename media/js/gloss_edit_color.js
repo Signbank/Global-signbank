@@ -505,7 +505,6 @@ function hide_other_forms(focus_field) {
 
 function update_view_and_remember_original_value(change_summary)
 {
-    console.log('change summary: '+change_summary);
 	split_values_count = change_summary.split('\t').length - 1;
 	if (split_values_count > 0)
 	{

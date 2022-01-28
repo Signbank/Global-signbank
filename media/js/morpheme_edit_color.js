@@ -340,6 +340,12 @@ function configure_edit() {
          data      : dialects,
 		 callback : update_view_and_remember_original_value
      });
+     $('.edit_semanticfield').editable(edit_post_url, {
+         params : { a: 0 },
+         type      : 'multiselect',
+         data      : semanticfield_choices,
+		 callback : update_view_and_remember_original_value
+     });
      $('.edit_check').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'checkbox',

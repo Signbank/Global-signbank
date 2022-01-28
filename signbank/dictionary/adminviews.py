@@ -5489,6 +5489,11 @@ class MorphemeDetailView(DetailView):
             context[topic + '_fields'] = []
         for field in settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics']:
             # This test was easier than changing all the datastructures
+            if field == 'semField':
+                # ignore this field, the multiselect field semFieldShadow is used instead
+                # no choice lists are computed for it
+                # this is the data for the input fields that have choices
+                continue
             if field in FIELDS['phonology']:
                 topic = 'phonology'
             else:
@@ -5591,6 +5596,22 @@ class MorphemeDetailView(DetailView):
 
         context['morpheme_type'] = translated_morph_type
 
+        gloss_semanticfields = []
+        multiselect_semanticfields = gl.semFieldShadow.all()
+        legacy_semanticfield = gl.semField
+        if legacy_semanticfield and not multiselect_semanticfields:
+
+            new_semanticfield = semanticfield_fieldchoice_to_multiselect(legacy_semanticfield)
+
+            if new_semanticfield:
+                # the following is only done if the legacy value has not been put in the multiselect semantic fields
+                gl.semFieldShadow.add(new_semanticfield)
+                gl.save()
+
+        for sf in gl.semFieldShadow.all():
+            gloss_semanticfields.append(sf)
+
+        context['gloss_semanticfields'] = gloss_semanticfields
 
         # Put translations (keywords) per language in the context
         context['translations_per_language'] = {}
