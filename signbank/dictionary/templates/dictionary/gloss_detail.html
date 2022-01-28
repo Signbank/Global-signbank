@@ -10,17 +10,9 @@
 
 {% load guardian_tags %}
 
-{% block extrahead %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
-    <style>
-        #panel-expand-collapse-btn-group.affix {
-            position:fixed;
-        }
-    </style>
-{% endblock %}
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
@@ -55,7 +47,15 @@
     var definition_role_choices = {{gloss.definition_role_choices_json|safe}};
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
-    var handedness_weak_choices = {{gloss.handedness_weak_choices_json|safe}};
+    var relation_delete_choices_colors = '{ "delete" : "ffffff" }';
+    var handedness_weak_choices = {{gloss.handedness_weak_drop_prop_json|safe}};
+    var handedness_weak_choices_colors = '{}';
+    for (var key in handedness_weak_choices) {
+        handedness_weak_choices_colors[key] = 'ffffff';
+    };
+    var handedness_weak_drop_reverse = {{gloss.handedness_weak_drop_prop_json|safe}};
+    var handedness_weakdrop = handedness_weak_drop_reverse['{{gloss.weakdrop}}'];
+    var handedness_weakprop = handedness_weak_drop_reverse['{{gloss.weakprop}}'];
     var dialects = {{gloss.dialect_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
@@ -68,6 +68,7 @@
 
     var choice_lists = [];
     var static_choice_lists = {{static_choice_lists|safe}};
+    var static_choice_list_colors = {{static_choice_list_colors|safe}};
 
     var generate_translated_choice_list_table = {{generate_translated_choice_list_table|safe}};
 
@@ -131,7 +132,45 @@
 
     </script>
 
-    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit.js"></script>
+<script type='text/javascript'>
+
+//Keyboard shortcuts
+document.onkeydown = checkKey;
+
+function checkKey(e)
+{
+    // No shortcut if your typing
+    if (document.activeElement.tagName == 'INPUT') {return;}
+
+    e = e || window.event;
+
+    switch(e.key)
+    {
+      case 'p':
+        element_id = 'phonology';
+        break;
+      case 'm':
+        element_id = 'morphology'
+        break;
+      case 's':
+        element_id = 'semantics'
+        break;
+      default:
+        element_id = null
+    }
+
+    if (element_id != null)
+    {
+        toggle_edit();
+        $('#'+element_id).collapse('show');
+        $('#'+element_id)[0].scrollIntoView();
+    }
+
+};
+
+</script>
+
+    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit_color.js"></script>
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
@@ -183,6 +222,65 @@
     </script>
 {% endblock %}
 
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <style>
+        #panel-expand-collapse-btn-group.affix {
+            position:fixed;
+        }
+    </style>
+<style>
+.preview {
+    background-color: white !important;
+    height: 40;
+    width: auto;
+    position: relative;
+    padding: 0 0 0 0 !important;
+}
+
+select option {
+    background-color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.bootstrap-select.btn-group .dropdown-menu li a:hover {
+    color: blue !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.dropdown-menu {
+    display: visible !important;
+    z-index: 5;
+    box-shadow: 0 10px 10px #333;
+}
+
+.dropdown-item:active{
+    color: blue;
+    background-color: darkviolet;
+}
+
+.bootstrap-select {
+    color: black !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+</style>
+<style>
+.form-group {
+    background-color: white;
+    color: black;
+}
+option:not(:checked) {
+    background-color: white !important;
+    color: #000;
+}
+</style>
+
+{% endblock %}
 
 {% block content %}
 
@@ -475,12 +573,12 @@
 
             </tr>
 
-            {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+            {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
             <tr>
                 <th>
                     {% trans "Annotation ID Gloss" %} ({{ lang }})
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translations.0.text|safe }}</td>
+                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translation }}</td>
                 <td>
                     {% if gloss.simultaneous_morphology.all.count > 0 %}
 
@@ -513,14 +611,14 @@
                 <th>
                     {% trans "Translation equivalents for" %} {{ lang }}
                 </th>
-                <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' colspan="2">{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' >{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td><td/>
             </tr>
             {% endfor %}
 
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th>
                     <td class="edit edit_{{kind}}" id='{{name}}'
-                        value='{{value}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td></tr>
+                        value='{{value}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}</td><td/></tr>
             {% endfor %}
 
         </table>
@@ -826,7 +924,7 @@
 		    {% for value,name,label,kind in phonology_fields %}
                 {% if name == 'handedness' %}
                     <tr class="empty_row">
-                        <th/><th/><th>WD</th><th>WP</th>
+                        <th/><th style="width:500px;"></th><th>WD</th><th>WP</th>
                     </tr>
                     {% if value == '-' or value == ' ' or value == '' or value == None %}
                     <tr class="empty_row">
@@ -1064,7 +1162,7 @@
                     <tr id='row_{{rel.id}}'>
                         {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                         {% if "change_dataset" in dataset_perms %}
-                        <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}'><span class='glyphicon glyphicon-trash relation_delete'></span></td>
+                        <td class='edit edit_relation_delete' id='relationdelete_{{rel.id}}' value="delete"><span class='glyphicon glyphicon-trash relation_delete'></span></td>
                         {% else %}
                         <td></td>
                         {% endif %}
@@ -1128,7 +1226,7 @@
                     <tr id='foreign_{{rel.id}}'>
                         {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
                         {% if "change_dataset" in dataset_perms %}
-                        <td class='edit edit_foreign_delete' id='relationforeign-delete_{{rel.id}}'><span class='glyphicon glyphicon-trash relationtoforeignsign_delete'></span></td>
+                        <td class='edit edit_foreign_delete' id='relationforeign-delete_{{rel.id}}' value="delete"><span class='glyphicon glyphicon-trash relationtoforeignsign_delete'></span></td>
                         {% else %}
                         <td></td>
                         {% endif %}
@@ -1163,44 +1261,6 @@
     {% endif %}
 
 
-        <div class="panel panel-default">
-            <div class='panel-heading'>
-                <div class='panel-title'>
-                    <a data-toggle='collapse' href='#frequency'>{% trans "Frequency" %}</a>
-                    {% if tokNo == 1 %}
-                    <div class="pull-right">
-                    <span id="freqency-one-star-icon">
-                        <img id='frequency-one-star' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                    </span>
-                    </div>
-                    {% elif tokNo > 1 and tokNo < 6 %}
-                    <div class="pull-right">
-                    <span id="freqency-two-stars-icon">
-                        <img id='frequency-two-stars_1' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                        <img id='frequency-two-stars_2' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                    </span>
-                    </div>
-                    {% elif tokNo > 5 %}
-                    <div class="pull-right">
-                    <span id="freqency-three-stars-icon">
-                        <img id='frequency-three-stars_1' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                        <img id='frequency-three-stars_2' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                        <img id='frequency-three-stars_3' src='{{ STATIC_URL }}images/black_star.png' style="width:20px; height:auto; margin: 0px;">
-                    </span>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            <div id='frequency' class='panel-collapse collapse'>
-                <table class='table table-condensed'>
-                    {% for value,name,label,kind in frequency_fields %}
-                    <tr><th>{{label}}</th><td id='{{name}}'>{% value value %}</td></tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </div>
-
-
     <!-- Publication status -->
     <div class="panel panel-default">
         <div class='panel-heading'>
@@ -1228,7 +1288,7 @@
                 {% endif %}
 
                 {% for value,name,label,kind in publication_fields %}
-	            <tr {% if value == None or value == False %} class="empty_row" {% endif %}>
+	            <tr>
                       <th>{{label}}</th>
                       <td class="edit edit_{{kind}}" id='{{name}}'
                           value='{{value}}'>{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
@@ -1402,7 +1462,7 @@
                     <td><a {% if not media_okay %}
 				            disabled onclick="return false;" style="color:rgb(150,150,150);"
 			                {% endif %}
-				            download="{{ file_name }}" href="{{ URL }}{{ PREFIX_URL }}{{ path }}">Download</a>
+				            download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">Download</a>
                     </td>
                     <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>

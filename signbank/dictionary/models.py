@@ -865,19 +865,71 @@ class Gloss(models.Model):
     def data_datasets(self):
         # for use in displaying frequency for a gloss in chart format in the frequency templates
         # the frequency fields are put into a dictionary structure
+
+        # data_datasets is a structure used in the FrequencyView template by chartjs
+        # it takes the form of a list of dictionaries with predefined entries:
+        #      'label' of a category and
+        #      'data' for the category.
+        # the data entry is a list of counts to be shown for the label category across regions
+        # each dictionary in the list contains data to be shown for the regions:
+        # [ { 'label' : 'Occurrences',
+        #     'data' : [ < list of gloss usage occurrences per region > ]
+        #   },
+        #   { 'label' : 'Signers',
+        #     'data' : [ < list of count of signers per regions > ]
+        #    } ]
+
+        # the total_occurrences value is used in the template to size the length of the chart axis
+        # Initialise return variables
         data_datasets = []
+        total_occurrences = 0
+
+        # Prepare counters
+        count_speakers_per_region = {}
+        frequency_per_region = {}
+        gloss_frequency_per_region = {}
+        speakers_per_region = {}
+
+        try:
+            frequency_regions = self.lemma.dataset.frequency_regions()
+        except (ObjectDoesNotExist, AttributeError):
+            return (total_occurrences, data_datasets)
+
+        frequency_objects = self.glossfrequency_set.all()
+
+        # the first loop tallies up the frequency data from the gloss frequency objects
+        for r in frequency_regions:
+            frequency_objects_at_location = frequency_objects.filter(speaker__location=r)
+            gloss_frequency_per_region[r] = frequency_objects_at_location
+            count_speakers_per_region[r] = frequency_objects_at_location.count()
+            frequency_per_region[r] = 0
+            speakers_per_region[r] = []
+            for frequency_obj_at_location in frequency_objects_at_location:
+                frequency_per_region[r] += frequency_obj_at_location.frequency
+                speaker = frequency_obj_at_location.speaker.identifier
+                if speaker not in speakers_per_region[r]:
+                    speakers_per_region[r].append(speaker)
+
+        # the second loop puts the data in the output structure
         for c in settings.FREQUENCY_CATEGORIES:
-            dataset_dict = {}
-            dataset_dict['label'] = c
-            dataset_dict['data'] = []
-            for r in settings.FREQUENCY_REGIONS:
-                field_r_c = settings.FREQUENCY_FIELDS[r][c]
-                k_value = getattr(self, field_r_c)
-                if k_value == None:
-                    k_value = 0
-                dataset_dict['data'].append(k_value)
-            data_datasets.append(dataset_dict)
-        return data_datasets
+            if c == "Occurences":
+                dataset_dict = {}
+                dataset_dict['label'] = c
+                dataset_dict['data'] = []
+                for r in frequency_regions:
+                    k_value = frequency_per_region[r]
+                    dataset_dict['data'].append(k_value)
+                    total_occurrences += k_value
+                data_datasets.append(dataset_dict)
+            elif c == "Signers":
+                dataset_dict = {}
+                dataset_dict['label'] = c
+                dataset_dict['data'] = []
+                for r in frequency_regions:
+                    k_value = len(speakers_per_region[r])
+                    dataset_dict['data'].append(k_value)
+                data_datasets.append(dataset_dict)
+        return (total_occurrences, data_datasets)
 
     def has_frequency_data(self):
 
@@ -887,25 +939,26 @@ class Gloss(models.Model):
 
     def speaker_data(self):
 
-        glossfrequency_objects = self.glossfrequency_set.all()
+        # returns a dictionary for this gloss of all the speaker details of speakers signing this gloss
+        # in the corpus to which this gloss belongs
 
-        # this is a list with duplicates
+        # two extra categories are used that are not currently displayed in the frequency table
+        SEX_CATEGORIES = ['Female', 'Male', 'Other']
+        AGE_CATEGORIES = ['< 25', '25 - 35', '36 - 65', '> 65', 'Unknown Age']
+
+        # get frequency objects for this gloss
+        glossfrequency_objects = self.glossfrequency_set.all()
+        # collect the speakers
         speakers_with_gloss = [ gfo.speaker for gfo in glossfrequency_objects ]
+        # remove duplicates
+        speakers_with_gloss = list(set(speakers_with_gloss))
 
         # for the results, Other and Unknown Age are also tallied so that
         # the total number of speakers for the gloss is the same for gender and age
         # the interface needs this for showing percentages as well as raw data
-
         speaker_data = {}
-        speaker_data['Male'] = 0
-        speaker_data['Female'] = 0
-        speaker_data['Other'] = 0
-        speaker_data['< 25'] = 0
-        speaker_data['25 - 35'] = 0
-        speaker_data['36 - 65'] = 0
-        speaker_data['> 65'] = 0
-        speaker_data['Unknown Age'] = 0
-        speaker_data['Total'] = 0
+        for i_key in SEX_CATEGORIES + AGE_CATEGORIES + ['Total']:
+            speaker_data[i_key] = 0
 
         for speaker in speakers_with_gloss:
             if speaker.gender == 'm':
@@ -931,15 +984,20 @@ class Gloss(models.Model):
 
 
     def speaker_age_data(self):
+        # this method returns a dictionary mapping ages
+        # to number of speakers of that age that sign the gloss
 
+        # get frequency objects for this gloss
         glossfrequency_objects = self.glossfrequency_set.all()
-
-        # this is a list with duplicates
+        # collect the speakers
         speakers_with_gloss = [ gfo.speaker for gfo in glossfrequency_objects ]
+        # remove duplicates
+        speakers_with_gloss = list(set(speakers_with_gloss))
 
         speaker_age_data = {}
 
         for speaker in speakers_with_gloss:
+            # the resulting dictionary is going to be used in javascript so convert to string
             speaker_age = str(speaker.age)
             if speaker_age in speaker_age_data.keys():
                 speaker_age_data[speaker_age] += 1
@@ -1032,28 +1090,39 @@ class Gloss(models.Model):
         # the self object is included in the results
 
         # Build query
+        # the stems are language, text pairs
+        # the variant patterns to be searched for have alternative "-<letter> or "-<number>" patterns.
         this_sign_stems = self.get_stems()
+
         this_sign_dataset = self.lemma.dataset
         this_sign_language = self.lemma.dataset.default_language
         queries = []
         for this_sign_stem in this_sign_stems:
-            this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
-            queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
-                             lemma__dataset=this_sign_dataset, annotationidglosstranslation__language=this_sign_language))
-        if len(queries) > 1:
-            query = queries.pop()
-            for q in queries:
-                query |= q
-        else:
-            query = queries[0]
+            this_matches = r'^' + re.escape(this_sign_stem[1]) + r'$'
+            queries.append(Q(annotationidglosstranslation__text__regex=this_matches, annotationidglosstranslation__language=this_sign_language,
+                             lemma__dataset=this_sign_dataset))
+            this_also_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
+            queries.append(Q(annotationidglosstranslation__text__regex=this_also_matches, annotationidglosstranslation__language=this_sign_language,
+                             lemma__dataset=this_sign_dataset))
+            this_even_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[1-9]$'
+            queries.append(Q(annotationidglosstranslation__text__regex=this_even_matches, annotationidglosstranslation__language=this_sign_language,
+                             lemma__dataset=this_sign_dataset))
 
-        other_relations_of_sign = self.other_relations()
-        other_relation_objects = [x.target for x in other_relations_of_sign]
-
+        merged_query_expression = Q()
         if queries:
-            pattern_variants = Gloss.objects.filter(query).exclude(id__in=other_relation_objects)
+            # queries list is non-empty
+            # remove one Q expression and put it in merged_query_expression
+            merged_query_expression = queries.pop()
+            for q in queries:
+                # iterate  over the remaining Q expressings or-ing them with the rest
+                merged_query_expression |= q
+
+        if merged_query_expression:
+            # exclude glosses that have a relation to this gloss
+            related_gloss_ids = [relation.target.id for relation in self.other_relations()]
+            pattern_variants = Gloss.objects.filter(merged_query_expression).exclude(id__in=related_gloss_ids).distinct()
         else:
-            pattern_variants = []
+            pattern_variants = [ self ]
         return pattern_variants
 
     def other_relations(self):
@@ -1091,7 +1160,9 @@ class Gloss(models.Model):
 
     def get_stems(self):
 
-        stems = [(x.language, x.text[:-2]) for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-']
+        this_sign_language = self.lemma.dataset.default_language
+        stems = [(x.language, x.text[:-2])
+                 for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-' and x.language == this_sign_language ]
 
         return stems
 
@@ -2173,6 +2244,14 @@ class Dataset(models.Model):
 
         return users_who_can_change_dataset
 
+    def frequency_regions(self):
+
+        gf_objects = GlossFrequency.objects.filter(gloss__lemma__dataset=self)
+        regions = gf_objects.values('speaker__location').distinct()
+        frequency_regions = [ v['speaker__location'] for v in regions ]
+        # the order of the reqions needs to be constant everywhere in the code. How?
+        return frequency_regions
+
     def generate_frequency_dict(self, language_code):
 
         codes_to_adjectives = dict(settings.LANGUAGES)
@@ -2431,9 +2510,27 @@ class Speaker(models.Model):
     location = models.CharField(max_length=100)
     handedness = models.CharField(blank=True,choices=[('Right','r'),('Left','l'),('Ambidextrous','a')],max_length=1)
 
+    def __str__(self):
+        try:
+            (participant, corpus) = self.identifier.rsplit('_', 1)
+        except:
+            participant = self.identifier
+        return participant
+
+    def participant(self):
+        try:
+            (participant, corpus) = self.identifier.rsplit('_', 1)
+        except:
+            participant = self.identifier
+        return participant
+
 class GlossFrequency(models.Model):
 
     speaker = models.ForeignKey("Speaker")
     document = models.ForeignKey("Document")
     gloss = models.ForeignKey("Gloss")
     frequency = models.IntegerField()
+
+    def __str__(self):
+
+        return str(self.gloss.id) + ' ' + self.document.identifier + ' ' + self.speaker.identifier + ' ' + str(self.frequency)

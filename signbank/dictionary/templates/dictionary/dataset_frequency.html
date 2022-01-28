@@ -1,0 +1,363 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load has_group %}
+{% load bootstrap3 %}
+
+{% load guardian_tags %}
+
+
+{% block extrajs %}
+
+    <script type='text/javascript'>
+    var url = '{{PREFIX_URL}}';
+    var language_code = '{{ LANGUAGE_CODE }}';
+    var csrf_token = '{{csrf_token}}';
+    var edit_post_url = '{{PREFIX_URL}}/datasets/frequency/{{dataset.id}}';
+    var document_identifiers = {{ document_identifiers | safe }};
+
+    // setup requried for Ajax POST
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+
+
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrf_token);
+            }
+        }
+    });
+
+        function update_document(el) {
+            var this_document = $(el).attr('value');
+            var lookup = "#toelichting_"+this_document;
+            $.ajax({
+                url : url + "dictionary/update_corpus_document_counts/"+{{dataset.id}}+ "/" + this_document + "/",
+                datatype: "json",
+                type: "POST",
+                async: true,
+                success : function(result) {
+                    $(lookup).html('');
+                    $(lookup).append(result);
+                }
+            });
+        };
+
+    $(document).ready(function() {
+
+    });
+    </script>
+
+<style>
+list {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+}
+dl:after {
+    content: none;
+}
+dl {
+    margin-bottom: 0px;
+}
+dt {
+    margin-left: 0px;
+}
+dd {
+    margin-left: 0px;
+}
+
+.list-group-item.active {
+    background-color: #fff;
+    color: #000;
+}
+.list-group-item.active:hover {
+    color: #000;
+}
+.list-group-item {
+    color: gray;
+}
+.list-group-item:hover {
+    color: #428bca;
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<h3>{% trans "Dataset Corpus Overview" %}</h3>
+
+{% if user.is_anonymous %}
+
+    <p>{% trans "Please login to use this functionality." %}</p>
+
+{% elif not corpus or not speakers or not documents %}
+    <div style="width:1200px">
+    <table class='table'>
+        <tr><th>{% trans "Dataset" %}</th><td>{{dataset.name}}</td></tr>
+        <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
+        <tr><th>{% trans "Sign Language" %}</th><td>{{dataset.signlanguage}}</td></tr>
+        {% if not corpus %}
+        <tr>
+            <th style="width:200px;">{% trans "Corpus" %}</th>
+            <td>{% trans "There is no corpus for this dataset." %}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th style="width:200px;">{% trans "Metadata CSV" %}</th>
+
+            <td id='dataset_{{dataset.acronym}}_metadata' >
+                {% if dataset.get_metadata_path %}
+                {% url 'dictionary:protected_media' '' as protected_media_url %}
+                    <a download="{{dataset.acronym}}_metadata.csv" href="{{protected_media_url}}{{ dataset.metadata_url }}"
+                                style="font-style: bold;">{{dataset.acronym}}_metadata.csv</a>
+                {% else %}
+                <p>{% trans "There is no metadata CSV file for this dataset." %}</p>
+
+                <p>A metadata file can be uploaded by the Dataset Manager via the Manage Datasets page.</p>
+
+                <p>The metadata CSV currently supports:<br>
+                        <div class="container" >
+                          <table class="justify-content:center">
+                            <tr>
+                                <td align='right'>Signer ID</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Used in Dataset EAF files" %}</td>
+                            </tr>
+                            <tr>
+                                <td align='right'>Region</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Geographical region" %}</td>
+                            </tr>
+                            <tr>
+                                <td align='right'>Age</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Age at time of recording" %}</td>
+                            </tr>
+                            <tr>
+                                <td align='right'>Gender</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Male (m), Female (f), Other (o)" %}</td>
+                            </tr>
+                            <tr>
+                                <td align='right'>Handedness</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Right (r), Left (l), Ambidextrous (a), Unknown" %}</td>
+                            </tr>
+                          </table>
+                        </div>
+                </p>
+                <p>The header row of the CSV file should be (using tab as separator):<br/>
+                <pre>
+<code>
+Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
+</code>
+                </pre>
+                </p>
+        {% endif %}
+            </td>
+        </tr>
+
+        <tr>
+          <th style="width:200px;">{% trans "EAF Files" %}</th>
+          <td >
+              {% if dataset.uploaded_eafs %}
+              {% url 'dictionary:protected_media' '' as protected_media_url %}
+              <div name="uploaded_eaf_files"
+                    style="height:120px; overflow-y:auto;display:block;">
+                  <ul class="list-group-hover" style="padding: 0;">
+                      <li class="list-group-item active" style="padding: 0;">{% trans "File" %}</li>
+              {% for eaf_name in dataset.uploaded_eafs %}
+              <li class="list-group-item" style="padding: 0;">{{eaf_name}}</li>
+              {% endfor %}
+                      </ul>
+              </div>
+              {% else %}
+              <p>{% trans "There are no EAF files for this dataset." %}</p>
+              <p>EAF files can be uploaded by the Dataset Manager via the Manage Datasets page.</p>
+              {% endif %}
+          </td>
+        </tr>
+    </table>
+        {% if dataset.get_metadata_path and dataset.uploaded_eafs %}
+        {% get_obj_perms request.user for dataset as "dataset_perms" %}
+        {% if "change_dataset" in dataset_perms %}
+        {% if not corpus %}
+        <form name='create_corpus_form' id='create_corpus_form' method='get'>
+            <div class="hidden">
+                <input name='dataset_name' class='form-control' value='{{dataset.acronym}}' >
+            </div>
+            <div class='btn-group'>
+                <button id="create_corpus" class="btn btn-primary" type="submit" name='create_corpus' value='{{dataset.acronym}}'>{% trans "Create Corpus" %}</button>
+            </div>
+        </form>
+        {% else %}
+        <form name='create_corpus_form' id='update_corpus_form' method='get'>
+            <div class="hidden">
+                <input name='dataset_name' class='form-control' value='{{dataset.acronym}}' >
+            </div>
+            <div class='btn-group'>
+                <button id="update_corpus" class="btn btn-primary" type="submit" name='update_corpus' value='{{dataset.acronym}}'>{% trans "Update Corpus" %}</button>
+            </div>
+        </form>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+    </div>
+    {% else %}
+    <div style="width:1200px">
+    <table class='table'>
+        <tr><th>{% trans "Dataset" %}</th><td>{{dataset.name}}</td></tr>
+        <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
+        <tr><th>{% trans "Sign Language" %}</th><td>{{dataset.signlanguage}}</td></tr>
+
+        <tr>
+          <th style="width:200px;">{% trans "Speakers in Metadata" %}</th>
+          <td >
+              {% if speakers %}
+              <ul class="list-group-hover" style="padding: 0;">
+                 <dl class="row list-group-item active"  style="width:1008px; padding: 0;">
+                      <dt class="col-sm-2">{% trans "Identifier" %}</dt>
+                      <dt class="col-sm-2">{% trans "Gender" %}</dt>
+                      <dt class="col-sm-1">{% trans "Age" %}</dt>
+                      <dt class="col-sm-4">{% trans "Location" %}</dt>
+                      <dt class="col-sm-3">{% trans "Handedness" %}</dt>
+                  </dl>
+              <list name="speaker_tuples"
+                    style="height:110px; display:block;">
+
+              {% for identifier, gender, age, location, handedness in speakers %}
+                  <dl class="row list-group-item" style="padding: 0;">
+                      <dd class="col-sm-2">{{identifier}}</dd>
+                      <dd class="col-sm-2">{{gender}}</dd>
+                      <dd class="col-sm-1">{{age}}</dd>
+                      <dd class="col-sm-4">{{location}}</dd>
+                      <dd class="col-sm-3">{{handedness}}</dd>
+                  </dl>
+              {% endfor %}
+              </list>
+              </ul>
+              {% else %}
+              <p>{% trans "No speakers imported." %}</p>
+              {% endif %}
+          </td>
+        </tr>
+        <!--  This is an extra panel showing what documents the speaker appears in. It is too slow for NGT. -->
+<!--                <tr>-->
+<!--          <th style="width:200px;">{% trans "Speakers in Documents" %}</th>-->
+<!--          <td >-->
+<!--              {% if speakers_in_documents %}-->
+<!--              <ul class="list-group-hover" style="padding: 0;">-->
+<!--                 <dl class="row list-group-item active"  style="width:1008px; padding: 0;">-->
+<!--                      <dt class="col-sm-2">{% trans "Identifier" %}</dt>-->
+<!--                      <dt class="col-sm-10">{% trans "Appears in Documents" %}</dt>-->
+<!--                  </dl>-->
+<!--              <list name="speaker_tuples"-->
+<!--                    style="height:84px; display:block;">-->
+
+<!--              {% for identifier, speaker_appears_in_documents in speakers_in_documents %}-->
+<!--                  <dl class="row list-group-item" style="padding: 0;">-->
+<!--                      <dd class="col-sm-2">{{identifier}}</dd>-->
+<!--                      <dd class="col-sm-10">{% for doc in speaker_appears_in_documents %}{{doc}}{% if not forloop.last %}, {% endif %}{% endfor %}</dd>-->
+<!--                  </dl>-->
+<!--              {% endfor %}-->
+<!--              </list>-->
+<!--              </ul>-->
+<!--              {% else %}-->
+<!--              <p>{% trans "Speakers in metafile not found in documents. Update corpus, update metafile, or upload more documents." %}</p>-->
+<!--              {% endif %}-->
+<!--          </td>-->
+<!--        </tr>-->
+        <tr>
+            <td>
+            <form name='process_speakers_form' id='process_speakers_form' method='get'>
+                <div class="hidden">
+                    <input name='dataset_name' class='form-control' value='{{dataset.acronym}}' >
+                </div>
+                <div class='btn-group'>
+                    <button id="process_speakers" class="btn btn-primary" type="submit" name='process_speakers'
+                            value='{{dataset.acronym}}'>{% if speakers %}{% trans "Refresh Metadata" %}{% else %}{% trans "Process Metadata" %}{% endif %}</button>
+                </div>
+            </form>
+            </td>
+        </tr>
+        <tr>
+          <th style="width:200px;">{% trans "Documents" %}</th>
+          <td >
+              {% if documents %}
+              <ul class="list-group-hover" style="padding: 0;">
+                 <dl class="row list-group-item active"  style="width:1008px; padding: 0;">
+                      <dt class="col-sm-2">{% trans "Document" %}</dt>
+                      <dt class="col-sm-2">{% trans "Creation Date" %}</dt>
+                      <dt class="col-sm-2">{% trans "Number of Glosses" %}</dt>
+                      <dt class="col-sm-2">{% trans "Refresh" %}</dt>
+                      <dt class="col-sm-2">{% trans "Comment" %}</dt>
+                  </dl>
+              <list name="document_tuples"
+                    style="height:146px; display:block;">
+              {% for identifier, creation_time, number_of_glosses, other_dataset in documents %}
+                  <dl id="document_{{identifier}}" class="row list-group-item" style="padding: 0;">
+                      <dd class="col-sm-2">{{identifier}}</dd>
+                      <dd class="col-sm-2">{{creation_time}}</dd>
+                      <dd class="col-sm-2">{{number_of_glosses}}</dd>
+                      <dd class="col-sm-2">
+                   {% csrf_token %}
+                   <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
+                            <div class='btn-group' >
+                                <button id="update_document_{{identifier}}" class="btn btn-primary" method='post'
+                                        onclick='return update_document(this)'
+                                        style="padding-top: 0; padding-bottom: 0; margin-top: 0;"
+                                        name='update_document'
+                                        value='{{identifier}}'>{{identifier}}</button>
+                            </div>
+                      </dd>
+                      <dd class="col-sm-2" id='toelichting_{{identifier}}'>
+                      </dd>
+                  </dl>
+              {% endfor %}
+              </list>
+              </ul>
+              {% else %}
+              <p>{% trans "No documents found." %}</p>
+              {% endif %}
+          </td>
+        </tr>
+    </table>
+    {% if new_eaf_files %}
+    <div style="width:1200px">
+    <table class='table'>
+        <tr>
+          <th style="width:200px;">{% trans "New EAF Files" %}</th>
+          <td >
+
+              {% url 'dictionary:protected_media' '' as protected_media_url %}
+              <div name="new_eaf_files"
+                    style="height:80px; overflow-y:auto;display:block;">
+                  <ul class="list-group-hover" style="padding: 0;">
+                      <li class="list-group-item active" style="padding: 0;">{% trans "File" %}</li>
+                      {% for eaf_name in new_eaf_files %}
+                      <li class="list-group-item" style="padding: 0;">{{eaf_name}}</li>
+                      {% endfor %}
+                  </ul>
+              </div>
+          </td>
+        </tr>
+    </table>
+    </div>
+    {% endif %}
+    {% if dataset.get_metadata_path and dataset.uploaded_eafs %}
+    {% if request.user|has_group:"Dataset_Manager" %}
+    {% get_obj_perms request.user for dataset as "dataset_perms" %}
+    {% if "change_dataset" in dataset_perms %}
+    <form name='update_documents_form' id='update_documents_form' method='get'>
+        <div class="hidden">
+            <input name='dataset_name' class='form-control' value='{{dataset.acronym}}' >
+        </div>
+        <div class='btn-group'>
+            <button id="update_documents" class="btn btn-primary" type="submit"
+                    name='update_corpus' value='{{dataset.acronym}}'>{% trans "Refresh All Documents" %}</button>
+        </div>
+    </form>
+    {% endif %}
+    {% endif %}
+    {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,3 +1,4 @@
+
 (function ($) {
 	$.fn.editable = function (target, options) {
 		if ('disable' == target) {
@@ -41,7 +42,8 @@
 		settings.autowidth = 'auto' == settings.width;
 		settings.autoheight = 'auto' == settings.height;
 		return this.each(function () {
-			var self = this; var savedwidth = $(self).width();
+			var self = this;
+			var savedwidth = $(self).width();
 			var savedheight = $(self).height();
 			$(this).data('event.editable', settings.event);
 			if (! $.trim($(this).html())) {
@@ -57,6 +59,7 @@
 				if (false === onedit.apply(this,[settings, self])) {
 					return;
 				}
+				hide_other_forms(this.id);
 				e.preventDefault();
 				e.stopPropagation();
 				if (settings.tooltip) {
@@ -189,8 +192,8 @@
 								}
 								$(self).html(settings.indicator);
 								var ajaxoptions = {
-									type: 'POST', data: submitdata, dataType: 'html', url: settings.target, success: function (result, status) {
-										if (ajaxoptions.dataType == 'html') {
+									type: 'POST', data: submitdata, datatype: 'text', url: settings.target, success: function (result, status) {
+										if (ajaxoptions.datatype == 'text') {
 											$(self).html(result);
 										}
 										self.editing = false; callback.apply(self,[result, settings]);
@@ -255,6 +258,9 @@
 									form.submit();
 								}
 							});
+							submit.css({
+                                'display': 'inline-block', 'position': 'absolute', 'left': settings.width-150
+                            });
 						} else {
 							var submit = $('<button type="submit" />');
 							submit.html(settings.submit);
@@ -264,6 +270,9 @@
 					if (settings.cancel) {
 						if (settings.cancel.match(/>$/)) {
 							var cancel = $(settings.cancel);
+							cancel.css({
+                                'display': 'inline-block', 'position': 'absolute', 'left': settings.width-100
+                            });
 						} else {
 							var cancel = $('<button type="cancel" />');
 							cancel.html(settings.cancel);
@@ -314,36 +323,43 @@
 			},
 			select: {
 				element: function (settings, original) {
-					var dropdown_button = $('<button />');
-					dropdown_button.attr('id', 'preview_' + settings.params.field);
-					dropdown_button.attr('class', 'btn dropdown-toggle');
-					dropdown_button.attr('type', 'button');
-					dropdown_button.attr('data-toggle', 'dropdown');
-					dropdown_button.attr('aria-haspopup', 'true');
-					dropdown_button.attr('aria-expanded', 'false');
-					dropdown_button.css({
-						'display': 'inline-block', 'width': 'auto', 'color': 'red'
-					});
-					var td_value = $('#' + settings.params.field).attr('value');
-					if (settings.params.field == 'weakdrop' || settings.params.field == 'weakprop') {
-					    td_value = handedness_weak_drop_reverse[td_value];
-					};
-					if (td_value) {
-						dropdown_button.html(td_value);
-					} else {
-						dropdown_button.html('------');
-					};
-//					dropdown_button.click(function () {
-//						console.log('clicked button: ' + settings.params.field);
-//					});
-					$(this).append(dropdown_button);
+                    var dropdown_button = $('<button />');
+                    dropdown_button.attr('id', 'preview_' + settings.params.field);
+                    dropdown_button.attr('class', 'btn dropdown-toggle');
+                    dropdown_button.attr('type', 'button');
+                    dropdown_button.attr('data-toggle', 'dropdown');
+                    dropdown_button.attr('aria-haspopup', 'true');
+                    dropdown_button.attr('aria-expanded', 'false');
+                    dropdown_button.css({
+                        'display': 'inline-block', 'width': 'auto', 'color': 'red', 'position': 'relative', 'z-index': 0, 'left': '0px'
+                    });
+                    var td_value = $('#' + settings.params.field).attr('value');
+                    var row_class = $('#' + settings.params.field).parent().attr('class');
+                    if (settings.params.field == 'weakdrop' || settings.params.field == 'weakprop') {
+                        if (td_value == 'None' || td_value == 'True' || td_value == 'False') {
+                            // get translated display value
+                            td_value = handedness_weak_choices[td_value];
+                        }
+                    };
+                    if (row_class != 'empty_row' && td_value != 'None') {
+                        dropdown_button.html(td_value);
+                    } else {
+                        dropdown_button.html('------');
+                    };
+                    $(this).append(dropdown_button);
 					var select = $('<ul />');
 					select.attr('class', 'dropdown-menu shadow-sm p-3 mb-5 bg-white rounded');
 					select.attr('id', 'ul_' + settings.params.field);
+					if (settings.params.field == 'weakdrop' || settings.params.field == 'weakprop') {
+					    select.css({'overflow-y': 'scroll', 'list-style-type': 'none',
+					        'max-height': '200px', 'position': 'absolute', 'min-width': '80px'
+					    });
+					} else {
+					    select.css({'overflow-y': 'scroll', 'list-style-type': 'none',
+					        'max-height': '200px', 'position': 'absolute', 'z-index': 10
+					    });
+					};
 					select.attr('role', 'listbox');
-					select.css({
-						'overflow-y': 'scroll', 'list-style-type': 'none', 'max-height': '200px', 'position': 'static'
-					});
 					$(this).append(select);
 					return (select);
 				},
@@ -376,13 +392,12 @@
 					var chosen_offset = 0;
 					$('ul', this).children().each(function (index) {
 						var indie = (settings.params === undefined) ? -1: settings.params.a;
-						if ($(this).val() == json[ 'selected'] || $(this).data('value') == indie || $(this).text() == $.trim(original.revert)) {
+						if ($(this).data('value') == indie || $(this).text() == $.trim(original.revert)) {
 							$.extend(settings.submitdata, {
 								"value": settings.params.a
 							});
 							$(this).attr('class', 'dropdown-item active');
 							chosen_offset = index*20;
-							console.log('active offset: '+chosen_offset);
 						} else {
 							var this_val = $(this).data('value');
 							$(this).click(function () {
@@ -406,7 +421,6 @@
                         if (this_li) {
                             scroller = this_li.offsetTop;
                         };
-                        console.log('key press offset: ', scroller);
                         $('.dropdown-menu').animate({
                             scrollTop: scroller
                         }, 1000);
@@ -425,7 +439,7 @@
 		}
 	};
 	$.fn.editable.defaults = {
-		name: 'value', id: 'id', type: 'text', width: 'auto', height: 'auto', event: 'click.editable', onblur: 'cancel', loadtype: 'GET', loadtext: 'Loading...', placeholder: 'Click to edit', loaddata: {
+		name: 'value', id: 'id', type: 'text', width: 'auto', height: 'auto', event: 'click.editable', onblur: 'cancel', loadtype: 'POST', loadtext: 'Loading...', placeholder: 'Click to edit', loaddata: {
 		},
 		submitdata: {
 		},

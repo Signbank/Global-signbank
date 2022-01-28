@@ -43,8 +43,8 @@
          {% endif %}
     </div>
 
-    <table class='table table-condensed'>
-        <tr><th>{% trans "Dataset name" %}</th><td>{{dataset.name}}</td></tr>
+    <table class='table table-responsive'>
+        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:800px;">{{dataset.name}}</td></tr>
         <tr><th>{% trans "Acronym" %}</th><td class='edit edit_text' align="left" id='acronym' name='acronym'
                 value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td></tr>
         <tr><th>Number of glosses</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
@@ -86,9 +86,18 @@
                 {% endif %}
             </td>
         </tr>
+        {% if not user.is_anonymous %}
+        <tr><th>{% trans "Corpus" %}</th>
+            <td>
+                <a href="{{PREFIX_URL}}/datasets/frequency/{{dataset.id}}" >
+                    <button id='view_corpus' class='btn btn-primary' name='view_corpus'>{% trans "Corpus Overview" %}</button></a>
+            </td>
+        </tr>
+        {% endif %}
         <tr><th>{% trans "Description" %}</th>
             <td class='edit edit_area' align="left" id='description' name='description'
-                placeholder='{% trans "Description" %}' value="{{datasetform.description.value|default:''}}">{{dataset.description}}</td></tr>
+                placeholder='{% trans "Description" %}'
+                value="{{datasetform.description.value|default:''}}">{{dataset.description|wordwrap:120|linebreaks}}</td></tr>
         <tr><th>{% trans "Sign language" %}</th><td>{{dataset.signlanguage.name}} ({{dataset.signlanguage.description}})</td></tr>
         <tr><th>{% trans "Translation languages" %}</th>
             <td>{% for tl in dataset.translation_languages.all %}{{tl.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
@@ -98,13 +107,17 @@
                 value='{{datasetform.default_language.value}}'>{{dataset.default_language}}</td></tr>
         <tr><th>{% trans "Conditions for data citation and usage" %}</th>
             <td class='edit edit_area' id='conditions_of_use' name='conditions_of_use'
-                placeholder='{% trans "Conditions of use by others" %}' value="{{datasetform.conditions_of_use.value|default:''}}">{{dataset.conditions_of_use}}</td></tr>
+                placeholder='{% trans "Conditions of use by others" %}'
+                value="{{datasetform.conditions_of_use.value|default:''}}">
+                <p>{{dataset.conditions_of_use|wordwrap:120|linebreaks}}</p></td></tr>
         <tr><th>{% trans "Copyright statement" %}</th>
             <td class='edit edit_area' id='copyright' name='copyright'
-                placeholder='{% trans "Copyright statement" %}' value="{{datasetform.copyright.value|default:''}}">{{dataset.copyright}}</td></tr>
+                placeholder='{% trans "Copyright statement" %}'
+                value="{{datasetform.copyright.value|default:''}}">{{dataset.copyright|wordwrap:120|linebreaks}}</td></tr>
         <tr><th>{% trans "Reference" %}</th>
             <td class='edit edit_area' id='reference' name='reference'
-                placeholder='{% trans "Reference" %}' value="{{datasetform.reference.value|default:''}}">{{dataset.reference}}</td></tr>
+                placeholder='{% trans "Reference" %}'
+                value="{{datasetform.reference.value|default:''}}">{{dataset.reference|wordwrap:120|linebreaks}}</td></tr>
     </table>
 
     <div>

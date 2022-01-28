@@ -94,7 +94,7 @@ FREQUENCY_FIELDS = {
     },
 }
 
-TMP_DIR = '/var/www/signbank/live/writable/tmp'
+TMP_DIR = '/var/www/writable/tmp'
 
 #temp experiment
 SWITCH_TO_MYSQL = False 
