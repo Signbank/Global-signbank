@@ -387,6 +387,51 @@
 		  {% endfor %}
 		</tbody>
 
+
+		<thead>
+		   {% if gloss.paradigm_count %}
+			<tr>
+			   <th style="width:8em; color:darkred">{% trans "Handshape Paradigm" %}</th>
+
+			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
+			   <th style='width:12em'>{% trans "Dataset" %}</th>
+
+			   <th style='width:12em'>{% trans "Translation equivalents" %}</th>
+			   <th>{% trans "Handedness" %}</th>
+			   <th>{% trans "Strong hand" %}</th>
+			   <th>{% trans "Weak hand" %}</th>
+			   <th>{% trans "Location" %}</th>
+			   <th style='width:12em'>{% trans "Tags" %}</th>
+		  </tr>
+		 {% endif %}
+		</thead>
+		<tbody>
+		 {% for rel, target_display in otherrelations %}
+		  {% if rel.role == "paradigm" %}
+		  <tr>
+			  <td>{%if rel.target.get_image_path %}
+				  <div class="thumbnail_container">
+				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
+					  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_path}}">
+				  </a>
+				  </div>
+				  {% endif %}
+			  </td>
+			  <td id='paradigm_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
+			  <td id='paradigm_dataset'>{{rel.target.dataset}}</td>
+			  <td id='paradigm_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+					<td id='paradigm_handedness'>{{ rel.target.get_handedness_display }}</td>
+					<td id='paradigm_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
+					<td id='paradigm_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
+					<td id='paradigm_locprim'>{{ rel.target.get_locprim_display }}</td>
+			  {% load underscore_to_space %}
+			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+		  </tr>
+		  {% endif %}
+		  {% endfor %}
+		</tbody>
+
+
 		<thead>
 		   {% if gloss.seealso_count %}
 			<tr>
