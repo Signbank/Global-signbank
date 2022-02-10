@@ -909,7 +909,10 @@ class GlossListView(ListView):
             if '' in vals:
                 vals.remove('')
             if vals != []:
-                qs = qs.filter(**{ fieldnameQuery: vals })
+                if fieldnamemulti == 'semField':
+                    qs = qs.filter(semFieldShadow__in=vals)
+                else:
+                    qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
         fieldnames = [ f for f in fieldnames if f not in multiple_select_gloss_fields ]
@@ -1226,11 +1229,7 @@ class GlossDetailView(DetailView):
         context['StrongHand'] = self.object.domhndsh if strong_hand_obj else 0
         context['WeakHand'] = self.object.subhndsh
 
-        # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
-        context['SemanticFieldDefined'] = (int(self.object.semField) > 1) if self.object.semField else 0  # minimal machine value is 2
-        # context['ValenceDefined'] = (int(self.object.valence) > 1) if self.object.valence else 0          # minimal machine value is 2
-        # context['IconicImageDefined'] = self.object.iconImage                                             # exists if not emtpy
-
+        context['SemanticFieldDefined'] =  self.object.semFieldShadow.all().count() > 0
 
         next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
         if next_gloss == None:
@@ -2166,7 +2165,10 @@ class MorphemeListView(ListView):
             if '' in vals:
                 vals.remove('')
             if vals != []:
-                qs = qs.filter(**{ fieldnameQuery: vals })
+                if fieldnamemulti == 'semField':
+                    qs = qs.filter(semFieldShadow__in=vals)
+                else:
+                    qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
         fieldnames = [ f for f in fieldnames if f not in multiple_select_morpheme_fields ]
