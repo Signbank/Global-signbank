@@ -1,6 +1,6 @@
 asgiref==3.4.1
 attrs==17.4.0
-Django==1.11
+Django==2.2.27
 django-appconf==1.0.4
 django-bootstrap3==8.2.2
 django-colorfield==0.3.2
