@@ -1650,6 +1650,117 @@ class HandshapeTests(TestCase):
             self.assertEqual(changed_gloss.domhndsh, str(new_handshape.machine_value))
 
 
+class MultipleSelectTests(TestCase):
+
+    def setUp(self):
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        assign_perm('dictionary.search_gloss', self.user)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        self.user.save()
+
+    def create_semanticfield(self):
+
+        used_machine_values = [s.machine_value for s in SemanticField.objects.all()]
+        max_used_machine_value = max(used_machine_values)
+        new_machine_value = max_used_machine_value + 1
+        new_english_name = 'thisisanewtestsemanticfield_'+str(new_machine_value)+'_en'
+        dutch_language = Language.objects.get(language_code_2char='nl')
+        new_dutch_name = 'thisisanewtestsemanticfield_'+str(new_machine_value)+'_nl'
+
+        # English is the default language, included in the SemanticField object as 'name'
+        # Under the FieldChoice model, this used to be english_name
+        new_semanticfield = SemanticField(machine_value=new_machine_value, name=new_english_name)
+        new_semanticfield.save()
+
+        # Make a translation for Dutch since it is the other language of the test dataset
+        new_semanticfield_translation = SemanticFieldTranslation(semField=new_semanticfield, language=dutch_language, name=new_dutch_name)
+        new_semanticfield_translation.save()
+
+        # Create a corresponding legacy field of type semField in FieldChoice for the new SemanticField
+        # At the moment, the legacy fields are still used in Search routines
+        new_fieldchoice = FieldChoice(machine_value=new_machine_value,
+                                        field='semField',
+                                        english_name=new_english_name,
+                                        dutch_name=new_dutch_name,
+                                        chinese_name=new_english_name)
+        new_fieldchoice.save()
+
+        print('New semantic field ', new_semanticfield.machine_value, ' created: ', new_semanticfield.name)
+
+        return new_semanticfield
+
+
+    def test_SemanticField(self):
+
+        # Create the glosses
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        #Create a client and log in
+        client = Client(enforce_csrf_checks=False)
+        client.login(username='test-user', password='test-user')
+        assign_perm('view_dataset', self.user, test_dataset)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporaryidgloss_"+ language.language_code_2char,
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        new_semanticfield = self.create_semanticfield()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.handedness = 4
+        # save the gloss so it can be used in the ManyToMany relation of SemanticField added to the gloss below
+        new_gloss.save()
+
+        # make some annotations for the new gloss
+        # This is necessary to test Searching, which does a sort on the annotation for the gloss, it can't be non-existent or empty
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporaryannotationidgloss_' + language.language_code_2char
+            annotationIdgloss.save()
+
+        new_gloss.semFieldShadow.clear()
+        new_gloss.semFieldShadow.add(new_semanticfield)
+        new_gloss.save()
+
+        print('New gloss ', new_gloss.idgloss, ' created with semantic field ', new_semanticfield.name)
+        #Search on the new field
+        #It is multi-select so the semField parameter has [] after it
+        response = client.get('/signs/search/', {'semField[]':new_semanticfield.machine_value}, follow=True)
+
+        # check that the new gloss is found when searching on the new semantic field
+        print('Search for the gloss on semantic field.')
+        self.assertEqual(len(response.context['object_list']), 1)
+
+        # Add another semantic field to the gloss
+        new_semanticfield_2 = self.create_semanticfield()
+
+        new_gloss.semFieldShadow.add(new_semanticfield_2)
+        new_gloss.save()
+        print('Semantic field ', new_semanticfield_2.name, ' added to gloss.')
+
+        #Search on the new field
+        #It is multi-select so the semField parameter has [] after it
+        response = client.get('/signs/search/', {'semField[]':[ new_semanticfield.machine_value, new_semanticfield_2.machine_value] }, follow=True)
+
+        # check that the new gloss is found when searching on the new semantic field
+        print('Search for the gloss on both semantic fields.')
+        self.assertEqual(len(response.context['object_list']), 1)
+
+
 class FieldChoiceTests(TestCase):
 
     from reversion.admin import VersionAdmin
