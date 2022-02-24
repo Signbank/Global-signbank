@@ -12,7 +12,7 @@ class EmailBackend(ModelBackend):
     def authenticate(self, username=None, password=None): 
         if email_re.search(username):
             try: 
-                user = User.objects.get(email__iexact=username) 
+                user = User.objects.get(username__iexact=username)
                 if user.check_password(password): 
                     return user
             except User.DoesNotExist: 
