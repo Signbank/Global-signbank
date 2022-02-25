@@ -2448,12 +2448,13 @@ class testSettings(TestCase):
                         if setting_first_file not in all_settings_strings[second_file]:
                             comparison_table_first_not_in_second[first_file][second_file].append(setting_first_file)
 
+        second_file = 'default.py'
         for first_file in all_settings:
-            for second_file in all_settings:
-                # the default.py file is part of the installation (should this filename be a setting?)
-                # check that other settings files do not contain settings that are not in the default settings file
-                if first_file != second_file and second_file == 'default.py':
-                    self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
+            # the default.py file is part of the installation (should this filename be a setting?)
+            # check that other settings files do not contain settings that are not in the default settings file
+            if first_file != second_file:
+                print('first file: ', first_file, comparison_table_first_not_in_second[first_file][second_file])
+                self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
 
     def test_settings_field_choice_category(self):
         # this test checks that fieldnames in settings exist in the models
@@ -2963,17 +2964,48 @@ class MinimalPairsTests(TestCase):
         used_machine_values = [ h.machine_value for h in Handshape.objects.all() ]
         max_used_machine_value = max(used_machine_values)
 
-        # create two arbitrary new Handshapes
+        name_1 = 'testhandshape1'
+        name_2 = 'testhandshape2'
 
-        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name='thisisatemporarytesthandshape1',
-                                                                                dutch_name='thisisatemporarytesthandshape1',
-                                                                                chinese_name='thisisatemporarytesthandshape1')
+        # create two arbitrary new Handshapes and store the data in FieldChoice table
+
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name=name_1,dutch_name=name_1,chinese_name=name_1)
         self.test_handshape1.save()
 
-        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name='thisisatemporarytesthandshape2',
-                                                                                dutch_name='thisisatemporarytesthandshape2',
-                                                                                chinese_name='thisisatemporarytesthandshape2')
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name=name_2,dutch_name=name_2,chinese_name=name_2)
         self.test_handshape2.save()
+
+        # FieldChoice fields for Handshape are still used in MinimalPairs routines
+        self.new_fieldchoice_1 = FieldChoice(machine_value=max_used_machine_value+1,
+                                             field='Handshape',
+                                             english_name=name_1,dutch_name=name_1,chinese_name=name_1)
+        self.new_fieldchoice_1.save()
+
+        self.new_fieldchoice_2 = FieldChoice(machine_value=max_used_machine_value+2,
+                                        field='Handshape',
+                                        english_name=name_2,dutch_name=name_2,chinese_name=name_2)
+        self.new_fieldchoice_2.save()
+
+        # Store the translations in the global quick access table used in the template
+        global translated_choice_lists_table
+
+        codes_to_adjectives = dict(
+            [(language.lower().replace('_', '-'), adjective) for language, adjective in settings.LANGUAGES])
+
+        translations_for_handshape_1 = dict()
+        for (l_name, l_adjective) in codes_to_adjectives.items():
+            translations_for_handshape_1[l_name] = name_1
+
+        translations_for_handshape_2 = dict()
+        for (l_name, l_adjective) in codes_to_adjectives.items():
+            translations_for_handshape_2[l_name] = name_2
+
+        translated_choice_lists_table['domhndsh'][self.new_fieldchoice_1.machine_value] = translations_for_handshape_1
+        translated_choice_lists_table['domhndsh'][self.new_fieldchoice_2.machine_value] = translations_for_handshape_2
+
+        translated_choice_lists_table['subhndsh'][self.new_fieldchoice_1.machine_value] = translations_for_handshape_1
+        translated_choice_lists_table['subhndsh'][self.new_fieldchoice_2.machine_value] = translations_for_handshape_2
+
 
     def test_analysis_minimalpairs(self):
 
@@ -3128,7 +3160,7 @@ class MinimalPairsTests(TestCase):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': 2,
-                'domhndsh' : self.test_handshape1.machine_value,
+                'domhndsh' : str(self.test_handshape1.machine_value),
                 'locprim': 7,
                 'tokNo': 0,
                 'tokNoSgnr': 0
@@ -3144,20 +3176,11 @@ class MinimalPairsTests(TestCase):
                 annotationIdgloss.save()
             glosses[gloss_id] = new_gloss
 
-        # print('created glosses: ', glosses)
-
         # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
         # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
 
-        # pretend locprim hasn't been assigned
-        glosses[2].locprim = None
-        glosses[2].save()
-
         glosses[3].locprim = ''
         glosses[3].save()
-
-        glosses[4].locprim = '-'
-        glosses[4].save()
 
         # this is an errorneous None value
         glosses[5].locprim = 'None'
@@ -3168,17 +3191,11 @@ class MinimalPairsTests(TestCase):
         glosses[6].save()
         error_337_gloss_6 = 'ERROR_337'
 
-        glosses[7].locprim = 0
-        glosses[7].save()
-
-        glosses[8].locprim = '0'
-        glosses[8].save()
-
         # gloss 9 has an empty handedness, it has no minimal pairs
         glosses[9].handedness = None
         glosses[9].save()
 
-        glosses[10].domhndsh = self.test_handshape2.machine_value
+        glosses[10].domhndsh = str(self.test_handshape2.machine_value)
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
@@ -3190,13 +3207,13 @@ class MinimalPairsTests(TestCase):
         glosses[12].weakdrop = True
         glosses[12].save()
 
-        glosses[13].domhndsh = self.test_handshape2.machine_value
+        glosses[13].domhndsh = str(self.test_handshape2.machine_value)
         glosses[13].handedness = 4
         glosses[13].save()
 
-        glosses[14].domhndsh = self.test_handshape2.machine_value
+        glosses[14].domhndsh = str(self.test_handshape2.machine_value)
         glosses[14].handedness = 4
-        glosses[14].subhndsh = self.test_handshape2.machine_value
+        glosses[14].subhndsh = str(self.test_handshape2.machine_value)
         glosses[14].save()
 
         glosses_to_ids = {}
