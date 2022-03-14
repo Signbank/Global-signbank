@@ -2753,7 +2753,7 @@ class Corpus_Tests(TestCase):
         sp_per_document = dictionary_documents_to_speakers(self.test_dataset.acronym)
 
         for did in sp_per_document.keys():
-            speakers = document_to_speakers(did)
+            speakers = document_to_speakers(self.test_dataset.acronym, did)
             self.assertEqual(sp_per_document[did], speakers)
 
         gl_appear_in_documents = dictionary_glosses_to_documents(self.test_dataset.acronym)

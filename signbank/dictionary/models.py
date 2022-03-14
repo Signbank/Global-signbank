@@ -2189,12 +2189,12 @@ class Dataset(models.Model):
 
     def uploaded_eafs(self):
 
-        dataset_eaf_folder = WRITABLE_FOLDER + DATASET_EAF_DIRECTORY + '/' + self.acronym
+        # this is to move the file system commands out of models.py
+        from signbank.frequency import uploaded_eaf_paths, eaf_file_from_paths
 
-        uploaded_eafs = []
-        if os.path.isdir(dataset_eaf_folder):
-            for filename in os.listdir(dataset_eaf_folder):
-                uploaded_eafs.append(filename)
+        eaf_paths = uploaded_eaf_paths(self.acronym)
+        uploaded_eafs = eaf_file_from_paths(eaf_paths)
+
         uploaded_eafs.sort()
 
         return uploaded_eafs

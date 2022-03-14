@@ -22,6 +22,7 @@ from django.conf import settings
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
+from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -2293,13 +2294,45 @@ def upload_metadata(request):
 
     raise Http404('Incorrect request')
 
+
+def remove_eaf_files(request):
+    if request.method == "POST":
+
+        selected_paths = []
+        dataset_acronym = ''
+        for key in request.POST.keys():
+            if key == 'dataset_acronym':
+                dataset_acronym = request.POST['dataset_acronym']
+            if key.startswith('select_document:'):
+                value = request.POST[key]
+                selected_paths.append(value)
+        if dataset_acronym == '':
+            messages.add_message(request, messages.ERROR, _('No acronym for dataset.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+        try:
+            dataset = Dataset.objects.get(acronym=dataset_acronym)
+        except ObjectDoesNotExist:
+            messages.add_message(request, messages.ERROR, _('Dataset does not exist.'))
+            return HttpResponseRedirect(reverse('admin_dataset_view'))
+        # Check for 'change_dataset' permission
+        user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        if not user_change_datasets.exists() or dataset not in user_change_datasets:
+            messages.add_message(request, messages.ERROR, _("You are not authorized to remove eaf files."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER,DATASET_EAF_DIRECTORY,dataset_acronym)
+        for selected_path in selected_paths:
+            destination_location = dataset_eaf_folder + '/' + selected_path
+            os.remove(destination_location)
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
 def upload_eaf_files(request):
     if request.method == "POST":
 
         form = EAFFilesForm(request.POST,request.FILES)
-
         if form.is_valid():
 
+            folder = ''
             dataset_acronym = ''
 
             eaf_filenames_list = []
@@ -2311,29 +2344,96 @@ def upload_eaf_files(request):
                 messages.add_message(request, messages.ERROR, _('No eaf files found.'))
                 return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
-            # print('found files ', eaf_filenames_list)
-
             for key in request.POST.keys():
                 if key == 'dataset_acronym':
                     dataset_acronym = request.POST['dataset_acronym']
+                if key == 'dir_name':
+                    folder = request.POST.get('dir_name', '')
 
             if dataset_acronym == '':
                 messages.add_message(request, messages.ERROR, _('No acronym for dataset.'))
                 return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
+            try:
+                dataset = Dataset.objects.get(acronym=dataset_acronym)
+            except ObjectDoesNotExist:
+                messages.add_message(request, messages.ERROR, _('Dataset does not exist.'))
+                return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+            already_uploaded_eafs = dataset.uploaded_eafs()
+            document_identifiers_of_uploaded_eafs = document_identifiers_from_paths(already_uploaded_eafs)
+
+            (eaf_paths_dict, duplicates) = documents_paths_dictionary(dataset_acronym)
+
             if not os.path.isdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY):
                 os.mkdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY, mode=0o755)
 
-            dataset_eaf_folder = WRITABLE_FOLDER + DATASET_EAF_DIRECTORY + '/' + dataset_acronym
+            dataset_eaf_folder = os.path.join(WRITABLE_FOLDER,DATASET_EAF_DIRECTORY,dataset_acronym)
             if not os.path.isdir(dataset_eaf_folder):
                 os.mkdir(dataset_eaf_folder, mode=0o755)
 
+            if folder:
+                # this could have a side effect of creating an empty folder
+                # at a later step the files are checked to be eaf files
+                # incorrectly typed files are removed after creation, but not the folder
+                dataset_eaf_folder = os.path.join(dataset_eaf_folder,folder)
+                if not os.path.isdir(dataset_eaf_folder):
+                    os.mkdir(dataset_eaf_folder, mode=0o755)
+
+            # move uploaded files to appropriate location
             for f in request.FILES.getlist('file'):
-                next_eaf_file = dataset_eaf_folder + os.sep + f.name
+                next_eaf_file = os.path.join(dataset_eaf_folder,f.name)
                 f_handle = open(next_eaf_file, mode='wb+')
                 for chunk in f.chunks():
                     f_handle.write(chunk)
 
-            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+            # this import has limited usage, reduce its scope
+            import magic
+            # check whether anything should not have been uploaded
+            # check the type of the first chunk of the uploaded files
+            # check that the files do not already exist
+            ignored_files = []
+            duplicate_files = []
+            already_seen = []
+            import_twice = []
+            for new_file in eaf_filenames_list:
+                # duplicate_found = False
+                norm_filename = os.path.normpath(new_file)
+                split_norm_filename = norm_filename.split('.')
+                if len(split_norm_filename) == 1:
+                    # file has no extension
+                    wrong_format = True
+                else:
+                    extension = split_norm_filename[-1]
+                    wrong_format = (extension.lower() != 'eaf')
+                destination_location = os.path.join(dataset_eaf_folder,new_file)
+                file_basename = os.path.basename(new_file)
+                basename = os.path.splitext(file_basename)[0]
+                if basename in document_identifiers_of_uploaded_eafs or basename in eaf_paths_dict.keys():
+                    # check if the new file is in the same location
+                    new_file_location = os.path.join(folder,file_basename)
+                    if new_file_location not in eaf_paths_dict[basename]:
+                        duplicate_files.append(new_file)
+                if basename in already_seen:
+                    # potential conflict, the same file is being imported twice from different locations
+                    import_twice.append(new_file)
+                else:
+                    already_seen.append(basename)
 
+                magic_file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
+                if magic_file_type != 'text/xml' or wrong_format:
+                    # this file is not an eaf file or is missing an extension
+                    ignored_files.append(new_file)
+                    os.remove(destination_location)
+            if ignored_files:
+                message_string = ", ".join(ignored_files)
+                messages.add_message(request, messages.ERROR, _('Non-EAF file(s) ignored: ')+message_string)
+            if import_twice:
+                message_string = ", ".join(import_twice)
+                messages.add_message(request, messages.WARNING, _('File(s) encountered twice: ')+message_string)
+            if duplicate_files:
+                message_string = ", ".join(duplicate_files)
+                messages.add_message(request, messages.INFO, _('Already imported to different folder: ')+message_string)
+
+            return HttpResponseRedirect(reverse('admin_dataset_manager'))
     raise Http404('Incorrect request')

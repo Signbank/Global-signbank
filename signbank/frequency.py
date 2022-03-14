@@ -51,6 +51,7 @@ def get_gloss_from_frequency_dict(dataset_acronym, gloss_id_or_value):
         # if we return a gloss, it has a lemma and hence a dataset defined
         return gloss
     except (ValueError, ObjectDoesNotExist, MultipleObjectsReturned, TypeError):
+        # print('get gloss from frequency exception, gloss_id_or_value: ', gloss_id_or_value)
         query = Q(annotationidglosstranslation__text__iexact=gloss_id_or_value,
                   annotationidglosstranslation__language=language)
         qs = Gloss.objects.filter(lemma__dataset=dataset).filter(query)
@@ -84,25 +85,22 @@ def get_gloss_tokNoSgnr(dataset_acronym, gloss_id):
     return total_speakers
 
 def remove_document_from_corpus(dataset_acronym, document_identifier):
-    try:
-        glosses_to_update = {}
-        documents_with_identifier = Document.objects.filter(corpus__name=dataset_acronym, identifier=document_identifier)
-        for d_obj in documents_with_identifier:
-            gloss_frequency_objects = d_obj.glossfrequency_set.all()
-            for gf in gloss_frequency_objects:
-                if gf.gloss.id not in glosses_to_update.keys():
-                    glosses_to_update[gf.gloss.id] = gf.gloss
-                gf.delete()
-            d_obj.delete()
-        # update frequency counts stored in gloss fields tokNo and tokNoSgnr
-        for gid in glosses_to_update.keys():
-            glosses_to_update[gid].tokNo = get_gloss_tokNo(dataset_acronym, gid)
-            glosses_to_update[gid].tokNoSgnr = get_gloss_tokNoSgnr(dataset_acronym, gid)
-            glosses_to_update[gid].save()
-        return
-    except (ObjectDoesNotExist, MultipleObjectsReturned):
-        print('remove_document_from_corpus: not found: ', dataset_acronym, document_identifier)
-        return
+    print('Remove deleted document from corpus ', dataset_acronym, ': ', document_identifier)
+    glosses_to_update = {}
+    documents_with_identifier = Document.objects.filter(corpus__name=dataset_acronym, identifier=document_identifier)
+    for d_obj in documents_with_identifier:
+        gloss_frequency_objects = d_obj.glossfrequency_set.all()
+        for gf in gloss_frequency_objects:
+            if gf.gloss.id not in glosses_to_update.keys():
+                glosses_to_update[gf.gloss.id] = gf.gloss
+            gf.delete()
+        d_obj.delete()
+    # update frequency counts stored in gloss fields tokNo and tokNoSgnr
+    for gid in glosses_to_update.keys():
+        glosses_to_update[gid].tokNo = get_gloss_tokNo(dataset_acronym, gid)
+        glosses_to_update[gid].tokNoSgnr = get_gloss_tokNoSgnr(dataset_acronym, gid)
+        glosses_to_update[gid].save()
+    return
 
 def speaker_to_glosses(dataset_acronym, speaker_id):
     # maps a speaker id to glosses that occur in frequency data
@@ -248,8 +246,8 @@ def dictionary_documents_to_glosses(dataset_acronym):
     return documents_contain_glosses
 
 
-def document_to_speakers(document_id):
-    glosses_frequencies = GlossFrequency.objects.filter(document__identifier=document_id)
+def document_to_speakers(dataset_acronym, document_id):
+    glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym, document__identifier=document_id)
     speakers = [ fg.speaker.participant() for fg in glosses_frequencies]
     speakers = sorted(list(set(speakers)))
     return speakers
@@ -274,6 +272,80 @@ def dictionary_documents_to_speakers(dataset_acronym):
             documents_contain_speakers[document_id] = speakers
     return documents_contain_speakers
 
+def uploaded_eaf_paths(dataset_acronym, **kwargs):
+
+    if 'testing' in kwargs.keys():
+        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
+    else:
+        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+
+    uploaded_eafs = []
+    if os.path.isdir(dataset_eaf_folder):
+        for file_or_folder in os.listdir(dataset_eaf_folder):
+            dataset_subfolder = os.path.join(dataset_eaf_folder,file_or_folder)
+            if os.path.isfile(dataset_subfolder):
+                uploaded_eafs.append(dataset_subfolder)
+            else:
+                for filename in os.listdir(dataset_subfolder):
+                    subfolder_path = os.path.join(dataset_subfolder,filename)
+                    if os.path.isdir(subfolder_path):
+                        print('frequency:uploaded_eaf_paths: sub sub folder found: ', subfolder_path)
+                        continue
+                    else:
+                        uploaded_eafs.append(subfolder_path)
+
+    uploaded_eafs.sort()
+
+    return uploaded_eafs
+
+
+def documents_paths_dictionary(dataset_acronym, **kwargs):
+    # this variant is used to keep track of the paths associated with document files
+    # it also keeps track of whether duplicate files are found
+    if 'testing' in kwargs.keys():
+        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
+    else:
+        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+
+    uploaded_eafs_dict = {}
+    duplicate_document_identifiers = []
+    already_seen_document_identifiers = []
+    if os.path.isdir(dataset_eaf_folder):
+        for file_or_folder in os.listdir(dataset_eaf_folder):
+            dataset_subfolder = os.path.join(dataset_eaf_folder,file_or_folder)
+            if os.path.isfile(dataset_subfolder):
+                # eaf file at root level
+                file_basename = os.path.basename(dataset_subfolder)
+                basename = os.path.splitext(file_basename)[0]
+                if basename in already_seen_document_identifiers:
+                    duplicate_document_identifiers.append(basename)
+                    uploaded_eafs_dict[basename].append(file_basename)
+                else:
+                    already_seen_document_identifiers.append(basename)
+                    uploaded_eafs_dict[basename] = [file_basename]
+            else:
+                # subfolder found
+                for filename in os.listdir(dataset_subfolder):
+                    subfolder_path = os.path.join(dataset_subfolder,filename)
+                    if os.path.isdir(subfolder_path):
+                        # the directory should only have at most one tier
+                        # this could happen if somebody uploaded via the file system
+                        print('frequency:documents_paths_dictionary: sub sub folder found: ', subfolder_path)
+                        continue
+                    else:
+                        file_basename = os.path.basename(subfolder_path)
+                        basename = os.path.splitext(file_basename)[0]
+                        file_path = os.path.dirname(subfolder_path)
+                        directory = os.path.basename(file_path)
+                        if basename in already_seen_document_identifiers:
+                            duplicate_document_identifiers.append(basename)
+                            uploaded_eafs_dict[basename].append( os.path.join(directory,file_basename) )
+                        else:
+                            already_seen_document_identifiers.append(basename)
+                            uploaded_eafs_dict[basename] = [ os.path.join(directory,file_basename) ]
+    return (uploaded_eafs_dict, duplicate_document_identifiers)
+
+
 def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
     # this is a convenience function that determines which documents have been updated and which documents have been removed
     # however, glosses can be added and removed from the database, so whether an eaf file has been changed or not may be irrelevant
@@ -290,21 +362,21 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
         # No dataset corresponding to dataset acronym
         return ([],[],[])
 
-    uploaded_eaf_files = dataset.uploaded_eafs()
-
     try:
         corpus = Corpus.objects.get(name=dataset_acronym)
     except (ObjectDoesNotExist):
         corpus = None
 
+    uploaded_paths = uploaded_eaf_paths(dataset_acronym, **kwargs)
+
     eaf_file_paths_small_files = []
     eaf_file_paths_large_files = []
-    for filename in uploaded_eaf_files:
-        filesize = os.path.getsize(dataset_eaf_folder + os.sep + str(filename))
+    for filename in uploaded_paths:
+        filesize = os.path.getsize(filename)
         if filesize > 50000:
-            eaf_file_paths_large_files.append(dataset_eaf_folder + os.sep + str(filename))
+            eaf_file_paths_large_files.append(filename)
         else:
-            eaf_file_paths_small_files.append(dataset_eaf_folder + os.sep + str(filename))
+            eaf_file_paths_small_files.append(filename)
 
     existing_documents_creation_dates = {}
     if corpus:
@@ -347,39 +419,37 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
     return (eaf_files_to_update, new_eaf_files, missing_eaf_files)
 
 
-def newly_uploaded_documents(dataset_acronym, **kwargs):
+def document_identifiers_from_paths(eaf_paths):
 
-    if 'testing' in kwargs.keys():
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
-    else:
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+    document_identifiers = []
+    for eaf_path in eaf_paths:
+        file_basename = os.path.basename(eaf_path)
+        basename = os.path.splitext(file_basename)[0]
+        document_identifiers.append(basename)
 
-    try:
-        dataset = Dataset.objects.get(acronym=dataset_acronym)
-    except (ObjectDoesNotExist):
-        # No dataset corresponding to dataset acronym
-        return []
+    return document_identifiers
 
-    try:
-        corpus = Corpus.objects.get(name=dataset_acronym)
-    except (ObjectDoesNotExist):
-        corpus = None
 
-    existing_documents = Document.objects.filter(corpus=corpus)
-    existing_documents_identifiers = [ d.identifier for d in existing_documents ]
-    existing_documents_creation_dates = {}
-    for d in existing_documents:
-        existing_documents_creation_dates[d.identifier] = d.creation_time
+def eaf_file_from_paths(eaf_paths):
 
-    newly_uploaded_documents = []
-    if os.path.isdir(dataset_eaf_folder):
-        for filename in os.listdir(dataset_eaf_folder):
-            basename = os.path.splitext(filename)[0]
-            if basename not in existing_documents_identifiers:
-                newly_uploaded_documents.append(filename)
-    newly_uploaded_documents.sort()
+    filenames = []
+    if not eaf_paths:
+        return filenames
+    common_path = os.path.commonpath(eaf_paths)
+    for eaf_path in eaf_paths:
+        file_basename = os.path.basename(eaf_path)
+        dir_name = os.path.dirname(eaf_path)
+        if common_path == dir_name:
+            filenames.append(file_basename)
+        else:
+            folder = os.path.split(dir_name)[1]
+            if folder:
+                filenames.append(os.path.join(folder,file_basename))
+            else:
+                filenames.append(file_basename)
 
-    return newly_uploaded_documents
+    return filenames
+
 
 def document_has_been_updated(dataset_acronym, document_identifier, **kwargs):
 
@@ -542,7 +612,13 @@ def process_frequencies_per_speaker(dataset_acronym, speaker_objects, document_o
     updated_glosses = {}
     glosses_in_other_dataset = []
     for pers in frequencies_per_speaker.keys():
+        if pers not in speaker_objects.keys():
+            print('Corpus ', dataset_acronym, ': Speaker not found: ', pers)
+            continue
         for doc in frequencies_per_speaker[pers].keys():
+            if doc not in document_objects.keys():
+                print('Corpus ', dataset_acronym, ': Document not found: ', doc)
+                continue
             gloss_frequency_list = sorted(frequencies_per_speaker[pers][doc].items())
             for gloss_id_or_value, cnt in gloss_frequency_list:
                 gloss = get_gloss_from_frequency_dict(dataset_acronym, gloss_id_or_value)
@@ -671,6 +747,7 @@ def configure_corpus_documents(dataset_acronym, **kwargs):
         try:
             frequencies_per_speaker_sub = sign_counter.freqsPerPerson
         except KeyError:
+            print('except KeyError after sign_counter.freqsPerPerson, large file: ', large_eaf_file)
             frequencies_per_speaker_sub = {}
 
         (glosses_not_in_signbank_sub, updated_glosses_sub, glosses_in_other_dataset_sub) = process_frequencies_per_speaker(dataset_acronym,
@@ -696,6 +773,20 @@ def configure_corpus_documents(dataset_acronym, **kwargs):
         updated_glosses[gid].save()
 
 
+def get_path_of_eaf_file(dataset_eaf_folder, eaf_paths, document_id):
+
+    document_path = dataset_eaf_folder + os.sep + document_id + '.eaf'
+
+    for eaf_path in eaf_paths:
+        file_basename = os.path.basename(eaf_path)
+        basename = os.path.splitext(file_basename)[0]
+        if basename == document_id:
+            document_path = eaf_path
+            break
+
+    return document_path
+
+
 def update_corpus_counts(dataset_acronym, **kwargs):
 
     if 'testing' in kwargs.keys():
@@ -708,24 +799,26 @@ def update_corpus_counts(dataset_acronym, **kwargs):
     try:
         corpus = Corpus.objects.get(name=dataset_acronym)
     except (ObjectDoesNotExist):
-        print('update_corpus_counts: corpus does not exist: ', dataset_acronym)
+        print('frequency.update_corpus_counts: corpus does not exist: ', dataset_acronym)
         return
 
     (speaker_identifiers, dictionary_speakerIds_to_speakerObjs) = dictionary_speakerIdentifiers_to_speakerObjects(dataset_acronym)
 
     if not speaker_identifiers:
         # this would be very weird if this error happened
-        print('update_corpus_counts: No speaker objects found for corpus ', dataset_acronym)
+        print('frequency.update_corpus_counts: No speaker objects found for corpus ', dataset_acronym)
         return
+
+    uploaded_paths = uploaded_eaf_paths(dataset_acronym, **kwargs)
 
     eaf_file_paths_small_files = []
     eaf_file_paths_large_files = []
-    for filename in os.listdir(dataset_eaf_folder):
-        filesize = os.path.getsize(dataset_eaf_folder + os.sep + str(filename))
+    for filename in uploaded_paths:
+        filesize = os.path.getsize(filename)
         if filesize > 50000:
-            eaf_file_paths_large_files.append(dataset_eaf_folder + os.sep + str(filename))
+            eaf_file_paths_large_files.append(filename)
         else:
-            eaf_file_paths_small_files.append(dataset_eaf_folder + os.sep + str(filename))
+            eaf_file_paths_small_files.append(filename)
 
     existing_documents = Document.objects.filter(corpus__name=dataset_acronym)
     existing_documents_creation_dates = {}
@@ -776,7 +869,7 @@ def update_corpus_counts(dataset_acronym, **kwargs):
             sign_counter.run()
         except KeyError:
             # the counter scripts generate a key error if a speaker is not found
-            print('update_corpus_counts: Speakers not found for corpus ', eaf_file_paths_small_files)
+            print('frequency.update_corpus_counts: Speakers not found for corpus ', eaf_file_paths_small_files)
             return
 
         try:
@@ -804,7 +897,7 @@ def update_corpus_counts(dataset_acronym, **kwargs):
             sign_counter.run()
         except KeyError:
             # KeyError is raised if the participants in the eaf file are not found in the metadata file
-            print('update_corpus_counts: Speakers not found for document: ', large_eaf_file)
+            print('frequency.update_corpus_counts: Speakers not found for document: ', large_eaf_file)
             continue
 
         # we get the frequencies from the sign_counter object
@@ -812,7 +905,6 @@ def update_corpus_counts(dataset_acronym, **kwargs):
             frequencies_per_speaker_sub = sign_counter.freqsPerPerson
         except (KeyError, ObjectDoesNotExist):
             frequencies_per_speaker_sub = {}
-            print('update_corpus_counts: No frequency data calculated for ', large_eaf_file)
 
         (glosses_not_in_signbank_sub, updated_glosses_sub, glosses_in_other_dataset_sub) = process_frequencies_per_speaker(dataset_acronym,
                                                                                              dictionary_speakerIds_to_speakerObjs,
@@ -870,7 +962,10 @@ def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
         return []
 
     document_identifiers_of_eaf_files = [ document_id ]
-    eaf_path = dataset_eaf_folder + os.sep + document_id + '.eaf'
+    uploaded_paths = uploaded_eaf_paths(dataset_acronym, **kwargs)
+
+    eaf_path = get_path_of_eaf_file(dataset_eaf_folder, uploaded_paths, document_id)
+
     document_creation_dates_of_eaf_files = [ get_creation_time(eaf_path) ]
 
     dictionary_documentIds_to_documentObjs = dictionary_documentIdentifiers_to_documentObjects(corpus,
@@ -901,6 +996,9 @@ def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
         updated_glosses[gid].tokNo = get_gloss_tokNo(dataset_acronym, gid)
         updated_glosses[gid].tokNoSgnr = get_gloss_tokNoSgnr(dataset_acronym, gid)
         updated_glosses[gid].save()
+
+    dictionary_documentIds_to_documentObjs[document_id].creation_time = document_creation_dates_of_eaf_files[0]
+    dictionary_documentIds_to_documentObjs[document_id].save()
 
     # for the purposes of debugging, this is the data that is accumulated during processing
     # these could be incorporated into a return tuple and used elsewhere in the template for the corpus
@@ -940,8 +1038,14 @@ def update_document_counts(request, dataset_id, document_id):
         exception_value = [ 'Failed']
         return HttpResponse(json.dumps(exception_value), {'content-type': 'application/json'})
 
+    import locale
+    locale.setlocale(locale.LC_ALL, '')
+    document_date_stamp = document.creation_time.strftime('%d %B %Y')
+
+    number_of_glosses = str(document_to_number_of_glosses(dataset.acronym, document.identifier))
+
     glosses_in_documents_at_start = [ gf['gloss__id'] for gf in
-                                            GlossFrequency.objects.filter(document__identifier=document_id).values('gloss__id').distinct() ]
+                                            GlossFrequency.objects.filter(document=document).values('gloss__id').distinct() ]
 
     for gl in glosses_in_documents_at_start:
         if gl not in updated_glosses:
@@ -955,10 +1059,27 @@ def update_document_counts(request, dataset_id, document_id):
                 print('GlossFrequency exists for Gloss but  not in updated glosses, but not retrieved properly: ', gl)
                 continue
     if updated_glosses:
-        original_value = [ 'Glosses updated']
+        original_value = [ 'Glosses updated' '\t' + document_date_stamp + '\t' + number_of_glosses ]
     else:
-        original_value = [ 'No annotations']
-    # messages.add_message(request, messages.INFO, ('Corpus document ' + document_id + ' successfully updated.'))
+        original_value = [ 'No annotations' '\t' + document_date_stamp + '\t' + number_of_glosses ]
 
     return HttpResponse(json.dumps(original_value), {'content-type': 'application/json'})
 
+
+def update_corpora(folder_index=None):
+
+    # this is intended to be run as a cron job to update all corpora
+    # each corpora, if created has a subfolder where its eaf files are kept, plus a metadata file
+    # this checks for there existence before running the code to update the frequency data
+
+    corpora_folders = []
+    for corpora in Corpus.objects.all():
+        corpora_folder = os.path.join(settings.WRITABLE_FOLDER, settings.DATASET_EAF_DIRECTORY,corpora.name)
+        metadata_location = os.path.join(settings.WRITABLE_FOLDER, settings.DATASET_METADATA_DIRECTORY,
+                                         corpora.name + '_metadata.csv')
+        if os.path.isdir(corpora_folder) and os.path.isfile(metadata_location):
+            corpora_folders.append(corpora.name)
+    for corpus in corpora_folders:
+        update_corpus_counts(corpus)
+    print('frequency.update_corpora script completed.')
+    return HttpResponse('', {'content-type': 'application/json'})
