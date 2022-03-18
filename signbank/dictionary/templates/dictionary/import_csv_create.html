@@ -34,7 +34,7 @@
 
 {% if stage == 0 %}
 
-    <div>{% blocktrans %}Upload your changed CSV here:{% endblocktrans %}</div>
+    <div>{% blocktrans %}Upload your CSV here:{% endblocktrans %}</div>
 
     <form action="" method="post" enctype="multipart/form-data" role="form">
         {% csrf_token %}
@@ -47,7 +47,9 @@
                           Dataset (acronym), Lemma ID Gloss, and Annotation ID Gloss for the translation languages of the dataset. Only one dataset can be modified."></span>
                 </div>
                 <div class="col-sm-10">
-                    <input type="file" required="" name="file" class="filestyle" data-icon="false" data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
+                    <input type="file" required="" name="file" class="filestyle" data-icon="false"
+                           accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv, application/vnd.ms-excel"
+                           data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
                 </div>
                 <div class="col-sm-1">
                     <input class="btn btn-primary" type="submit" value="{% blocktrans %}Submit{% endblocktrans %}" />

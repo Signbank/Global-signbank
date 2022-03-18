@@ -25,7 +25,7 @@ from signbank.tools import get_selected_datasets_for_user, get_default_annotatio
 
 import signbank.settings
 from signbank.settings.base import *
-from django.utils.translation import override
+from django.utils.translation import override, ugettext_lazy as _
 
 from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper
@@ -874,7 +874,35 @@ def import_csv_create(request):
     #Propose changes
     if len(request.FILES) > 0:
 
-        csv_text = request.FILES['file'].read().decode('UTF-8')
+        new_file = request.FILES['file']
+
+        try:
+            # files that will fail here include those renamed to .csv which are not csv
+            # non UTF-8 encoded files also fail
+            csv_text = new_file.read().decode('UTF-8-sig')
+        except (UnicodeDecodeError, UnicodeError):
+            new_file.seek(0)
+            import magic
+            magic_file_type = magic.from_buffer(new_file.read(2048), mime=True)
+
+            if magic_file_type == 'text/plain':
+                feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
+            else:
+                feedback_message = _('Unrecognised format in selected CSV file.')
+
+            messages.add_message(request, messages.ERROR, feedback_message)
+
+            return render(request, 'dictionary/import_csv_create.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'creation': creation,
+                           'gloss_already_exists': gloss_already_exists,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
 
         delimiter = ','
@@ -889,21 +917,28 @@ def import_csv_create(request):
             elif delimiter_radio == 'semicolon':
                 delimiter = ';'
             else:
+                # this should not occur
+                # perhaps only if the user is trying to fiddle without using the template
                 print('Unknown delimiter found during import_csv_create: ', delimiter_radio)
 
         creation = []
         keys = {}   # in case something goes wrong in header row
+        empty_row = ''
         for nl, line in enumerate(csv_lines):
 
             #The first line contains the keys
             if nl == 0:
-                keys = line.strip().split(delimiter)
+                keys = line.strip().split(',')
+                # create a template for an empty row with the desired number of columns
                 num_keys = len(keys)
+                empty_row = [''] * num_keys
                 continue
             elif len(line) == 0:
+                # this happens at the end of the file
                 continue
-
             values = csv.reader([line], delimiter=delimiter).__next__()
+            if values == empty_row:
+                continue
             value_dict = {}
 
             for nv,value in enumerate(values):
@@ -1292,27 +1327,76 @@ def import_csv_update(request):
 
     #Propose changes
     if len(request.FILES) > 0:
+
+        new_file = request.FILES['file']
+
+        try:
+            # files that will fail here include those renamed to .csv which are not csv
+            # non UTF-8 encoded files also fail
+            csv_text = new_file.read().decode('UTF-8-sig')
+        except (UnicodeDecodeError, UnicodeError):
+            new_file.seek(0)
+            import magic
+            magic_file_type = magic.from_buffer(new_file.read(2048), mime=True)
+
+            if magic_file_type == 'text/plain':
+                feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
+            else:
+                feedback_message = _('Unrecognised format in selected CSV file.')
+
+            messages.add_message(request, messages.ERROR, feedback_message)
+
+            return render(request, 'dictionary/import_csv_update.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'creation': creation,
+                           'gloss_already_exists': gloss_already_exists,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
         fatal_error = False
-        csv_text = request.FILES['file'].read().decode('UTF-8')
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
+
+        # the following code allows for specifying a column delimiter in the import_csv_create.html template
+        if 'delimiter' in request.POST:
+            delimiter_radio = request.POST['delimiter']
+            if delimiter_radio == 'tab':
+                delimiter = '\t'
+            elif delimiter_radio == 'comma':
+                delimiter = ','
+            elif delimiter_radio == 'semicolon':
+                delimiter = ';'
+            else:
+                # this should not occur
+                # perhaps only if the user is trying to fiddle without using the template
+                print('Unknown delimiter found during import_csv_create: ', delimiter_radio)
+
         creation = []
-        keys = {}   # in case something goes wrong in header row
+        keys = []   # in case something goes wrong in header row
+        empty_row = ''
         for nl, line in enumerate(csv_lines):
 
             #The first line contains the keys
             if nl == 0:
                 keys = line.strip().split(',')
+                # create a template for an empty row with the desired number of columns
                 num_keys = len(keys)
+                empty_row = [''] * num_keys
                 continue
             elif len(line) == 0:
+                # this happens at the end of the file
                 continue
-
-            values = csv.reader([line]).__next__()
+            values = csv.reader([line], delimiter=delimiter).__next__()
+            if values == empty_row:
+                continue
             value_dict = {}
-
             for nv,value in enumerate(values):
 
                 try:
+                    # keys is a list of header fields, get the indexed element, column of header
                     if keys[nv]:
                         if keys[nv] in columns_to_skip.keys():
                             continue
@@ -1713,21 +1797,70 @@ def import_csv_lemmas(request):
 
     #Propose changes
     if len(request.FILES) > 0:
+
+        new_file = request.FILES['file']
+
+        try:
+            # files that will fail here include those renamed to .csv which are not csv
+            # non UTF-8 encoded files also fail
+            csv_text = new_file.read().decode('UTF-8-sig')
+        except (UnicodeDecodeError, UnicodeError):
+            new_file.seek(0)
+            import magic
+            magic_file_type = magic.from_buffer(new_file.read(2048), mime=True)
+
+            if magic_file_type == 'text/plain':
+                feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
+            else:
+                feedback_message = _('Unrecognised format in selected CSV file.')
+
+            messages.add_message(request, messages.ERROR, feedback_message)
+
+            return render(request, 'dictionary/import_csv_update_lemmas.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
         fatal_error = False
-        csv_text = request.FILES['file'].read().decode('UTF-8')
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
+
+        delimiter = ','
+
+        # the following code allows for specifying a column delimiter in the import_csv_create.html template
+        if 'delimiter' in request.POST:
+            delimiter_radio = request.POST['delimiter']
+            if delimiter_radio == 'tab':
+                delimiter = '\t'
+            elif delimiter_radio == 'comma':
+                delimiter = ','
+            elif delimiter_radio == 'semicolon':
+                delimiter = ';'
+            else:
+                # this should not occur
+                # perhaps only if the user is trying to fiddle without using the template
+                print('Unknown delimiter found during import_csv_create: ', delimiter_radio)
+
         keys = {}   # in case something goes wrong in header row
+        empty_row = ''
         for nl, line in enumerate(csv_lines):
 
             #The first line contains the keys
             if nl == 0:
                 keys = line.strip().split(',')
+                # create a template for an empty row with the desired number of columns
                 num_keys = len(keys)
+                empty_row = [''] * num_keys
                 continue
             elif len(line) == 0:
+                # this happens at the end of the file
                 continue
-
-            values = csv.reader([line]).__next__()
+            values = csv.reader([line], delimiter=delimiter).__next__()
+            if values == empty_row:
+                continue
             value_dict = {}
 
             for nv,value in enumerate(values):
