@@ -300,49 +300,86 @@ def uploaded_eaf_paths(dataset_acronym, **kwargs):
 
 
 def documents_paths_dictionary(dataset_acronym, **kwargs):
-    # this variant is used to keep track of the paths associated with document files
-    # it also keeps track of whether duplicate files are found
+    # This function is used to keep track of the paths associated with document files
+    # It also keeps track of whether duplicate files are found
+
     if 'testing' in kwargs.keys():
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
     else:
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
 
+    # Set up initial data structures
+    #  -- uploaded_eafs_dict
+    #          Maps document identifiers to a list of path names.
+    #          Ideally, there should only be one pathname in the list for a document identifier
+    #  -- duplicate_document_identifiers
+    #          If duplicate files for a document identifier are found, the identifier is put in the list of duplicates
+    #          and the extra path is appended to the list in the dict
+    #  -- already_seen_document_identifiers
+    #          This variable keeps track of what has been encountered while traversing the file system
+
     uploaded_eafs_dict = {}
     duplicate_document_identifiers = []
     already_seen_document_identifiers = []
-    if os.path.isdir(dataset_eaf_folder):
-        for file_or_folder in os.listdir(dataset_eaf_folder):
-            dataset_subfolder = os.path.join(dataset_eaf_folder,file_or_folder)
-            if os.path.isfile(dataset_subfolder):
-                # eaf file at root level
-                file_basename = os.path.basename(dataset_subfolder)
-                basename = os.path.splitext(file_basename)[0]
-                if basename in already_seen_document_identifiers:
-                    duplicate_document_identifiers.append(basename)
-                    uploaded_eafs_dict[basename].append(file_basename)
-                else:
-                    already_seen_document_identifiers.append(basename)
-                    uploaded_eafs_dict[basename] = [file_basename]
+
+    # Check whether a folder exists for this dataset
+    if not os.path.isdir(dataset_eaf_folder):
+        # return empty data structures
+        return (uploaded_eafs_dict, duplicate_document_identifiers)
+
+    for file_or_folder in os.listdir(dataset_eaf_folder):
+        dataset_subfolder = os.path.join(dataset_eaf_folder,file_or_folder)
+        # Check if an eaf file is at root level of the dataset folder
+        if os.path.isfile(dataset_subfolder):
+
+            # Get the document identifier (filename minus extension) from this eaf file
+            file_basename = os.path.basename(dataset_subfolder)
+            basename = os.path.splitext(file_basename)[0]
+
+            # Check whether this document has already been seen
+            if basename in already_seen_document_identifiers:
+                # This is a duplicate file
+                # Append its identifier and its location to the lists
+                duplicate_document_identifiers.append(basename)
+                uploaded_eafs_dict[basename].append(file_basename)
             else:
-                # subfolder found
-                for filename in os.listdir(dataset_subfolder):
-                    subfolder_path = os.path.join(dataset_subfolder,filename)
-                    if os.path.isdir(subfolder_path):
-                        # the directory should only have at most one tier
-                        # this could happen if somebody uploaded via the file system
-                        print('frequency:documents_paths_dictionary: sub sub folder found: ', subfolder_path)
-                        continue
+                # This file has not been seen yet.
+                # For the document identifier, create a new one element list for its filename
+                already_seen_document_identifiers.append(basename)
+                uploaded_eafs_dict[basename] = [file_basename]
+        else:
+            # A subfolder has been encountered for this dataset
+            # Apply the same procedure as above, but do not go down an additional level
+            for filename in os.listdir(dataset_subfolder):
+                # Get ready to check out whether this is a file or a subfolder
+                subfolder_path = os.path.join(dataset_subfolder,filename)
+                if os.path.isdir(subfolder_path):
+                    # The directory should only have at most one tier
+                    # This could happen if somebody uploaded via the file system
+                    # Just ignore this and give a message for the admin in the error log
+                    print('frequency:documents_paths_dictionary: sub sub folder found (ignored): ', subfolder_path)
+                    continue
+                else:
+                    # Get the document identifier (filename minus extension) from this eaf file
+                    file_basename = os.path.basename(subfolder_path)
+                    basename = os.path.splitext(file_basename)[0]
+
+                    # Get the folder location within this dataset's folder
+                    file_path = os.path.dirname(subfolder_path)
+                    directory = os.path.basename(file_path)
+
+                    # Check whether this document has already been seen
+                    if basename in already_seen_document_identifiers:
+                        # This is a duplicate file
+                        # Append its identifier and its location to the lists
+                        duplicate_document_identifiers.append(basename)
+                        uploaded_eafs_dict[basename].append( os.path.join(directory,file_basename) )
                     else:
-                        file_basename = os.path.basename(subfolder_path)
-                        basename = os.path.splitext(file_basename)[0]
-                        file_path = os.path.dirname(subfolder_path)
-                        directory = os.path.basename(file_path)
-                        if basename in already_seen_document_identifiers:
-                            duplicate_document_identifiers.append(basename)
-                            uploaded_eafs_dict[basename].append( os.path.join(directory,file_basename) )
-                        else:
-                            already_seen_document_identifiers.append(basename)
-                            uploaded_eafs_dict[basename] = [ os.path.join(directory,file_basename) ]
+                        # This file has not been seen yet.
+                        # For the document identifier, create a new one element list for its location
+                        already_seen_document_identifiers.append(basename)
+                        uploaded_eafs_dict[basename] = [ os.path.join(directory,file_basename) ]
+
     return (uploaded_eafs_dict, duplicate_document_identifiers)
 
 
