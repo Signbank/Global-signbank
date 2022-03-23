@@ -274,6 +274,8 @@ def dictionary_documents_to_speakers(dataset_acronym):
 
 def uploaded_eaf_paths(dataset_acronym, **kwargs):
 
+    # This function retrieves the paths of eaf files for the dataset from the file system
+    # It's purpose is to keep code less cumbersome elsewhere
     if 'testing' in kwargs.keys():
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
     else:
@@ -396,16 +398,27 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
     try:
         dataset = Dataset.objects.get(acronym=dataset_acronym)
     except (ObjectDoesNotExist):
-        # No dataset corresponding to dataset acronym
-        return ([],[],[])
+        # A dataset with the acronym was not found
+        dataset = None
 
     try:
         corpus = Corpus.objects.get(name=dataset_acronym)
     except (ObjectDoesNotExist):
+        # Corpus has not been created yet for this dataset
         corpus = None
 
+    eaf_files_to_update = []
+    new_eaf_files = []
+    missing_eaf_files = []
+
+    if not dataset or not corpus:
+        # Something went wrong
+        return (eaf_files_to_update, new_eaf_files, missing_eaf_files)
+
+    # Get whatever is stored for this dataset acronym on the file system
     uploaded_paths = uploaded_eaf_paths(dataset_acronym, **kwargs)
 
+    # To speedup processing of eaf files, separate the larger ones
     eaf_file_paths_small_files = []
     eaf_file_paths_large_files = []
     for filename in uploaded_paths:
@@ -415,15 +428,17 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
         else:
             eaf_file_paths_small_files.append(filename)
 
+    # Ideally we could take into account the creation date of the eaf file versus that stored in the processed document
+    # The information about whether a file is newer than the document might be useful to the user
+    # However, glosses can also be created online which previously were not found
+    # In that case, the document ought to be processed again regardless of whether it is newer
     existing_documents_creation_dates = {}
-    if corpus:
-        existing_documents = Document.objects.filter(corpus=corpus)
-        existing_documents_identifiers = [ d.identifier for d in existing_documents ]
-        for d in existing_documents:
-            existing_documents_creation_dates[d.identifier] = d.creation_time
-    else:
-        existing_documents_identifiers = []
+    existing_documents = Document.objects.filter(corpus=corpus)
+    existing_documents_identifiers = [ d.identifier for d in existing_documents ]
+    for d in existing_documents:
+        existing_documents_creation_dates[d.identifier] = d.creation_time
 
+    # Do the same for the actual files
     all_eaf_files_identifiers = []
     all_eaf_files_creation_dates = {}
     all_eaf_files = eaf_file_paths_small_files + eaf_file_paths_large_files
@@ -433,13 +448,14 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
         all_eaf_files_identifiers += [basename]
         all_eaf_files_creation_dates[basename] = get_creation_time(eaf_path)
 
-    missing_eaf_files = []
+    # Check whether the existing document identifers all have eaf files
     for d_identier in existing_documents_identifiers:
         if d_identier not in all_eaf_files_identifiers:
             missing_eaf_files += [d_identier]
 
-    eaf_files_to_update = []
-    new_eaf_files = []
+    # Compare the creation dates of documents with files on disk
+    # Keep track of which files are new or updated
+    # This is shown in the template Corpus Overview
     for eaf_path in all_eaf_files:
         file_basename = os.path.basename(eaf_path)
         basename = os.path.splitext(file_basename)[0]
