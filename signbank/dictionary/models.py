@@ -1057,6 +1057,12 @@ class Gloss(models.Model):
 
         return seealso_count
 
+    def paradigm_count(self):
+
+        paradigm_count = self.relation_sources.filter(role='paradigm').count()
+
+        return paradigm_count
+
     def variant_count(self):
 
         variant_count = self.relation_sources.filter(role='variant').count()
@@ -1798,6 +1804,7 @@ RELATION_ROLE_CHOICES = (('homonym', 'Homonym'),
                          ('hyponym', 'Hyponym'),
                          ('hypernym', 'Hypernym'),
                          ('seealso', 'See Also'),
+                         ('paradigm', 'Handshape Paradigm')
                          )
 
 VARIANT_ROLE_CHOICES = (('variant', 'Variant'))

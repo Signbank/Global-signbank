@@ -228,6 +228,7 @@ RELATION_ROLE_CHOICES = (('','---------'),
                          ('hyponym', 'Hyponym'),
                          ('hypernym', 'Hypernym'),
                          ('seealso', 'See Also'),
+                         ('paradigm', 'Handshape Paradigm')
                          )
 
 DEFN_ROLE_CHOICES = [('','---------'),('all','All')] + build_choice_list('NoteType')
