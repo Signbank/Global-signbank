@@ -84,6 +84,8 @@ urlpatterns = [
     # url(r'^import_other_media/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_other_media)),
     url(r'update_corpus_document_counts/(?P<dataset_id>.*)/(?P<document_id>.*)/$',
         permission_required('dictionary.change_gloss')(signbank.frequency.update_document_counts)),
+    url(r'update_corpora/$',
+        permission_required('dictionary.change_gloss')(signbank.frequency.update_corpora)),
 
     url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
 

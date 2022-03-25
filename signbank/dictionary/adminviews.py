@@ -48,8 +48,9 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
-    dictionary_speakers_to_documents, newly_uploaded_documents, document_has_been_updated, document_to_number_of_glosses, \
-    document_to_glosses, get_corpus_speakers
+    dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
+    document_to_glosses, get_corpus_speakers, remove_document_from_corpus, document_identifiers_from_paths, \
+    eaf_file_from_paths, documents_paths_dictionary
 from signbank.dictionary.frequency_display import collect_speaker_age_data, collect_variants_data, collect_variants_age_range_data, \
                                                     collect_variants_age_sex_raw_percentage
 
@@ -3950,6 +3951,8 @@ class DatasetManagerView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
+        form = EAFFilesForm()
+
         default_language_choice_dict = dict()
         for language in dataset_languages:
             default_language_choice_dict[language.name] = language.name
@@ -4870,26 +4873,45 @@ class DatasetFrequencyView(DetailView):
             corpus = None
         context['corpus'] = corpus
 
+        (update_eaf_files, new_eaf_files, missing_eaf_files) = get_names_of_updated_eaf_files(corpus_name)
+
+        updated_documents = document_identifiers_from_paths(update_eaf_files)
+
         document_objects = Document.objects.filter(corpus=corpus).order_by('identifier')
 
         # some additional data is collected about the eaf files versus the documents in the database
         gloss_frequency_objects_per_document = {}
         documents_without_data = []
         more_recent_eaf_files = []
+
+        for d_identifier in missing_eaf_files:
+            remove_document_from_corpus(corpus_name, d_identifier)
+
+        document_objects = Document.objects.filter(corpus=corpus).order_by('identifier')
+        # at this point, documents associated with missing eaf files have been removed
+        # as well as any frequency objects for that document
         for d_obj in document_objects:
+            # this is done in a separate variable instead of in the if expression
+            # the function on the right hand side looks at the file
             has_been_updated = document_has_been_updated(corpus_name, d_obj.identifier)
             if has_been_updated:
                 more_recent_eaf_files += [d_obj.identifier]
             frequency_objects_for_document = GlossFrequency.objects.filter(document=d_obj)
-            if frequency_objects_for_document:
-                gloss_frequency_objects_per_document[d_obj.identifier] = frequency_objects_for_document
-            else:
+            gloss_frequency_objects_per_document[d_obj.identifier] = frequency_objects_for_document
+            if not frequency_objects_for_document:
                 documents_without_data.append(d_obj.identifier)
 
+        def document_toelichting(document_identifier):
+            if document_identifier in updated_documents:
+                return _('Modified')
+            else:
+                return ''
+
         context['document_identifiers'] = [ do.identifier for do in document_objects ]
-        context['documents'] = [ (do.identifier, do.creation_time.date,
+        context['documents'] = [ (do.identifier,
+                                  do.creation_time.date,
                                   document_to_number_of_glosses(corpus_name, do.identifier),
-                                  False) for do in document_objects ]
+                                  document_toelichting(do.identifier) ) for do in document_objects ]
 
         frequencies = GlossFrequency.objects.filter(document__in=document_objects)
 
@@ -4915,8 +4937,14 @@ class DatasetFrequencyView(DetailView):
         #     speaker_tuples_documents.append((participant, speakers_to_documents[participant]))
         # context['speakers_in_documents'] = speaker_tuples_documents
 
-        newly_uploaded_eafs = newly_uploaded_documents(corpus_name)
+        newly_uploaded_eafs = eaf_file_from_paths(new_eaf_files)
         context['new_eaf_files'] = newly_uploaded_eafs
+
+        (eaf_paths_dict, duplicates) = documents_paths_dictionary(corpus_name)
+
+        context['sorted_document_identifiers'] = sorted(eaf_paths_dict.keys())
+        context['duplicates'] = duplicates
+        context['overview_eaf_files'] = eaf_paths_dict
 
         return context
 
@@ -4927,6 +4955,8 @@ class DatasetFrequencyView(DetailView):
             return self.render_to_create_corpus_response(context)
         elif self.request.GET.get('update_corpus') == self.object.acronym:
             return self.render_to_update_corpus_response(context)
+        # elif self.request.GET.get('update_corpus') == self.object.acronym:
+        #     return self.render_to_update_corpus_response(context)
         else:
             return super(DatasetFrequencyView, self).render_to_response(context)
 
@@ -5044,8 +5074,6 @@ class DatasetFrequencyView(DetailView):
             if errors:
                 messages.add_message(self.request, messages.ERROR, _('Error processing participants meta data for this dataset.'))
                 return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
-
-        # (update_eaf_files, new_eaf_files, missing_eaf_files) = get_names_of_updated_eaf_files(dataset_object.acronym)
 
         update_corpus_counts(dataset_object.acronym)
 

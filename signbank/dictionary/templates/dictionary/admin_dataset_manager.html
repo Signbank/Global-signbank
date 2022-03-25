@@ -26,6 +26,35 @@
               placeholder: 'Select an option'
             });
         });
+
+        function selectFolder(e) {
+<!--            console.log(JSON.stringify(e));-->
+            var theFiles = e.target.files;
+            var relativePath = theFiles[0].webkitRelativePath;
+            var folder = relativePath.split("/");
+            $("#dir_name").val(folder[0]);
+
+<!--            console.log(JSON.stringify(theFiles[0]));-->
+<!--            var countFiles = theFiles.length;-->
+<!--            console.log(countFiles);-->
+<!--            for (var i = 0; i < countFiles; i++) {-->
+<!--                var relativePath = theFiles[i].webkitRelativePath;-->
+<!--                console.log(relativePath);-->
+<!--                var folder = relativePath.split("/");-->
+<!--                console.log(folder[1]);-->
+<!--            }-->
+        }
+
+        function do_toggle_import(el) {
+              var words = el.id.split("_");
+              var input_file_or_folder = document.getElementById(words[2]+'_file_or_folder');
+              if (words[1] == 'files') {
+                    $(input_file_or_folder).removeProp("webkitdirectory");
+              } else {
+                    $(input_file_or_folder).prop({"webkitdirectory":true});
+              }
+       }
+
     </script>
 
 {% endblock %}
@@ -47,10 +76,10 @@
           <th style="width:200px;">{% trans "Users who can View Dataset (Group permissions excluded)" %}</th>
           <th style="width:200px;">{% trans "Users who can Change Dataset (Group permissions excluded)" %}</th>
           <th style="width:200px;">{% trans "Default language" %}</th>
-          <th style="width:200px;">
+          <th style="width:80px;">
               <div class="text-container"><p>{% trans "Hyperlinks" %}</p></div>
           </th>
-          <th style="width:200px;">
+          <th style="width:250px;">
                 <div class="text-container hasTooltip"><p>{% trans "Metadata CSV" %}</p>
               <span class="isTooltip" style="width: 400px;">The Metadata CSV currently supports:<br>
                   <table>
@@ -71,7 +100,7 @@
                     </tr>
                   </table>
               </span></div></th>
-          <th style="width:200px;">{% trans "EAF Files" %}</th>
+          <th style="width:270px;">{% trans "EAF Files" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -290,10 +319,18 @@
           <form id='upload_eaf_files' action="{{PREFIX_URL}}/update/dataset_eafs/" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <input class='btn btn-primary' id='upload_eafs' name='upload_eafs' type='submit'
-                   value='{% trans "Upload EAF Files" %}' >
-
+                   value='{% trans "Upload EAF" %}' >
+             <input type="radio" name="radio_folder_or_files" id="radio_folder_{{dataset.acronym}}" value="folder" checked
+                onclick="do_toggle_import(this);">
+              <label for="radio_folder">{% trans "Folder" %}</label>
+                <input type="radio" name="radio_folder_or_files" id="radio_files_{{dataset.acronym}}" value="files"
+                onclick="do_toggle_import(this);">
+                <label for="radio_files">{% trans "Files" %}</label>
+            <input type="hidden" name="dir_name" id="dir_name" value="">
             <input type='hidden' name='dataset_acronym' value='{{dataset.acronym}}'>
-            <input class='form-control' placeholder='{% trans "Upload EAF Files" %}' name='file' type='file' multiple required="">
+            <input class='form-control' placeholder='{% trans "Upload EAF Files" %}'
+                   name='file' type='file' multiple="" required="" webkitdirectory=true
+                    onchange="selectFolder(event)" id="{{dataset.acronym}}_file_or_folder">
           </form>
           </div>
           </td>

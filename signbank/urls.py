@@ -122,6 +122,7 @@ urlpatterns = [
     url(r'^datasets/(?P<acronym>.*)$', dataset_detail_view_by_acronym, name='dataset_detail_view_by_acronym'),
     url(r'^update/metadata/', signbank.dictionary.update.upload_metadata, name='upload_metadata'),
     url(r'^update/dataset_eafs/', signbank.dictionary.update.upload_eaf_files, name='upload_eaf_files'),
+    url(r'^update/remove_eaf_files/', signbank.dictionary.update.remove_eaf_files, name='remove_eaf_files'),
                   url(r'^__debug__/', include(debug_toolbar.urls))
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

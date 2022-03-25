@@ -37,14 +37,19 @@
         function update_document(el) {
             var this_document = $(el).attr('value');
             var lookup = "#toelichting_"+this_document;
+            var datum = "#datum_"+this_document;
+            var numglosses = "#numglosses_"+this_document;
             $.ajax({
                 url : url + "dictionary/update_corpus_document_counts/"+{{dataset.id}}+ "/" + this_document + "/",
                 datatype: "json",
                 type: "POST",
                 async: true,
                 success : function(result) {
+                    split_values = result[0].split('\t');
                     $(lookup).html('');
-                    $(lookup).append(result);
+                    $(lookup).append(split_values[0]);
+                    $(datum).html(split_values[1]);
+                    $(numglosses).html(split_values[2]);
                 }
             });
         };
@@ -89,6 +94,7 @@ dd {
 </style>
 {% endblock %}
 
+{% block bootstrap3_title %}Signbank: Corpus Overview{% endblock %}
 
 {% block content %}
 
@@ -286,17 +292,17 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                  <dl class="row list-group-item active"  style="width:1008px; padding: 0;">
                       <dt class="col-sm-2">{% trans "Document" %}</dt>
                       <dt class="col-sm-2">{% trans "Creation Date" %}</dt>
-                      <dt class="col-sm-2">{% trans "Number of Glosses" %}</dt>
+                      <dt class="col-sm-3">{% trans "Number of Annotations" %}</dt>
                       <dt class="col-sm-2">{% trans "Refresh" %}</dt>
                       <dt class="col-sm-2">{% trans "Comment" %}</dt>
                   </dl>
               <list name="document_tuples"
                     style="height:146px; display:block;">
-              {% for identifier, creation_time, number_of_glosses, other_dataset in documents %}
+              {% for identifier, creation_time, number_of_glosses, toelichting in documents %}
                   <dl id="document_{{identifier}}" class="row list-group-item" style="padding: 0;">
                       <dd class="col-sm-2">{{identifier}}</dd>
-                      <dd class="col-sm-2">{{creation_time}}</dd>
-                      <dd class="col-sm-2">{{number_of_glosses}}</dd>
+                      <dd class="col-sm-2" id='datum_{{identifier}}'>{{creation_time}}</dd>
+                      <dd class="col-sm-3" id='numglosses_{{identifier}}'>{{number_of_glosses}}</dd>
                       <dd class="col-sm-2">
                    {% csrf_token %}
                    <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
@@ -308,7 +314,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                                         value='{{identifier}}'>{{identifier}}</button>
                             </div>
                       </dd>
-                      <dd class="col-sm-2" id='toelichting_{{identifier}}'>
+                      <dd class="col-sm-2" id='toelichting_{{identifier}}'>{{toelichting}}
                       </dd>
                   </dl>
               {% endfor %}
@@ -320,11 +326,113 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
           </td>
         </tr>
     </table>
+    </div>
+        {% if duplicates %}
+        <div>
+            {% blocktrans %}
+            <p style="color:red;">Some eaf files have been uploaded to more than one location.
+                Please identify the unwanted copies in the list below.</p>
+            {% endblocktrans %}
+        </div>
+        {% endif %}
+
+      <form name='remove_eafs_form' id='remove_eafs_form'
+            method="post" action="{{PREFIX_URL}}/update/remove_eaf_files/">
+
+        {% csrf_token %}
+        <div class="hidden">
+            <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
+        </div>
+        <div class='hidden'>
+            <input name='remove_eafs' value='{{dataset.acronym}}'>
+        </div>
+        <table class='table'>
+        <tr>
+            <th style="width:200px;">{% trans "Overview EAF Files" %}</th>
+            <td >
+               <div name="overview_eaf_files"
+                    style="height:180px; display:block;">
+                  <ul class="list-group-hover" style="padding: 0;">
+                      <li class="list-group-item active row" style="padding: 0;">
+                          <dt class="col-sm-2">{% trans "Document" %}</dt>
+                          <dt class="col-sm-6">{% trans "Path" %}</dt>
+                          <dt class="col-sm-2">{% trans "Delete" %}</dt>
+                      </li>
+
+                  <list name="document_path_tuples"
+                    style="height:146px; display:block;">
+                      {% for document_identifier in sorted_document_identifiers %}
+                      {% with overview_eaf_files|keyvalue:document_identifier as eaf_paths %}
+                      {% for path in eaf_paths %}
+                      <li id="document_paths_{{document_identifier}}" class="row"
+                            {% if document_identifier in duplicates %}
+                                style="padding: 0; color:red;"
+                            {% elif document_identifier in document_identifiers %}
+                                style="padding: 0; color:blue;"
+                            {% else %}
+                                style="padding: 0;"
+                            {% endif %} >
+                        <dd class="col-sm-2">{{document_identifier}}</dd>
+                        <dd class="col-sm-6" >{{path}}</dd>
+
+                        <dd class="col-sm-2" id='{{dataset.acronym}}_{{document_identifier}}_{{path}}' value=''
+                            name="{{dataset.acronym}}_{{document_identifier}}_{{path}}">
+                                <input type="checkbox" name="select_document:{{path}}"
+                                       id="select_document_{{path}}" value="{{path}}" >
+                        </dd>
+                      </li>
+                      {% endfor %}
+                      {% endwith %}
+                      {% endfor %}
+                  </list>
+                  </ul>
+              </div>
+            </td>
+        </tr>
+        </table>
+
+
+    {% if dataset.get_metadata_path and dataset.uploaded_eafs %}
+    {% if request.user|has_group:"Dataset_Manager" %}
+    {% get_obj_perms request.user for dataset as "dataset_perms" %}
+    {% if "change_dataset" in dataset_perms %}
+    <button id='remove_eafs_btn'
+            {% if duplicates %}
+            class='btn btn-danger'
+            {% else %}
+            class="btn btn-primary"
+            {% endif %}
+            data-toggle='modal' type="button"
+            data-target='#remove_eafs_modal'>{% trans "Remove EAF Files" %}</button>
+
+    <div class="modal fade" id="remove_eafs_modal" tabindex="-1" role="dialog" aria-labelledby="#modalRemoveEafs" aria-hidden="true">
+         <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class='modal-header'>
+                    <h3 id='modalRemoveEafs'>{% trans "Remove EAF Files" %}</h3>
+                </div>
+                <div class='modal-body'>
+                    <p>{% trans "Please make sure to leave one copy of the documents you want." %}</p>
+                    <p>{% trans "If all copies of a file are removed, the associated document and its frequency data will be removed." %}</p>
+                 </div>
+
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-warning" value='{% trans "Remove EAF Files" %}'>
+                      </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endif %}
+    </form>
+    <br/><br/>
     {% if new_eaf_files %}
     <div style="width:1200px">
     <table class='table'>
         <tr>
-          <th style="width:200px;">{% trans "New EAF Files" %}</th>
+          <th style="width:200px;">{% trans "Unprocessed EAF Files" %}</th>
           <td >
 
               {% url 'dictionary:protected_media' '' as protected_media_url %}
@@ -342,19 +450,40 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
     </table>
     </div>
     {% endif %}
+    </div>
+    {% if not duplicates %}
     {% if dataset.get_metadata_path and dataset.uploaded_eafs %}
     {% if request.user|has_group:"Dataset_Manager" %}
     {% get_obj_perms request.user for dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
-    <form name='update_documents_form' id='update_documents_form' method='get'>
-        <div class="hidden">
-            <input name='dataset_name' class='form-control' value='{{dataset.acronym}}' >
+    <button id='refresh_all_btn' class='btn btn-primary' data-toggle='modal' data-target='#refresh_all_modal'>{% trans "Refresh All Documents" %}</button>
+
+    <div class="modal fade" id="refresh_all_modal" tabindex="-1" role="dialog" aria-labelledby="#modalRefreshAll" aria-hidden="true">
+         <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class='modal-header'>
+                    <h3 id='modalRefreshAll'>{% trans "Refresh All Documents" %}</h3>
+                </div>
+                <div class='modal-body'>
+                    <p>{% trans "Depending on how many files and annotations you have, this could take some time." %}</p>
+                    <p>{% trans "Once your corpus has been created, its files are refreshed in a cron job during the night." %}</p>
+                 </div>
+                  <form name='update_documents_form' id='update_documents_form' method='get'>
+                    <div class="hidden">
+                        <input name='dataset_name' class='form-control' value='{{dataset.acronym}}' >
+                    </div>
+                    <div class='hidden'>
+                        <input name='update_corpus' value='{{dataset.acronym}}'>
+                    </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cron Job" %}</button>
+                        <input type="submit" class="btn btn-warning" value='{% trans "Refresh Now" %}'>
+                      </div>
+                  </form>
+            </div>
         </div>
-        <div class='btn-group'>
-            <button id="update_documents" class="btn btn-primary" type="submit"
-                    name='update_corpus' value='{{dataset.acronym}}'>{% trans "Refresh All Documents" %}</button>
-        </div>
-    </form>
+    </div>
+    {% endif %}
     {% endif %}
     {% endif %}
     {% endif %}
