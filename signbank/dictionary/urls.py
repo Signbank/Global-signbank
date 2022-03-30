@@ -6,7 +6,7 @@ from signbank.dictionary.forms import *
 
 from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossFrequencyView, GlossRelationsDetailView, MorphemeDetailView, \
     MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView, \
-    create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView
+    create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView, DerivationHistoryListView
 
 from signbank.dictionary.views import create_citation_image
 
@@ -89,6 +89,8 @@ urlpatterns = [
 
     url(r'configure_handshapes/$',
         permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_handshapes)),
+    url(r'configure_derivationhistory/$',
+        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_derivationhistory)),
     url(r'configure_speakers/(?P<datasetid>\d+)$',
         permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_speakers_dataset)),
     url(r'configure_corpus_documents/(?P<datasetid>\d+)$',
@@ -118,6 +120,9 @@ urlpatterns = [
     url(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
     url(r'^semanticfield/(?P<pk>\d+)', SemanticFieldDetailView.as_view(), name='admin_semanticfield_view'),
     url(r'^semanticfields/$', permission_required('dictionary.search_gloss')(SemanticFieldListView.as_view()), name='admin_semanticfield_list'),
+    url(r'^derivationhistory/(?P<pk>\d+)', DerivationHistoryDetailView.as_view(), name='admin_derivationhistory_view'),
+    url(r'^derivationhistory_list/$', permission_required('dictionary.search_gloss')(DerivationHistoryListView.as_view()),
+        name='admin_derivationhistory_list'),
     # Lemma Idgloss views
     url(r'^lemma/$', login_required(LemmaListView.as_view()), name='admin_lemma_list'),
     url(r'^lemma/add/$', permission_required('dictionary.add_lemmaidgloss')(LemmaCreateView.as_view()), name='create_lemma'),

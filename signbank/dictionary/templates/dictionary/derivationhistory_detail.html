@@ -1,0 +1,57 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% load guardian_tags %}
+
+{% block extrajs %}
+
+    <script type='text/javascript'>
+    var url = '{{ URL }}'
+
+    </script>
+{% endblock %}
+
+{% block content %}
+
+<h3>{% trans "Derivation History Detail View" %}</h3>
+
+
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+        {% if not user.is_anonymous %}
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/derivationhistory_list/">{% trans "Derivation Histories List" %}</a>
+        {% endif %}
+        </li>
+    </ul>
+</div>
+
+<div id="definitionblock">
+
+        <div class='panel-group' id="definition" style="z-index: 10;opacity:.99; position: relative; background-color: white;margin-top:15px;">
+            <table class='table table-condensed'>
+                <tr><th style="width:18em;">{% trans "Derivation History " %}</th><td>{{ derivationhistory.name }}</td></tr>
+
+                <tr><th>{% trans "Description" %}</th>
+                    <td align="left" id='description' name='description'>{{derivationhistory.description}}</td></tr>
+
+
+                <tr><th>{% trans "Translations" %}</th>
+                    {% if translations %}
+                    <td><table>
+                    {% for language, name in translations %}
+                        <tr><td>{{language}}</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>{{name}}</td></tr>
+                    {% endfor %}
+                    </table></td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                </tr>
+            </table>
+        </div>
+</div>
+
+{% endblock %}
+

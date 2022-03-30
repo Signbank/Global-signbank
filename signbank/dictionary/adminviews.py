@@ -347,7 +347,11 @@ class GlossListView(ListView):
             context['GLOSS_LIST_DISPLAY_HEADER'] = ''
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
+            fieldnames.remove('derivHist')
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
+            multiple_select_gloss_fields.remove('derivHist')
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
         multiple_select_gloss_categories = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
@@ -372,6 +376,8 @@ class GlossListView(ListView):
 
             for fieldname in settings.FIELDS[topic]:
 
+                if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
+                    continue
                 # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand for purposes of nested dependencies in Search form
                 if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                     field = search_form[fieldname]
@@ -879,6 +885,8 @@ class GlossListView(ListView):
 
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
+            fieldnames.remove('derivHist')
 
         # SignLanguage and basic property filters
         # allows for multiselect
@@ -899,6 +907,8 @@ class GlossListView(ListView):
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
+            multiple_select_gloss_fields.remove('derivHist')
 
         for fieldnamemulti in multiple_select_gloss_fields:
 
@@ -911,6 +921,8 @@ class GlossListView(ListView):
             if vals != []:
                 if fieldnamemulti == 'semField':
                     qs = qs.filter(semFieldShadow__in=vals)
+                elif fieldnamemulti == 'derivHist':
+                    qs = qs.filter(derivHistShadow__in=vals)
                 else:
                     qs = qs.filter(**{ fieldnameQuery: vals })
 
@@ -1231,6 +1243,8 @@ class GlossDetailView(DetailView):
 
         context['SemanticFieldDefined'] =  self.object.semFieldShadow.all().count() > 0
 
+        context['DerivationHistoryDefined'] = self.object.derivHistShadow.all().count() > 0
+
         next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
         if next_gloss == None:
             context['nextglossid'] = context['gloss'].pk #context['gloss']
@@ -1308,7 +1322,7 @@ class GlossDetailView(DetailView):
             context[topic+'_fields'] = []
             for field in FIELDS[topic]:
                 # the following check will be used when querying is added, at the moment these don't appear in the phonology list
-                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS + ['semField']:
+                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS + ['semField', 'derivHist']:
                     if topic == 'phonology':
                         gloss_phonology.append(field)
                     choice_list = []
@@ -1547,6 +1561,25 @@ class GlossDetailView(DetailView):
 
         context['gloss_semanticfields'] = gloss_semanticfields
 
+
+        gloss_derivationhistory = []
+        multiselect_derivationhistory = gl.derivHistShadow.all()
+        legacy_derivationhistory = gl.derivHist
+        if legacy_derivationhistory and not multiselect_derivationhistory:
+
+            new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(legacy_derivationhistory)
+
+            if new_derivationhistory:
+                # the following is only done if the legacy value has not been put in the multiselect derivation history
+                gl.derivHistShadow.add(new_derivationhistory)
+                gl.save()
+
+        for sf in gl.derivHistShadow.all():
+            gloss_derivationhistory.append(sf)
+
+        context['gloss_derivationhistory'] = gloss_derivationhistory
+
+
         simultaneous_morphology = []
         sim_morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
 
@@ -1640,6 +1673,11 @@ class GlossDetailView(DetailView):
             context['SHOW_LETTER_NUMBER_PHONOLOGY'] = settings.SHOW_LETTER_NUMBER_PHONOLOGY
         else:
             context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
+
+        if hasattr(settings, 'USE_DERIVATIONHISTORY') and settings.USE_DERIVATIONHISTORY:
+            context['USE_DERIVATIONHISTORY'] = settings.USE_DERIVATIONHISTORY
+        else:
+            context['USE_DERIVATIONHISTORY'] = False
 
         context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
 
@@ -1996,6 +2034,9 @@ class MorphemeListView(ListView):
 
             for fieldname in settings.FIELDS[topic]:
 
+                if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
+                    continue
+
                 if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
 
                     if topic == 'phonology':
@@ -2044,6 +2085,8 @@ class MorphemeListView(ListView):
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
+            fieldnames.remove('derivHist')
         multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
         context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = multiple_select_morpheme_fields
 
@@ -2136,6 +2179,8 @@ class MorphemeListView(ListView):
 
 
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
+            fieldnames.remove('derivHist')
 
         # SignLanguage and basic property filters
         # allows for multiselect
@@ -2167,6 +2212,8 @@ class MorphemeListView(ListView):
             if vals != []:
                 if fieldnamemulti == 'semField':
                     qs = qs.filter(semFieldShadow__in=vals)
+                elif fieldnamemulti == 'derivHist':
+                    qs = qs.filter(derivHistShadow__in=vals)
                 else:
                     qs = qs.filter(**{ fieldnameQuery: vals })
 
@@ -2782,6 +2829,164 @@ class SemanticFieldListView(ListView):
 
         return qs
 
+
+class DerivationHistoryDetailView(DetailView):
+    model = DerivationHistory
+    template_name = 'dictionary/derivationhistory_detail.html'
+    context_object_name = 'derivationhistory'
+
+    class Meta:
+        ordering = ['name']
+
+    #Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+        # Get the machine value in the URL
+        match_machine_value = int(kwargs['pk'])
+        try:
+            self.object = DerivationHistory.objects.get(machine_value=match_machine_value)
+        except ObjectDoesNotExist:
+            # No DerivationHistory exists for this machine value
+            # See if there is a fieldChoice for the derivHist category with this machine value
+            # check to see if this semantic field has been created in FieldChoice but not yet viewed
+            # if that is the case, create a new DerivationHistory object and view that,
+            # otherwise return an error
+
+            new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(match_machine_value)
+
+            if not new_derivationhistory:
+
+                return HttpResponse('<p>DerivationHistory not configured for this machine value.</p>')
+
+        try:
+            # The semantic field object exists, make sure it's in FieldChoices
+            fieldchoice_for_this_object = FieldChoice.objects.get(field__iexact='derivHist', machine_value=match_machine_value)
+        except ObjectDoesNotExist:
+            # the semantic field object with the machine value has been either fetched or created and stored in self.object
+            print('field choice not found for derivHist with machine value ', match_machine_value)
+            this_derivationhistory = self.object
+
+            dutch_language = Language.objects.get(language_code_2char='nl')
+            chinese_language = Language.objects.get(language_code_2char='zh')
+
+            dutch_translation = DerivationHistoryTranslation.objects.filter(derivHist=this_derivationhistory, language=dutch_language).first()
+
+            if not dutch_translation:
+                # this DerivationHistory was created without a translation, use English
+                dutch_translation = this_derivationhistory.name
+                dutch_derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=dutch_language,
+                                                             name=dutch_translation)
+                dutch_derivationhistorytranslation.save()
+
+            chinese_translation = DerivationHistoryTranslation.objects.filter(derivHist=this_derivationhistory, language=chinese_language).first()
+
+            if not chinese_translation:
+                # this DerivationHistory was created without a translation, use English
+                chinese_translation = this_derivationhistory.name
+                chinese_derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=chinese_language,
+                                                               name=new_chinese_name)
+                chinese_derivationhistorytranslation.save()
+
+            # for the purposes of FieldChoice choice lists, make sure the translations have values
+            this_field_choice = FieldChoice(machine_value=this_derivationhistory.machine_value,
+                                            field='derivHist',
+                                            english_name=this_derivationhistory.name,
+                                            dutch_name=dutch_translation,
+                                            chinese_name=chinese_translation)
+            this_field_choice.save()
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+
+        try:
+            context = super(DerivationHistoryDetailView, self).get_context_data(**kwargs)
+        except:
+            # return custom template
+            return HttpResponse('invalid', {'content-type': 'text/plain'})
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+
+        context['translations'] = [ (translation.language.name, translation.name) for translation in self.object.derivationhistorytranslation_set.all() ]
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        return context
+
+
+class DerivationHistoryListView(ListView):
+
+    model = DerivationHistory
+    template_name = 'dictionary/admin_derivationhistory_list.html'
+    search_type = 'derivationhistory'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DerivationHistoryListView, self).get_context_data(**kwargs)
+
+        context['derivationhistoryfieldchoicecount'] = FieldChoice.objects.filter(field__iexact='derivHist').count()
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+
+        context['derivationhistorycount'] = DerivationHistory.objects.count()
+
+        # this is needed to avoid crashing the browser if you go to the last page
+        # of an extremely long list and go to Detail View on the objects
+
+        if len(self.object_list) > settings.MAX_SCROLL_BAR:
+            list_of_objects = context['page_obj'].object_list
+        else:
+            list_of_objects = self.object_list
+
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        return context
+
+    def get_queryset(self):
+
+        # get query terms from self.request
+        get = self.request.GET
+
+        qs = DerivationHistory.objects.all().order_by('name')
+
+        derivationhistory_fields = FieldChoice.objects.filter(field__iexact='derivHist')
+        # Find out if any DerivationHistorys exist for which no DerivationHistory object has been created
+        # this can happen if new derivHist choices are created in Admin
+
+        existing_derivationhistory_objects_machine_values = [ o.machine_value for o in qs ]
+
+        new_derivationhistory_created = 0
+
+        for s in derivationhistory_fields:
+            if s.machine_value in existing_derivationhistory_objects_machine_values:
+                pass
+            else:
+                # create a new DerivationHistory object
+                new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(s.machine_value)
+
+                if new_derivationhistory:
+                    new_derivationhistory_created = 1
+
+        if new_derivationhistory_created: # if a new DerivationHistory object was created, reload the query result
+
+            qs = DerivationHistory.objects.all().order_by('name')
+
+        return qs
+
+
+
 class HomonymListView(ListView):
     model = Gloss
     template_name = 'dictionary/admin_homonyms_list.html'
@@ -2859,6 +3064,8 @@ class MinimalPairsListView(ListView):
 
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
+            multiple_select_gloss_fields.remove('derivHist')
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
         context['translated_choice_lists_table'] = generate_translated_choice_list_table()
@@ -2906,6 +3113,8 @@ class MinimalPairsListView(ListView):
 
             for fieldname in settings.FIELDS[topic]:
 
+                if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
+                    continue
                 if fieldname in settings.MINIMAL_PAIRS_SEARCH_FIELDS:
                     # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand for purposes of nested dependencies in Search form
                     if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
@@ -3030,6 +3239,8 @@ class MinimalPairsListView(ListView):
 
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
+            multiple_select_gloss_fields.remove('derivHist')
 
         for fieldnamemulti in multiple_select_gloss_fields:
 
@@ -5491,8 +5702,8 @@ class MorphemeDetailView(DetailView):
             context[topic + '_fields'] = []
         for field in settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics']:
             # This test was easier than changing all the datastructures
-            if field == 'semField':
-                # ignore this field, the multiselect field semFieldShadow is used instead
+            if field == 'semField' or field == 'derivHist':
+                # ignore this field, the multiselect field semFieldShadow or derivHistShadow is used instead
                 # no choice lists are computed for it
                 # this is the data for the input fields that have choices
                 continue
@@ -5615,6 +5826,23 @@ class MorphemeDetailView(DetailView):
 
         context['gloss_semanticfields'] = gloss_semanticfields
 
+        gloss_derivationhistory = []
+        multiselect_derivationhistory = gl.derivHistShadow.all()
+        legacy_derivationhistory = gl.derivHist
+        if legacy_derivationhistory and not multiselect_derivationhistory:
+
+            new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(legacy_derivationhistory)
+
+            if new_derivationhistory:
+                # the following is only done if the legacy value has not been put in the multiselect derivation history
+                gl.derivHistShadow.add(new_derivationhistory)
+                gl.save()
+
+        for sf in gl.derivHistShadow.all():
+            gloss_derivationhistory.append(sf)
+
+        context['gloss_derivationhistory'] = gloss_derivationhistory
+
         # Put translations (keywords) per language in the context
         context['translations_per_language'] = {}
         if gl.dataset:
@@ -5684,6 +5912,11 @@ class MorphemeDetailView(DetailView):
         else:
             context['MORPHEME_DISPLAY_FIELDS'] = []
 
+        if hasattr(settings, 'USE_DERIVATIONHISTORY') and settings.USE_DERIVATIONHISTORY:
+            context['USE_DERIVATIONHISTORY'] = settings.USE_DERIVATIONHISTORY
+        else:
+            context['USE_DERIVATIONHISTORY'] = False
+
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
 
@@ -5695,7 +5928,7 @@ def gloss_ajax_search_results(request):
         else:
             return HttpResponse(json.dumps(None))
     else:
-        print('gloss ajax search results: search type not in session')
+        # gloss ajax search results: search type not in session
         return HttpResponse(json.dumps(None))
 
 def handshape_ajax_search_results(request):
@@ -5710,7 +5943,7 @@ def lemma_ajax_search_results(request):
     if 'search_type' in request.session.keys() and request.session['search_type'] == 'lemma':
         return HttpResponse(json.dumps(request.session['search_results']))
     else:
-        print('lemma ajax search results: search type not in session')
+        # lemma ajax search results: search type not in session
         return HttpResponse(json.dumps(None))
 
 def gloss_ajax_complete(request, prefix):
@@ -6793,4 +7026,47 @@ def semanticfield_fieldchoice_to_multiselect(machine_value):
         chinese_translation.save()
 
     return new_semanticfield
+
+
+
+def derivationhistory_fieldchoice_to_multiselect(machine_value):
+    if not machine_value:
+        return None
+
+    try:
+        # check that there is a DerivationHistory object defined for the legacy derivHist FieldChoice of this gloss
+        derivationhistory = DerivationHistory.objects.get(machine_value=machine_value)
+        # already done
+        return derivationhistory
+    except ObjectDoesNotExist:
+        # if not, create one
+        # first get the FieldChoice
+        try:
+            derivHist_fieldchoice = FieldChoice.objects.get(field__iexact='derivHist', machine_value=machine_value)
+        except ObjectDoesNotExist:
+            # this happens if an invalid machine value is used in the url
+            return None
+
+    new_machine_value = derivHist_fieldchoice.machine_value
+    new_english_name = derivHist_fieldchoice.english_name
+    # legacy values
+    new_dutch_name = derivHist_fieldchoice.dutch_name
+    dutch_language = Language.objects.get(language_code_2char='nl')
+    new_chinese_name = derivHist_fieldchoice.chinese_name
+    chinese_language = Language.objects.get(language_code_2char='zh')
+
+    new_derivationhistory = DerivationHistory(machine_value=new_machine_value, name=new_english_name)
+    new_derivationhistory.save()
+
+    if new_dutch_name:
+        dutch_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=dutch_language,
+                                                     name=new_dutch_name)
+        dutch_translation.save()
+
+    if new_chinese_name:
+        chinese_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=chinese_language,
+                                                       name=new_chinese_name)
+        chinese_translation.save()
+
+    return new_derivationhistory
 

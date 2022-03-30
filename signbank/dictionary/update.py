@@ -217,6 +217,11 @@ def update_gloss(request, glossid):
 
             return update_semanticfield(gloss, field, values)
 
+        elif field == 'derivationhistory':
+            # expecting possibly multiple values
+
+            return update_derivationhistory(gloss, field, values)
+
         elif field == 'dataset':
             original_value = getattr(gloss,field)
 
@@ -614,6 +619,31 @@ def update_semanticfield(gloss, field, values):
 
     return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
 
+def update_derivationhistory(gloss, field, values):
+    # expecting possibly multiple values
+    derivationhistory_choices = json.loads(gloss.derivationhistory_choices())
+    numerical_values_converted_to_derivationhistory = [ derivationhistory_choices[value] for value in values ]
+    error_string_values = ', '.join(numerical_values_converted_to_derivationhistory)
+    new_derivationhistory_to_save = []
+
+    try:
+        for value in numerical_values_converted_to_derivationhistory:
+            derivationhistory_objs = DerivationHistory.objects.filter(name=value)
+            for sf_obj in derivationhistory_objs:
+                new_derivationhistory_to_save.append(sf_obj)
+
+        # clear the old dialects only after we've parsed and checked the new ones
+        gloss.derivHistShadow.clear()
+        for sf in new_derivationhistory_to_save:
+            gloss.derivHistShadow.add(sf)
+        gloss.save()
+
+        new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+    except:
+        return HttpResponseBadRequest("Derivation History %s has errors." % error_string_values,
+                                      {'content-type': 'text/plain'})
+
+    return HttpResponse(str(new_derivationhistory_value), {'content-type': 'text/plain'})
 
 def update_tags(gloss, field, values):
     # expecting possibly multiple values
@@ -1759,6 +1789,11 @@ def update_morpheme(request, morphemeid):
             # expecting possibly multiple values
 
             return update_semanticfield(morpheme, field, values)
+
+        elif field == 'derivationhistory':
+            # expecting possibly multiple values
+
+            return update_derivationhistory(morpheme, field, values)
 
         elif field == 'dataset':
             # this has been hidden

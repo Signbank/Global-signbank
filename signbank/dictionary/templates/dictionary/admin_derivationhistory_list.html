@@ -1,0 +1,49 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}Signbank: Available derivation histories{% endblock %}
+
+
+{% block content %}
+
+<h3>{% trans "Available Derivation Histories" %}</h3>
+
+{% if object_list %}
+
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+          <th style="width:300px;">{% trans "Name" %}</th>
+          <th style="width:200px;">{% trans "Translations" %}</th>
+
+      </tr>
+    </thead>
+    <tbody>
+      {% for derivationhistory in object_list %}
+        <tr>
+            <td>
+                <a href="{{PREFIX_URL}}/dictionary/derivationhistory/{{derivationhistory.machine_value}}/">{{ derivationhistory.name }}</a>
+            </td>
+            {% if derivationhistory.derivationhistorytranslation_set.all %}
+            <td><table>
+            {% for translation in derivationhistory.derivationhistorytranslation_set.all %}
+                <tr><td>{{translation.language}}</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>{{translation.name}}</td></tr>
+            {% endfor %}
+            </table></td>
+            {% else %}
+            <td></td>
+            {% endif %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+{% trans "No derivation histories found." %}
+{% endif %}
+
+{% endblock content %}
+

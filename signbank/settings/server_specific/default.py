@@ -105,7 +105,7 @@ FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic',
                        'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number',
                        'weakdrop','weakprop']
 
-FIELDS['semantics'] = ['semField','namEnt','iconImg','valence','concConcSet']
+FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','iconImg','valence','concConcSet']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe',
                        'tokNoSgnrGe','tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
@@ -191,6 +191,9 @@ DEFAULT_DATASET_PK = 1
 
 #whether the Handshape functionality should be present in the interface
 USE_HANDSHAPE = True
+
+#whether the Derivation History functionality should be present in the interface
+USE_DERIVATIONHISTORY = True
 
 #Gloss fields used in the API
 API_FIELDS = ['idgloss']

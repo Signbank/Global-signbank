@@ -58,6 +58,7 @@
     var handedness_weakprop = handedness_weak_drop_reverse['{{gloss.weakprop}}'];
     var dialects = {{gloss.dialect_choices|safe}};
     var semanticfield_choices = {{gloss.semanticfield_choices|safe}};
+    var derivationhistory_choices = {{gloss.derivationhistory_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
     {% else %}
@@ -1132,12 +1133,18 @@ option:not(:checked) {
         </div>
         <div id='semantics' class='panel-collapse collapse'>
             <table class='table table-condensed'>
-                <tr {%if gloss_semanticfields|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Semantic Field" %}</th>
+                <tr><th>{% trans "Semantic Field" %}</th>
                     <td class='edit edit_semanticfield'
                         id='semanticfield'>{% for sf in gloss_semanticfields %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                     <td/>
                 </tr>
-
+                {% if USE_DERIVATIONHISTORY %}
+                <tr><th>{% trans "Derivation History" %}</th>
+                    <td class='edit edit_derivationhistory'
+                        id='derivationhistory'>{% for sf in gloss_derivationhistory %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                    <td/>
+                </tr>
+                {% endif %}
 		    {% for value,name,label,kind in semantics_fields %}
 	              <tr><th>
                     {% if name == 'concConcSet' %}
