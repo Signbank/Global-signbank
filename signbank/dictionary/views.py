@@ -2783,44 +2783,15 @@ def gif_prototype(request):
 
 def configure_derivationhistory(request):
 
-    output_string = '<!DOCTYPE html>\n' \
-                         '<html>\n' \
-                         '<body>\n'
-    derivationhistory_table_pre = '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
-                         '<thead>\n' \
-                         '<tr>\n' \
-                         '<th style="width:20em; text-align:left;">Machine Value</th>\n' \
-                         '<th style="width:25em; text-align:left;">English Name</th>\n' \
-                         '<th style="width:40em; text-align:left;">Dutch Name</th>\n' \
-                         '<th style="width:40em; text-align:left;">Chinese Name</th>\n' \
-                         '</tr>\n' \
-                         '</thead>\n' \
-                         '<tbody>\n'
-
-    derivationhistory_table_suffix = '</tbody>\n' \
-                         '</table>\n'
-
-    output_string_suffix = '</body>\n' \
-                         '</html>'
-
-    if not request.user.is_authenticated():
-        return HttpResponse(
-            output_string + '<p>You must be logged in to use this functionality.</p>' + output_string_suffix)
-    if not request.user.is_superuser:
-        return HttpResponse(
-            output_string + '<p>You are not allowed to configure derivation histories.</p>' + output_string_suffix)
-    elif not settings.USE_DERIVATIONHISTORY:
-        return HttpResponse(output_string + '<p>Derivation History is not supported by your Signbank configuration.</p>' + output_string_suffix)
-    # check if the Derivation History table has been filled, if so don't do anything
     already_filled_derivationhistory = DerivationHistory.objects.count()
-    if already_filled_derivationhistory:
-        return HttpResponse(output_string + '<p>Derivation History is already configured.</p>' + output_string_suffix)
-    else:
 
-        output_string += derivationhistory_table_pre
+    # check if the user has permission to configure
+    # and whether already configured
+    if request.user.is_superuser and not already_filled_derivationhistory:
 
         derivationhistory_count = FieldChoice.objects.filter(field__iexact='derivHist').count()
 
+        # check if field choices already exist for derivHist
         if not derivationhistory_count:
             # This has not been initialized
             # These are the initial choices from the Signbank migrations
@@ -2828,11 +2799,10 @@ def configure_derivationhistory(request):
             # Put them back in Global
             # The machine value is not created automatically, it is unique to the field derivHist
             # NOTE: This should be done in a different way, possibly a setting
-            derivationhistory_initial_choices = [(b'0', b'-'), (b'1', b'N/A'), (b'4', 'Arc'), (b'37', 'Circle'),
-                                               (b'44', 'Motivated shape'), (b'45', 'Spiral'), (b'6', 'Straight'), (b'12', 'Zigzag')]
+            derivationhistory_initial_choices = [(4, 'Arc'), (37, 'Circle'),
+                                               (44, 'Motivated shape'), (45, 'Spiral'), (6, 'Straight'), (12, 'Zigzag')]
 
-            for (b_machine_value, name) in derivationhistory_initial_choices:
-                machine_value = int(b_machine_value)
+            for (machine_value, name) in derivationhistory_initial_choices:
                 dhfc = FieldChoice(field='derivHist', machine_value=machine_value, english_name=name, dutch_name=name, chinese_name=name)
                 dhfc.save()
 
@@ -2863,10 +2833,20 @@ def configure_derivationhistory(request):
                                                                    name=new_chinese_name)
                 chinese_translation.save()
 
-            output_string += '<tr><td>' + str(new_machine_value) + '</td><td>' + new_english_name + '</td><td>' + new_dutch_name + '</td><td>' + new_chinese_name + '</td></tr>\n'
 
-        output_string += derivationhistory_table_suffix
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        output_string += output_string_suffix
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
 
-        return HttpResponse(output_string)
+    return render(request, 'dictionary/admin_configure_derivationhistory.html',
+                  { 'USE_DERIVATIONHISTORY': settings.USE_DERIVATIONHISTORY,
+                    'already_set_up': already_filled_derivationhistory,
+                    'revisions':FieldChoice.objects.filter(field__iexact='derivHist'),
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })
