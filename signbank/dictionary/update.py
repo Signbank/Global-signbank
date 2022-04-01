@@ -594,54 +594,66 @@ def update_dialect(gloss, field, values):
     return HttpResponse(str(signlanguage_value) + '\t' + str(new_dialects_value), {'content-type': 'text/plain'})
 
 def update_semanticfield(gloss, field, values):
+    # field is 'semanticfield'
     # expecting possibly multiple values
-    semanticfield_choices = json.loads(gloss.semanticfield_choices())
-    numerical_values_converted_to_semanticfields = [ semanticfield_choices[value] for value in values ]
-    error_string_values = ', '.join(numerical_values_converted_to_semanticfields)
+    # values is a list of strings
     new_semanticfields_to_save = []
 
-    try:
-        for value in numerical_values_converted_to_semanticfields:
-            semanticfield_objs = SemanticField.objects.filter(name=value)
-            for sf_obj in semanticfield_objs:
-                new_semanticfields_to_save.append(sf_obj)
+    # fetch all the valid semantic field choices
+    # create a lookup dictionary mapping names to objects
+    # the name is a unique field in the model
+    semanticfield_choices = {}
+    for sf in SemanticField.objects.all():
+        semanticfield_choices[sf.name] = sf
 
-        # clear the old dialects only after we've parsed and checked the new ones
-        gloss.semFieldShadow.clear()
-        for sf in new_semanticfields_to_save:
-            gloss.semFieldShadow.add(sf)
-        gloss.save()
+    # get the SmanticField objects for the values
+    for value in values:
+        # there's a conditional here, although it's not really needed
+        # it is impossible for a value not to be found among the choices
+        # we test for it among the keys to avoid a key error
+        # if a value is not found it is simply ignored
+        if value in semanticfield_choices.keys():
+            new_semanticfields_to_save.append(semanticfield_choices[value])
 
-        new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
-    except:
-        return HttpResponseBadRequest("Semantic Field %s has errors." % error_string_values,
-                                      {'content-type': 'text/plain'})
+    # clear the old semantic fields only after we've parsed and checked the new ones
+    gloss.semFieldShadow.clear()
+    for sf in new_semanticfields_to_save:
+        gloss.semFieldShadow.add(sf)
+    gloss.save()
+
+    new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
 
     return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
 
 def update_derivationhistory(gloss, field, values):
+    # field is 'derivationhistory'
     # expecting possibly multiple values
-    derivationhistory_choices = json.loads(gloss.derivationhistory_choices())
-    numerical_values_converted_to_derivationhistory = [ derivationhistory_choices[value] for value in values ]
-    error_string_values = ', '.join(numerical_values_converted_to_derivationhistory)
+    # values is a list of strings
     new_derivationhistory_to_save = []
 
-    try:
-        for value in numerical_values_converted_to_derivationhistory:
-            derivationhistory_objs = DerivationHistory.objects.filter(name=value)
-            for sf_obj in derivationhistory_objs:
-                new_derivationhistory_to_save.append(sf_obj)
+    # fetch all the valid derivation history choices
+    # create a lookup dictionary mapping names to objects
+    # the name is a unique field in the model
+    derivationhistory_choices = {}
+    for dh in DerivationHistory.objects.all():
+        derivationhistory_choices[dh.name] = dh
 
-        # clear the old dialects only after we've parsed and checked the new ones
-        gloss.derivHistShadow.clear()
-        for sf in new_derivationhistory_to_save:
-            gloss.derivHistShadow.add(sf)
-        gloss.save()
+    # get the DerivationHistory objects for the values
+    for value in values:
+        # there's a conditional here, although it's not really needed
+        # it is impossible for a value not to be found among the choices
+        # we test for it among the keys to avoid a key error
+        # if a value is not found it is simply ignored
+        if value in derivationhistory_choices.keys():
+            new_derivationhistory_to_save.append(derivationhistory_choices[value])
 
-        new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
-    except:
-        return HttpResponseBadRequest("Derivation History %s has errors." % error_string_values,
-                                      {'content-type': 'text/plain'})
+    # clear the old derivation histories only after we've parsed and checked the new ones
+    gloss.derivHistShadow.clear()
+    for sf in new_derivationhistory_to_save:
+        gloss.derivHistShadow.add(sf)
+    gloss.save()
+
+    new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
 
     return HttpResponse(str(new_derivationhistory_value), {'content-type': 'text/plain'})
 
