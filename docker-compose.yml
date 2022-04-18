@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+    backend: &backend
+        stdin_open: true
+        tty: true
+        build: .
+        environment:
+          - DATABASE_URL=postgres://postgres:postgres@database/postgres
+        ports:
+          - 8000:8000
+        volumes:
+            - "./:/app:z"
+            - writable:/writaable
+        links:
+            - database
+            - mail
+    database:
+        image: postgres:14
+        environment:
+          - "POSTGRES_PASSWORD=postgres"
+    mail:
+        image: djfarrelly/maildev
+        ports:
+          - 1025:1025
+        command: bin/maildev --web 1025 --smtp 25
+volumes:
+  writable:
