@@ -67,6 +67,10 @@ class Command(BaseCommand):
         publisher.permissions.add(add_page)
         publisher.permissions.add(add_attachment)
 
+        # Dataset Manager
+        dataset_manager, created = Group.objects.get_or_create(
+            name="Dataset_Manager")
+
         # Editor
         editor, created = Group.objects.get_or_create(name='Editor')
         editor.permissions.add(advanced_search)
@@ -120,6 +124,8 @@ class Command(BaseCommand):
             # create some sample users
             peter = User.objects.create_user(
                 'publisher', 'example@example.com', 'publisher', first_name='Peter', last_name='Publisher')
+            david = User.objects.create_user(
+                'dataset_manager', 'example@example.com', 'dataset_manager', first_name="David", last_name="Dataset-Manager")
             eric = User.objects.create_user(
                 'editor', 'example@example.com', 'editor', first_name='Eric', last_name='Editor')
             ian = User.objects.create_user(
@@ -134,6 +140,7 @@ class Command(BaseCommand):
                 'public', 'example@example.com', 'public', first_name='Pamela', last_name='Public')
 
             print("Created user 'publisher' who is a publisher")
+            print("Created user 'david' who is a dataset manager")
             print("Created user 'editor' who is a editor")
             print("Created user 'interpreter' who is a interpreter")
             print("Created user 'boss' who is a supervisor")
@@ -142,6 +149,7 @@ class Command(BaseCommand):
             print("Created user 'public' who is not in any groups")
 
             peter.groups.add(publisher)
+            david.groups.add(dataset_manager)
             eric.groups.add(editor)
             ian.groups.add(interpreter)
             boss.groups.add(supervisor)
