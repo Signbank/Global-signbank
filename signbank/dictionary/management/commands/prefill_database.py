@@ -73,18 +73,24 @@ class Command(BaseCommand):
         dataset.save()
 
         if len(translation_languages) == 1:
-            print('Added ', translation_languages[0].name,
+            print('Added', translation_languages[0].name,
                   'as translation language to dataset '+dataset_name)
 
         elif len(translation_languages) > 1:
-            print('Added ', ' and '.join([lang.name for lang in translation_languages]),
+            print('Added', ' and '.join([lang.name for lang in translation_languages]),
                   'as translation languages to dataset '+dataset_name)
 
         print()
 
+    @transaction.atomic
     def handle(self, *args, **options):
 
-        print('This is a tool to prefill the database of a new Signbank installation. We will go through (1) user management, (2) data management and (3) interface subsequently. Note: none of the choices here are final, you can always change and extend things later; the goal of this tool is just to have a minimal version of Signbank working quickly. Hit enter to continue.')
+        print("""
+This is a tool to prefill the database of a new Signbank installation.
+We will go through (1) user management, (2) data management and (3) interface subsequently.
+Note: none of the choices here are final, you can always change and extend things later; the goal of this tool
+is just to have a minimal version of Signbank working quickly. Hit enter to continue.
+        """)
         input()
         print()
 
@@ -97,13 +103,17 @@ class Command(BaseCommand):
         root_user_password = os.getenv("DJANGO_SUPERUSER_PASSWORD") or getpass.getpass(
             'Password of the superuser: ')
 
-        User.objects.create_superuser(
-            root_user_name, root_user_email, root_user_password)
-        print('Superuser', root_user_name, 'created')
+        if not User.objects.filter(username=root_user_name).exists():
+            User.objects.create_superuser(
+                root_user_name, root_user_email, root_user_password)
+            print('Superuser', root_user_name, 'created')
+        else:
+            print('User with username', root_user_name, 'already exists')
+
         print()
 
         if input('Create base groups and permissions ? [y/n]: ').lower() in ['y', 'yes']:
-            management.call_command('permissions', create_users=False)
+            management.call_command('permissions')
             print('Groups and permissions created')
 
         print()
