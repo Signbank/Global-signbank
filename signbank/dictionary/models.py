@@ -56,9 +56,9 @@ def build_choice_list(field):
 
 
 def get_default_language_id():
-    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
+    language = Language.objects.values('id').get(**DEFAULT_KEYWORDS_LANGUAGE)
     if language is not None:
-        return language.id
+        return language['id']
     return None
 
 
