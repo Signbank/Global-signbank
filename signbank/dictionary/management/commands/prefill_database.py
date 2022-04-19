@@ -97,7 +97,7 @@ class Command(BaseCommand):
         root_user_password = os.getenv("DJANGO_SUPERUSER_PASSWORD") or getpass.getpass(
             'Password of the superuser: ')
 
-        User.objects.count() == 0 and User.objects.create_superuser(
+        User.objects.create_superuser(
             root_user_name, root_user_email, root_user_password)
         print('Superuser', root_user_name, 'created')
         print()
