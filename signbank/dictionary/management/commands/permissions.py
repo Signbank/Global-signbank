@@ -45,14 +45,6 @@ class Command(BaseCommand):
     help = 'set up default groups and permissions'
     args = ''
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "--create-users",
-            action='store_true',
-            dest='create_users',
-            default=True,
-            help='Create example users in each group with permissions applied')
-
     def handle(self, *args, **options):
 
         # Publisher
@@ -123,7 +115,7 @@ class Command(BaseCommand):
         public, created = Group.objects.get_or_create(name='Public')
 
         # create sample users if we don't have them already
-        if options['create_users'] and len(User.objects.filter(username='publisher')) == 0:
+        if len(User.objects.filter(username='publisher')) == 0:
 
             # create some sample users
             peter = User.objects.create_user(
@@ -140,6 +132,14 @@ class Command(BaseCommand):
                 'observer', 'example@example.com', 'observer', first_name='Olive', last_name='Observer')
             public = User.objects.create_user(
                 'public', 'example@example.com', 'public', first_name='Pamela', last_name='Public')
+
+            print("Created user 'publisher' who is a publisher")
+            print("Created user 'editor' who is a editor")
+            print("Created user 'interpreter' who is a interpreter")
+            print("Created user 'boss' who is a supervisor")
+            print("Created user 'researcher' who is a researcher")
+            print("Created user 'observer' who is a observer")
+            print("Created user 'public' who is not in any groups")
 
             peter.groups.add(publisher)
             eric.groups.add(editor)
