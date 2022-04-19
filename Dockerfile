@@ -31,7 +31,7 @@ RUN echo "APT::Install-Recommends \"0\";" >> /etc/apt/apt.conf.d/02recommends &&
 RUN mkdir /writable
 VOLUME /writaable
 
-RUN ln -s /usr/bin/ffmpeg /usr/sbin/av
+RUN ln -s /usr/bin/ffmpeg /usr/sbin/avconv
 
 # Install requirements
 WORKDIR /app
