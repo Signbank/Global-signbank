@@ -403,6 +403,172 @@ class HandshapeAdmin(VersionAdmin):
             del actions['delete_selected']
         return actions
 
+class SemanticFieldAdminForm(forms.ModelForm):
+
+    class Meta:
+        model = SemanticField
+        fields = ['name', 'description']
+
+    def __init__(self, *args, **kwargs):
+        super(SemanticFieldAdminForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        # check that the name is not empty
+        name = self.cleaned_data.get('name')
+        if not name:
+            raise forms.ValidationError(_('The semantic field name is required'))
+
+    def get_form(self, request, obj=None, **kwargs):
+
+        form = super(SemanticFieldAdminForm, self).get_form(request, obj, **kwargs)
+        return form
+
+
+class SemanticFieldTranslationInline(admin.TabularInline):
+
+    model = SemanticFieldTranslation
+
+    list_display = ['language', 'name']
+
+    extra = 0
+
+    class Media:
+        css = {
+            'all': ('css/custom_admin.css',)
+        }
+
+
+class SemanticFieldAdmin(VersionAdmin):
+
+    model = SemanticField
+    form = SemanticFieldAdminForm
+
+    readonly_fields=['machine_value']
+
+    list_display = ['machine_value', 'name', 'description']
+
+    inlines = [SemanticFieldTranslationInline,]
+
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+    }
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class SemanticFieldTranslationAdmin(VersionAdmin):
+
+    model = SemanticFieldTranslation
+
+    readonly_fields=['semField', 'language', 'name']
+
+    list_display = ['semField', 'name', 'language']
+
+    list_filter = ['semField']
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+
+class DerivationHistoryAdminForm(forms.ModelForm):
+
+    class Meta:
+        model = DerivationHistory
+        fields = ['name', 'description']
+
+    def __init__(self, *args, **kwargs):
+        super(DerivationHistoryAdminForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        # check that the name is not empty
+        name = self.cleaned_data.get('name')
+        if not name:
+            raise forms.ValidationError(_('The derivation history name is required'))
+
+    def get_form(self, request, obj=None, **kwargs):
+
+        form = super(DerivationHistoryAdminForm, self).get_form(request, obj, **kwargs)
+        return form
+
+
+class DerivationHistoryTranslationInline(admin.TabularInline):
+
+    model = DerivationHistoryTranslation
+
+    list_display = ['language', 'name']
+
+    extra = 0
+
+    class Media:
+        css = {
+            'all': ('css/custom_admin.css',)
+        }
+
+
+class DerivationHistoryAdmin(VersionAdmin):
+
+    model = DerivationHistory
+    form = DerivationHistoryAdminForm
+
+    readonly_fields=['machine_value']
+
+    list_display = ['machine_value', 'name', 'description']
+
+    inlines = [DerivationHistoryTranslationInline,]
+
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+    }
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class DerivationHistoryTranslationAdmin(VersionAdmin):
+
+    model = DerivationHistoryTranslation
+
+    readonly_fields=['derivHist', 'language', 'name']
+
+    list_display = ['derivHist', 'name', 'language']
+
+    list_filter = ['derivHist']
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+
 class GlossRevisionAdmin(VersionAdmin):
 
     model = GlossRevision
@@ -891,6 +1057,10 @@ admin.site.register(SimultaneousMorphologyDefinition, SimultaneousMorphologyDefi
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 admin.site.register(Handshape, HandshapeAdmin)
+admin.site.register(SemanticField, SemanticFieldAdmin)
+admin.site.register(SemanticFieldTranslation, SemanticFieldTranslationAdmin)
+admin.site.register(DerivationHistory, DerivationHistoryAdmin)
+admin.site.register(DerivationHistoryTranslation, DerivationHistoryTranslationAdmin)
 admin.site.register(GlossRevision,GlossRevisionAdmin)
 
 admin.site.register(UserProfile)

@@ -200,6 +200,28 @@ class Dialect(models.Model):
         return self.signlanguage.name + "/" + self.name
 
 
+class SemanticField(models.Model):
+
+    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+
+    name = models.CharField(max_length=20, unique=True)
+    description = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class DerivationHistory(models.Model):
+
+    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+
+    name = models.CharField(max_length=20, unique=True)
+    description = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
 class RelationToForeignSign(models.Model):
     """Defines a relationship to another sign in another language (often a loan)"""
 
@@ -663,6 +685,8 @@ class Gloss(models.Model):
                                 max_length=5)
     semField.field_choice_category = 'SemField'
 
+    semFieldShadow = models.ManyToManyField(SemanticField)
+
     wordClass = models.CharField(_("Word class"), null=True, blank=True, max_length=5,
                                  choices=build_choice_list('WordClass'))
     wordClass.field_choice_category = 'WordClass'
@@ -672,6 +696,9 @@ class Gloss(models.Model):
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("derivHist"), max_length=50,
                                  blank=True)
     derivHist.field_choice_category = 'derivHist'
+
+    derivHistShadow = models.ManyToManyField(DerivationHistory)
+
     lexCatNotes = models.CharField(_("Lexical category notes"), null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
     valence.field_choice_category = 'Valence'
@@ -1684,6 +1711,22 @@ class Gloss(models.Model):
 
         return json.dumps(OrderedDict(reformatted_li))
 
+    def semanticfield_choices(self):
+        """Return JSON for semantic field choices"""
+
+        d = dict()
+        for sf in SemanticField.objects.all():
+            d[sf.name] = sf.name
+        return json.dumps(d)
+
+    def derivationhistory_choices(self):
+        """Return JSON for semantic field choices"""
+
+        d = dict()
+        for dh in DerivationHistory.objects.all():
+            d[dh.name] = dh.name
+        return json.dumps(d)
+
     def signlanguage_choices(self):
         """Return JSON for langauge choices"""
 
@@ -2370,6 +2413,27 @@ class Language(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class SemanticFieldTranslation(models.Model):
+
+    semField = models.ForeignKey(SemanticField)
+    language = models.ForeignKey(Language)
+    name = models.CharField(max_length=20)
+
+    class Meta:
+        unique_together = (("semField", "language", "name"),)
+
+
+class DerivationHistoryTranslation(models.Model):
+
+    derivHist = models.ForeignKey(DerivationHistory)
+    language = models.ForeignKey(Language)
+    name = models.CharField(max_length=20)
+
+    class Meta:
+        unique_together = (("derivHist", "language", "name"),)
+
 
 
 class AnnotationIdglossTranslation(models.Model):

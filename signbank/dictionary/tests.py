@@ -1650,6 +1650,117 @@ class HandshapeTests(TestCase):
             self.assertEqual(changed_gloss.domhndsh, str(new_handshape.machine_value))
 
 
+class MultipleSelectTests(TestCase):
+
+    def setUp(self):
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        assign_perm('dictionary.search_gloss', self.user)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        self.user.save()
+
+    def create_semanticfield(self):
+
+        used_machine_values = [s.machine_value for s in SemanticField.objects.all()]
+        max_used_machine_value = max(used_machine_values)
+        new_machine_value = max_used_machine_value + 1
+        new_english_name = 'thisisanewtestsemanticfield_'+str(new_machine_value)+'_en'
+        dutch_language = Language.objects.get(language_code_2char='nl')
+        new_dutch_name = 'thisisanewtestsemanticfield_'+str(new_machine_value)+'_nl'
+
+        # English is the default language, included in the SemanticField object as 'name'
+        # Under the FieldChoice model, this used to be english_name
+        new_semanticfield = SemanticField(machine_value=new_machine_value, name=new_english_name)
+        new_semanticfield.save()
+
+        # Make a translation for Dutch since it is the other language of the test dataset
+        new_semanticfield_translation = SemanticFieldTranslation(semField=new_semanticfield, language=dutch_language, name=new_dutch_name)
+        new_semanticfield_translation.save()
+
+        # Create a corresponding legacy field of type semField in FieldChoice for the new SemanticField
+        # At the moment, the legacy fields are still used in Search routines
+        new_fieldchoice = FieldChoice(machine_value=new_machine_value,
+                                        field='semField',
+                                        english_name=new_english_name,
+                                        dutch_name=new_dutch_name,
+                                        chinese_name=new_english_name)
+        new_fieldchoice.save()
+
+        print('New semantic field ', new_semanticfield.machine_value, ' created: ', new_semanticfield.name)
+
+        return new_semanticfield
+
+
+    def test_SemanticField(self):
+
+        # Create the glosses
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        #Create a client and log in
+        client = Client(enforce_csrf_checks=False)
+        client.login(username='test-user', password='test-user')
+        assign_perm('view_dataset', self.user, test_dataset)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporaryidgloss_"+ language.language_code_2char,
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        new_semanticfield = self.create_semanticfield()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.handedness = 4
+        # save the gloss so it can be used in the ManyToMany relation of SemanticField added to the gloss below
+        new_gloss.save()
+
+        # make some annotations for the new gloss
+        # This is necessary to test Searching, which does a sort on the annotation for the gloss, it can't be non-existent or empty
+        for language in test_dataset.translation_languages.all():
+            annotationIdgloss = AnnotationIdglossTranslation()
+            annotationIdgloss.gloss = new_gloss
+            annotationIdgloss.language = language
+            annotationIdgloss.text = 'thisisatemporaryannotationidgloss_' + language.language_code_2char
+            annotationIdgloss.save()
+
+        new_gloss.semFieldShadow.clear()
+        new_gloss.semFieldShadow.add(new_semanticfield)
+        new_gloss.save()
+
+        print('New gloss ', new_gloss.idgloss, ' created with semantic field ', new_semanticfield.name)
+        #Search on the new field
+        #It is multi-select so the semField parameter has [] after it
+        response = client.get('/signs/search/', {'semField[]':new_semanticfield.machine_value}, follow=True)
+
+        # check that the new gloss is found when searching on the new semantic field
+        print('Search for the gloss on semantic field.')
+        self.assertEqual(len(response.context['object_list']), 1)
+
+        # Add another semantic field to the gloss
+        new_semanticfield_2 = self.create_semanticfield()
+
+        new_gloss.semFieldShadow.add(new_semanticfield_2)
+        new_gloss.save()
+        print('Semantic field ', new_semanticfield_2.name, ' added to gloss.')
+
+        #Search on the new field
+        #It is multi-select so the semField parameter has [] after it
+        response = client.get('/signs/search/', {'semField[]':[ new_semanticfield.machine_value, new_semanticfield_2.machine_value] }, follow=True)
+
+        # check that the new gloss is found when searching on the new semantic field
+        print('Search for the gloss on both semantic fields.')
+        self.assertEqual(len(response.context['object_list']), 1)
+
+
 class FieldChoiceTests(TestCase):
 
     from reversion.admin import VersionAdmin
@@ -2337,12 +2448,13 @@ class testSettings(TestCase):
                         if setting_first_file not in all_settings_strings[second_file]:
                             comparison_table_first_not_in_second[first_file][second_file].append(setting_first_file)
 
+        second_file = 'default.py'
         for first_file in all_settings:
-            for second_file in all_settings:
-                # the default.py file is part of the installation (should this filename be a setting?)
-                # check that other settings files do not contain settings that are not in the default settings file
-                if first_file != second_file and second_file == 'default.py':
-                    self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
+            # the default.py file is part of the installation (should this filename be a setting?)
+            # check that other settings files do not contain settings that are not in the default settings file
+            if first_file != second_file:
+                print('first file: ', first_file, comparison_table_first_not_in_second[first_file][second_file])
+                self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
 
     def test_settings_field_choice_category(self):
         # this test checks that fieldnames in settings exist in the models
@@ -2852,17 +2964,48 @@ class MinimalPairsTests(TestCase):
         used_machine_values = [ h.machine_value for h in Handshape.objects.all() ]
         max_used_machine_value = max(used_machine_values)
 
-        # create two arbitrary new Handshapes
+        name_1 = 'testhandshape1'
+        name_2 = 'testhandshape2'
 
-        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name='thisisatemporarytesthandshape1',
-                                                                                dutch_name='thisisatemporarytesthandshape1',
-                                                                                chinese_name='thisisatemporarytesthandshape1')
+        # create two arbitrary new Handshapes and store the data in FieldChoice table
+
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, english_name=name_1,dutch_name=name_1,chinese_name=name_1)
         self.test_handshape1.save()
 
-        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name='thisisatemporarytesthandshape2',
-                                                                                dutch_name='thisisatemporarytesthandshape2',
-                                                                                chinese_name='thisisatemporarytesthandshape2')
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, english_name=name_2,dutch_name=name_2,chinese_name=name_2)
         self.test_handshape2.save()
+
+        # FieldChoice fields for Handshape are still used in MinimalPairs routines
+        self.new_fieldchoice_1 = FieldChoice(machine_value=max_used_machine_value+1,
+                                             field='Handshape',
+                                             english_name=name_1,dutch_name=name_1,chinese_name=name_1)
+        self.new_fieldchoice_1.save()
+
+        self.new_fieldchoice_2 = FieldChoice(machine_value=max_used_machine_value+2,
+                                        field='Handshape',
+                                        english_name=name_2,dutch_name=name_2,chinese_name=name_2)
+        self.new_fieldchoice_2.save()
+
+        # Store the translations in the global quick access table used in the template
+        global translated_choice_lists_table
+
+        codes_to_adjectives = dict(
+            [(language.lower().replace('_', '-'), adjective) for language, adjective in settings.LANGUAGES])
+
+        translations_for_handshape_1 = dict()
+        for (l_name, l_adjective) in codes_to_adjectives.items():
+            translations_for_handshape_1[l_name] = name_1
+
+        translations_for_handshape_2 = dict()
+        for (l_name, l_adjective) in codes_to_adjectives.items():
+            translations_for_handshape_2[l_name] = name_2
+
+        translated_choice_lists_table['domhndsh'][self.new_fieldchoice_1.machine_value] = translations_for_handshape_1
+        translated_choice_lists_table['domhndsh'][self.new_fieldchoice_2.machine_value] = translations_for_handshape_2
+
+        translated_choice_lists_table['subhndsh'][self.new_fieldchoice_1.machine_value] = translations_for_handshape_1
+        translated_choice_lists_table['subhndsh'][self.new_fieldchoice_2.machine_value] = translations_for_handshape_2
+
 
     def test_analysis_minimalpairs(self):
 
@@ -3017,7 +3160,7 @@ class MinimalPairsTests(TestCase):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': 2,
-                'domhndsh' : self.test_handshape1.machine_value,
+                'domhndsh' : str(self.test_handshape1.machine_value),
                 'locprim': 7,
                 'tokNo': 0,
                 'tokNoSgnr': 0
@@ -3033,20 +3176,11 @@ class MinimalPairsTests(TestCase):
                 annotationIdgloss.save()
             glosses[gloss_id] = new_gloss
 
-        # print('created glosses: ', glosses)
-
         # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
         # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
 
-        # pretend locprim hasn't been assigned
-        glosses[2].locprim = None
-        glosses[2].save()
-
         glosses[3].locprim = ''
         glosses[3].save()
-
-        glosses[4].locprim = '-'
-        glosses[4].save()
 
         # this is an errorneous None value
         glosses[5].locprim = 'None'
@@ -3057,17 +3191,11 @@ class MinimalPairsTests(TestCase):
         glosses[6].save()
         error_337_gloss_6 = 'ERROR_337'
 
-        glosses[7].locprim = 0
-        glosses[7].save()
-
-        glosses[8].locprim = '0'
-        glosses[8].save()
-
         # gloss 9 has an empty handedness, it has no minimal pairs
         glosses[9].handedness = None
         glosses[9].save()
 
-        glosses[10].domhndsh = self.test_handshape2.machine_value
+        glosses[10].domhndsh = str(self.test_handshape2.machine_value)
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
@@ -3079,13 +3207,13 @@ class MinimalPairsTests(TestCase):
         glosses[12].weakdrop = True
         glosses[12].save()
 
-        glosses[13].domhndsh = self.test_handshape2.machine_value
+        glosses[13].domhndsh = str(self.test_handshape2.machine_value)
         glosses[13].handedness = 4
         glosses[13].save()
 
-        glosses[14].domhndsh = self.test_handshape2.machine_value
+        glosses[14].domhndsh = str(self.test_handshape2.machine_value)
         glosses[14].handedness = 4
-        glosses[14].subhndsh = self.test_handshape2.machine_value
+        glosses[14].subhndsh = str(self.test_handshape2.machine_value)
         glosses[14].save()
 
         glosses_to_ids = {}

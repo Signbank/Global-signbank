@@ -2506,9 +2506,6 @@ def configure_handshapes(request):
 
         output_string += handshapes_table_suffix
 
-        # Add FieldChoice types for Handshape objects
-        # output_string += values_Quantity()
-
         output_string += output_string_suffix
 
         return HttpResponse(output_string)
@@ -2915,3 +2912,74 @@ def find_interesting_frequency_examples(request):
 def gif_prototype(request):
 
     return render(request,'dictionary/gif_prototype.html')
+
+
+def configure_derivationhistory(request):
+
+    already_filled_derivationhistory = DerivationHistory.objects.count()
+
+    # check if the user has permission to configure
+    # and whether already configured
+    if request.user.is_superuser and not already_filled_derivationhistory:
+
+        derivationhistory_count = FieldChoice.objects.filter(field__iexact='derivHist').count()
+
+        # check if field choices already exist for derivHist
+        if not derivationhistory_count:
+            # This has not been initialized
+            # These are the initial choices from the Signbank migrations
+            # These were deleted from Global, but are present in ASL
+            # Put them back in Global
+            # The machine value is not created automatically, it is unique to the field derivHist
+            # NOTE: This should be done in a different way, possibly a setting
+            derivationhistory_initial_choices = [(4, 'Arc'), (37, 'Circle'),
+                                               (44, 'Motivated shape'), (45, 'Spiral'), (6, 'Straight'), (12, 'Zigzag')]
+
+            for (machine_value, name) in derivationhistory_initial_choices:
+                dhfc = FieldChoice(field='derivHist', machine_value=machine_value, english_name=name, dutch_name=name, chinese_name=name)
+                dhfc.save()
+
+        derivationhistory = FieldChoice.objects.filter(field__iexact='derivHist')
+
+        for derivHist_fieldchoice in derivationhistory:
+
+            new_machine_value = derivHist_fieldchoice.machine_value
+            new_english_name = derivHist_fieldchoice.english_name
+
+            new_dutch_name = derivHist_fieldchoice.dutch_name
+            dutch_language = Language.objects.get(language_code_2char='nl')
+            new_chinese_name = derivHist_fieldchoice.chinese_name
+            chinese_language = Language.objects.get(language_code_2char='zh')
+
+            new_derivationhistory = DerivationHistory(machine_value=new_machine_value, name=new_english_name)
+            new_derivationhistory.save()
+
+            if new_dutch_name:
+                dutch_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory,
+                                                                 language=dutch_language,
+                                                                 name=new_dutch_name)
+                dutch_translation.save()
+
+            if new_chinese_name:
+                chinese_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory,
+                                                                   language=chinese_language,
+                                                                   name=new_chinese_name)
+                chinese_translation.save()
+
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
+    return render(request, 'dictionary/admin_configure_derivationhistory.html',
+                  { 'USE_DERIVATIONHISTORY': settings.USE_DERIVATIONHISTORY,
+                    'already_set_up': already_filled_derivationhistory,
+                    'revisions':FieldChoice.objects.filter(field__iexact='derivHist'),
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })

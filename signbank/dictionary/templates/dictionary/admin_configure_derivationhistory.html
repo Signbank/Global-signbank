@@ -1,0 +1,49 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Configure Derivation History{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block content %}
+
+<br/><br/>
+{% if not USE_DERIVATIONHISTORY %}
+<p>{% trans "Derivation History is not supported by your Signbank configuration." %}</p>
+{% elif not user.is_superuser %}
+<p>{% trans "You do not have permission to configure Derivation Histories." %}</p>
+{% elif already_set_up %}
+<p>{% trans "Derivation History has already been configured." %}</p>
+{% elif not revisions %}
+<p>{% trans "No choices found for Derivation History in FieldChoice." %}</p>
+{% else %}
+<p>{% trans "The following field choices have been set up for derivation histories. They can be modified in Admin." %}</p>
+<div id="definitionblock" style="z-index:0;padding-top: 100px;">
+    <table class="table table-condensed">
+        <thead>
+            <tr>
+                <th style="width:20em; text-align:left;">Machine Value</th>
+                <th style="width:25em; text-align:left;">English Name</th>
+                <th style="width:40em; text-align:left;">Dutch Name</th>
+                <th style="width:40em; text-align:left;">Chinese Name</th>
+            </tr>
+        </thead>
+
+        {% for revision in revisions %}
+            <tr>
+                <td>{{revision.machine_value}}</td>
+                <td>{{revision.english_name}}</td>
+                <td>{{revision.dutch_name}}</td>
+                <td>{{revision.chinese_name}}</td>
+            </tr>
+        {% endfor %}
+
+    </table>
+</div>
+{% endif %}
+{% endblock %}

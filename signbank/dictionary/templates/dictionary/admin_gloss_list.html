@@ -407,6 +407,7 @@ function do_toggle_annotation(el) {
 {{ form.media.js }}
 
 <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search'>
+{% csrf_token %}
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
             <span class="hasTooltip">
@@ -471,7 +472,6 @@ function do_toggle_annotation(el) {
 
                         <div id='searchpanels' class='collapse'>
                         <table class='table'>
-                            {% csrf_token %}
                             <tr id='signlanguage_selection'>
                                 <td><label>{{searchform.signLanguage.label}}</label>
                                         {{ searchform.signLanguage }}
@@ -502,7 +502,6 @@ function do_toggle_annotation(el) {
                       <div id='morph_search' class='collapse'>
                       <table class='table table-condensed'>
                         <tr>
-                        {% csrf_token %}
                           <td>
                             <table class='table table-condensed'>
                                 <tr>
