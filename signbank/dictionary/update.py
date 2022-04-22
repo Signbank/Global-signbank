@@ -451,7 +451,14 @@ def update_gloss(request, glossid):
         except:
             original_human_value = original_value
 
-        revision = GlossRevision(old_value=original_human_value, new_value=newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
+        # this takes care of a problem with None not being allowed as a value in GlossRevision
+        # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
+        if field in ['weakdrop', 'weakprop'] and newvalue is None:
+            # user is setting the field back to Neutral, show this in the Revision History
+            glossrevision_newvalue = _('Neutral')
+        else:
+            glossrevision_newvalue = newvalue
+        revision = GlossRevision(old_value=original_human_value, new_value=glossrevision_newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
         revision.save()
         # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
         return HttpResponse(
