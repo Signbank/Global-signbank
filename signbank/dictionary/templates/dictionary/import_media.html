@@ -1,0 +1,58 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}Signbank: Import Media{% endblock %}
+
+{% block content %}
+
+<h3>{% trans "Imported Media" %}</h3>
+
+{% if not files_per_dataset_per_language %}
+<div>
+<p>{% trans "No media found to import." %}</p>
+</div>
+{% else %}
+<table style="font-size: 11px; border-collapse:collapse; border-spacing: 2px;" border="1">
+<thead>
+<tr>
+<th style="width:20em; text-align:left;">Dataset Folder</th>
+<th style="width:25em; text-align:left;">Language Folder</th>
+<th style="width:40em; text-align:left;">Filename</th>
+<th style="width:40em; text-align:left;">Status</th>
+</tr>
+</thead>
+<tbody>
+
+{% for files_per_language in files_per_dataset_per_language %}
+
+<tr style="border-collapse:collapse;"><th colspan="4" style="width:20em; text-align:left;">{{files_per_language.dataset}}</th></tr>
+
+
+{% if not files_per_language.mediapaths %}
+<tr><td>{{files_per_language.dataset}}</td><td colspan="2">{{files_per_language.lang3chr}}</td><td>Empty Folder</td></tr>
+{% else %}
+{% for mediapath, status in files_per_language.mediapaths %}
+<tr><td>{{files_per_language.dataset}}</td><td>{{files_per_language.lang3chr}}</td><td>{{mediapath}}</td><td>{{status}}</td></tr>
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+
+</tbody>
+</table>
+{% if errors %}
+<div>
+<h3>Errors</h3>
+<ul>
+    {% for error in errors %}
+    <li>{{error}}</li>
+    {% endfor %}
+</ul>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
