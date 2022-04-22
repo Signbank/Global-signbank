@@ -80,7 +80,7 @@ class BasicCRUDTests(TestCase):
 
         # set up keyword search parameter for default language
         default_language = Language.objects.get(id=get_default_language_id())
-        keyword_search_field_prefix = "keywords_"
+        keyword_search_field_prefix = "keyword_"
         keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
 
         #We can even add and remove stuff to the keyword table
@@ -308,7 +308,7 @@ class BasicCRUDTests(TestCase):
             annotationIdgloss.save()
 
         # set up keyword search parameter for default language
-        keyword_search_field_prefix = "keywords_"
+        keyword_search_field_prefix = "keyword_"
         keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
 
         # keywords: this is merely part of the setup for the test

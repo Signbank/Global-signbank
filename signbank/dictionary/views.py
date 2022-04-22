@@ -1618,7 +1618,7 @@ def import_csv_update(request):
                 if languages:
                     language = languages[0]
                     language_code_2char = language.language_code_2char
-                    update_keywords(gloss, "keywords_" + language_code_2char, new_value)
+                    update_keywords(gloss, "keyword_" + language_code_2char, new_value)
                     gloss.save()
                 continue
 

@@ -467,7 +467,7 @@ def update_keywords(gloss, field, value):
     # Determine the language of the keywords
     language = Language.objects.get(id=get_default_language_id())
     try:
-        language_code_2char = field[len('keywords_'):]
+        language_code_2char = field[len('keyword_'):]
         language = Language.objects.filter(language_code_2char=language_code_2char)[0]
     except:
         pass
