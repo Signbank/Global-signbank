@@ -20,7 +20,7 @@ import signbank.settings
 from django.conf import settings
 
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
@@ -132,341 +132,344 @@ def update_gloss(request, glossid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return HttpResponseForbidden("Gloss Update Not Allowed")
 
-    if request.method == "POST":
-
-        gloss = get_object_or_404(Gloss, id=glossid)
-        gloss.save() # This updates the lastUpdated field
-
-        field = request.POST.get('id', '')
-        value = request.POST.get('value', '')
-        original_value = '' #will in most cases be set later, but can't be empty in case it is not set
-        category_value = ''
-        field_category = ''
-        lemma_gloss_group = False
-        lemma_group_string = gloss.idgloss
-        other_glosses_in_lemma_group = Gloss.objects.filter(lemma__lemmaidglosstranslation__text__iexact=lemma_group_string).count()
-        if other_glosses_in_lemma_group > 1:
-            lemma_gloss_group = True
-
-        if len(value) == 0:
-            # this seems a bit dangerous
-            value = ' '
-
-        elif value[0] == '_':
-            value = value[1:]
-
-        values = request.POST.getlist('value[]')   # in case we need multiple values 
-
-        # validate
-        # field is a valid field
-        # value is a valid value for field
-        
-        if field == 'deletegloss':
-            if value == 'confirmed':
-                # delete the gloss and redirect back to gloss list
-
-                pk = gloss.pk
-                gloss.delete()
-                gloss.pk = pk
-
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
-        
-        if field.startswith('definition'):
-            
-            return update_definition(request, gloss, field, value)
-
-        elif field.startswith('keywords'):
-
-            return update_keywords(gloss, field, value)
-
-        elif field.startswith('relationforeign'):
-            
-            return update_relationtoforeignsign(gloss, field, value)
-            
-        elif field.startswith('relation'):
-            
-            return update_relation(gloss, field, value)
-
-        elif field.startswith('morphology-definition'):
-
-            return update_morphology_definition(gloss, field, value, request.LANGUAGE_CODE)
-
-        elif field.startswith('morpheme-definition'):
-
-            return update_morpheme_definition(gloss, field, value)
-
-        elif field.startswith('blend-definition'):
-
-            return update_blend_definition(gloss, field, value)
-
-        elif field.startswith('other-media'):
-
-            return update_other_media(request,gloss, field, value)
-
-        elif field == 'signlanguage':
-            # expecting possibly multiple values
-
-            return update_signlanguage(gloss, field, values)
-
-        elif field == 'dialect':
-            # expecting possibly multiple values
-
-            return update_dialect(gloss, field, values)
-
-        elif field == 'semanticfield':
-            # expecting possibly multiple values
-
-            return update_semanticfield(gloss, field, values)
-
-        elif field == 'derivationhistory':
-            # expecting possibly multiple values
-
-            return update_derivationhistory(gloss, field, values)
-
-        elif field == 'dataset':
-            original_value = getattr(gloss,field)
-
-            # in case somebody tries an empty or non-existent dataset name
-            try:
-                ds = Dataset.objects.get(name=value)
-            except:
-                return HttpResponse(str(original_value), {'content-type': 'text/plain'})
-
-            if ds.is_public:
-                print('dataset is public')
-                newvalue = value
-                setattr(gloss, field, ds)
-                gloss.save()
-
-                request.session['last_used_dataset'] = ds.name
-
-                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-            import guardian
-            if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
-                newvalue = value
-                setattr(gloss, field, ds)
-                gloss.save()
-
-                request.session['last_used_dataset'] = ds.name
-
-                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-            print('no permission for chosen dataset')
-            newvalue = original_value
-            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-        elif field == "sn":
-            # sign number must be unique, return error message if this SN is 
-            # already taken
-            
-            if value == '':
-                gloss.__setattr__(field, None)
-                gloss.save()
-                newvalue = ''
-            else:
-                try:
-                    value = int(value)
-                except:
-                    return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
-                
-                existing_gloss = Gloss.objects.filter(sn__exact=value)
-                if existing_gloss.count() > 0:
-                    g = existing_gloss[0].idgloss
-                    return HttpResponseBadRequest("SN value already taken for gloss %s" % g, {'content-type': 'text/plain'})
-                else:
-                    gloss.sn = value
-                    gloss.save()
-                    newvalue = value
-            
-        
-        elif field in 'inWeb':
-            # only modify if we have publish permission
-            if request.user.has_perm('dictionary.can_publish'):
-                gloss.inWeb = value.lower() in [_('Yes').lower(),'true',True,1]
-                gloss.save()
-            
-            if gloss.inWeb:
-                newvalue = _('Yes')
-            else:
-                newvalue = _('No')
-
-        elif field in 'isNew':
-            # only modify if we have publish permission
-            gloss.isNew = value.lower() in [_('Yes').lower(),'true',True,1]
-            gloss.save()
-
-            if gloss.isNew:
-                newvalue = _('Yes')
-            else:
-                newvalue = _('No')
-        elif field in 'excludeFromEcv':
-            # only modify if we have publish permission
-
-            gloss.excludeFromEcv = value.lower() in [_('Yes').lower(),'true',True,1]
-            gloss.save()
-
-            if gloss.excludeFromEcv:
-                newvalue = _('Yes')
-            else:
-                newvalue = _('No')
-
-        elif field.startswith('annotation_idgloss'):
-
-            return update_annotation_idgloss(gloss, field, value)
-
-        elif field.startswith('lemmaidgloss'):
-            # Set new lemmaidgloss for this gloss
-            # First check whether the gloss dataset is the same as the lemma dataset
-            try:
-                dataset = gloss.dataset
-                lemma = LemmaIdgloss.objects.get(pk=value)
-                if dataset is None or dataset == lemma.dataset:
-                    gloss.lemma = lemma
-                    gloss.save()
-                else:
-                    messages.add_message(messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
-            except ObjectDoesNotExist:
-                messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-        else:
-
-
-            if not field in [f.name for f in Gloss._meta.get_fields()]:
-                return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
-
-            whitespace = tuple(' \n\r\t')
-            if value.startswith(whitespace) or value.endswith(whitespace):
-                value = value.strip()
-            original_value = getattr(gloss,field)
-
-            if field == 'idgloss' and value == '':
-                # don't allow user to set Lemma ID Gloss to empty
-                # return HttpResponse(str(original_value), {'content-type': 'text/plain'})
-                value = str(original_value)
-
-            # special cases
-            # - Foreign Key fields (Language, Dialect)
-            # - keywords
-            # - videos
-            # - tags
-
-            #Translate the value if a boolean
-            # Language values are needed here!
-            newvalue = value
-            if isinstance(gloss._meta.get_field(field),NullBooleanField):
-                # value is the html 'value' received during editing
-                # value gets converted to a Boolean by the following statement
-                if field in ['weakdrop', 'weakprop']:
-                    NEUTRALBOOLEANCHOICES = { 'None': '1', 'True': '2', 'False': '3' }
-                    category_value = 'phonology'
-                    if value not in ['1', '2', '3']:
-                        # this code is for the case the user has not selected a value in the list
-                        if value in ['None', 'True', 'False']:
-                            value = NEUTRALBOOLEANCHOICES[value]
-                        else:
-                            # something is wrong, set to None
-                            value = '1'
-                    newvalue = {'1': '&nbsp;', '2': '+WD', '3': '-WD'}[value]
-                    value = {'1': None, '2': True, '3': False}[value]
-
-                elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
-                    newvalue = value
-                    value = (value in ['letter', 'number'])
-                else:
-                    value = (value.lower() in [_('Yes').lower(),'true',True,1])
-                    newvalue = value
-            # special value of 'notset' or -1 means remove the value
-            fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-
-            # this is dangerous because Field CHoice fields are actually CharFields
-
-            fields_empty_null = [f.name for f in Gloss._meta.fields
-                                    if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
-
-            char_fields_not_null = [f.name for f in Gloss._meta.fields
-                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField'
-                                        and not hasattr(f, 'field_choice_category') and not f.null]
-
-            char_fields = [f.name for f in Gloss._meta.fields
-                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField'
-                                        and not hasattr(f, 'field_choice_category')]
-
-            text_fields = [f.name for f in Gloss._meta.fields
-                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField' ]
-
-            text_fields_not_null = [f.name for f in Gloss._meta.fields
-                                    if f.name in fieldnames and f.__class__.__name__ == 'TextField' and not f.null]
-
-            # The following code relies on the order of if else testing
-            # The updates ignore Placeholder empty fields of '-' and '------'
-            # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-            if value in ['notset','','-','------'] and field in fields_empty_null:
-                gloss.__setattr__(field, None)
-                gloss.save()
-                newvalue = ''
-            elif (field in char_fields or field in text_fields_not_null) and (value == '-' or value == '------'):
-                value = ''
-                gloss.__setattr__(field, value)
-                gloss.save()
-                newvalue = ''
-            elif field in text_fields and (value == '-' or value == '------'):
-                # this is to take care of legacy code where some values were set to the empty field display hint
-                gloss.__setattr__(field, None)
-                gloss.save()
-                newvalue = ''
-            #Regular field updating
-            else:
-                # Alert: Note that if field is idgloss, the following code updates it
-                gloss.__setattr__(field,value)
-                gloss.save()
-
-                #If the value is not a Boolean, return the new value
-                if not isinstance(value,bool):
-                    # if we get to here, field is a valid field of Gloss
-                    # field is a choice list and we need to get the translated human value
-
-                    changed_field = [ f for f in Gloss._meta.fields if f.name == field].pop()
-
-                    if hasattr(changed_field, 'field_choice_category'):
-                        field_category = getattr(changed_field, 'field_choice_category')
-                        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                        # if the choice_list happens to be empty, the following call results in value being assigned
-                        newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
-                    else:
-                        newvalue = value
-
-        if field in FIELDS['phonology']:
-
-             category_value = 'phonology'
-
-        #This is because you cannot concat none to a string in py3
-        if original_value == None:
-            original_value = ''
-
-        #Remember this change for the history books
-        try:
-            original_human_value = machine_value_to_translated_human_value(original_value,choice_list,request.LANGUAGE_CODE)
-        except:
-            original_human_value = original_value
-
-        # this takes care of a problem with None not being allowed as a value in GlossRevision
-        # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
-        if field in ['weakdrop', 'weakprop'] and newvalue is None:
-            # user is setting the field back to Neutral, show this in the Revision History
-            glossrevision_newvalue = _('Neutral')
-        else:
-            glossrevision_newvalue = newvalue
-        revision = GlossRevision(old_value=original_human_value, new_value=glossrevision_newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
-        revision.save()
-        # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
-        return HttpResponse(
-            str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group),
-            {'content-type': 'text/plain'})
-    else:
+    if not request.method == "POST":
         print('update gloss is not POST')
         return HttpResponseForbidden("Gloss Update Not Allowed")
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss.save() # This updates the lastUpdated field
+
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    original_value = '' #will in most cases be set later, but can't be empty in case it is not set
+    category_value = ''
+    field_category = ''
+    lemma_gloss_group = False
+    lemma_group_string = gloss.idgloss
+    other_glosses_in_lemma_group = Gloss.objects.filter(lemma__lemmaidglosstranslation__text__iexact=lemma_group_string).count()
+    if other_glosses_in_lemma_group > 1:
+        lemma_gloss_group = True
+
+    if len(value) == 0:
+        # this seems a bit dangerous
+        value = ' '
+
+    elif value[0] == '_':
+        value = value[1:]
+
+    values = request.POST.getlist('value[]')   # in case we need multiple values
+
+    # this variable may or may not be needed, depending on what field is being changed
+    # initialize it to empty
+    choice_list = []
+    # validate
+    # field is a valid field
+    # value is a valid value for field
+
+    if field == 'deletegloss':
+        if value == 'confirmed':
+            # delete the gloss and redirect back to gloss list
+
+            pk = gloss.pk
+            gloss.delete()
+            gloss.pk = pk
+
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
+
+    if field.startswith('definition'):
+
+        return update_definition(request, gloss, field, value)
+
+    elif field.startswith('keywords'):
+
+        return update_keywords(gloss, field, value)
+
+    elif field.startswith('relationforeign'):
+
+        return update_relationtoforeignsign(gloss, field, value)
+
+    elif field.startswith('relation'):
+
+        return update_relation(gloss, field, value)
+
+    elif field.startswith('morphology-definition'):
+
+        return update_morphology_definition(gloss, field, value, request.LANGUAGE_CODE)
+
+    elif field.startswith('morpheme-definition'):
+
+        return update_morpheme_definition(gloss, field, value)
+
+    elif field.startswith('blend-definition'):
+
+        return update_blend_definition(gloss, field, value)
+
+    elif field.startswith('other-media'):
+
+        return update_other_media(request,gloss, field, value)
+
+    elif field == 'signlanguage':
+        # expecting possibly multiple values
+
+        return update_signlanguage(gloss, field, values)
+
+    elif field == 'dialect':
+        # expecting possibly multiple values
+
+        return update_dialect(gloss, field, values)
+
+    elif field == 'semanticfield':
+        # expecting possibly multiple values
+
+        return update_semanticfield(gloss, field, values)
+
+    elif field == 'derivationhistory':
+        # expecting possibly multiple values
+
+        return update_derivationhistory(gloss, field, values)
+
+    elif field == 'dataset':
+        original_value = getattr(gloss,field)
+
+        # in case somebody tries an empty or non-existent dataset name
+        try:
+            ds = Dataset.objects.get(name=value)
+        except:
+            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+
+        if ds.is_public:
+            print('dataset is public')
+            newvalue = value
+            setattr(gloss, field, ds)
+            gloss.save()
+
+            request.session['last_used_dataset'] = ds.name
+
+            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+        import guardian
+        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
+            newvalue = value
+            setattr(gloss, field, ds)
+            gloss.save()
+
+            request.session['last_used_dataset'] = ds.name
+
+            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+        print('no permission for chosen dataset')
+        newvalue = original_value
+        return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+    elif field == "sn":
+        # sign number must be unique, return error message if this SN is
+        # already taken
+
+        if value == '':
+            gloss.__setattr__(field, None)
+            gloss.save()
+            newvalue = ''
+        else:
+            try:
+                value = int(value)
+            except:
+                return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
+
+            existing_gloss = Gloss.objects.filter(sn__exact=value)
+            if existing_gloss.count() > 0:
+                g = existing_gloss[0].idgloss
+                return HttpResponseBadRequest("SN value already taken for gloss %s" % g, {'content-type': 'text/plain'})
+            else:
+                gloss.sn = value
+                gloss.save()
+                newvalue = value
+
+
+    elif field in 'inWeb':
+        # only modify if we have publish permission
+        if request.user.has_perm('dictionary.can_publish'):
+            gloss.inWeb = value.lower() in [_('Yes').lower(),'true',True,1]
+            gloss.save()
+
+        if gloss.inWeb:
+            newvalue = _('Yes')
+        else:
+            newvalue = _('No')
+
+    elif field in 'isNew':
+        # only modify if we have publish permission
+        gloss.isNew = value.lower() in [_('Yes').lower(),'true',True,1]
+        gloss.save()
+
+        if gloss.isNew:
+            newvalue = _('Yes')
+        else:
+            newvalue = _('No')
+    elif field in 'excludeFromEcv':
+        # only modify if we have publish permission
+
+        gloss.excludeFromEcv = value.lower() in [_('Yes').lower(),'true',True,1]
+        gloss.save()
+
+        if gloss.excludeFromEcv:
+            newvalue = _('Yes')
+        else:
+            newvalue = _('No')
+
+    elif field.startswith('annotation_idgloss'):
+
+        return update_annotation_idgloss(gloss, field, value)
+
+    elif field.startswith('lemmaidgloss'):
+        # Set new lemmaidgloss for this gloss
+        # First check whether the gloss dataset is the same as the lemma dataset
+        try:
+            dataset = gloss.dataset
+            lemma = LemmaIdgloss.objects.get(pk=value)
+            if dataset is None or dataset == lemma.dataset:
+                gloss.lemma = lemma
+                gloss.save()
+            else:
+                messages.add_message(messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
+        except ObjectDoesNotExist:
+            messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    else:
+
+
+        if not field in [f.name for f in Gloss._meta.get_fields()]:
+            return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
+
+        whitespace = tuple(' \n\r\t')
+        if value.startswith(whitespace) or value.endswith(whitespace):
+            value = value.strip()
+        original_value = getattr(gloss,field)
+
+        if field == 'idgloss' and value == '':
+            # don't allow user to set Lemma ID Gloss to empty
+            # return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+            value = str(original_value)
+
+        # special cases
+        # - Foreign Key fields (Language, Dialect)
+        # - keywords
+        # - videos
+        # - tags
+
+        #Translate the value if a boolean
+        # Language values are needed here!
+        newvalue = value
+        if isinstance(gloss._meta.get_field(field),NullBooleanField):
+            # value is the html 'value' received during editing
+            # value gets converted to a Boolean by the following statement
+            if field in ['weakdrop', 'weakprop']:
+                NEUTRALBOOLEANCHOICES = { 'None': '1', 'True': '2', 'False': '3' }
+                category_value = 'phonology'
+                if value not in ['1', '2', '3']:
+                    # this code is for the case the user has not selected a value in the list
+                    if value in ['None', 'True', 'False']:
+                        value = NEUTRALBOOLEANCHOICES[value]
+                    else:
+                        # something is wrong, set to None
+                        value = '1'
+                newvalue = {'1': '&nbsp;', '2': '+WD', '3': '-WD'}[value]
+                value = {'1': None, '2': True, '3': False}[value]
+
+            elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                newvalue = value
+                value = (value in ['letter', 'number'])
+            else:
+                value = (value.lower() in [_('Yes').lower(),'true',True,1])
+                newvalue = value
+        # special value of 'notset' or -1 means remove the value
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+
+        # this is dangerous because Field CHoice fields are actually CharFields
+
+        fields_empty_null = [f.name for f in Gloss._meta.fields
+                                if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
+
+        char_fields_not_null = [f.name for f in Gloss._meta.fields
+                                if f.name in fieldnames and f.__class__.__name__ == 'CharField'
+                                    and not hasattr(f, 'field_choice_category') and not f.null]
+
+        char_fields = [f.name for f in Gloss._meta.fields
+                                if f.name in fieldnames and f.__class__.__name__ == 'CharField'
+                                    and not hasattr(f, 'field_choice_category')]
+
+        text_fields = [f.name for f in Gloss._meta.fields
+                                if f.name in fieldnames and f.__class__.__name__ == 'TextField' ]
+
+        text_fields_not_null = [f.name for f in Gloss._meta.fields
+                                if f.name in fieldnames and f.__class__.__name__ == 'TextField' and not f.null]
+
+        # The following code relies on the order of if else testing
+        # The updates ignore Placeholder empty fields of '-' and '------'
+        # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+        if value in ['notset','','-','------'] and field in fields_empty_null:
+            gloss.__setattr__(field, None)
+            gloss.save()
+            newvalue = ''
+        elif (field in char_fields or field in text_fields_not_null) and (value == '-' or value == '------'):
+            value = ''
+            gloss.__setattr__(field, value)
+            gloss.save()
+            newvalue = ''
+        elif field in text_fields and (value == '-' or value == '------'):
+            # this is to take care of legacy code where some values were set to the empty field display hint
+            gloss.__setattr__(field, None)
+            gloss.save()
+            newvalue = ''
+        #Regular field updating
+        else:
+            # Alert: Note that if field is idgloss, the following code updates it
+            gloss.__setattr__(field,value)
+            gloss.save()
+
+            #If the value is not a Boolean, get the human readable value
+            if not isinstance(value,bool):
+                # if we get to here, field is a valid field of Gloss
+                # field is a choice list and we need to get the translated human value
+
+                changed_field = [ f for f in Gloss._meta.fields if f.name == field].pop()
+
+                if hasattr(changed_field, 'field_choice_category'):
+                    field_category = getattr(changed_field, 'field_choice_category')
+                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
+                    # if the choice_list happens to be empty, the following call results in 'value' being assigned
+                    newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+                else:
+                    newvalue = value
+
+    if field in FIELDS['phonology']:
+
+         category_value = 'phonology'
+
+    # the gloss has been updated, now prepare values for saving to GlossHistory and display in template
+    #This is because you cannot concat none to a string in py3
+    if original_value is None:
+        original_value = ''
+    # this takes care of a problem with None not being allowed as a value in GlossRevision
+    # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
+    if newvalue is None:
+        newvalue = ''
+
+    # if choice_list is empty, the original_value is returned by the called function
+    original_human_value = machine_value_to_translated_human_value(original_value,choice_list,request.LANGUAGE_CODE)
+
+    if isinstance(value, bool) and field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+    # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
+        glossrevision_newvalue = value
+    else:
+        glossrevision_newvalue = newvalue
+    revision = GlossRevision(old_value=original_human_value, new_value=glossrevision_newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+    # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
+    return HttpResponse(
+        str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group),
+        {'content-type': 'text/plain'})
+
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
@@ -667,7 +670,6 @@ def update_derivationhistory(gloss, field, values):
 
 def update_tags(gloss, field, values):
     # expecting possibly multiple values
-
     current_tag_ids = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
 
     new_tag_ids = [tag.id for tag in Tag.objects.filter(name__in=values)]
@@ -2018,21 +2020,36 @@ def add_tag(request, glossid):
 
     if request.method == "POST":
         thisgloss = get_object_or_404(Gloss, id=glossid)
-
+        current_tags = [tagged_item.tag.name for tagged_item in TaggedItem.objects.filter(object_id=thisgloss.id)]
+        old_tags_string = ','.join(current_tags)
+        tags_label = 'Tags'
         form = TagUpdateForm(request.POST)
         if form.is_valid():
 
             tag = form.cleaned_data['tag']
 
             if form.cleaned_data['delete']:
+
                 # get the relevant TaggedItem
                 ti = get_object_or_404(TaggedItem, object_id=thisgloss.id, tag__name=tag)
                 ti.delete()
+                new_tags = [tagged_item.tag.name for tagged_item in TaggedItem.objects.filter(object_id=thisgloss.id)]
+                new_tags_string = ','.join(new_tags)
+
+                revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                         gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                revision.save()
                 response = HttpResponse('deleted', {'content-type': 'text/plain'})
             else:
+
                 # we need to wrap the tag name in quotes since it might contain spaces
                 Tag.objects.add_tag(thisgloss, '"%s"' % tag)
+                new_tags = [tagged_item.tag.name for tagged_item in TaggedItem.objects.filter(object_id=thisgloss.id)]
+                new_tags_string = ','.join(new_tags)
                 # response is new HTML for the tag list and form
+                revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                         gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                revision.save()
                 response = render(request,'dictionary/glosstags.html',
                                               {'gloss': thisgloss,
                                                'tagform': TagUpdateForm()})
