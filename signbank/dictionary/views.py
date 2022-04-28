@@ -2853,11 +2853,29 @@ def gloss_revision_history(request,gloss_pk):
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
 
+        # field name qualification is stored separately here
+        # Django was having a bit of trouble translating it when embeded in the field_name string below
+        if revision.field_name == 'Tags':
+            if revision.old_value:
+                # this translation exists in the interface of Gloss Edit View
+                delete_command = str(_('delete this tag'))
+                field_name_qualification = ' (' + delete_command + ')'
+            elif revision.new_value:
+                # this translation exists in the interface of Gloss Edit View
+                add_command = str(_('Add Tag'))
+                field_name_qualification = ' (' + add_command + ')'
+            else:
+                # this shouldn't happen
+                field_name_qualification = ''
+        else:
+            field_name_qualification = ' (' + revision.field_name + ')'
         revision_dict = {
+            'is_tag': revision.field_name == 'Tags',
             'gloss' : revision.gloss,
             'user' : revision.user,
             'time' : revision.time,
             'field_name' : fieldname_to_translated_human_value(revision.field_name),
+            'field_name_qualification' : field_name_qualification,
             'old_value' : check_value_to_translated_human_value(revision.field_name, revision.old_value),
             'new_value' : check_value_to_translated_human_value(revision.field_name, revision.new_value) }
         revisions.append(revision_dict)

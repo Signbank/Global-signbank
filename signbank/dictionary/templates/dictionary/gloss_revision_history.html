@@ -84,9 +84,19 @@
             <tr>
                 <td>{{revision.user}}</td>
                 <td>{{revision.time}}</td>
-                <td>{{revision.field_name}}</td>
-                <td>{{revision.old_value}}</td>
-                <td>{{revision.new_value}}</td>
+                <td>{{revision.field_name}}{{revision.field_name_qualification}}</td>
+                <td>{% if revision.is_tag and revision.old_value %}
+                    {% load underscore_to_space %}
+                    <div class='tag' style="margin:0;">
+                        <span class='tagname'>{{revision.old_value|underscore_to_space}}</span>
+                    </div>
+                    {% else %}{{revision.old_value}}{% endif %}</td>
+                <td>{% if revision.is_tag and revision.new_value %}
+                    {% load underscore_to_space %}
+                    <div class='tag' style="margin:0;">
+                        <span class='tagname'>{{revision.new_value|underscore_to_space}}</span>
+                    </div>
+                    {% else %}{{revision.new_value}}{% endif %}</td>
             </tr>
         {% endfor %}
 

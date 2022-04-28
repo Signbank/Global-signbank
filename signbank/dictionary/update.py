@@ -2020,8 +2020,6 @@ def add_tag(request, glossid):
 
     if request.method == "POST":
         thisgloss = get_object_or_404(Gloss, id=glossid)
-        current_tags = [tagged_item.tag.name for tagged_item in TaggedItem.objects.filter(object_id=thisgloss.id)]
-        old_tags_string = ','.join(current_tags)
         tags_label = 'Tags'
         form = TagUpdateForm(request.POST)
         if form.is_valid():
@@ -2029,33 +2027,30 @@ def add_tag(request, glossid):
             tag = form.cleaned_data['tag']
 
             if form.cleaned_data['delete']:
+                old_tags_string = tag
 
                 # get the relevant TaggedItem
                 ti = get_object_or_404(TaggedItem, object_id=thisgloss.id, tag__name=tag)
                 ti.delete()
-                new_tags = [tagged_item.tag.name for tagged_item in TaggedItem.objects.filter(object_id=thisgloss.id)]
-                new_tags_string = ','.join(new_tags)
+                new_tags_string = ''
 
                 revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
                                          gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
                 revision.save()
                 response = HttpResponse('deleted', {'content-type': 'text/plain'})
             else:
+                old_tags_string = ''
 
                 # we need to wrap the tag name in quotes since it might contain spaces
                 Tag.objects.add_tag(thisgloss, '"%s"' % tag)
-                new_tags = [tagged_item.tag.name for tagged_item in TaggedItem.objects.filter(object_id=thisgloss.id)]
-                new_tags_string = ','.join(new_tags)
-                # response is new HTML for the tag list and form
+                new_tags_string = tag
                 revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
                                          gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
                 revision.save()
+                # response is new HTML for the tag list and form
                 response = render(request,'dictionary/glosstags.html',
                                               {'gloss': thisgloss,
                                                'tagform': TagUpdateForm()})
-        else:
-            print("invalid form")
-            print(form.as_table())
             
     return response
 
