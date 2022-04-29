@@ -107,8 +107,7 @@ FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic',
 
 FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','iconImg','valence','concConcSet']
 
-FIELDS['frequency'] = ['tokNo','tokNoSgnr','tokNoA','tokNoSgnrA','tokNoV','tokNoSgnrV','tokNoR','tokNoSgnrR','tokNoGe',
-                       'tokNoSgnrGe','tokNoGr','tokNoSgnrGr','tokNoO','tokNoSgnrO']
+FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
 FIELDS['handshape'] = ['hsNumSel','hsFingSel','hsFingSel2','hsFingConf','hsFingConf2','hsAperture','hsSpread',
                        'hsFingUnsel','fsT','fsI','fsM','fsR','fsP','fs2T','fs2I','fs2M','fs2R','fs2P','ufT','ufI','ufM',
