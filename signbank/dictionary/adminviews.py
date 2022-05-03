@@ -644,13 +644,11 @@ class GlossListView(ListView):
 
                 # is this needed?
                 if f.name in char_fields_not_null and value and not isinstance(value,str):
-                    print(gloss.id, ' convert value to string: ', value)
                     value = str(value)
 
                 # some legacy glosses have empty text fields of other formats
                 if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
                         and (value == '-' or value == '------' or value == ' '):
-                    # print(gloss.id, ' replace with empty string: ', value)
                     value = ''
 
                 if value is None:
@@ -847,11 +845,8 @@ class GlossListView(ListView):
 
             qs = qs.filter(query)
 
-        print(GlossSearchForm.keyword_search_field_prefix)
         # Evaluate all gloss/language search fields
         for get_key, get_value in get.items():
-            if get_value:
-                print('key, value: ', get_key, get_value)
             if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
@@ -863,7 +858,6 @@ class GlossListView(ListView):
                 qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
                                lemma__lemmaidglosstranslation__language=language)
             elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
-                print('search keyword')
                 language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
                 qs = qs.filter(translation__translation__text__iregex=get_value,
