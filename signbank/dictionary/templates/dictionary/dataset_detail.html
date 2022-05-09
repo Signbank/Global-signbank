@@ -14,7 +14,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ URL }}';
+    var url = '{{ PREFIX_URL }}';
 
     var edit_mode_str = '{% trans "Edit" %}';
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
@@ -28,10 +28,13 @@
 
 {% endblock %}
 
+{% block bootstrap3_title %}
+{% blocktrans %}Dataset Details{% endblocktrans %}
+{% endblock %}
 
 {% block content %}
 
-<h3>{% trans "Dataset details" %}</h3>
+<h3>{% trans "Dataset Details" %}</h3>
 
     <div class='pull-right'>
         {% get_obj_perms request.user for dataset as "dataset_perms" %}

@@ -326,7 +326,7 @@ function do_set_lemma_language(el) {
 <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/morphemes/search'>
 
 <div class="panel panel-default">
-    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
                   title="In many text fields, you can use patterns as follows:
                   <table>
@@ -603,12 +603,10 @@ function do_set_lemma_language(el) {
             <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
             <div class="btn-group">
                 <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
-                    <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="morpheme">{% trans "Search morpheme" %}</span>&nbsp;<span class="caret"></span>
+                    <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="morpheme">{% trans "Search Morpheme" %}</span>&nbsp;<span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-left">
-                    <!--<li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>-->
-                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search morpheme" %}</a></li>
-                    <!--<li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>-->
+                    <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="morpheme">{% trans "Search Morpheme" %}</a></li>
                 </ul>
             </div>
 
@@ -624,7 +622,7 @@ function do_set_lemma_language(el) {
 
         <form name="show_pages">
         <div class='form-group' id='paginate_by'>
-        <label for='paginate_by'>{% trans "Results per page" %}</label>
+        <label for='paginate_by'>{% trans "Results Per Page" %}</label>
         <select class='form-control' name="paginate_by">
             <option {% if paginate_by == 500 %}selected{% endif %}>500</option>
             <option {% if paginate_by == 100 %}selected{% endif %}>100</option>
@@ -706,7 +704,7 @@ function do_set_lemma_language(el) {
                                  <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
                                  <!-- Input that holds the lemma id the user chose from the type ahead -->
                                  <input type='hidden' name='idgloss' value='confirmed' required="">
-                                 <a href="#" onclick="return toggleAddLemma()">{% trans "Create new" %}</a>
+                                 <a href="#" onclick="return toggleAddLemma()">{% trans "Create New" %}</a>
                              </div>
                              <div id="lemma_add">
                                 {% for dataset_lang in dataset_languages %}
@@ -743,7 +741,7 @@ function do_set_lemma_language(el) {
 
   
 
-<p>{% trans "Number of matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{glosscount}}.</p>
+<p>{% trans "Number of Matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{glosscount}}.</p>
 
 {% if object_list %}
 <table class='table table-condensed'>
@@ -753,7 +751,7 @@ function do_set_lemma_language(el) {
           {% for dataset_lang in dataset_languages %}
           <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
-           <th>{% trans "Morpheme type" %}</th>
+           <th>{% trans "Morpheme Type" %}</th>
            {% for dataset_lang in dataset_languages %}
            <th>{% trans "Abstract Meaning" %}
               {% if SHOW_DATASET_INTERFACE_OPTIONS %}

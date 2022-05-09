@@ -7,12 +7,12 @@
 {% load wrong_sign %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Recently added signs{% endblocktrans %}
+{% blocktrans %}Recently Ddded Signs{% endblocktrans %}
 {% endblock %}
 
 {% block content %}
 
-<h3>{% trans "Recently added signs" %}</h3>
+<h3>{% trans "Recently Added Signs" %}</h3>
 
     {% if glosses %}
     <table class="table table-condensed">
@@ -21,7 +21,7 @@
             <th style="width:300px;">{% trans "Lemma ID Gloss" %}</th>
             <th>{% trans "Annotation ID Gloss" %}</th>
             <th style="width:180px;">{% trans "Creator" %}</th>
-            <th style="width:180px">{% trans "Creation date" %}</th></tr>
+            <th style="width:180px">{% trans "Creation Date" %}</th></tr>
 
         {% for gloss in glosses %}
         <!-- Apply three-way coloring: (1) tag for wrong sign, (2) availability of video, and (3) gloss database value for 'isNew' -->

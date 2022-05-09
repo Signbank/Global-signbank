@@ -21,10 +21,10 @@
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
           <th style="width:200px;">{% trans "Languages" %}</th>
           {% if user.is_anonymous %}
-          <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
-          <th style="width:255px;">{% trans "Number of public glosses" %}</th>
+          <th style="width:255px;">{% trans "Number of Signs or Morphemes" %}</th>
+          <th style="width:255px;">{% trans "Number of Public Glosses" %}</th>
           {% else %}
-          <th style="width:255px;">{% trans "Number of signs or morphemes" %}</th>
+          <th style="width:255px;">{% trans "Number of Signs or Morphemes" %}</th>
           {% endif %}
           {% if not user.is_anonymous %}
           <th style="width:80px;">{% trans "View Dataset" %}</th>
@@ -32,7 +32,7 @@
           <th style="width:300px;">{% trans "Request Access" %}</th>
 
           <th style="width:80px;">{% trans "Selected" %}</th>
-          <th>{% trans "Export dataset" %}</th>
+          <th>{% trans "Export Dataset" %}</th>
           {% endif %}
       </tr>
     </thead>
