@@ -644,13 +644,11 @@ class GlossListView(ListView):
 
                 # is this needed?
                 if f.name in char_fields_not_null and value and not isinstance(value,str):
-                    print(gloss.id, ' convert value to string: ', value)
                     value = str(value)
 
                 # some legacy glosses have empty text fields of other formats
                 if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
                         and (value == '-' or value == '------' or value == ' '):
-                    # print(gloss.id, ' replace with empty string: ', value)
                     value = ''
 
                 if value is None:

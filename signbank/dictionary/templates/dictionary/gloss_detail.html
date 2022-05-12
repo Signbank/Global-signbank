@@ -615,7 +615,7 @@ option:not(:checked) {
                 <th>
                     {% trans "Translation equivalents for" %} {{ lang }}
                 </th>
-                <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' >{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td><td/>
+                <td class='edit edit_text' id='keyword_{{ lang.language_code_2char }}' >{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td><td/>
             </tr>
             {% endfor %}
 
