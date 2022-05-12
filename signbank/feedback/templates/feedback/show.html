@@ -3,7 +3,7 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 
-{% block bootstrap3_title %}Signbank: Feedback overview{% endblock %}
+{% block bootstrap3_title %}Signbank: Feedback Overview{% endblock %}
 
 {% block extrahead %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.11.0.min.js"></script>
@@ -46,7 +46,7 @@ $(window).ready(function(){
 
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
-  <h3>{% trans "General feedback" %}</h3>
+  <h3>{% trans "General Feedback" %}</h3>
   
   {% for fb in general %}
     <div class="panel-group" id="general{{fb.id}}">

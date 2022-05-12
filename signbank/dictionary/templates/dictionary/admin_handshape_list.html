@@ -16,7 +16,7 @@
     var language_code = '{{ LANGUAGE_CODE }}';
 
     <!--var edit_mode_str = '{% trans "Edit" %}'-->
-    <!--var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'-->
+    <!--var turn_off_edit_mode_str = '{% trans "Turn Off Edit Mode" %}'-->
     var saving_str = '{% trans "Saving..." %}'
     var current_language_code = '{{ request.LANGUAGE_CODE }}'
     if (current_language_code == 'nl') {
@@ -160,7 +160,7 @@ function do_adminsearch(el) {
 <form name='adminsearch' id='adminsearch'>
 <div class="panel panel-default">
 {% if not user.is_anonymous %}
-<div class="panel-heading" data-toggle="collapse" data-target="#queryarea">{% trans "Form your query" %}</div>
+<div class="panel-heading" data-toggle="collapse" data-target="#queryarea">{% trans "Form Your Query" %}</div>
 <div id='queryarea' class='panel-collapse collapse'>
         <div class="hidden">
             <input name='sortOrder' class='form-control' value='machine_value' >
@@ -172,8 +172,8 @@ function do_adminsearch(el) {
                     {% csrf_token %}
                     <table class='table'>
                         <tr id='handshape_name_field'>
-                            <td><label for='id_dutch_name'>{% trans "Handshape name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='dutch_name' type='text'
+                            <td><label for='id_dutch_name'>{% trans "Handshape Name" %}</label></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='dutch_name' type='text'
                                        value='{{searchform.dutch_name.value|default:'' }}'/></td>
                         </tr>
                     </table>
@@ -183,8 +183,8 @@ function do_adminsearch(el) {
                     {% csrf_token %}
                     <table class='table'>
                         <tr id='handshape_name_field'>
-                            <td><label for='id_chinese_name'>{% trans "Handshape name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='chinese_name' type='text'
+                            <td><label for='id_chinese_name'>{% trans "Handshape Name" %}</label></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='chinese_name' type='text'
                                        value='{{searchform.chinese_name.value|default:'' }}'/></td>
                         </tr>
                     </table>
@@ -194,8 +194,8 @@ function do_adminsearch(el) {
                     {% csrf_token %}
                     <table class='table'>
                         <tr id='handshape_name_field'>
-                            <td><label for='id_english_name'>{% trans "Handshape name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='english_name' type='text'
+                            <td><label for='id_english_name'>{% trans "Handshape Name" %}</label></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='english_name' type='text'
                                        value='{{searchform.english_name.value|default:'' }}'/></td>
                         </tr>
                     </table>
@@ -207,7 +207,7 @@ function do_adminsearch(el) {
 
                 <div class="panel-heading" data-toggle="collapse" data-target="#finger_selection" id="fingerSelectionPanels">
                     <div class='panel-title' id='finger_selection_heading'>
-                        <a data-toggle='collapse' href='#finger_selection'><label>{% trans "Finger selection" %}</label></a>
+                        <a data-toggle='collapse' href='#finger_selection'><label>{% trans "Finger Selection" %}</label></a>
                     </div>
                     <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
                     <div class="pull-right">
@@ -373,16 +373,16 @@ function do_adminsearch(el) {
         <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
             <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="{{search_type}}">
                 {% if search_type == 'handshape' %}
-                {% trans "Search handshape" %}
+                {% trans "Search Handshape" %}
                 {% else %}
-                {% trans "Search sign by handshape" %}
+                {% trans "Search Sign by Handshape" %}
                 {% endif %}
             </span>&nbsp;<span class="caret"></span>
         </a>
         <ul class="dropdown-menu dropdown-menu-left">
-            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="handshape">{% trans "Search handshape" %}</a></li>
+            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="handshape">{% trans "Search Handshape" %}</a></li>
 
-            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_handshape">{% trans "Search sign by handshape" %}</a></li>
+            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_handshape">{% trans "Search Sign by Handshape" %}</a></li>
         </ul>
     </div>
     <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
@@ -404,7 +404,7 @@ function do_adminsearch(el) {
 {% if search_type == 'handshape' %}
 
 {% if not user.is_anonymous %}
-<p>{% trans "Number of matches:" %} {{ object_list|length }} {% trans "out of" %} {{handshapescount}}.</p>
+<p>{% trans "Number of Matches:" %} {{ object_list|length }} {% trans "out of" %} {{handshapescount}}.</p>
 {% endif %}
 
 {% if object_list %}
@@ -419,13 +419,13 @@ function do_adminsearch(el) {
       <tr>
           <th>{% trans "Handshape" %}</th>
           <th>{% trans "Name" %}</th>
-          <th>{% trans "Finger selection" %}</th>
-          <th>{% trans "Finger configuration" %}</th>
-          <th>{% trans "Finger selection 2" %}</th>
-          <th>{% trans "Finger configuration 2" %}</th>
+          <th>{% trans "Finger Selection" %}</th>
+          <th>{% trans "Finger Configuration" %}</th>
+          <th>{% trans "Finger Selection 2" %}</th>
+          <th>{% trans "Finger Configuration 2" %}</th>
           <th>{% trans "Quantity" %}</th>
           <!--<th>{% trans "Thumb" %}</th>-->
-          <th>{% trans "Unselected fingers extended" %}</th>
+          <th>{% trans "Unselected Fingers Extended" %}</th>
           <th>{% trans "Spreading" %}</th>
           <th>{% trans "Aperture" %}</th>
       </tr>
@@ -660,7 +660,7 @@ function do_adminsearch(el) {
 
 {% elif search_type == 'sign_handshape' %}
 
-<p>{% trans "Number of matches:" %} {{ object_list|length }} {% trans "out of" %} {{signscount}}.
+<p>{% trans "Number of Matches:" %} {{ object_list|length }} {% trans "out of" %} {{signscount}}.
         {% if selected_datasets %}
         {% trans "Datasets:" %}
         {% for ds in selected_datasets %}{{ds.name}}{% if not forloop.last %}, {% else %}.{% endif %}
@@ -678,8 +678,8 @@ function do_adminsearch(el) {
           {% endfor %}
           <th>{% trans "Dataset" %}</th>
            <th>{% trans "Handedness" %}</th>
-           <th>{% trans "Strong hand" %}</th>
-           <th>{% trans "Weak hand" %}</th>
+           <th>{% trans "Strong Hand" %}</th>
+           <th>{% trans "Weak Hand" %}</th>
       </tr>
 
     </thead>

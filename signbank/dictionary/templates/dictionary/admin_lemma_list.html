@@ -27,7 +27,7 @@ var paginate_by = '{{paginate_by}}';
 
 <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/dictionary/lemma/'>
 <div class="panel panel-default">
-    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
             <span class="hasTooltip">
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
                   title=""></span>
@@ -106,7 +106,7 @@ var paginate_by = '{{paginate_by}}';
 </div>
 
     <div class='btn-group' style="margin-bottom: 20px">
-       <input class="btn btn-primary" type="submit" name="search_lemma" value='{% trans "Search lemma" %}'/>
+       <input class="btn btn-primary" type="submit" name="search_lemma" value='{% trans "Search Lemma" %}'/>
 
        <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
                value='{% trans "Reset" %}'>
@@ -115,7 +115,7 @@ var paginate_by = '{{paginate_by}}';
     <h3>{% trans "Lemmas" %}</h3>
 
     <div>
-    {% trans "Number of matches:" %} {{search_matches}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{lemma_count}}.
+    {% trans "Number of Matches:" %} {{search_matches}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{lemma_count}}.
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         {% trans "Datasets:" %}
@@ -154,7 +154,7 @@ var paginate_by = '{{paginate_by}}';
           {% for dataset_lang in dataset_languages %}
           <th>{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
-          <th>{% trans "Number of glosses" %}</th>
+          <th>{% trans "Number of Glosses" %}</th>
           <th>{% trans "Update" %}</th>
       </tr>
     </thead>

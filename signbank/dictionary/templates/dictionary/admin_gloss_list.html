@@ -409,7 +409,7 @@ function do_toggle_annotation(el) {
 <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search'>
 {% csrf_token %}
 <div class="panel panel-default">
-    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form your query" %}
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
             <span class="hasTooltip">
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
                   title=""></span>
@@ -716,16 +716,16 @@ function do_toggle_annotation(el) {
             <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
             <span data-bind="label" onclick="do_adminsearch(this);" name="search_type" value="{{search_type}}">
                 {% if search_type == 'sign' %}
-                {% trans "Search sign" %}
+                {% trans "Search Sign" %}
                 {% else %}
-                {% trans "Search sign or morpheme" %}
+                {% trans "Search Sign or Morpheme" %}
                 {% endif %}
             </span>&nbsp;<span class="caret"></span>
             </a>
             <ul class="dropdown-menu dropdown-menu-left">
-                <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search sign" %}</a></li>
+                <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign">{% trans "Search Sign" %}</a></li>
                 <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type"
-                       value="sign_or_morpheme">{% trans "Sign or morpheme" %}</a></li>
+                       value="sign_or_morpheme">{% trans "Sign or Morpheme" %}</a></li>
             </ul>
         </div>
 
@@ -733,7 +733,7 @@ function do_toggle_annotation(el) {
         <input type="submit" style="visibility: hidden;"/>
 
         {% else %}
-        <input class="btn btn-primary" type="submit" value='{% trans "Search sign" %}'/>
+        <input class="btn btn-primary" type="submit" value='{% trans "Search Sign" %}'/>
         {% endif %}
 
         {% if perms.dictionary.export_csv %}
@@ -761,7 +761,7 @@ function do_toggle_annotation(el) {
             <button class="btn btn-primary" type="submit" name="view_type" value='gloss_list'/>{% trans "List View" %}</button>
             {% endif %}
         </a>
-        {% trans "Number of matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{glosscount}}.
+        {% trans "Number of Matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{glosscount}}.
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         {% trans "Datasets:" %}
@@ -842,7 +842,7 @@ function do_toggle_annotation(el) {
                              <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
                              <input type='hidden' name='idgloss' value='confirmed' required="">
-                             <a href="#" onclick="return toggleAddLemma()">{% trans "Create new" %}</a>
+                             <a href="#" onclick="return toggleAddLemma()">{% trans "Create New" %}</a>
                          </div>
                          <div id="lemma_add">
                             {% for dataset_lang in dataset_languages %}
@@ -876,7 +876,7 @@ function do_toggle_annotation(el) {
 
         <form name="show_pages">
         <div class='form-group' id='paginate_by'>
-        <label for='paginate_by'>{% trans "Results per page" %}</label>
+        <label for='paginate_by'>{% trans "Results Per Page" %}</label>
         <select class='form-control' name="paginate_by">
             <option {% if paginate_by == 500 %} selected="" {% endif %}>500</option>
             <option {% if paginate_by == 100 %} selected="" {% endif %}>100</option>
@@ -922,7 +922,7 @@ function do_toggle_annotation(el) {
 <table class='table table-condensed' id = 'lemmalist_table'>
 <thead id = 'lemmalist_table_header'>
 <tr>
-    <th>{% trans "Lemma ID gloss" %}</th>
+    <th>{% trans "Lemma ID Gloss" %}</th>
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
 
     {% for dataset_lang in dataset_languages %}

@@ -5,7 +5,7 @@
 {% load bootstrap3 %}
 {% load tagging_tags %}
 {% load wrong_sign %}
-{% block bootstrap3_title %}Signbank: Add new sign{% endblock %}
+{% block bootstrap3_title %}Signbank: Add New Sign{% endblock %}
 
 {% load guardian_tags %}
 
@@ -106,7 +106,7 @@
                              <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
                              <input type='hidden' name='idgloss' value='confirmed' required="">
-                             <a href="#" onclick="return toggleAddLemma()">{% trans "Create new" %}</a>
+                             <a href="#" onclick="return toggleAddLemma()">{% trans "Create New" %}</a>
                          </div>
                          <div id="lemma_add">
                             {% for dataset_lang in dataset_languages %}

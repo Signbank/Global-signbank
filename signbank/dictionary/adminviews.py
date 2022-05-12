@@ -292,7 +292,7 @@ class GlossListView(ListView):
         for field_group in FIELDS.values():
             for field in field_group:
                 fields_that_need_translated_options.append(field)
-
+        print('fields_that_need_translated_options: ', fields_that_need_translated_options)
         for field in fields_that_need_translated_options:
             try:
                 if isinstance(search_form.fields[field], TypedChoiceField):

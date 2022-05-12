@@ -88,8 +88,8 @@ option:not(:checked) {
 //    console.log('phonology_fields '+phonology_fields);
 
     var edit_mode_str = '{% trans "Edit" %}';
-    var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
-    var delete_this_gloss_str = '{% trans "Delete this morpheme" %}';
+    var turn_off_edit_mode_str = '{% trans "Turn Off Edit Mode" %}';
+    var delete_this_gloss_str = '{% trans "Delete This Morpheme" %}';
     var saving_str = '{% trans "Saving..." %}';
     var yes_str = '{% trans "Yes" %}'
     var no_str = '{% trans "No" %}'
@@ -296,7 +296,7 @@ function checkKey(e)
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
-         <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit next morpheme" %}</button>
+         <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit Next Morpheme" %}</button>
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
          
     </div>
@@ -416,7 +416,7 @@ function checkKey(e)
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
                 <td style="width:600px;"><span id="lemma">{{ morpheme.lemma }}
                         {% if lemma_group %}
-                            <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
+                            <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
                     </span>
                     <form name='set_lemma_form' id='set_lemma_form'
@@ -437,9 +437,9 @@ function checkKey(e)
                         <input type='hidden' name='id' value='lemmaidgloss'>
 
                         <!-- Submit -->
-                        <input class='btn btn-primary' value='{% trans "Set lemma" %}' type='submit'>
+                        <input class='btn btn-primary' value='{% trans "Set Lemma" %}' type='submit'>
                         <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
-                        <a href="#" onclick="return showAddLemma()">{% trans "Create new" %}</a>
+                        <a href="#" onclick="return showAddLemma()">{% trans "Create New" %}</a>
                     </form>
                     <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' morpheme.id %}" >
                         {% csrf_token %}
@@ -452,7 +452,7 @@ function checkKey(e)
 
                         {% endfor %}
                         <!-- Submit -->
-                        <input class='btn btn-primary' value='{% trans "Add lemma" %}' type='submit'>
+                        <input class='btn btn-primary' value='{% trans "Add Lemma" %}' type='submit'>
                         <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
                     </form>
                 </td><td style="width:200px;"></td>
@@ -471,14 +471,14 @@ function checkKey(e)
             {% for lang, translations in translations_per_language.items %}
             <tr>
                 <th>
-                    {% trans "Abstract meaning" %} ({{ lang }})
+                    {% trans "Abstract Meaning" %} ({{ lang }})
                 </th>
                 <td class='edit edit_text' id='keyword_{{ lang.language_code_2char }}'>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             </tr>
             {% endfor %}
 
             <tr>
-                <th>{% trans "Morpheme type" %}</th>
+                <th>{% trans "Morpheme Type" %}</th>
                 <td class='edit edit_mrptype' id='mrpType' value='{{morpheme_type}}'>{{morpheme_type}}</td>
             </tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
@@ -542,7 +542,7 @@ function checkKey(e)
             {% if appears_in %}
                 <tr>
                     <th style='width:2em'></th>
-                    <th style='width:12em'>{% trans "Word class" %}</th>
+                    <th style='width:12em'>{% trans "Word Class" %}</th>
                     <th style='width:12em'>{% trans "Gloss" %}</th>
                 </tr>
                 {% for morphgloss,wordclass in appears_in %}
@@ -699,7 +699,7 @@ function checkKey(e)
                               <form action='{% url "dictionary:update_morpheme" morpheme.id %}' method='post'>
                                   {% csrf_token %}
                                   <input type='hidden' name='id' value='definitiondelete_{{def.id}}'>
-                                  <input type='hidden' name='value' value='{% trans "confirmed" %}'>
+                                  <input type='hidden' name='value' value='confirmed'>
                                   <div class="modal-footer">
                                     <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                                     <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
@@ -735,14 +735,14 @@ function checkKey(e)
                         <td style="width:7em"><input class='checkbox' name='published' type='checkbox'></td>
                         <td style='width:5em'><input class='form-control' name='count' type='number'></td>
                         <td style='width:10em'>{{definitionform.role}}</td>
-                        <td><input class='form-control' name='text' placeholder='{% trans "Enter new note" %}'></td>
+                        <td><input class='form-control' name='text' placeholder='{% trans "Enter New Note" %}'></td>
                     </tr>
                      <tr>
                         <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
-                        <td><input class='btn' type='submit' value='{% trans "Save new note" %}'></td>
+                        <td><input class='btn' type='submit' value='{% trans "Save New Note" %}'></td>
                     </tr>
                  </table>
             </fieldset>
@@ -759,7 +759,7 @@ function checkKey(e)
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#othermedia' href='#othermedia'>{% trans "Other media" %}</a>
+                <a data-toggle='collapse' data-parent='#othermedia' href='#othermedia'>{% trans "Other Media" %}</a>
             </div>
         </div>
         <div id='othermedia' class='collapse'>
@@ -770,7 +770,7 @@ function checkKey(e)
                   <th style='width:6em'>{% trans "Image/Video" %}</th>
                   <th style='width:6em'>{% trans "File Type" %}</th>
                   <th style='width:20em'>{% trans "Type" %}</th>
-                  <th style='width:12em'>{% trans "Alternative gloss" %}</th>
+                  <th style='width:12em'>{% trans "Alternative Gloss" %}</th>
               </tr>
 
                {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
@@ -832,7 +832,7 @@ function checkKey(e)
                     <tr>
                         <td>{{othermediaform.file}}</td>
                         <td>{{othermediaform.type}}</td>
-                        <td><input class='form-control' placeholder='{% trans "Alternative gloss" %}' name='alternative_gloss' type='text'></td>
+                        <td><input class='form-control' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
                     </tr>
                      <tr>
                         <td></td>
