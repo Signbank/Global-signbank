@@ -2560,3 +2560,29 @@ def upload_eaf_files(request):
             messages.add_message(request, messages.INFO, _('Already imported to different folder: ')+message_string)
 
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+def update_expiry(request):
+    # if something is wrong with the call, proceed to Signbank Welcome Page
+    # This can happen if the user types in the url rather than getting there via the User Profile View
+    # And the Extend Expiry button was not shown on their profile
+    if request.method != "POST":
+        return HttpResponseRedirect(settings.URL + settings.PREFIX_URL + '/')
+
+    if 'username' in request.POST.keys():
+        username = request.POST['username']
+    else:
+        username = ''
+
+    if username and request.user.username == username:
+        try:
+            user_profile = UserProfile.objects.get(user=request.user)
+        except ObjectDoesNotExist:
+            HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+        from dateutil.relativedelta import relativedelta
+        expiry = getattr(user_profile, 'expiry_date')
+        if expiry:
+            user_profile.expiry_date = expiry + relativedelta(months=+6)
+            user_profile.save()
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
