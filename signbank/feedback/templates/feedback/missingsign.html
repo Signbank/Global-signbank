@@ -1,7 +1,8 @@
-
-
 {% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
 {% load bootstrap3 %}
+{% block bootstrap3_title %}Signbank: Missing Sign Feedback{% endblock %}
 
 {% block extrajs %}
 <script type='text/javascript'>
@@ -47,61 +48,74 @@ $(document).ready(function(){
 {% block content %}
   <div class="col-md-6 col-md-offset-3">
       
-      <h2>Missing Sign Feedback</h2>
+      <h2>{% trans "Missing Sign Feedback" %}</h2>
       
   {% if posted %}
 <div id="feedbackmessage">
     <p class='alert alert-info'>
-        Thank you for your feedback. 
+        {% trans "Thank you for your feedback." %}
     </p>
 </div>    
   {% else %}
-      <p>Please submit a video comment showing the sign you think is missing.</p>
-      <p>Please produce the sign in isolation and then in an example sentence.</p>
-      <p>Please also type in the English translation equivalent below as well as
-          your contact information (name and email address) so we can contact you for a follow up if need be.</p>
-      <p>Thank you for taking the time to contact us and help SignBank grow.</p>
+      <p>{% trans "Please submit a video comment showing the sign you think is missing." %}</p>
+      <p>{% trans "Please produce the sign in isolation and then in an example sentence." %}</p>
+      <p>{% blocktrans trimmed %}
+          Please also type in the English translation equivalent below as well as
+          your contact information (name and email address) so we can contact you for a follow up if need be.
+      {% endblocktrans %}</p>
+      <p>{% trans "Thank you for taking the time to contact us and help SignBank grow." %}</p>
 
 <form method="post" enctype="multipart/form-data" name="missingsign">
    {% csrf_token %}
-    <p>You may either upload a video that shows the missing sign or
+    <p>{% blocktrans trimmed %}
+        You may either upload a video that shows the missing sign or
     fill in details below. In either case, you should
     enter a meaning and any comments you might have in the text 
-    boxes at the bottom of the form. </p>
+    boxes at the bottom of the form.
+    {% endblocktrans %}</p>
 
-    <button class='btn btn-default' id="togglevideobutton">Video Comment</button>
+    <button class='btn btn-default' id="togglevideobutton">{% trans "Video Comment" %}</button>
     
  <fieldset id="videoupload">
-  <legend>Video Upload</legend>
+  <legend>{% trans "Video Upload" %}</legend>
   <div id="{{form.video.name}}div">
     {% bootstrap_label form.video.label %}
-    <p>Upload a video of the sign.</p>
+    <p>{% trans "Upload a video of the sign." %}</p>
     {% if form.video.errors %}{{form.video.errors}}{% endif %}
     {% bootstrap_field form.video show_label=False %}
        
-    <p>NOTE: Video files can be quite large, and may take a long time to send. 
-    Please be patient when submitting this feedback.</p>
+    <p>{% blocktrans trimmed %}
+        NOTE: Video files can be quite large, and may take a long time to send.
+    Please be patient when submitting this feedback.
+    {% endblocktrans %}</p>
   </div>
 </fieldset>
 
 
 <fieldset id="meaninginput">
-  <legend>Details</legend>
+  <legend>{% trans "Details" %}</legend>
     <div id="{{form.meaning.name}}div">
-        <p>Please explain the meaning of the new or missing sign, or enter individual English words that have the same meaning as this sign (i.e. keywords).</p>
+        <p>{% blocktrans trimmed %}
+            Please explain the meaning of the new or missing sign, or enter individual
+            English words that have the same meaning as this sign (i.e. keywords).
+        {% endblocktrans %}</p>
         {% if form.meaning.errors %}{{form.meaning.errors}}{% endif %}
         {% bootstrap_field form.meaning show_label=False %}
     </div>
 
     <div id="{{form.comments.name}}div">
-        <p>Are there any other comments you would like to give about this sign? For example, do you think there are other or extra keyword/s that belong with this sign? If so, please include your comments below.</p>
+        <p>{% blocktrans trimmed %}
+            Are there any other comments you would like to give about this sign? For example,
+            do you think there are other or extra keyword/s that belong with this sign?
+            If so, please include your comments below.
+        {% endblocktrans %}</p>
         {% if form.comments.errors %}{{form.comments.errors}}{% endif %}
         {% bootstrap_field form.comments show_label=False %}
     </div>
 </fieldset>
  
 <div class="formbuttons">
-  <input class='btn btn-primary' type="submit" value="Submit Feedback" class="submit" />
+  <input class='btn btn-primary' type="submit" value='{% trans "Submit Feedback" %}' class="submit" />
 </div>
 </form>
 
