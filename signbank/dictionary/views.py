@@ -599,7 +599,7 @@ def import_media(request,video):
                     except OSError as oserror:
                         errors.append("OSError: {}".format(oserror))
 
-                    overwritten = False
+                    overwritten = len(GlossVideo.objects.filter(gloss=gloss)) > 1
 
                 if overwritten:
                     overwritten_files.append(filename)
@@ -898,6 +898,7 @@ def import_csv_create(request):
     # (although these are ignored, it is advised to remove them to make it clear the data is not being stored)
 
     fatal_error = False
+    encoding_error = False
 
     uploadform = signbank.dictionary.forms.CSVUploadForm
     changes = []
@@ -965,7 +966,7 @@ def import_csv_create(request):
 
             #The first line contains the keys
             if nl == 0:
-                keys = line.strip().split(',')
+                keys = line.strip().split(delimiter)
                 # create a template for an empty row with the desired number of columns
                 num_keys = len(keys)
                 empty_row = [''] * num_keys
@@ -1357,12 +1358,14 @@ def import_csv_update(request):
     earlier_updates_same_csv = []
     earlier_updates_lemmaidgloss = {}
 
+    encoding_error = False
+
     # this is needed in case the user has exported the csv first and not removed the frequency columns
     # this code retrieves the column headers in English
     with override(LANGUAGE_CODE):
         columns_to_skip = {field.verbose_name: field for field in Gloss._meta.fields if field.name in FIELDS['frequency']}
 
-    #Propose changes
+    #Process Input File
     if len(request.FILES) > 0:
 
         new_file = request.FILES['file']
@@ -1371,6 +1374,7 @@ def import_csv_update(request):
             # files that will fail here include those renamed to .csv which are not csv
             # non UTF-8 encoded files also fail
             csv_text = new_file.read().decode('UTF-8-sig')
+
         except (UnicodeDecodeError, UnicodeError):
             new_file.seek(0)
             import magic
@@ -1409,78 +1413,87 @@ def import_csv_update(request):
             else:
                 # this should not occur
                 # perhaps only if the user is trying to fiddle without using the template
-                print('Unknown delimiter found during import_csv_create: ', delimiter_radio)
+                # set to template default, print message for Admin
+                print('Missing template default for delimiter_radio in import_csv_update.html')
+                delimiter = ','
+                delimiter_radio = 'comma'
+        else:
+            # this should not occur
+            # perhaps only if the user is trying to fiddle without using the template
+            # set to template default, print message for Admin
+            print('Missing template default for delimiter_radio in import_csv_update.html')
+            delimiter = ','
+            delimiter_radio = 'comma'
 
-        creation = []
-        keys = []   # in case something goes wrong in header row
-        empty_row = ''
-        for nl, line in enumerate(csv_lines):
+        first_csv_line, rest_csv_lines = csv_lines[0], csv_lines[1:]
 
-            #The first line contains the keys
-            if nl == 0:
-                keys = line.strip().split(',')
-                # create a template for an empty row with the desired number of columns
-                num_keys = len(keys)
-                empty_row = [''] * num_keys
-                continue
-            elif len(line) == 0:
+        keys = first_csv_line.strip().split(delimiter)
+        if len(keys) < 2:
+            feedback_message = _('Incorrect Delimiter: ') + delimiter_radio + '.'
+            messages.add_message(request, messages.ERROR, feedback_message)
+            encoding_error = True
+        elif '' in keys:
+            feedback_message = _('Empty Column Header Found.')
+            messages.add_message(request, messages.ERROR, feedback_message)
+            encoding_error = True
+        elif len(keys) > len(list(set(keys))) :
+            feedback_message = _('Duplicate Column Header Found.')
+            messages.add_message(request, messages.ERROR, feedback_message)
+            encoding_error = True
+        elif 'Signbank ID' not in keys:
+            feedback_message = _('The Signbank ID column is required.')
+            messages.add_message(request, messages.ERROR, feedback_message)
+            encoding_error = True
+        elif 'Dataset' not in keys:
+            feedback_message = _('The Dataset column is required.')
+            messages.add_message(request, messages.ERROR, feedback_message)
+            encoding_error = True
+        if encoding_error:
+            return render(request, 'dictionary/import_csv_update.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'creation': creation,
+                           'gloss_already_exists': gloss_already_exists,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+        # create a template for an empty row with the desired number of columns
+        empty_row = [''] * len(keys)
+        for nl, line in enumerate(rest_csv_lines):
+            if len(line) == 0:
                 # this happens at the end of the file
                 continue
             values = csv.reader([line], delimiter=delimiter).__next__()
             if values == empty_row:
                 continue
+
+            # construct value_dict for row
             value_dict = {}
             for nv,value in enumerate(values):
+                if nv >= len(keys):
+                    # this has already been checked above
+                    # it's here to avoid needing an exception on the subscript [nv]
+                    continue
+                elif keys[nv] in columns_to_skip.keys():
+                    continue
+                value_dict[keys[nv]] = value
 
-                try:
-                    # keys is a list of header fields, get the indexed element, column of header
-                    if keys[nv]:
-                        if keys[nv] in columns_to_skip.keys():
-                            continue
-                        if keys[nv] in value_dict.keys():
-                            e = 'Duplicate header column found: ' + keys[nv]
-                            error.append(e)
-                            fatal_error = True
-                            break
-                        value_dict[keys[nv]] = value
-                    elif value:
-                        # empty column header
-                        e = 'Row '+str(nl + 1) + ': Extra data found in column without header: ' + value
-                        error.append(e)
-                        fatal_error = True
-                        break
-                except IndexError:
-                    e = 'Row '+str(nl + 1) + ': Index error in column: ' + str(nv)
-                    error.append(e)
-                    fatal_error = True
-                    break
-
-            if fatal_error:
-                break
-
-            if 'Signbank ID' in value_dict:
-                try:
-                    pk = int(value_dict['Signbank ID'])
-                except ValueError:
-                    e = 'Row '+str(nl + 1) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
-                    error.append(e)
-                    fatal_error = True
-            else:
-                e = 'Signbank ID required to update glosses.'
+            # 'Signbank ID' in value_dict keys, checked above
+            try:
+                pk = int(value_dict['Signbank ID'])
+            except (ValueError, KeyError):
+                # the ID is not a number
+                e = 'Row '+str(nl + 1) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
                 error.append(e)
                 fatal_error = True
-
-            if fatal_error:
                 break
 
-            # Check whether the user may change the dataset of the current row
-            if 'Dataset' in value_dict:
-                dataset_name = value_dict['Dataset'].strip()
-            else:
-                e1 = 'The Dataset column is required.'
-                error.append(e1)
-                fatal_error = True
-                break
+            # 'Dataset' in value_dict keys, checked above
+            dataset_name = value_dict['Dataset'].strip()
+
             if dataset_name not in seen_dataset_names:
                 # catch possible empty values for dataset, primarily for pretty printing error message
                 if dataset_name == '' or dataset_name == None or dataset_name == 0 or dataset_name == 'NULL':
@@ -1489,14 +1502,14 @@ def import_csv_update(request):
                     break
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
-                except:
-                    print('exception trying to get dataset object')
-                    # An error message should be returned here, the dataset does not exist
+                except ObjectDoesNotExist:
+                    # The dataset does not exist
                     e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
                     error.append(e_dataset_not_found)
                     fatal_error = True
                     break
                 if dataset_name not in user_datasets_names:
+                    # Check whether the user may change the dataset of the current row
                     e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
                     error.append(e3)
                     fatal_error = True
@@ -1519,7 +1532,9 @@ def import_csv_update(request):
                     seen_dataset_names.append(dataset_name)
                     # saw the first dataset
 
-            if fatal_error:
+            if fatal_error or encoding_error:
+                # break out of enumerate csv lines
+                # Dataset or Signbank ID data for configuring updates in the next step is compromised
                 break
             # The Lemma ID Gloss may already exist.
             lemmaidglosstranslations = {}
@@ -1780,8 +1795,11 @@ def import_csv_update(request):
     else:
 
         stage = 0
+    if encoding_error:
+        # Go back to upload page
+        stage = 0
 
-    if stage == 1 and not changes and not error:
+    elif stage == 1 and not changes and not error:
         # no changes were found in the input file. print a message as feedback
         # this is needed in order to have output that can be tested for in the unit tests
         messages.add_message(request, messages.INFO, ('No changes were found.'))
@@ -1887,7 +1905,7 @@ def import_csv_lemmas(request):
 
             #The first line contains the keys
             if nl == 0:
-                keys = line.strip().split(',')
+                keys = line.strip().split(delimiter)
                 # create a template for an empty row with the desired number of columns
                 num_keys = len(keys)
                 empty_row = [''] * num_keys
