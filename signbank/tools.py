@@ -40,9 +40,11 @@ def save_media(source_folder,language_code_3char,goal_folder,gloss,extension):
 
     #Figure out some names
     annotation_id = ""
-    language = Language.objects.get(language_code_3char=language_code_3char)
-    if not language:
-        raise ObjectDoesNotExist
+    try:
+        language = Language.objects.get(language_code_3char=language_code_3char)
+    except ObjectDoesNotExist:
+        # no language exists for this folder
+        return False, False
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
         annotation_id = annotationidglosstranslations[0].text

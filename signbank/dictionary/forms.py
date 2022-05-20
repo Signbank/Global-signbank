@@ -292,7 +292,7 @@ class GlossSearchForm(forms.ModelForm):
     createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     gloss_search_field_prefix = "glosssearch_"
-    keyword_search_field_prefix = "keywords_"
+    keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
 
     class Meta:
@@ -847,7 +847,7 @@ class FocusGlossSearchForm(forms.ModelForm):
     createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     gloss_search_field_prefix = "glosssearch_"
-    keyword_search_field_prefix = "keywords_"
+    keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
 
     class Meta:
