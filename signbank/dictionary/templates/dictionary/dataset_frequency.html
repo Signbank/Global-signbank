@@ -127,9 +127,10 @@ dd {
                 {% else %}
                 <p>{% trans "There is no metadata CSV file for this dataset." %}</p>
 
-                <p>A metadata file can be uploaded by the Dataset Manager via the Manage Datasets page.</p>
+                <p>{% trans "A metadata file can be uploaded by the Dataset Manager via the Manage Datasets page." %}</p>
 
-                <p>The metadata CSV currently supports:<br>
+                <p>{% trans "The metadata CSV currently supports:" %}<br>
+                <!-- This is an example of the Header of a metafile, the column headers are in English as shown, do not translate. -->
                         <div class="container" >
                           <table class="justify-content:center">
                             <tr>
@@ -150,7 +151,7 @@ dd {
                           </table>
                         </div>
                 </p>
-                <p>The header row of the CSV file should be (using tab as separator):<br/>
+                <p>{% trans "The header row of the CSV file should be (using tab as separator):" %}<br/>
                 <pre>
 <code>
 Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
@@ -177,7 +178,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
               </div>
               {% else %}
               <p>{% trans "There are no EAF files for this dataset." %}</p>
-              <p>EAF files can be uploaded by the Dataset Manager via the Manage Datasets page.</p>
+              <p>{% trans "EAF files can be uploaded by the Dataset Manager via the Manage Datasets page." %}</p>
               {% endif %}
           </td>
         </tr>

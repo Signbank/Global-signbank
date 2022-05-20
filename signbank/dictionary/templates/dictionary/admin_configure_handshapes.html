@@ -5,7 +5,7 @@
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Configure Derivation History{% endblocktrans %}
+{% blocktrans %}Configure Handshapes{% endblocktrans %}
 {% endblock %}
 
 {% load guardian_tags %}
@@ -13,16 +13,16 @@
 {% block content %}
 
 <br/><br/>
-{% if not USE_DERIVATIONHISTORY %}
-<p>{% trans "Derivation History is not supported by your Signbank configuration." %}</p>
+{% if not USE_HANDSHAPE %}
+<p>{% trans "Handshapes are not supported by your Signbank configuration." %}</p>
 {% elif not user.is_superuser %}
-<p>{% trans "You do not have permission to configure Derivation Histories." %}</p>
+<p>{% trans "You do not have permission to configure Handshapes." %}</p>
 {% elif already_set_up %}
-<p>{% trans "Derivation History has already been configured." %}</p>
+<p>{% trans "Handshapes are already configured." %}</p>
 {% elif not revisions %}
-<p>{% trans "No choices found for Derivation History in FieldChoice." %}</p>
+<p>{% trans "No choices found for Handshape in FieldChoice." %}</p>
 {% else %}
-<p>{% trans "The following field choices have been set up for derivation histories. They can be modified in Admin." %}</p>
+<p>{% trans "The following field choices have been set up for handshapes. They can be modified in Admin." %}</p>
 <div id="definitionblock" style="z-index:0;padding-top: 100px;">
     <table class="table table-condensed">
         <thead>
@@ -34,12 +34,12 @@
             </tr>
         </thead>
 
-        {% for revision in revisions %}
+        {% for handshape in handshapes %}
             <tr>
-                <td>{{revision.machine_value}}</td>
-                <td>{{revision.english_name}}</td>
-                <td>{{revision.dutch_name}}</td>
-                <td>{{revision.chinese_name}}</td>
+                <td>{{handshape.machine_value}}</td>
+                <td>{{handshape.english_name}}</td>
+                <td>{{handshape.dutch_name}}</td>
+                <td>{{handshape.chinese_name}}</td>
             </tr>
         {% endfor %}
 

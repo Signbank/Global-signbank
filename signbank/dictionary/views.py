@@ -2496,35 +2496,9 @@ def find_and_save_variants(request):
 
 def configure_handshapes(request):
 
-    output_string = '<!DOCTYPE html>\n' \
-                         '<html>\n' \
-                         '<body>\n'
-    handshapes_table_pre = '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
-                         '<thead>\n' \
-                         '<tr>\n' \
-                         '<th style="width:20em; text-align:left;">Machine Value</th>\n' \
-                         '<th style="width:25em; text-align:left;">English Name</th>\n' \
-                         '<th style="width:40em; text-align:left;">Dutch Name</th>\n' \
-                         '<th style="width:40em; text-align:left;">Chinese Name</th>\n' \
-                         '</tr>\n' \
-                         '</thead>\n' \
-                         '<tbody>\n'
-
-    handshapes_table_suffix = '</tbody>\n' \
-                         '</table>\n'
-
-    output_string_suffix = '</body>\n' \
-                         '</html>'
-
-    if not settings.USE_HANDSHAPE:
-        return HttpResponse(output_string + '<p>Handshapes are not supported by your Signbank configuration.</p>' + output_string_suffix)
-    # check if the Handshape table has been filled, if so don't do anything
+    # check if the Handshape table has been filled
     already_filled_handshapes = Handshape.objects.count()
-    if already_filled_handshapes:
-        return HttpResponse(output_string + '<p>Handshapes are already configured.</p>' + output_string_suffix)
-    else:
-
-        output_string += handshapes_table_pre
+    if request.user.is_superuser and not already_filled_handshapes:
 
         handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
 
@@ -2539,13 +2513,22 @@ def configure_handshapes(request):
             new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
             new_handshape.save()
 
-            output_string += '<tr><td>' + str(new_machine_value) + '</td><td>' + new_english_name + '</td><td>' + new_dutch_name + '</td><td>' + new_chinese_name + '</td></tr>\n'
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        output_string += handshapes_table_suffix
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
 
-        output_string += output_string_suffix
-
-        return HttpResponse(output_string)
+    return render(request, 'dictionary/admin_configure_handshapes.html',
+                  { 'USE_HANDSHAPE': settings.USE_HANDSHAPE,
+                    'already_set_up': already_filled_handshapes,
+                    'handshapes':FieldChoice.objects.filter(field__iexact='Handshape'),
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })
 
 def configure_speakers_dataset(request,datasetid):
     try:
