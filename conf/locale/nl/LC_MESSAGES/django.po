@@ -982,15 +982,15 @@ msgstr "Opslaan..."
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:30
 msgid "Manage Datasets"
-msgstr "Dataset beheren"
+msgstr "Datasets beheren"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:34
 msgid "Users who can View Dataset (Group permissions excluded)"
-msgstr ""
+msgstr "Gebruikers die dataset kunnen zien (Groepsrechten uitgesloten)"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:35
 msgid "Users who can Change Dataset (Group permissions excluded)"
-msgstr ""
+msgstr "Gebruikers die dataset kunnen wijzigen (Groepsrechten uitgesloten)"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:48
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:112
@@ -1022,12 +1022,12 @@ msgstr "Gebruikersnaam"
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:84
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:148
 msgid "Grant"
-msgstr ""
+msgstr "Verleen toegang"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:101
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:165
 msgid "Revoke"
-msgstr ""
+msgstr "Toegang intrekken"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:121
 #, python-format
@@ -1044,7 +1044,7 @@ msgstr "Datasets beheren"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:185
 msgid "You must be in group Dataset Manager to use this functionality."
-msgstr ""
+msgstr "Je moet in groep Dataset Manager zijn om deze functionaliteit te gebruiken."
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_select_list.html:15
 msgid "Select datasets"
@@ -1309,7 +1309,7 @@ msgstr "Zoek gebaar met handvorm"
 
 #: signbank/dictionary/templates/dictionary/admin_homonyms_list.html:19
 msgid "Focus Gloss"
-msgstr ""
+msgstr "Focus glos"
 
 #: signbank/dictionary/templates/dictionary/admin_homonyms_list.html:20
 msgid "Homonym Relations (SAVED)"
@@ -1792,7 +1792,7 @@ msgstr "Upload hier het gewijzigde CSV-bestand:"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:54
 msgid "Browse&hellip;"
-msgstr ""
+msgstr "Blader&hellip;"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:57
 #: signbank/dictionary/templates/dictionary/search_result.html:20
