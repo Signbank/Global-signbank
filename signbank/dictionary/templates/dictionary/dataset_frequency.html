@@ -274,6 +274,9 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
 <!--        </tr>-->
         <tr>
             <td>
+            {% if request.user|has_group:"Dataset_Manager" %}
+            {% get_obj_perms request.user for dataset as "dataset_perms" %}
+            {% if "change_dataset" in dataset_perms %}
             <form name='process_speakers_form' id='process_speakers_form' method='get'>
                 <div class="hidden">
                     <input name='dataset_name' class='form-control' value='{{dataset.acronym}}' >
@@ -283,6 +286,8 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                             value='{{dataset.acronym}}'>{% if speakers %}{% trans "Refresh Metadata" %}{% else %}{% trans "Process Metadata" %}{% endif %}</button>
                 </div>
             </form>
+            {% endif %}
+            {% endif %}
             </td>
         </tr>
         <tr>
@@ -305,15 +310,20 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                       <dd class="col-sm-2" id='datum_{{identifier}}'>{{creation_time}}</dd>
                       <dd class="col-sm-3" id='numglosses_{{identifier}}'>{{number_of_glosses}}</dd>
                       <dd class="col-sm-2">
-                   {% csrf_token %}
-                   <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
-                            <div class='btn-group' >
-                                <button id="update_document_{{identifier}}" class="btn btn-primary" method='post'
-                                        onclick='return update_document(this)'
-                                        style="padding-top: 0; padding-bottom: 0; margin-top: 0;"
-                                        name='update_document'
-                                        value='{{identifier}}'>{{identifier}}</button>
-                            </div>
+                           {% if request.user|has_group:"Dataset_Manager" %}
+                           {% get_obj_perms request.user for dataset as "dataset_perms" %}
+                           {% if "change_dataset" in dataset_perms %}
+                           {% csrf_token %}
+                           <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
+                                    <div class='btn-group' >
+                                        <button id="update_document_{{identifier}}" class="btn btn-primary" method='post'
+                                                onclick='return update_document(this)'
+                                                style="padding-top: 0; padding-bottom: 0; margin-top: 0;"
+                                                name='update_document'
+                                                value='{{identifier}}'>{{identifier}}</button>
+                                    </div>
+                            {% endif %}
+                            {% endif %}
                       </dd>
                       <dd class="col-sm-2" id='toelichting_{{identifier}}'>{{toelichting}}
                       </dd>
@@ -357,7 +367,12 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                       <li class="list-group-item active row" style="padding: 0;">
                           <dt class="col-sm-2">{% trans "Document" %}</dt>
                           <dt class="col-sm-6">{% trans "Path" %}</dt>
+                          {% if request.user|has_group:"Dataset_Manager" %}
+                          {% get_obj_perms request.user for dataset as "dataset_perms" %}
+                          {% if "change_dataset" in dataset_perms %}
                           <dt class="col-sm-2">{% trans "Delete" %}</dt>
+                          {% endif %}
+                          {% endif %}
                       </li>
 
                   <list name="document_path_tuples"
@@ -375,12 +390,16 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                             {% endif %} >
                         <dd class="col-sm-2">{{document_identifier}}</dd>
                         <dd class="col-sm-6" >{{path}}</dd>
-
-                        <dd class="col-sm-2" id='{{dataset.acronym}}_{{document_identifier}}_{{path}}' value=''
-                            name="{{dataset.acronym}}_{{document_identifier}}_{{path}}">
-                                <input type="checkbox" name="select_document:{{path}}"
-                                       id="select_document_{{path}}" value="{{path}}" >
-                        </dd>
+                           {% if request.user|has_group:"Dataset_Manager" %}
+                           {% get_obj_perms request.user for dataset as "dataset_perms" %}
+                           {% if "change_dataset" in dataset_perms %}
+                            <dd class="col-sm-2" id='{{dataset.acronym}}_{{document_identifier}}_{{path}}' value=''
+                                name="{{dataset.acronym}}_{{document_identifier}}_{{path}}">
+                                    <input type="checkbox" name="select_document:{{path}}"
+                                        id="select_document_{{path}}" value="{{path}}" >
+                            </dd>
+                           {% endif %}
+                           {% endif %}
                       </li>
                       {% endfor %}
                       {% endwith %}

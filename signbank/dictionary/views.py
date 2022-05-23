@@ -633,82 +633,6 @@ def import_media(request,video):
                                                         'selected_datasets':selected_datasets,
                                                         'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-def import_other_media(request):
-
-    errors = []
-
-    #First do some checks
-    if not os.path.isfile(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'):
-        errors.append('The required file index.csv is not present')
-    else:
-
-        for n,row in enumerate(csv.reader(open(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'))):
-
-            #Skip the header
-            if n == 0:
-                if row == ['Idgloss','filename','type','alternative_gloss']:
-                    continue
-                else:
-                    errors.append('The header of index.csv is not Idgloss,filename,type,alternative_gloss')
-                    continue
-
-            #Create an other video for this
-            try:
-                idgloss, file_name, other_media_type, alternative_gloss = row
-            except ValueError:
-                errors.append('Line '+str(n)+' does not seem to have the correct amount of items')
-                continue
-
-            for field_choice in FieldChoice.objects.filter(field='OtherMediaType'):
-                if field_choice.english_name == other_media_type:
-                    other_media_type_machine_value = field_choice.machine_value
-
-            parent_gloss = Gloss.objects.filter(idgloss=idgloss)[0]
-
-            other_media = OtherMedia()
-            other_media.parent_gloss = parent_gloss
-            other_media.alternative_gloss = alternative_gloss
-            other_media.path = settings.STATIC_URL+'othermedia/'+str(parent_gloss.pk)+'/'+file_name
-
-            try:
-                other_media.type = other_media_type_machine_value
-            except UnboundLocalError:
-                pass
-
-            #Copy the file
-            goal_folder = settings.OTHER_MEDIA_DIRECTORY+str(parent_gloss.pk)+'/'
-
-            try:
-                os.mkdir(goal_folder)
-            except OSError:
-                pass #Do nothing if the folder exists already
-
-            source = settings.OTHER_MEDIA_TO_IMPORT_FOLDER+file_name
-
-            try:
-                shutil.copyfile(source,goal_folder+file_name)
-            except IOError:
-                errors.append('File '+source+' not present')
-
-            #Copy at the end, so it only goes through if there was no crash before
-            other_media.save()
-
-            try:
-                os.remove(source)
-            except OSError:
-                pass
-
-    if len(errors) == 0:
-        return HttpResponse('OK')
-    else:
-        output = '<p>Errors</p><ul>'
-
-        for error in errors:
-            output += '<li>'+error+'</li>'
-
-        output += '</ul>'
-
-        return HttpResponse(output)
 
 def try_code(request):
 
@@ -2529,41 +2453,6 @@ def configure_handshapes(request):
                    'selected_datasets': selected_datasets,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
                    })
-
-def configure_speakers_dataset(request,datasetid):
-    try:
-        dataset = get_object_or_404(Dataset, pk=datasetid)
-    except ObjectDoesNotExist:
-        return HttpResponse('<p>Dataset unknown.</p>')
-
-    if request.user.has_perm('dictionary.change_gloss'):
-
-        errors = import_corpus_speakers(dataset.acronym)
-
-        if len(errors) == 0:
-            return HttpResponse('<p>Speakers have been configured.</p>')
-        else:
-            return HttpResponse('<p>Problem importing speakers.</p>')
-    else:
-
-        return HttpResponse('<p>You do not have permission to configure speakers.</p>')
-
-
-def configure_corpus_documents_dataset(request, datasetid):
-    try:
-        dataset = get_object_or_404(Dataset, pk=datasetid)
-    except ObjectDoesNotExist:
-        return HttpResponse('<p>Dataset unknown.</p>')
-
-    if request.user.has_perm('dictionary.change_gloss'):
-
-        configure_corpus_documents(dataset.acronym)
-
-        return HttpResponse('<p>Corpus ' + dataset.acronym + ' has been configured.</p>')
-
-    else:
-
-        return HttpResponse('<p>You do not have permission to configure a corpus.</p>')
 
 
 def get_unused_videos(request):
