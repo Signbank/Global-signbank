@@ -878,10 +878,8 @@ msgid "You are not authorized to add a morpheme"
 msgstr "Je hebt niet genoeg rechten om een morfeem toe te voegen"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:15
-#, fuzzy
-#| msgid "View dataset"
 msgid "View available datasets"
-msgstr "Toon dataset"
+msgstr "Toon beschikbare datasets"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:18
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:33
@@ -983,18 +981,16 @@ msgid "Saving..."
 msgstr "Opslaan..."
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:30
-#, fuzzy
-#| msgid "Change Dataset"
 msgid "Manage Datasets"
-msgstr "Verander dataset"
+msgstr "Datasets beheren"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:34
 msgid "Users who can View Dataset (Group permissions excluded)"
-msgstr ""
+msgstr "Gebruikers die dataset kunnen zien (Groepsrechten uitgesloten)"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:35
 msgid "Users who can Change Dataset (Group permissions excluded)"
-msgstr ""
+msgstr "Gebruikers die dataset kunnen wijzigen (Groepsrechten uitgesloten)"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:48
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:112
@@ -1026,12 +1022,12 @@ msgstr "Gebruikersnaam"
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:84
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:148
 msgid "Grant"
-msgstr ""
+msgstr "Verleen toegang"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:101
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:165
 msgid "Revoke"
-msgstr ""
+msgstr "Toegang intrekken"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:121
 #, python-format
@@ -1043,20 +1039,16 @@ msgid ""
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:183
-#, fuzzy
-#| msgid "Change Dataset"
 msgid "Manage datasets"
-msgstr "Verander dataset"
+msgstr "Datasets beheren"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:185
 msgid "You must be in group Dataset Manager to use this functionality."
-msgstr ""
+msgstr "Je moet in groep Dataset Manager zijn om deze functionaliteit te gebruiken."
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_select_list.html:15
-#, fuzzy
-#| msgid "Possible datasets"
 msgid "Select datasets"
-msgstr "Mogelijke datasets"
+msgstr "Selecteer datasets"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_select_list.html:36
 msgid "Save selection"
@@ -1317,7 +1309,7 @@ msgstr "Zoek gebaar met handvorm"
 
 #: signbank/dictionary/templates/dictionary/admin_homonyms_list.html:19
 msgid "Focus Gloss"
-msgstr ""
+msgstr "Focus glos"
 
 #: signbank/dictionary/templates/dictionary/admin_homonyms_list.html:20
 msgid "Homonym Relations (SAVED)"
@@ -1336,57 +1328,47 @@ msgid "Abstract Meaning"
 msgstr "Mogelijke vertalingen"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:44
-#, fuzzy
-#| msgid "Dataset Name"
 msgid "Dataset name"
 msgstr "Dataset-naam"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:45
-#, fuzzy
-#| msgid "Antonyms"
 msgid "Acronym"
-msgstr "Antoniemen"
+msgstr "Acroniem"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:47
 msgid "Accessible by others"
-msgstr ""
+msgstr "Toegankelijk voor anderen"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:52
 msgid "Owner &amp; Contact person(s)"
-msgstr ""
+msgstr "Eigenaar &amp; contactperso(o)n(en)"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:76
-#, fuzzy
-#| msgid "Add User"
 msgid "Add Owner"
-msgstr "Gebruiker toevoegen"
+msgstr "Eigenaar toevoegen"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:85
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:87
 msgid "Description"
-msgstr ""
+msgstr "Omschrijving"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:88
-#, fuzzy
-#| msgid "Sign Language"
 msgid "Sign language"
 msgstr "Gebarentaal"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:89
-#, fuzzy
-#| msgid "Translation equivalents"
 msgid "Translation languages"
-msgstr "Mogelijke vertalingen in het Nederlands"
+msgstr "Mogelijke vertaaltalen"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:91
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:93
 msgid "Conditions of use by others"
-msgstr ""
+msgstr "Gebruiksvoorwaarden door anderen"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:94
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:96
 msgid "Copyright statement"
-msgstr ""
+msgstr "Copyright verklaring"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:28
 msgid "Delete this gloss"
@@ -1810,7 +1792,7 @@ msgstr "Upload hier het gewijzigde CSV-bestand:"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:54
 msgid "Browse&hellip;"
-msgstr ""
+msgstr "Blader&hellip;"
 
 #: signbank/dictionary/templates/dictionary/import_csv.html:57
 #: signbank/dictionary/templates/dictionary/search_result.html:20
@@ -2226,16 +2208,12 @@ msgid "Sign Definition"
 msgstr "Gebaardefinitie"
 
 #: signbank/dictionary/update.py:51 signbank/dictionary/update.py:1413
-#, fuzzy
-#| msgid "You are not authorized to add a morpheme"
 msgid "You are not authorized to change the selected dataset."
-msgstr "Je hebt niet genoeg rechten om een morfeem toe te voegen"
+msgstr "Je hebt niet genoeg rechten om de geselecteerde dataset te wijzigen."
 
 #: signbank/dictionary/update.py:55 signbank/dictionary/update.py:1417
-#, fuzzy
-#| msgid "Please provide some initial data"
 msgid "Please provide a dataset."
-msgstr "Geef hier wat data om mee te beginnen"
+msgstr "Specificeer hier een dataset"
 
 #: signbank/dictionary/update.py:259
 msgid "yes"
@@ -2243,13 +2221,11 @@ msgstr "ja"
 
 #: signbank/feedback/templates/feedback/generalfeedbacksummary.html:10
 msgid "General feedback summary"
-msgstr ""
+msgstr "Algemene feedback samenvatting"
 
 #: signbank/feedback/templates/feedback/show.html:49
-#, fuzzy
-#| msgid "Provide general site feedback"
 msgid "General feedback"
-msgstr "Geef algemene feedback op de site"
+msgstr "Algemene feedback"
 
 #: signbank/feedback/templates/feedback/show.html:81
 #: signbank/feedback/templates/feedback/show.html:141
@@ -2260,29 +2236,22 @@ msgstr "Verwijder"
 #: signbank/feedback/templates/feedback/show.html:89
 #: signbank/feedback/templates/feedback/show.html:149
 #: signbank/feedback/templates/feedback/show.html:213
-#, fuzzy
-#| msgid "Delete This Note"
 msgid "Delete This Comment"
 msgstr "Verwijder deze aantekening"
 
 #: signbank/feedback/templates/feedback/show.html:92
 #: signbank/feedback/templates/feedback/show.html:152
 #: signbank/feedback/templates/feedback/show.html:216
-#, fuzzy
-#| msgid "This action will delete this note. It cannot be undone."
 msgid "This action will delete this comment. It cannot be undone."
-msgstr ""
-"Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
+msgstr "Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
 
 #: signbank/feedback/templates/feedback/show.html:112
-#, fuzzy
-#| msgid "Sign search"
 msgid "Sign Feedback"
-msgstr "Gebaar zoeken"
+msgstr "Gebaar feedback"
 
 #: signbank/feedback/templates/feedback/show.html:170
 msgid "Missing Sign Feedback"
-msgstr ""
+msgstr "Feedback over ontbrekend gebaar"
 
 #: signbank/pages/admin.py:14 signbank/pages/models.py:10
 msgid "URL"
@@ -2628,10 +2597,7 @@ msgid "Password reset for Signbank"
 msgstr "Wachtwoord opnieuw ingesteld"
 
 #: templates/global-templates/registration/password_reset_email.html:4
-#, fuzzy
-#| msgid "Please go to the following page and choose a new password:"
-msgid ""
-"Please go to the following page and choose a new password for the username"
+msgid "Please go to the following page and choose a new password:"
 msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen:"
 
 #~ msgid "Users View Dataset"
@@ -3647,9 +3613,8 @@ msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen:"
 #~ msgid "ID Morpheme/Annotation ID Morpheme"
 #~ msgstr "ID-glos morfeem/Annotatie-ID-Glos morfeem"
 
-#, fuzzy
 #~ msgid "Compound sign"
-#~ msgstr "Samenstelling"
+#~ msgstr "Samengesteld gebaar"
 
 #~ msgid "This gloss is not defined as part of a compound"
 #~ msgstr "Dit gebaar is niet onderdeel van een samenstelling"
@@ -3759,13 +3724,11 @@ msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen:"
 #~ msgid "Video"
 #~ msgstr "video"
 
-#, fuzzy
 #~ msgid "Delete This Other Video"
-#~ msgstr "Verwijder deze aantekening"
+#~ msgstr "Verwijder andere video"
 
-#, fuzzy
 #~ msgid "Save new other video"
-#~ msgstr "Andere video's"
+#~ msgstr "Nieuwe video opslaan"
 
 #~ msgid "History"
 #~ msgstr "Geschiedenis"
