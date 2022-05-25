@@ -1129,8 +1129,8 @@ class GlossDetailView(DetailView):
             show_dataset_interface = False
 
         try:
-            self.object = self.get_object()
-        except ObjectDoesNotExist:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -1695,8 +1695,8 @@ class GlossRelationsDetailView(DetailView):
             show_dataset_interface = False
 
         try:
-            self.object = self.get_object()
-        except ObjectDoesNotExist:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -2563,9 +2563,8 @@ class HandshapeDetailView(DetailView):
         try:
             # GET A HANDSHAPE OBJECT WITH THE REQUESTED MACHINE VALUE
             # see if Handshape object exists for this machine_value
-            self.object = self.get_object()
-
-        except ObjectDoesNotExist:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
             # SEE IF THERE IS A FIELDCHOICE FOR THIS HANDSHAPE MACHINE VALUE
             # check to see if this handshape has been created but not yet viewed
             # if that is the case, create a new handshape object and view that,
@@ -3512,8 +3511,8 @@ class GlossFrequencyView(DetailView):
             show_dataset_interface = False
 
         try:
-            self.object = self.get_object()
-        except ObjectDoesNotExist:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -4853,8 +4852,8 @@ class DatasetDetailView(DetailView):
             show_dataset_interface = False
 
         try:
-            self.object = self.get_object()
-        except ObjectDoesNotExist:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested dataset does not exist.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -5309,8 +5308,8 @@ class DatasetFrequencyView(DetailView):
             show_dataset_interface = False
 
         try:
-            self.object = self.get_object()
-        except ObjectDoesNotExist:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested dataset does not exist.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -5703,8 +5702,8 @@ class MorphemeDetailView(DetailView):
             show_dataset_interface = False
 
         try:
-            self.object = self.get_object()
-        except ObjectDoesNotExist:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested morpheme does not exist.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -7081,8 +7080,8 @@ class LemmaUpdateView(UpdateView):
             show_dataset_interface = False
 
         try:
-            self.object = self.get_object()
-        except ObjectDoesNotExist:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested lemma does not exist.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
