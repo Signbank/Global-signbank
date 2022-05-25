@@ -1381,10 +1381,8 @@ msgstr "Deze idgloss bestaat al"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:184
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:124
-#, fuzzy, python-format
-#| msgid "\"Sign %(glossposn)s of %(glosscount)s in the NGT Dictionary\" "
 msgid "\"Sign %(glossposn)s of %(glosscount)s in the dictionary\" "
-msgstr "\"Gebaar %(glossposn)s van %(glosscount)s in NGT Signbank\" "
+msgstr "\"Gebaar %(glossposn)s van %(glosscount)s in het lexicon\" "
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:188
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:128
@@ -1879,11 +1877,6 @@ msgstr "Wijzigingen zijn gepubliceerd."
 
 #. Translators: Welcome message
 #: signbank/dictionary/templates/dictionary/index.html:7
-#, fuzzy, python-format
-#| msgid ""
-#| "Welcome to the Sign Search section of the %(language)s SignBank. Here you "
-#| "can search for a sign using a Dutch translation in the search box above, "
-#| "or browse words starting with any letter below."
 msgid ""
 "Welcome to the Sign Search section of the %(language)s SignBank. Here you "
 "can search for a sign using a translation in the search box above, or browse "
@@ -2159,23 +2152,16 @@ msgstr "Klik hier om terug te gaan."
 
 #. Translators: Page title
 #: signbank/dictionary/templates/dictionary/word.html:9
-#, fuzzy, python-format
-#| msgid "NGT: sign for %(translation)s"
 msgid "Sign for %(translation)s"
-msgstr "NGT: gebaar voor %(translation)s"
+msgstr "Gebaar voor %(translation)s"
 
 #. Translators: Sign x of n(signs)
 #: signbank/dictionary/templates/dictionary/word.html:52
-#, fuzzy, python-format
-#| msgid ""
-#| "Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the NGT "
-#| "Dictionary"
-msgid ""
 "Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the "
 "dictionary"
 msgstr ""
-"Gebaar %(glossposn)s van %(glosscount)s <span class='hidden-xs'>in NGT "
-"Signbank"
+"Gebaar %(glossposn)s van %(glosscount)s <span class='hidden-xs'>in het "
+"lexicon"
 
 #: signbank/dictionary/templates/dictionary/word.html:57
 msgid "Next Sign"
