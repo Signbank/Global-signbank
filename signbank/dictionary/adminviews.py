@@ -4530,15 +4530,15 @@ class DatasetManagerView(ListView):
                 dataset_object.default_language = language
                 dataset_object.save()
                 messages.add_message(self.request, messages.INFO,
-                                     ('The default language of {} is set to {}.'
+                                     _('The default language of {} is set to {}.'
                                       .format(dataset_object.acronym, language.name)))
             else:
                 messages.add_message(self.request, messages.INFO,
-                                     ('{} is not in the set of languages of dataset {}.'
+                                     _('{} is not in the set of languages of dataset {}.'
                                       .format(language.name, dataset_object.acronym)))
-        except:
+        except (ObjectDoesNotExist, KeyError):
             messages.add_message(self.request, messages.ERROR,
-                                 ('Something went wrong setting the default language for '
+                                 _('Something went wrong setting the default language for '
                                   + dataset_object.acronym))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
@@ -6870,7 +6870,7 @@ def create_lemma_for_gloss(request, glossid):
                 lemmaidglosstranslation__text__exact=value.upper(),
                 dataset=dataset)
             if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
-                messages.add_message(request, messages.ERROR, _('Lemma ID Gloss not unique for %(language)s.') % {'language': language.name})
+                messages.add_message(request, messages.ERROR, _('Lemma ID Gloss not unique for language.'))
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     if form.is_valid():
