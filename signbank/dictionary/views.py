@@ -2487,24 +2487,38 @@ def configure_handshapes(request):
 
 
 def get_unused_videos(request):
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    selected_dataset_acronyms = [ ds.acronym for ds in selected_datasets ]
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
     file_not_in_glossvideo_object = []
     gloss_video_dir = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY)
-    all_files = [str(file) for file in Path(gloss_video_dir).glob('**/*') if file.is_file()]
-
-    for file in all_files:
-        full_file_path = file
-        file = file[len(settings.WRITABLE_FOLDER):]
-        if file.startswith('/'):
-            file = file[1:]
-        if small_appendix in file:
-            file = add_small_appendix(file, reverse=True)
-
-        gloss_videos = GlossVideo.objects.filter(videofile=file)
-        if not gloss_videos:
-            file_not_in_glossvideo_object.append(full_file_path)
+    for acronym in os.listdir(gloss_video_dir):
+        if acronym not in selected_dataset_acronyms:
+            continue
+        if os.path.isdir(os.path.join(gloss_video_dir, acronym)):
+            for folder in os.listdir(os.path.join(gloss_video_dir, acronym)):
+                if os.path.isdir(os.path.join(gloss_video_dir, acronym, folder)):
+                    for filename in os.listdir(os.path.join(gloss_video_dir, acronym, folder)):
+                        if small_appendix in filename:
+                            filename = add_small_appendix(filename, reverse=True)
+                        gloss_video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY, acronym, folder, filename)
+                        gloss_videos = GlossVideo.objects.filter(videofile=gloss_video_path, version=0)
+                        if not gloss_videos:
+                            feedback_path = os.path.join(acronym, folder, filename)
+                            file_not_in_glossvideo_object.append((acronym, folder, filename))
 
     return render(request, "dictionary/unused_videos.html",
-                  {'file_not_in_glossvideo_object': file_not_in_glossvideo_object})
+                  {'file_not_in_glossvideo_object': file_not_in_glossvideo_object,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })
 
 
 def list_all_fieldchoice_names(request):

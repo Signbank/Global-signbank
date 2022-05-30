@@ -1,19 +1,28 @@
 {% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
 
 {% block script %}
 
 {% endblock %}
 
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Unused Video Files{% endblocktrans %}
+{% endblock %}
+
 {% block content %}
 
-<h1>Unused video files and other unlinked files</h1>
+<h3>{% trans "Unused video files and other unlinked files" %}</h3>
 
-<p><i>Number of unused video files: {{ file_not_in_glossvideo_object|length }}</i></p>
+<p><i>{% trans "Number of unused video files" %}: {{ file_not_in_glossvideo_object|length }}</i></p>
 
 {% if file_not_in_glossvideo_object %}
-    <table class="table">
+    <table class='table table-condensed'>
+        <tr><th>{% trans "Dataset" %}</th><th style="width:300px;">{% trans "Folder (Gloss Prefix)" %}</th><th>{% trans "Filename" %}</th></tr>
         {% for file in file_not_in_glossvideo_object %}
-            <tr><td>{{ file }}</td></tr>
+            <tr><td>{{file.0}}</td><td>{{file.1}}</td><td>{{file.2}}</td></tr>
         {% endfor %}
     </table>
 {% endif %}
