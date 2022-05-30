@@ -2,7 +2,9 @@
 {% load i18n %}
 {% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
-{% block bootstrap3_title %}Signbank: Frequency List{% endblock %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Frequency List{% endblocktrans %}
+{% endblock %}
 
 {% block extrahead %}
 {% endblock %}
@@ -225,7 +227,7 @@ table {
     <div id="visibility_buttons">
          <table class='table table-condensed'>
                 <tr id='phonology_selection'>
-                    <td style="width:200px;"><label>Phonology</label></td>
+                    <td style="width:200px;"><label>{% trans "Phonology" %}</label></td>
                     <td>
                         <select id='id_Phonology'>
                             {% for f_field, f_label in field_labels_list %}
@@ -235,7 +237,7 @@ table {
                     </td>
                 </tr>
                 <tr id='semantics_selection'>
-                    <td><label>Semantics</label></td>
+                    <td><label>{% trans "Semantics" %}</label></td>
                     <td>
                         <select id='id_Semantics'>
                             {% for s_field, s_label in field_labels_semantics_list %}
