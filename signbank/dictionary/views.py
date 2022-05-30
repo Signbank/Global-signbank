@@ -2510,7 +2510,6 @@ def get_unused_videos(request):
                         gloss_video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY, acronym, folder, filename)
                         gloss_videos = GlossVideo.objects.filter(videofile=gloss_video_path, version=0)
                         if not gloss_videos:
-                            feedback_path = os.path.join(acronym, folder, filename)
                             file_not_in_glossvideo_object.append((acronym, folder, filename))
 
     return render(request, "dictionary/unused_videos.html",
