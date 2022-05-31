@@ -170,12 +170,12 @@ def update_gloss(request, glossid):
                 gloss.pk = pk
 
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
-        
+
         if field.startswith('definition'):
             
             return update_definition(request, gloss, field, value)
 
-        elif field.startswith('keywords'):
+        elif field.startswith('keyword'):
 
             return update_keywords(gloss, field, value)
 

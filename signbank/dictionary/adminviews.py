@@ -47,7 +47,7 @@ from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses
-from signbank.frequency import import_corpus_speakers, configure_corpus_documents, update_corpus_counts, \
+from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
     document_to_glosses, get_corpus_speakers, remove_document_from_corpus, document_identifiers_from_paths, \
@@ -5428,7 +5428,7 @@ class DatasetFrequencyView(DetailView):
             messages.add_message(self.request, messages.ERROR, _('Error processing participants meta data for this dataset.'))
             return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
 
-        configure_corpus_documents(dataset_object.acronym)
+        configure_corpus_documents_for_dataset(dataset_object.acronym)
 
         messages.add_message(self.request, messages.INFO, ('Corpus ' + self.dataset_name + ' successfully created.'))
         return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))

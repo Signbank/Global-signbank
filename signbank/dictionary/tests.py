@@ -2776,7 +2776,7 @@ class Corpus_Tests(TestCase):
 
     def test_corpus_creation(self):
         # this imports the Speaker data to the test database
-        from signbank.frequency import import_corpus_speakers, configure_corpus_documents, dictionary_glosses_to_speakers, gloss_to_speakers, \
+        from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, dictionary_glosses_to_speakers, gloss_to_speakers, \
             dictionary_documents_to_glosses, dictionary_documents_to_speakers, dictionary_glosses_to_documents, \
             document_to_speakers, document_to_glosses, \
             gloss_to_documents, speaker_to_glosses, dictionary_speakers_to_glosses, dictionary_speakers_to_documents, speaker_to_documents, \
@@ -2802,7 +2802,7 @@ class Corpus_Tests(TestCase):
 
         ### CORPUS FUNCTION
         print('CONFIGURE CORPUS')
-        configure_corpus_documents(dataset_acronym, testing=True)
+        configure_corpus_documents_for_dataset(dataset_acronym, testing=True)
 
         try:
             corpus = Corpus.objects.get(name=dataset_acronym)
