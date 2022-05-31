@@ -411,12 +411,13 @@ class ECVsNonEmptyTests(TestCase):
             # get the dataset using filter (returns a list)
             try:
                 dataset_of_filename = Dataset.objects.get(acronym__iexact=fname)
-            except:
+            except ObjectDoesNotExist:
                 try:
                     fname_nounderscore = fname.replace("_"," ")
                     dataset_of_filename = Dataset.objects.get(acronym__iexact=fname_nounderscore)
-                except:
+                except ObjectDoesNotExist:
                     print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
+                    continue
             if not len(entry_nodes):
                 # no glosses in the ecv
                 print('EMPTY ECV FILE FOUND: ', filename)
@@ -1664,6 +1665,8 @@ class MultipleSelectTests(TestCase):
     def create_semanticfield(self):
 
         used_machine_values = [s.machine_value for s in SemanticField.objects.all()]
+        if not used_machine_values:
+            used_machine_values = [ 1, 2]
         max_used_machine_value = max(used_machine_values)
         new_machine_value = max_used_machine_value + 1
         new_english_name = 'thisisanewtestsemanticfield_'+str(new_machine_value)+'_en'
@@ -2385,17 +2388,17 @@ class testFrequencyAnalysis(TestCase):
 
             if len(choice_list) > 0:
                 translated_choices = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False, shortlist=False)
-            else:
-                translated_choices = []
-            frequency_choices_f = frequency_dict[f]
+                frequency_choices_f = frequency_dict[f]
+                frequency_choices_f_keys = frequency_choices_f.keys()
 
-            self.assertEqual(len(translated_choices), len(frequency_choices_f))
+                self.assertEqual(len(translated_choices), len(frequency_choices_f))
 
-            frequency_choices_f_keys = [ k for k in frequency_choices_f.keys() ]
-            translated_choices_keys = [ k for (k,v) in translated_choices ]
+                frequency_choices_f_keys = [ k for k in frequency_choices_f_keys ]
+                translated_choices_keys = [ k for (k,v) in translated_choices ]
 
-            # Make sure the sorted field choices are in the same order
-            self.assertEqual(translated_choices_keys, frequency_choices_f_keys)
+                # Make sure the sorted field choices are in the same order
+                print('Testing choices for field choice category: ', fieldchoice_category)
+                self.assertEqual(translated_choices_keys, frequency_choices_f_keys)
 
 
 class testSettings(TestCase):

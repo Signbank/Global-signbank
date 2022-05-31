@@ -2157,11 +2157,8 @@ msgstr "Gebaar voor %(translation)s"
 
 #. Translators: Sign x of n(signs)
 #: signbank/dictionary/templates/dictionary/word.html:52
-"Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the "
-"dictionary"
-msgstr ""
-"Gebaar %(glossposn)s van %(glosscount)s <span class='hidden-xs'>in het "
-"lexicon"
+msgid "Sign %(glossposn)s of %(glosscount)s <span class='hidden-xs'>in the dictionary"
+msgstr "Gebaar %(glossposn)s van %(glosscount)s <span class='hidden-xs'>in het lexicon"
 
 #: signbank/dictionary/templates/dictionary/word.html:57
 msgid "Next Sign"
@@ -2540,6 +2537,7 @@ msgstr ""
 "opnieuw in wilt stellen."
 
 #: templates/ASL-templates/registration/password_reset_email.html:4
+#: templates/global-templates/registration/password_reset_email.html:4
 msgid "Please go to the following page and choose a new password:"
 msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen:"
 
@@ -2581,10 +2579,6 @@ msgstr "Stel mijn wachtwoord opnieuw in"
 #: templates/global-templates/registration/password_reset_subject.txt:2
 msgid "Password reset for Signbank"
 msgstr "Wachtwoord opnieuw ingesteld"
-
-#: templates/global-templates/registration/password_reset_email.html:4
-msgid "Please go to the following page and choose a new password:"
-msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen:"
 
 #~ msgid "Users View Dataset"
 #~ msgstr "Dataset inzien"
