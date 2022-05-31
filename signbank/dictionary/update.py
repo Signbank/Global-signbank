@@ -32,7 +32,6 @@ from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_
 # this method is called from the GlossListView (Add Gloss button on the page)
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
-    print('inside update add_gloss')
     if request.method == "POST":
         dataset = None
         if 'dataset' in request.POST and request.POST['dataset'] is not None:
@@ -51,6 +50,11 @@ def add_gloss(request):
             last_used_dataset = request.session['last_used_dataset']
         else:
             last_used_dataset = default_dataset
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            show_dataset_interface = False
 
         form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
@@ -90,8 +94,12 @@ def add_gloss(request):
                     annotationidglosstranslation__text__exact=value.upper(),
                     lemma__dataset=dataset)
                 if len(glosses_for_this_language_and_annotation_idgloss) != 0:
+                    translated_message = _('Annotation ID Gloss not unique.')
                     return render(request, 'dictionary/warning.html',
-                                  {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
+                           {'warning': translated_message,
+                            'dataset_languages': dataset_languages,
+                            'selected_datasets': selected_datasets,
+                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
             try:
@@ -1314,10 +1322,10 @@ def add_morpheme_definition(request, glossid):
                 dataset_id = Dataset.objects.get(name=datasetid)
                 count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id).count()
                 if count_morphemes_in_dataset < 1:
-                    messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
+                    messages.add_message(request, messages.INFO, _('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
                     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
-            messages.add_message(request, messages.INFO, ('Edit Simultaneuous Morphology: No morpheme selected.'))
+            messages.add_message(request, messages.INFO, _('Edit Simultaneuous Morphology: No morpheme selected.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
         if form.is_valid():
@@ -1326,10 +1334,10 @@ def add_morpheme_definition(request, glossid):
 
             try:
                 morph = Morpheme.objects.get(id=morph_id)
-            except:
+            except ObjectDoesNotExist:
 
                 # The user has tryed to type in a name themself rather than select from the list.
-                messages.add_message(request, messages.INFO, ('Simultaneuous morphology: no morpheme found with identifier ' + morph_id + '.'))
+                messages.add_message(request, messages.ERROR, _('Simultaneuous morphology: no morpheme found with identifier {}.'.format(morph_id)))
 
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
@@ -1657,6 +1665,11 @@ def add_morpheme(request):
         else:
             last_used_dataset = default_dataset
 
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            show_dataset_interface = False
+
         form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
         # Check for 'change_dataset' permission
@@ -1694,8 +1707,12 @@ def add_morpheme(request):
                     annotationidglosstranslation__language=language,
                     annotationidglosstranslation__text__exact=value.upper())
                 if len(morphemes_for_this_language_and_annotation_idgloss) != 0:
+                    translated_message = _('Annotation ID Gloss not unique.')
                     return render(request, 'dictionary/warning.html',
-                                  {'warning': language.name + " " + 'annotation ID Gloss not unique.'})
+                           {'warning': translated_message,
+                            'dataset_languages': dataset_languages,
+                            'selected_datasets': selected_datasets,
+                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
             try:
@@ -1710,7 +1727,8 @@ def add_morpheme(request):
                 messages.add_message(request, messages.ERROR, ve.message)
                 return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                      'dataset_languages': dataset_languages,
-                                                     'selected_datasets': get_selected_datasets_for_user(request.user)})
+                                                     'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                     'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
             if not ('search_results' in request.session.keys()):
                 request.session['search_results'] = None
@@ -2136,13 +2154,13 @@ def update_dataset(request, datasetid):
         try:
             group_manager = Group.objects.get(name='Dataset_Manager')
         except:
-            messages.add_message(request, messages.ERROR, ('No group Dataset_Manager found.'))
+            messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
         groups_of_user = request.user.groups.all()
         if not group_manager in groups_of_user:
             messages.add_message(request, messages.ERROR,
-                                 ('You must be in group Dataset Manager to modify dataset details.'))
+                                 _('You must be in group Dataset Manager to modify dataset details.'))
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
         user_change_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
