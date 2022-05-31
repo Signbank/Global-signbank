@@ -5,7 +5,7 @@
 
 {% block content %}
 
-<h2>User profile</h2>
+<h2>User Profile</h2>
 
 <table class="table">
     {% if user.is_anonymous %}
@@ -57,6 +57,20 @@
         </td>
         {% endif %}
     </tr>
+    {% if delta.days < 60 %}
+    <tr>
+    <form name='extend_account_expiry' id='extend_account_expiry' action="{{PREFIX_URL}}/update/expiry/" method='POST'>
+            <td>
+            {% csrf_token %}
+            <input type="hidden" name="username" id="username" value="{{user.username}}" />
+            </td>
+            <td/><td/>
+            <td>
+            <input class='btn btn-primary' id='extend_expiry' name='extend_expiry' type='submit' value='{% trans "Extend Expiry" %}'>
+            </td>
+    </form>
+    </tr>
+    {% endif %}
     {% endif %}
 </table>
 
