@@ -140,7 +140,7 @@ var paginate_by = '{{paginate_by}}';
         <button id='delete_lemmas' type="button"
                 data-toggle="modal" data-target="#deleteNoGlossesModal"
                 data-keyboard="false" data-backdrop="static"
-                class='btn btn-danger pull-right'>{% trans "Delete Lemma's with No Glosses" %}</button>
+                class='btn btn-danger pull-right'>{% trans "Delete Lemmas with No Glosses" %}</button>
 
     {% endif %}
 </div>
@@ -274,8 +274,8 @@ var paginate_by = '{{paginate_by}}';
                 <h2 id='modalTitleDelete'>{% trans "Delete Lemmas with No Glosses" %}</h2>
             </div>
             <div class='modal-body'>
-                <p>{% trans "This action will delete all lemmas without glosses and all associated translations belonging to those lemma's. It cannot be undone." %}</p>
-                <p>{% trans "You have chosen to delete" %} {{num_gloss_zero_matches}} {% trans "lemma's." %}</p>
+                <p>{% trans "This action will delete all lemmas without glosses and all associated translations belonging to those lemmas. It cannot be undone." %}</p>
+                <p>{% trans "You have chosen to delete" %} {{num_gloss_zero_matches}} {% trans "lemmas." %}</p>
              </div>
           <div class="modal-footer">
           <form id="delete-no-glosses-form" action='' method="POST">
