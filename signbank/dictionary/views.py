@@ -18,7 +18,7 @@ import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForGlossForm
-from signbank.frequency import configure_corpus_documents, import_corpus_speakers
+from signbank.frequency import configure_corpus_documents_for_dataset, import_corpus_speakers
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
