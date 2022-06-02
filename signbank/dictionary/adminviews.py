@@ -6144,30 +6144,22 @@ def handshape_ajax_complete(request, prefix):
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
 def morph_ajax_complete(request, prefix):
-    """Return a list of morphs matching the search term
+    """Return a list of morphemes matching the search term
     as a JSON structure suitable for typeahead."""
 
-    datasetid = request.session['datasetid']
-    dataset_id = Dataset.objects.get(id=datasetid)
-
-    query = Q(annotationidglosstranslation__text__istartswith=prefix) | \
-            Q(sn__startswith=prefix)
+    # the following query retrieves morphemes with annotations that match the prefix
+    query = Q(annotationidglosstranslation__text__istartswith=prefix)
     qs = Morpheme.objects.filter(query).distinct()
 
     result = []
     for g in qs:
-        if g.dataset == dataset_id:
-            default_annotationidglosstranslation = ""
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language__language_code_2char=request.LANGUAGE_CODE)
-            if annotationidglosstranslation:
-                default_annotationidglosstranslation = annotationidglosstranslation.text
-            else:
-                annotationidglosstranslation = g.annotationidglosstranslation_set.get(
-                    language__language_code_2char='en')
-                if annotationidglosstranslation:
-                    default_annotationidglosstranslation = annotationidglosstranslation.text
-            result.append({'idgloss': g.idgloss, 'annotation_idgloss': default_annotationidglosstranslation, 'sn': g.sn,
-                           'pk': "%s" % (g.id)})
+        annotationidglosstranslations = g.annotationidglosstranslation_set.all()
+        if not annotationidglosstranslations:
+            continue
+        # if there are results, just grab the first one
+        default_annotationidglosstranslation = annotationidglosstranslations.first().text
+        result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss,
+                       'pk': "%s" % (g.id)})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
