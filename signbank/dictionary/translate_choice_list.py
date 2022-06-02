@@ -1,6 +1,8 @@
 from collections import OrderedDict
+# from signbank.dictionary.models import Gloss, GlossRevision, Morpheme, Handshape
 import signbank.settings.base as settings
-
+from django.utils.translation import ugettext_lazy as _
+from django.db.models import When, Case, NullBooleanField, IntegerField
 
 def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
 
@@ -149,6 +151,52 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
             human_value = machine_value
 
     return human_value
+
+def fieldname_to_translated_human_value(field_name):
+    # translates the field name dynamically
+    # used to translate the field names stored in GlossRevision
+    # the Gloss model needs to be imported here, at runtime
+    from signbank.dictionary.models import Gloss
+    gloss_fields = [ field.name for field in Gloss._meta.get_fields() ]
+    if field_name in gloss_fields:
+        # commented out version shows field name of model, if available
+        # verbose_name = _(Gloss._meta.get_field(field_name).verbose_name) + " (" + field_name + ")"
+        verbose_name = _(Gloss._meta.get_field(field_name).verbose_name)
+    else:
+        verbose_name = _(field_name)
+    return verbose_name
+
+def check_value_to_translated_human_value(field_name, check_value):
+    # check_value has type CharField
+    # translates to a human value dynamically
+    # used to translate the values stored in GlossRevision when booleans
+    # the Gloss model needs to be imported here, at runtime
+    from signbank.dictionary.models import Gloss
+    gloss_fields = [ field.name for field in Gloss._meta.get_fields() ]
+    if field_name not in gloss_fields or Gloss._meta.get_field(field_name).__class__.__name__ != 'NullBooleanField':
+        # don't do anything to value
+        return check_value
+
+    # the value is a Boolean or it might not be set
+    # if it's weakdrop or weakprop, it has a value Neutral when it's not set
+    # look for aliases for empty to account for legacy data
+    if field_name in settings.HANDEDNESS_ARTICULATION_FIELDS:
+        # use the abbreviation that appears in the template
+        value_abbreviation = 'WD' if field_name == 'weakdrop' else 'WP'
+        if check_value in ['True', '+WD', '+WP', '1']:
+            translated_value = '+' + value_abbreviation
+        elif check_value in ['None', '', 'Neutral', 'notset']:
+            translated_value = _('Neutral')
+        else:
+            # here, the value is False
+            translated_value = '-' + value_abbreviation
+    elif check_value in ['True', '1', 'letter', 'number']:
+        translated_value = _('Yes')
+    else:
+        # this is the default
+        # if previously a None value has been converted to string 'None' it ends up here
+        translated_value = _('No')
+    return translated_value
 
 def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=False):
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;

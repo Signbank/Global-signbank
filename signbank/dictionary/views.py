@@ -22,6 +22,8 @@ from signbank.frequency import configure_corpus_documents_for_dataset, import_co
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value, \
+    check_value_to_translated_human_value
 
 import signbank.settings
 from signbank.settings.base import *
@@ -2916,8 +2918,38 @@ def gloss_revision_history(request,gloss_pk):
     else:
         show_dataset_interface = False
 
+    revisions = []
+    for revision in GlossRevision.objects.filter(gloss=gloss):
+
+        # field name qualification is stored separately here
+        # Django was having a bit of trouble translating it when embeded in the field_name string below
+        if revision.field_name == 'Tags':
+            if revision.old_value:
+                # this translation exists in the interface of Gloss Edit View
+                delete_command = str(_('delete this tag'))
+                field_name_qualification = ' (' + delete_command + ')'
+            elif revision.new_value:
+                # this translation exists in the interface of Gloss Edit View
+                add_command = str(_('Add Tag'))
+                field_name_qualification = ' (' + add_command + ')'
+            else:
+                # this shouldn't happen
+                field_name_qualification = ''
+        else:
+            field_name_qualification = ' (' + revision.field_name + ')'
+        revision_dict = {
+            'is_tag': revision.field_name == 'Tags',
+            'gloss' : revision.gloss,
+            'user' : revision.user,
+            'time' : revision.time,
+            'field_name' : fieldname_to_translated_human_value(revision.field_name),
+            'field_name_qualification' : field_name_qualification,
+            'old_value' : check_value_to_translated_human_value(revision.field_name, revision.old_value),
+            'new_value' : check_value_to_translated_human_value(revision.field_name, revision.new_value) }
+        revisions.append(revision_dict)
+
     return render(request, 'dictionary/gloss_revision_history.html',
-                  {'gloss': gloss, 'revisions':GlossRevision.objects.filter(gloss=gloss),
+                  {'gloss': gloss, 'revisions':revisions,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'active_id': gloss_pk,
