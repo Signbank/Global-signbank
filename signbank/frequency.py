@@ -9,6 +9,7 @@ import re
 from urllib.parse import quote
 import csv
 from django.utils.translation import override, ugettext_lazy as _
+from django.contrib.auth.decorators import permission_required
 
 from django.utils.translation import override
 
@@ -705,7 +706,14 @@ def process_frequencies_per_speaker(dataset_acronym, speaker_objects, document_o
     return (glosses_not_in_signbank, updated_glosses, glosses_in_other_dataset)
 
 
-def configure_corpus_documents(dataset_acronym, **kwargs):
+def configure_corpus_documents(**kwargs):
+
+    for corpus in Corpus.objects.all():
+        configure_corpus_documents_for_dataset(corpus.name, **kwargs)
+    return
+
+
+def configure_corpus_documents_for_dataset(dataset_acronym, **kwargs):
 
     if 'testing' in kwargs.keys():
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_EAF_DIRECTORY,dataset_acronym)
@@ -734,12 +742,20 @@ def configure_corpus_documents(dataset_acronym, **kwargs):
     # create Document objects for the EAF files
     eaf_file_paths_small_files = []
     eaf_file_paths_large_files = []
-    for filename in os.listdir(dataset_eaf_folder):
-        filesize = os.path.getsize(dataset_eaf_folder + os.sep + str(filename))
-        if filesize > 50000:
-            eaf_file_paths_large_files.append(dataset_eaf_folder + os.sep + str(filename))
+    for file_or_folder in os.listdir(dataset_eaf_folder):
+        if os.path.isdir(os.path.join(dataset_eaf_folder, file_or_folder)):
+            for filename in os.listdir(os.path.join(dataset_eaf_folder, file_or_folder)):
+                filesize = os.path.getsize(dataset_eaf_folder + os.sep + str(file_or_folder) + os.sep + str(filename))
+                if filesize > 50000:
+                    eaf_file_paths_large_files.append(dataset_eaf_folder + os.sep + str(file_or_folder) + os.sep + str(filename))
+                else:
+                    eaf_file_paths_small_files.append(dataset_eaf_folder + os.sep + str(file_or_folder) + os.sep + str(filename))
         else:
-            eaf_file_paths_small_files.append(dataset_eaf_folder + os.sep + str(filename))
+            filesize = os.path.getsize(dataset_eaf_folder + os.sep + str(file_or_folder))
+            if filesize > 50000:
+                eaf_file_paths_large_files.append(dataset_eaf_folder + os.sep + str(file_or_folder))
+            else:
+                eaf_file_paths_small_files.append(dataset_eaf_folder + os.sep + str(file_or_folder))
 
     # fetch document identifiers and creation dates for all eaf files
     # get filenames out of paths to use as document identifiers

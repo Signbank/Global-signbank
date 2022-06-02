@@ -180,7 +180,7 @@ def update_gloss(request, glossid):
 
         return update_definition(request, gloss, field, value)
 
-    elif field.startswith('keywords'):
+    elif field.startswith('keyword'):
 
         return update_keywords(gloss, field, value)
 
@@ -477,7 +477,7 @@ def update_keywords(gloss, field, value):
     # Determine the language of the keywords
     language = Language.objects.get(id=get_default_language_id())
     try:
-        language_code_2char = field[len('keywords_'):]
+        language_code_2char = field[len('keyword_'):]
         language = Language.objects.filter(language_code_2char=language_code_2char)[0]
     except:
         pass
@@ -2579,3 +2579,39 @@ def upload_eaf_files(request):
             messages.add_message(request, messages.INFO, _('Already imported to different folder: ')+message_string)
 
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
+
+def update_expiry(request):
+
+    # if something is wrong with the call, proceed to Signbank Welcome Page
+    # This can happen if the user types in the url rather than getting there via the User Profile View
+    # And the Extend Expiry button was not shown on their profile
+
+    # Check for request type
+    if request.method != "POST":
+        return HttpResponseRedirect(settings.URL + settings.PREFIX_URL + '/')
+
+    # Check if we have a username
+    if 'username' in request.POST.keys():
+        username = request.POST['username']
+    else:
+        username = ''
+
+    if not username or request.user.username != username:
+        HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    # Check if user exists
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except ObjectDoesNotExist:
+        HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    from dateutil.relativedelta import relativedelta
+    expiry = getattr(user_profile, 'expiry_date')
+
+    # Check if we have an expiry date
+    if not expiry:
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    user_profile.expiry_date = expiry + relativedelta(months=+6)
+    user_profile.save()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

@@ -153,7 +153,7 @@ function do_adminsearch(el) {
 
 <form name="show_pages">
 <div class='form-group' id='paginate_by'>
-<label for='paginate_by'>{% trans "Glosses per page" %}</label>
+<label for='paginate_by'>{% trans "Glosses Per Page" %}</label>
 <select class='form-control' name="paginate_by" >
     <option {% if paginate_by == 50 %}selected{% endif %}>50</option>
     <option {% if paginate_by == 25 %}selected{% endif %}>25</option>
@@ -164,7 +164,7 @@ function do_adminsearch(el) {
 </div>
 </form>
 
-<h3>{% trans "Minimal pairs" %}</h3>
+<h3>{% trans "Minimal Pairs" %}</h3>
 
 <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/minimalpairs/'>
 <div class="panel panel-default">
@@ -283,7 +283,7 @@ function do_adminsearch(el) {
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
             <th>{% trans "Focus Gloss" %}</th>
             <th>{% trans "Minimal Pair Gloss" %}</th>
-            <th style="width:auto;">{% trans "Field name" %}</th>
+            <th style="width:auto;">{% trans "Field Name" %}</th>
             <th>{% trans "Source Sign Value" %}</th>
             <th>{% trans "Contrasting Sign Value" %}</th>
       </tr>

@@ -29,7 +29,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         # Static settings
-        WRITABLE_FOLDER = '/var/www/signbank/live/writable/database/'
+        WRITABLE_FOLDER = '/var/www/writable/database/'
         SOURCE_DB = WRITABLE_FOLDER + 'signbank.db'
         TEST_DB_FILENAME = WRITABLE_FOLDER + 'test-signbank.db'
         SMALL = True

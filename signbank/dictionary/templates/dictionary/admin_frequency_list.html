@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
-{% block bootstrap3_title %}Signbank: Frequency list{% endblock %}
+{% block bootstrap3_title %}Signbank: Frequency List{% endblock %}
 
 {% block extrahead %}
 {% endblock %}
@@ -248,14 +248,14 @@ table {
     </div>
 
     <button id="toggle_frequencies" value='hide_empty_frequencies' onclick="toggle_empty_frequencies(this)"
-            class="btn btn-default">{% trans "Hide empty frequencies" %}</button>
+            class="btn btn-default">{% trans "Hide Empty Frequencies" %}</button>
     <button id="sort_results" value='sort_by_frequency' onclick="sort_frequencies(this)"
-            class="btn btn-default">{% trans "Sort by frequency" %}</button>
+            class="btn btn-default">{% trans "Sort by Frequency" %}</button>
 <table class='table table-condensed table-bordered'>
     <thead>
       <tr>
           <th style="width:300px;">{% trans "Dataset" %}</th>
-          <th style="width:300px;">{% trans "Field name" %}</th>
+          <th style="width:300px;">{% trans "Field Name" %}</th>
           <th>{% trans "Frequencies" %}</th>
       </tr>
     </thead>

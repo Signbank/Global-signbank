@@ -19,6 +19,7 @@ from django.contrib import messages
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from signbank.dictionary.templatetags.field_choice import get_field_choice
+from django.contrib.auth.models import User, Group
 
 import csv
 import operator
@@ -46,7 +47,7 @@ from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses
-from signbank.frequency import import_corpus_speakers, configure_corpus_documents, update_corpus_counts, \
+from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
     document_to_glosses, get_corpus_speakers, remove_document_from_corpus, document_identifiers_from_paths, \
@@ -644,13 +645,11 @@ class GlossListView(ListView):
 
                 # is this needed?
                 if f.name in char_fields_not_null and value and not isinstance(value,str):
-                    print(gloss.id, ' convert value to string: ', value)
                     value = str(value)
 
                 # some legacy glosses have empty text fields of other formats
                 if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
                         and (value == '-' or value == '------' or value == ' '):
-                    # print(gloss.id, ' replace with empty string: ', value)
                     value = ''
 
                 if value is None:
@@ -4490,9 +4489,13 @@ class DatasetManagerView(ListView):
         manage_identifier = 'dataset_' + dataset_object.acronym.replace(' ','')
 
         from guardian.shortcuts import assign_perm, remove_perm
+        datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False)
+        groups_user_is_in = Group.objects.filter(user=user_object)
+
         if 'add_view_perm' in self.request.GET:
             manage_identifier += '_manage_view'
-            if dataset_object in get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False):
+            if dataset_object in datasets_user_can_view:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.INFO,
                                      ('User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
@@ -4540,7 +4543,8 @@ class DatasetManagerView(ListView):
 
         if 'add_change_perm' in self.request.GET:
             manage_identifier += '_manage_change'
-            if dataset_object in get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False):
+
+            if dataset_object in datasets_user_can_change and 'Editor' in groups_user_is_in:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.INFO,
                                          (
@@ -4552,7 +4556,7 @@ class DatasetManagerView(ListView):
                                   ') already has change permission for this dataset.'))
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
-            if not dataset_object in get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False):
+            if not dataset_object in datasets_user_can_view:
                 messages.add_message(self.request, messages.WARNING,
                                      (
                                      'User ' + username + ' (' + user_object.first_name + ' ' + user_object.last_name +
@@ -4564,6 +4568,11 @@ class DatasetManagerView(ListView):
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
             try:
                 assign_perm('change_dataset', user_object, dataset_object)
+
+                # put user in Editor group
+                editor_group = Group.objects.get(name='Editor')
+                editor_group.user_set.add(user_object)
+                editor_group.save()
 
                 if not user_object.has_perm('dictionary.change_gloss'):
                     assign_perm('dictionary.change_gloss', user_object)
@@ -4579,7 +4588,7 @@ class DatasetManagerView(ListView):
         if 'delete_view_perm' in self.request.GET:
             manage_identifier += '_manage_view'
 
-            if dataset_object in get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False):
+            if dataset_object in datasets_user_can_view:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.ERROR,
                                          (
@@ -4606,8 +4615,6 @@ class DatasetManagerView(ListView):
         if 'delete_change_perm' in self.request.GET:
             manage_identifier += '_manage_change'
 
-            datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False)
-
             if dataset_object in datasets_user_can_change:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.ERROR,
@@ -4624,6 +4631,10 @@ class DatasetManagerView(ListView):
                             # this was the only dataset the user could change
                             remove_perm('dictionary.change_gloss', user_object)
                             remove_perm('dictionary.add_gloss', user_object)
+                            # remove user from Editor group as they can no longer change any datasets
+                            editor_group = Group.objects.get(name='Editor')
+                            editor_group.user_set.remove(user_object)
+                            editor_group.save()
                         messages.add_message(self.request, messages.INFO,
                                              ('Change permission for user ' + username + ' successfully revoked.'))
                     except:
@@ -5417,7 +5428,7 @@ class DatasetFrequencyView(DetailView):
             messages.add_message(self.request, messages.ERROR, _('Error processing participants meta data for this dataset.'))
             return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))
 
-        configure_corpus_documents(dataset_object.acronym)
+        configure_corpus_documents_for_dataset(dataset_object.acronym)
 
         messages.add_message(self.request, messages.INFO, ('Corpus ' + self.dataset_name + ' successfully created.'))
         return HttpResponseRedirect(reverse('admin_dataset_frequency', args=(dataset_object.id,)))

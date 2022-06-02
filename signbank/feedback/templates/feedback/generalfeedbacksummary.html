@@ -3,11 +3,11 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 
-{% block bootstrap3_title %}Signbank: Feedback overview{% endblock %}
+{% block bootstrap3_title %}Signbank: Feedback Overview{% endblock %}
 
 {% block content %}
     <table class='table table-condensed'>
-    <caption style="text-align: left;font-weight: bold;">{% trans "General feedback summary" %}</caption>
+    <caption style="text-align: left;font-weight: bold;">{% trans "General Feedback Summary" %}</caption>
       <tr><th>Date</th><th>User</th><th>Comment</th></tr>
 
       {% for feedback in feedbacklist %}

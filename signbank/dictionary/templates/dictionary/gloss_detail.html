@@ -24,8 +24,8 @@
     var language_code = '{{ LANGUAGE_CODE }}';
 
     {% trans "Edit" as edit_mode_str %} 
-    {% trans "Turn off edit mode" as turn_off_edit_mode_str %} 
-    {% trans "Delete this gloss" as delete_this_gloss_str %} 
+    {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
+    {% trans "Delete This Gloss" as delete_this_gloss_str %}
     {% trans "Saving..." as saving_str %} 
     {% trans "This idgloss already exists" as idgloss_already_exists_str %} 
 
@@ -343,7 +343,7 @@ option:not(:checked) {
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
-         <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit next gloss" %}</button>
+         <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit Next Gloss" %}</button>
 
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
 
@@ -409,7 +409,7 @@ option:not(:checked) {
 
     <div id="feedback">
         <ul>
-            <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}?return=/dictionary/gloss/{{gloss.id}}/">{% trans "Provide feedback about this sign" %}</a></li>
+            <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}?return=/dictionary/gloss/{{gloss.id}}/">{% trans "Provide Feedback About This Sign" %}</a></li>
         </ul>
     </div>
 
@@ -513,7 +513,7 @@ option:not(:checked) {
 
                 <td style="width:600px;"><span id="lemma">{{ gloss.lemma }}
                         {% if lemma_group %}
-                            <a href='{{lemma_group_url}}' title='{% trans "Show lemma group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
+                            <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
                     </span>
                 </td></tr>
@@ -521,11 +521,11 @@ option:not(:checked) {
                 <td>
                     <div id="lemma_buttons" name="lemma_buttons" class="btn-group">
                         <button id='show_edit_lemma_form' name='show_edit_lemma_form'
-                                class='btn btn-primary btn-space'>{% trans "Edit lemma" %}</button>
+                                class='btn btn-primary btn-space'>{% trans "Edit Lemma" %}</button>
                         <button id='show_set_lemma_form' name='show_set_lemma_form'
-                                class='btn btn-primary btn-space'>{% trans "Choose other" %}</button>
+                                class='btn btn-primary btn-space'>{% trans "Choose Other" %}</button>
                         <button id='show_create_lemma_form' name='show_create_lemma_form'
-                                class='btn btn-primary btn-space'>{% trans "Create new" %}</button>
+                                class='btn btn-primary btn-space'>{% trans "Create New" %}</button>
                     </div>
                 </td></tr>
                 <tr name="lemma_forms_row"><th></th>
@@ -534,7 +534,7 @@ option:not(:checked) {
                           method='post' action='{% url "dictionary:change_lemma" gloss.lemma.id %}'>
                          {% csrf_token %}
                         <input type="hidden" class='btn btn-primary'
-                            value='{% trans "Edit lemma" %}'
+                            value='{% trans "Edit Lemma" %}'
                             type='submit'>
                         <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma.id}}'>
                         <input type='hidden' id="page" name="page" value=''>
@@ -556,7 +556,7 @@ option:not(:checked) {
                         <!-- Input for gloss_update (1) -->
                         <input type='hidden' name='id' value='lemmaidgloss'>
                         <!-- Submit -->
-                        <input class='btn btn-primary' value='{% trans "Set lemma" %}' type='submit'>
+                        <input class='btn btn-primary' value='{% trans "Set Lemma" %}' type='submit'>
                         <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
                     </form>
                     <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
@@ -570,7 +570,7 @@ option:not(:checked) {
 
                         {% endfor %}
                         <!-- Submit -->
-                        <input class='btn btn-primary' value='{% trans "Add lemma" %}' type='submit'>
+                        <input class='btn btn-primary' value='{% trans "Add Lemma" %}' type='submit'>
                         <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
                     </form>
                 </td>
@@ -613,9 +613,9 @@ option:not(:checked) {
             {% for lang, translations in translations_per_language.items %}
             <tr>
                 <th>
-                    {% trans "Translation equivalents for" %} {{ lang }}
+                    {% trans "Translation Equivalents for" %} {{ lang }}
                 </th>
-                <td class='edit edit_text' id='keywords_{{ lang.language_code_2char }}' >{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td><td/>
+                <td class='edit edit_text' id='keyword_{{ lang.language_code_2char }}' >{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td><td/>
             </tr>
             {% endfor %}
 
@@ -662,8 +662,8 @@ option:not(:checked) {
                    {% if gloss.parent_glosses.count > 0 %}
                   <tr>
                       <th style="width:2em;"></th>
-                      <th style="width:12em;">{% trans "Compound part" %}</th>
-                      <th>{% trans "Component sign" %}</th>
+                      <th style="width:12em;">{% trans "Compound Part" %}</th>
+                      <th>{% trans "Component Sign" %}</th>
                   </tr>
 
                    {% for morphdef, translated_role, sign_display in morphdefs %}
@@ -678,7 +678,7 @@ option:not(:checked) {
                                  <div class="modal-dialog modal-sm">
                                     <div class="modal-content">
                                         <div class='modal-header'>
-                                            <h2 id='modalTitleComp'>{% trans "Delete This Compound part" %}</h2>
+                                            <h2 id='modalTitleComp'>{% trans "Delete This Compound Part" %}</h2>
                                         </div>
                                         <div class='modal-body'>
 
@@ -746,15 +746,15 @@ option:not(:checked) {
                 {% else %}
                 <tr>
                     <th style="width:2em;"></th>
-                    <th style="width:22em;">{% trans "Morpheme gloss" %}</th>
-                    <th colspan="2">{% trans "Meaning in this sign" %}</th>
+                    <th style="width:22em;">{% trans "Morpheme Gloss" %}</th>
+                    <th colspan="2">{% trans "Meaning in This Sign" %}</th>
                 </tr>
                 {% endif %}
                 {% else %}
                 <tr>
                     <th style="width:2em;"></th>
-                    <th style="width:22em;">{% trans "Morpheme gloss" %}</th>
-                    <th colspan="2">{% trans "Meaning in this sign" %}</th>
+                    <th style="width:22em;">{% trans "Morpheme Gloss" %}</th>
+                    <th colspan="2">{% trans "Meaning in This Sign" %}</th>
                 </tr>
                 {% endif %}
 
@@ -816,10 +816,10 @@ option:not(:checked) {
                    <tr>
                        <td style="width:2em;"></td>
                        <td style="width:22em;">
-                           <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme gloss" %}' value="{{morphemeform.morph_id.value|default:''}}"/>
+                           <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' value="{{morphemeform.morph_id.value|default:''}}"/>
                            <input type="hidden" name='morph_id' value=""/>
                        </td>
-                       <td><input class='form-control' placeholder='{% trans "Meaning in this sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
+                       <td><input class='form-control' placeholder='{% trans "Meaning in This Sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
                    </tr>
                </table>
@@ -835,8 +835,8 @@ option:not(:checked) {
                 </tr>
                 <tr>
                     <th style="width:2em;"></th>
-                    <th style="width:22em;">{% trans "Blend gloss" %}</th>
-                    <th colspan="2">{% trans "Role in this sign" %}</th>
+                    <th style="width:22em;">{% trans "Blend Gloss" %}</th>
+                    <th colspan="2">{% trans "Role in This Sign" %}</th>
                 </tr>
                 {% for blend, blend_display in blend_morphology %}
                 <tr>
@@ -895,10 +895,10 @@ option:not(:checked) {
                    <tr>
                        <td style="width:2em;"></td>
                        <td style="width:22em;">
-                           <input class='form-control glosstypeahead' placeholder='{% trans "Blend gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
+                           <input class='form-control glosstypeahead' placeholder='{% trans "Blend Gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
                            <input type="hidden" name='blend_id' value=""/>
                        </td>
-                       <td><input class='form-control' placeholder='{% trans "Role in this sign" %}' name='role' value="{{blendform.role.value|default:''}}" required=""/></td>
+                       <td><input class='form-control' placeholder='{% trans "Role in This Sign" %}' name='role' value="{{blendform.role.value|default:''}}" required=""/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Blend" %}' type='submit'></td>
                    </tr>
                </table>
@@ -1110,7 +1110,7 @@ option:not(:checked) {
             {% if minimalpairs %}
                <tr>
                    <th style="width:auto; padding:0px 0px;">{% trans "Annotation ID Gloss" %}</th>
-                   <th style="width:auto; padding:0px 0px;">{% trans "Field name" %}</th>
+                   <th style="width:auto; padding:0px 0px;">{% trans "Field Name" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Source Sign Value" %}</th>
                    <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
                 </tr>
@@ -1133,26 +1133,31 @@ option:not(:checked) {
         </div>
         <div id='semantics' class='panel-collapse collapse'>
             <table class='table table-condensed'>
-                <tr><th>{% trans "Semantic Field" %}</th>
+                <tr {%if not gloss_semanticfields %} class="empty_row"{% endif %}>
+                    <th>{% trans "Semantic Field" %}</th>
                     <td class='edit edit_semanticfield'
                         id='semanticfield'>{% for sf in gloss_semanticfields %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                     <td/>
                 </tr>
                 {% if USE_DERIVATIONHISTORY %}
-                <tr><th>{% trans "Derivation History" %}</th>
+                <tr {%if not gloss_derivationhistory %} class="empty_row"{% endif %}>
+                    <th>{% trans "Derivation History" %}</th>
                     <td class='edit edit_derivationhistory'
                         id='derivationhistory'>{% for sf in gloss_derivationhistory %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                     <td/>
                 </tr>
                 {% endif %}
 		    {% for value,name,label,kind in semantics_fields %}
-	              <tr><th>
+	            <tr {%if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %}>
+                    <th>
                     {% if name == 'concConcSet' %}
                         <a target="_blank" href="http://concepticon.clld.org">{{label}}</a>
                     {% else %}
                         {{label}}
                     {% endif %}
-                 </th><td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}'>{% value value %}</td></tr>
+                    </th>
+                    <td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}'>{% value value %}</td>
+                </tr>
             {% endfor %}
             
             </table>
@@ -1236,7 +1241,7 @@ option:not(:checked) {
                         <th style='width:1em'></th>
                         <th style='width:3em'>{% trans "Loan" %}</th>
 		                <th style='width:10em'>{% trans "Related Language" %}</th>
-		                <th style='width:15em'>{% trans "Gloss in related language" %}</th>
+		                <th style='width:15em'>{% trans "Gloss in Related Language" %}</th>
 		            </tr>
                    {% for rel in gloss.relationtoforeignsign_set.all %}
                     <tr id='foreign_{{rel.id}}'>
@@ -1262,8 +1267,8 @@ option:not(:checked) {
                    <table class='table table-condensed'>
                        <tr>
                            <td><input class='checkbox' name='loan' type='checkbox'></td>
-                           <td><input class='form-control' placeholder='{% trans "Related language" %}' name='other_lang' type='text'></td>
-                           <td><input class='form-control' placeholder='{% trans "Gloss in related language" %}' name='other_lang_gloss' type='text'></td>
+                           <td><input class='form-control' placeholder='{% trans "Related Language" %}' name='other_lang' type='text'></td>
+                           <td><input class='form-control' placeholder='{% trans "Gloss in Related Language" %}' name='other_lang_gloss' type='text'></td>
                            <td><input class='btn btn-primary' value='{% trans "Add Relation to Foreign Sign" %}' type='submit'></td>
                        </tr>
                    </table>
@@ -1361,7 +1366,7 @@ option:not(:checked) {
                               <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
                                   {% csrf_token %}
                                   <input type='hidden' name='id' value='definitiondelete_{{def.id}}'>
-                                  <input type='hidden' name='value' value='{% trans "confirmed" %}'>
+                                  <input type='hidden' name='value' value='confirmed'>
                                   <div class="modal-footer">
                                     <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                                     <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
@@ -1397,14 +1402,14 @@ option:not(:checked) {
                         <td style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
                         <td style='width:5em'><input class='form-control' name='count' id='id_count' type='number' value=3></td>
                         <td style='width:10em'>{{definitionform.note}}</td>
-                        <td><input class='form-control' name='text' id='id_text' placeholder='{% trans "Enter new note" %}'></td>
+                        <td><input class='form-control' name='text' id='id_text' placeholder='{% trans "Enter New Note" %}'></td>
                     </tr>
                      <tr>
                         <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
-                        <td><input class='btn btn-primary' type='submit' value='{% trans "Save new note" %}'></td>
+                        <td><input class='btn btn-primary' type='submit' value='{% trans "Save New Note" %}'></td>
                     </tr>
                  </table>
             </fieldset>
@@ -1421,7 +1426,7 @@ option:not(:checked) {
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' href='#othermedia'>{% trans "Other media" %}</a>
+                <a data-toggle='collapse' href='#othermedia'>{% trans "Other Media" %}</a>
                 {% if other_media %}
                 <div class="pull-right">
                 <span id="camera-icon"><img id='camera' src='{{ STATIC_URL }}images/camera.png' style="width:25px; height:25px; margin: 0px;"></span>
@@ -1437,7 +1442,7 @@ option:not(:checked) {
                   <th style='width:6em'>{% trans "Image/Video" %}</th>
                   <th style='width:6em'>{% trans "File Type" %}</th>
                   <th style='width:20em'>{% trans "Type" %}</th>
-                  <th style='width:12em'>{% trans "Alternative gloss" %}</th>
+                  <th style='width:12em'>{% trans "Alternative Gloss" %}</th>
               </tr>
 
                {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
@@ -1500,7 +1505,7 @@ option:not(:checked) {
                     <tr>
                         <td>{{othermediaform.file}}</td>
                         <td>{{othermediaform.type}}</td>
-                        <td><input class='form-control' placeholder='{% trans "Alternative gloss" %}' name='alternative_gloss' type='text'></td>
+                        <td><input class='form-control' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
                     </tr>
                      <tr>
                         <td></td>

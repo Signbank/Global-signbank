@@ -4,7 +4,7 @@
 {% load bootstrap3 %}
 {% load guardian_tags %}
 
-{% block bootstrap3_title %}Signbank: Dataset selection{% endblock %}
+{% block bootstrap3_title %}Signbank: Dataset Selection{% endblock %}
 
 {% block extrajs %}
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
@@ -26,7 +26,7 @@ function select_no_datasets() {
 {% endblock %}
 
 {% block content %}
-<h3>{% trans "Select datasets" %}</h3>
+<h3>{% trans "Select Datasets" %}</h3>
 
 {% if object_list %}
 <form name="selectdatasets" id="selectdatasets" method="post" action="{{PREFIX_URL}}/datasets/change_selection">

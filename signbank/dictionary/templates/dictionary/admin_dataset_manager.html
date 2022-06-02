@@ -28,21 +28,10 @@
         });
 
         function selectFolder(e) {
-<!--            console.log(JSON.stringify(e));-->
             var theFiles = e.target.files;
             var relativePath = theFiles[0].webkitRelativePath;
             var folder = relativePath.split("/");
             $("#dir_name").val(folder[0]);
-
-<!--            console.log(JSON.stringify(theFiles[0]));-->
-<!--            var countFiles = theFiles.length;-->
-<!--            console.log(countFiles);-->
-<!--            for (var i = 0; i < countFiles; i++) {-->
-<!--                var relativePath = theFiles[i].webkitRelativePath;-->
-<!--                console.log(relativePath);-->
-<!--                var folder = relativePath.split("/");-->
-<!--                console.log(folder[1]);-->
-<!--            }-->
         }
 
         function do_toggle_import(el) {
@@ -59,7 +48,7 @@
 
 {% endblock %}
 
-{% block bootstrap3_title %}Signbank: Manage datasets{% endblock %}
+{% block bootstrap3_title %}Signbank: Manage Datasets{% endblock %}
 
 {% block content %}
 <h3>{% trans "Manage Datasets" %}</h3>
@@ -75,7 +64,7 @@
           <th style="width:100px;">{% trans "Dataset Name" %}</th>
           <th style="width:200px;">{% trans "Users who can View Dataset (Group permissions excluded)" %}</th>
           <th style="width:200px;">{% trans "Users who can Change Dataset (Group permissions excluded)" %}</th>
-          <th style="width:200px;">{% trans "Default language" %}</th>
+          <th style="width:200px;">{% trans "Default Language" %}</th>
           <th style="width:80px;">
               <div class="text-container"><p>{% trans "Hyperlinks" %}</p></div>
           </th>

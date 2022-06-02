@@ -80,7 +80,7 @@ class BasicCRUDTests(TestCase):
 
         # set up keyword search parameter for default language
         default_language = Language.objects.get(id=get_default_language_id())
-        keyword_search_field_prefix = "keywords_"
+        keyword_search_field_prefix = "keyword_"
         keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
 
         #We can even add and remove stuff to the keyword table
@@ -308,7 +308,7 @@ class BasicCRUDTests(TestCase):
             annotationIdgloss.save()
 
         # set up keyword search parameter for default language
-        keyword_search_field_prefix = "keywords_"
+        keyword_search_field_prefix = "keyword_"
         keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
 
         # keywords: this is merely part of the setup for the test
@@ -411,12 +411,13 @@ class ECVsNonEmptyTests(TestCase):
             # get the dataset using filter (returns a list)
             try:
                 dataset_of_filename = Dataset.objects.get(acronym__iexact=fname)
-            except:
+            except ObjectDoesNotExist:
                 try:
                     fname_nounderscore = fname.replace("_"," ")
                     dataset_of_filename = Dataset.objects.get(acronym__iexact=fname_nounderscore)
-                except:
+                except ObjectDoesNotExist:
                     print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
+                    continue
             if not len(entry_nodes):
                 # no glosses in the ecv
                 print('EMPTY ECV FILE FOUND: ', filename)
@@ -1664,6 +1665,8 @@ class MultipleSelectTests(TestCase):
     def create_semanticfield(self):
 
         used_machine_values = [s.machine_value for s in SemanticField.objects.all()]
+        if not used_machine_values:
+            used_machine_values = [ 1, 2]
         max_used_machine_value = max(used_machine_values)
         new_machine_value = max_used_machine_value + 1
         new_english_name = 'thisisanewtestsemanticfield_'+str(new_machine_value)+'_en'
@@ -2385,17 +2388,17 @@ class testFrequencyAnalysis(TestCase):
 
             if len(choice_list) > 0:
                 translated_choices = choicelist_queryset_to_translated_dict(choice_list, language_code, ordered=False, shortlist=False)
-            else:
-                translated_choices = []
-            frequency_choices_f = frequency_dict[f]
+                frequency_choices_f = frequency_dict[f]
+                frequency_choices_f_keys = frequency_choices_f.keys()
 
-            self.assertEqual(len(translated_choices), len(frequency_choices_f))
+                self.assertEqual(len(translated_choices), len(frequency_choices_f))
 
-            frequency_choices_f_keys = [ k for k in frequency_choices_f.keys() ]
-            translated_choices_keys = [ k for (k,v) in translated_choices ]
+                frequency_choices_f_keys = [ k for k in frequency_choices_f_keys ]
+                translated_choices_keys = [ k for (k,v) in translated_choices ]
 
-            # Make sure the sorted field choices are in the same order
-            self.assertEqual(translated_choices_keys, frequency_choices_f_keys)
+                # Make sure the sorted field choices are in the same order
+                print('Testing choices for field choice category: ', fieldchoice_category)
+                self.assertEqual(translated_choices_keys, frequency_choices_f_keys)
 
 
 class testSettings(TestCase):
@@ -2776,7 +2779,7 @@ class Corpus_Tests(TestCase):
 
     def test_corpus_creation(self):
         # this imports the Speaker data to the test database
-        from signbank.frequency import import_corpus_speakers, configure_corpus_documents, dictionary_glosses_to_speakers, gloss_to_speakers, \
+        from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, dictionary_glosses_to_speakers, gloss_to_speakers, \
             dictionary_documents_to_glosses, dictionary_documents_to_speakers, dictionary_glosses_to_documents, \
             document_to_speakers, document_to_glosses, \
             gloss_to_documents, speaker_to_glosses, dictionary_speakers_to_glosses, dictionary_speakers_to_documents, speaker_to_documents, \
@@ -2802,7 +2805,7 @@ class Corpus_Tests(TestCase):
 
         ### CORPUS FUNCTION
         print('CONFIGURE CORPUS')
-        configure_corpus_documents(dataset_acronym, testing=True)
+        configure_corpus_documents_for_dataset(dataset_acronym, testing=True)
 
         try:
             corpus = Corpus.objects.get(name=dataset_acronym)
