@@ -5,7 +5,9 @@
 {% load guardian_tags %}
 {% load annotation_idgloss_translation %}
 
-{% block bootstrap3_title %}Signbank: Import Media{% endblock %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Import Media{% endblocktrans %}
+{% endblock %}
 
 {% block content %}
 
@@ -54,7 +56,7 @@
 
 {% if errors %}
 <div>
-<h3>Errors</h3>
+<h3>{% trans "Errors" %}</h3>
 <ul>
     {% for error in errors %}
     <li>{{error}}</li>

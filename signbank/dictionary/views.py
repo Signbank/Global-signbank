@@ -635,82 +635,6 @@ def import_media(request,video):
                                                         'selected_datasets':selected_datasets,
                                                         'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-def import_other_media(request):
-
-    errors = []
-
-    #First do some checks
-    if not os.path.isfile(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'):
-        errors.append('The required file index.csv is not present')
-    else:
-
-        for n,row in enumerate(csv.reader(open(settings.OTHER_MEDIA_TO_IMPORT_FOLDER+'index.csv'))):
-
-            #Skip the header
-            if n == 0:
-                if row == ['Idgloss','filename','type','alternative_gloss']:
-                    continue
-                else:
-                    errors.append('The header of index.csv is not Idgloss,filename,type,alternative_gloss')
-                    continue
-
-            #Create an other video for this
-            try:
-                idgloss, file_name, other_media_type, alternative_gloss = row
-            except ValueError:
-                errors.append('Line '+str(n)+' does not seem to have the correct amount of items')
-                continue
-
-            for field_choice in FieldChoice.objects.filter(field='OtherMediaType'):
-                if field_choice.english_name == other_media_type:
-                    other_media_type_machine_value = field_choice.machine_value
-
-            parent_gloss = Gloss.objects.filter(idgloss=idgloss)[0]
-
-            other_media = OtherMedia()
-            other_media.parent_gloss = parent_gloss
-            other_media.alternative_gloss = alternative_gloss
-            other_media.path = settings.STATIC_URL+'othermedia/'+str(parent_gloss.pk)+'/'+file_name
-
-            try:
-                other_media.type = other_media_type_machine_value
-            except UnboundLocalError:
-                pass
-
-            #Copy the file
-            goal_folder = settings.OTHER_MEDIA_DIRECTORY+str(parent_gloss.pk)+'/'
-
-            try:
-                os.mkdir(goal_folder)
-            except OSError:
-                pass #Do nothing if the folder exists already
-
-            source = settings.OTHER_MEDIA_TO_IMPORT_FOLDER+file_name
-
-            try:
-                shutil.copyfile(source,goal_folder+file_name)
-            except IOError:
-                errors.append('File '+source+' not present')
-
-            #Copy at the end, so it only goes through if there was no crash before
-            other_media.save()
-
-            try:
-                os.remove(source)
-            except OSError:
-                pass
-
-    if len(errors) == 0:
-        return HttpResponse('OK')
-    else:
-        output = '<p>Errors</p><ul>'
-
-        for error in errors:
-            output += '<li>'+error+'</li>'
-
-        output += '</ul>'
-
-        return HttpResponse(output)
 
 def try_code(request):
 
@@ -2529,35 +2453,9 @@ def find_and_save_variants(request):
 
 def configure_handshapes(request):
 
-    output_string = '<!DOCTYPE html>\n' \
-                         '<html>\n' \
-                         '<body>\n'
-    handshapes_table_pre = '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
-                         '<thead>\n' \
-                         '<tr>\n' \
-                         '<th style="width:20em; text-align:left;">Machine Value</th>\n' \
-                         '<th style="width:25em; text-align:left;">English Name</th>\n' \
-                         '<th style="width:40em; text-align:left;">Dutch Name</th>\n' \
-                         '<th style="width:40em; text-align:left;">Chinese Name</th>\n' \
-                         '</tr>\n' \
-                         '</thead>\n' \
-                         '<tbody>\n'
-
-    handshapes_table_suffix = '</tbody>\n' \
-                         '</table>\n'
-
-    output_string_suffix = '</body>\n' \
-                         '</html>'
-
-    if not settings.USE_HANDSHAPE:
-        return HttpResponse(output_string + '<p>Handshapes are not supported by your Signbank configuration.</p>' + output_string_suffix)
-    # check if the Handshape table has been filled, if so don't do anything
+    # check if the Handshape table has been filled
     already_filled_handshapes = Handshape.objects.count()
-    if already_filled_handshapes:
-        return HttpResponse(output_string + '<p>Handshapes are already configured.</p>' + output_string_suffix)
-    else:
-
-        output_string += handshapes_table_pre
+    if request.user.is_superuser and not already_filled_handshapes:
 
         handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
 
@@ -2572,69 +2470,56 @@ def configure_handshapes(request):
             new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
             new_handshape.save()
 
-            output_string += '<tr><td>' + str(new_machine_value) + '</td><td>' + new_english_name + '</td><td>' + new_dutch_name + '</td><td>' + new_chinese_name + '</td></tr>\n'
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        output_string += handshapes_table_suffix
-
-        output_string += output_string_suffix
-
-        return HttpResponse(output_string)
-
-def configure_speakers_dataset(request,datasetid):
-    try:
-        dataset = get_object_or_404(Dataset, pk=datasetid)
-    except ObjectDoesNotExist:
-        return HttpResponse('<p>Dataset unknown.</p>')
-
-    if request.user.has_perm('dictionary.change_gloss'):
-
-        errors = import_corpus_speakers(dataset.acronym)
-
-        if len(errors) == 0:
-            return HttpResponse('<p>Speakers have been configured.</p>')
-        else:
-            return HttpResponse('<p>Problem importing speakers.</p>')
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
+        show_dataset_interface = False
 
-        return HttpResponse('<p>You do not have permission to configure speakers.</p>')
-
-
-def configure_corpus_documents_dataset(request, datasetid):
-    try:
-        dataset = get_object_or_404(Dataset, pk=datasetid)
-    except ObjectDoesNotExist:
-        return HttpResponse('<p>Dataset unknown.</p>')
-
-    if request.user.has_perm('dictionary.change_gloss'):
-
-        configure_corpus_documents_for_dataset(dataset.acronym)
-
-        return HttpResponse('<p>Corpus ' + dataset.acronym + ' has been configured.</p>')
-
-    else:
-
-        return HttpResponse('<p>You do not have permission to configure a corpus.</p>')
+    return render(request, 'dictionary/admin_configure_handshapes.html',
+                  { 'USE_HANDSHAPE': settings.USE_HANDSHAPE,
+                    'already_set_up': already_filled_handshapes,
+                    'handshapes':FieldChoice.objects.filter(field__iexact='Handshape'),
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })
 
 
 def get_unused_videos(request):
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    selected_dataset_acronyms = [ ds.acronym for ds in selected_datasets ]
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
     file_not_in_glossvideo_object = []
     gloss_video_dir = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY)
-    all_files = [str(file) for file in Path(gloss_video_dir).glob('**/*') if file.is_file()]
-
-    for file in all_files:
-        full_file_path = file
-        file = file[len(settings.WRITABLE_FOLDER):]
-        if file.startswith('/'):
-            file = file[1:]
-        if small_appendix in file:
-            file = add_small_appendix(file, reverse=True)
-
-        gloss_videos = GlossVideo.objects.filter(videofile=file)
-        if not gloss_videos:
-            file_not_in_glossvideo_object.append(full_file_path)
+    for acronym in os.listdir(gloss_video_dir):
+        if acronym not in selected_dataset_acronyms:
+            continue
+        if os.path.isdir(os.path.join(gloss_video_dir, acronym)):
+            for folder in os.listdir(os.path.join(gloss_video_dir, acronym)):
+                if os.path.isdir(os.path.join(gloss_video_dir, acronym, folder)):
+                    for filename in os.listdir(os.path.join(gloss_video_dir, acronym, folder)):
+                        if small_appendix in filename:
+                            filename = add_small_appendix(filename, reverse=True)
+                        gloss_video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY, acronym, folder, filename)
+                        gloss_videos = GlossVideo.objects.filter(videofile=gloss_video_path, version=0)
+                        if not gloss_videos:
+                            file_not_in_glossvideo_object.append((acronym, folder, filename))
 
     return render(request, "dictionary/unused_videos.html",
-                  {'file_not_in_glossvideo_object': file_not_in_glossvideo_object})
+                  {'file_not_in_glossvideo_object': file_not_in_glossvideo_object,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })
 
 
 def list_all_fieldchoice_names(request):

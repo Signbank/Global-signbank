@@ -1,6 +1,8 @@
 from django.db import models, OperationalError, ProgrammingError
 from django.contrib.auth import models as authmodels
 from django.conf import settings
+from signbank.settings.base import COMMENT_VIDEO_LOCATION, WRITABLE_FOLDER
+import os
 from signbank.video.fields import VideoUploadToFLVField
 
 from signbank.dictionary.models import *
@@ -57,6 +59,17 @@ class GeneralFeedback(models.Model):
            
     class Meta:
         ordering = ['-date']
+
+    def has_video(self):
+        """Return the video object for this Feedback or None if no video available"""
+        if self.video:
+            filepath = os.path.join(settings.COMMENT_VIDEO_LOCATION, os.sep, self.video.path)
+        else:
+            filepath = ''
+        if filepath and os.path.exists(filepath.encode('utf-8')):
+            return self.video
+        else:
+            return ''
 
 class GeneralFeedbackForm(forms.Form):
     """Form for general feedback"""
@@ -280,4 +293,14 @@ class MissingSignFeedback(models.Model):
 
     class Meta:
         ordering = ['-date']
-    
+
+    def has_video(self):
+        """Return the video object for this Feedback or None if no video available"""
+        if self.video:
+            filepath = os.path.join(settings.COMMENT_VIDEO_LOCATION, os.sep, self.video.path)
+        else:
+            filepath = ''
+        if filepath and os.path.exists(filepath.encode('utf-8')):
+            return self.video
+        else:
+            return ''

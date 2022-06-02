@@ -81,7 +81,6 @@ urlpatterns = [
 
     url(r'^import_images/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':False}),
     url(r'^import_videos/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':True}),
-    # url(r'^import_other_media/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_other_media)),
     url(r'update_corpus_document_counts/(?P<dataset_id>.*)/(?P<document_id>.*)/$',
         permission_required('dictionary.change_gloss')(signbank.frequency.update_document_counts)),
     url(r'update_corpora/$',
@@ -93,10 +92,6 @@ urlpatterns = [
         permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_handshapes)),
     url(r'configure_derivationhistory/$',
         permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_derivationhistory)),
-    url(r'configure_speakers/(?P<datasetid>\d+)$',
-        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_speakers_dataset)),
-    url(r'configure_corpus_documents/(?P<datasetid>\d+)$',
-        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_corpus_documents_dataset)),
 
     url(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     url(r'all_field_choices.tsv/$',signbank.dictionary.views.list_all_fieldchoice_names),
