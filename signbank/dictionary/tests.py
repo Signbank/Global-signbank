@@ -466,7 +466,7 @@ class ImportExportTests(TestCase):
 
         # the Dataset is Empty at this point, so export is not offered.
 
-        self.assertEqual(str(json_message), 'The dataset ' + dataset_name + ' is empty, export ECV is not available.')
+        self.assertEqual(str(json_message), 'The dataset is empty, export ECV is not available.')
 
 
     def test_DatasetListView_ECV_export_permission_change_dataset(self):
@@ -526,7 +526,7 @@ class ImportExportTests(TestCase):
         json_message = json_decoded_cookies[0]
         print('Message TWO: ', json_message)
 
-        self.assertEqual(str(json_message), 'ECV ' + test_dataset_acronym + ' successfully updated.')
+        self.assertEqual(str(json_message), 'ECV successfully updated.')
 
         # cleanup
         test_dataset.acronym = dataset_name
@@ -882,7 +882,7 @@ class VideoTests(TestCase):
 
         logged_in = client.login(username='test-user', password='test-user')
 
-        NAME = 'XXtéstlemmä  ~山脉 %20'  # %20 is an url encoded space
+        NAME = 'XXtéstlemmä%20~山脉%20'  # %20 is an url encoded space
 
         # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
@@ -1077,7 +1077,7 @@ class FrontEndTests(TestCase):
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertEqual(response.status_code,200)
         self.assertContains(response,
-                            'The gloss you are trying to view ({}) is not in your selected datasets.'
+                            'The gloss you are trying to view is not in your selected datasets.'
                             .format(self.hidden_gloss.pk))
 
         #With permissions you also see something
@@ -1298,7 +1298,7 @@ class ManageDatasetTests(TestCase):
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'View permission for user {} ({} {}) successfully granted.'
+        self.assertContains(response, 'View permission for user successfully granted.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
 
         # Revoke view permission
@@ -1306,14 +1306,14 @@ class ManageDatasetTests(TestCase):
                     'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'View (and change) permission for user {} successfully revoked.'
+        self.assertContains(response, 'View (and change) permission for user successfully revoked.'
                             .format(self.user2.username))
 
         # Grant change permission without view permission
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'User {} ({} {}) does not have view permission for this dataset. Please grant view permission first.'
+        self.assertContains(response, 'User does not have view permission for this dataset. Please grant view permission first.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
 
         # Grant change permission with view permission
@@ -1324,7 +1324,7 @@ class ManageDatasetTests(TestCase):
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'Change permission for user {} successfully granted.'
+        self.assertContains(response, 'Change permission for user successfully granted.'
                             .format(self.user2.username))
 
         # Revoke change permission
@@ -1332,7 +1332,7 @@ class ManageDatasetTests(TestCase):
                     'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
-        self.assertContains(response, 'Change permission for user {} successfully revoked.'
+        self.assertContains(response, 'Change permission for user successfully revoked.'
                             .format(self.user2.username))
 
 

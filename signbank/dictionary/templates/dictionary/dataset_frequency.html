@@ -14,7 +14,6 @@
     var url = '{{PREFIX_URL}}';
     var language_code = '{{ LANGUAGE_CODE }}';
     var csrf_token = '{{csrf_token}}';
-    var edit_post_url = '{{PREFIX_URL}}/datasets/frequency/{{dataset.id}}';
     var document_identifiers = {{ document_identifiers | safe }};
 
     // setup requried for Ajax POST
@@ -40,7 +39,7 @@
             var datum = "#datum_"+this_document;
             var numglosses = "#numglosses_"+this_document;
             $.ajax({
-                url : url + "dictionary/update_corpus_document_counts/"+{{dataset.id}}+ "/" + this_document + "/",
+                url : url + "/dictionary/update_corpus_document_counts/"+{{dataset.id}}+ "/" + this_document + "/",
                 datatype: "json",
                 type: "POST",
                 async: true,
