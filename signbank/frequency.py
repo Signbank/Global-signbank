@@ -1104,7 +1104,7 @@ def update_document_counts(request, dataset_id, document_id):
         updated_glosses = update_corpus_document_counts(dataset.acronym, document_id)
     except Exception as e:
         print(e)
-        exception_value = [ 'Failed']
+        exception_value = [ _('Failed') ]
         return HttpResponse(json.dumps(exception_value), {'content-type': 'application/json'})
 
     import locale
@@ -1128,9 +1128,9 @@ def update_document_counts(request, dataset_id, document_id):
                 print('GlossFrequency exists for Gloss but  not in updated glosses, but not retrieved properly: ', gl)
                 continue
     if updated_glosses:
-        original_value = [ 'Glosses updated' '\t' + document_date_stamp + '\t' + number_of_glosses ]
+        original_value = [ _('Glosses updated') + '\t' + document_date_stamp + '\t' + number_of_glosses ]
     else:
-        original_value = [ 'No annotations' '\t' + document_date_stamp + '\t' + number_of_glosses ]
+        original_value = [ _('No annotations') + '\t' + document_date_stamp + '\t' + number_of_glosses ]
 
     return HttpResponse(json.dumps(original_value), {'content-type': 'application/json'})
 

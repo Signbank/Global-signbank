@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-01 11:35+0200\n"
+"POT-Creation-Date: 2022-06-03 15:33+0200\n"
 "PO-Revision-Date: 2018-03-08 18:54+0100\n"
 "Last-Translator: susanodd\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -78,8 +78,8 @@ msgstr "Wijzig"
 #: signbank/dictionary/adminviews.py:5467
 #: signbank/dictionary/adminviews.py:5506
 #: signbank/dictionary/adminviews.py:5546
-#: signbank/dictionary/adminviews.py:6197
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:107
+#: signbank/dictionary/adminviews.py:6189
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:106
 #: signbank/frequency.py:1087
 msgid "Please login to use this functionality."
 msgstr "Log alsjeblieft in om deze functionaliteit te gebruiken."
@@ -178,7 +178,7 @@ msgstr ""
 #: signbank/dictionary/adminviews.py:4452
 #: signbank/dictionary/adminviews.py:4808
 #: signbank/dictionary/adminviews.py:4943
-#: signbank/dictionary/adminviews.py:5116 signbank/dictionary/update.py:2157
+#: signbank/dictionary/adminviews.py:5116 signbank/dictionary/update.py:2176
 msgid "No group Dataset_Manager found."
 msgstr "Geen groep Dataset_Manager gevonden."
 
@@ -295,8 +295,10 @@ msgstr ""
 
 #: signbank/dictionary/adminviews.py:4813
 #: signbank/dictionary/adminviews.py:5121
-msgid "You must be in group Dataset Manager to use the requested functionality."
-msgstr "Je moet in groep Dataset Manager zijn om deze functionaliteit te gebruiken."
+msgid ""
+"You must be in group Dataset_Manager to use the requested functionality."
+msgstr ""
+"Je moet in groep Dataset Manager zijn om deze functionaliteit te gebruiken."
 
 #: signbank/dictionary/adminviews.py:4859
 #: signbank/dictionary/adminviews.py:5315
@@ -369,33 +371,33 @@ msgstr ""
 
 #: signbank/dictionary/adminviews.py:5489
 msgid "No permission to import speakers for this dataset."
-msgstr ""
+msgstr "Geen toestemming om gebaarders te importeren voor deze dataset."
 
 #: signbank/dictionary/adminviews.py:5496
 #: signbank/dictionary/adminviews.py:5535
 #: signbank/dictionary/adminviews.py:5579
 msgid "Error processing participants meta data for this dataset."
-msgstr ""
+msgstr "Er is iets misgelopen bij het verwerken van de metadata."
 
 #: signbank/dictionary/adminviews.py:5499
 msgid "Speakers successfully processed."
-msgstr ""
+msgstr "Gebaarders met succes bijgewerkt."
 
 #: signbank/dictionary/adminviews.py:5528
 msgid "No permission to create a corpus for this dataset."
-msgstr ""
+msgstr "Geen toestemming om een corpus te maken voor deze dataset."
 
 #: signbank/dictionary/adminviews.py:5539
 msgid "Corpus successfully created."
-msgstr ""
+msgstr "Corpus met succes gecreëerd."
 
 #: signbank/dictionary/adminviews.py:5568
 msgid "No permission to update the corpus for this dataset."
-msgstr ""
+msgstr "Geen toestemming om het corpus bij te werken."
 
 #: signbank/dictionary/adminviews.py:5585
 msgid "Corpus successfully updated."
-msgstr ""
+msgstr "Corpus met succes bijgewerkt."
 
 #: signbank/dictionary/adminviews.py:5709
 msgid "The requested morpheme does not exist."
@@ -413,8 +415,8 @@ msgstr ""
 msgid "The morpheme you are trying to view is not in a dataset you can view."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:6325
-#: signbank/dictionary/adminviews.py:6346 signbank/dictionary/models.py:1677
+#: signbank/dictionary/adminviews.py:6317
+#: signbank/dictionary/adminviews.py:6338 signbank/dictionary/models.py:1677
 #: signbank/dictionary/models.py:1684 signbank/dictionary/models.py:1691
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:67
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:75
@@ -437,22 +439,24 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:654
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:658
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:721
-#: signbank/dictionary/update.py:294 signbank/dictionary/update.py:298
-#: signbank/dictionary/update.py:304 signbank/dictionary/update.py:308
-#: signbank/dictionary/update.py:314 signbank/dictionary/update.py:318
-#: signbank/dictionary/update.py:386
+#: signbank/dictionary/translate_choice_list.py:194
+#: signbank/dictionary/update.py:299 signbank/dictionary/update.py:303
+#: signbank/dictionary/update.py:309 signbank/dictionary/update.py:313
+#: signbank/dictionary/update.py:319 signbank/dictionary/update.py:323
+#: signbank/dictionary/update.py:391
 #: venv/lib/python3.6/site-packages/django/forms/widgets.py:700
 msgid "Yes"
 msgstr "Ja"
 
-#: signbank/dictionary/adminviews.py:6327
-#: signbank/dictionary/adminviews.py:6348 signbank/dictionary/models.py:1677
+#: signbank/dictionary/adminviews.py:6319
+#: signbank/dictionary/adminviews.py:6340 signbank/dictionary/models.py:1677
 #: signbank/dictionary/models.py:1684 signbank/dictionary/models.py:1691
+#: signbank/dictionary/translate_choice_list.py:189
 msgid "Neutral"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:6329
-#: signbank/dictionary/adminviews.py:6350 signbank/dictionary/models.py:1677
+#: signbank/dictionary/adminviews.py:6321
+#: signbank/dictionary/adminviews.py:6342 signbank/dictionary/models.py:1677
 #: signbank/dictionary/models.py:1684 signbank/dictionary/models.py:1691
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:69
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:77
@@ -475,68 +479,69 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:654
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:658
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:721
-#: signbank/dictionary/update.py:300 signbank/dictionary/update.py:310
-#: signbank/dictionary/update.py:320
+#: signbank/dictionary/translate_choice_list.py:198
+#: signbank/dictionary/update.py:305 signbank/dictionary/update.py:315
+#: signbank/dictionary/update.py:325
 #: venv/lib/python3.6/site-packages/django/forms/widgets.py:701
 msgid "No"
 msgstr "Nee"
 
-#: signbank/dictionary/adminviews.py:6761
+#: signbank/dictionary/adminviews.py:6753
 msgid "You have no permission to delete lemmas."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:6766
+#: signbank/dictionary/adminviews.py:6758
 msgid "Incorrect deletion code."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:6779
+#: signbank/dictionary/adminviews.py:6771
 msgid ""
 "You do not have change permission on the dataset of the lemma you are "
 "atteempting to delete."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:6836
-#: signbank/dictionary/adminviews.py:7021
+#: signbank/dictionary/adminviews.py:6828
+#: signbank/dictionary/adminviews.py:7013
 msgid "Lemma ID Gloss is not unique for that language."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:6870
+#: signbank/dictionary/adminviews.py:6862
 msgid "The specified gloss does not exist."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:6886
+#: signbank/dictionary/adminviews.py:6878
 msgid "Lemma ID Gloss not unique for language."
 msgstr "Lemma-ID-Glos is niet uniek."
 
-#: signbank/dictionary/adminviews.py:6899
+#: signbank/dictionary/adminviews.py:6891
 msgid "The form contains errors."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:7050
+#: signbank/dictionary/adminviews.py:7042
 msgid "The changes to the lemma have been saved."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:7057
+#: signbank/dictionary/adminviews.py:7049
 msgid "There must be at least one translation for this lemma."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:7087
+#: signbank/dictionary/adminviews.py:7079
 msgid "The requested lemma does not exist."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:7094
+#: signbank/dictionary/adminviews.py:7086
 msgid "Requested lemma has no dataset."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:7108
+#: signbank/dictionary/adminviews.py:7100
 msgid "The lemma you are trying to view is not in your selected datasets."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:7115
+#: signbank/dictionary/adminviews.py:7107
 msgid "The lemma you are trying to view is not in a dataset you can view."
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:7132
+#: signbank/dictionary/adminviews.py:7124
 msgid "There are glosses using this lemma."
 msgstr ""
 
@@ -728,8 +733,8 @@ msgstr ""
 
 #: signbank/dictionary/forms.py:330 signbank/dictionary/forms.py:429
 #: signbank/dictionary/forms.py:885
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:114
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:218
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:113
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:217
 #: signbank/dictionary/templates/dictionary/unassigned_glosses.html:20
 msgid "Sign Language"
 msgstr "Gebarentaal"
@@ -815,7 +820,7 @@ msgstr "Rol"
 msgid "Blend"
 msgstr "Blend"
 
-#: signbank/dictionary/forms.py:547 signbank/dictionary/update.py:1600
+#: signbank/dictionary/forms.py:547 signbank/dictionary/update.py:1609
 msgid "Please choose a type description when uploading other media."
 msgstr ""
 
@@ -1016,7 +1021,7 @@ msgstr "Samenstelling"
 #: signbank/dictionary/models.py:524
 #: signbank/dictionary/templates/dictionary/admin_handshape_list.html:682
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:764
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:230
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:229
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:115
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:182
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:227
@@ -1083,7 +1088,7 @@ msgstr ""
 
 #: signbank/dictionary/models.py:550
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:765
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:229
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:228
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:118
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:185
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:230
@@ -1445,8 +1450,8 @@ msgstr "ISO 639-3 taalcode (3 karakters) van een geschreven taal."
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:155
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:285
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:652
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:112
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:216
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:111
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:215
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1308
 #: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:1279
 #: signbank/dictionary/templates/dictionary/glosslist_headerrow.html:31
@@ -1748,36 +1753,36 @@ msgid "Hyperlinks"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:74
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:122
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:121
 msgid "Metadata CSV"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:78
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:139
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:138
 msgid "Used in Dataset EAF files"
 msgstr "Gebruikt in dataset EAF bestanden"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:81
 msgid "Geographical region"
-msgstr ""
+msgstr "Geografische regio"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:84
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:145
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:144
 msgid "Age at time of recording"
-msgstr ""
+msgstr "Leeftijd op het moment van opname"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:87
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:148
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:147
 msgid "Male (m), Female (f), Other (o)"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:90
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:151
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:150
 msgid "Right (r), Left (l), Ambidextrous (a), Unknown"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:94
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:168
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:167
 msgid "EAF Files"
 msgstr "EAF bestanden"
 
@@ -1835,7 +1840,7 @@ msgstr "Instellen"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:273
 msgid "No metadata CSV file found."
-msgstr "Geen metadata CSV-bestand gevonden."
+msgstr "Geen metadata bestand gevonden."
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:282
 msgid "Update CSV"
@@ -2121,9 +2126,9 @@ msgstr "Hits per pagina"
 #: signbank/dictionary/templates/dictionary/admin_glosslist_list.html:743
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:165
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:636
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:304
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:303
 msgid "Refresh"
-msgstr ""
+msgstr "Ververs"
 
 #: signbank/dictionary/templates/dictionary/admin_gloss_list.html:947
 #: signbank/dictionary/templates/dictionary/admin_glosslist_list.html:829
@@ -2331,7 +2336,7 @@ msgid "Update"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:191
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:375
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:374
 #: signbank/feedback/templates/feedback/show.html:74
 #: signbank/feedback/templates/feedback/show.html:133
 #: signbank/feedback/templates/feedback/show.html:196
@@ -2352,7 +2357,8 @@ msgid ""
 "This action will delete all lemmas without glosses and all associated "
 "translations belonging to those lemmas. It cannot be undone."
 msgstr ""
-"Je verwijdert zo alle lemmata zonder glossen. Het kan niet ongedaan gemaakt worden."
+"Je verwijdert zo alle lemmata zonder glossen. Het kan niet ongedaan gemaakt "
+"worden."
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:278
 msgid "You have chosen to delete"
@@ -2363,7 +2369,7 @@ msgid "lemmas."
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:285
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:442
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:441
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:372
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:560
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:574
@@ -2524,8 +2530,8 @@ msgid "Dataset name"
 msgstr "Dataset-naam"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:51
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:113
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:217
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:112
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:216
 msgid "Acronym"
 msgstr "Acroniem"
 
@@ -2542,7 +2548,7 @@ msgid "Add Owner"
 msgstr "Eigenaar toevoegen"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:93
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:117
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:116
 #: signbank/dictionary/templates/dictionary/gloss_frequency.html:1334
 msgid "Corpus"
 msgstr ""
@@ -2616,8 +2622,7 @@ msgstr "Kleur"
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choice_colors.html:311
 msgid "You must be a superuser to use this functionality."
-msgstr ""
-"Je moet superuser zijn om deze functionaliteit te gebruiken."
+msgstr "Je moet superuser zijn om deze functionaliteit te gebruiken."
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choices.html:53
 msgid "Signbank: Manage Field Choices"
@@ -2637,119 +2642,123 @@ msgstr ""
 msgid "Field Choice [Frequency in Selected Managed Datasets]"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:98
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:97
 msgid "Signbank: Corpus Overview"
-msgstr ""
+msgstr "Signbank: Corpus overzicht"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:103
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:102
 msgid "Dataset Corpus Overview"
-msgstr ""
+msgstr "Overzicht corpus"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:118
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:117
 msgid "There is no corpus for this dataset."
 msgstr "Er is geen corpus voor deze dataset."
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:130
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:129
 msgid "There is no metadata CSV file for this dataset."
-msgstr ""
+msgstr "Er is geen metadata bestand voor deze dataset."
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:132
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:131
 msgid ""
 "A metadata file can be uploaded by the Dataset Manager via the Manage "
 "Datasets page."
-msgstr ""
+msgstr "Een bestand kan worden geüpload via de Beheer Datasets pagina."
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:134
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:133
 msgid "The metadata CSV currently supports:"
-msgstr ""
+msgstr "Het metadata-bestand ondersteunt momenteel:"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:142
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:141
 msgid "Geographical Region"
-msgstr ""
+msgstr "Geografische regio"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:156
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:155
 msgid "The header row of the CSV file should be (using tab as separator):"
 msgstr ""
+"De koprij van het bestand zou zo eruit moeten zien (met tab als "
+"scheidingsteken):"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:175
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:464
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:174
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:463
 #: venv/lib/python3.6/site-packages/django/db/models/fields/files.py:229
 msgid "File"
 msgstr "Bestand"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:182
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:181
 msgid "There are no EAF files for this dataset."
 msgstr "Er zijn geen EAF-bestanden voor deze dataset."
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:183
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:182
 msgid ""
 "EAF files can be uploaded by the Dataset Manager via the Manage Datasets "
 "page."
 msgstr ""
+"EAF-bestanden kunnen worden geüpload door de Dataset Manager via de Beheer "
+"Datasets pagina."
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:197
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:196
 msgid "Create Corpus"
 msgstr "Maak een nieuwe corpus"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:206
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:205
 msgid "Update Corpus"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:221
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:220
 msgid "Speakers in Metadata"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:226
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:258
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:225
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:257
 msgid "Identifier"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:227
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:226
 #: signbank/dictionary/templates/dictionary/gloss_frequency.html:1419
 msgid "Gender"
-msgstr ""
+msgstr "Geslacht"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:228
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:227
 #: signbank/dictionary/templates/dictionary/gloss_frequency.html:1438
 msgid "Age"
-msgstr ""
+msgstr "Leeftijd"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:247
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:246
 msgid "No speakers imported."
-msgstr ""
+msgstr "Geen sprekers geimporteerd."
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:253
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:252
 msgid "Speakers in Documents"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:259
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:258
 msgid "Appears in Documents"
 msgstr "Komt voor in documenten"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:273
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:272
 msgid ""
 "Speakers in metafile not found in documents. Update corpus, update metafile, "
 "or upload more documents."
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:288
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:287
 msgid "Refresh Metadata"
-msgstr ""
+msgstr "Ververs metadata"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:288
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:287
 msgid "Process Metadata"
-msgstr ""
+msgstr "Verwerk metadata"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:296
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:295
 msgid "Documents"
-msgstr ""
+msgstr "Documenten"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:301
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:370
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:300
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:369
 msgid "Document"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:302
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:301
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1295
 #: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:1266
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:635
@@ -2757,19 +2766,19 @@ msgstr ""
 msgid "Creation Date"
 msgstr "Aanmaakdatum"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:303
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:302
 msgid "Number of Annotations"
 msgstr "Aantal annotaties"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:305
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:304
 msgid "Comment"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:337
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:336
 msgid "No documents found."
 msgstr "Geen documenten gevonden."
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:345
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:344
 msgid ""
 "\n"
 "            <p style=\"color:red;\">Some eaf files have been uploaded to "
@@ -2778,58 +2787,62 @@ msgid ""
 "            "
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:364
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:363
 msgid "Overview EAF Files"
-msgstr ""
+msgstr "Overzicht EAF-bestanden"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:371
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:370
 msgid "Path"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:428
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:434
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:443
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:427
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:433
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:442
 msgid "Remove EAF Files"
-msgstr ""
+msgstr "Verwijder EAF-bestanden"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:437
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:436
 msgid "Please make sure to leave one copy of the documents you want."
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:438
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:437
 msgid ""
 "If all copies of a file are removed, the associated document and its "
 "frequency data will be removed."
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:457
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:456
 msgid "Unprocessed EAF Files"
-msgstr ""
+msgstr "Niet verwerkte EAF-bestanden"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:481
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:487
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:480
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:486
 msgid "Refresh All Documents"
-msgstr ""
+msgstr "Ververs alle documenten"
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:490
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:489
 msgid ""
 "Depending on how many files and annotations you have, this could take some "
 "time."
 msgstr ""
+"Afhankelijk van het aantal bestanden en de hoeveelheid annotaties kan dit "
+"veel tijd kosten."
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:491
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:490
 msgid ""
 "Once your corpus has been created, its files are refreshed in a cron job "
 "during the night."
 msgstr ""
+"Zodra een corpus is gemaakt, worden de EAF-bestanden verwerkt door een cron "
+"job tijdens de nacht."
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:501
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:500
 msgid "Cron Job"
 msgstr ""
 
-#: signbank/dictionary/templates/dictionary/dataset_frequency.html:502
+#: signbank/dictionary/templates/dictionary/dataset_frequency.html:501
 msgid "Refresh Now"
-msgstr ""
+msgstr "VERVERS NU"
 
 #: signbank/dictionary/templates/dictionary/derivationhistory_detail.html:7
 msgid "Signbank: Derivation History Details"
@@ -2916,7 +2929,7 @@ msgstr "Relaties"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
 #: signbank/dictionary/templates/dictionary/word.html:88
 msgid "Frequency View"
-msgstr "Detailbeeld frequentie"
+msgstr "Frequentie-weergave"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:336
 #: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:288
@@ -3427,10 +3440,12 @@ msgstr "ID-Glos"
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:22
 #: signbank/dictionary/templates/dictionary/morphemetags.html:22
+#: signbank/dictionary/views.py:2820
 msgid "delete this tag"
 msgstr "verwijder dit label"
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:39
+#: signbank/dictionary/views.py:2824
 msgid "Add Tag"
 msgstr "Voeg label toe"
 
@@ -3696,7 +3711,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/import_media.html:31
 msgid "Empty Folder"
-msgstr ""
+msgstr "Lege folder"
 
 #: signbank/dictionary/templates/dictionary/import_media.html:40
 #: signbank/dictionary/templates/dictionary/unused_videos.html:23
@@ -3819,7 +3834,7 @@ msgstr "Geen recent toegevoegd gebaren in de geselecteerde datasets."
 
 #: signbank/dictionary/templates/dictionary/recently_added_glosses.html:68
 msgid "days"
-msgstr ""
+msgstr "dagen"
 
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:9
 #, python-format
@@ -3986,19 +4001,19 @@ msgstr "Geen niet-toegewezen glossen gevonden."
 
 #: signbank/dictionary/templates/dictionary/unused_videos.html:12
 msgid "Signbank: Unused Video Files"
-msgstr ""
+msgstr "Signbank: Ontkoppelde videobestanden"
 
 #: signbank/dictionary/templates/dictionary/unused_videos.html:17
-msgid "Unused video files and other unlinked files"
-msgstr ""
+msgid "Unused Video Files"
+msgstr "Ontkoppelde videobestanden"
 
 #: signbank/dictionary/templates/dictionary/unused_videos.html:19
 msgid "Number of unused video files"
-msgstr "Aantal niet-toegewezen video bestanden"
+msgstr "Aantal ontkoppelde videobestanden"
 
 #: signbank/dictionary/templates/dictionary/unused_videos.html:23
 msgid "Folder (Gloss Prefix)"
-msgstr ""
+msgstr "Folder (Glos-voorvoegsel)"
 
 #: signbank/dictionary/templates/dictionary/update_lemma.html:7
 msgid "Signbank: Update Lemma"
@@ -4015,7 +4030,7 @@ msgstr "Terug naar lemmata-lijst"
 
 #: signbank/dictionary/templates/dictionary/update_lemma.html:54
 msgid "Return to Gloss Detail View"
-msgstr ""
+msgstr "Terug naar glos-detailbeeld"
 
 #: signbank/dictionary/templates/dictionary/update_result.html:9
 msgid "The update to the gloss {{ gloss }} was successful"
@@ -4041,7 +4056,7 @@ msgstr "Vervangen van video geannuleerd."
 #: signbank/dictionary/templates/dictionary/update_video.html:48
 #: signbank/dictionary/templates/dictionary/update_video.html:54
 msgid "Close Window"
-msgstr "Sluit scherm"
+msgstr "Sluit venster"
 
 #: signbank/dictionary/templates/dictionary/update_video.html:52
 msgid "Replacement of video completed."
@@ -4091,141 +4106,164 @@ msgstr "Gebaarverdeling"
 msgid "Sign Definition"
 msgstr "Gebaardefinitie"
 
-#: signbank/dictionary/update.py:72 signbank/dictionary/update.py:1699
+#: signbank/dictionary/update.py:72 signbank/dictionary/update.py:1708
 msgid "The given Lemma Idgloss ID is unknown."
 msgstr ""
 
-#: signbank/dictionary/update.py:79 signbank/dictionary/update.py:1679
+#: signbank/dictionary/update.py:79 signbank/dictionary/update.py:1688
 msgid "You are not authorized to change the selected dataset."
 msgstr "Je hebt niet genoeg rechten om de geselecteerde dataset te wijzigen."
 
-#: signbank/dictionary/update.py:83 signbank/dictionary/update.py:1683
+#: signbank/dictionary/update.py:83 signbank/dictionary/update.py:1692
 msgid "Please provide a dataset."
 msgstr "Specificeer hier een dataset"
 
-#: signbank/dictionary/update.py:97 signbank/dictionary/update.py:1710
+#: signbank/dictionary/update.py:97 signbank/dictionary/update.py:1719
 msgid "Annotation ID Gloss not unique."
 msgstr "Annotatie-ID-Glos is niet uniek"
 
-#: signbank/dictionary/update.py:336
+#: signbank/dictionary/update.py:341
 msgid "The dataset of the gloss is not the same as that of the lemma."
 msgstr ""
 
-#: signbank/dictionary/update.py:338 signbank/dictionary/update.py:1914
+#: signbank/dictionary/update.py:343 signbank/dictionary/update.py:1923
 msgid "The specified lemma does not exist."
 msgstr ""
 
-#: signbank/dictionary/update.py:1325
+#: signbank/dictionary/update.py:1334
 msgid ""
 "Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes."
 msgstr ""
 
-#: signbank/dictionary/update.py:1328
+#: signbank/dictionary/update.py:1337
 msgid "Edit Simultaneuous Morphology: No morpheme selected."
 msgstr "Bewerk Simultane morfologie: Geen morfeem geselecteerd."
 
-#: signbank/dictionary/update.py:1340
+#: signbank/dictionary/update.py:1349
 msgid "Simultaneuous morphology: no morpheme found with identifier {}."
 msgstr ""
 
-#: signbank/dictionary/update.py:1522 signbank/dictionary/update.py:1583
+#: signbank/dictionary/update.py:1531 signbank/dictionary/update.py:1592
 msgid "Upload other media failed: The file has an unknown type."
 msgstr ""
 
-#: signbank/dictionary/update.py:1530
+#: signbank/dictionary/update.py:1539
 msgid "Upload other media failed: The file has no extension."
 msgstr ""
 
-#: signbank/dictionary/update.py:1566
+#: signbank/dictionary/update.py:1575
 msgid "The destination filename for other media could not be created."
 msgstr ""
 
-#: signbank/dictionary/update.py:1589
+#: signbank/dictionary/update.py:1598
 msgid "Upload other media failed: The file extension does not match its type."
 msgstr ""
 
-#: signbank/dictionary/update.py:1912
+#: signbank/dictionary/update.py:1921
 msgid "The dataset of the morpheme is not the same as that of the lemma."
 msgstr ""
 
-#: signbank/dictionary/update.py:2163
+#: signbank/dictionary/update.py:2182
 msgid "You must be in group Dataset Manager to modify dataset details."
-msgstr ""
-"Je moet in groep Dataset Manager zijn om deze dataset te wijzigen."
+msgstr "Je moet in groep Dataset Manager zijn om deze dataset te wijzigen."
 
-#: signbank/dictionary/update.py:2416 signbank/dictionary/update.py:2467
+#: signbank/dictionary/update.py:2435 signbank/dictionary/update.py:2486
 msgid "No acronym for dataset."
-msgstr ""
+msgstr "Geen acroniem voor dataset."
 
-#: signbank/dictionary/update.py:2424 signbank/dictionary/update.py:2475
+#: signbank/dictionary/update.py:2443 signbank/dictionary/update.py:2494
 msgid "Dataset does not exist."
 msgstr "Dataset bestaat niet."
 
-#: signbank/dictionary/update.py:2430
+#: signbank/dictionary/update.py:2449
 msgid "You are not authorized to remove eaf files."
 msgstr "Je hebt niet genoeg rechten om EAF-bestanden te verwijderen."
 
-#: signbank/dictionary/update.py:2450
+#: signbank/dictionary/update.py:2469
 msgid "No eaf files found."
 msgstr "Geen EAF-bestanden gevonden."
 
-#: signbank/dictionary/update.py:2481
+#: signbank/dictionary/update.py:2500
 msgid "You are not authorized to upload eaf files."
 msgstr "Je hebt niet genoeg rechten om EAF-bestanden te uploaden."
 
-#: signbank/dictionary/update.py:2570
+#: signbank/dictionary/update.py:2589
 msgid "Non-EAF file(s) ignored: "
 msgstr ""
 
-#: signbank/dictionary/update.py:2574
+#: signbank/dictionary/update.py:2593
 msgid "File(s) encountered twice: "
 msgstr ""
 
-#: signbank/dictionary/update.py:2578
+#: signbank/dictionary/update.py:2597
 msgid "Already imported to different folder: "
 msgstr ""
 
-#: signbank/dictionary/views.py:850 signbank/dictionary/views.py:1313
-#: signbank/dictionary/views.py:1799
+#: signbank/dictionary/views.py:571
+msgid "Warning: Duplicate gloss found."
+msgstr "Waarschuwing: Duplicaat glos gevonden."
+
+#: signbank/dictionary/views.py:574
+msgid "Fail: Gloss Not Found"
+msgstr "Fout: Glos niet gevonden"
+
+#: signbank/dictionary/views.py:584
+msgid "Permission denied"
+msgstr "Geen toestemming"
+
+#: signbank/dictionary/views.py:592
+msgid "Success (Image File Overwritten)"
+msgstr "Succes (Beeldbestand overschreven)"
+
+#: signbank/dictionary/views.py:594 signbank/dictionary/views.py:605
+msgid "Success"
+msgstr "Succes"
+
+#: signbank/dictionary/views.py:603
+msgid "Success (Video File Overwritten)"
+msgstr "Succes (Videobestand overschreven)"
+
+#: signbank/dictionary/views.py:858 signbank/dictionary/views.py:1321
+#: signbank/dictionary/views.py:1807
 msgid ""
 "Unrecognised text encoding. Please export your file to UTF-8 format using e."
 "g. LibreOffice."
 msgstr ""
 
-#: signbank/dictionary/views.py:852 signbank/dictionary/views.py:1315
-#: signbank/dictionary/views.py:1801
+#: signbank/dictionary/views.py:860 signbank/dictionary/views.py:1323
+#: signbank/dictionary/views.py:1809
 msgid "Unrecognised format in selected CSV file."
-msgstr ""
-
-#: signbank/dictionary/views.py:898 signbank/dictionary/views.py:1361
-#: signbank/dictionary/views.py:1845
-msgid "Incorrect Delimiter: "
-msgstr ""
-
-#: signbank/dictionary/views.py:902 signbank/dictionary/views.py:1365
-#: signbank/dictionary/views.py:1849
-msgid "Empty Column Header Found."
 msgstr ""
 
 #: signbank/dictionary/views.py:906 signbank/dictionary/views.py:1369
 #: signbank/dictionary/views.py:1853
-msgid "Duplicate Column Header Found."
+msgid "Incorrect Delimiter: "
 msgstr ""
 
-#: signbank/dictionary/views.py:910
-msgid "Signbank ID column found."
-msgstr "Signbank-ID kolom gevonden."
+#: signbank/dictionary/views.py:910 signbank/dictionary/views.py:1373
+#: signbank/dictionary/views.py:1857
+msgid "Empty Column Header Found."
+msgstr "Lege kolomkop gevonden."
 
 #: signbank/dictionary/views.py:914 signbank/dictionary/views.py:1377
 #: signbank/dictionary/views.py:1861
+msgid "Duplicate Column Header Found."
+msgstr "Duplicaat kolomkop gevonden."
+
+#: signbank/dictionary/views.py:918
+msgid "Signbank ID column found."
+msgstr "Signbank-ID kolom gevonden."
+
+#: signbank/dictionary/views.py:922 signbank/dictionary/views.py:1385
+#: signbank/dictionary/views.py:1869
 msgid "The Dataset column is required."
 msgstr "De kolom 'Dataset' is verplicht."
 
-#: signbank/dictionary/views.py:1373
+#: signbank/dictionary/views.py:1381
 msgid "The Signbank ID column is required."
 msgstr "De kolom 'Signbank ID' is verplicht."
 
-#: signbank/dictionary/views.py:1857
+#: signbank/dictionary/views.py:1865
 msgid "The Lemma ID column is required."
 msgstr "De kolom 'Lemma ID' is verplicht."
 
@@ -4346,11 +4384,23 @@ msgstr "Gebaar feedback"
 
 #: signbank/frequency.py:1090
 msgid "No permission to update corpus."
-msgstr ""
+msgstr "Geen toestemming om de corpus te updaten."
 
 #: signbank/frequency.py:1100
 msgid "Document does not exist: "
 msgstr "Document bestaat niet: "
+
+#: signbank/frequency.py:1107
+msgid "Failed"
+msgstr "Mislukt"
+
+#: signbank/frequency.py:1131
+msgid "Glosses updated"
+msgstr "Glossen bijgewerkt"
+
+#: signbank/frequency.py:1133
+msgid "No annotations"
+msgstr "Geen annotaties"
 
 #: signbank/pages/admin.py:15
 msgid ""
@@ -4770,8 +4820,8 @@ msgid ""
 "Enter a valid 'slug' consisting of Unicode letters, numbers, underscores, or "
 "hyphens."
 msgstr ""
-"Vul een geldige regel in, bestaande uit Unicode letters, cijfers, underscores of "
-"streepjes."
+"Vul een geldige regel in, bestaande uit Unicode letters, cijfers, "
+"underscores of streepjes."
 
 #: venv/lib/python3.6/site-packages/django/core/validators.py:257
 #: venv/lib/python3.6/site-packages/django/core/validators.py:277
@@ -4902,7 +4952,8 @@ msgstr "%(model_name)s met dit %(field_label)s bestaat al"
 #, python-format
 msgid ""
 "%(field_label)s must be unique for %(date_field_label)s %(lookup_type)s."
-msgstr "%(field_label)s moet uniek zijn voor %(date_field_label)s %(lookup_type)s."
+msgstr ""
+"%(field_label)s moet uniek zijn voor %(date_field_label)s %(lookup_type)s."
 
 #: venv/lib/python3.6/site-packages/django/db/models/fields/__init__.py:140
 #, python-format
@@ -5003,8 +5054,8 @@ msgid ""
 "'%(value)s' value has an invalid format. It must be in [DD] [HH:[MM:]]ss[."
 "uuuuuu] format."
 msgstr ""
-"'%(value)s' waarde heeft een ongeldige indeling, het moet in [DD] [HH:[MM:]]ss[."
-"uuuuuu]] indeling."
+"'%(value)s' waarde heeft een ongeldige indeling, het moet in [DD] [HH:"
+"[MM:]]ss[.uuuuuu]] indeling."
 
 #: venv/lib/python3.6/site-packages/django/db/models/fields/__init__.py:1627
 msgid "Duration"
