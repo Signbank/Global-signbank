@@ -554,22 +554,20 @@ def import_media(request,video):
 
             lang3code_folder_path = os.path.join(dataset_folder_path, lang3code_folder_name) + "/"
             for filename in os.listdir(lang3code_folder_path):
-
                 files_per_dataset_per_language[dataset_folder_name][lang3code_folder_name].append(filename)
                 status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = ''
                 (filename_without_extension, extension) = os.path.splitext(filename)
                 extension = extension[1:]  # Remove the dot
-
                 glosses = Gloss.objects.filter(lemma__dataset=dataset, annotationidglosstranslation__language=language,
                                              annotationidglosstranslation__text__exact=filename_without_extension)
                 if glosses:
                     gloss = glosses[0]
                     if glosses.count() > 1:
                         # not sure if this can happen
-                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = 'Warning: Duplicate gloss found.'
+                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Warning: Duplicate gloss found.')
                         continue
                 else:
-                    status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = 'Fail: Gloss Not Found'
+                    status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Fail: Gloss Not Found')
                     continue
 
                 default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
@@ -579,29 +577,33 @@ def import_media(request,video):
                                                           GLOSS_IMAGE_DIRECTORY, gloss, extension)
 
                     if not was_allowed:
-                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = 'Permission denied'
+                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Permission denied')
 
                         errors.append('Failed to move media file for '+default_annotationidgloss+
                                       '. Either the source could not be read or the destination could not be written.')
                         print('Failed to move media file for ',GLOSS_IMAGE_DIRECTORY,lang3code_folder_path,default_annotationidgloss)
                         continue
 
-                    status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = 'Success'
+                    if overwritten:
+                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Success (Image File Overwritten)')
+                    else:
+                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Success')
 
                 else:
                     video_file_path = os.path.join(lang3code_folder_path, filename)
                     vfile = File(open(video_file_path, 'rb'))
                     video = gloss.add_video(request.user, vfile)
                     vfile.close()
-
-                    status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = 'Success'
+                    overwritten = len(GlossVideo.objects.filter(gloss=gloss)) > 1
+                    if overwritten:
+                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Success (Video File Overwritten)')
+                    else:
+                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Success')
 
                     try:
                         os.remove(video_file_path)
                     except OSError as oserror:
                         errors.append("OSError: {}".format(oserror))
-
-                    overwritten = len(GlossVideo.objects.filter(gloss=gloss)) > 1
 
                 if overwritten:
                     overwritten_files.append(filename)
