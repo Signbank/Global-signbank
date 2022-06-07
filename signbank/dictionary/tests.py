@@ -412,8 +412,9 @@ class ECVsNonEmptyTests(TestCase):
             try:
                 dataset_of_filename = Dataset.objects.get(acronym__iexact=fname)
             except ObjectDoesNotExist:
+                uppercase_fname = fname.upper()
                 try:
-                    fname_nounderscore = fname.replace("_"," ")
+                    fname_nounderscore = uppercase_fname.replace("_"," ")
                     dataset_of_filename = Dataset.objects.get(acronym__iexact=fname_nounderscore)
                 except ObjectDoesNotExist:
                     print('WARNING: ECV FILENAME DOES NOT MATCH DATASET ACRONYM: ', filename)
@@ -435,6 +436,26 @@ class ImportExportTests(TestCase):
 
     def setUp(self):
 
+        # create a new temp dataset with fields fetched from default dataset
+        default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        signlanguage = SignLanguage.objects.get(name=default_dataset.signlanguage.name)
+        translation_languages = default_dataset.translation_languages.all()
+        # the id is computed because datasets exist in the test database and we want an unused one
+        # this also ignores any datasets created during tests
+        used_dataset_ids = [ds.id for ds in Dataset.objects.all()]
+        max_used_dataset_id = max(used_dataset_ids)
+        #Create a temporary dataset that resembles the default dataset
+        new_dataset = Dataset(id=max_used_dataset_id+1,
+                              acronym = settings.TEST_DATASET_ACRONYM,
+                              name=settings.TEST_DATASET_ACRONYM,
+                              default_language=default_dataset.default_language,
+                              signlanguage = signlanguage)
+        new_dataset.save()
+        for language in translation_languages:
+            new_dataset.translation_languages.add(language)
+        # save the newly created dataset for the tests of this class
+        self.test_dataset = new_dataset
+
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
 
@@ -442,19 +463,15 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv with empty dataset')
 
-        dataset_name = settings.DEFAULT_DATASET_ACRONYM
-        print('Test Dataset is: ', dataset_name)
-
         # Give the test user permission to change a dataset
-        test_dataset = Dataset.objects.get(acronym=dataset_name)
-        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
 
-        url = '/datasets/available?dataset_name='+dataset_name+'&export_ecv=ECV'
+        url = '/datasets/available?dataset_name='+ self.test_dataset.name + '&export_ecv=ECV'
 
         response = client.get(url)
 
@@ -472,20 +489,12 @@ class ImportExportTests(TestCase):
     def test_DatasetListView_ECV_export_permission_change_dataset(self):
 
         print('Test DatasetListView export_ecv with permission change_dataset')
-
-        dataset_name = settings.DEFAULT_DATASET_ACRONYM
-        print('Test Dataset is: ', dataset_name)
+        print('Test Dataset is: ', self.test_dataset.acronym)
 
         # Give the test user permission to change a dataset
-        test_dataset = Dataset.objects.get(acronym=dataset_name)
-        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
-        test_dataset_acronym = 'temp_' + dataset_name
-
-        test_dataset.acronym = test_dataset_acronym
-        test_dataset.save()
-        print('Test dataset name changed to: ', test_dataset_acronym)
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
@@ -494,11 +503,11 @@ class ImportExportTests(TestCase):
         # this has many steps
 
         # Create a lemma first
-        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma = LemmaIdgloss(dataset=self.test_dataset)
         new_lemma.save()
 
         # Create a lemma idgloss translation
-        language = Language.objects.get(id=get_default_language_id())
+        language = self.test_dataset.default_language
         new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
                                                               lemma=new_lemma, language=language)
         new_lemmaidglosstranslation.save()
@@ -509,14 +518,14 @@ class ImportExportTests(TestCase):
         new_gloss.save()
 
         # fill in the annotation translations for the new gloss
-        for language in test_dataset.translation_languages.all():
+        for language in self.test_dataset.translation_languages.all():
             annotationIdgloss = AnnotationIdglossTranslation()
             annotationIdgloss.gloss = new_gloss
             annotationIdgloss.language = language
             annotationIdgloss.text = 'thisisatemporarytestgloss'
             annotationIdgloss.save()
 
-        url = '/datasets/available?dataset_name=' + test_dataset_acronym + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_name=' + self.test_dataset.acronym + '&export_ecv=ECV'
 
         response = client.get(url)
 
@@ -528,13 +537,9 @@ class ImportExportTests(TestCase):
 
         self.assertEqual(str(json_message), 'ECV successfully updated.')
 
-        # cleanup
-        test_dataset.acronym = dataset_name
-        test_dataset.save()
-
         location_ecv_files = ECV_FOLDER
         for filename in os.listdir(location_ecv_files):
-            if filename == test_dataset_acronym.lower() + '.ecv':
+            if filename == self.test_dataset.acronym.lower() + '.ecv':
                 filename_path = os.path.join(location_ecv_files,filename)
                 os.remove(filename_path)
                 print('Temp ecv file removed.')
@@ -543,14 +548,13 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv without permission')
 
-        dataset_name = settings.DEFAULT_DATASET_ACRONYM
-        print('Test Dataset is: ', dataset_name)
+        print('Test Dataset is: ', self.test_dataset.acronym)
 
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
 
-        url = '/datasets/available?dataset_name='+dataset_name+'&export_ecv=ECV'
+        url = '/datasets/available?dataset_name='+ self.test_dataset.acronym + '&export_ecv=ECV'
 
         response = client.get(url)
 
@@ -566,12 +570,11 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv anonymous user not logged in')
 
-        dataset_name = settings.DEFAULT_DATASET_ACRONYM
-        print('Test Dataset is: ', dataset_name)
+        print('Test Dataset is: ', self.test_dataset.acronym)
 
         client = Client()
 
-        url = '/datasets/available?dataset_name=' + dataset_name + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_name=' + self.test_dataset.acronym + '&export_ecv=ECV'
 
         response = client.get(url, follow=True)
         self.assertTrue("Please login to use this functionality." in str(response.content))
@@ -581,19 +584,17 @@ class ImportExportTests(TestCase):
         logged_in = client.login(username=self.user.username, password='test-user')
         print(str(logged_in))
 
-        dataset_name = settings.DEFAULT_DATASET
-        print('Test Dataset is: ', dataset_name)
+        print('Test Dataset is: ', self.test_dataset.acronym)
 
         # Give the test user permission to change a dataset
-        test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
         assign_perm('dictionary.export_csv', self.user)
         print('User has permmission to export csv.')
 
         # set the language for glosssearch field name
-        default_language = Language.objects.get(id=get_default_language_id())
+        default_language = self.test_dataset.default_language
         gloss_search_field_prefix = "glosssearch_"
         glosssearch_field_name = gloss_search_field_prefix + default_language.language_code_2char
 
@@ -613,22 +614,20 @@ class ImportExportTests(TestCase):
         logged_in = client.login(username=self.user.username, password='test-user')
         print(str(logged_in))
 
-        dataset_name = settings.DEFAULT_DATASET
-        print('Test Dataset is: ', dataset_name)
+        print('Test Dataset is: ', self.test_dataset.acronym)
 
         # Give the test user permission to change a dataset
-        test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
         # Create test lemma idgloss
-        lemma = LemmaIdgloss(dataset=test_dataset)
+        lemma = LemmaIdgloss(dataset=self.test_dataset)
         lemma.save()
 
         # Create test lemma idgloss translations
         lemma_idgloss_translation_prefix = 'test_lemma_translation_'
         test_translation_index = 1
-        for language in test_dataset.translation_languages.all():
+        for language in self.test_dataset.translation_languages.all():
             lemma_translation = LemmaIdglossTranslation(lemma=lemma, language=language,
                                     text='{}{}_{}'.format(lemma_idgloss_translation_prefix,
                                                           language.language_code_2char, test_translation_index))
@@ -641,7 +640,7 @@ class ImportExportTests(TestCase):
         # Prepare form data for making A NEW LemmaIdgloss + LemmaIdglossTranslations
         test_translation_index = 2
         form_data = {'update_or_create': 'update'}
-        for language in test_dataset.translation_languages.all():
+        for language in self.test_dataset.translation_languages.all():
             language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
@@ -654,7 +653,7 @@ class ImportExportTests(TestCase):
         # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_translation_index = 1
         form_data = {'update_or_create': 'update'}
-        for language in test_dataset.translation_languages.all():
+        for language in self.test_dataset.translation_languages.all():
             language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
@@ -664,12 +663,12 @@ class ImportExportTests(TestCase):
         response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
         self.assertEqual(response.status_code, 200)
 
-        count_dataset_translation_languages = test_dataset.translation_languages.all().count()
+        count_dataset_translation_languages = self.test_dataset.translation_languages.all().count()
         print('Number of translation languages for the test dataset: ', count_dataset_translation_languages)
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         form_data = {'update_or_create': 'update'}
-        for index, language in enumerate(test_dataset.translation_languages.all()):
+        for index, language in enumerate(self.test_dataset.translation_languages.all()):
             if index == 0:
                 test_translation_index = 1
             else:
@@ -692,7 +691,7 @@ class ImportExportTests(TestCase):
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
 
         form_data = {'update_or_create': 'update'}
-        for index, language in enumerate(test_dataset.translation_languages.all()):
+        for index, language in enumerate(self.test_dataset.translation_languages.all()):
             if index == 0:
                 test_translation_index = 1
             else:
@@ -722,12 +721,10 @@ class ImportExportTests(TestCase):
         logged_in = client.login(username=self.user.username, password='test-user')
         print(str(logged_in))
 
-        dataset_name = settings.DEFAULT_DATASET
-        print('Test Dataset is: ', dataset_name)
+        print('Test Dataset is: ', self.test_dataset.acronym)
 
         # Give the test user permission to change a dataset
-        test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
         gloss_id = 1
@@ -737,8 +734,8 @@ class ImportExportTests(TestCase):
         # Prepare form data for making A NEW LemmaIdgloss + LemmaIdglossTranslations
         test_lemma_translation_index = 1
         test_annotation_translation_index = 1
-        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): test_dataset.acronym}
-        for language in test_dataset.translation_languages.all():
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): self.test_dataset.acronym}
+        for language in self.test_dataset.translation_languages.all():
             form_name = '{}.lemma_id_gloss_{}'.format(gloss_id, language.language_code_2char)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_lemma_translation_index)
@@ -752,8 +749,8 @@ class ImportExportTests(TestCase):
 
         # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_annotation_translation_index = 2
-        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): test_dataset.acronym}
-        for language in test_dataset.translation_languages.all():
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): self.test_dataset.acronym}
+        for language in self.test_dataset.translation_languages.all():
             form_name = '{}.lemma_id_gloss_{}'.format(gloss_id, language.language_code_2char)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_lemma_translation_index)
@@ -765,13 +762,13 @@ class ImportExportTests(TestCase):
         response = client.post(reverse_lazy('import_csv_create'), form_data)
         self.assertContains(response, 'Changes are live.')
 
-        count_dataset_translation_languages = test_dataset.translation_languages.all().count()
+        count_dataset_translation_languages = self.test_dataset.translation_languages.all().count()
         print('Number of translation languages for the test dataset: ', count_dataset_translation_languages)
 
         # Prepare form data for linking to SEVERAL EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_annotation_translation_index = 3
-        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): test_dataset.acronym}
-        for index, language in enumerate(test_dataset.translation_languages.all()):
+        form_data = {'update_or_create': 'create', '{}.dataset'.format(gloss_id): self.test_dataset.acronym}
+        for index, language in enumerate(self.test_dataset.translation_languages.all()):
             if index == 0:
                 test_lemma_translation_index = 1
             else:
