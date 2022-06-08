@@ -115,7 +115,6 @@ def choicelist_queryset_to_field_colors(queryset):
     return temp_mapping_dict
 
 def machine_value_to_translated_human_value(machine_value,choice_list,language_code):
-
     codes_to_adjectives = dict(settings.LANGUAGES)
 
     if language_code not in codes_to_adjectives.keys():
@@ -180,7 +179,17 @@ def check_value_to_translated_human_value(field_name, check_value):
     # the value is a Boolean or it might not be set
     # if it's weakdrop or weakprop, it has a value Neutral when it's not set
     # look for aliases for empty to account for legacy data
-    if field_name in settings.HANDEDNESS_ARTICULATION_FIELDS:
+    if field_name not in settings.HANDEDNESS_ARTICULATION_FIELDS:
+        # This accounts for legacy values in the revision history
+        if check_value == '' or check_value in ['False', 'No', 'Nee']:
+            translated_value = _('No')
+            return translated_value
+        elif check_value in ['True', 'Yes', 'Ja']:
+            translated_value = _('Yes')
+            return translated_value
+        else:
+            return check_value
+    else:
         # use the abbreviation that appears in the template
         value_abbreviation = 'WD' if field_name == 'weakdrop' else 'WP'
         if check_value in ['True', '+WD', '+WP', '1']:
@@ -190,13 +199,7 @@ def check_value_to_translated_human_value(field_name, check_value):
         else:
             # here, the value is False
             translated_value = '-' + value_abbreviation
-    elif check_value in ['True', '1', 'letter', 'number']:
-        translated_value = _('Yes')
-    else:
-        # this is the default
-        # if previously a None value has been converted to string 'None' it ends up here
-        translated_value = _('No')
-    return translated_value
+        return translated_value
 
 def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=False):
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;

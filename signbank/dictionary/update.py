@@ -295,6 +295,7 @@ def update_gloss(request, glossid):
 
     elif field in 'inWeb':
         # only modify if we have publish permission
+        original_value = getattr(gloss,field)
         if request.user.has_perm('dictionary.can_publish'):
             gloss.inWeb = value.lower() in [_('Yes').lower(),'true',True,1]
             gloss.save()
@@ -305,6 +306,7 @@ def update_gloss(request, glossid):
             newvalue = _('No')
 
     elif field in 'isNew':
+        original_value = getattr(gloss,field)
         # only modify if we have publish permission
         gloss.isNew = value.lower() in [_('Yes').lower(),'true',True,1]
         gloss.save()
@@ -314,6 +316,7 @@ def update_gloss(request, glossid):
         else:
             newvalue = _('No')
     elif field in 'excludeFromEcv':
+        original_value = getattr(gloss,field)
         # only modify if we have publish permission
 
         gloss.excludeFromEcv = value.lower() in [_('Yes').lower(),'true',True,1]
@@ -465,7 +468,6 @@ def update_gloss(request, glossid):
 
     # if choice_list is empty, the original_value is returned by the called function
     original_human_value = machine_value_to_translated_human_value(original_value,choice_list,request.LANGUAGE_CODE)
-
     if isinstance(value, bool) and field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
     # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
