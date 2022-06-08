@@ -797,6 +797,11 @@ class FieldChoiceAdmin(VersionAdmin):
         if not field_machine_value:
             print('ADMIN has_delete_permission: field ', field_value, ' has an empty machine value')
 
+        # check if this is a duplicate, if so allow deletion
+        fieldchoices_with_same_machine_value = FieldChoice.objects.filter(field=field_value,machine_value=field_machine_value).count()
+        if fieldchoices_with_same_machine_value > 1:
+            return True
+
         from signbank.tools import fields_with_choices_glosses, fields_with_choices_handshapes, \
             fields_with_choices_definition, fields_with_choices_morphology_definition, \
             fields_with_choices_other_media_type, fields_with_choices_morpheme_type
