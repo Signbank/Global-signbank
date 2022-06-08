@@ -180,16 +180,17 @@ def check_value_to_translated_human_value(field_name, check_value):
     # if it's weakdrop or weakprop, it has a value Neutral when it's not set
     # look for aliases for empty to account for legacy data
     if field_name not in settings.HANDEDNESS_ARTICULATION_FIELDS:
-        # This accounts for legacy values in the revision history
-        if check_value == '' or check_value in ['False', 'No', 'Nee']:
+        # This accounts for legacy values stored in the revision history
+        if check_value == '' or check_value in ['False', 'No', 'Nee', '&nbsp;']:
             translated_value = _('No')
             return translated_value
-        elif check_value in ['True', 'Yes', 'Ja']:
+        elif check_value in ['True', 'Yes', 'Ja', '1', 'letter', 'number']:
             translated_value = _('Yes')
             return translated_value
         else:
             return check_value
     else:
+        # field is in settings.HANDEDNESS_ARTICULATION_FIELDS
         # use the abbreviation that appears in the template
         value_abbreviation = 'WD' if field_name == 'weakdrop' else 'WP'
         if check_value in ['True', '+WD', '+WP', '1']:
