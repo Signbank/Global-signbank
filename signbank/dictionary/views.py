@@ -21,7 +21,7 @@ from signbank.video.forms import VideoUploadForGlossForm
 from signbank.frequency import configure_corpus_documents_for_dataset, import_corpus_speakers
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, pretty_print_query_fields, pretty_print_query_values
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -2841,6 +2841,58 @@ def gloss_revision_history(request,gloss_pk):
                    'selected_datasets': selected_datasets,
                    'active_id': gloss_pk,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })
+
+def gloss_list_view(request,gloss_pk):
+
+    gloss = Gloss.objects.get(pk=gloss_pk)
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
+    if 'search_results' in request.session.keys():
+        search_results = request.session['search_results']
+    else:
+        search_results = []
+    if search_results and len(search_results) > 0:
+        if request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+            request.session['search_results'] = None
+    if 'search_type' in request.session.keys():
+        if request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            # search_type is 'handshape'
+            request.session['search_results'] = None
+
+    if 'query_parameters' in request.session.keys():
+        # if the query parameters are available, convert them to a dictionary
+        session_query_parameters = request.session['query_parameters']
+        query_parameters = json.loads(session_query_parameters)
+    else:
+        query_parameters = {}
+
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+    if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
+        fieldnames.remove('derivHist')
+    multiple_select_gloss_fields = [field.name + '[]' for field in Gloss._meta.fields if
+                                    field.name in fieldnames and hasattr(field, 'field_choice_category')]
+    query_parameters_mapping = pretty_print_query_fields(dataset_languages, query_parameters.keys())
+
+    query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters,request.LANGUAGE_CODE)
+
+    return render(request, 'dictionary/gloss_list_view.html',
+                  {'gloss': gloss, 'object_list':search_results,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'active_id': gloss_pk,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+                   'MULTIPLE_SELECT_GLOSS_FIELDS': multiple_select_gloss_fields,
+                   'query_parameters': query_parameters,
+                   'query_parameters_mapping': query_parameters_mapping,
+                   'query_parameters_values_mapping': query_parameters_values_mapping
                    })
 
 

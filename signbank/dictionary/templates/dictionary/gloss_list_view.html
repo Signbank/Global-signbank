@@ -1,0 +1,268 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}List View for {{ gloss }}{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+
+    <script type='text/javascript'>
+    var url = '{{ PREFIX_URL }}';
+
+
+    var language_code = '{{ LANGUAGE_CODE }}';
+
+    {% trans "Edit" as edit_mode_str %}
+    {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
+    {% trans "Delete This Gloss" as delete_this_gloss_str %}
+    {% trans "Saving..." as saving_str %}
+    {% trans "This idgloss already exists" as idgloss_already_exists_str %}
+
+    var edit_mode_str = '{{edit_mode_str|escapejs}}';
+    var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
+    var delete_this_gloss_str = '{{delete_this_gloss_str|escapejs}}';
+    var saving_str = '{{saving_str|escapejs}}';
+    var idgloss_already_exists_str = '{{idgloss_already_exists_str|escapejs}}';
+
+
+    var yes_str = '{% trans "Yes" %}'
+    var no_str = '{% trans "No" %}'
+
+    var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+    console.log(multiple_select_fields);
+
+    var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
+
+
+    var gloss_dataset_id = {{ gloss.lemma.dataset.id}};
+    var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
+
+
+    var csrf_token = '{{csrf_token}}';
+
+    var this_gloss_id = {{gloss.id}};
+
+    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+
+    {% include "dictionary/search_result_bar.html" %}
+
+    function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
+        var target_object = document.forms[formId][targetObjectId].value;
+        var this_gloss = document.forms[formId][thisGlossID].value;
+        if (target_object == "") {
+            alert(mustChooseAlert);
+            return false;
+        }
+        if (target_object == this_gloss) {
+            alert(mustBeDifferentAlert);
+            return false;
+        }
+    }
+
+
+    $('[data-toggle="tooltip"]').tooltip({
+        placement : 'bottom'
+    });
+
+
+
+    </script>
+    <script type='text/javascript'>
+
+        $('#searchresults').css({'padding-top': 10});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
+
+         $('#panel-expand-collapse-btn-toolbar').css({
+            'height': $('#panel-expand-collapse-btn-group').css('height'),
+         });
+    </script>
+{% endblock %}
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <style>
+        #panel-expand-collapse-btn-group.affix {
+            position:fixed;
+        }
+    </style>
+<style>
+.preview {
+    background-color: white !important;
+    height: 40;
+    width: auto;
+    position: relative;
+    padding: 0 0 0 0 !important;
+}
+
+select option {
+    background-color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.bootstrap-select.btn-group .dropdown-menu li a:hover {
+    color: blue !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.dropdown-menu {
+    display: visible !important;
+    z-index: 5;
+    box-shadow: 0 10px 10px #333;
+}
+
+.dropdown-item:active{
+    color: blue;
+    background-color: darkviolet;
+}
+
+.bootstrap-select {
+    color: black !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+</style>
+<style>
+.form-group {
+    background-color: white;
+    color: black;
+}
+option:not(:checked) {
+    background-color: white !important;
+    color: #000;
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+    </div>
+    {% endif %}
+</div>
+
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+
+    <div class='btn-group'>
+        {% if SIGN_NAVIGATION %}
+
+            {% if navigation.prev %}
+            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %]
+            </a>
+            {% endif %}
+
+            <button class='btn navbar-btn'>{% blocktrans %}"Sign {{glossposn}} of {{glosscount}} in the dictionary" {% endblocktrans %}</button>
+
+            {% if navigation.next %}
+            <a class="btn navbar-btn btn-default"
+               href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
+            {% endif %}
+         {% endif %}
+    </div>
+
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+        </li>
+        {% if gloss.has_frequency_data %}
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequency View" %}</a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
+        </li>
+        <li class="nav-item active">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/list_view">{% trans "List View" %}</a>
+        </li>
+    </ul>
+</div>
+
+
+<div id="definitionblock" style="z-index:0;padding-top: 100px; width: 800px;">
+    <br>
+    <h3>{% trans "Query Parameters" %}</h3>
+    <table class="table table-condensed">
+        <thead id = 'query_table_header'>
+                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
+                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+        </thead>
+        <tbody>
+        {% for key, value in query_parameters.items %}
+        <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_mapping|get_item:key}}</td>
+            {% if '[]' in key %}
+        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
+                class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+            {% else %}
+                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                    border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
+    <br>
+    <h3>{% trans "Glosses Matching Query" %}</h3>
+    <table class="table table-condensed">
+
+            <thead id = 'glosslist_table_header'>
+    <tr>
+
+        <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Annotation ID Gloss" %}</th>
+
+          {% for column in column_headers %}
+            <th></th>
+          {% endfor %}
+
+      </tr>
+
+    </thead>
+    <tbody>
+        {% for search_result in object_list %}
+            <tr>
+              <td  style="vertical-align:top; border-bottom: 1px solid grey;
+              border-left: 1px solid grey; border-right: 1px solid grey">
+                  <div class="annotation_{{dataset_lang.language_code_2char}}">
+                      {% if gloss.id == search_result.id %}
+                            {{search_result.data_label}}
+                      {% else %}
+                      <a class='nav-link'
+                         href="{{PREFIX_URL}}/dictionary/{{search_result.href_type}}/{{search_result.id}}">{{search_result.data_label}}</a>
+                      {% endif %}
+                  </div>
+              </td>
+
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+</div>
+{% endblock %}

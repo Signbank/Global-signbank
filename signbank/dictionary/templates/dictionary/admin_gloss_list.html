@@ -39,15 +39,17 @@
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
-console.log('Multiple select fields: '+multiple_select_fields);
 var field_colors = {{field_colors|safe}};
 var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};
 var objects_on_this_page = {{objects_on_page|safe}};
 var view_type = '{{view_type}}';
 var paginate_by = '{{paginate_by}}';
-
-
+var query_parameters = '{{query_parameters|safe}}';
+var query_parameters_keys = {{query_parameters_keys|safe}};
+var query_parameters_dict = JSON.parse(query_parameters);
+var other_parameters_keys = {{other_parameters_keys|safe}};
+var language_query_keys = {{language_query_keys|safe}};
 
 $(document).ready(function() {
 
@@ -141,7 +143,14 @@ $(document).ready(function() {
         width: 'resolve',
         placeholder: ''
      });
-     $('#id_signLanguage').val(null).trigger('change');
+
+     if (query_parameters_keys.includes('signlanguage[]')) {
+         var query_initial = query_parameters_dict['signlanguage[]'];
+         $('#id_signLanguage').val(query_initial);
+         $('#id_signLanguage').trigger('change');
+     } else {
+         $('#id_signLanguage').val(null).trigger('change');
+     };
 
      $('#id_signLanguage').change(function() {
         set_signlanguages_dialects();
@@ -157,7 +166,48 @@ $(document).ready(function() {
         width: 'resolve',
         placeholder: ''
      });
-     $('#id_dialects').val(null).trigger('change');
+
+     if (query_parameters_keys.includes('dialect[]')) {
+         var query_initial = query_parameters_dict['dialect[]'];
+         $('#id_dialects').val(query_initial);
+         $('#id_dialects').trigger('change');
+    } else {
+         $('#id_dialects').val(null).trigger('change');
+    };
+
+    // initialize query parameters in multiple select fields
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = '#id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        if (query_parameters_keys.includes(this_var)) {
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+     }
+
+     // initialize non-multiple select, not language-based query fields
+     for (var i = 0; i < other_parameters_keys.length; i++) {
+        var this_var = other_parameters_keys[i];
+        if (query_parameters_keys.includes(this_var)) {
+            var this_id = '#id_' + other_parameters_keys[i];
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+    }
+
+     // initialize language-based query fields
+     for (var i = 0; i < language_query_keys.length; i++) {
+        if (query_parameters_keys.includes(this_var)) {
+            var this_id = '#id_' + language_query_keys[i];
+            var this_var = language_query_keys[i];
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial[j]);
+            $(this_id).trigger('change');
+        };
+    }
+
 
      // Empty menu_bar_search_mirror
      $("#adminsearch :input").change(function() {
@@ -328,17 +378,13 @@ function do_adminsearch(el) {
 function do_toggle_groups(el) {
   var sViewType = $(el).attr('value');
   $("#toggle_groups input[name='view_type']").val(sViewType);
-  console.log('switch');
-  console.log(sViewType);
   switch(sViewType) {
     case "lemma_groups":
         $(el).val('gloss_list');
-        console.log('change to gloss list');
         $(el).html("Gloss View");
         break;
     case "gloss_list":
         $(el).val('lemma_groups');
-        console.log('change to lemma groups');
         $(el).html("Lemma View");
         break;
   }
@@ -371,8 +417,6 @@ function ready_videos(el) {
 function do_set_lemma_language(el) {
   if (user_can_add_gloss) {
       var dataset_language_id = $(el).attr('value');
-    <!--  console.log('lemma_language');-->
-    <!--  console.log(dataset_language_id);-->
       $("#selected_lemma_language").attr('value',dataset_language_id);
       language_code = dataset_language_id;
       set_lemma_language();
@@ -382,7 +426,6 @@ function do_set_lemma_language(el) {
 // This function toggles the different language columns for Annotations, Lemmas, and Translations
 function do_toggle_annotation(el) {
     var dataset_language_id = $(el).attr('value');
-    console.log('toggle column annotation '+dataset_language_id);
     var annotation_column_id = '.annotation_' + dataset_language_id;
     var lemma_column_id = '.lemma_' + dataset_language_id;
     var translation_column_id = '.translation_' + dataset_language_id;
@@ -820,7 +863,6 @@ function do_toggle_annotation(el) {
                      <script type='text/javascript'>
                      gloss_dataset_id = {{ selected_datasets.0.id }};
                      language_code = '{{selected_datasets.0.default_language.language_code_2char}}';
-<!--                     console.log('admin_gloss_list template, show dataset interface options false, language code is: '+language_code);-->
                      </script>
                      {% endif %}
                      </select>

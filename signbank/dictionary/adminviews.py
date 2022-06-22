@@ -1,3 +1,5 @@
+import json
+
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
@@ -7,7 +9,7 @@ from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField, BooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.template import RequestContext
 from django.core.urlresolvers import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
@@ -46,7 +48,8 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
-    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses
+    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
+    convert_query_parameters_to_filter, empty_query_dict, update_query_dict, pretty_print_query_fields
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -211,6 +214,8 @@ class GlossListView(ListView):
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
     queryset_language_codes = []
+    query_parameters = dict()
+    search_form_data = QueryDict(mutable=True)
 
     def get_template_names(self):
         if 'settings' in self.kwargs:
@@ -222,7 +227,6 @@ class GlossListView(ListView):
         context = super(GlossListView, self).get_context_data(**kwargs)
 
         if 'settings' in self.kwargs:
-            # print('show colors inside GlossListView')
             self.request.session['show_colors'] = True
         else:
             self.request.session['show_colors'] = False
@@ -284,8 +288,48 @@ class GlossListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
-                                      dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters']:
+            if 'query' in self.request.GET:
+                # if the query parameters are available, convert them to a dictionary
+                session_query_parameters = self.request.session['query_parameters']
+                self.query_parameters = json.loads(session_query_parameters)
+            elif 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
+                self.request.session['query_parameters'] = json.dumps(dict())
+                self.request.session.modified = True
+            else:
+                # if the query parameters are available, convert them to a dictionary
+                session_query_parameters = self.request.session['query_parameters']
+                self.query_parameters = json.loads(session_query_parameters)
+
+        if self.query_parameters and 'query' in self.request.GET:
+            # this doesn't actually work, because of the multiselect fields in the query form
+            new_get_parameters = update_query_dict(self.query_parameters)
+
+            search_form = GlossSearchForm(new_get_parameters, languages=dataset_languages, sign_languages=sign_languages,
+                                              dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+        else:
+            search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
+                                              dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+
+        context['query_parameters'] = json.dumps(self.query_parameters)
+        query_parameters_keys = list(self.query_parameters.keys())
+        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
+        other_parameters_keys = ['sortOrder', 'search_type', 'search', 'useInstr', 'morpheme', 'hasComponentOfType', 'hasMorphemeOfType',
+                       'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet', 'relation', 'hasRelation',
+                       'relationToForeignSign', 'definitionRole', 'definitionContains', 'createdBefore', 'createdAfter', 'createdBy']
+        context['other_parameters_keys'] = json.dumps(other_parameters_keys)
+        gloss_search_field_prefix = "glosssearch_"
+        keyword_search_field_prefix = "keyword_"
+        lemma_search_field_prefix = "lemma_"
+        language_query_keys = []
+        for language in dataset_languages:
+            glosssearch_field_name = gloss_search_field_prefix + language.language_code_2char
+            language_query_keys.append(glosssearch_field_name)
+            lemma_field_name = lemma_search_field_prefix + language.language_code_2char
+            language_query_keys.append(lemma_field_name)
+            keyword_field_name = keyword_search_field_prefix + language.language_code_2char
+            language_query_keys.append(keyword_field_name)
+        context['language_query_keys'] = json.dumps(language_query_keys)
 
         #Translations for field choices dropdown menu
         fields_that_need_translated_options = ['hasComponentOfType','hasMorphemeOfType']
@@ -766,7 +810,6 @@ class GlossListView(ListView):
 
 
     def get_queryset(self):
-
         get = self.request.GET
 
         #First check whether we want to show everything or a subset
@@ -801,10 +844,16 @@ class GlossListView(ListView):
 
         setattr(self.request, 'web_search', self.web_search)
 
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters']:
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
+        else:
+            self.query_parameters = dict()
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         #Get the initial selection
-        if len(get) > 0 or show_all:
+        if len(get) > 0 or show_all or self.query_parameters:
             # anonymous users can search signs, make sure no morphemes are in the results
             if self.search_type == 'sign' or not self.request.user.is_authenticated():
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
@@ -818,6 +867,12 @@ class GlossListView(ListView):
                     qs = Gloss.objects.all().prefetch_related('lemma').prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
                 else:
                     qs = Gloss.objects.all().filter(lemma__dataset__in=selected_datasets)
+            if self.query_parameters and 'query' in get:
+                query = convert_query_parameters_to_filter(self.query_parameters)
+                if query:
+                    qs = qs.filter(query).distinct()
+                    sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+                    return sorted_qs
 
         #No filters or 'show_all' specified? show nothing
         else:
@@ -846,19 +901,24 @@ class GlossListView(ListView):
 
             qs = qs.filter(query)
 
+        query_parameters = dict()
+
         # Evaluate all gloss/language search fields
         for get_key, get_value in get.items():
             if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
+                query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
                 qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                                annotationidglosstranslation__language=language)
             elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
+                query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
                 qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
                                lemma__lemmaidglosstranslation__language=language)
             elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
+                query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
                 qs = qs.filter(translation__translation__text__iregex=get_value,
@@ -866,21 +926,23 @@ class GlossListView(ListView):
 
         if 'keyword' in get and get['keyword'] != '':
             val = get['keyword']
+            query_parameters['keyword'] = get['keyword']
             qs = qs.filter(translation__translation__text__iregex=val)
 
         if 'inWeb' in get and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['inWeb'] == '2'
+            query_parameters['inWeb'] = get['inWeb']
             qs = qs.filter(inWeb__exact=val)
 
         if 'hasvideo' in get and get['hasvideo'] != 'unspecified':
             val = get['hasvideo'] == 'no'
-
+            query_parameters['hasvideo'] = get['hasvideo']
             qs = qs.filter(glossvideo__isnull=val)
 
         if 'defspublished' in get and get['defspublished'] != 'unspecified':
             val = get['defspublished'] == 'yes'
-
+            query_parameters['defspublished'] = get['defspublished']
             qs = qs.filter(definition__published=val)
 
 
@@ -894,6 +956,7 @@ class GlossListView(ListView):
         if '' in vals:
             vals.remove('')
         if vals != []:
+            query_parameters['dialect[]'] = get.getlist('dialect[]')
             qs = qs.filter(dialect__in=vals)
 
         # allows for multiselect
@@ -901,9 +964,11 @@ class GlossListView(ListView):
         if '' in vals:
             vals.remove('')
         if vals != []:
+            query_parameters['signlanguage[]'] = get.getlist('signlanguage[]')
             qs = qs.filter(signlanguage__in=vals)
 
         if 'useInstr' in get and get['useInstr'] != '':
+            query_parameters['useInstr'] = get['useInstr']
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
@@ -919,6 +984,7 @@ class GlossListView(ListView):
             if '' in vals:
                 vals.remove('')
             if vals != []:
+                query_parameters[fieldnamemultiVarname] = get.getlist(fieldnamemultiVarname)
                 if fieldnamemulti == 'semField':
                     qs = qs.filter(semFieldShadow__in=vals)
                 elif fieldnamemulti == 'derivHist':
@@ -945,14 +1011,19 @@ class GlossListView(ListView):
                     val = {'0':'','1': None, '2': True, '3': False}[val]
 
                 if val != '':
+                    query_parameters[fieldname] = get[fieldname]
+
                     kwargs = {key:val}
                     qs = qs.filter(**kwargs)
 
         if 'defsearch' in get and get['defsearch'] != '':
+            query_parameters['defsearch'] = get['defsearch']
 
             val = get['defsearch']
 
             if 'defrole' in get:
+                query_parameters['defrole'] = get['defrole']
+
                 role = get['defrole']
             else:
                 role = 'all'
@@ -963,6 +1034,7 @@ class GlossListView(ListView):
                 qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
 
         if 'tags' in get and get['tags'] != '':
+            query_parameters['tags'] = get.getlist('tags')
             vals = get.getlist('tags')
 
             tags = []
@@ -979,6 +1051,7 @@ class GlossListView(ListView):
         qs = qs.distinct()
 
         if 'nottags' in get and get['nottags'] != '':
+            query_parameters['nottags'] = get.getlist('nottags')
             vals = get.getlist('nottags')
 
             tags = []
@@ -992,12 +1065,14 @@ class GlossListView(ListView):
             qs = [q for q in qs if q not in tqs]
 
         if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
+            query_parameters['relationToForeignSign'] = get['relationToForeignSign']
 
             relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
             potential_pks = [relation.gloss.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
 
         if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
+            query_parameters['hasRelationToForeignSign'] = get['hasRelationToForeignSign']
 
             pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
 
@@ -1007,6 +1082,7 @@ class GlossListView(ListView):
                 qs = qs.exclude(pk__in=pks_for_glosses_with_relations)
 
         if 'relation' in get and get['relation'] != '':
+            query_parameters['relation'] = get['relation']
 
             potential_targets = Gloss.objects.filter(idgloss__icontains=get['relation'])
             relations = Relation.objects.filter(target__in=potential_targets)
@@ -1014,6 +1090,7 @@ class GlossListView(ListView):
             qs = qs.filter(pk__in=potential_pks)
 
         if 'hasRelation' in get and get['hasRelation'] != '':
+            query_parameters['hasRelation'] = get['hasRelation']
 
             #Find all relations with this role
             if get['hasRelation'] == 'all':
@@ -1026,6 +1103,7 @@ class GlossListView(ListView):
             qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
 
         if 'morpheme' in get and get['morpheme'] != '':
+            query_parameters['morpheme'] = get['morpheme']
 
             # morpheme is an integer
             input_morpheme = get['morpheme']
@@ -1034,12 +1112,13 @@ class GlossListView(ListView):
                 selected_morpheme = Morpheme.objects.get(pk=get['morpheme'])
                 potential_pks = [appears.parent_gloss.pk for appears in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
                 qs = qs.filter(pk__in=potential_pks)
-            except:
+            except ObjectDoesNotExist:
                 # This error should not occur, the input search form requires the selection of a morpheme from a list
                 # If the user attempts to input a string, it is ignored by the gloss list search form
                 print("Morpheme not found: ", str(input_morpheme))
 
         if 'hasComponentOfType' in get and get['hasComponentOfType'] != '':
+            query_parameters['hasComponentOfType'] = get['hasComponentOfType']
 
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
             morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasComponentOfType'])
@@ -1047,6 +1126,7 @@ class GlossListView(ListView):
             qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
         if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
+            query_parameters['hasMorphemeOfType'] = get['hasMorphemeOfType']
 
             morpheme_type = get['hasMorphemeOfType']
             # Get all Morphemes of the indicated mrpType
@@ -1055,6 +1135,7 @@ class GlossListView(ListView):
             qs = qs.filter(id__in=target_morphemes)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
+            query_parameters['definitionRole'] = get['definitionRole']
 
             #Find all definitions with this role
             if get['definitionRole'] == 'all':
@@ -1067,6 +1148,7 @@ class GlossListView(ListView):
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
         if 'definitionContains' in get and get['definitionContains'] != '':
+            query_parameters['definitionContains'] = get['definitionContains']
 
             definitions_with_this_text = Definition.objects.filter(text__iregex=get['definitionContains'])
 
@@ -1075,21 +1157,29 @@ class GlossListView(ListView):
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
         if 'createdBefore' in get and get['createdBefore'] != '':
+            query_parameters['createdBefore'] = get['createdBefore']
 
             created_before_date = DT.datetime.strptime(get['createdBefore'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE,created_before_date))
 
         if 'createdAfter' in get and get['createdAfter'] != '':
+            query_parameters['createdAfter'] = get['createdAfter']
 
             created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
             qs = qs.filter(creationDate__range=(created_after_date,DT.datetime.now()))
 
         if 'createdBy' in get and get['createdBy'] != '':
+            query_parameters['createdBy'] = get['createdBy']
+
             created_by_search_string = ' '.join(get['createdBy'].strip().split()) # remove redundant spaces
             qs = qs.annotate(
                 created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
                 .filter(created_by__icontains=created_by_search_string)
 
+        # save the query parameters to a sessin variable
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
+        self.query_parameters = query_parameters
         qs = qs.select_related('lemma')
 
         # Sort the queryset by the parameters given
@@ -1110,6 +1200,7 @@ class GlossDetailView(DetailView):
     model = Gloss
     context_object_name = 'gloss'
     last_used_dataset = None
+    query_parameters = dict()
     # template_name = 'dictionary/gloss_detail_preview.html'
 
     def get_template_names(self):
@@ -1181,13 +1272,19 @@ class GlossDetailView(DetailView):
             search_results = self.request.session['search_results']
         else:
             search_results = []
+        if 'query_parameters' in self.request.session.keys():
+            if not search_results:
+                self.request.session['query_parameters'] = json.dumps(dict())
+                self.request.session.modified = True
+            else:
+                self.query_parameters = self.request.session['query_parameters']
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = json.dumps([])
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = json.dumps([])
 
         # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
         from signbank.tools import convert_language_code_to_2char

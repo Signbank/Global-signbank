@@ -105,7 +105,7 @@ FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic',
                        'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number',
                        'weakdrop','weakprop']
 
-FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','iconImg','valence','concConcSet']
+FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','valence','iconImg','concConcSet']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
