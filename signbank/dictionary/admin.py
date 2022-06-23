@@ -619,7 +619,7 @@ class SignLanguageAdmin(VersionAdmin):
     model = SignLanguage
     inlines = [DialectInline]
     list_display = ['id', 'name', 'description']
-    readonly_fields = ['id', 'name']
+    readonly_fields = ['id']
     fields = ['id', 'name', 'description']
 
     extra = 0
