@@ -203,11 +203,20 @@ $(document).ready(function() {
             var this_id = '#id_' + language_query_keys[i];
             var this_var = language_query_keys[i];
             var query_initial = query_parameters_dict[this_var];
-            $(this_id).val(query_initial[j]);
+            $(this_id).val(query_initial);
             $(this_id).trigger('change');
         };
     }
 
+     if (query_parameters_keys.includes('tags')) {
+        var $select = $("select[name='tags']");
+         var query_initial = query_parameters_dict['tags'];
+         for (var i = 0; i < query_initial.length; i++) {
+             var tag_value = query_initial[i];
+             var $option = $select.find("option[value='" + tag_value + "']");
+             $option.attr("selected","selected");
+         };
+    };
 
      // Empty menu_bar_search_mirror
      $("#adminsearch :input").change(function() {
@@ -711,13 +720,13 @@ function do_toggle_annotation(el) {
                           <tr>
                             <td>
                                 <div class='input-group'>
-                                    <label class='input-group-addon' for='id_definitionRole'>{{searchform.createdBefore.label}}</label>
+                                    <label class='input-group-addon' for='id_createdBefore'>{{searchform.createdBefore.label}}</label>
                                     {{searchform.createdBefore}}
                                 </div>
                             </td>
                             <td>
                                 <div class='input-group'>
-                                    <label class='input-group-addon' for='id_definitionContains'>{{searchform.createdAfter.label}}</label>
+                                    <label class='input-group-addon' for='id_createdAfter'>{{searchform.createdAfter.label}}</label>
                                     {{searchform.createdAfter}}
                                 </div>
                             </td>
@@ -735,7 +744,7 @@ function do_toggle_annotation(el) {
                           <tr>
                               <td>
                                   <div class='input-group'>
-                                    <label class='input-group-addon' for='id_language'>{{searchform.tags.label}}</label>
+                                    <label class='input-group-addon' for='id_tags'>{{searchform.tags.label}}</label>
                                     {{searchform.tags}}
                                   </div>
                               </td>

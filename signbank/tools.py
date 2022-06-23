@@ -2136,21 +2136,41 @@ def convert_query_parameters_to_filter(query_parameters):
                 # the code for "No" excludes the above glosses from the results
                 query_list.append(~Q(pk__in=pks_for_glosses_with_relations))
 
+        elif get_key == 'relationToForeignSign':
+            relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get_value)
+            potential_pks = [relation.gloss.pk for relation in relations]
+            query_list.append(Q(pk__in=potential_pks))
+
         elif get_key == 'defspublished' and get_value != '':
             val = get_value == 'yes'
             query_list.append(Q(definition__published=val))
 
+        elif get_key in ['definitionContains']:
+            definitions_with_this_text = Definition.objects.filter(text__iregex=get_value)
+
+            #Remember the pk of all glosses that are referenced in the collection definitions
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
+            query_list.append(Q(pk__in=pks_for_glosses_with_these_definitions))
+
         elif get_key == 'dialect[]':
             query_list.append(Q(dialect__in=get_value))
-
         elif get_key == 'signlanguage[]':
             query_list.append(Q(signlanguage__in=get_value))
 
         elif get_key == 'useInstr':
             query_list.append(Q(useInstr__iregex=get_value))
+        elif get_key == 'createdBefore':
+            created_before_date = DT.datetime.strptime(get_value, "%m/%d/%Y").date()
+            query_list.append(Q(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date)))
+        elif get_key == 'createdAfter':
+            created_after_date = DT.datetime.strptime(get_value, "%m/%d/%Y").date()
+            query_list.append(Q(creationDate__range=(created_after_date, DT.datetime.now())))
+        elif get_key == 'createdBy':
+            created_by_first_name = [gloss.pk for gloss in Gloss.objects.filter(creator__first_name__icontains=get_value)]
+            created_by_last_name = [gloss.pk for gloss in Gloss.objects.filter(creator__last_name__icontains=get_value)]
+            pks_for_glosses_with_matching_creator = created_by_last_name + created_by_first_name
+            query_list.append(Q(pk__in=pks_for_glosses_with_matching_creator))
 
-        # elif get_key == 'handedness[]':
-        #     query_list.append(Q(handedness__in=get_value))
         elif get_key in multiple_select_gloss_fields:
             if get_key[:-2] == 'semField':
                 q_filter = 'semFieldShadow__in'
@@ -2178,6 +2198,11 @@ def convert_query_parameters_to_filter(query_parameters):
             #Remember the pk of all glosses that take part in the collected relations
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_correct_relation))
+        elif get_key in ['relation']:
+            potential_targets = Gloss.objects.filter(idgloss__icontains=get_value)
+            relations = Relation.objects.filter(target__in=potential_targets)
+            potential_pks = [relation.source.pk for relation in relations]
+            query_list.append(Q(pk__in=potential_pks))
         elif get_key in ['morpheme']:
             # Filter all glosses that contain this morpheme in their simultaneous morphology
             try:
@@ -2187,8 +2212,26 @@ def convert_query_parameters_to_filter(query_parameters):
             except ObjectDoesNotExist:
                 # This error should not occur, the input search form requires the selection of a morpheme from a list
                 # If the user attempts to input a string, it is ignored by the gloss list search form
-                print("Morpheme not found: ", get_value)
+                print("convert_query_parameters_to_filter: Morpheme not found: ", get_value)
                 continue
+        elif get_key in ['hasComponentOfType']:
+            # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get_value)
+            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
+            query_list.append(Q(pk__in=pks_for_glosses_with_morphdefs_with_correct_role))
+        elif get_key in ['hasMorphemeOfType']:
+            # Get all Morphemes of the indicated mrpType
+            target_morphemes = Morpheme.objects.filter(mrpType__exact=get_value)
+            # this only works in the query is Sign or Morpheme
+            query_list.append(Q(id__in=target_morphemes))
+        elif get_key in ['tags']:
+            tag_ids = [tag.id for tag in Tag.objects.filter(name__in=get_value)]
+            for tag_id in tag_ids:
+                # this has to be done sequentially, this is an AND of the choices in the form
+                # the get_queryset of GlossListView is also implemented as an AND
+                pks_for_glosses_with_tags = [ item.object_id for item in TaggedItem.objects.filter(tag_id=tag_id) ]
+                query_list.append(Q(pk__in=pks_for_glosses_with_tags))
+
         elif get_key in gloss_fields:
                 field_obj = Gloss._meta.get_field(get_key)
 
@@ -2206,9 +2249,11 @@ def convert_query_parameters_to_filter(query_parameters):
         else:
             pass
 
+    # make a filter from the list of Q elements
+    # a singleton is treated differently from more than one
     if not query_list:
         # query_list is empty
-        query = Q()
+        query = None
     elif len(query_list) == 1:
         query = query_list[0]
     else:
@@ -2278,13 +2323,13 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
             elif key[:-2] in form_fields:
                 query_dict[key] = GlossSearchForm.__dict__['declared_fields'][key[:-2]].label.encode('utf-8').decode()
             else:
-                print('multiple select field not found in Gloss or GlossSearchForm: ', key)
+                print('pretty_print_query_fields: multiple select field not found in Gloss or GlossSearchForm: ', key)
                 query_dict[key] = key
         elif key not in gloss_fields:
             if key in form_fields:
                 query_dict[key] = GlossSearchForm.__dict__['declared_fields'][key].label.encode('utf-8').decode()
             else:
-                print('key not in gloss_fields, not in form_fields:', key)
+                print('pretty_print_query_fields: key not in gloss_fields, not in form_fields:', key)
                 query_dict[key] = key
         else:
             query_dict[key] = Gloss._meta.get_field(key).verbose_name.encode('utf-8').decode()
@@ -2381,8 +2426,12 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
                 query_dict[key] = morpheme_object.idgloss
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 query_dict[key] = query_parameters[key]
+        elif key in ['createdBefore', 'createdAfter']:
+            created_date = DT.datetime.strptime(query_parameters[key], "%m/%d/%Y").date()
+            query_dict[key] = created_date
+        elif key in ['tags']:
+            query_dict[key] = query_parameters[key]
         else:
-            print('pretty_print_query_values, translation not implemented yet: ', key, query_parameters[key])
             query_dict[key] = query_parameters[key]
 
     for language in dataset_languages:

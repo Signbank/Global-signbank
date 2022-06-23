@@ -219,6 +219,14 @@ option:not(:checked) {
         <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                         border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
                 class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+            {% elif key == 'tags' %}
+                <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
+                   <div class='tag'>
+                   {% load underscore_to_space %}
+                        <span class='tagname'>{{qv|underscore_to_space}}</span>
+                   </div>
+                    {% if not forloop.last %} {% endif %}{% endfor %}</td>
             {% else %}
                     <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                     border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>

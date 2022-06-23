@@ -316,7 +316,7 @@ class GlossListView(ListView):
         context['query_parameters_keys'] = json.dumps(query_parameters_keys)
         other_parameters_keys = ['sortOrder', 'search_type', 'search', 'useInstr', 'morpheme', 'hasComponentOfType', 'hasMorphemeOfType',
                        'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet', 'relation', 'hasRelation',
-                       'relationToForeignSign', 'definitionRole', 'definitionContains', 'createdBefore', 'createdAfter', 'createdBy']
+                       'relationToForeignSign', 'definitionRole', 'definitionContains', 'createdAfter', 'createdBefore', 'createdBy']
         context['other_parameters_keys'] = json.dumps(other_parameters_keys)
         gloss_search_field_prefix = "glosssearch_"
         keyword_search_field_prefix = "keyword_"
@@ -1016,27 +1016,28 @@ class GlossListView(ListView):
                     kwargs = {key:val}
                     qs = qs.filter(**kwargs)
 
-        if 'defsearch' in get and get['defsearch'] != '':
-            query_parameters['defsearch'] = get['defsearch']
-
-            val = get['defsearch']
-
-            if 'defrole' in get:
-                query_parameters['defrole'] = get['defrole']
-
-                role = get['defrole']
-            else:
-                role = 'all'
-
-            if role == 'all':
-                qs = qs.filter(definition__text__icontains=val)
-            else:
-                qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
+        # THIS IS NOT USED BY GLOBAL, subsumed by definitionContains
+        # if 'defsearch' in get and get['defsearch'] != '':
+        #     query_parameters['defsearch'] = get['defsearch']
+        #
+        #     val = get['defsearch']
+        #
+        #     if 'definitionRole' in get:
+        #         query_parameters['definitionRole'] = get['definitionRole']
+        #
+        #         role = get['definitionRole']
+        #     else:
+        #         role = 'all'
+        #
+        #     if role == 'all':
+        #         qs = qs.filter(definition__text__icontains=val)
+        #     else:
+        #         qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
 
         if 'tags' in get and get['tags'] != '':
             query_parameters['tags'] = get.getlist('tags')
             vals = get.getlist('tags')
-
+            print('tags: ', vals)
             tags = []
             for t in vals:
                 tags.extend(Tag.objects.filter(name=t))
@@ -2389,20 +2390,20 @@ class MorphemeListView(ListView):
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
 
-
-        if 'defsearch' in get and get['defsearch'] != '':
-
-            val = get['defsearch']
-
-            if 'defrole' in get:
-                role = get['defrole']
-            else:
-                role = 'all'
-
-            if role == 'all':
-                qs = qs.filter(definition__text__icontains=val)
-            else:
-                qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
+        # THIS CODE IS NOT USED BY GLOBAL, subsumed by definitionContains
+        # if 'defsearch' in get and get['defsearch'] != '':
+        #
+        #     val = get['defsearch']
+        #
+        #     if 'definitionRole' in get:
+        #         role = get['definitionRole']
+        #     else:
+        #         role = 'all'
+        #
+        #     if role == 'all':
+        #         qs = qs.filter(definition__text__icontains=val)
+        #     else:
+        #         qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
 
         if 'tags' in get and get['tags'] != '':
             vals = get.getlist('tags')
