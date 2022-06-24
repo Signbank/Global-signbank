@@ -2076,11 +2076,12 @@ def strip_control_characters(input):
 
 def list_to_query(query_list):
     if not query_list:
-        print('oops query_list argument to list_to_query is empty')
+        #query_list argument to list_to_query is empty
         return Q()
     elif len(query_list) == 1:
         return query_list[0]
     else:
+        # here the recursive call is only done if the rest of the list is not empty
         rest_of_query_list = query_list[1:]
         q_exp = list_to_query(rest_of_query_list)
         or_query = query_list[0] & q_exp
@@ -2252,55 +2253,14 @@ def convert_query_parameters_to_filter(query_parameters):
     # make a filter from the list of Q elements
     # a singleton is treated differently from more than one
     if not query_list:
-        # query_list is empty
-        query = None
+        # query_list is empty, this will return everything since nothing was filtered
+        query = Q()
     elif len(query_list) == 1:
         query = query_list[0]
     else:
         # length of query_list is greater than 1
         query = list_to_query(query_list)
     return query
-
-
-def empty_query_dict(dataset_languages):
-    # these are the non-multiselect fields in the search form, plus those dependent on languages
-    gloss_search_field_prefix = "glosssearch_"
-    keyword_search_field_prefix = "keyword_"
-    lemma_search_field_prefix = "lemma_"
-
-    query_dict = QueryDict(mutable=True)
-    for language in dataset_languages:
-        glosssearch_field_name = gloss_search_field_prefix + language.language_code_2char
-        query_dict[glosssearch_field_name] = ''
-        lemma_field_name = lemma_search_field_prefix + language.language_code_2char
-        query_dict[lemma_field_name] = ''
-        keyword_field_name = keyword_search_field_prefix + language.language_code_2char
-        query_dict[keyword_field_name] = ''
-
-    multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if hasattr(field, 'field_choice_category')]
-
-    for form_field in ['signlanguage', 'dialect'] + multiple_select_gloss_fields:
-
-        query_dict[form_field+'[]'] = ''
-
-    for form_field in ['weakdrop', 'weakprop', 'domhndsh_letter', 'domhndsh_number',
-                       'subhndsh_letter', 'subhndsh_number', 'repeat', 'altern', 'hasRelationToForeignSign', 'inWeb', 'isNew']:
-        query_dict[form_field] = '0'
-
-    for form_field in ['sortOrder', 'search_type', 'search', 'useInstr', 'morpheme', 'hasComponentOfType', 'hasMorphemeOfType',
-                       'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet', 'relation', 'hasRelation',
-                       'relationToForeignSign', 'definitionRole', 'definitionContains', 'createdBefore', 'createdAfter', 'createdBy']:
-        query_dict[form_field] = ''
-    return query_dict
-
-def update_query_dict(query_parameters):
-    new_query_get_data = QueryDict(mutable=True)
-    for key in query_parameters.keys():
-        if key[-2:] == '[]':
-            new_query_get_data.setlist(key, query_parameters[key])
-        else:
-            new_query_get_data[key] = query_parameters[key]
-    return new_query_get_data
 
 def pretty_print_query_fields(dataset_languages,query_parameters):
     gloss_fields = [f.name for f in Gloss._meta.fields]

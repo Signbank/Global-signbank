@@ -49,7 +49,7 @@ from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
-    convert_query_parameters_to_filter, empty_query_dict, update_query_dict, pretty_print_query_fields
+    convert_query_parameters_to_filter
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -301,15 +301,8 @@ class GlossListView(ListView):
                 session_query_parameters = self.request.session['query_parameters']
                 self.query_parameters = json.loads(session_query_parameters)
 
-        if self.query_parameters and 'query' in self.request.GET:
-            # this doesn't actually work, because of the multiselect fields in the query form
-            new_get_parameters = update_query_dict(self.query_parameters)
-
-            search_form = GlossSearchForm(new_get_parameters, languages=dataset_languages, sign_languages=sign_languages,
-                                              dialects=dialects, language_code=self.request.LANGUAGE_CODE)
-        else:
-            search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
-                                              dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
+                                          dialects=dialects, language_code=self.request.LANGUAGE_CODE)
 
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())
@@ -853,7 +846,7 @@ class GlossListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         #Get the initial selection
-        if len(get) > 0 or show_all or self.query_parameters:
+        if show_all or (len(get) > 0 and 'query' not in self.request.GET) or  (self.query_parameters and 'query' in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
             if self.search_type == 'sign' or not self.request.user.is_authenticated():
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
