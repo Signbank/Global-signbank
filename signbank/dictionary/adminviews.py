@@ -311,6 +311,19 @@ class GlossListView(ListView):
                        'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet', 'relation', 'hasRelation',
                        'relationToForeignSign', 'definitionRole', 'definitionContains', 'createdAfter', 'createdBefore', 'createdBy']
         context['other_parameters_keys'] = json.dumps(other_parameters_keys)
+
+        # This is needed to display the idgloss of the morpheme in Search by Morphology: Search for gloss with this as morpheme
+        # The id of the morpheme selected in the GlossSearchForm is kept in a hidden input field
+        # after selection from the lookahead list
+        if 'morpheme' in self.query_parameters.keys():
+            try:
+                morpheme_idgloss = Morpheme.objects.get(pk=self.query_parameters['morpheme']).idgloss
+            except ObjectDoesNotExist:
+                morpheme_idgloss = ''
+        else:
+            morpheme_idgloss = ''
+        context['morpheme_idgloss'] = morpheme_idgloss
+
         gloss_search_field_prefix = "glosssearch_"
         keyword_search_field_prefix = "keyword_"
         lemma_search_field_prefix = "lemma_"

@@ -50,6 +50,7 @@ var query_parameters_keys = {{query_parameters_keys|safe}};
 var query_parameters_dict = JSON.parse(query_parameters);
 var other_parameters_keys = {{other_parameters_keys|safe}};
 var language_query_keys = {{language_query_keys|safe}};
+var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
 
 $(document).ready(function() {
 
@@ -192,8 +193,15 @@ $(document).ready(function() {
         if (query_parameters_keys.includes(this_var)) {
             var this_id = '#id_' + other_parameters_keys[i];
             var query_initial = query_parameters_dict[this_var];
-            $(this_id).val(query_initial);
-            $(this_id).trigger('change');
+            if (this_var == 'morpheme') {
+                // special case for morpheme, the query parameter is its ID, stored in a hidden field
+                var $hiddeninput = $("input[name='morpheme']");
+                $hiddeninput.val(query_initial);
+                // the context variable morpheme_idgloss is shown to the user
+                $(this_id).attr('value', morpheme_idgloss);
+            } else {
+                $(this_id).val(query_initial);
+            };
         };
     }
 
@@ -204,12 +212,11 @@ $(document).ready(function() {
             var this_var = language_query_keys[i];
             var query_initial = query_parameters_dict[this_var];
             $(this_id).val(query_initial);
-            $(this_id).trigger('change');
         };
     }
 
      if (query_parameters_keys.includes('tags')) {
-        var $select = $("select[name='tags']");
+         var $select = $("select[name='tags']");
          var query_initial = query_parameters_dict['tags'];
          for (var i = 0; i < query_initial.length; i++) {
              var tag_value = query_initial[i];
@@ -561,7 +568,7 @@ function do_toggle_annotation(el) {
                                 <tr>
                                     <td><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
                                     <td>
-                                        <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' value="{{searchform.morpheme.value|default:''}}"/>
+                                        <input class='form-control morphtypeahead' id="id_morpheme" placeholder='{% trans "Morpheme Gloss" %}' value="{{searchform.morpheme.value|default:''}}"/>
                                         <input type="hidden" name='morpheme' value=""/>
                                     </td>
                                 </tr>
