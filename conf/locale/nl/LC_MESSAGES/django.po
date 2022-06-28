@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 15:33+0200\n"
+"POT-Creation-Date: 2022-06-28 13:47+0200\n"
 "PO-Revision-Date: 2018-03-08 18:54+0100\n"
 "Last-Translator: susanodd\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -64,7 +64,7 @@ msgstr ""
 msgid "This field choice already exists"
 msgstr ""
 
-#: signbank/dictionary/admin.py:1001 signbank/dictionary/admin.py:1029
+#: signbank/dictionary/admin.py:1006 signbank/dictionary/admin.py:1034
 #: signbank/dictionary/templates/dictionary/import_csv.html:121
 #: signbank/dictionary/templates/dictionary/import_csv_update.html:127
 #: signbank/dictionary/templates/dictionary/import_csv_update_lemmas.html:126
@@ -178,7 +178,7 @@ msgstr ""
 #: signbank/dictionary/adminviews.py:4452
 #: signbank/dictionary/adminviews.py:4808
 #: signbank/dictionary/adminviews.py:4943
-#: signbank/dictionary/adminviews.py:5116 signbank/dictionary/update.py:2176
+#: signbank/dictionary/adminviews.py:5116 signbank/dictionary/update.py:2178
 msgid "No group Dataset_Manager found."
 msgstr "Geen groep Dataset_Manager gevonden."
 
@@ -439,11 +439,11 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:654
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:658
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:721
-#: signbank/dictionary/translate_choice_list.py:194
-#: signbank/dictionary/update.py:299 signbank/dictionary/update.py:303
-#: signbank/dictionary/update.py:309 signbank/dictionary/update.py:313
-#: signbank/dictionary/update.py:319 signbank/dictionary/update.py:323
-#: signbank/dictionary/update.py:391
+#: signbank/dictionary/translate_choice_list.py:188
+#: signbank/dictionary/update.py:300 signbank/dictionary/update.py:304
+#: signbank/dictionary/update.py:311 signbank/dictionary/update.py:315
+#: signbank/dictionary/update.py:322 signbank/dictionary/update.py:326
+#: signbank/dictionary/update.py:394
 #: venv/lib/python3.6/site-packages/django/forms/widgets.py:700
 msgid "Yes"
 msgstr "Ja"
@@ -451,7 +451,7 @@ msgstr "Ja"
 #: signbank/dictionary/adminviews.py:6319
 #: signbank/dictionary/adminviews.py:6340 signbank/dictionary/models.py:1677
 #: signbank/dictionary/models.py:1684 signbank/dictionary/models.py:1691
-#: signbank/dictionary/translate_choice_list.py:189
+#: signbank/dictionary/translate_choice_list.py:199
 msgid "Neutral"
 msgstr ""
 
@@ -479,9 +479,9 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:654
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:658
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:721
-#: signbank/dictionary/translate_choice_list.py:198
-#: signbank/dictionary/update.py:305 signbank/dictionary/update.py:315
-#: signbank/dictionary/update.py:325
+#: signbank/dictionary/translate_choice_list.py:185
+#: signbank/dictionary/update.py:306 signbank/dictionary/update.py:317
+#: signbank/dictionary/update.py:328
 #: venv/lib/python3.6/site-packages/django/forms/widgets.py:701
 msgid "No"
 msgstr "Nee"
@@ -820,7 +820,7 @@ msgstr "Rol"
 msgid "Blend"
 msgstr "Blend"
 
-#: signbank/dictionary/forms.py:547 signbank/dictionary/update.py:1609
+#: signbank/dictionary/forms.py:547 signbank/dictionary/update.py:1611
 msgid "Please choose a type description when uploading other media."
 msgstr ""
 
@@ -2337,9 +2337,9 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:191
 #: signbank/dictionary/templates/dictionary/dataset_frequency.html:374
-#: signbank/feedback/templates/feedback/show.html:74
-#: signbank/feedback/templates/feedback/show.html:133
-#: signbank/feedback/templates/feedback/show.html:196
+#: signbank/feedback/templates/feedback/show.html:76
+#: signbank/feedback/templates/feedback/show.html:135
+#: signbank/feedback/templates/feedback/show.html:198
 #: venv/lib/python3.6/site-packages/django/forms/formsets.py:393
 msgid "Delete"
 msgstr "Verwijder"
@@ -2392,9 +2392,9 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:709
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:803
 #: signbank/dictionary/templates/dictionary/update_video.html:78
-#: signbank/feedback/templates/feedback/show.html:92
-#: signbank/feedback/templates/feedback/show.html:151
-#: signbank/feedback/templates/feedback/show.html:215
+#: signbank/feedback/templates/feedback/show.html:94
+#: signbank/feedback/templates/feedback/show.html:153
+#: signbank/feedback/templates/feedback/show.html:217
 msgid "Cancel"
 msgstr "Annuleer"
 
@@ -2414,9 +2414,9 @@ msgstr "Annuleer"
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:507
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:710
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:804
-#: signbank/feedback/templates/feedback/show.html:93
-#: signbank/feedback/templates/feedback/show.html:152
-#: signbank/feedback/templates/feedback/show.html:216
+#: signbank/feedback/templates/feedback/show.html:95
+#: signbank/feedback/templates/feedback/show.html:154
+#: signbank/feedback/templates/feedback/show.html:218
 msgid "Confirm Delete"
 msgstr "Bevestig verwijderen"
 
@@ -3440,12 +3440,12 @@ msgstr "ID-Glos"
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:22
 #: signbank/dictionary/templates/dictionary/morphemetags.html:22
-#: signbank/dictionary/views.py:2820
+#: signbank/dictionary/views.py:2816
 msgid "delete this tag"
 msgstr "verwijder dit label"
 
 #: signbank/dictionary/templates/dictionary/glosstags.html:39
-#: signbank/dictionary/views.py:2824
+#: signbank/dictionary/views.py:2820
 msgid "Add Tag"
 msgstr "Voeg label toe"
 
@@ -3504,7 +3504,7 @@ msgstr "Blader&hellip;"
 #: signbank/dictionary/templates/dictionary/import_csv_update.html:61
 #: signbank/dictionary/templates/dictionary/import_csv_update_lemmas.html:60
 #: signbank/dictionary/templates/dictionary/search_result.html:20
-#: signbank/feedback/templates/feedback/generalfeedback.html:45
+#: signbank/feedback/templates/feedback/generalfeedback.html:47
 msgid "Submit"
 msgstr "Bevestig"
 
@@ -4106,279 +4106,292 @@ msgstr "Gebaarverdeling"
 msgid "Sign Definition"
 msgstr "Gebaardefinitie"
 
-#: signbank/dictionary/update.py:72 signbank/dictionary/update.py:1708
+#: signbank/dictionary/update.py:72 signbank/dictionary/update.py:1710
 msgid "The given Lemma Idgloss ID is unknown."
 msgstr ""
 
-#: signbank/dictionary/update.py:79 signbank/dictionary/update.py:1688
+#: signbank/dictionary/update.py:79 signbank/dictionary/update.py:1690
 msgid "You are not authorized to change the selected dataset."
 msgstr "Je hebt niet genoeg rechten om de geselecteerde dataset te wijzigen."
 
-#: signbank/dictionary/update.py:83 signbank/dictionary/update.py:1692
+#: signbank/dictionary/update.py:83 signbank/dictionary/update.py:1694
 msgid "Please provide a dataset."
 msgstr "Specificeer hier een dataset"
 
-#: signbank/dictionary/update.py:97 signbank/dictionary/update.py:1719
+#: signbank/dictionary/update.py:97 signbank/dictionary/update.py:1721
 msgid "Annotation ID Gloss not unique."
 msgstr "Annotatie-ID-Glos is niet uniek"
 
-#: signbank/dictionary/update.py:341
+#: signbank/dictionary/update.py:344
 msgid "The dataset of the gloss is not the same as that of the lemma."
 msgstr ""
 
-#: signbank/dictionary/update.py:343 signbank/dictionary/update.py:1923
+#: signbank/dictionary/update.py:346 signbank/dictionary/update.py:1925
 msgid "The specified lemma does not exist."
 msgstr ""
 
-#: signbank/dictionary/update.py:1334
+#: signbank/dictionary/update.py:1336
 msgid ""
 "Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes."
 msgstr ""
 
-#: signbank/dictionary/update.py:1337
+#: signbank/dictionary/update.py:1339
 msgid "Edit Simultaneuous Morphology: No morpheme selected."
 msgstr "Bewerk Simultane morfologie: Geen morfeem geselecteerd."
 
-#: signbank/dictionary/update.py:1349
+#: signbank/dictionary/update.py:1351
 msgid "Simultaneuous morphology: no morpheme found with identifier {}."
 msgstr ""
 
-#: signbank/dictionary/update.py:1531 signbank/dictionary/update.py:1592
+#: signbank/dictionary/update.py:1533 signbank/dictionary/update.py:1594
 msgid "Upload other media failed: The file has an unknown type."
 msgstr ""
 
-#: signbank/dictionary/update.py:1539
+#: signbank/dictionary/update.py:1541
 msgid "Upload other media failed: The file has no extension."
 msgstr ""
 
-#: signbank/dictionary/update.py:1575
+#: signbank/dictionary/update.py:1577
 msgid "The destination filename for other media could not be created."
 msgstr ""
 
-#: signbank/dictionary/update.py:1598
+#: signbank/dictionary/update.py:1600
 msgid "Upload other media failed: The file extension does not match its type."
 msgstr ""
 
-#: signbank/dictionary/update.py:1921
+#: signbank/dictionary/update.py:1923
 msgid "The dataset of the morpheme is not the same as that of the lemma."
 msgstr ""
 
-#: signbank/dictionary/update.py:2182
+#: signbank/dictionary/update.py:2184
 msgid "You must be in group Dataset Manager to modify dataset details."
 msgstr "Je moet in groep Dataset Manager zijn om deze dataset te wijzigen."
 
-#: signbank/dictionary/update.py:2435 signbank/dictionary/update.py:2486
+#: signbank/dictionary/update.py:2437 signbank/dictionary/update.py:2488
 msgid "No acronym for dataset."
 msgstr "Geen acroniem voor dataset."
 
-#: signbank/dictionary/update.py:2443 signbank/dictionary/update.py:2494
+#: signbank/dictionary/update.py:2445 signbank/dictionary/update.py:2496
 msgid "Dataset does not exist."
 msgstr "Dataset bestaat niet."
 
-#: signbank/dictionary/update.py:2449
+#: signbank/dictionary/update.py:2451
 msgid "You are not authorized to remove eaf files."
 msgstr "Je hebt niet genoeg rechten om EAF-bestanden te verwijderen."
 
-#: signbank/dictionary/update.py:2469
+#: signbank/dictionary/update.py:2471
 msgid "No eaf files found."
 msgstr "Geen EAF-bestanden gevonden."
 
-#: signbank/dictionary/update.py:2500
+#: signbank/dictionary/update.py:2502
 msgid "You are not authorized to upload eaf files."
 msgstr "Je hebt niet genoeg rechten om EAF-bestanden te uploaden."
 
-#: signbank/dictionary/update.py:2589
+#: signbank/dictionary/update.py:2591
 msgid "Non-EAF file(s) ignored: "
 msgstr ""
 
-#: signbank/dictionary/update.py:2593
+#: signbank/dictionary/update.py:2595
 msgid "File(s) encountered twice: "
 msgstr ""
 
-#: signbank/dictionary/update.py:2597
+#: signbank/dictionary/update.py:2599
 msgid "Already imported to different folder: "
 msgstr ""
 
-#: signbank/dictionary/views.py:571
+#: signbank/dictionary/views.py:567
 msgid "Warning: Duplicate gloss found."
 msgstr "Waarschuwing: Duplicaat glos gevonden."
 
-#: signbank/dictionary/views.py:574
+#: signbank/dictionary/views.py:570
 msgid "Fail: Gloss Not Found"
 msgstr "Fout: Glos niet gevonden"
 
-#: signbank/dictionary/views.py:584
+#: signbank/dictionary/views.py:580
 msgid "Permission denied"
 msgstr "Geen toestemming"
 
-#: signbank/dictionary/views.py:592
+#: signbank/dictionary/views.py:588
 msgid "Success (Image File Overwritten)"
 msgstr "Succes (Beeldbestand overschreven)"
 
-#: signbank/dictionary/views.py:594 signbank/dictionary/views.py:605
+#: signbank/dictionary/views.py:590 signbank/dictionary/views.py:601
 msgid "Success"
 msgstr "Succes"
 
-#: signbank/dictionary/views.py:603
+#: signbank/dictionary/views.py:599
 msgid "Success (Video File Overwritten)"
 msgstr "Succes (Videobestand overschreven)"
 
-#: signbank/dictionary/views.py:858 signbank/dictionary/views.py:1321
-#: signbank/dictionary/views.py:1807
+#: signbank/dictionary/views.py:854 signbank/dictionary/views.py:1317
+#: signbank/dictionary/views.py:1803
 msgid ""
 "Unrecognised text encoding. Please export your file to UTF-8 format using e."
 "g. LibreOffice."
 msgstr ""
 
-#: signbank/dictionary/views.py:860 signbank/dictionary/views.py:1323
-#: signbank/dictionary/views.py:1809
+#: signbank/dictionary/views.py:856 signbank/dictionary/views.py:1319
+#: signbank/dictionary/views.py:1805
 msgid "Unrecognised format in selected CSV file."
+msgstr ""
+
+#: signbank/dictionary/views.py:902 signbank/dictionary/views.py:1365
+#: signbank/dictionary/views.py:1849
+msgid "Incorrect Delimiter: "
 msgstr ""
 
 #: signbank/dictionary/views.py:906 signbank/dictionary/views.py:1369
 #: signbank/dictionary/views.py:1853
-msgid "Incorrect Delimiter: "
-msgstr ""
-
-#: signbank/dictionary/views.py:910 signbank/dictionary/views.py:1373
-#: signbank/dictionary/views.py:1857
 msgid "Empty Column Header Found."
 msgstr "Lege kolomkop gevonden."
 
-#: signbank/dictionary/views.py:914 signbank/dictionary/views.py:1377
-#: signbank/dictionary/views.py:1861
+#: signbank/dictionary/views.py:910 signbank/dictionary/views.py:1373
+#: signbank/dictionary/views.py:1857
 msgid "Duplicate Column Header Found."
 msgstr "Duplicaat kolomkop gevonden."
 
-#: signbank/dictionary/views.py:918
+#: signbank/dictionary/views.py:914
 msgid "Signbank ID column found."
 msgstr "Signbank-ID kolom gevonden."
 
-#: signbank/dictionary/views.py:922 signbank/dictionary/views.py:1385
-#: signbank/dictionary/views.py:1869
+#: signbank/dictionary/views.py:918 signbank/dictionary/views.py:1381
+#: signbank/dictionary/views.py:1865
 msgid "The Dataset column is required."
 msgstr "De kolom 'Dataset' is verplicht."
 
-#: signbank/dictionary/views.py:1381
+#: signbank/dictionary/views.py:1377
 msgid "The Signbank ID column is required."
 msgstr "De kolom 'Signbank ID' is verplicht."
 
-#: signbank/dictionary/views.py:1865
+#: signbank/dictionary/views.py:1861
 msgid "The Lemma ID column is required."
 msgstr "De kolom 'Lemma ID' is verplicht."
 
-#: signbank/feedback/templates/feedback/generalfeedback.html:18
-#: signbank/feedback/templates/feedback/show.html:45
+#: signbank/feedback/templates/feedback/generalfeedback.html:9
+msgid "Signbank: General Feedback"
+msgstr "Signbank: Algemene feedback"
+
+#: signbank/feedback/templates/feedback/generalfeedback.html:20
+#: signbank/feedback/templates/feedback/show.html:47
 msgid "General Feedback"
 msgstr "Algemene feedback"
 
-#: signbank/feedback/templates/feedback/generalfeedback.html:20
+#: signbank/feedback/templates/feedback/generalfeedback.html:22
 msgid ""
 "Please enter any comments you may have about this site and click \"submit\" "
 "to send your feedback to us. We value your contributions and comments."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/generalfeedback.html:28
+#: signbank/feedback/templates/feedback/generalfeedback.html:30
 msgid "General comments, suggestions, or anything you feel like telling us."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/generalfeedback.html:34
+#: signbank/feedback/templates/feedback/generalfeedback.html:36
 msgid " Upload your feedback as a video."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/generalfeedback.html:37
-#: signbank/feedback/templates/feedback/missingsign.html:87
+#: signbank/feedback/templates/feedback/generalfeedback.html:39
+#: signbank/feedback/templates/feedback/missingsign.html:89
 msgid ""
 "NOTE: Video files can be quite large, and may take a long time to send. "
 "Please be patient when submitting this feedback."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/generalfeedbacksummary.html:10
+#: signbank/feedback/templates/feedback/generalfeedbacksummary.html:7
+#: signbank/feedback/templates/feedback/show.html:6
+msgid "Signbank: Feedback Overview"
+msgstr "Signbank: Feedbackoverzicht"
+
+#: signbank/feedback/templates/feedback/generalfeedbacksummary.html:12
 msgid "General Feedback Summary"
 msgstr "Algemene feedback samenvatting"
 
-#: signbank/feedback/templates/feedback/missingsign.html:51
-#: signbank/feedback/templates/feedback/show.html:162
+#: signbank/feedback/templates/feedback/missingsign.html:6
+msgid "Signbank: Missing Sign Feedback"
+msgstr "Signbank: Meld een ontbrekend gebaar"
+
+#: signbank/feedback/templates/feedback/missingsign.html:53
+#: signbank/feedback/templates/feedback/show.html:164
 msgid "Missing Sign Feedback"
 msgstr "Feedback over ontbrekend gebaar"
 
-#: signbank/feedback/templates/feedback/missingsign.html:56
+#: signbank/feedback/templates/feedback/missingsign.html:58
 msgid "Thank you for your feedback."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:60
+#: signbank/feedback/templates/feedback/missingsign.html:62
 msgid "Please submit a video comment showing the sign you think is missing."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:61
+#: signbank/feedback/templates/feedback/missingsign.html:63
 msgid "Please produce the sign in isolation and then in an example sentence."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:62
+#: signbank/feedback/templates/feedback/missingsign.html:64
 msgid ""
 "Please also type in the English translation equivalent below as well as your "
 "contact information (name and email address) so we can contact you for a "
 "follow up if need be."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:66
+#: signbank/feedback/templates/feedback/missingsign.html:68
 msgid "Thank you for taking the time to contact us and help SignBank grow."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:70
+#: signbank/feedback/templates/feedback/missingsign.html:72
 msgid ""
 "You may either upload a video that shows the missing sign or fill in details "
 "below. In either case, you should enter a meaning and any comments you might "
 "have in the text boxes at the bottom of the form."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:77
+#: signbank/feedback/templates/feedback/missingsign.html:79
 msgid "Video Comment"
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:80
+#: signbank/feedback/templates/feedback/missingsign.html:82
 msgid "Video Upload"
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:83
+#: signbank/feedback/templates/feedback/missingsign.html:85
 msgid "Upload a video of the sign."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:96
+#: signbank/feedback/templates/feedback/missingsign.html:98
 msgid "Details"
 msgstr "Details"
 
-#: signbank/feedback/templates/feedback/missingsign.html:98
+#: signbank/feedback/templates/feedback/missingsign.html:100
 msgid ""
 "Please explain the meaning of the new or missing sign, or enter individual "
 "English words that have the same meaning as this sign (i.e. keywords)."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:107
+#: signbank/feedback/templates/feedback/missingsign.html:109
 msgid ""
 "Are there any other comments you would like to give about this sign? For "
 "example, do you think there are other or extra keyword/s that belong with "
 "this sign? If so, please include your comments below."
 msgstr ""
 
-#: signbank/feedback/templates/feedback/missingsign.html:118
+#: signbank/feedback/templates/feedback/missingsign.html:120
 msgid "Submit Feedback"
 msgstr "Verstuur feedback"
 
-#: signbank/feedback/templates/feedback/show.html:82
-#: signbank/feedback/templates/feedback/show.html:141
-#: signbank/feedback/templates/feedback/show.html:205
+#: signbank/feedback/templates/feedback/show.html:84
+#: signbank/feedback/templates/feedback/show.html:143
+#: signbank/feedback/templates/feedback/show.html:207
 msgid "Delete This Comment"
 msgstr "Verwijder deze aantekening"
 
-#: signbank/feedback/templates/feedback/show.html:85
-#: signbank/feedback/templates/feedback/show.html:144
-#: signbank/feedback/templates/feedback/show.html:208
+#: signbank/feedback/templates/feedback/show.html:87
+#: signbank/feedback/templates/feedback/show.html:146
+#: signbank/feedback/templates/feedback/show.html:210
 msgid "This action will delete this comment. It cannot be undone."
 msgstr ""
 "Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
 
-#: signbank/feedback/templates/feedback/show.html:105
+#: signbank/feedback/templates/feedback/show.html:107
 msgid "Sign Feedback"
 msgstr "Gebaar feedback"
 
@@ -4498,21 +4511,21 @@ msgid "title"
 msgstr "titel"
 
 #: signbank/settings/server_specific/default.py:64
-#: signbank/settings/server_specific/global_sb_local.py:24
+#: signbank/settings/server_specific/global_sb_local.py:26
 #: signbank/settings/server_specific/global_sb_new_aj.py:14
-#: signbank/settings/server_specific/server_specific.py:24
+#: signbank/settings/server_specific/server_specific.py:26
 msgid "English"
 msgstr "Engels"
 
-#: signbank/settings/server_specific/global_sb_local.py:25
+#: signbank/settings/server_specific/global_sb_local.py:27
 #: signbank/settings/server_specific/global_sb_new_aj.py:15
-#: signbank/settings/server_specific/server_specific.py:25
+#: signbank/settings/server_specific/server_specific.py:27
 msgid "Dutch"
 msgstr "Nederlands"
 
-#: signbank/settings/server_specific/global_sb_local.py:26
+#: signbank/settings/server_specific/global_sb_local.py:28
 #: signbank/settings/server_specific/global_sb_new_aj.py:16
-#: signbank/settings/server_specific/server_specific.py:26
+#: signbank/settings/server_specific/server_specific.py:28
 msgid "Chinese"
 msgstr "Chinees"
 
