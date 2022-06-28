@@ -13,28 +13,11 @@
 {% load guardian_tags %}
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
     var url = '{{ PREFIX_URL }}';
 
-
     var language_code = '{{ LANGUAGE_CODE }}';
-
-    {% trans "Edit" as edit_mode_str %}
-    {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
-    {% trans "Delete This Gloss" as delete_this_gloss_str %}
-    {% trans "Saving..." as saving_str %}
-    {% trans "This idgloss already exists" as idgloss_already_exists_str %}
-
-    var edit_mode_str = '{{edit_mode_str|escapejs}}';
-    var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
-    var delete_this_gloss_str = '{{delete_this_gloss_str|escapejs}}';
-    var saving_str = '{{saving_str|escapejs}}';
-    var idgloss_already_exists_str = '{{idgloss_already_exists_str|escapejs}}';
-
 
     var yes_str = '{% trans "Yes" %}'
     var no_str = '{% trans "No" %}'
@@ -69,13 +52,79 @@
         }
     }
 
-
     $('[data-toggle="tooltip"]').tooltip({
         placement : 'bottom'
     });
+        var objects_on_page = {{objects_on_page|safe}};
 
+        lookup = "#glosslist_table";
+        $.ajax({
+                url : url + "/dictionary/ajax/glosslistheader/",
+                datatype: "json",
+                async: true,
+                success : function(result) {
+                    var elem = $(result);
+                    var parsed = $.parseHTML(result);
+                    $(lookup).find('#glosslist_table_header').before(result);
+                }
 
+        });
+        for (var i = 0; i < objects_on_page.length; i++) {
+            $.ajax({
+                url : url + "/dictionary/ajax/glossrow/" + objects_on_page[i] + "/",
+                datatype: "json",
+                async: true,
+                success : function(result) {
+                    var elem = $(result);
+                    var parsed = $.parseHTML(result);
+                    $.each( parsed, function(i, el ) {
+                        nodename = el.nodeName;
+                        if (nodename == 'TR') {
+                            id_of_row = $(el).attr('id');
+                            res = id_of_row.split("_");
+                            id_of_gloss = res[1];
+                            focus_gloss_lookup = '#focusgloss_' + id_of_gloss;
+                            $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
+                            video_lookup = '#glossvideo_' + id_of_gloss;
+                            video_elt = $(lookup).find(video_lookup)
+                            video_elt.addClass("hover-shows-video");
+                            ready_videos(video_elt);
+                        };
+                    });
+                }
+            });
+        };
 
+    function ready_videos(el) {
+        $(el).find('video').hide();
+
+        $(el).mouseenter(function ()
+        {
+            $(this).find('img').hide();
+            $(this).find('video').show();
+            $(this).find('video').get(0).play();
+        });
+
+        $(el).mouseleave(function ()
+        {
+            $(this).find('img').show();
+            $(this).find('video').hide();
+
+            $(this).find('video').get(0).pause();
+            $(this).find('video').get(0).currentTime = 0;
+        });
+    }
+
+    // This function toggles the different language columns for Annotations, Lemmas, and Translations
+    function do_toggle_annotation(el) {
+        var dataset_language_id = $(el).attr('value');
+        var annotation_column_id = '.annotation_' + dataset_language_id;
+        var lemma_column_id = '.lemma_' + dataset_language_id;
+        var translation_column_id = '.translation_' + dataset_language_id;
+        $(annotation_column_id).toggle();
+        $(lemma_column_id).toggle();
+        $(translation_column_id).toggle();
+    };
     </script>
     <script type='text/javascript'>
 
@@ -200,10 +249,10 @@ option:not(:checked) {
 </div>
 
 
-<div id="definitionblock" style="z-index:0;padding-top: 100px; width: 800px;">
+<div id="definitionblock" >
     <br>
     <h3>{% trans "Query Parameters" %}</h3>
-    <table class="table table-condensed">
+    <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
         <thead id = 'query_table_header'>
                 <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                         border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
@@ -237,39 +286,31 @@ option:not(:checked) {
     <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
     <br>
     <h3>{% trans "Glosses Matching Query" %}</h3>
-    <table class="table table-condensed">
 
-            <thead id = 'glosslist_table_header'>
-    <tr>
+    {% if object_list %}
+    {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+    {% if dataset_languages|length > 2 %}
+    {% for dataset_lang in dataset_languages %}
+    <button name="button_annotation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_annotation(this);"
+            value="{{dataset_lang.language_code_2char}}" >
+        {{ dataset_lang.name }}
+    </button>
+    {% endfor %}
+    <br>
+    <br>
+    {% endif %}
+    {% endif %}
 
-        <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Annotation ID Gloss" %}</th>
-
-          {% for column in column_headers %}
-            <th></th>
-          {% endfor %}
-
-      </tr>
-
-    </thead>
-    <tbody>
-        {% for search_result in object_list %}
-            <tr>
-              <td  style="vertical-align:top; border-bottom: 1px solid grey;
-              border-left: 1px solid grey; border-right: 1px solid grey">
-                  <div class="annotation_{{dataset_lang.language_code_2char}}">
-                      {% if gloss.id == search_result.id %}
-                            {{search_result.data_label}}
-                      {% else %}
-                      <a class='nav-link'
-                         href="{{PREFIX_URL}}/dictionary/{{search_result.href_type}}/{{search_result.id}}">{{search_result.data_label}}</a>
-                      {% endif %}
-                  </div>
-              </td>
-
+    <table class='table table-condensed' id = 'glosslist_table'>
+        <thead id = 'glosslist_table_header'></thead>
+        <tbody>
+        {% for gloss in object_list %}
+        <tr id = "focusgloss_{{gloss.id}}">
             </tr>
         {% endfor %}
-    </tbody>
+        </tbody>
     </table>
+    {% endif %}
+
 </div>
 {% endblock %}

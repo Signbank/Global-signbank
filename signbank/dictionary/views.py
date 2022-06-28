@@ -2843,6 +2843,13 @@ def gloss_revision_history(request,gloss_pk):
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
                    })
 
+def map_search_results_to_gloss_list(search_results):
+
+    gloss_ids = []
+    for search_result in search_results:
+        gloss_ids.append(search_result['id'])
+    return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))
+
 def gloss_list_view(request,gloss_pk):
 
     gloss = Gloss.objects.get(pk=gloss_pk)
@@ -2867,6 +2874,8 @@ def gloss_list_view(request,gloss_pk):
             # search_type is 'handshape'
             request.session['search_results'] = None
 
+    (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
+
     if 'query_parameters' in request.session.keys():
         # if the query parameters are available, convert them to a dictionary
         session_query_parameters = request.session['query_parameters']
@@ -2884,7 +2893,9 @@ def gloss_list_view(request,gloss_pk):
     query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters,request.LANGUAGE_CODE)
 
     return render(request, 'dictionary/gloss_list_view.html',
-                  {'gloss': gloss, 'object_list':search_results,
+                  {'gloss': gloss,
+                   'objects_on_page': objects_on_page,
+                   'object_list': object_list,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'active_id': gloss_pk,

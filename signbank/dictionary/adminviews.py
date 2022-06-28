@@ -1043,7 +1043,6 @@ class GlossListView(ListView):
         if 'tags' in get and get['tags'] != '':
             query_parameters['tags'] = get.getlist('tags')
             vals = get.getlist('tags')
-            print('tags: ', vals)
             tags = []
             for t in vals:
                 tags.extend(Tag.objects.filter(name=t))
