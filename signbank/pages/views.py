@@ -67,6 +67,12 @@ def page(request, url='/'):
     elif request.LANGUAGE_CODE == 'zh-hans':
         f.title = mark_safe(f.title_chinese)
         f.content = mark_safe(f.content_chinese)
+    elif request.LANGUAGE_CODE == 'ar' and f.title_arabic and f.content_arabic:
+        f.title = mark_safe(f.title_arabic)
+        f.content = mark_safe(f.content_arabic)
+    elif request.LANGUAGE_CODE == 'he' and f.title_hebrew and f.content_hebrew:
+        f.title = mark_safe(f.title_hebrew)
+        f.content = mark_safe(f.content_hebrew)
     else:
         f.title = mark_safe(f.title)
         f.content = mark_safe(f.content)
