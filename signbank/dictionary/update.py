@@ -225,6 +225,16 @@ def update_gloss(request, glossid):
 
             return update_dialect(gloss, field, values)
 
+        elif field == 'semanticfield':
+            # expecting possibly multiple values
+
+            return update_semanticfield(gloss, field, values)
+
+        elif field == 'derivationhistory':
+            # expecting possibly multiple values
+
+            return update_derivationhistory(gloss, field, values)
+
         elif field == 'dataset':
             original_value = getattr(gloss,field)
 
@@ -600,6 +610,70 @@ def update_dialect(gloss, field, values):
                                       {'content-type': 'text/plain'})
 
     return HttpResponse(str(signlanguage_value) + '\t' + str(new_dialects_value), {'content-type': 'text/plain'})
+
+def update_semanticfield(gloss, field, values):
+    # field is 'semanticfield'
+    # expecting possibly multiple values
+    # values is a list of strings
+    new_semanticfields_to_save = []
+
+    # fetch all the valid semantic field choices
+    # create a lookup dictionary mapping names to objects
+    # the name is a unique field in the model
+    semanticfield_choices = {}
+    for sf in SemanticField.objects.all():
+        semanticfield_choices[sf.name] = sf
+
+    # get the SmanticField objects for the values
+    for value in values:
+        # there's a conditional here, although it's not really needed
+        # it is impossible for a value not to be found among the choices
+        # we test for it among the keys to avoid a key error
+        # if a value is not found it is simply ignored
+        if value in semanticfield_choices.keys():
+            new_semanticfields_to_save.append(semanticfield_choices[value])
+
+    # clear the old semantic fields only after we've parsed and checked the new ones
+    gloss.semFieldShadow.clear()
+    for sf in new_semanticfields_to_save:
+        gloss.semFieldShadow.add(sf)
+    gloss.save()
+
+    new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
+
+    return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
+
+def update_derivationhistory(gloss, field, values):
+    # field is 'derivationhistory'
+    # expecting possibly multiple values
+    # values is a list of strings
+    new_derivationhistory_to_save = []
+
+    # fetch all the valid derivation history choices
+    # create a lookup dictionary mapping names to objects
+    # the name is a unique field in the model
+    derivationhistory_choices = {}
+    for dh in DerivationHistory.objects.all():
+        derivationhistory_choices[dh.name] = dh
+
+    # get the DerivationHistory objects for the values
+    for value in values:
+        # there's a conditional here, although it's not really needed
+        # it is impossible for a value not to be found among the choices
+        # we test for it among the keys to avoid a key error
+        # if a value is not found it is simply ignored
+        if value in derivationhistory_choices.keys():
+            new_derivationhistory_to_save.append(derivationhistory_choices[value])
+
+    # clear the old derivation histories only after we've parsed and checked the new ones
+    gloss.derivHistShadow.clear()
+    for sf in new_derivationhistory_to_save:
+        gloss.derivHistShadow.add(sf)
+    gloss.save()
+
+    new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+
+    return HttpResponse(str(new_derivationhistory_value), {'content-type': 'text/plain'})
 
 def update_tags(gloss, field, values):
     # expecting possibly multiple values
@@ -1661,6 +1735,16 @@ def update_morpheme(request, morphemeid):
             # expecting possibly multiple values
 
             return update_dialect(morpheme, field, values)
+
+        elif field == 'semanticfield':
+            # expecting possibly multiple values
+
+            return update_semanticfield(morpheme, field, values)
+
+        elif field == 'derivationhistory':
+            # expecting possibly multiple values
+
+            return update_derivationhistory(morpheme, field, values)
 
         elif field == 'dataset':
             # this has been hidden

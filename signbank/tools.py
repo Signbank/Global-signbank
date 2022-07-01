@@ -1622,6 +1622,21 @@ def convert_language_code_to_2char(language_code):
 
     return new_language_code
 
+def convert_language_code_to_language_minus_locale(language_code):
+    # this is used for default sort in GlossListView, only the first two characters
+    # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
+    if '-' in language_code:
+        language_code_parts = language_code.split('-')
+    elif '_' in language_code:
+        language_code_parts = language_code.split('_')
+    else:
+        # only one part
+        language_code_parts = [language_code]
+
+    new_language_code = language_code_parts[0]
+
+    return new_language_code
+
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
 from signbank.settings import server_specific
 from signbank.settings.server_specific import *
