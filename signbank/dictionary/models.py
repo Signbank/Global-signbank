@@ -167,14 +167,14 @@ class FieldChoice(models.Model):
     ]
 
     field = models.CharField(max_length=50)
-    fieldchoice = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
-    name = models.CharField(max_length=50)  # new field wrt master, will be copy of english_name
+    fieldchoice = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS, null=True)
+    name = models.CharField(max_length=50, blank=True)  # new field wrt master, will be copy of english_name
     english_name = models.CharField(max_length=50)
-    name_en = models.CharField(max_length=50, null=True)
+    # name_en = models.CharField(max_length=50, null=True) # Django adds this during migration
     dutch_name = models.CharField(max_length=50)
-    name_nl = models.CharField(max_length=50, null=True)
+    # name_nl = models.CharField(max_length=50, null=True) # Django adds this during migration
     chinese_name = models.CharField(max_length=50, blank=True)
-    name_zh_hans = models.CharField(max_length=50, null=True)
+    # name_zh_hans = models.CharField(max_length=50, null=True) # Django adds this during migration
     machine_value = models.IntegerField(
         help_text="The actual numeric value stored in the database. Created automatically.")
     field_color = ColorField(default='ffffff')
@@ -373,13 +373,13 @@ class RelationToForeignSign(models.Model):
 
 class Handshape(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
-    name = models.CharField(_("English name"), max_length=50) # new field wrt master, will be copy of english_name
+    name = models.CharField(_("English name"), max_length=50, blank=True) # new field wrt master, will be copy of english_name
     english_name = models.CharField(_("English name"), max_length=50)
-    name_en = models.CharField(max_length=50, null=True, verbose_name='English name')
+    # name_en = models.CharField(max_length=50, null=True, verbose_name='English name') # Django adds this during migration
     dutch_name = models.CharField(_("Dutch name"), max_length=50)
-    name_nl = models.CharField(max_length=50, null=True, verbose_name='English name')
+    # name_nl = models.CharField(max_length=50, null=True, verbose_name='English name') # Django adds this during migration
     chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
-    name_zh_hans = models.CharField(max_length=50, null=True, verbose_name='English name')
+    # name_zh_hans = models.CharField(max_length=50, null=True, verbose_name='English name') # Django adds this during migration
     hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"),
                                 max_length=5)
     hsNumSel.field_choice_category = 'Quantity'

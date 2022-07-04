@@ -4,7 +4,7 @@ from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
-                                        MorphologyDefinition, build_choice_list_2, OtherMedia, Handshape, \
+                                        MorphologyDefinition, build_choice_list_2, build_choice_list, OtherMedia, Handshape, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
 from django.conf import settings
@@ -226,8 +226,13 @@ RELATION_ROLE_CHOICES = (('','---------'),
                          ('hyponym', 'Hyponym'),
                          ('hypernym', 'Hypernym'),
                          ('seealso', 'See Also'),
+                         ('paradigm', 'Handshape Paradigm'),
                          )
 
+DEFN_ROLE_CHOICES = [('','---------'),('all','All')] + build_choice_list('NoteType')
+COMPONENT_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphologyType')
+MORPHEME_ROLE_CHOICES = [('','---------')] + build_choice_list('MorphemeType')
+ATTRS_FOR_FORMS = {'class':'form-control'}
 
 def get_definition_role_choices():
     return build_choice_list_2('NoteType', [('','---------'),('all','All')])
@@ -455,18 +460,22 @@ class MorphemeSearchForm(forms.ModelForm):
                                                         required=False, widget=Select2)
 
 class DefinitionForm(forms.ModelForm):
+    note = forms.ChoiceField(label=_(u'Type'), choices=build_choice_list('NoteType'),
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
     class Meta:
         model = Definition
         fields = ('published','count', 'text')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['note'] = forms.ChoiceField(label=_(u'Type'),
-                             choices=choicelist_queryset_to_translated_dict(
-                                 FieldChoice.objects.filter(field__exact='NoteType'),
-                                 get_language(), ordered=False, id_prefix=''
-                             ),
-                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    # this is new wrt master
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.fields['note'] = forms.ChoiceField(label=_(u'Type'),
+    #                          choices=choicelist_queryset_to_translated_dict(
+    #                              FieldChoice.objects.filter(field__exact='NoteType'),
+    #                              get_language(), ordered=False, id_prefix=''
+    #                          ),
+    #                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         
 class RelationForm(forms.ModelForm):
     
@@ -507,8 +516,10 @@ class GlossMorphologyForm(forms.ModelForm):
     """Morphology specification of a Gloss"""
 
     parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
-    role = forms.ChoiceField(label=_(u'Type'),choices=get_morphology_type_choices,
-                             widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    role = forms.ChoiceField(label=_(u'Type'),choices=build_choice_list('MorphologyType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    # this is new wrt master
+    # role = forms.ChoiceField(label=_(u'Type'),choices=get_morphology_type_choices,
+    #                          widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     morpheme_id = forms.CharField(label=_(u'Morpheme'))
 
     class Meta:
@@ -534,8 +545,10 @@ class MorphemeMorphologyForm(forms.ModelForm):
     """Morphology specification for a Morpheme"""
 
     parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
-    role = forms.ChoiceField(label=_(u'Type'),choices=get_morphology_type_choices,
-                             widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    role = forms.ChoiceField(label=_(u'Type'),choices=build_choice_list('MorphologyType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    # this is new wrt master
+    # role = forms.ChoiceField(label=_(u'Type'),choices=get_morphology_type_choices,
+    #                          widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     morpheme_id = forms.CharField(label=_(u'Morpheme'))
 
     class Meta:
@@ -545,8 +558,10 @@ class MorphemeMorphologyForm(forms.ModelForm):
 class OtherMediaForm(forms.ModelForm):
 
     gloss = forms.CharField()
-    file = forms.FileField()
-    type = forms.ChoiceField(choices=build_choice_list_2('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*, application/pdf'}), required=True)
+    type = forms.ChoiceField(choices=build_choice_list('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    # this is new wrt master
+    # type = forms.ChoiceField(choices=build_choice_list_2('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     alternative_gloss = forms.TextInput()
 
     class Meta:
@@ -592,6 +607,13 @@ class DatasetUpdateForm(forms.ModelForm):
 
 def get_finger_selection_choices():
     return build_choice_list_2('FingerSelection', [('','---------')])
+
+FINGER_SELECTION_CHOICES = [('','---------')] + build_choice_list('FingerSelection')
+FINGER_CONFIGURATION_CHOICES = [('','---------')] + build_choice_list('JointConfiguration')
+QUANTITY_CHOICES = [('','---------')] + build_choice_list('Quantity')
+THUMB_CHOICES = [('','---------')] + build_choice_list('Thumb')
+SPREADING_CHOICES = [('','---------')] + build_choice_list('Spreading')
+APERTURE_CHOICES = [('','---------')] + build_choice_list('Aperture')
 attrs_default = {'class': 'form-control'}
 FINGER_SELECTION = ((True, 'True'), (False, 'False'), (None, 'Either'))
 
@@ -602,9 +624,24 @@ class HandshapeSearchForm(forms.ModelForm):
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="machine_value")  # Used in Handshapelistview to store user-selection
 
+    fingerSelection = forms.ChoiceField(label=_(u'Finger Selection'), choices=FINGER_SELECTION_CHOICES,
+                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    fingerConfiguration = forms.ChoiceField(label=_(u'Finger Configuration'), choices=FINGER_CONFIGURATION_CHOICES,
+                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+    numSelected = forms.ChoiceField(label=_(u'Quantity'),
+                               choices=QUANTITY_CHOICES ,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
     # this is used to pass the label to the handshapes list view
-    unselectedFingers = forms.ChoiceField(label=_(u'Unselected fingers extended'), choices=get_finger_selection_choices,
+    # this is new wrt master
+    # unselectedFingers = forms.ChoiceField(label=_(u'Unselected fingers extended'), choices=get_finger_selection_choices,
+    #                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    unselectedFingers = forms.ChoiceField(label=_(u'Unselected Fingers Extended'), choices=FINGER_SELECTION_CHOICES,
                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    spreading = forms.ChoiceField(label=_(u'Spreading'), choices=SPREADING_CHOICES,
+                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    aperture = forms.ChoiceField(label=_(u'Aperture'), choices=APERTURE_CHOICES,
+                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     fsT = forms.NullBooleanSelect()
     fsI = forms.NullBooleanSelect()
