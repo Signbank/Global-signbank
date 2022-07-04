@@ -4,7 +4,7 @@ from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
-                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, \
+                                        MorphologyDefinition, build_choice_list_2, OtherMedia, Handshape, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
 from django.conf import settings
@@ -230,15 +230,15 @@ RELATION_ROLE_CHOICES = (('','---------'),
 
 
 def get_definition_role_choices():
-    return build_choice_list('NoteType', [('','---------'),('all','All')])
+    return build_choice_list_2('NoteType', [('','---------'),('all','All')])
 
 
 def get_component_role_choice():
-    return build_choice_list('MorphologyType', [('','---------')])
+    return build_choice_list_2('MorphologyType', [('','---------')])
 
 
 def get_morpheme_role_choices():
-    return build_choice_list('MorphemeType', [('','---------')])
+    return build_choice_list_2('MorphemeType', [('','---------')])
 
 
 ATTRS_FOR_FORMS = {'class':'form-control'}
@@ -500,7 +500,7 @@ class RelationToForeignSignForm(forms.ModelForm):
 
 
 def get_morphology_type_choices():
-    return build_choice_list('MorphologyType')
+    return build_choice_list_2('MorphologyType')
 
 
 class GlossMorphologyForm(forms.ModelForm):
@@ -546,7 +546,7 @@ class OtherMediaForm(forms.ModelForm):
 
     gloss = forms.CharField()
     file = forms.FileField()
-    type = forms.ChoiceField(choices=build_choice_list('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    type = forms.ChoiceField(choices=build_choice_list_2('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     alternative_gloss = forms.TextInput()
 
     class Meta:
@@ -591,7 +591,7 @@ class DatasetUpdateForm(forms.ModelForm):
         self.fields['default_language'] = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), choices=languages)
 
 def get_finger_selection_choices():
-    return build_choice_list('FingerSelection', [('','---------')])
+    return build_choice_list_2('FingerSelection', [('','---------')])
 attrs_default = {'class': 'form-control'}
 FINGER_SELECTION = ((True, 'True'), (False, 'False'), (None, 'Either'))
 
