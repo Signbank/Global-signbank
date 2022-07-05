@@ -54,7 +54,9 @@ class PageAdmin(SummernoteModelAdmin):
         )
     else:
         fieldsets = (
-            (None, {'fields': ('url', 'title', 'title_dutch', 'title_chinese', 'parent', 'index', 'publish', 'content', 'content_dutch', 'content_chinese')}),
+            (None, {'fields': ('url', 'title', 'title_dutch', 'title_chinese', 'title_arabic', 'title_hebrew',
+                               'parent', 'index', 'publish',
+                               'content', 'content_dutch', 'content_chinese', 'content_arabic', 'content_hebrew')}),
             (_('Advanced options'), {'classes': ('collapse',), 'fields': ('group_required', 'template_name')}),
         )
     list_display = ('url', 'title', 'parent', 'index')
