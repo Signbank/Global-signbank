@@ -15,7 +15,7 @@ django-summernote==0.8.6
 django-tagging==0.4.5
 flatdict==4.0.0
 git+https://github.com/vanlummelhuizen/CNGT-scripts@master#egg=CNGT_scripts
-lxml==3.7.3
+lxml==4.9.1
 numpy==1.19.5
 py==1.5.2
 pympi-ling==1.70.2
