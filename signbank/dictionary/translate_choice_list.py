@@ -27,12 +27,12 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
         temp_mapping_dict[choice.machine_value] = human_value
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
-            raw_choice_list.append((id_prefix + str(choice.id), choice.name))
+            raw_choice_list.append((id_prefix + str(choice.pk), choice.name))
 
     if 'NoteType' in str(queryset.query):
         print(raw_choice_list)
 
-    list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].id), v) for v in list_head_values]
+    list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].pk), v) for v in list_head_values]
 
     if ordered:
         sorted_choice_list = OrderedDict(list_head)

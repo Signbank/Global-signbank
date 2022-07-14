@@ -1248,6 +1248,8 @@ class GlossDetailView(DetailView):
                     if hasattr(gloss_field, 'field_choice_category'):
                         fieldchoice_category = gloss_field.field_choice_category
                         choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                    elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+                        choice_list = Handshape.objects.all()
 
                     context['static_choice_lists'][field] = {}
                     #Take the human value in the language we are using
