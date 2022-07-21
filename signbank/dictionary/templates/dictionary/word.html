@@ -67,8 +67,6 @@
     {% endif %}
 </div>
 
-</div>
-
     <div id="signinfo" class='navbar navbar-default navbar-collapse'>
 
         {% if perms.dictionary.search_gloss %}
@@ -91,9 +89,11 @@
             <li class="nav-item">
                 <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
             </li>
+            {% if SHOW_QUERY_PARAMETERS_AS_VIEW %}
             <li class="nav-item">
-                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/list_view">{% trans "List View" %}</a>
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/query_view">{% trans "Query View" %}</a>
             </li>
+            {% endif %}
             {% endif %}
         </ul>
         <br>

@@ -49,7 +49,8 @@ from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
-    convert_query_parameters_to_filter
+    convert_query_parameters_to_filter, searchform_panels, pretty_print_query_fields, pretty_print_query_values, \
+    potential_query_parameters, query_parameters_this_gloss
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -288,13 +289,13 @@ class GlossListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters']:
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] != '':
             if 'query' in self.request.GET:
                 # if the query parameters are available, convert them to a dictionary
                 session_query_parameters = self.request.session['query_parameters']
                 self.query_parameters = json.loads(session_query_parameters)
             elif 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
-                self.request.session['query_parameters'] = json.dumps(dict())
+                self.request.session['query_parameters'] = ''
                 self.request.session.modified = True
             else:
                 # if the query parameters are available, convert them to a dictionary
@@ -307,9 +308,24 @@ class GlossListView(ListView):
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())
         context['query_parameters_keys'] = json.dumps(query_parameters_keys)
-        other_parameters_keys = ['sortOrder', 'search_type', 'search', 'useInstr', 'morpheme', 'hasComponentOfType', 'hasMorphemeOfType',
-                       'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet', 'relation', 'hasRelation',
-                       'relationToForeignSign', 'definitionRole', 'definitionContains', 'createdAfter', 'createdBefore', 'createdBy']
+        # other parameters are in the GlossSearchForm in the template that are not initialised via multiselect or language fields
+        # plus semantics and phonology fields with text types
+        other_parameters = ['sortOrder', 'search_type', 'search'] + \
+                                settings.SEARCH_BY_PUBLICATION_FIELDS + \
+                                settings.SEARCH_BY_RELATION_FIELDS + \
+                                settings.SEARCH_BY_MORPHOLOGY_FIELDS + \
+                                settings.SEARCH_BY_PHONOLOGY_FIELDS + \
+                                settings.SEARCH_BY_SEMANTICS_FIELDS
+                                # ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet']
+        # other_parameters_keys = ['sortOrder', 'search_type', 'search', 'useInstr',
+        #                          'morpheme', 'hasComponentOfType', 'hasMorphemeOfType',
+        #                          'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet',
+        #                          'relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign',
+        #                          'definitionRole', 'definitionContains', 'createdAfter', 'createdBefore', 'createdBy']
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+        other_parameters_keys = [ key for key in other_parameters if key not in multiple_select_gloss_fields ]
+
         context['other_parameters_keys'] = json.dumps(other_parameters_keys)
 
         # This is needed to display the idgloss of the morpheme in Search by Morphology: Search for gloss with this as morpheme
@@ -396,7 +412,17 @@ class GlossListView(ListView):
         if hasattr(settings, 'GLOSS_LIST_DISPLAY_HEADER') and self.request.user.is_authenticated():
             context['GLOSS_LIST_DISPLAY_HEADER'] = settings.GLOSS_LIST_DISPLAY_HEADER
         else:
-            context['GLOSS_LIST_DISPLAY_HEADER'] = ''
+            context['GLOSS_LIST_DISPLAY_HEADER'] = []
+
+        if hasattr(settings, 'SEARCH_BY_PUBLICATION_FIELDS') and self.request.user.is_authenticated():
+            context['SEARCH_BY_PUBLICATION_FIELDS'] = searchform_panels(search_form, settings.SEARCH_BY_PUBLICATION_FIELDS)
+        else:
+            context['SEARCH_BY_PUBLICATION_FIELDS'] = []
+
+        if hasattr(settings, 'SEARCH_BY_RELATION_FIELDS') and self.request.user.is_authenticated():
+            context['SEARCH_BY_RELATION_FIELDS'] = searchform_panels(search_form, settings.SEARCH_BY_RELATION_FIELDS)
+        else:
+            context['SEARCH_BY_RELATION_FIELDS'] = []
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
@@ -526,7 +552,7 @@ class GlossListView(ListView):
         column_headers = []
         for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
             field_label = Gloss._meta.get_field(fieldname).verbose_name
-            column_headers.append(field_label)
+            column_headers.append((fieldname, field_label))
         context['column_headers'] = column_headers
 
         return context
@@ -850,12 +876,11 @@ class GlossListView(ListView):
 
         setattr(self.request, 'web_search', self.web_search)
 
-        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters']:
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             session_query_parameters = self.request.session['query_parameters']
             self.query_parameters = json.loads(session_query_parameters)
         else:
             self.query_parameters = dict()
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         #Get the initial selection
@@ -941,7 +966,13 @@ class GlossListView(ListView):
             query_parameters['inWeb'] = get['inWeb']
             qs = qs.filter(inWeb__exact=val)
 
-        if 'hasvideo' in get and get['hasvideo'] != 'unspecified':
+        if 'excludeFromEcv' in get and get['excludeFromEcv'] != '0':
+            # Don't apply 'excludeFromEcv' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
+            val = get['excludeFromEcv'] == '2'
+            query_parameters['excludeFromEcv'] = get['excludeFromEcv']
+            qs = qs.filter(excludeFromEcv__exact=val)
+
+        if 'hasvideo' in get and get['hasvideo'] not in ['unspecified', '0']:
             val = get['hasvideo'] == 'no'
             query_parameters['hasvideo'] = get['hasvideo']
             qs = qs.filter(glossvideo__isnull=val)
@@ -1278,19 +1309,13 @@ class GlossDetailView(DetailView):
             search_results = self.request.session['search_results']
         else:
             search_results = []
-        if 'query_parameters' in self.request.session.keys():
-            if not search_results:
-                self.request.session['query_parameters'] = json.dumps(dict())
-                self.request.session.modified = True
-            else:
-                self.query_parameters = self.request.session['query_parameters']
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = json.dumps([])
+                self.request.session['search_results'] = None
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = json.dumps([])
+                self.request.session['search_results'] = None
 
         # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
         from signbank.tools import convert_language_code_to_2char
@@ -1300,6 +1325,43 @@ class GlossDetailView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        phonology_matrix = context['gloss'].phonology_matrix_homonymns()
+        phonology_focus = [field for field in phonology_matrix.keys()
+                           if phonology_matrix[field] != None and phonology_matrix[field] not in ['False', 'Neutral']]
+        default_query_parameters = query_parameters_this_gloss(phonology_focus, phonology_matrix)
+
+        default_query_parameters_mapping = pretty_print_query_fields(dataset_languages, default_query_parameters.keys())
+
+        default_query_parameters_values_mapping = pretty_print_query_values(dataset_languages, default_query_parameters,
+                                                                            self.request.LANGUAGE_CODE)
+        context['default_query_parameters'] = default_query_parameters
+        context['default_query_parameters_mapping'] = default_query_parameters_mapping
+        context['default_query_parameters_values_mapping'] = default_query_parameters_values_mapping
+
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+            # if the query parameters are available, convert them to a dictionary
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
+        else:
+            # local query parameters
+            self.query_parameters = {}
+            # save the default query parameters to the sessin variable
+            self.request.session['query_parameters'] = json.dumps(default_query_parameters)
+            self.request.session.modified = True
+
+        context['query_parameters'] = self.query_parameters
+
+        query_parameters_mapping = pretty_print_query_fields(dataset_languages, self.query_parameters.keys())
+
+        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters,
+                                                                    self.request.LANGUAGE_CODE)
+        context['query_parameters_mapping'] = query_parameters_mapping
+        context['query_parameters_values_mapping'] = query_parameters_values_mapping
 
         # Add in a QuerySet of all the books
         context['tagform'] = TagUpdateForm()
@@ -1370,10 +1432,6 @@ class GlossDetailView(DetailView):
 
         # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
-
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-        context['dataset_languages'] = dataset_languages
 
         # set up weak drop weak prop fields
 
@@ -1780,6 +1838,16 @@ class GlossDetailView(DetailView):
 
         context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
 
+        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
+            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
+        else:
+            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
+
+        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
+            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
+        else:
+            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = False
+
         return context
 
 class GlossRelationsDetailView(DetailView):
@@ -2074,6 +2142,16 @@ class GlossRelationsDetailView(DetailView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
+            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
+        else:
+            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
+
+        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
+            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
+        else:
+            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = False
 
         return context
 
@@ -3563,6 +3641,16 @@ class FrequencyListView(ListView):
         context['all_field_labels_choices'] = dict(field_labels_choices, **field_labels_semantics_choices)
 
         context['all_field_labels'] = dict(field_labels, **field_labels_semantics)
+
+        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
+            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
+        else:
+            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
+
+        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
+            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
+        else:
+            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = False
 
         return context
 
@@ -6481,6 +6569,12 @@ def glosslist_ajax_complete(request, gloss_id):
     language_code = request.LANGUAGE_CODE
     user = request.user
 
+    display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+
+    if request.is_ajax() and request.method == 'GET':
+        if 'query' in request.GET and 'display_fields' in request.GET:
+            display_fields = json.loads(request.GET['display_fields'])
+
     is_anonymous = user.is_authenticated()
 
     if language_code == "zh-hans":
@@ -6502,7 +6596,7 @@ def glosslist_ajax_complete(request, gloss_id):
         translations_per_language.append((language,this_gloss.translation_set.filter(language=language).order_by('translation__text')))
 
     column_values = []
-    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+    for fieldname in display_fields:
 
         machine_value = getattr(this_gloss,fieldname)
         gloss_field = Gloss._meta.get_field(fieldname)
@@ -6517,9 +6611,9 @@ def glosslist_ajax_complete(request, gloss_id):
 
         human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
         if human_value:
-            column_values.append(human_value)
+            column_values.append((fieldname, human_value))
         else:
-            column_values.append('-')
+            column_values.append((fieldname, '-'))
 
     return render(request, 'dictionary/gloss_row.html', { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
@@ -6531,6 +6625,12 @@ def glosslistheader_ajax(request):
 
     language_code = request.LANGUAGE_CODE
     user = request.user
+
+    display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+
+    if request.is_ajax() and request.method == 'GET':
+        if 'query' in request.GET and 'display_fields' in request.GET:
+            display_fields = json.loads(request.GET['display_fields'])
 
     is_anonymous = user.is_authenticated()
     if language_code == "zh-hans":
@@ -6545,10 +6645,9 @@ def glosslistheader_ajax(request):
     dataset_languages = get_dataset_languages(selected_datasets)
 
     column_headers = []
-    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
-
+    for fieldname in display_fields:
         field_label = Gloss._meta.get_field(fieldname).verbose_name
-        column_headers.append(field_label)
+        column_headers.append((fieldname, field_label))
 
     sortOrder = ''
 
@@ -6610,9 +6709,9 @@ def glossrow_ajax_complete_colors(request, gloss_id, show_colors=True):
 
         human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
         if human_value:
-            column_values.append(human_value)
+            column_values.append((fieldname, human_value))
         else:
-            column_values.append('-')
+            column_values.append((fieldname, '-'))
 
     return render(request, glossrow_template, { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
@@ -6661,9 +6760,9 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
 
         human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
         if human_value:
-            column_values.append(human_value)
+            column_values.append((fieldname, human_value))
         else:
-            column_values.append('-')
+            column_values.append((fieldname, '-'))
 
     return render(request, 'dictionary/lemma_gloss_row.html', { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,

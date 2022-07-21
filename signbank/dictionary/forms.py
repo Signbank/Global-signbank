@@ -242,14 +242,14 @@ class GlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
-    englishGloss = forms.CharField(label=_("English Gloss"))
+    # englishGloss = forms.CharField(label=_("English Gloss"))
     tags = forms.MultipleChoiceField(label=_('Tags'), choices=tag_choices)
     nottags = forms.MultipleChoiceField(label=_('Not Tags'), choices=not_tag_choices)  # this field is not used in the template
     keyword = forms.CharField(label=_(u'Translations'))
-    hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=YESNOCHOICES)
-    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
+    hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=NULLBOOLEANCHOICES)
+    # defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
 
-    defsearch = forms.CharField(label=_(u'Search Definition/Notes')) # this field is a duplicate of definitionContains
+    # defsearch = forms.CharField(label=_(u'Search Definition/Notes')) # this field is a duplicate of definitionContains
 
     relation = forms.CharField(label=_(u'Search for gloss of related signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     relationToForeignSign = forms.CharField(label=_(u'Search for gloss of foreign signs'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
@@ -280,8 +280,10 @@ class GlossSearchForm(forms.ModelForm):
     subhndsh_letter = forms.ChoiceField(label=_(u'letter'),choices=UNKNOWNBOOLEANCHOICES)
     subhndsh_number = forms.ChoiceField(label=_(u'number'),choices=UNKNOWNBOOLEANCHOICES)
 
-    isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    inWeb = forms.ChoiceField(label=_(u'Is in Web Dictionary'),choices=NULLBOOLEANCHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES)
+    inWeb = forms.ChoiceField(label=_(u'Is in Web Dictionary'),choices=NULLBOOLEANCHOICES)
+    excludeFromEcv = forms.ChoiceField(label=_(u'Exclude from ECV'),choices=NULLBOOLEANCHOICES)
+
     definitionRole = forms.ChoiceField(label=_(u'Note Type'),choices=DEFN_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_(u'Note Contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
@@ -353,15 +355,16 @@ class MorphemeSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
-    englishGloss = forms.CharField(label=_("English Gloss"))
-    lemmaGloss = forms.CharField(label=_("Lemma Gloss"))
+    # englishGloss = forms.CharField(label=_("English Gloss"))
+    lemmaGloss = forms.CharField(label=_("Lemma Gloss")) # used in Morpheme Search
     tags = forms.MultipleChoiceField(choices=tag_choices)
     nottags = forms.MultipleChoiceField(choices=not_tag_choices)
     keyword = forms.CharField(label=_(u'Translations'))
     hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=YESNOCHOICES)
-    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
+    useInstr = forms.CharField(label=_("Annotation instructions"))
+    # defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
 
-    defsearch = forms.CharField(label=_(u'Search Definition/Notes'))
+    # defsearch = forms.CharField(label=_(u'Search Definition/Notes'))
 
     relation = forms.CharField(label=_(u'Search for Gloss of Related Signs'),
                                widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))

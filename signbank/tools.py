@@ -2087,6 +2087,66 @@ def list_to_query(query_list):
         or_query = query_list[0] & q_exp
         return or_query
 
+def query_parameters_this_gloss(phonology_focus, phonology_matrix):
+
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+    if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
+        fieldnames.remove('derivHist')
+    multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if
+                                    field.name in fieldnames and hasattr(field, 'field_choice_category')]
+    query_parameters = dict()
+    for field_key in phonology_focus:
+        field_value = phonology_matrix[field_key]
+        if field_key in multiple_select_gloss_fields:
+            field_key = field_key + '[]'
+            query_parameters[field_key] = []
+            query_parameters[field_key].append(field_value)
+        elif field_key in ['weakdrop', 'weakprop', 'domhndsh_letter', 'domhndsh_number',
+                       'subhndsh_letter', 'subhndsh_number', 'repeat', 'altern', 'hasRelationToForeignSign', 'inWeb', 'isNew']:
+            NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
+            query_parameters[field_key] = NEUTRALBOOLEANCHOICES[field_value]
+        elif field_key in ['sortOrder', 'search_type', 'search', 'useInstr', 'morpheme', 'hasComponentOfType', 'hasMorphemeOfType',
+                       'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet', 'relation', 'hasRelation',
+                       'relationToForeignSign', 'definitionRole', 'definitionContains', 'createdBefore', 'createdAfter', 'createdBy']:
+            query_parameters[field_key] = field_value
+        else:
+            query_parameters[field_key] = field_value
+    return query_parameters
+
+
+def potential_query_parameters(dataset_languages):
+    # this is used for catching inconsistencies between GlossSearchForm and the Gloss model
+    # return a list of all the fields of Gloss that can be queried upon
+    gloss_fields = [ field.name for field in Gloss._meta.fields ]
+    form_base_fields = [ field for field in GlossSearchForm.__dict__['base_fields'].keys() ]
+
+    main_fields = []
+    for f in form_base_fields:
+        if f in FIELDS['main']:
+            main_fields.append(f)
+
+    not_in_settings = []
+    for f in form_base_fields:
+        if f not in gloss_fields:
+            not_in_settings.append(f)
+
+    gloss_search_field_prefix = "glosssearch_"
+    lemma_search_field_prefix = "lemma_"
+    keyword_search_field_prefix = "keyword_"
+    language_fields = []
+    for language in dataset_languages:
+        language_fields.append(gloss_search_field_prefix+language.language_code_2char)
+        language_fields.append(lemma_search_field_prefix+language.language_code_2char)
+        language_fields.append(keyword_search_field_prefix+language.language_code_2char)
+    all_fields = form_base_fields + language_fields
+    if not settings.USE_DERIVATIONHISTORY and 'derivHist' in all_fields:
+        all_fields.remove('derivHist')
+    if 'sortOrder' in all_fields:
+        all_fields.remove('sortOrder')
+    if 'search' in all_fields:
+        all_fields.remove('search')
+    return all_fields
+
 def convert_query_parameters_to_filter(query_parameters):
     # Evaluate all gloss/language search fields
     gloss_search_field_prefix = "glosssearch_"
@@ -2123,6 +2183,10 @@ def convert_query_parameters_to_filter(query_parameters):
             val = get_value == '2'
             query_list.append(Q(inWeb__exact=val))
 
+        elif get_key == 'excludeFromEcv' and get_value != '':
+            val = get_value == '2'
+            query_list.append(Q(excludeFromEcv__exact=val))
+
         elif get_key == 'hasvideo' and get_value != '':
             val = get_value == 'no'
             query_list.append(Q(glossvideo__isnull=val))
@@ -2133,7 +2197,7 @@ def convert_query_parameters_to_filter(query_parameters):
             if get_value == '1':
                 # value '1' filters glosses with a relation to a foreign sign
                 query_list.append(Q(pk__in=pks_for_glosses_with_relations))
-            else:
+            elif get_value == '2':
                 # the code for "No" excludes the above glosses from the results
                 query_list.append(~Q(pk__in=pks_for_glosses_with_relations))
 
@@ -2297,10 +2361,10 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
     for language in dataset_languages:
         glosssearch_field_name = gloss_search_field_prefix + language.language_code_2char
         if glosssearch_field_name in query_parameters:
-            query_dict[glosssearch_field_name] = _('Gloss') + " (" + language.name + ")"
+            query_dict[glosssearch_field_name] = _('Annotation ID Gloss') + " (" + language.name + ")"
         lemma_field_name = lemma_search_field_prefix + language.language_code_2char
         if lemma_field_name in query_parameters:
-            query_dict[lemma_field_name] = _('Lemma') + " (" + language.name + ")"
+            query_dict[lemma_field_name] = _('Lemma ID Gloss') + " (" + language.name + ")"
         keyword_field_name = keyword_search_field_prefix + language.language_code_2char
         if keyword_field_name in query_parameters:
             query_dict[keyword_field_name] = _('Translations') + " (" + language.name + ")"
@@ -2326,8 +2390,9 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
-    NEUTRALBOOLEANCHOICES = { '1': _('Neutral'), '2': _('Yes'), '3': _('No') }
-    UNKNOWNBOOLEANCHOICES = { '1': _('Unknown'), '2': _('True'), '3': _('False') }
+    NEUTRALBOOLEANCHOICES = { '0': _('Neutral'), '1': _('Neutral'), '2': _('Yes'), '3': _('No') }
+    UNKNOWNBOOLEANCHOICES = { '0': _('Unknown'), '1': _('Unknown'), '2': _('True'), '3': _('False') }
+    NULLBOOLEANCHOICES = { '0': _('Unknown'), '1': _('Unknown'), '2': _('True'), '3': _('False') }
     RELATION_ROLE_CHOICES = {'all': _('All'),
                              'homonym': _('Homonym'),
                              'synonym': _('Synonym'),
@@ -2359,12 +2424,13 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
         elif key in ['repeat', 'altern']:
             query_dict[key] = UNKNOWNBOOLEANCHOICES[query_parameters[key]]
         elif key in ['hasRelationToForeignSign']:
-            if query_parameters[key] == '1':
+            if query_parameters[key] in ['1', 'yes']:
                 query_dict[key] = _('Yes')
-            else:
+            elif query_parameters[key] in ['2', 'no']:
                 query_dict[key] = _('No')
-        elif key in ['inWeb', 'isNew']:
-            query_dict[key] = UNKNOWNBOOLEANCHOICES[query_parameters[key]]
+        elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo']:
+            print(key, query_parameters[key])
+            query_dict[key] = NULLBOOLEANCHOICES[query_parameters[key]]
         elif key in ['hasRelation']:
             query_dict[key] = RELATION_ROLE_CHOICES[query_parameters[key]]
         elif key in ['definitionRole']:
@@ -2392,6 +2458,7 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
         elif key in ['tags']:
             query_dict[key] = query_parameters[key]
         else:
+            print('key not pretty printed: ', key)
             query_dict[key] = query_parameters[key]
 
     for language in dataset_languages:
@@ -2406,3 +2473,10 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
             query_dict[keyword_field_name] = query_parameters[keyword_field_name]
 
     return query_dict
+
+def searchform_panels(searchform, searchfields) :
+    search_by_fields = []
+    for field in searchfields:
+        form_field_parameters = (field,searchform.fields[field].label,searchform[field])
+        search_by_fields.append(form_field_parameters)
+    return search_by_fields

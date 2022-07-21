@@ -288,7 +288,104 @@ option:not(:checked) {
 
 <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    <div>
+    {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
+    <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'>QUERY</span></button>
+
+     <div class="modal fade" id="display_query_parameters"
+          aria-labelledby="#modalQuery" aria-hidden="true">
+         <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class='modal-header'>
+                    <h3 id='modalQuery'>
+                        {% if not query_parameters.items %}
+                        {% trans "Default Query Parameters" %}
+                        {% else %}
+                        {% trans "Query Parameters" %}
+                        {% endif %}
+                    </h3>
+                    {% if not query_parameters.items %}
+                    <p>{% trans "No active query parameters were used in the search. Here are the non-empty fields of this gloss." %}</p>
+                    {% endif %}
+                </div>
+                <div class='modal-body'>
+            {% if not query_parameters.items %}
+                    <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
+                        <thead id = 'default_query_table_header'>
+                                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
+                                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                        </thead>
+                        <tbody>
+                        {% for key, value in default_query_parameters.items %}
+                        <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{{default_query_parameters_mapping|get_item:key}}</td>
+                            {% if '[]' in key %}
+                        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}<button
+                                class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+                            {% elif key == 'tags' %}
+                                <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}
+                                   <div class='tagQP' >
+                                   {% load underscore_to_space %}
+                                        <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
+                                   </div>
+                                    {% if not forloop.last %} {% endif %}{% endfor %}</td>
+                            {% else %}
+                                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                    border-top: 1px solid grey; border-right: 1px solid grey;">{{default_query_parameters_values_mapping|get_item:key}}</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+            {% else %}
+                    <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
+                        <thead id = 'query_table_header'>
+                                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
+                                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                        </thead>
+                        <tbody>
+                        {% for key, value in query_parameters.items %}
+                        <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_mapping|get_item:key}}</td>
+                            {% if '[]' in key %}
+                        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
+                                class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+                            {% elif key == 'tags' %}
+                                <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
+                                   <div class='tagQP' >
+                                   {% load underscore_to_space %}
+                                        <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
+                                   </div>
+                                    {% if not forloop.last %} {% endif %}{% endfor %}</td>
+                            {% else %}
+                                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                    border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+            {% endif %}
+                 </div>
+                <div class="modal-footer">
+                    <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                </div>
+
+            </div>
+          </div>
+     </div>
+    {% endif %}
     <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+    </div>
     </div>
     {% endif %}
 </div>
@@ -335,9 +432,11 @@ option:not(:checked) {
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
         </li>
+        {% if SHOW_QUERY_PARAMETERS_AS_VIEW %}
         <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/list_view">{% trans "List View" %}</a>
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/query_view">{% trans "Query View" %}</a>
         </li>
+        {% endif %}
     </ul>
 
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}

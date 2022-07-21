@@ -1,0 +1,52 @@
+
+ <span class='glyphicon glyphicon-question-sign' data-toggle='modal' data-target='#display_query_parameters'>Query</span>
+
+     <div class="modal fade" id="display_query_parameters" role="dialog" aria-labelledby="#modalQuery" aria-hidden="true">
+         <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class='modal-header'>
+                    <h3 id='modalQuery'>{% trans "Query Parameters" %}</h3>
+                </div>
+                <div class='modal-body'>
+                    <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
+                        <thead id = 'query_table_header'>
+                                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
+                                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                        </thead>
+                        <tbody>
+                        {% for key, value in query_parameters.items %}
+                        <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_mapping|get_item:key}}</td>
+                            {% if '[]' in key %}
+                        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
+                                class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+                            {% elif key == 'tags' %}
+                                <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
+                                   <div class='tagQP' >
+                                   {% load underscore_to_space %}
+                                        <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
+                                   </div>
+                                    {% if not forloop.last %} {% endif %}{% endfor %}</td>
+                            {% else %}
+                                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                    border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                 </div>
+                <div class="modal-footer">
+                    <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                </div>
+
+            </div>
+          </div>
+     </div>
+
+

@@ -5,25 +5,14 @@
 {% load bootstrap3 %}
 {% load tagging_tags %}
 
-<tr id = "glossrow_{{focus_gloss.id}}"
+<tr id = "glossrow_{{focus_gloss.id}}">
 
-    {% if not user.is_anonymous %}
-    {% tags_for_object focus_gloss as tag_list %}
-    {% load wrong_sign %}
-    {% if tag_list|wrong_sign %}
-        class="danger"
-    {% elif not focus_gloss.has_video %}
-        class="warning"
-    {% elif focus_gloss.isNew %}
-        class="info"
-    {% else %}
+    {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
+        <td style="width:12em;">{{focus_gloss.lemma.dataset.acronym}}</td>
     {% endif %}
-    {% endif %}>
-
-    {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td style="width:12em;">{{focus_gloss.lemma.dataset.acronym}}</td>{% endif %}
 
 
-    <td>{%if focus_gloss.get_image_path %}
+    <td class="field_hasvideo">{%if focus_gloss.get_image_path %}
     {% url 'dictionary:protected_media' '' as protected_media_url %}
 
       <div class="thumbnail_container">
@@ -74,13 +63,18 @@
     </td>
     {% endfor %}
 
-    {% for value in column_values %}
-    <td>{{value}}</td>
+    {% for field,value in column_values %}
+    <td>
+        <div class="field_{{field}}">{{value}}</div>
+    </td>
+
     {% endfor %}
 
     {% if not user.is_anonymous %}
     {% load underscore_to_space %}
     {% tags_for_object focus_gloss as tag_list %}
-    <td>{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+    <td>
+        <div class="field_tags">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
+    </td>
     {% endif %}
 </tr>

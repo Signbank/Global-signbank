@@ -131,8 +131,21 @@ MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic'
                         'oriCh','contType','movSh','movDir','repeat','altern']
 MINIMAL_PAIRS_SEARCH_FIELDS = MINIMAL_PAIRS_FIELDS + ['namEnt','semField','valence']
 
-#Display these fields als columns in the list view
+#Display these fields as columns in the list view
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
+
+# These are fields in the Search forms by panel
+SEARCH_BY_PUBLICATION_FIELDS = ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo',
+                                'definitionRole', 'definitionContains', #'defspublished',
+                                'createdBefore', 'createdAfter', 'createdBy', 'useInstr', 'tags']
+SEARCH_BY_RELATION_FIELDS = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
+SEARCH_BY_SEMANTICS_FIELDS = FIELDS['semantics']
+SEARCH_BY_PHONOLOGY_FIELDS = FIELDS['phonology']
+SEARCH_BY_MORPHOLOGY_FIELDS = ['morpheme', 'hasComponentOfType', 'hasMorphemeOfType']
+
+QUERY_DISPLAY_FIELDS = MINIMAL_PAIRS_SEARCH_FIELDS
+SHOW_QUERY_PARAMETERS_AS_BUTTON = True
+SHOW_QUERY_PARAMETERS_AS_VIEW = False
 
 # fields are ordered per kind: Field Choice Lists, Text, Boolean
 MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','relOriMov',
