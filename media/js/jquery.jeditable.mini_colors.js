@@ -300,6 +300,9 @@
 						input.height(settings.height);
 					}
 					input.attr('autocomplete', 'off');
+					input.css({
+                                'display': 'inline-block', 'position': 'absolute', 'width': '320px'
+                    });
 					$(this).append(input);
 					return (input);
 				}

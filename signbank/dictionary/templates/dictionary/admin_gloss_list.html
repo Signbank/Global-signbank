@@ -295,11 +295,13 @@ $(document).ready(function() {
                             video_lookup = '#glossvideo_' + id_of_gloss;
                             video_elt = $(lookup).find(video_lookup)
                             video_elt.addClass("hover-shows-video");
+                            ready_videos(video_elt);
                         };
                     });
                 }
             });
         };
+        ready_videos();
     }
 
 });
@@ -403,6 +405,26 @@ function do_toggle_groups(el) {
         break;
   }
   document.getElementById('adminsearch').submit();
+}
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        $(this).find('img').hide();
+        $(this).find('video').show();
+        $(this).find('video').get(0).play();
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+        $(this).find('video').hide();
+
+        $(this).find('video').get(0).pause();
+        $(this).find('video').get(0).currentTime = 0;
+    });
 }
 
 /**

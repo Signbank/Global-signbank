@@ -212,7 +212,7 @@ class TagUpdateForm(forms.Form):
                             choices=tag_choices)
     delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
 
-YESNOCHOICES = (("unspecified", "Unspecified" ), ('yes', 'Yes'), ('no', 'No'))
+YESNOCHOICES = (('unspecified', "---------" ), ('yes', 'Yes'), ('no', 'No'))
 NULLBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
 NONEBOOLEANCHOICES = [(0,'---------'),(1,'None'),(2,'True'),(3,'False')]
 UNKNOWNBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
@@ -247,7 +247,7 @@ class GlossSearchForm(forms.ModelForm):
     nottags = forms.MultipleChoiceField(label=_('Not Tags'), choices=not_tag_choices)  # this field is not used in the template
     keyword = forms.CharField(label=_(u'Translations'))
     hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=NULLBOOLEANCHOICES)
-    # defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
+    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
 
     # defsearch = forms.CharField(label=_(u'Search Definition/Notes')) # this field is a duplicate of definitionContains
 
@@ -302,7 +302,7 @@ class GlossSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class':'form-control'}
 
         model = Gloss
-        fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew']
+        fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew', 'excludeFromEcv']
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
@@ -338,7 +338,7 @@ class GlossSearchForm(forms.ModelForm):
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
         field_language = language_code
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         multiple_select_gloss_fields = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
 
         for (fieldname, field_category) in multiple_select_gloss_fields:

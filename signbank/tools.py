@@ -2105,6 +2105,9 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
                        'subhndsh_letter', 'subhndsh_number', 'repeat', 'altern', 'hasRelationToForeignSign', 'inWeb', 'isNew']:
             NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
             query_parameters[field_key] = NEUTRALBOOLEANCHOICES[field_value]
+        elif field_key in ['defspublished']:
+            YESNOCHOICES = {'None': 'unspecified', 'True': 'yes', 'False': 'no'}
+            query_parameters[field_key] = YESNOCHOICES[field_value]
         elif field_key in ['sortOrder', 'search_type', 'search', 'useInstr', 'morpheme', 'hasComponentOfType', 'hasMorphemeOfType',
                        'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet', 'relation', 'hasRelation',
                        'relationToForeignSign', 'definitionRole', 'definitionContains', 'createdBefore', 'createdAfter', 'createdBy']:
@@ -2188,7 +2191,7 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(excludeFromEcv__exact=val))
 
         elif get_key == 'hasvideo' and get_value != '':
-            val = get_value == 'no'
+            val = get_value != '2'
             query_list.append(Q(glossvideo__isnull=val))
 
         elif get_key == 'hasRelationToForeignSign':
@@ -2393,6 +2396,7 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
     NEUTRALBOOLEANCHOICES = { '0': _('Neutral'), '1': _('Neutral'), '2': _('Yes'), '3': _('No') }
     UNKNOWNBOOLEANCHOICES = { '0': _('Unknown'), '1': _('Unknown'), '2': _('True'), '3': _('False') }
     NULLBOOLEANCHOICES = { '0': _('Unknown'), '1': _('Unknown'), '2': _('True'), '3': _('False') }
+    YESNOCHOICES = { 'unspecified': '---------', 'yes': _('Yes'), 'no': _('No') }
     RELATION_ROLE_CHOICES = {'all': _('All'),
                              'homonym': _('Homonym'),
                              'synonym': _('Synonym'),
@@ -2429,8 +2433,9 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
             elif query_parameters[key] in ['2', 'no']:
                 query_dict[key] = _('No')
         elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo']:
-            print(key, query_parameters[key])
             query_dict[key] = NULLBOOLEANCHOICES[query_parameters[key]]
+        elif key in ['defspublished']:
+            query_dict[key] = YESNOCHOICES[query_parameters[key]]
         elif key in ['hasRelation']:
             query_dict[key] = RELATION_ROLE_CHOICES[query_parameters[key]]
         elif key in ['definitionRole']:

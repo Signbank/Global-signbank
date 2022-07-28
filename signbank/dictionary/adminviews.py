@@ -973,7 +973,7 @@ class GlossListView(ListView):
             qs = qs.filter(excludeFromEcv__exact=val)
 
         if 'hasvideo' in get and get['hasvideo'] not in ['unspecified', '0']:
-            val = get['hasvideo'] == 'no'
+            val = get['hasvideo'] != '2'
             query_parameters['hasvideo'] = get['hasvideo']
             qs = qs.filter(glossvideo__isnull=val)
 
@@ -2378,9 +2378,9 @@ class MorphemeListView(ListView):
             val = get['inWeb'] == '2'
             qs = qs.filter(inWeb__exact=val)
 
-        if 'hasvideo' in get and get['hasvideo'] != 'unspecified':
-            val = get['hasvideo'] == 'no'
-
+        if 'hasvideo' in get and get['hasvideo'] not in ['unspecified', '0']:
+            val = get['hasvideo'] != '2'
+            query_parameters['hasvideo'] = get['hasvideo']
             qs = qs.filter(glossvideo__isnull=val)
 
         if 'defspublished' in get and get['defspublished'] != 'unspecified':

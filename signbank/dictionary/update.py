@@ -317,6 +317,7 @@ def update_gloss(request, glossid):
             newvalue = _('No')
     elif field in 'excludeFromEcv':
         original_value = getattr(gloss,field)
+        print('excludefromecv: ', original_value, ', ', value)
         # only modify if we have publish permission
 
         gloss.excludeFromEcv = value.lower() in [_('Yes').lower(),'true',True,1]

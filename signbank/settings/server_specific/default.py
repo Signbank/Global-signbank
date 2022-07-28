@@ -136,7 +136,7 @@ GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
 
 # These are fields in the Search forms by panel
 SEARCH_BY_PUBLICATION_FIELDS = ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo',
-                                'definitionRole', 'definitionContains', #'defspublished',
+                                'definitionRole', 'definitionContains', 'defspublished',
                                 'createdBefore', 'createdAfter', 'createdBy', 'useInstr', 'tags']
 SEARCH_BY_RELATION_FIELDS = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
 SEARCH_BY_SEMANTICS_FIELDS = FIELDS['semantics']
