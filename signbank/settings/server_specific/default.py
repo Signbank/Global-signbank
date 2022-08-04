@@ -135,9 +135,10 @@ MINIMAL_PAIRS_SEARCH_FIELDS = MINIMAL_PAIRS_FIELDS + ['namEnt','semField','valen
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
 
 # These are fields in the Search forms by panel
-SEARCH_BY_PUBLICATION_FIELDS = ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo',
+SEARCH_BY_PUBLICATION_FIELDS = ['inWeb', 'isNew', 'hasvideo', 'hasothermedia',
                                 'definitionRole', 'definitionContains', 'defspublished',
-                                'createdBefore', 'createdAfter', 'createdBy', 'useInstr', 'tags']
+                                'createdBy', 'createdAfter', 'createdBefore',
+                                'useInstr', 'tags', 'excludeFromEcv']
 SEARCH_BY_RELATION_FIELDS = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
 SEARCH_BY_SEMANTICS_FIELDS = FIELDS['semantics']
 SEARCH_BY_PHONOLOGY_FIELDS = FIELDS['phonology']

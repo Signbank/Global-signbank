@@ -27,6 +27,8 @@
     color: black !important;
     font-weight: bold;
 }
+
+.pub-row tr {float: left!important; width: 50%!important;}
 </style>
 
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
@@ -223,6 +225,18 @@ $(document).ready(function() {
              var $option = $select.find("option[value='" + tag_value + "']");
              $option.attr("selected","selected");
          };
+    };
+
+     if (query_parameters_keys.includes('keyword')) {
+        var $translation = $("input[name='keyword']");
+        var query_initial = query_parameters_dict['keyword'];
+        $translation.val(query_initial);
+    };
+
+     if (query_parameters_keys.includes('search')) {
+        var $menu_bar_search = $("input[name='search']");
+        var query_initial = query_parameters_dict['search'];
+        $menu_bar_search.val(query_initial);
     };
 
      // Empty menu_bar_search_mirror
@@ -665,7 +679,7 @@ function do_toggle_annotation(el) {
                            data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
                       <div id='pub_search' class='collapse'>
-                      <table class='table'>
+                      <table class='table pub-row'>
                       {% for publication_id, publication_label, publication_field in SEARCH_BY_PUBLICATION_FIELDS %}
                       <tr>
                           <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
@@ -848,8 +862,8 @@ function do_toggle_annotation(el) {
 
 {% if view_type == "gloss_list" %}
 
-        <form name="show_pages">
-        <div class='form-group' id='paginate_by'>
+    <form name="show_pages">
+    <div class='form-group' id='paginate_by'>
         <label for='paginate_by'>{% trans "Results Per Page" %}</label>
         <select class='form-control' name="paginate_by">
             <option {% if paginate_by == 500 %} selected="" {% endif %}>500</option>

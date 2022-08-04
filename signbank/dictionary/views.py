@@ -2954,6 +2954,7 @@ def gloss_query_view(request,gloss_pk):
     if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
         show_query_parameters_as_view = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
     else:
+        # this isn't actually relevant because this function displays the query view
         show_query_parameters_as_view = False
 
     return render(request, 'dictionary/gloss_query_view.html',

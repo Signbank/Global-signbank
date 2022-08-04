@@ -213,9 +213,9 @@ class TagUpdateForm(forms.Form):
     delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
 
 YESNOCHOICES = (('unspecified', "---------" ), ('yes', 'Yes'), ('no', 'No'))
-NULLBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
+NULLBOOLEANCHOICES = [(0,'---------'),(2,'True'),(3,'False')]
 NONEBOOLEANCHOICES = [(0,'---------'),(1,'None'),(2,'True'),(3,'False')]
-UNKNOWNBOOLEANCHOICES = [(0,'---------'),(1,'Unknown'),(2,'True'),(3,'False')]
+UNKNOWNBOOLEANCHOICES = [(0,'---------'),(2,'True'),(3,'False')]
 NEUTRALBOOLEANCHOICES = [(1,'Neutral'),(2,'Yes'),(3,'No')]
 NEUTRALQUERYCHOICES = [(0,'---------'),(1,'Neutral'),(2,'True'),(3,'False')]
 
@@ -240,13 +240,14 @@ class GlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False #otherwise the html required attribute will show up on every form
 
-    search = forms.CharField(label=_("Dutch Gloss"))
+    search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
     # englishGloss = forms.CharField(label=_("English Gloss"))
     tags = forms.MultipleChoiceField(label=_('Tags'), choices=tag_choices)
     nottags = forms.MultipleChoiceField(label=_('Not Tags'), choices=not_tag_choices)  # this field is not used in the template
-    keyword = forms.CharField(label=_(u'Translations'))
-    hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=NULLBOOLEANCHOICES)
+    keyword = forms.CharField(label=_('Search Translations'))
+    hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
+    hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
 
     # defsearch = forms.CharField(label=_(u'Search Definition/Notes')) # this field is a duplicate of definitionContains
@@ -288,10 +289,11 @@ class GlossSearchForm(forms.ModelForm):
     definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_(u'Note Contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-    createdBefore = forms.DateField(label=_(u'Created Before'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
+    createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     createdAfter = forms.DateField(label=_(u'Created After'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
 
-    createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    createdBefore = forms.DateField(label=_(u'Created Before'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
+
 
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
@@ -360,7 +362,8 @@ class MorphemeSearchForm(forms.ModelForm):
     tags = forms.MultipleChoiceField(choices=tag_choices)
     nottags = forms.MultipleChoiceField(choices=not_tag_choices)
     keyword = forms.CharField(label=_(u'Translations'))
-    hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=YESNOCHOICES)
+    hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=NULLBOOLEANCHOICES)
+    hasothermedia = forms.ChoiceField(label=_(u'Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
     # defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
 

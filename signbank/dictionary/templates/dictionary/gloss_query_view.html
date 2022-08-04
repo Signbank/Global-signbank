@@ -53,6 +53,8 @@
         }
     }
 
+$(document).ready(function() {
+
     $('[data-toggle="tooltip"]').tooltip({
         placement : 'bottom'
     });
@@ -71,6 +73,8 @@
                     var elem = $(result);
                     var parsed = $.parseHTML(result);
                     $(lookup).find('#glosslist_table_header').before(result);
+                    // hide the sort arrowheads from the header
+                    $(lookup).find('.col_sort_arrowheads').css('display','none');
                 }
 
         });
@@ -98,11 +102,15 @@
                             video_elt = $(lookup).find(video_lookup)
                             video_elt.addClass("hover-shows-video");
                             ready_videos(video_elt);
+                            // figure out how to initially not show these and still toggle line-through on buttons
+                            // $(lookup).find('.field_hasvideo').css('display','none');
+                            // $(lookup).find('.field_tags').css('display','none');
                         };
                     });
                 }
             });
         };
+});
 
     function ready_videos(el) {
         $(el).find('video').hide();
@@ -124,15 +132,109 @@
         });
     }
 
-    // This function toggles the different language columns for Annotations, Lemmas, and Translations
+    // toggle the line-through on a button
+    function do_toggle_line_through(el,id) {
+        var button_value = $(el).attr('value');
+        var button_id = '#' + id;
+        var button_status = $(button_id).css('text-decoration');
+        if ($(button_id).css('text-decoration-line') == 'none') {
+            $(button_id).css('text-decoration', 'line-through');
+        } else {
+            $(button_id).css('text-decoration', 'none');
+        };
+    };
+
+    // This function toggles the different language columns for Annotations
     function do_toggle_annotation(el) {
         var dataset_language_id = $(el).attr('value');
         var annotation_column_id = '.annotation_' + dataset_language_id;
-        var lemma_column_id = '.lemma_' + dataset_language_id;
-        var translation_column_id = '.translation_' + dataset_language_id;
+        var visible_columns_start = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
         $(annotation_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the annotation columns were not visible at the start, show the header and visible columns
+            $('.annotations_multicolumn').toggle();
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.annotations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+        do_toggle_line_through(el,'button_annotation_'+dataset_language_id);
+    };
+
+    // This function toggles the different language columns for Lemmas
+    function do_toggle_lemma(el) {
+        var visible_columns_start = 0;
+        $('th[id^="lemma_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var lemma_column_id = '.lemma_' + dataset_language_id;
         $(lemma_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="lemma_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the lemma columns were not visible at the start, show the header and visible columns
+            $('.lemmas_multicolumn').toggle();
+            $('.lemmas_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.lemmas_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.lemmas_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+        do_toggle_line_through(el,'button_lemma_'+dataset_language_id);
+    };
+
+    // This function toggles the different language columns for Translations
+    function do_toggle_translations(el) {
+        var visible_columns_start = 0;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var translation_column_id = '.translation_' + dataset_language_id;
         $(translation_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the translation columns were not visible at the start, show the header and visible columns
+            $('.translations_multicolumn').toggle();
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.translations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+        do_toggle_line_through(el,'button_translation_'+dataset_language_id);
     };
 
     // This function toggles the different field columns
@@ -140,7 +242,27 @@
         var field_id = $(el).attr('value');
         var field_column_id = '.field_' + field_id;
         $(field_column_id).toggle();
+        do_toggle_line_through(el,'button_'+field_id);
     };
+
+    // This function toggles the different publication field columns
+    function do_toggle_pub_field(el) {
+        var field_id = $(el).attr('value');
+        var field_column_id = '.field_' + field_id;
+        $(field_column_id).toggle();
+        do_toggle_line_through(el,'button_pub_'+field_id);
+    };
+
+ /**
+ * @param {string} field_name - name of the field to sort on
+ * @param {string} action     - one of: desc, asc, del
+ * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
+ * @returns {void}
+ */
+function do_sort_column(field_name, action, frmName) {
+    // do nothing in this view
+    // arrowheads are hidden
+};
     </script>
     <script type='text/javascript'>
 
@@ -261,6 +383,20 @@ option:not(:checked) {
     -webkit-box-shadow:-1px -1px 2px #004977;
     box-shadow:-1px -1px 2px #004977;
 }
+.tags-cell {
+    overflow-y: visible;
+    width: 255px;
+    box-sizing: inherit;
+    white-space: nowrap;
+}
+.gloss-row {
+    overflow-y: scroll;
+}
+thead tr th {
+    border-bottom: 1px solid grey;
+    border-spacing: 0px;
+    border-collapse: separate;
+}
 </style>
 
 {% endblock %}
@@ -313,7 +449,7 @@ option:not(:checked) {
         </li>
         {% if SHOW_QUERY_PARAMETERS_AS_VIEW %}
         <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/query_view">{% trans "Query View" %}</a>
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/query_view">{% trans "Query View" %}</a>
         </li>
         {% endif %}
     </ul>
@@ -394,46 +530,79 @@ option:not(:checked) {
     </table>
     <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
     <br>
+    <br>
     <h3>{% trans "Glosses Matching Query" %}</h3>
-
     <table>
     <tr>
-    <td><span>{% trans "Toggle Dataset Languages" %}</span></td>
+    <td><span>{% trans "Toggle Annotations" %}</span></td>
     <td>
     {% for dataset_lang in dataset_languages %}
-    <button name="button_annotation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_annotation(this);"
-            value="{{dataset_lang.language_code_2char}}" >
+    <button name="button_annotation_{{dataset_lang.language_code_2char}}"
+            id="button_annotation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_annotation(this);"
+            value="{{dataset_lang.language_code_2char}}" style="text-decoration:none;">
         {{ dataset_lang.name }}
     </button>
     {% endfor %}
     </td>
     </tr>
-    <br>
+    <tr>
+    <td><span>{% trans "Toggle Lemmas" %}</span></td>
+    <td>
+    {% for dataset_lang in dataset_languages %}
+    <button name="button_lemma_{{dataset_lang.language_code_2char}}"
+            id="button_lemma_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_lemma(this);"
+            value="{{dataset_lang.language_code_2char}}" style="text-decoration:none;">
+        {{ dataset_lang.name }}
+    </button>
+    {% endfor %}
+    </td>
+    </tr>
+    <tr>
+    <td><span>{% trans "Toggle Translations" %}</span></td>
+    <td>
+    {% for dataset_lang in dataset_languages %}
+    <button name="button_translation_{{dataset_lang.language_code_2char}}"
+            id="button_translation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_translations(this);"
+            value="{{dataset_lang.language_code_2char}}" style="text-decoration:none;">
+        {{ dataset_lang.name }}
+    </button>
+    {% endfor %}
+    </td>
+    </tr>
     <tr>
     <td style="width:300px;"><span>{% trans "Toggle Non-Empty Fields of Focus Gloss" %}</span></td>
     <td>
     {% for fieldname,label in column_headers %}
-        <button name="button_{{fieldname}}" type='submit' onclick="do_toggle_field(this);"
-            value="{{fieldname}}" >
+        <button name="button_{{fieldname}}" id="button_{{fieldname}}" type='submit' onclick="do_toggle_field(this);"
+            value="{{fieldname}}" style="text-decoration:none;">
             {{label}}
         </button>
     {% endfor %}
     </td>
     </tr>
-    <br>
     <tr>
     <td style="width:300px;"><span>{% trans "Toggle Publication Fields" %}</span></td>
     <td>
+    {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
+        <button name="button_dataset" id="button_pub_dataset" type='submit' onclick="do_toggle_pub_field(this);"
+            value="dataset" style="text-decoration:none;">
+            {% trans "Dataset" %}
+        </button>
+    {% endif %}
     {% for fieldname,label in TOGGLE_PUBLICATION_FIELDS %}
-        <button name="button_{{fieldname}}" type='submit' onclick="do_toggle_field(this);"
-            value="{{fieldname}}" >
+        {% if fieldname == 'tags' or fieldname == 'hasvideo' %}
+        <button name="button_{{fieldname}}" id="button_pub_{{fieldname}}" type='submit' onclick="do_toggle_pub_field(this);"
+            value="{{fieldname}}" style="text-decoration:none;">
             {{label}}
         </button>
+        {% endif %}
     {% endfor %}
     </td>
+    </tr>
     </table>
     <br>
 
+    <div class='table-responsive'>
     <table class='table table-condensed' id = 'glosslist_table'>
         <thead id = 'glosslist_table_header'></thead>
         <tbody>
@@ -443,6 +612,7 @@ option:not(:checked) {
         {% endfor %}
         </tbody>
     </table>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

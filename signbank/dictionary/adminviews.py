@@ -920,9 +920,12 @@ class GlossListView(ListView):
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
 
+        query_parameters = dict()
+
         #If not, we will go trhough a long list of filters
         if 'search' in get and get['search'] != '':
             val = get['search']
+            query_parameters['search'] = val
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
             query = Q(annotationidglosstranslation__text__iregex=val)
@@ -931,8 +934,6 @@ class GlossListView(ListView):
                 query = query | Q(sn__exact=val)
 
             qs = qs.filter(query)
-
-        query_parameters = dict()
 
         # Evaluate all gloss/language search fields
         for get_key, get_value in get.items():
@@ -976,6 +977,17 @@ class GlossListView(ListView):
             val = get['hasvideo'] != '2'
             query_parameters['hasvideo'] = get['hasvideo']
             qs = qs.filter(glossvideo__isnull=val)
+
+        if 'hasothermedia' in get and get['hasothermedia'] not in ['unspecified', '0']:
+            query_parameters['hasothermedia'] = get['hasothermedia']
+
+            # Remember the pk of all glosses that have other media
+            pks_for_glosses_with_othermedia = [ om.parent_gloss.pk for om in OtherMedia.objects.all() ]
+
+            if get['hasothermedia'] == '2': #We only want glosses with a relation to a foreign sign
+                qs = qs.filter(pk__in=pks_for_glosses_with_othermedia)
+            elif get['hasothermedia'] == '3': #We only want glosses without a relation to a foreign sign
+                qs = qs.exclude(pk__in=pks_for_glosses_with_othermedia)
 
         if 'defspublished' in get and get['defspublished'] != 'unspecified':
             val = get['defspublished'] == 'yes'
@@ -3890,6 +3902,16 @@ class GlossFrequencyView(DetailView):
         else:
             context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
 
+        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
+            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
+        else:
+            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
+
+        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
+            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
+        else:
+            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = False
+
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
@@ -6617,6 +6639,7 @@ def glosslist_ajax_complete(request, gloss_id):
 
     return render(request, 'dictionary/gloss_row.html', { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
+                                                          'selected_datasets': selected_datasets,
                                                           'translations_per_language': translations_per_language,
                                                           'column_values': column_values,
                                                           'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
@@ -6658,9 +6681,9 @@ def glosslistheader_ajax(request):
             sortOrder = sortOrderParameters[1].split('&')[0]
 
     return render(request, 'dictionary/glosslist_headerrow.html', { 'dataset_languages': dataset_languages,
+                                                                    'selected_datasets': selected_datasets,
                                                                     'column_headers': column_headers,
                                                                     'sortOrder': str(sortOrder),
-                                                                    'GLOSS_LIST_DISPLAY_FIELDS' : settings.GLOSS_LIST_DISPLAY_FIELDS,
                                                                     'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 
 def glossrow_ajax_complete_colors(request, gloss_id, show_colors=True):
@@ -6714,10 +6737,10 @@ def glossrow_ajax_complete_colors(request, gloss_id, show_colors=True):
             column_values.append((fieldname, '-'))
 
     return render(request, glossrow_template, { 'focus_gloss': this_gloss,
-                                                          'dataset_languages': dataset_languages,
-                                                          'translations_per_language': translations_per_language,
-                                                          'column_values': column_values,
-                                                          'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
+                                                'dataset_languages': dataset_languages,
+                                                'translations_per_language': translations_per_language,
+                                                'column_values': column_values,
+                                                'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 
 def lemmaglosslist_ajax_complete(request, gloss_id):
 

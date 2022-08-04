@@ -8,79 +8,84 @@
     <thead>
     <tr>
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
-        <th></th>
+        <th class="field_dataset"></th>
         {% endif %}
 
-          <th class="field_hasvideo"></th>
-        <th colspan="{{dataset_languages|length}}"
-            style="border-bottom: 1px solid grey; border-left: 1px solid grey; border-top: 1px solid grey;">{% trans "Annotation ID Gloss" %}</th>
-
-        <th colspan="{{dataset_languages|length}}"
-            style="border-bottom: 1px solid grey; border-left: 1px solid grey; border-top: 1px solid grey;">{% trans "Lemma ID Gloss" %}</th>
-
-          <th colspan="{{dataset_languages|length}}"
-            style="border-bottom: 1px solid grey; border-left: 1px solid grey; border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Translations" %}</th>
+        <th class="field_hasvideo"></th>
+        {% trans "Annotation ID Gloss" as annotation_header %}
+        <th class="annotations_multicolumn" colspan="{{dataset_languages|length}}"
+            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ annotation_header }}</th>
+        {% trans "Lemma ID Gloss" as lemma_header %}
+        <th class="lemmas_multicolumn" colspan="{{dataset_languages|length}}"
+            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ lemma_header }}</th>
+        {% trans "Translations" as translations_header %}
+        <th class="translations_multicolumn" colspan="{{dataset_languages|length}}"
+            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ translations_header }}</th>
 
           {% for fieldname,column in column_headers %}
-            <th></th>
+            <th style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
           {% endfor %}
 
            {% if not user.is_anonymous %}
-           <th style="width:255px;"></th>
+           <th style="width:255px;border-bottom: 1px solid grey; white-space:nowrap;"></th>
            {% endif %}
       </tr>
       <tr>
           {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
-          <th style="vertical-align:top">{% trans "Dataset" %}</th>
+          <th class="field_dataset" style="vertical-align:top">{% trans "Dataset" %}</th>
           {% endif %}
           <th class="field_hasvideo"></th>
 
            {% for dataset_lang in dataset_languages %}
-          <th  style="vertical-align:top; border-bottom: 1px solid grey; border-left: 1px solid grey; border-right: 1px solid grey">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
-              <div class="annotation_{{dataset_lang.language_code_2char}}">{{ dataset_lang.name }}</div>
+          <th class="annotation_{{dataset_lang.language_code_2char}}" id="annotation_{{dataset_lang.language_code_2char}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
+              <div>{{ dataset_lang.name }}</div>
               {% endif %}
           </th>
           {% endfor %}
 
           {% for dataset_lang in dataset_languages %}
-          <th style="vertical-align:top; border-bottom: 1px solid grey; border-left: 1px solid grey; border-right: 1px solid grey">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
-              <div class="lemma_{{dataset_lang.language_code_2char}}">{{ dataset_lang.name }}</div>
+          <th class="lemma_{{dataset_lang.language_code_2char}}" id="lemma_{{dataset_lang.language_code_2char}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
+              <div>{{ dataset_lang.name }}</div>
               {% endif %}
           </th>
           {% endfor %}
 
           {% for dataset_lang in dataset_languages %}
-          <th style="vertical-align:top; border-bottom: 1px solid grey; border-left: 1px solid grey; border-right: 1px solid grey">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
-              <div class="translation_{{dataset_lang.language_code_2char}}">{{ dataset_lang.name }}</div>
+          <th class="translation_{{dataset_lang.language_code_2char}}" id="translation_{{dataset_lang.language_code_2char}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
+              <div>{{ dataset_lang.name }}</div>
               {% endif %}
           </th>
           {% endfor %}
 
           {% for fieldname,column in column_headers %}
-            <th style="vertical-align:top; white-space:nowrap;">
-                <div class="field_{{fieldname}}">{{column}}</div>
+            <th class="field_{{fieldname}}" id="field_{{fieldname}}"
+                style="vertical-align:top; border-bottom: 1px solid grey; white-space:nowrap;">
+                <div>{{column}}</div>
             </th>
           {% endfor %}
 
            {% if not user.is_anonymous %}
-           <th style="width:255px;vertical-align:top">
-               <div class="field_tags">{% trans "Tags" %}</div>
+           <th class="field_tags" id="field_tags" style="width:255px;border-bottom: 1px solid grey;vertical-align:top">
+               <div>{% trans "Tags" %}</div>
            </th>
            {% endif %}
       </tr>
 
 
-      <tr>
+      <tr id="row_sort_arrowheads">
           {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
-            <th></th>
+            <th class="field_dataset"></th>
           {% endif %}
 
           <th class="field_hasvideo"></th>
           {% for dataset_lang in dataset_languages %}
           {% with "annotationidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
           {% with minfield="-"|add:field %}
-           <th style="white-space:nowrap;">
-               <div class="annotation_{{dataset_lang.language_code_2char}}">
+           <th class="annotation_{{dataset_lang.language_code_2char}}" style="white-space:nowrap;">
+               <div class="col_sort_arrowheads">
              <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
                {% if sortOrder and sortOrder == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
              </a>
@@ -99,8 +104,8 @@
           {% for dataset_lang in dataset_languages %}
           {% with "lemmaidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
           {% with minfield="-"|add:field %}
-           <th style="white-space:nowrap;">
-            <div class="lemma_{{dataset_lang.language_code_2char}}">
+           <th class="lemma_{{dataset_lang.language_code_2char}}" style="white-space:nowrap;">
+            <div class="col_sort_arrowheads">
              <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
                {% if sortOrder and sortOrder == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
              </a>
@@ -120,8 +125,8 @@
            {% for dataset_lang in dataset_languages %}
            {% with "translation_"|add:dataset_lang.language_code_2char as field %}
            {% with minfield="-"|add:field %}
-           <th style="white-space:nowrap;">
-             <div class="translation_{{dataset_lang.language_code_2char}}">
+           <th class="translation_{{dataset_lang.language_code_2char}}" style="white-space:nowrap;">
+             <div class="col_sort_arrowheads">
              <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
                {% if sortOrder and sortOrder == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
              </a>
@@ -139,8 +144,8 @@
 
            {% for fieldname,column in column_headers %}
            {% with minfield="-"|add:column %}
-           <th>
-             <div class="field_{{fieldname}}">
+           <th class="field_{{fieldname}}">
+             <div class="col_sort_arrowheads">
              <a href="#" onclick="do_sort_column('{{fieldname}}','asc', 'adminsearch')">
                {% if sortOrder and sortOrder == column %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
              </a>
@@ -154,8 +159,9 @@
            </th>
            {% endwith %}
            {% endfor %}
-
-           <th style="width:255px;"></th>
+           {% if not user.is_anonymous %}
+           <th class="field_tags" style="width:255px;"></th>
+           {% endif %}
       </tr>
 
     </thead>

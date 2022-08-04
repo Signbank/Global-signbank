@@ -2166,7 +2166,14 @@ def convert_query_parameters_to_filter(query_parameters):
 
     query_list = []
     for get_key, get_value in query_parameters.items():
-        if get_key.startswith(gloss_search_field_prefix) and get_value != '':
+        if get_key == 'search' and get_value != '':
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(get_value)
+            query = Q(annotationidglosstranslation__text__iregex=val)
+            if re.match('^\d+$', val):
+                query = query | Q(sn__exact=val)
+            query_list.append(query)
+        elif get_key.startswith(gloss_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_gloss_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char)
             query_list.append(Q(annotationidglosstranslation__text__iregex=get_value, annotationidglosstranslation__language=language))
@@ -2193,6 +2200,17 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key == 'hasvideo' and get_value != '':
             val = get_value != '2'
             query_list.append(Q(glossvideo__isnull=val))
+
+        elif get_key in ['hasothermedia'] and get_value != '':
+
+            # Remember the pk of all glosses that have other media
+            pks_for_glosses_with_othermedia = [ om.parent_gloss.pk for om in OtherMedia.objects.all() ]
+            if get_value == '2':
+                # value '1' filters glosses with othermedia
+                query_list.append(Q(pk__in=pks_for_glosses_with_othermedia))
+            elif get_value == '3':
+                # the code for '3' excludes the above glosses from the results
+                query_list.append(~Q(pk__in=pks_for_glosses_with_othermedia))
 
         elif get_key == 'hasRelationToForeignSign':
             pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
@@ -2315,6 +2333,7 @@ def convert_query_parameters_to_filter(query_parameters):
                 kwargs = {q_filter:q_value}
                 query_list.append(Q(**kwargs))
         else:
+            print('convert_query_parameters_to_filter: not implemented for ', get_key)
             pass
 
     # make a filter from the list of Q elements
@@ -2394,8 +2413,8 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
     NEUTRALBOOLEANCHOICES = { '0': _('Neutral'), '1': _('Neutral'), '2': _('Yes'), '3': _('No') }
-    UNKNOWNBOOLEANCHOICES = { '0': _('Unknown'), '1': _('Unknown'), '2': _('True'), '3': _('False') }
-    NULLBOOLEANCHOICES = { '0': _('Unknown'), '1': _('Unknown'), '2': _('True'), '3': _('False') }
+    UNKNOWNBOOLEANCHOICES = { '0': _('---------'), '2': _('True'), '3': _('False') }
+    NULLBOOLEANCHOICES = { '0': _('---------'), '2': _('True'), '3': _('False') }
     YESNOCHOICES = { 'unspecified': '---------', 'yes': _('Yes'), 'no': _('No') }
     RELATION_ROLE_CHOICES = {'all': _('All'),
                              'homonym': _('Homonym'),
@@ -2432,7 +2451,7 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
                 query_dict[key] = _('Yes')
             elif query_parameters[key] in ['2', 'no']:
                 query_dict[key] = _('No')
-        elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo']:
+        elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasothermedia']:
             query_dict[key] = NULLBOOLEANCHOICES[query_parameters[key]]
         elif key in ['defspublished']:
             query_dict[key] = YESNOCHOICES[query_parameters[key]]
@@ -2463,7 +2482,7 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
         elif key in ['tags']:
             query_dict[key] = query_parameters[key]
         else:
-            print('key not pretty printed: ', key)
+            # key can be keyword, just pring the value
             query_dict[key] = query_parameters[key]
 
     for language in dataset_languages:
