@@ -22,7 +22,7 @@ from signbank.frequency import configure_corpus_documents_for_dataset, import_co
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, pretty_print_query_fields, pretty_print_query_values, \
-    potential_query_parameters, query_parameters_this_gloss
+    query_parameters_this_gloss, map_search_results_to_gloss_list
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -170,11 +170,6 @@ def word(request, keyword, n):
     else:
         show_query_parameters_as_button = False
 
-    if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
-        show_query_parameters_as_view = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
-    else:
-        show_query_parameters_as_view = False
-
     return render(request,"dictionary/word.html",
                               {'translation': trans.translation.text.encode('utf-8'),
                                'viewname': 'words',
@@ -202,8 +197,7 @@ def word(request, keyword, n):
                                'annotation_idgloss': {},
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
-                               'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button,
-                               'SHOW_QUERY_PARAMETERS_AS_VIEW': show_query_parameters_as_view})
+                               'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button })
 
 def gloss(request, glossid):
     """View of a gloss - mimics the word view, really for admin use
@@ -2823,11 +2817,6 @@ def gloss_revision_history(request,gloss_pk):
     else:
         show_query_parameters_as_button = False
 
-    if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
-        show_query_parameters_as_view = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
-    else:
-        show_query_parameters_as_view = False
-
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
 
@@ -2864,16 +2853,8 @@ def gloss_revision_history(request,gloss_pk):
                    'selected_datasets': selected_datasets,
                    'active_id': gloss_pk,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
-                   'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button,
-                   'SHOW_QUERY_PARAMETERS_AS_VIEW': show_query_parameters_as_view
+                   'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button
                    })
-
-def map_search_results_to_gloss_list(search_results):
-
-    gloss_ids = []
-    for search_result in search_results:
-        gloss_ids.append(search_result['id'])
-    return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))
 
 def gloss_query_view(request,gloss_pk):
 
@@ -2935,9 +2916,6 @@ def gloss_query_view(request,gloss_pk):
 
     default_query_parameters_values_mapping = pretty_print_query_values(dataset_languages, default_query_parameters,request.LANGUAGE_CODE)
 
-    # this is used for catching inconsistencies between the GlossSearchForm and the possible fields of Gloss
-    # potential_columns = potential_query_parameters(dataset_languages)
-
     toggle_publication_fields = []
     if hasattr(settings, 'SEARCH_BY_PUBLICATION_FIELDS'):
 
@@ -2951,12 +2929,6 @@ def gloss_query_view(request,gloss_pk):
     else:
         show_query_parameters_as_button = False
 
-    if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
-        show_query_parameters_as_view = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
-    else:
-        # this isn't actually relevant because this function displays the query view
-        show_query_parameters_as_view = False
-
     return render(request, 'dictionary/gloss_query_view.html',
                   {'gloss': gloss,
                    'objects_on_page': objects_on_page,
@@ -2968,7 +2940,6 @@ def gloss_query_view(request,gloss_pk):
                    'active_id': gloss_pk,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
                    'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button,
-                   'SHOW_QUERY_PARAMETERS_AS_VIEW': show_query_parameters_as_view,
                    'MULTIPLE_SELECT_GLOSS_FIELDS': multiple_select_gloss_fields,
                    'TOGGLE_PUBLICATION_FIELDS': toggle_publication_fields,
                    'default_query_parameters': default_query_parameters,

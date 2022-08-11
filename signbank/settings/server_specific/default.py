@@ -146,7 +146,6 @@ SEARCH_BY_MORPHOLOGY_FIELDS = ['morpheme', 'hasComponentOfType', 'hasMorphemeOfT
 
 QUERY_DISPLAY_FIELDS = MINIMAL_PAIRS_SEARCH_FIELDS
 SHOW_QUERY_PARAMETERS_AS_BUTTON = True
-SHOW_QUERY_PARAMETERS_AS_VIEW = False
 
 # fields are ordered per kind: Field Choice Lists, Text, Boolean
 MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','relOriMov',

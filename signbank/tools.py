@@ -2116,41 +2116,7 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
             query_parameters[field_key] = field_value
     return query_parameters
 
-
-def potential_query_parameters(dataset_languages):
-    # this is used for catching inconsistencies between GlossSearchForm and the Gloss model
-    # return a list of all the fields of Gloss that can be queried upon
-    gloss_fields = [ field.name for field in Gloss._meta.fields ]
-    form_base_fields = [ field for field in GlossSearchForm.__dict__['base_fields'].keys() ]
-
-    main_fields = []
-    for f in form_base_fields:
-        if f in FIELDS['main']:
-            main_fields.append(f)
-
-    not_in_settings = []
-    for f in form_base_fields:
-        if f not in gloss_fields:
-            not_in_settings.append(f)
-
-    gloss_search_field_prefix = "glosssearch_"
-    lemma_search_field_prefix = "lemma_"
-    keyword_search_field_prefix = "keyword_"
-    language_fields = []
-    for language in dataset_languages:
-        language_fields.append(gloss_search_field_prefix+language.language_code_2char)
-        language_fields.append(lemma_search_field_prefix+language.language_code_2char)
-        language_fields.append(keyword_search_field_prefix+language.language_code_2char)
-    all_fields = form_base_fields + language_fields
-    if not settings.USE_DERIVATIONHISTORY and 'derivHist' in all_fields:
-        all_fields.remove('derivHist')
-    if 'sortOrder' in all_fields:
-        all_fields.remove('sortOrder')
-    if 'search' in all_fields:
-        all_fields.remove('search')
-    return all_fields
-
-def convert_query_parameters_to_filter(query_parameters):
+def apply_language_filters_to_results(qs, query_parameters):
     # Evaluate all gloss/language search fields
     gloss_search_field_prefix = "glosssearch_"
     len_gloss_search_field_prefix = len(gloss_search_field_prefix)
@@ -2159,32 +2125,50 @@ def convert_query_parameters_to_filter(query_parameters):
     lemma_search_field_prefix = "lemma_"
     len_lemma_search_field_prefix = len(lemma_search_field_prefix)
 
+    for get_key, get_value in query_parameters.items():
+        if get_key.startswith(gloss_search_field_prefix) and get_value != '':
+            language_code_2char = get_key[len_gloss_search_field_prefix:]
+            language = Language.objects.filter(language_code_2char=language_code_2char)
+            qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
+                           annotationidglosstranslation__language=language)
+        elif get_key.startswith(lemma_search_field_prefix) and get_value != '':
+            language_code_2char = get_key[len_lemma_search_field_prefix:]
+            language = Language.objects.filter(language_code_2char=language_code_2char)
+            qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
+                           lemma__lemmaidglosstranslation__language=language)
+        elif get_key.startswith(keyword_search_field_prefix) and get_value != '':
+            language_code_2char = get_key[len_keyword_search_field_prefix:]
+            language = Language.objects.filter(language_code_2char=language_code_2char)
+            qs = qs.filter(translation__translation__text__iregex=get_value,
+                           translation__language=language)
+    return qs
+
+def convert_query_parameters_to_filter(query_parameters):
+    # Evaluate all gloss/language search fields
+    glosssearch = "glosssearch_"
+    lemmasearch = "lemma_"
+    keywordsearch = "keyword_"
+
     gloss_fields = [ field.name for field in Gloss._meta.fields ]
     multiple_select_gloss_fields = [field.name + '[]' for field in Gloss._meta.fields if hasattr(field, 'field_choice_category')]
     if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
         multiple_select_gloss_fields.remove('derivHist[]')
 
     query_list = []
+
     for get_key, get_value in query_parameters.items():
-        if get_key == 'search' and get_value != '':
+        if get_key == 'search_type':
+            continue
+        elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) or get_key.startswith(keywordsearch):
+            # because of joining tables, these are done in a separate function and directly applied to the query results
+            continue
+        elif get_key == 'search' and get_value != '':
             from signbank.tools import strip_control_characters
             val = strip_control_characters(get_value)
             query = Q(annotationidglosstranslation__text__iregex=val)
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
             query_list.append(query)
-        elif get_key.startswith(gloss_search_field_prefix) and get_value != '':
-            language_code_2char = get_key[len_gloss_search_field_prefix:]
-            language = Language.objects.filter(language_code_2char=language_code_2char)
-            query_list.append(Q(annotationidglosstranslation__text__iregex=get_value, annotationidglosstranslation__language=language))
-        elif get_key.startswith(lemma_search_field_prefix) and get_value != '':
-            language_code_2char = get_key[len_lemma_search_field_prefix:]
-            language = Language.objects.filter(language_code_2char=language_code_2char)
-            query_list.append(Q(lemma__lemmaidglosstranslation__text__iregex=get_value, lemma__lemmaidglosstranslation__language=language))
-        elif get_key.startswith(keyword_search_field_prefix) and get_value != '':
-            language_code_2char = get_key[len_keyword_search_field_prefix:]
-            language = Language.objects.filter(language_code_2char=language_code_2char)
-            query_list.append(Q(translation__translation__text__iregex=get_value, translation__language=language))
 
         elif get_key == 'keyword' and get_value != '':
             query_list.append(Q(translation__translation__text__iregex=get_value))
@@ -2285,7 +2269,7 @@ def convert_query_parameters_to_filter(query_parameters):
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_correct_relation))
         elif get_key in ['relation']:
-            potential_targets = Gloss.objects.filter(idgloss__icontains=get_value)
+            potential_targets = Gloss.objects.filter(annotationidglosstranslation__text__iregex=get_value)
             relations = Relation.objects.filter(target__in=potential_targets)
             potential_pks = [relation.source.pk for relation in relations]
             query_list.append(Q(pk__in=potential_pks))
@@ -2350,7 +2334,7 @@ def convert_query_parameters_to_filter(query_parameters):
 
 def pretty_print_query_fields(dataset_languages,query_parameters):
     gloss_fields = [f.name for f in Gloss._meta.fields]
-    form_fields = GlossSearchForm.__dict__['declared_fields']
+    form_fields = GlossSearchForm.__dict__['base_fields']
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
@@ -2359,6 +2343,8 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
         if key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
             # language-based fields are done later
             continue
+        elif key == 'search_type':
+            query_dict[key] = gettext("Search Type")
         elif key == 'dialect[]':
             query_dict[key] = gettext("Dialect")
         elif key == 'signlanguage[]':
@@ -2367,13 +2353,13 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
             if key[:-2] in gloss_fields:
                 query_dict[key] = Gloss._meta.get_field(key[:-2]).verbose_name.encode('utf-8').decode()
             elif key[:-2] in form_fields:
-                query_dict[key] = GlossSearchForm.__dict__['declared_fields'][key[:-2]].label.encode('utf-8').decode()
+                query_dict[key] = GlossSearchForm.__dict__['base_fields'][key[:-2]].label.encode('utf-8').decode()
             else:
                 print('pretty_print_query_fields: multiple select field not found in Gloss or GlossSearchForm: ', key)
                 query_dict[key] = key
         elif key not in gloss_fields:
             if key in form_fields:
-                query_dict[key] = GlossSearchForm.__dict__['declared_fields'][key].label.encode('utf-8').decode()
+                query_dict[key] = GlossSearchForm.__dict__['base_fields'][key].label.encode('utf-8').decode()
             else:
                 print('pretty_print_query_fields: key not in gloss_fields, not in form_fields:', key)
                 query_dict[key] = key
@@ -2425,10 +2411,20 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
                              'hypernym': _('Hypernym'),
                              'seealso': _('See Also'),
                              'paradigm': _('Handshape Paradigm') }
+    SEARCH_TYPE_CHOICES = {
+        'sign': _("Search Sign"),
+        'sign_or_morpheme': _("Search Sign or Morpheme"),
+        'morpheme': _("Search Morpheme"),
+        'sign_handshape': _("Search Sign by Handshape"),
+        'handshape': _("Search Handshape"),
+        'lemma': _("Search Lemma")
+    }
 
     query_dict = dict()
     for key in query_parameters:
-        if key == 'dialect[]':
+        if key == 'search_type':
+            query_dict[key] = SEARCH_TYPE_CHOICES[query_parameters[key]]
+        elif key == 'dialect[]':
             choices_for_category = Dialect.objects.filter(id__in=query_parameters[key])
             query_dict[key] = [ choice.signlanguage.name + "/" + choice.name for choice in choices_for_category ]
         elif key == 'signlanguage[]':
@@ -2482,7 +2478,8 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
         elif key in ['tags']:
             query_dict[key] = query_parameters[key]
         else:
-            # key can be keyword, just pring the value
+            # key can be keyword, just print the value
+            # includes relationToForeignSign, relation
             query_dict[key] = query_parameters[key]
 
     for language in dataset_languages:
@@ -2504,3 +2501,10 @@ def searchform_panels(searchform, searchfields) :
         form_field_parameters = (field,searchform.fields[field].label,searchform[field])
         search_by_fields.append(form_field_parameters)
     return search_by_fields
+
+def map_search_results_to_gloss_list(search_results):
+
+    gloss_ids = []
+    for search_result in search_results:
+        gloss_ids.append(search_result['id'])
+    return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))

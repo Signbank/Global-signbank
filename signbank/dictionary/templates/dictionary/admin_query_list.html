@@ -7,7 +7,7 @@
 {% load wrong_sign %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Query View for {{ gloss }}{% endblocktrans %}
+{% blocktrans %}Query List View{% endblocktrans %}
 {% endblock %}
 
 {% load guardian_tags %}
@@ -24,34 +24,13 @@
 
     var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
 
-    var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
-
-
-    var gloss_dataset_id = {{ gloss.lemma.dataset.id}};
-    var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
-
     var display_fields = JSON.stringify({{display_fields|safe}});
+    var query_fields_parameters = JSON.stringify({{query_fields_parameters|safe}});
 
     var csrf_token = '{{csrf_token}}';
 
-    var this_gloss_id = {{gloss.id}};
-
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
-    {% include "dictionary/search_result_bar.html" %}
-
-    function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
-        var target_object = document.forms[formId][targetObjectId].value;
-        var this_gloss = document.forms[formId][thisGlossID].value;
-        if (target_object == "") {
-            alert(mustChooseAlert);
-            return false;
-        }
-        if (target_object == this_gloss) {
-            alert(mustBeDifferentAlert);
-            return false;
-        }
-    }
 
 $(document).ready(function() {
 
@@ -67,7 +46,8 @@ $(document).ready(function() {
                 async: true,
                 data: {
                     query: true,
-                    display_fields: display_fields
+                    display_fields: display_fields,
+                    query_fields_parameters: query_fields_parameters
                 },
                 success : function(result) {
                     var elem = $(result);
@@ -85,7 +65,8 @@ $(document).ready(function() {
                 async: true,
                 data: {
                     query: true,
-                    display_fields: display_fields
+                    display_fields: display_fields,
+                    query_fields_parameters: query_fields_parameters
                 },
                 success : function(result) {
                     var elem = $(result);
@@ -253,6 +234,14 @@ $(document).ready(function() {
         do_toggle_line_through(el,'button_pub_'+field_id);
     };
 
+    // This function toggles the different publication field columns
+    function do_toggle_qp_field(el) {
+        var field_id = $(el).attr('value');
+        var field_column_id = '.field_' + field_id;
+        $(field_column_id).toggle();
+        do_toggle_line_through(el,'button_qp_'+field_id);
+    };
+
  /**
  * @param {string} field_name - name of the field to sort on
  * @param {string} action     - one of: desc, asc, del
@@ -266,8 +255,8 @@ function do_sort_column(field_name, action, frmName) {
     </script>
     <script type='text/javascript'>
 
-        $('#searchresults').css({'padding-top': 10});
-        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
+        $('#signinfo').css({'margin-bottom': 30});
+        $('#definitionblock').css({'padding-top': $('#signinfo').height() + 30});
 
          $('#panel-expand-collapse-btn-toolbar').css({
             'height': $('#panel-expand-collapse-btn-group').css('height'),
@@ -403,96 +392,20 @@ thead tr th {
 
 {% block content %}
 
-<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
-    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
-    </div>
-    {% endif %}
-</div>
-
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
-
-    <div class='btn-group'>
-        {% if SIGN_NAVIGATION %}
-
-            {% if navigation.prev %}
-            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %]
-            </a>
-            {% endif %}
-
-            <button class='btn navbar-btn'>{% blocktrans %}"Sign {{glossposn}} of {{glosscount}} in the dictionary" {% endblocktrans %}</button>
-
-            {% if navigation.next %}
-            <a class="btn navbar-btn btn-default"
-               href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
-            {% endif %}
-         {% endif %}
-    </div>
 
     <ul class='nav nav-tabs'>
         <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
-        </li>
-        <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Detail View" %}</a>
-        </li>
-        <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
-        </li>
-        {% if gloss.has_frequency_data %}
-        <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequency View" %}</a>
-        </li>
-        {% endif %}
-        <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
-        </li>
-        <li class="nav-item">
-            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/query_view">{% trans "Query View" %}</a>
+            <a class='nav-link active' href="">{% trans "Query View" %}</a>
         </li>
     </ul>
 </div>
 
-
-<div id="definitionblock" >
-    <br>
+<div id="definitionblock" style="padding-top: 30px;">
     {% if not query_parameters.items %}
     <br>
-    <p>{% trans "No active query parameters in search." %}</p>
+    <p>{% trans "No active search or query parameters." %}</p>
 
-        <h3>{% trans "Default Query Parameters" %}</h3>
-    <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
-        <thead id = 'default_query_table_header'>
-                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
-                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
-        </thead>
-        <tbody>
-        {% for key, value in default_query_parameters.items %}
-        <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{{default_query_parameters_mapping|get_item:key}}</td>
-            {% if '[]' in key %}
-        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}<button
-                class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
-            {% elif key == 'tags' %}
-                <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}
-                   <div class='tagQP' >
-                   {% load underscore_to_space %}
-                        <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
-                   </div>
-                    {% if not forloop.last %} {% endif %}{% endfor %}</td>
-            {% else %}
-                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                    border-top: 1px solid grey; border-right: 1px solid grey;">{{default_query_parameters_values_mapping|get_item:key}}</td>
-            {% endif %}
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
     {% else %}
     <h3>{% trans "Query Parameters" %}</h3>
     <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
@@ -530,10 +443,9 @@ thead tr th {
     <br>
     <br>
     <h3>{% trans "Glosses Matching Query" %}</h3>
-    <table>
+    <table class="table table-bordered" style="border-left: 2px solid grey; border-spacing: 15px 30px; width: auto;">
     <tr>
-    <td><span>{% trans "Toggle Annotations" %}</span></td>
-    <td>
+    <td><span>{% trans "Annotation ID Gloss" %}</span>
     {% for dataset_lang in dataset_languages %}
     <button name="button_annotation_{{dataset_lang.language_code_2char}}"
             id="button_annotation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_annotation(this);"
@@ -542,10 +454,8 @@ thead tr th {
     </button>
     {% endfor %}
     </td>
-    </tr>
-    <tr>
-    <td><span>{% trans "Toggle Lemmas" %}</span></td>
-    <td>
+
+    <td><span>{% trans "Lemma ID Gloss" %}</span>
     {% for dataset_lang in dataset_languages %}
     <button name="button_lemma_{{dataset_lang.language_code_2char}}"
             id="button_lemma_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_lemma(this);"
@@ -554,10 +464,8 @@ thead tr th {
     </button>
     {% endfor %}
     </td>
-    </tr>
-    <tr>
-    <td><span>{% trans "Toggle Translations" %}</span></td>
-    <td>
+
+    <td><span>{% trans "Translations" %}</span>
     {% for dataset_lang in dataset_languages %}
     <button name="button_translation_{{dataset_lang.language_code_2char}}"
             id="button_translation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_translations(this);"
@@ -568,9 +476,8 @@ thead tr th {
     </td>
     </tr>
     <tr>
-    <td style="width:300px;"><span>{% trans "Toggle Non-Empty Fields of Focus Gloss" %}</span></td>
-    <td>
-    {% for fieldname,label in column_headers %}
+    <td style="width:300px;" colspan=3 ><span>{% trans "Gloss List Fields" %}</span>
+    {% for fieldname,label in TOGGLE_GLOSS_LIST_DISPLAY_FIELDS %}
         <button name="button_{{fieldname}}" id="button_{{fieldname}}" type='submit' onclick="do_toggle_field(this);"
             value="{{fieldname}}" style="text-decoration:none;">
             {{label}}
@@ -578,9 +485,20 @@ thead tr th {
     {% endfor %}
     </td>
     </tr>
+    {% if TOGGLE_QUERY_PARAMETER_FIELDS %}
     <tr>
-    <td style="width:300px;"><span>{% trans "Toggle Publication Fields" %}</span></td>
-    <td>
+    <td style="width:300px;" colspan=3 ><span>{% trans "Query Parameter Fields" %}</span>
+    {% for fieldname,label in TOGGLE_QUERY_PARAMETER_FIELDS %}
+        <button name="button_{{fieldname}}" id="button_qp_{{fieldname}}" type='submit' onclick="do_toggle_qp_field(this);"
+            value="{{fieldname}}" style="text-decoration:none;">
+            {{label}}
+        </button>
+    {% endfor %}
+    </td>
+    </tr>
+    {% endif %}
+    <tr>
+    <td style="width:300px;" colspan=3 ><span>{% trans "Publication Fields" %}</span>
     {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
         <button name="button_dataset" id="button_pub_dataset" type='submit' onclick="do_toggle_pub_field(this);"
             value="dataset" style="text-decoration:none;">
@@ -591,7 +509,11 @@ thead tr th {
         {% if fieldname == 'tags' or fieldname == 'hasvideo' %}
         <button name="button_{{fieldname}}" id="button_pub_{{fieldname}}" type='submit' onclick="do_toggle_pub_field(this);"
             value="{{fieldname}}" style="text-decoration:none;">
+            {% if fieldname == 'hasvideo' %}
+            {% trans "Video" %}
+            {% else %}
             {{label}}
+            {% endif %}
         </button>
         {% endif %}
     {% endfor %}

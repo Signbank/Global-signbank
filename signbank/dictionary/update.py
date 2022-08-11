@@ -2290,7 +2290,6 @@ def update_owner(dataset, field, values):
             if value != current_owners_name:
                 print('clear owners field')
                 # dataset.owners.clear()
-                # Has a side effect that the Dialects value is cleared, this will be passed back to the user interface
                 owners_value = ''
         # dataset.save()
         print('save dataset')

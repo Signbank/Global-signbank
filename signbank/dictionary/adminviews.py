@@ -50,7 +50,7 @@ from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     convert_query_parameters_to_filter, searchform_panels, pretty_print_query_fields, pretty_print_query_values, \
-    potential_query_parameters, query_parameters_this_gloss
+    query_parameters_this_gloss, map_search_results_to_gloss_list, apply_language_filters_to_results
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -289,7 +289,7 @@ class GlossListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] != '':
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             if 'query' in self.request.GET:
                 # if the query parameters are available, convert them to a dictionary
                 session_query_parameters = self.request.session['query_parameters']
@@ -310,18 +310,13 @@ class GlossListView(ListView):
         context['query_parameters_keys'] = json.dumps(query_parameters_keys)
         # other parameters are in the GlossSearchForm in the template that are not initialised via multiselect or language fields
         # plus semantics and phonology fields with text types
-        other_parameters = ['sortOrder', 'search_type', 'search'] + \
+        other_parameters = ['sortOrder'] + \
                                 settings.SEARCH_BY_PUBLICATION_FIELDS + \
                                 settings.SEARCH_BY_RELATION_FIELDS + \
                                 settings.SEARCH_BY_MORPHOLOGY_FIELDS + \
                                 settings.SEARCH_BY_PHONOLOGY_FIELDS + \
                                 settings.SEARCH_BY_SEMANTICS_FIELDS
-                                # ['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet']
-        # other_parameters_keys = ['sortOrder', 'search_type', 'search', 'useInstr',
-        #                          'morpheme', 'hasComponentOfType', 'hasMorphemeOfType',
-        #                          'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet',
-        #                          'relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign',
-        #                          'definitionRole', 'definitionContains', 'createdAfter', 'createdBefore', 'createdBy']
+
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
         other_parameters_keys = [ key for key in other_parameters if key not in multiple_select_gloss_fields ]
@@ -876,15 +871,22 @@ class GlossListView(ListView):
 
         setattr(self.request, 'web_search', self.web_search)
 
-        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+        if 'query_parameters' in self.request.session.keys() \
+                and self.request.session['query_parameters'] not in ['', '{}'] \
+                and 'query' in self.request.GET:
             session_query_parameters = self.request.session['query_parameters']
             self.query_parameters = json.loads(session_query_parameters)
+            if 'search_type' in self.query_parameters.keys() and self.query_parameters['search_type'] != 'sign':
+                # Make sure on loading the query parameters that the right kind of search is done
+                # this is important if the user searched on Sign or Morpheme
+                self.search_type = self.query_parameters['search_type']
         else:
             self.query_parameters = dict()
         selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         #Get the initial selection
-        if show_all or (len(get) > 0 and 'query' not in self.request.GET) or  (self.query_parameters and 'query' in self.request.GET):
+        if show_all or (len(get) > 0 and 'query' not in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
             if self.search_type == 'sign' or not self.request.user.is_authenticated():
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
@@ -898,12 +900,21 @@ class GlossListView(ListView):
                     qs = Gloss.objects.all().prefetch_related('lemma').prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
                 else:
                     qs = Gloss.objects.all().filter(lemma__dataset__in=selected_datasets)
-            if self.query_parameters and 'query' in get:
-                query = convert_query_parameters_to_filter(self.query_parameters)
-                if query:
-                    qs = qs.filter(query).distinct()
-                    sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
-                    return sorted_qs
+        elif self.query_parameters and 'query' in self.request.GET:
+            if self.search_type == 'sign_or_morpheme':
+                qs = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
+            else:
+                qs = Gloss.none_morpheme_objects().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
+
+            qs = apply_language_filters_to_results(qs, self.query_parameters)
+            qs = qs.distinct()
+
+            query = convert_query_parameters_to_filter(self.query_parameters)
+            if query:
+                qs = qs.filter(query).distinct()
+
+            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            return sorted_qs
 
         #No filters or 'show_all' specified? show nothing
         else:
@@ -934,6 +945,9 @@ class GlossListView(ListView):
                 query = query | Q(sn__exact=val)
 
             qs = qs.filter(query)
+
+        if self.search_type != 'sign':
+            query_parameters['search_type'] = self.search_type
 
         # Evaluate all gloss/language search fields
         for get_key, get_value in get.items():
@@ -984,9 +998,9 @@ class GlossListView(ListView):
             # Remember the pk of all glosses that have other media
             pks_for_glosses_with_othermedia = [ om.parent_gloss.pk for om in OtherMedia.objects.all() ]
 
-            if get['hasothermedia'] == '2': #We only want glosses with a relation to a foreign sign
+            if get['hasothermedia'] == '2': #We only want glosses with other media
                 qs = qs.filter(pk__in=pks_for_glosses_with_othermedia)
-            elif get['hasothermedia'] == '3': #We only want glosses without a relation to a foreign sign
+            elif get['hasothermedia'] == '3': #We only want glosses without other media
                 qs = qs.exclude(pk__in=pks_for_glosses_with_othermedia)
 
         if 'defspublished' in get and get['defspublished'] != 'unspecified':
@@ -1065,24 +1079,6 @@ class GlossListView(ListView):
                     kwargs = {key:val}
                     qs = qs.filter(**kwargs)
 
-        # THIS IS NOT USED BY GLOBAL, subsumed by definitionContains
-        # if 'defsearch' in get and get['defsearch'] != '':
-        #     query_parameters['defsearch'] = get['defsearch']
-        #
-        #     val = get['defsearch']
-        #
-        #     if 'definitionRole' in get:
-        #         query_parameters['definitionRole'] = get['definitionRole']
-        #
-        #         role = get['definitionRole']
-        #     else:
-        #         role = 'all'
-        #
-        #     if role == 'all':
-        #         qs = qs.filter(definition__text__icontains=val)
-        #     else:
-        #         qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
-
         if 'tags' in get and get['tags'] != '':
             query_parameters['tags'] = get.getlist('tags')
             vals = get.getlist('tags')
@@ -1116,7 +1112,7 @@ class GlossListView(ListView):
         if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
             query_parameters['relationToForeignSign'] = get['relationToForeignSign']
 
-            relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
+            relations = RelationToForeignSign.objects.filter(other_lang_gloss__iregex=get['relationToForeignSign'])
             potential_pks = [relation.gloss.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
 
@@ -1133,7 +1129,7 @@ class GlossListView(ListView):
         if 'relation' in get and get['relation'] != '':
             query_parameters['relation'] = get['relation']
 
-            potential_targets = Gloss.objects.filter(idgloss__icontains=get['relation'])
+            potential_targets = Gloss.objects.filter(annotationidglosstranslation__text__iregex=get['relation'])
             relations = Relation.objects.filter(target__in=potential_targets)
             potential_pks = [relation.source.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
@@ -1717,12 +1713,15 @@ class GlossDetailView(DetailView):
         multiselect_semanticfields = gl.semFieldShadow.all()
         legacy_semanticfield = gl.semField
         if legacy_semanticfield and not multiselect_semanticfields:
-
             new_semanticfield = semanticfield_fieldchoice_to_multiselect(legacy_semanticfield)
 
             if new_semanticfield:
                 # the following is only done if the legacy value has not been put in the multiselect semantic fields
                 gl.semFieldShadow.add(new_semanticfield)
+                gl.save()
+            else:
+                # old legacy value does not exist anymore as a field choice, remove it
+                gl.semField = None
                 gl.save()
 
         for sf in gl.semFieldShadow.all():
@@ -1854,11 +1853,6 @@ class GlossDetailView(DetailView):
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
         else:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
-
-        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
-            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
-        else:
-            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = False
 
         return context
 
@@ -2159,11 +2153,6 @@ class GlossRelationsDetailView(DetailView):
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
         else:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
-
-        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
-            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
-        else:
-            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = False
 
         return context
 
@@ -3539,6 +3528,172 @@ class MinimalPairsListView(ListView):
 
         return qs
 
+class QueryListView(ListView):
+    # not sure what model should be used here, it applies to all the glosses in a dataset
+    model = Dataset
+    template_name = 'dictionary/admin_query_list.html'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(QueryListView, self).get_context_data(**kwargs)
+
+        language_code = self.request.LANGUAGE_CODE
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        codes_to_adjectives = dict(settings.LANGUAGES)
+        if language_code not in codes_to_adjectives.keys():
+            adjective = 'english'
+        else:
+            adjective = codes_to_adjectives[language_code].lower()
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        if hasattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS'):
+            context['GLOSS_LIST_DISPLAY_FIELDS'] = settings.GLOSS_LIST_DISPLAY_FIELDS
+        else:
+            context['GLOSS_LIST_DISPLAY_FIELDS'] = []
+
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
+            fieldnames.remove('derivHist')
+        multiple_select_gloss_fields = [field.name + '[]' for field in Gloss._meta.fields if
+                                        field.name in fieldnames and hasattr(field, 'field_choice_category')]
+
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+        else:
+            search_results = []
+        if search_results and len(search_results) > 0:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+                self.request.session['search_results'] = None
+        if 'search_type' in self.request.session.keys():
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+                # search_type is 'handshape'
+                self.request.session['search_results'] = None
+
+        (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
+
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+            # if the query parameters are available, convert them to a dictionary
+            session_query_parameters = self.request.session['query_parameters']
+            query_parameters = json.loads(session_query_parameters)
+        else:
+            # local query parameters
+            query_parameters = {}
+            # save the default query parameters to the sessin variable
+            self.request.session['query_parameters'] = json.dumps(query_parameters)
+            self.request.session.modified = True
+
+        query_parameters_mapping = pretty_print_query_fields(dataset_languages, query_parameters.keys())
+
+        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters,
+                                                                    self.request.LANGUAGE_CODE)
+
+        gloss_search_field_prefix = "glosssearch_"
+        lemma_search_field_prefix = "lemma_"
+        keyword_search_field_prefix = "keyword_"
+        query_fields_focus = []
+        query_fields_parameters = []
+        for qp_key in query_parameters.keys():
+            if qp_key == 'search_type':
+                continue
+            elif qp_key[-2:] == '[]':
+                qp_key = qp_key[:-2]
+            if qp_key.startswith(gloss_search_field_prefix) or \
+                    qp_key.startswith(lemma_search_field_prefix) or \
+                        qp_key.startswith(keyword_search_field_prefix):
+                continue
+            if qp_key in settings.GLOSS_LIST_DISPLAY_FIELDS:
+                continue
+            query_fields_focus.append(qp_key)
+            if qp_key == 'hasRelation':
+                # save type of relation
+                query_fields_parameters.append(query_parameters[qp_key])
+
+        if 'hasRelationToForeignSign' in query_fields_focus and 'relationToForeignSign' not in query_fields_focus:
+            if query_parameters['hasRelationToForeignSign'] == '1':
+                # if this is a query with hasRelationToForeignSign True, then also show the relations in the result table
+                query_fields_focus.append('relationToForeignSign')
+
+        phonology_focus = settings.GLOSS_LIST_DISPLAY_FIELDS + query_fields_focus
+
+        toggle_gloss_list_display_fields = []
+        if hasattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS'):
+
+            for gloss_list_field in settings.GLOSS_LIST_DISPLAY_FIELDS:
+                gloss_list_field_parameters = (gloss_list_field,
+                                                GlossSearchForm.__dict__['base_fields'][gloss_list_field].label.encode(
+                                                    'utf-8').decode())
+                toggle_gloss_list_display_fields.append(gloss_list_field_parameters)
+
+        toggle_query_parameter_fields = []
+        for query_field in query_fields_focus:
+            if query_field == 'search_type':
+                # don't show a button for this
+                continue
+            elif query_field == 'hasothermedia':
+                toggle_query_parameter = (query_field, _("Other Media"))
+            elif query_field in GlossSearchForm.__dict__['base_fields']:
+                toggle_query_parameter = (query_field,GlossSearchForm.__dict__['base_fields'][query_field].label.encode('utf-8').decode())
+            elif query_field == 'dialect':
+                toggle_query_parameter = (query_field, _("Dialect"))
+            elif query_field == 'hasComponentOfType':
+                toggle_query_parameter = (query_field, _("Sequential Morphology"))
+            elif query_field == 'hasMorphemeOfType':
+                toggle_query_parameter = (query_field, _("Morpheme Type"))
+            elif query_field == 'morpheme':
+                toggle_query_parameter = (query_field, _("Simultaneous Morphology"))
+            else:
+                toggle_query_parameter = (query_field,query_field.capitalize())
+            toggle_query_parameter_fields.append(toggle_query_parameter)
+
+        toggle_publication_fields = []
+        if hasattr(settings, 'SEARCH_BY_PUBLICATION_FIELDS'):
+
+            for publication_field in settings.SEARCH_BY_PUBLICATION_FIELDS:
+                publication_field_parameters = (publication_field,
+                                                GlossSearchForm.__dict__['base_fields'][publication_field].label.encode(
+                                                    'utf-8').decode())
+                toggle_publication_fields.append(publication_field_parameters)
+
+        context['objects_on_page'] = objects_on_page
+        context['object_list'] = object_list
+        context['display_fields'] = phonology_focus
+        context['query_fields_parameters'] = query_fields_parameters
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+        context['TOGGLE_QUERY_PARAMETER_FIELDS'] = toggle_query_parameter_fields
+        context['TOGGLE_PUBLICATION_FIELDS'] = toggle_publication_fields
+        context['TOGGLE_GLOSS_LIST_DISPLAY_FIELDS'] = toggle_gloss_list_display_fields
+        context['query_parameters'] = query_parameters
+        context['query_parameters_mapping'] = query_parameters_mapping
+        context['query_parameters_values_mapping'] = query_parameters_values_mapping
+
+        return context
+    def get_queryset(self):
+
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+        else:
+            search_results = []
+        if search_results and len(search_results) > 0:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+                self.request.session['search_results'] = None
+        if 'search_type' in self.request.session.keys():
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+                # search_type is 'handshape'
+                self.request.session['search_results'] = None
+
+        (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
+
+        return object_list
+
+
 class FrequencyListView(ListView):
     # not sure what model should be used here, it applies to all the glosses in a dataset
     model = Dataset
@@ -3658,11 +3813,6 @@ class FrequencyListView(ListView):
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
         else:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
-
-        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
-            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
-        else:
-            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = False
 
         return context
 
@@ -3906,11 +4056,6 @@ class GlossFrequencyView(DetailView):
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
         else:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
-
-        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_VIEW') and settings.SHOW_QUERY_PARAMETERS_AS_VIEW:
-            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = settings.SHOW_QUERY_PARAMETERS_AS_VIEW
-        else:
-            context['SHOW_QUERY_PARAMETERS_AS_VIEW'] = False
 
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
@@ -6173,6 +6318,10 @@ class MorphemeDetailView(DetailView):
                 # the following is only done if the legacy value has not been put in the multiselect semantic fields
                 gl.semFieldShadow.add(new_semanticfield)
                 gl.save()
+            else:
+                # old legacy value does not exist anymore as a field choice, remove it
+                gl.semField = None
+                gl.save()
 
         for sf in gl.semFieldShadow.all():
             gloss_semanticfields.append(sf)
@@ -6594,8 +6743,9 @@ def glosslist_ajax_complete(request, gloss_id):
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
 
     if request.is_ajax() and request.method == 'GET':
-        if 'query' in request.GET and 'display_fields' in request.GET:
+        if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
             display_fields = json.loads(request.GET['display_fields'])
+            query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
     is_anonymous = user.is_authenticated()
 
@@ -6620,22 +6770,83 @@ def glosslist_ajax_complete(request, gloss_id):
     column_values = []
     for fieldname in display_fields:
 
-        machine_value = getattr(this_gloss,fieldname)
-        gloss_field = Gloss._meta.get_field(fieldname)
-        if hasattr(gloss_field, 'field_choice_category'):
-            fieldchoice_category = gloss_field.field_choice_category
+        if fieldname == 'semField':
+            semanticfields = ", ".join([str(sf.name) for sf in this_gloss.semFieldShadow.all()])
+            column_values.append((fieldname, semanticfields))
+        elif fieldname == 'derivHist':
+            derivationhistories = ", ".join([str(dh.name) for dh in this_gloss.derivHistShadow.all()])
+            column_values.append((fieldname, derivationhistories))
+        elif fieldname == 'dialect':
+            dialects = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in this_gloss.dialect.all()])
+            column_values.append((fieldname, dialects))
+        elif fieldname == 'signlanguage':
+            # this is a ManyToManyField field
+            signlanguages = ", ".join([str(sl.name) for sl in this_gloss.signlanguage.all()])
+            column_values.append((fieldname, signlanguages))
+        elif fieldname == 'hasothermedia':
+            other_media_paths = []
+            for other_media in this_gloss.othermedia_set.all():
+                media_okay, path, other_media_filename = other_media.get_othermedia_path(this_gloss.id, check_existence=True)
+                if media_okay:
+                    other_media_paths.append(other_media_filename)
+            other_media = ", ".join(other_media_paths)
+            column_values.append((fieldname, other_media))
+        elif fieldname == 'hasComponentOfType':
+            morphemes = " + ".join([x.__str__() for x in this_gloss.parent_glosses.all()])
+            column_values.append((fieldname, morphemes))
+        elif fieldname == 'hasMorphemeOfType':
+            # the inheritance only works this way in this version of Django/Python
+            # the morphemes are filtered on this glosses id, then the morpheme is used
+            target_morphemes = Morpheme.objects.filter(id=this_gloss.id)
+            if target_morphemes:
+                morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
+                morpheme_type = target_morphemes[0].mrpType
+                translated_morph_type = machine_value_to_translated_human_value(morpheme_type, morph_typ_choices, request.LANGUAGE_CODE)
+            else:
+                translated_morph_type = ''
+            column_values.append((fieldname, translated_morph_type))
+        elif fieldname == 'morpheme':
+            morphemes = " + ".join([x.morpheme.__str__() for x in this_gloss.simultaneous_morphology.all()])
+            column_values.append((fieldname, morphemes))
+        elif fieldname == 'hasRelation':
+            if query_fields_parameters:
+                relations_of_type = [ r for r in this_gloss.relation_sources.all() if r.role in query_fields_parameters ]
+                relations = ", ".join([r.target.__str__() for r in relations_of_type])
+            else:
+                relations = ", ".join([r.role + ':' + r.target.__str__() for r in this_gloss.relation_sources.all()])
+            # has_relation = _('Yes') if (this_gloss.relation_sources.count() > 0) else _('No')
+            column_values.append((fieldname, relations))
+        elif fieldname == 'relation':
+            relations_to_signs = Relation.objects.filter(source=this_gloss)
+            relations = ", ".join([x.role + ':' + x.target.__str__() for x in relations_to_signs])
+            column_values.append((fieldname, relations))
+        elif fieldname == 'hasRelationToForeignSign':
+            has_relations = _('Yes') if (this_gloss.relationtoforeignsign_set.count() > 0) else _('No')
+            column_values.append((fieldname, has_relations))
+        elif fieldname == 'relationToForeignSign':
+            relations_to_foreign_signs = RelationToForeignSign.objects.filter(gloss=this_gloss)
+            relations = ", ".join([x.other_lang + ':' + x.other_lang_gloss for x in relations_to_foreign_signs])
+            column_values.append((fieldname, relations))
+        elif fieldname not in [ f.name for f in Gloss._meta.fields ]:
+            continue
         else:
-            fieldchoice_category = fieldname
-        if fieldchoice_category == 'Handshape':
-            choice_list = Handshape.objects.all()
-        else:
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            # this is a field of Gloss
+            machine_value = getattr(this_gloss,fieldname)
+            gloss_field = Gloss._meta.get_field(fieldname)
+            if hasattr(gloss_field, 'field_choice_category'):
+                fieldchoice_category = gloss_field.field_choice_category
+            else:
+                fieldchoice_category = fieldname
+            if fieldchoice_category == 'Handshape':
+                choice_list = Handshape.objects.all()
+            else:
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-        human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
-        if human_value:
-            column_values.append((fieldname, human_value))
-        else:
-            column_values.append((fieldname, '-'))
+            human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
+            if human_value:
+                column_values.append((fieldname, human_value))
+            else:
+                column_values.append((fieldname, '-'))
 
     return render(request, 'dictionary/gloss_row.html', { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
@@ -6650,10 +6861,12 @@ def glosslistheader_ajax(request):
     user = request.user
 
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+    query_fields_parameters = []
 
     if request.is_ajax() and request.method == 'GET':
-        if 'query' in request.GET and 'display_fields' in request.GET:
+        if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
             display_fields = json.loads(request.GET['display_fields'])
+            query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
     is_anonymous = user.is_authenticated()
     if language_code == "zh-hans":
@@ -6669,8 +6882,36 @@ def glosslistheader_ajax(request):
 
     column_headers = []
     for fieldname in display_fields:
-        field_label = Gloss._meta.get_field(fieldname).verbose_name
-        column_headers.append((fieldname, field_label))
+        if fieldname == 'dialect':
+            column_headers.append((fieldname, _("Dialect")))
+        elif fieldname == 'signlanguage':
+            column_headers.append((fieldname, _("Sign Language")))
+        elif fieldname == 'hasothermedia':
+            column_headers.append((fieldname, _("Other Media")))
+        elif fieldname == 'hasComponentOfType':
+            column_headers.append((fieldname, _("Sequential Morphology")))
+        elif fieldname == 'morpheme':
+            column_headers.append((fieldname, _("Simultaneous Morphology")))
+        elif fieldname == 'hasMorphemeOfType':
+            column_headers.append((fieldname, _("Morpheme Type")))
+        elif fieldname == 'hasRelation':
+            if query_fields_parameters:
+                # this is a singleton type of relation
+                relation_type = _("Type of Relation") + ':' + query_fields_parameters[0].capitalize()
+                column_headers.append((fieldname, relation_type))
+            else:
+                column_headers.append((fieldname, _("Type of Relation")))
+        elif fieldname == 'relation':
+            column_headers.append((fieldname, _("Gloss of Related Sign")))
+        elif fieldname == 'hasRelationToForeignSign':
+            column_headers.append((fieldname, _("Related to Foreign Sign")))
+        elif fieldname == 'relationToForeignSign':
+            column_headers.append((fieldname, _("Gloss of Foreign Sign")))
+        elif fieldname not in [ f.name for f in Gloss._meta.fields ]:
+            continue
+        else:
+            field_label = Gloss._meta.get_field(fieldname).verbose_name
+            column_headers.append((fieldname, field_label))
 
     sortOrder = ''
 
@@ -7369,7 +7610,6 @@ def semanticfield_fieldchoice_to_multiselect(machine_value):
         except ObjectDoesNotExist:
             # this happens if an invalid machine value is used in the url
             return None
-
     new_machine_value = semField_fieldchoice.machine_value
     new_english_name = semField_fieldchoice.english_name
     # legacy values
