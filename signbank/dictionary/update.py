@@ -1560,7 +1560,7 @@ def add_othermedia(request):
             # create the destination file
             try:
                 if os.path.exists(goal_path):
-                    print('file already exists')
+                    raise OSError
                 f = open(goal_path, 'wb+')
                 filename_plus_extension = destination_filename
             except (UnicodeEncodeError, IOError, OSError):
@@ -1571,10 +1571,11 @@ def add_othermedia(request):
 
                 try:
                     if os.path.exists(goal_location_str):
-                        print('file already exists')
+                        raise OSError
                     f = open(goal_location_str, 'wb+')
                 except (UnicodeEncodeError, IOError, OSError):
-                    messages.add_message(request, messages.ERROR, _("The destination filename for other media could not be created."))
+                    messages.add_message(request, messages.ERROR,
+                                _("The other media file could not be uploaded. Please use a different filename."))
                     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
             destination = File(f)
@@ -1593,6 +1594,25 @@ def add_othermedia(request):
                 os.remove(destination_location)
                 messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
                 return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+            if magic_file_type == 'video/quicktime':
+                # convert using ffmpeg
+                temp_destination_location = destination_location + ".mov"
+                os.rename(destination_location, temp_destination_location)
+
+                from signbank.video.convertvideo import convert_video
+                # convert the quicktime video to h264
+                success = convert_video(temp_destination_location, destination_location)
+
+                if success:
+                    # the destination filename already has the extension mp4
+                    os.remove(temp_destination_location)
+                else:
+                    # problems converting a quicktime media to h264
+                    os.remove(temp_destination_location)
+                    os.remove(destination_location)
+                    messages.add_message(request, messages.ERROR,
+                                         _("Upload other media failed: The Quicktime file could not be converted to H264."))
+                    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
             if filetype.split('/')[0] != magic_file_type.split('/')[0]:
                 # the uploaded file extension does not match its type

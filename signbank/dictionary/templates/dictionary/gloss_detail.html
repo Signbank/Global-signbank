@@ -192,7 +192,8 @@ function checkKey(e)
         });
 
         $('#searchresults').css({'padding-top': 10});
-        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
+        $('#definitionblock').css({'padding-top':
+                                            $('#searchresults').height() + $('#signinfo').height() + 20 });
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
         });
@@ -286,19 +287,15 @@ option:not(:checked) {
 
 {% block content %}
 
-<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+<div id="searchresults" class='navbar'
+     style="overflow-y:hidden;border:0;box-sizing:content-box; z-index:200;position:fixed; width:100%;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
     </div>
     {% endif %}
 </div>
 
-{% if request.GET.warning %}
-<div class="alert alert-warning">{{ request.GET.warning }}</div>
-{% endif %}
-
-
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="border:0;z-index:200;position:fixed;">
    
     <div class='btn-group'>
         {% if SIGN_NAVIGATION %}
@@ -335,11 +332,14 @@ option:not(:checked) {
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
         </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos View" %}</a>
+        </li>
     </ul>
 
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
-    <div class='pull-right' style="margin-right:15px;margin-top:10px;z-index:100;">
+    <div class='pull-right' style="margin-right:15px;margin-top:10px;">
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
@@ -379,7 +379,7 @@ option:not(:checked) {
         </div>
         {% endif %}
 
-<div id="definitionblock" style="z-index:0;">
+<div id="definitionblock">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
     <div id="videocontainer">
@@ -501,7 +501,7 @@ option:not(:checked) {
 </div>
 
 
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background: white;">
 
         {% include "dictionary/glosstags.html" %}
 

@@ -1679,6 +1679,145 @@ class GlossDetailView(DetailView):
 
         return context
 
+class GlossVideosView(DetailView):
+
+    model = Gloss
+    context_object_name = 'gloss'
+    last_used_dataset = None
+    template_name = 'dictionary/gloss_videos.html'
+
+    def get(self, request, *args, **kwargs):
+        # set the context parameters for warning.html
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            show_dataset_interface = False
+
+        try:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
+            translated_message = _('The requested gloss does not exist.')
+            return render(request, 'dictionary/warning.html',
+                          {'warning': translated_message,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+        if self.object.lemma == None or self.object.lemma.dataset == None:
+            translated_message = _('Requested gloss has no lemma or dataset.')
+            return render(request, 'dictionary/warning.html',
+                          {'warning': translated_message,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+
+        if not request.user.is_authenticated():
+            if self.object.inWeb:
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
+            else:
+                return HttpResponseRedirect(reverse('registration:auth_login'))
+
+        dataset_of_requested_gloss = self.object.lemma.dataset
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+
+        if dataset_of_requested_gloss not in selected_datasets:
+            translated_message = _('The gloss you are trying to view is not in your selected datasets.')
+            return render(request, 'dictionary/warning.html',
+                          {'warning': translated_message,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+        if dataset_of_requested_gloss not in datasets_user_can_view:
+            if self.object.inWeb:
+                return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
+            else:
+                translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
+                return render(request, 'dictionary/warning.html',
+                              {'warning': translated_message,
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': selected_datasets,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+    def get_context_data(self, **kwargs):
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+        else:
+            search_results = []
+        if search_results and len(search_results) > 0:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+                self.request.session['search_results'] = None
+        if 'search_type' in self.request.session.keys():
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+                # search_type is 'handshape'
+                self.request.session['search_results'] = None
+
+        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
+        from signbank.tools import convert_language_code_to_2char
+        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
+        language = Language.objects.get(id=get_default_language_id())
+        default_language_code = language.language_code_2char
+
+        # Call the base implementation first to get a context
+        context = super(GlossVideosView, self).get_context_data(**kwargs)
+
+        next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
+        if next_gloss == None:
+            context['nextglossid'] = context['gloss'].pk #context['gloss']
+        else:
+            context['nextglossid'] = next_gloss.pk
+
+        if settings.SIGN_NAVIGATION:
+            context['glosscount'] = Gloss.objects.count()
+            context['glossposn'] =  Gloss.objects.filter(sn__lt=context['gloss'].sn).count()+1
+
+        #Pass info about which fields we want to see
+        gl = context['gloss']
+        context['active_id'] = gl.id
+        labels = gl.field_labels()
+
+        # Gather the OtherMedia
+        context['other_media'] = []
+        context['other_media_field_choices'] = {}
+        other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
+
+        for other_media in gl.othermedia_set.all():
+            media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
+            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
+
+            import mimetypes
+            file_type = mimetypes.guess_type(path, strict=True)[0]
+            context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
+
+            # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
+            context['other_media_field_choices'][
+                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(
+                other_media_type_choice_list, self.request.LANGUAGE_CODE)
+
+        # set a session variable to be able to pass the gloss's id to the ajax_complete method
+        # the last_used_dataset name is updated to that of this gloss
+        # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
+        if gl.dataset:
+            self.request.session['datasetid'] = gl.dataset.id
+            self.last_used_dataset = gl.dataset.acronym
+        else:
+            self.request.session['datasetid'] = get_default_language_id()
+
+        self.request.session['last_used_dataset'] = self.last_used_dataset
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        return context
+
 class GlossRelationsDetailView(DetailView):
     model = Gloss
     template_name = 'dictionary/related_signs_detail_view.html'
