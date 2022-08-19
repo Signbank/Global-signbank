@@ -1143,23 +1143,23 @@ class GlossDetailView(DetailView):
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
-        context['handedness'] = (int(self.object.handedness.machine_value) > 1) \
-            if self.object.handedness and self.object.handedness.machine_value else 0  # minimal machine value is 2
-        context['domhndsh'] = (int(self.object.domhndsh.machine_value) > 2) \
-            if self.object.domhndsh and self.object.domhndsh.machine_value else 0        # minimal machine value -s 3
+        context['handedness'] = (int(self.object.handedness_fk.machine_value) > 1) \
+            if self.object.handedness_fk and self.object.handedness_fk.machine_value else 0  # minimal machine value is 2
+        context['domhndsh'] = (int(self.object.domhndsh_fk.machine_value) > 2) \
+            if self.object.domhndsh_fk and self.object.domhndsh_fk.machine_value else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
         # check for existence of strong hand and weak hand shapes
         try:
-            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh.machine_value)
+            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh_fk.machine_value)
         except (Handshape.DoesNotExist, AttributeError):
             strong_hand_obj = None
-        context['StrongHand'] = self.object.domhndsh.machine_value if strong_hand_obj else 0
-        context['WeakHand'] = self.object.subhndsh.machine_value if self.object.subhndsh else 0
+        context['StrongHand'] = self.object.domhndsh_fk.machine_value if strong_hand_obj else 0
+        context['WeakHand'] = self.object.subhndsh_fk.machine_value if self.object.subhndsh_fk else 0
 
         # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
-        context['SemanticFieldDefined'] = (int(self.object.semField.machine_value) > 1) \
-            if self.object.semField and self.object.semField.machine_value else 0  # minimal machine value is 2
+        context['SemanticFieldDefined'] = (int(self.object.semField_fk.machine_value) > 1) \
+            if self.object.semField and self.object.semField_fk.machine_value else 0  # minimal machine value is 2
         # context['ValenceDefined'] = (int(self.object.valence) > 1) if self.object.valence else 0          # minimal machine value is 2
         # context['IconicImageDefined'] = self.object.iconImage                                             # exists if not emtpy
 
@@ -1252,14 +1252,32 @@ class GlossDetailView(DetailView):
                     context['static_choice_lists'][field] = {}
                     #Take the human value in the language we are using
                     # TODO: TEMPORARY check for _fk version
-                    if hasattr(gl, field + '_fk'):
+                    if hasattr(gl, field + '_fk') and getattr(gl, field + '_fk'):
                         machine_value = getattr(gl, field + '_fk')
+                        fieldchoice_category = gloss_field.field_choice_category
+                        if fieldchoice_category == 'Handshape':
+                            print(gl, field, machine_value, type(machine_value))
+                            try:
+                                # field_choice_obj = Handshape.objects.get(machine_value=machine_value)
+                                field_choice_obj = machine_value
+                            except ObjectDoesNotExist:
+                                print('handshape not found: ', gl, machine_value)
+                                field_choice_obj = None
+                        else:
+                            print(gl, field, machine_value, type(machine_value))
+                            try:
+                                # field_choice_obj = FieldChoice.objects.get(field=fieldchoice_category, machine_value=machine_value)
+                                field_choice_obj = machine_value
+                            except ObjectDoesNotExist:
+                                print('field choice not found: ', gl, field, machine_value)
+                                field_choice_obj = None
                     else:
                         machine_value = getattr(gl,field)
+                        field_choice_obj = None
 
-                    if len(choice_list) > 0:
+                    if len(choice_list) > 0 and field_choice_obj:
                         # if there is a choice list, machine_value is FieldChoice object
-                        human_value = machine_value.name
+                        human_value = field_choice_obj.name
 
                         # The static_choice_lists structure is used in the Detail View to reverse map in javascript
                         # It's only needed for choice lists.
@@ -4889,11 +4907,16 @@ def glosslist_ajax_complete(request, gloss_id):
 
     column_values = []
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
-
         machine_value = getattr(this_gloss,fieldname)
         gloss_field = Gloss._meta.get_field(fieldname)
         if hasattr(gloss_field, 'field_choice_category'):
             fieldchoice_category = gloss_field.field_choice_category
+            fieldname_fk = fieldname + "_fk"
+            machine_value_fk = getattr(this_gloss, fieldname_fk)
+            gloss_field_fk = Gloss._meta.get_field(fieldname_fk)
+            if hasattr(gloss_field_fk, 'field_choice_category'):
+                print(fieldname_fk, ' has attribute field_choice_category')
+
         else:
             fieldchoice_category = fieldname
         if fieldchoice_category == 'Handshape':

@@ -88,6 +88,8 @@ urlpatterns = [
         permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_speakers)),
     url(r'configure_corpus_documents_ngt/$',
         permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_corpus_documents_ngt)),
+    url(r'configure_field_choices/$',
+        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_field_choices)),
 
     url(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     url(r'all_field_choices.tsv/$',signbank.dictionary.views.list_all_fieldchoice_names),

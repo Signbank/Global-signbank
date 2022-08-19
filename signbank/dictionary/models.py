@@ -1622,22 +1622,25 @@ class Gloss(models.Model):
             if (isinstance(gloss_field, models.CharField) and not hasattr(gloss_field, 'field_choice_category')) or isinstance(gloss_field, models.TextField):
                 continue
             phonology_dict[field] = None
-            field_value = getattr(self, field)
-            if hasattr(gloss_field, 'field_choice_category'):
-                fieldchoice_category = gloss_field.field_choice_category
-                if fieldchoice_category == 'Handshape':
-                    choice_list = Handshape.objects.all()
-                else:
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-                human_value = field_value.name
-                if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None or human_value == '0' or human_value == 'None'):
+            if hasattr(gloss_field, 'field_choice_category'):
+                # fieldchoice_category = gloss_field.field_choice_category
+                #
+                # if fieldchoice_category == 'Handshape':
+                #     choice_list = Handshape.objects.all()
+                # else:
+                #     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+
+                field_value = getattr(self, field+'_fk')
+
+                if field_value and field_value.machine_value > 1:
                     phonology_dict[field] = str(field_value.machine_value)
                 else:
                     phonology_dict[field] = None
             else:
                 # gloss_field is a Boolean
                 # TO DO: check these conversions to Strings instead of Booleans
+                field_value = getattr(self, field)
 
                 if field_value is not None:
 
@@ -1671,15 +1674,16 @@ class Gloss(models.Model):
             fieldchoice = getattr(self, field)
             gloss_field = gloss_fields[field]
             if hasattr(gloss_field, 'field_choice_category'):
-                fieldchoice_category = gloss_field.field_choice_category
-                if fieldchoice_category == 'Handshape':
-                    choice_list = Handshape.objects.all()
-                else:
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                # fieldchoice_category = gloss_field.field_choice_category
+                # if fieldchoice_category == 'Handshape':
+                #     choice_list = Handshape.objects.all()
+                # else:
+                #     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-                human_value = fieldchoice.name
-                if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None):
-                    phonology_dict[field] = fieldchoice.machine_value
+                field_value = getattr(self, field+'_fk')
+
+                if field_value and field_value.machine_value > 1:
+                    phonology_dict[field] = str(field_value.machine_value)
                 else:
                     phonology_dict[field] = None
             else:
@@ -1963,10 +1967,15 @@ class Gloss(models.Model):
             videofile_path = str(glossvideo.videofile)
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
 
-            for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
-                imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
-                if check_existance and os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
-                    return imagefile_path
+            if check_existance:
+                for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+                    imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
+                    try:
+                        imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
+                    except:
+                        imagefile_path_exists = False
+                    if check_existance and imagefile_path_exists:
+                        return imagefile_path
         else:
             # If there is no GlossVideo, see whether there is an image on disk anyway
             # TODO Create a more elegant solution, e.g. by introducing a GlossImage model
@@ -1975,11 +1984,16 @@ class Gloss(models.Model):
             from signbank.video.models import GlossVideo, get_video_file_path
             glossvideo = GlossVideo(gloss=self)
             videofile_path = get_video_file_path(glossvideo, 'does-not-exist.mp4')
+
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
 
             for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
                 imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
-                if check_existance and os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
+                try:
+                    imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
+                except:
+                    imagefile_path_exists = False
+                if check_existance and imagefile_path_exists:
                     return imagefile_path
         return ''
 

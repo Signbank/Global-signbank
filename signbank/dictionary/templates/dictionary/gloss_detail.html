@@ -849,7 +849,7 @@
                     <tr class="empty_row">
                         <th/><th/><th>WD</th><th>WP</th>
                     </tr>
-                    {% if value == '-' or value == ' ' or value == '' or value == None %}
+                    {% if value == '-' %}
                     <tr class="empty_row">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
@@ -882,7 +882,7 @@
                     <tr class="empty_row">
                         <th/><th/><th>letter</th><th>number</th>
                     </tr>
-                    {% if value == '-' or value == ' ' or value == '' or value == None %}
+                    {% if value == '-' %}
                     <tr class="empty_row">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
@@ -900,8 +900,12 @@
                     <tr >
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
+                            {% if gloss.domhndsh.machine_value > 1 %}
                             <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
                                href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{ value }}</a>
+                            {% else %}
+                                {{value}}
+                            {% endif %}
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
@@ -918,7 +922,7 @@
                     <tr class="empty_row">
                         <th/><th/><th>letter</th><th>number</th>
                     </tr>
-                    {% if value == '-' or value == ' ' or value == '' or value == None %}
+                    {% if value == '-' %}
                     <tr class="empty_row">
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
@@ -936,7 +940,12 @@
                     <tr >
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh.machine_value}}/">{{value}}</a>
+                            {% if gloss.subhndsh.machine_value > 1 %}
+                            <a id="weak_hand_link" style="color: inherit; display: visible;"
+                                    href="{{PREFIX_URL}}/dictionary/handshape/{{gloss.subhndsh.machine_value}}/">{{value}}</a>
+                            {% else %}
+                                {{value}}
+                            {% endif %}
                         </td>
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if name == 'subhndsh_letter' %}

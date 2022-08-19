@@ -1,0 +1,58 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Configure Field Choices{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block content %}
+
+<br/><br/>
+{% if not user.is_superuser %}
+<p>{% trans "You do not have permission to configure Field Choices." %}</p>
+{% else %}
+{% if already_set_up %}
+<p>{% trans "Field Choices have already been configured." %}</p>
+{% else %}
+<p>{% trans "The following field choices have been set up. They can be modified in Admin." %}</p>
+{% endif %}
+<div id="definitionblock" style="z-index:0;padding-top: 100px;">
+    <table class="table table-condensed">
+        <thead>
+            <tr>
+                <th style="width:20em; text-align:left;">{% trans "Category" %}</th>
+                <th style="width:20em; text-align:left;">{% trans "Machine Value" %}</th>
+                <th style="width:25em; text-align:left;">{% trans "English Name" %}</th>
+                <th style="width:40em; text-align:left;">{% trans "Dutch Name" %}</th>
+                <th style="width:40em; text-align:left;">{% trans "Chinese Name" %}</th>
+            </tr>
+        </thead>
+
+        {% for category, choices in field_choices.items %}
+            <tr>
+                <td>{{category}}</td>
+                <td colspan="4">
+                    <table>
+                        {% for choice in choices %}
+                            <tr>
+                                <td style="width:20em; text-align:left;">{{choice.machine_value}}</td>
+                                <td style="width:25em; text-align:left;">{{choice.english_name}}</td>
+                                <td style="width:40em; text-align:left;">{{choice.dutch_name}}</td>
+                                <td style="width:40em; text-align:left;">{{choice.chinese_name}}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </td>
+
+            </tr>
+        {% endfor %}
+
+    </table>
+</div>
+{% endif %}
+{% endblock %}

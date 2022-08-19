@@ -2215,3 +2215,164 @@ def configure_corpus_documents():
                 gloss_frequency.save()
 
     print('configure_corpus_documents: No glosses were found for these names: ', glosses_not_in_signbank)
+
+
+def add_default_fieldchoices(apps):
+    """
+    Add 0 and 1 choices to every FieldChoice category
+    :param apps:
+    :param schema_editor:
+    :return:
+    """
+    for category in sorted(set(FieldChoice.objects.all().values_list('field', flat=True))):
+        for choice in FieldChoice.objects.filter(field=category):
+            if not choice.name:
+                choice.name = choice.english_name
+                choice.save()
+
+        new_field_choice_0, created = FieldChoice.objects.get_or_create(field=category, english_name='-',
+                                                                        dutch_name='-', chinese_name='-',
+                                                                        machine_value=0)
+        new_field_choice_1, created = FieldChoice.objects.get_or_create(field=category, english_name='N/A',
+                                                                      dutch_name='N/A', chinese_name='N/A',
+                                                                      machine_value=1)
+
+    new_handshape_0, created = Handshape.objects.get_or_create(english_name='-',
+                                                                    dutch_name='-', chinese_name='-',
+                                                                    machine_value=0)
+    new_handshape_1, created = Handshape.objects.get_or_create(english_name='N/A',
+                                                                  dutch_name='N/A', chinese_name='N/A',
+                                                                  machine_value=1)
+
+from signbank.dictionary.models import Handshape, Gloss, Morpheme, MorphologyDefinition
+
+def set_fieldchoice_fieldchoice_field(apps):
+    fieldchoiceModel = apps.get_model('dictionary', 'FieldChoice')
+    field_choices = dict(FieldChoice.FIELDCHOICE_FIELDS)
+    for fieldchoice in fieldchoiceModel.objects.all():
+        if fieldchoice.fieldchoice:
+            # already set
+            pass
+        original_field_category = fieldchoice.field
+        field_category_in_caps = original_field_category.upper().replace(' ','_').replace(':','')
+        field_category = getattr(FieldChoice,field_category_in_caps)
+        if field_category in field_choices.keys():
+            fieldchoice.fieldchoice = field_choices[field_category]
+            fieldchoice.save()
+        else:
+            print('set_fieldchoice_fieldchoice_field: INFO: fieldchoice not found: ', field_category_in_caps)
+
+
+def move_fieldchoice_choice_for_class(apps, klass):
+    """
+    Make a foreign key ref based on the machine_value and the category of the corresponding field
+    :param apps:
+    :param schema_editor:
+    :param klass: the class for which fieldchoices should be moved to foreign keys
+    :return:
+    """
+    klass_old = apps.get_model('dictionary', klass.__name__)
+
+    fk_field_names = [f.name[:-3] for f in klass_old._meta.fields if f.name.endswith('_fk')]
+    print(klass.__name__, " FIELDS:", fk_field_names)
+
+    categories = []
+    for field in fk_field_names:
+        field_fc = klass._meta.get_field(field)
+        if hasattr(field_fc, 'field_choice_category'):
+            categories.append(field_fc.field_choice_category)
+
+    map_category_to_fieldchoices = {}
+    for category in categories:
+        map_category_to_fieldchoices[category] = FieldChoice.objects.filter(field=category)
+
+    empty_categories = []
+    for category in categories:
+        if not map_category_to_fieldchoices[category]:
+            empty_categories.append(category)
+
+    for obj in klass_old.objects.all():
+        for field in fk_field_names:
+            if getattr(obj, field+'_fk'):
+                # already copied
+                continue
+            category = klass._meta.get_field(field).field_choice_category
+            if category == 'Handshape' or category in empty_categories:
+                continue
+            machine_value = getattr(obj, field)
+            # print(klass.__name__, obj.pk, "=> Field:", field, "Category:", category, "machine_value:", machine_value)
+            try:
+                if machine_value in [None, '', 0, '0']:
+                    field_choice = FieldChoice.objects.get(field=category, machine_value=0)
+                else:
+                    field_choice = FieldChoice.objects.get(field=category, machine_value=machine_value)
+                setattr(obj, field+'_fk', field_choice)
+                obj.save()
+            except Exception as e:
+                print("INFO: fieldchoice not found", e, category, machine_value, ', gloss: ', obj.id)
+
+
+def copy_handshape_values():
+
+    for handshape in Handshape.objects.all():
+        if not handshape.name:
+            handshape.name = handshape.english_name
+            handshape.save()
+
+    # Put all handshapes in a dict for convenient lookup
+    handshapes = {}
+    for handshape in Handshape.objects.all():
+        handshapes[str(handshape.machine_value)] = handshape
+
+    # Copy values for each Gloss
+    for gloss in Gloss.objects.all():
+        if getattr(gloss, 'domhndsh_fk'):
+            # already set
+            pass
+        elif gloss.domhndsh in [None, '', 0, '0']:
+            gloss.domhndsh_fk = handshapes['0']
+        elif gloss.domhndsh in handshapes.keys():
+            gloss.domhndsh_fk = handshapes[gloss.domhndsh]
+
+        if getattr(gloss, 'subhndsh_fk'):
+            pass
+        elif gloss.subhndsh in [None, '', 0, '0']:
+            gloss.subhndsh_fk = handshapes['0']
+        elif gloss.subhndsh in handshapes.keys():
+            gloss.subhndsh_fk = handshapes[gloss.subhndsh]
+
+        if getattr(gloss, 'final_domhndsh_fk'):
+            pass
+        elif gloss.final_domhndsh in [None, '', 0, '0']:
+            gloss.final_domhndsh_fk = handshapes['0']
+        elif gloss.final_domhndsh in handshapes.keys():
+            gloss.final_domhndsh_fk = handshapes[gloss.final_domhndsh]
+
+        if getattr(gloss, 'final_subhndsh_fk'):
+            pass
+        elif gloss.final_subhndsh in [None, '', 0, '0']:
+            gloss.final_subhndsh_fk = handshapes['0']
+        elif gloss.final_subhndsh in handshapes.keys():
+            gloss.final_subhndsh_fk = handshapes[gloss.final_subhndsh]
+
+        try:
+            gloss.save()
+        except Exception as e:
+            print('copy_handshape_values: Error saving gloss ', gloss.id, e)
+
+def move_fieldchoice_choice(apps):
+    set_fieldchoice_fieldchoice_field(apps)
+    modelDefinition = apps.get_model('dictionary', 'Definition')
+    modelHandshape = apps.get_model('dictionary', 'Handshape')
+    copy_handshape_values()
+    modelGloss = apps.get_model('dictionary', 'Gloss')
+    modelMorpheme = apps.get_model('dictionary', 'Morpheme')
+    modelOtherMedia = apps.get_model('dictionary', 'OtherMedia')
+    modelMorphologyDefinition = apps.get_model('dictionary', 'MorphologyDefinition')
+
+    move_fieldchoice_choice_for_class(apps, modelDefinition)
+    move_fieldchoice_choice_for_class(apps, modelHandshape)
+    move_fieldchoice_choice_for_class(apps, modelGloss)
+    move_fieldchoice_choice_for_class(apps, modelMorpheme)
+    move_fieldchoice_choice_for_class(apps, modelOtherMedia)
+    move_fieldchoice_choice_for_class(apps, modelMorphologyDefinition)

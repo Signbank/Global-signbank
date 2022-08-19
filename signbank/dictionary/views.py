@@ -2960,3 +2960,38 @@ def find_interesting_frequency_examples(request):
 def gif_prototype(request):
 
     return render(request,'dictionary/gif_prototype.html')
+
+def configure_field_choices(request):
+    from django.apps import apps
+    from signbank.tools import add_default_fieldchoices, move_fieldchoice_choice
+
+
+    already_filled_fieldchoices = FieldChoice.objects.filter(fieldchoice__isnull=False).count()
+
+    # check if the user has permission to configure
+    # and whether already configured
+    if request.user.is_superuser and not already_filled_fieldchoices:
+
+        add_default_fieldchoices(apps)
+        move_fieldchoice_choice(apps)
+
+    field_choice_categories = sorted(set(FieldChoice.objects.all().values_list('field', flat=True)))
+    field_choice_dict = {}
+    for category in field_choice_categories:
+        field_choice_dict[category] = FieldChoice.objects.filter(field__iexact=category)
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
+    return render(request, 'dictionary/admin_configure_field_choices.html',
+                  {'already_set_up': already_filled_fieldchoices,
+                   'field_choices': field_choice_dict,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   })

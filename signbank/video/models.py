@@ -491,7 +491,7 @@ def process_gloss_changes(sender, instance, **kwargs):
     gloss = instance
     glossvideos = GlossVideo.objects.filter(gloss=gloss)
     for glossvideo in glossvideos:
-        glossvideo.move_video(move_files_on_disk=True)
+        glossvideo.move_video(move_files_on_disk=False)
 
 
 @receiver(models.signals.pre_delete, sender=GlossVideo)
