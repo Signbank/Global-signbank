@@ -18,11 +18,10 @@ import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForGlossForm
-from signbank.frequency import configure_corpus_documents_for_dataset, import_corpus_speakers
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, map_search_results_to_gloss_list
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
+
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -2854,100 +2853,6 @@ def gloss_revision_history(request,gloss_pk):
                    'active_id': gloss_pk,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
                    'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button
-                   })
-
-def gloss_query_view(request,gloss_pk):
-
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-    if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-        fieldnames.remove('derivHist')
-    multiple_select_gloss_fields = [field.name + '[]' for field in Gloss._meta.fields if
-                                    field.name in fieldnames and hasattr(field, 'field_choice_category')]
-
-    gloss = Gloss.objects.get(pk=gloss_pk)
-
-    phonology_matrix = gloss.phonology_matrix_homonymns()
-    phonology_focus = [ field for field in phonology_matrix.keys()
-                        if phonology_matrix[field] != None and phonology_matrix[field] not in ['False', 'Neutral'] ]
-    default_query_parameters = query_parameters_this_gloss(phonology_focus, phonology_matrix)
-
-    selected_datasets = get_selected_datasets_for_user(request.user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
-
-    if 'search_results' in request.session.keys():
-        search_results = request.session['search_results']
-    else:
-        search_results = []
-    if search_results and len(search_results) > 0:
-        if request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-            request.session['search_results'] = None
-    if 'search_type' in request.session.keys():
-        if request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
-            # search_type is 'handshape'
-            request.session['search_results'] = None
-
-    (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
-
-    column_headers = []
-    for fieldname in phonology_focus:
-        field_label = Gloss._meta.get_field(fieldname).verbose_name
-        column_headers.append((fieldname,field_label))
-    if 'query_parameters' in request.session.keys() and request.session['query_parameters'] not in ['', '{}']:
-        # if the query parameters are available, convert them to a dictionary
-        session_query_parameters = request.session['query_parameters']
-        query_parameters = json.loads(session_query_parameters)
-    else:
-        # local query parameters
-        query_parameters = {}
-        # save the default query parameters to the sessin variable
-        request.session['query_parameters'] = json.dumps(default_query_parameters)
-        request.session.modified = True
-
-    query_parameters_mapping = pretty_print_query_fields(dataset_languages, query_parameters.keys())
-
-    query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters,request.LANGUAGE_CODE)
-
-    default_query_parameters_mapping = pretty_print_query_fields(dataset_languages, default_query_parameters.keys())
-
-    default_query_parameters_values_mapping = pretty_print_query_values(dataset_languages, default_query_parameters,request.LANGUAGE_CODE)
-
-    toggle_publication_fields = []
-    if hasattr(settings, 'SEARCH_BY_PUBLICATION_FIELDS'):
-
-        for publication_field in settings.SEARCH_BY_PUBLICATION_FIELDS:
-            publication_field_parameters = (publication_field,
-                                                 GlossSearchForm.__dict__['base_fields'][publication_field].label.encode('utf-8').decode())
-            toggle_publication_fields.append(publication_field_parameters)
-
-    if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
-        show_query_parameters_as_button = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
-    else:
-        show_query_parameters_as_button = False
-
-    return render(request, 'dictionary/gloss_query_view.html',
-                  {'gloss': gloss,
-                   'objects_on_page': objects_on_page,
-                   'object_list': object_list,
-                   'column_headers': column_headers,
-                   'display_fields': phonology_focus,
-                   'dataset_languages': dataset_languages,
-                   'selected_datasets': selected_datasets,
-                   'active_id': gloss_pk,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
-                   'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button,
-                   'MULTIPLE_SELECT_GLOSS_FIELDS': multiple_select_gloss_fields,
-                   'TOGGLE_PUBLICATION_FIELDS': toggle_publication_fields,
-                   'default_query_parameters': default_query_parameters,
-                   'default_query_parameters_mapping': default_query_parameters_mapping,
-                   'default_query_parameters_values_mapping': default_query_parameters_values_mapping,
-                   'query_parameters': query_parameters,
-                   'query_parameters_mapping': query_parameters_mapping,
-                   'query_parameters_values_mapping': query_parameters_values_mapping
                    })
 
 

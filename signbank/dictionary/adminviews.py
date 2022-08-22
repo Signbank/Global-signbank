@@ -49,8 +49,9 @@ from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
-    convert_query_parameters_to_filter, searchform_panels, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, map_search_results_to_gloss_list, apply_language_filters_to_results
+    searchform_panels, map_search_results_to_gloss_list
+from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
+    query_parameters_this_gloss, apply_language_filters_to_results
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -6880,20 +6881,21 @@ def glosslistheader_ajax(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
 
+    fieldname_to_column_header = {'dialect': _("Dialect"),
+                                  'signlanguage': _("Sign Language"),
+                                  'hasothermedia': _("Other Media"),
+                                  'hasComponentOfType': _("Sequential Morphology"),
+                                  'morpheme': _("Simultaneous Morphology"),
+                                  'hasMorphemeOfType': _("Morpheme Type"),
+                                  'relation': _("Gloss of Related Sign"),
+                                  'hasRelationToForeignSign': _("Related to Foreign Sign"),
+                                  'relationToForeignSign': _("Gloss of Foreign Sign")
+                                  }
+
     column_headers = []
     for fieldname in display_fields:
-        if fieldname == 'dialect':
-            column_headers.append((fieldname, _("Dialect")))
-        elif fieldname == 'signlanguage':
-            column_headers.append((fieldname, _("Sign Language")))
-        elif fieldname == 'hasothermedia':
-            column_headers.append((fieldname, _("Other Media")))
-        elif fieldname == 'hasComponentOfType':
-            column_headers.append((fieldname, _("Sequential Morphology")))
-        elif fieldname == 'morpheme':
-            column_headers.append((fieldname, _("Simultaneous Morphology")))
-        elif fieldname == 'hasMorphemeOfType':
-            column_headers.append((fieldname, _("Morpheme Type")))
+        if fieldname in fieldname_to_column_header.keys():
+            column_headers.append((fieldname, fieldname_to_column_header[fieldname]))
         elif fieldname == 'hasRelation':
             if query_fields_parameters:
                 # this is a singleton type of relation
@@ -6901,12 +6903,6 @@ def glosslistheader_ajax(request):
                 column_headers.append((fieldname, relation_type))
             else:
                 column_headers.append((fieldname, _("Type of Relation")))
-        elif fieldname == 'relation':
-            column_headers.append((fieldname, _("Gloss of Related Sign")))
-        elif fieldname == 'hasRelationToForeignSign':
-            column_headers.append((fieldname, _("Related to Foreign Sign")))
-        elif fieldname == 'relationToForeignSign':
-            column_headers.append((fieldname, _("Gloss of Foreign Sign")))
         elif fieldname not in [ f.name for f in Gloss._meta.fields ]:
             continue
         else:
