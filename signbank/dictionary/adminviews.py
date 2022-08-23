@@ -296,8 +296,12 @@ class GlossListView(ListView):
                 session_query_parameters = self.request.session['query_parameters']
                 self.query_parameters = json.loads(session_query_parameters)
             elif 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
-                self.request.session['query_parameters'] = ''
+                self.query_parameters = {}
+                # save the default query parameters to the sessin variable
+                self.request.session['query_parameters'] = json.dumps(self.query_parameters)
                 self.request.session.modified = True
+                # self.request.session['query_parameters'] = ''
+                # self.request.session.modified = True
             else:
                 # if the query parameters are available, convert them to a dictionary
                 session_query_parameters = self.request.session['query_parameters']
@@ -312,11 +316,11 @@ class GlossListView(ListView):
         # other parameters are in the GlossSearchForm in the template that are not initialised via multiselect or language fields
         # plus semantics and phonology fields with text types
         other_parameters = ['sortOrder'] + \
-                                settings.SEARCH_BY_PUBLICATION_FIELDS + \
-                                settings.SEARCH_BY_RELATION_FIELDS + \
-                                settings.SEARCH_BY_MORPHOLOGY_FIELDS + \
-                                settings.SEARCH_BY_PHONOLOGY_FIELDS + \
-                                settings.SEARCH_BY_SEMANTICS_FIELDS
+                                settings.SEARCH_BY['publication'] + \
+                                settings.SEARCH_BY['relations'] + \
+                                settings.SEARCH_BY['morpheme'] + \
+                                settings.FIELDS['phonology'] + \
+                                settings.FIELDS['semantics']
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
@@ -410,15 +414,15 @@ class GlossListView(ListView):
         else:
             context['GLOSS_LIST_DISPLAY_HEADER'] = []
 
-        if hasattr(settings, 'SEARCH_BY_PUBLICATION_FIELDS') and self.request.user.is_authenticated():
-            context['SEARCH_BY_PUBLICATION_FIELDS'] = searchform_panels(search_form, settings.SEARCH_BY_PUBLICATION_FIELDS)
+        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated():
+            context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
         else:
-            context['SEARCH_BY_PUBLICATION_FIELDS'] = []
+            context['search_by_publication_fields'] = []
 
-        if hasattr(settings, 'SEARCH_BY_RELATION_FIELDS') and self.request.user.is_authenticated():
-            context['SEARCH_BY_RELATION_FIELDS'] = searchform_panels(search_form, settings.SEARCH_BY_RELATION_FIELDS)
+        if hasattr(settings, 'SEARCH_BY') and 'relations' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated():
+            context['search_by_relation_fields'] = searchform_panels(search_form, settings.SEARCH_BY['relations'])
         else:
-            context['SEARCH_BY_RELATION_FIELDS'] = []
+            context['search_by_relation_fields'] = []
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
@@ -883,6 +887,7 @@ class GlossListView(ListView):
                 self.search_type = self.query_parameters['search_type']
         else:
             self.query_parameters = dict()
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
@@ -932,6 +937,8 @@ class GlossListView(ListView):
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
 
+        # this is a temporary query_parameters variable
+        # it is saved to self.query_parameters after the parameters are processed
         query_parameters = dict()
 
         #If not, we will go trhough a long list of filters
@@ -1351,17 +1358,18 @@ class GlossDetailView(DetailView):
         context['default_query_parameters'] = default_query_parameters
         context['default_query_parameters_mapping'] = default_query_parameters_mapping
         context['default_query_parameters_values_mapping'] = default_query_parameters_values_mapping
+        context['json_default_query_parameters'] = json.dumps(default_query_parameters)
 
         if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             # if the query parameters are available, convert them to a dictionary
             session_query_parameters = self.request.session['query_parameters']
             self.query_parameters = json.loads(session_query_parameters)
-        else:
-            # local query parameters
-            self.query_parameters = {}
-            # save the default query parameters to the sessin variable
-            self.request.session['query_parameters'] = json.dumps(default_query_parameters)
-            self.request.session.modified = True
+        # else:
+        #     # local query parameters
+        #     self.query_parameters = {}
+        #     # save the default query parameters to the sessin variable
+        #     self.request.session['query_parameters'] = json.dumps(default_query_parameters)
+        #     self.request.session.modified = True
 
         context['query_parameters'] = self.query_parameters
 
@@ -1478,7 +1486,8 @@ class GlossDetailView(DetailView):
             context['frequency_fields'].append([getattr(gl,f_field), f_field, labels[f_field], 'IntegerField'])
 
         context['publication_fields'] = []
-        for p_field in FIELDS['publication']:
+        # field excludeFromEcv is added here in order to show it in Gloss Edit
+        for p_field in FIELDS['publication'] + ['excludeFromEcv']:
             context['publication_fields'].append([getattr(gl,p_field), p_field, labels[p_field], 'check'])
 
         context['static_choice_lists'] = {}
@@ -1856,6 +1865,16 @@ class GlossDetailView(DetailView):
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
 
         return context
+
+    def post(self, request, *args, **kwargs):
+        if request.method != "POST" or not request.POST or request.POST.get('use_default_query_parameters') != 'default_parameters':
+            return redirect(reverse('admin_gloss_view'))
+        # set up gloss detail view default parameters here
+        default_parameters = request.POST.get('default_parameters')
+        request.session['query_parameters'] = default_parameters
+        request.session.modified = True
+        return redirect(URL + settings.PREFIX_URL + '/signs/search/?query')
+
 
 class GlossRelationsDetailView(DetailView):
     model = Gloss
@@ -3655,9 +3674,9 @@ class QueryListView(ListView):
             toggle_query_parameter_fields.append(toggle_query_parameter)
 
         toggle_publication_fields = []
-        if hasattr(settings, 'SEARCH_BY_PUBLICATION_FIELDS'):
+        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys():
 
-            for publication_field in settings.SEARCH_BY_PUBLICATION_FIELDS:
+            for publication_field in settings.SEARCH_BY['publication']:
                 publication_field_parameters = (publication_field,
                                                 GlossSearchForm.__dict__['base_fields'][publication_field].label.encode(
                                                     'utf-8').decode())
@@ -6810,7 +6829,7 @@ def glosslist_ajax_complete(request, gloss_id):
             morphemes = " + ".join([x.morpheme.__str__() for x in this_gloss.simultaneous_morphology.all()])
             column_values.append((fieldname, morphemes))
         elif fieldname == 'hasRelation':
-            if query_fields_parameters:
+            if query_fields_parameters and query_fields_parameters[0] != 'all':
                 relations_of_type = [ r for r in this_gloss.relation_sources.all() if r.role in query_fields_parameters ]
                 relations = ", ".join([r.target.__str__() for r in relations_of_type])
             else:

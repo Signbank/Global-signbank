@@ -113,7 +113,14 @@ FIELDS['handshape'] = ['hsNumSel','hsFingSel','hsFingSel2','hsFingConf','hsFingC
                        'hsFingUnsel','fsT','fsI','fsM','fsR','fsP','fs2T','fs2I','fs2M','fs2R','fs2P','ufT','ufI','ufM',
                        'ufR','ufP']
 
-FIELDS['publication'] = ['inWeb', 'isNew', 'excludeFromEcv']
+FIELDS['publication'] = ['inWeb', 'isNew']
+
+FIELDS['properties'] = ['hasvideo', 'hasothermedia',
+                                'definitionRole', 'definitionContains', 'defspublished',
+                                'createdBy', 'createdAfter', 'createdBefore',
+                                'useInstr', 'tags', 'excludeFromEcv']
+FIELDS['relations'] = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
+FIELDS['morpheme'] = ['morpheme', 'hasComponentOfType', 'hasMorphemeOfType']
 
 # Use these fields in the server specific settings to specify frequency fields, if available
 FREQUENCY_CATEGORIES = []
@@ -135,14 +142,11 @@ MINIMAL_PAIRS_SEARCH_FIELDS = MINIMAL_PAIRS_FIELDS + ['namEnt','semField','valen
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
 
 # These are fields in the Search forms by panel
-SEARCH_BY_PUBLICATION_FIELDS = ['inWeb', 'isNew', 'hasvideo', 'hasothermedia',
-                                'definitionRole', 'definitionContains', 'defspublished',
-                                'createdBy', 'createdAfter', 'createdBefore',
-                                'useInstr', 'tags', 'excludeFromEcv']
-SEARCH_BY_RELATION_FIELDS = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
-SEARCH_BY_SEMANTICS_FIELDS = FIELDS['semantics']
-SEARCH_BY_PHONOLOGY_FIELDS = FIELDS['phonology']
-SEARCH_BY_MORPHOLOGY_FIELDS = ['morpheme', 'hasComponentOfType', 'hasMorphemeOfType']
+SEARCH_BY = {}
+# the ordering of the list of publication fields is important for the Gloss Search template
+SEARCH_BY['publication'] = FIELDS['publication'] + FIELDS['properties']
+SEARCH_BY['relations'] = FIELDS['relations']
+SEARCH_BY['morpheme'] = FIELDS['morpheme']
 
 QUERY_DISPLAY_FIELDS = MINIMAL_PAIRS_SEARCH_FIELDS
 SHOW_QUERY_PARAMETERS_AS_BUTTON = True

@@ -662,7 +662,7 @@ function do_toggle_annotation(el) {
 
                       <div id='rel_search' class='collapse'>
                       <table class='table'>
-                      {% for relation_id, relation_label, relation_field in SEARCH_BY_RELATION_FIELDS %}
+                      {% for relation_id, relation_label, relation_field in search_by_relation_fields %}
                       <tr>
                           <td style="padding-left:30px;"><label for='id_{{relation_id}}'>{{relation_label}}</label></td>
                           <td>{{relation_field}}</td>
@@ -678,7 +678,7 @@ function do_toggle_annotation(el) {
 
                       <div id='pub_search' class='collapse'>
                       <table class='table pub-row'>
-                      {% for publication_id, publication_label, publication_field in SEARCH_BY_PUBLICATION_FIELDS %}
+                      {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
                       <tr>
                           <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
                           <td>{{publication_field}}</td>

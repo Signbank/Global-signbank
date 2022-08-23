@@ -79,6 +79,7 @@
     var next_morpheme_id;
     var this_gloss_id = {{gloss.id}};
 
+    var json_default_query_parameters = {{json_default_query_parameters|safe}};
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
     {% include "dictionary/search_result_bar.html" %}
@@ -285,6 +286,19 @@ option:not(:checked) {
     background-color: white !important;
     color: #000;
 }
+/* This makes the popup Run Query button for the default parameters ressemble the style of the QP case.
+   The <a> surrounding the text of the default parameters button is to simulate the link of the QP button. */
+.btn-query {
+    background-color: transparent;
+    border: 1px solid;
+    color: rgb(66, 139, 202);
+    border-radius: 6px;
+    height: 28px;
+}
+.btn-query:hover .btn-query:focus {
+    color: rgb(66, 139, 202);
+    background-color: lightgrey;
+}
 </style>
 
 {% endblock %}
@@ -324,6 +338,10 @@ option:not(:checked) {
                 </div>
                 <div class='modal-body'>
                 {% if not query_parameters.items %}
+                    {% if not default_query_parameters.items %}
+                    <p>{% trans "No fields are filled in for this gloss." %}</p>
+                    {% else %}
+                    <input type='hidden' name='use_default_query_parameters' value='default_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'default_query_table_header'>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
@@ -355,7 +373,9 @@ option:not(:checked) {
                             {% endfor %}
                             </tbody>
                         </table>
+                    {% endif %}
                 {% else %}
+                        <input type='hidden' name='use_default_query_parameters' value='query_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'query_table_header'>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
@@ -390,8 +410,23 @@ option:not(:checked) {
                 {% endif %}
                 </div>
                 <div class="modal-footer">
-                    <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
-                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                    {% if not query_parameters.items %}
+                        {% if not default_query_parameters.items %}
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                        {% else %}
+                            <form id="use_default_query_parameters" action='' method="POST">
+                            {% csrf_token %}
+                            <button type='submit' class="btn-query" name="use_default_query_parameters"
+                                    value="default_parameters"><a>{% trans "Run Query" %}</a></button>
+                            <input type="hidden" id="default_parameters" name="default_parameters" value="{{json_default_query_parameters}}">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'
+                                    style="text-decoration:none;">{% trans "Run Query" %}</a></button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                    {% endif %}
                 </div>
 
             </div>
