@@ -4120,25 +4120,6 @@ class HandshapeListView(ListView):
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
 
-        # Handshape searching of signs relies on using the search_results in order to search signs that have the handshapes
-        # The search_results is no longer set to None
-
-        # Make sure that the QuerySet has filters applied (user is searching for something instead of showing all results [objects.all()])
-
-        if hasattr(qs.query.where, 'children') and len(qs.query.where.children) > 0:
-
-            items = []
-
-            for item in qs:
-                if self.request.LANGUAGE_CODE == 'nl':
-                    items.append(dict(id = item.machine_value, handshape = item.dutch_name))
-                elif self.request.LANGUAGE_CODE == 'zh-hans':
-                    items.append(dict(id = item.machine_value, handshape = item.chinese_name))
-                else:
-                    items.append(dict(id = item.machine_value, handshape = item.name))
-
-            self.request.session['search_results'] = items
-
         if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
             # User has toggled the sort order for the column
             qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
