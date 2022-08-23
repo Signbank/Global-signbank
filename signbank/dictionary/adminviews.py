@@ -1364,12 +1364,6 @@ class GlossDetailView(DetailView):
             # if the query parameters are available, convert them to a dictionary
             session_query_parameters = self.request.session['query_parameters']
             self.query_parameters = json.loads(session_query_parameters)
-        # else:
-        #     # local query parameters
-        #     self.query_parameters = {}
-        #     # save the default query parameters to the sessin variable
-        #     self.request.session['query_parameters'] = json.dumps(default_query_parameters)
-        #     self.request.session.modified = True
 
         context['query_parameters'] = self.query_parameters
 
