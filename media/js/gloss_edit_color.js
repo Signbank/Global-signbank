@@ -721,12 +721,17 @@ $.editable.addInputType('lemmatypeahead', {
  */
 
 $.editable.addInputType("multiselect", {
+    /* this applies to Dialect, SemanticField, and DerivationHistory */
     element: function (settings, original) {
         var select = $('<select multiple="multiple" />');
 
         if (settings.width != 'none') { select.width(settings.width); }
-        if (settings.size) { select.attr('size', settings.size); }
-
+        /* the size is the height of the multiselect options list */
+        if (settings.size) { select.attr('size', settings.size); } else { select.attr('size', 5); }
+        /* the width is the colum in the template of gloss edit */
+        select.css({
+                    'display': 'inline-block', 'position': 'absolute', 'width': '320px', 'z-index': '5'
+        });
         $(this).append(select);
         return (select);
     },

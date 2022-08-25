@@ -27,6 +27,8 @@
     color: black !important;
     font-weight: bold;
 }
+
+.pub-row tr {float: left!important; width: 50%!important;}
 </style>
 
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
@@ -39,15 +41,18 @@
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
-console.log('Multiple select fields: '+multiple_select_fields);
 var field_colors = {{field_colors|safe}};
 var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};
 var objects_on_this_page = {{objects_on_page|safe}};
 var view_type = '{{view_type}}';
 var paginate_by = '{{paginate_by}}';
-
-
+var query_parameters = '{{query_parameters|safe}}';
+var query_parameters_keys = {{query_parameters_keys|safe}};
+var query_parameters_dict = JSON.parse(query_parameters);
+var other_parameters_keys = {{other_parameters_keys|safe}};
+var language_query_keys = {{language_query_keys|safe}};
+var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
 
 $(document).ready(function() {
 
@@ -141,7 +146,14 @@ $(document).ready(function() {
         width: 'resolve',
         placeholder: ''
      });
-     $('#id_signLanguage').val(null).trigger('change');
+
+     if (query_parameters_keys.includes('signlanguage[]')) {
+         var query_initial = query_parameters_dict['signlanguage[]'];
+         $('#id_signLanguage').val(query_initial);
+         $('#id_signLanguage').trigger('change');
+     } else {
+         $('#id_signLanguage').val(null).trigger('change');
+     };
 
      $('#id_signLanguage').change(function() {
         set_signlanguages_dialects();
@@ -157,7 +169,75 @@ $(document).ready(function() {
         width: 'resolve',
         placeholder: ''
      });
-     $('#id_dialects').val(null).trigger('change');
+
+     if (query_parameters_keys.includes('dialect[]')) {
+         var query_initial = query_parameters_dict['dialect[]'];
+         $('#id_dialects').val(query_initial);
+         $('#id_dialects').trigger('change');
+    } else {
+         $('#id_dialects').val(null).trigger('change');
+    };
+
+    // initialize query parameters in multiple select fields
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = '#id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        if (query_parameters_keys.includes(this_var)) {
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+     }
+
+     // initialize non-multiple select, not language-based query fields
+     for (var i = 0; i < other_parameters_keys.length; i++) {
+        var this_var = other_parameters_keys[i];
+        if (query_parameters_keys.includes(this_var)) {
+            var this_id = '#id_' + other_parameters_keys[i];
+            var query_initial = query_parameters_dict[this_var];
+            if (this_var == 'morpheme') {
+                // special case for morpheme, the query parameter is its ID, stored in a hidden field
+                var $hiddeninput = $("input[name='morpheme']");
+                $hiddeninput.val(query_initial);
+                // the context variable morpheme_idgloss is shown to the user
+                $(this_id).attr('value', morpheme_idgloss);
+            } else {
+                $(this_id).val(query_initial);
+            };
+        };
+    }
+
+     // initialize language-based query fields
+     for (var i = 0; i < language_query_keys.length; i++) {
+        var this_var = language_query_keys[i];
+        if (query_parameters_keys.includes(this_var)) {
+            var $language_search = $("input[name='"+this_var+"']");
+            var query_initial = query_parameters_dict[this_var];
+            $language_search.val(query_initial);
+        };
+    }
+
+     if (query_parameters_keys.includes('tags')) {
+         var $select = $("select[name='tags']");
+         var query_initial = query_parameters_dict['tags'];
+         for (var i = 0; i < query_initial.length; i++) {
+             var tag_value = query_initial[i];
+             var $option = $select.find("option[value='" + tag_value + "']");
+             $option.attr("selected","selected");
+         };
+    };
+
+     if (query_parameters_keys.includes('keyword')) {
+        var $translation = $("input[name='keyword']");
+        var query_initial = query_parameters_dict['keyword'];
+        $translation.val(query_initial);
+    };
+
+     if (query_parameters_keys.includes('search')) {
+        var $menu_bar_search = $("input[name='search']");
+        var query_initial = query_parameters_dict['search'];
+        $menu_bar_search.val(query_initial);
+    };
 
      // Empty menu_bar_search_mirror
      $("#adminsearch :input").change(function() {
@@ -241,43 +321,41 @@ $(document).ready(function() {
 });
 
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
-function clearForm(myFormElement) {
+function clearForm() {
 
-  var elements = myFormElement.elements;
+      var inputElements = document.getElementById('searchfields').querySelectorAll("input");
+      var selectElements = document.getElementById('searchpanels').querySelectorAll("select");
 
-  myFormElement.reset();
+      for(i=0; i<inputElements.length; i++) {
+          field_name = inputElements[i].name;
+          field_type = inputElements[i].type.toLowerCase();
+          switch(field_type) {
 
-  for(i=0; i<elements.length; i++) {
+            case "text":
+            case "password":
+            case "textarea":
+            case "hidden":
 
-      field_type = elements[i].type.toLowerCase();
+              inputElements[i].value = "";
+              break;
 
-      switch(field_type) {
+            case "radio":
+            case "checkbox":
+              if (inputElements[i].checked) {
+                  inputElements[i].checked = false;
+              }
+              break;
 
-        case "text":
-        case "password":
-        case "textarea":
-        case "hidden":
+            case "select-one":
+            case "select-multiple":
+              inputElements[i].selectedIndex = -1;
+              break;
 
-          elements[i].value = "";
-          break;
-
-        case "radio":
-        case "checkbox":
-          if (elements[i].checked) {
-              elements[i].checked = false;
+            default:
+              break;
           }
-          break;
-
-        case "select-one":
-        case "select-multiple":
-          elements[i].selectedIndex = -1;
-          break;
-
-        default:
-          break;
-      }
-    }
-    return(false);
+      };
+     $('.js-example-basic-multiple').val(null).trigger('change');
 }
 
  /**
@@ -328,17 +406,13 @@ function do_adminsearch(el) {
 function do_toggle_groups(el) {
   var sViewType = $(el).attr('value');
   $("#toggle_groups input[name='view_type']").val(sViewType);
-  console.log('switch');
-  console.log(sViewType);
   switch(sViewType) {
     case "lemma_groups":
         $(el).val('gloss_list');
-        console.log('change to gloss list');
         $(el).html("Gloss View");
         break;
     case "gloss_list":
         $(el).val('lemma_groups');
-        console.log('change to lemma groups');
         $(el).html("Lemma View");
         break;
   }
@@ -371,8 +445,6 @@ function ready_videos(el) {
 function do_set_lemma_language(el) {
   if (user_can_add_gloss) {
       var dataset_language_id = $(el).attr('value');
-    <!--  console.log('lemma_language');-->
-    <!--  console.log(dataset_language_id);-->
       $("#selected_lemma_language").attr('value',dataset_language_id);
       language_code = dataset_language_id;
       set_lemma_language();
@@ -382,7 +454,6 @@ function do_set_lemma_language(el) {
 // This function toggles the different language columns for Annotations, Lemmas, and Translations
 function do_toggle_annotation(el) {
     var dataset_language_id = $(el).attr('value');
-    console.log('toggle column annotation '+dataset_language_id);
     var annotation_column_id = '.annotation_' + dataset_language_id;
     var lemma_column_id = '.lemma_' + dataset_language_id;
     var translation_column_id = '.translation_' + dataset_language_id;
@@ -468,11 +539,11 @@ function do_toggle_annotation(el) {
                     </table>
                 </div>
 
-                <div class="panel-group">
+                <div class="panel-group" id="searchpanels">
                     <div  class="panel panel-default">
-                        <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Language and Basic Properties" %}</div>
+                        <div class="panel-heading" data-toggle="collapse" data-target="#searchbasic">{% trans "Search by Language and Basic Properties" %}</div>
 
-                        <div id='searchpanels' class='collapse'>
+                        <div id='searchbasic' class='collapse'>
                         <table class='table'>
                             <tr id='signlanguage_selection'>
                                 <td><label>{{searchform.signLanguage.label}}</label>
@@ -509,7 +580,7 @@ function do_toggle_annotation(el) {
                                 <tr>
                                     <td><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
                                     <td>
-                                        <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' value="{{searchform.morpheme.value|default:''}}"/>
+                                        <input class='form-control morphtypeahead' id="id_morpheme" placeholder='{% trans "Morpheme Gloss" %}' value="{{searchform.morpheme.value|default:''}}"/>
                                         <input type="hidden" name='morpheme' value=""/>
                                     </td>
                                 </tr>
@@ -586,120 +657,34 @@ function do_toggle_annotation(el) {
                     </div>
 
                     <div  class="panel panel-default">
-                      <div class="panel-heading" data-toggle="collapse" data-target="#rel_search">{% trans "Search by Relation" %}</div>
+                      <div class="panel-heading" data-toggle="collapse"
+                           data-target="#rel_search">{% trans "Search by Relation" %}</div>
 
                       <div id='rel_search' class='collapse'>
                       <table class='table'>
-                        <tr>
-
-                              <tr>
-                                <td>
-                                    <div class='input-group'>
-                                        <label class='input-group-addon' for='id_relation'>{{searchform.relation.label}}</label>
-                                        {{searchform.relation}}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class='input-group'>
-                                        <label class='input-group-addon' for='id_hasRelation'>{{searchform.hasRelation.label}}</label>
-                                        {{searchform.hasRelation}}
-                                    </div>
-                                </td>
-                              </tr>
-
-                              <tr>
-                                <td>
-                                    <div class='input-group'>
-                                        <label class='input-group-addon' for='id_relationToForeignSign'>{{searchform.relationToForeignSign.label}}</label>
-                                        {{searchform.relationToForeignSign}}
-                                    </div>
-                                </td>
-
-                                <td>
-                                    <div class='input-group'>
-                                        <label class='input-group-addon' for='id_hasRelationToForeignSign'>{{searchform.hasRelationToForeignSign.label}}</label>
-                                        {{searchform.hasRelationToForeignSign}}
-                                    </div>
-                                </td>
-
-                              </tr>
-
-
-                        </tr>
+                      {% for relation_id, relation_label, relation_field in search_by_relation_fields %}
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_{{relation_id}}'>{{relation_label}}</label></td>
+                          <td>{{relation_field}}</td>
+                      </tr>
+                      {% endfor %}
                       </table>
                       </div>
                     </div>
 
                     <div  class="panel panel-default">
-                      <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
+                      <div class="panel-heading" data-toggle="collapse"
+                           data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
                       <div id='pub_search' class='collapse'>
-                      <table class='table'>
-                          <tr>
-                            <td>
-                                <div class='input-group'>
-                                    <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
-                                    {{searchform.inWeb}}
-                                </div>
-                            </td>
-                            <td>
-                                <div class='input-group'>
-                                    <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
-                                    {{searchform.isNew}}
-                                </div>
-                            </td>
-                          </tr>
-
-                          <tr>
-                            <td>
-                                <div class='input-group'>
-                                    <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
-                                    {{searchform.definitionRole}}
-                                </div>
-                            </td>
-                            <td>
-                                <div class='input-group'>
-                                    <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
-                                    {{searchform.definitionContains}}
-                                </div>
-                            </td>
-                          </tr>
-
-                          <tr>
-                            <td>
-                                <div class='input-group'>
-                                    <label class='input-group-addon' for='id_definitionRole'>{{searchform.createdBefore.label}}</label>
-                                    {{searchform.createdBefore}}
-                                </div>
-                            </td>
-                            <td>
-                                <div class='input-group'>
-                                    <label class='input-group-addon' for='id_definitionContains'>{{searchform.createdAfter.label}}</label>
-                                    {{searchform.createdAfter}}
-                                </div>
-                            </td>
-                          </tr>
-
-                          <tr>
-                              <td>
-                                  <div class='input-group'>
-                                    <label class='input-group-addon' for='id_createdBy'>{{searchform.createdBy.label}}</label>
-                                    {{searchform.createdBy}}
-                                  </div>
-                              </td>
-                          </tr>
-
-                          <tr>
-                              <td>
-                                  <div class='input-group'>
-                                    <label class='input-group-addon' for='id_language'>{{searchform.tags.label}}</label>
-                                    {{searchform.tags}}
-                                  </div>
-                              </td>
-                          </tr>
-
+                      <table class='table pub-row'>
+                      {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
+                          <td>{{publication_field}}</td>
+                      </tr>
+                      {% endfor %}
                       </table>
-
                       </div>
                     </div>
                 </div>
@@ -747,7 +732,7 @@ function do_toggle_annotation(el) {
         <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
         {% endif %}
         {% endif %}
-        <input class='btn btn-default' type='submit' onclick="return clearForm(document.adminsearch);"
+        <input class='btn btn-default' type='reset' onclick="clearForm();"
                value='{% trans "Reset" %}'>
     </div>
 
@@ -820,7 +805,6 @@ function do_toggle_annotation(el) {
                      <script type='text/javascript'>
                      gloss_dataset_id = {{ selected_datasets.0.id }};
                      language_code = '{{selected_datasets.0.default_language.language_code_2char}}';
-<!--                     console.log('admin_gloss_list template, show dataset interface options false, language code is: '+language_code);-->
                      </script>
                      {% endif %}
                      </select>
@@ -876,8 +860,8 @@ function do_toggle_annotation(el) {
 
 {% if view_type == "gloss_list" %}
 
-        <form name="show_pages">
-        <div class='form-group' id='paginate_by'>
+    <form name="show_pages">
+    <div class='form-group' id='paginate_by'>
         <label for='paginate_by'>{% trans "Results Per Page" %}</label>
         <select class='form-control' name="paginate_by">
             <option {% if paginate_by == 500 %} selected="" {% endif %}>500</option>
