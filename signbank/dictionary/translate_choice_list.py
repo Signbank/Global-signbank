@@ -13,7 +13,6 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
 
     list_head_values = ['-', 'N/A']
 
-    temp_mapping_dict = {}
     raw_choice_list = []
     machine_values_seen = []
     empty_or_NA = {}
@@ -27,7 +26,6 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
             empty_or_NA[human_value] = choice
             continue
 
-        temp_mapping_dict[choice.machine_value] = human_value
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
             raw_choice_list.append((id_prefix + str(choice.id), choice.name))
@@ -54,7 +52,6 @@ def choicelist_queryset_to_colors(queryset,language_code,ordered=True,id_prefix=
 
     list_head_values = ['-', 'N/A']
 
-    temp_mapping_dict = {}
     raw_choice_list = []
     machine_values_seen = []
     empty_or_NA = {}
@@ -68,7 +65,6 @@ def choicelist_queryset_to_colors(queryset,language_code,ordered=True,id_prefix=
             empty_or_NA[human_value] = choice
             continue
 
-        temp_mapping_dict[choice.machine_value] = human_value
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
             raw_choice_list.append((id_prefix + str(choice.machine_value), human_value, getattr(choice, 'field_color')))
@@ -79,15 +75,12 @@ def choicelist_queryset_to_colors(queryset,language_code,ordered=True,id_prefix=
     list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].id), v, 'ffffff') for v in list_head_values]
 
     if ordered:
-        sorted_choice_list = OrderedDict(list_head)
-        sorted_choices = sorted(raw_choice_list,key = lambda x: x[1])
+        # sort by human value
+        sorted_choices = list_head + sorted(raw_choice_list,key = lambda x: x[1])
         sorted_tuple_dict = []
         for (a, b, c) in sorted_choices:
             sorted_tuple_dict.append((a, c))
-        sorted_choice_list.update(OrderedDict(sorted_tuple_dict))
-        return sorted_choice_list
-    else:
-        sorted_choice_list = list_head + sorted(raw_choice_list, key=lambda x: x[1])
+        sorted_choice_list = OrderedDict(sorted_tuple_dict)
         return sorted_choice_list
 
 
