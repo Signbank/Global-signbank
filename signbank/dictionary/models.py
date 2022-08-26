@@ -152,14 +152,15 @@ class FieldChoice(models.Model):
     ]
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
-    english_name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50)
     dutch_name = models.CharField(max_length=50)
     chinese_name = models.CharField(max_length=50, blank=True)
     machine_value = models.IntegerField(
         help_text="The actual numeric value stored in the database. Created automatically.")
+    field_color = ColorField(default='ffffff')
 
     def __str__(self):
-        name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
+        name = self.field + ': ' + self.name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
         return name
 
     class Meta:

@@ -10,7 +10,7 @@ import signbank.dictionary.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0037_auto_20191101_1248'),
+        ('dictionary', '0040_auto_20220329_1328'), # make this migration follow those on master, this is the first FC migration
     ]
 
     operations = [
