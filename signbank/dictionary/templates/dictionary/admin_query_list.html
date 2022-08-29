@@ -390,6 +390,9 @@ thead tr th {
     border-spacing: 0px;
     border-collapse: separate;
 }
+#info_query_toggle:hover {
+    color: #004977;
+}
 </style>
 
 {% endblock %}
@@ -445,8 +448,12 @@ thead tr th {
     </table>
     <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
     <br>
-    <br>
     <h3>{% trans "Glosses Matching Query" %}</h3>
+    <div class="panel-heading" data-toggle="collapse"
+         data-target="#query_toggle_panel">{% trans "Columns can be hidden to focus on relevant results." %}
+        <span id="info_query_toggle" class="glyphicon glyphicon-th-list"></span>
+    </div>
+    <div id="query_toggle_panel" class='collapse'>
     <table class="table table-bordered" style="border-left: 2px solid grey; border-spacing: 15px 30px; width: auto;">
     <tr>
     <td><span>{% trans "Annotation ID Gloss" %}</span>
@@ -524,6 +531,7 @@ thead tr th {
     </td>
     </tr>
     </table>
+    </div>
     <br>
 
     <div class='table-responsive'>
