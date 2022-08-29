@@ -317,6 +317,7 @@ def update_gloss(request, glossid):
             newvalue = _('No')
     elif field in 'excludeFromEcv':
         original_value = getattr(gloss,field)
+        print('excludefromecv: ', original_value, ', ', value)
         # only modify if we have publish permission
 
         gloss.excludeFromEcv = value.lower() in [_('Yes').lower(),'true',True,1]
@@ -2309,7 +2310,6 @@ def update_owner(dataset, field, values):
             if value != current_owners_name:
                 print('clear owners field')
                 # dataset.owners.clear()
-                # Has a side effect that the Dialects value is cleared, this will be passed back to the user interface
                 owners_value = ''
         # dataset.save()
         print('save dataset')

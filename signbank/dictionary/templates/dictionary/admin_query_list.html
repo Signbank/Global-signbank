@@ -1,0 +1,542 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Query List View{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block extrajs %}
+
+    <script type='text/javascript'>
+    var url = '{{ PREFIX_URL }}';
+
+    var language_code = '{{ LANGUAGE_CODE }}';
+
+    var yes_str = '{% trans "Yes" %}'
+    var no_str = '{% trans "No" %}'
+
+    var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+
+    var display_fields = JSON.stringify({{display_fields|safe}});
+    var query_fields_parameters = JSON.stringify({{query_fields_parameters|safe}});
+
+    var csrf_token = '{{csrf_token}}';
+
+    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+
+
+$(document).ready(function() {
+
+    $('[data-toggle="tooltip"]').tooltip({
+        placement : 'bottom'
+    });
+        var objects_on_page = {{objects_on_page|safe}};
+
+        lookup = "#glosslist_table";
+        $.ajax({
+                url : url + "/dictionary/ajax/glosslistheader/",
+                datatype: "json",
+                async: true,
+                data: {
+                    query: true,
+                    display_fields: display_fields,
+                    query_fields_parameters: query_fields_parameters
+                },
+                success : function(result) {
+                    var elem = $(result);
+                    var parsed = $.parseHTML(result);
+                    $(lookup).find('#glosslist_table_header').before(result);
+                    // hide the sort arrowheads from the header
+                    $(lookup).find('.col_sort_arrowheads').css('display','none');
+                }
+
+        });
+        for (var i = 0; i < objects_on_page.length; i++) {
+            $.ajax({
+                url : url + "/dictionary/ajax/glossrow/" + objects_on_page[i] + "/",
+                datatype: "json",
+                async: true,
+                data: {
+                    query: true,
+                    display_fields: display_fields,
+                    query_fields_parameters: query_fields_parameters
+                },
+                success : function(result) {
+                    var elem = $(result);
+                    var parsed = $.parseHTML(result);
+                    $.each( parsed, function(i, el ) {
+                        nodename = el.nodeName;
+                        if (nodename == 'TR') {
+                            id_of_row = $(el).attr('id');
+                            res = id_of_row.split("_");
+                            id_of_gloss = res[1];
+                            focus_gloss_lookup = '#focusgloss_' + id_of_gloss;
+                            $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
+                            video_lookup = '#glossvideo_' + id_of_gloss;
+                            video_elt = $(lookup).find(video_lookup)
+                            video_elt.addClass("hover-shows-video");
+                            ready_videos(video_elt);
+                            // figure out how to initially not show these and still toggle line-through on buttons
+                            // $(lookup).find('.field_hasvideo').css('display','none');
+                            // $(lookup).find('.field_tags').css('display','none');
+                        };
+                    });
+                }
+            });
+        };
+});
+
+    function ready_videos(el) {
+        $(el).find('video').hide();
+
+        $(el).mouseenter(function ()
+        {
+            $(this).find('img').hide();
+            $(this).find('video').show();
+            $(this).find('video').get(0).play();
+        });
+
+        $(el).mouseleave(function ()
+        {
+            $(this).find('img').show();
+            $(this).find('video').hide();
+
+            $(this).find('video').get(0).pause();
+            $(this).find('video').get(0).currentTime = 0;
+        });
+    }
+
+    // toggle the line-through on a button
+    function do_toggle_line_through(el,id) {
+        var button_value = $(el).attr('value');
+        var button_id = '#' + id;
+        var button_status = $(button_id).css('text-decoration');
+        if ($(button_id).css('text-decoration-line') == 'none') {
+            $(button_id).css('text-decoration', 'line-through');
+        } else {
+            $(button_id).css('text-decoration', 'none');
+        };
+    };
+
+    // This function toggles the different language columns for Annotations
+    function do_toggle_annotation(el) {
+        var dataset_language_id = $(el).attr('value');
+        var annotation_column_id = '.annotation_' + dataset_language_id;
+        var visible_columns_start = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        $(annotation_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the annotation columns were not visible at the start, show the header and visible columns
+            $('.annotations_multicolumn').toggle();
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.annotations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+        do_toggle_line_through(el,'button_annotation_'+dataset_language_id);
+    };
+
+    // This function toggles the different language columns for Lemmas
+    function do_toggle_lemma(el) {
+        var visible_columns_start = 0;
+        $('th[id^="lemma_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var lemma_column_id = '.lemma_' + dataset_language_id;
+        $(lemma_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="lemma_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the lemma columns were not visible at the start, show the header and visible columns
+            $('.lemmas_multicolumn').toggle();
+            $('.lemmas_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.lemmas_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.lemmas_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+        do_toggle_line_through(el,'button_lemma_'+dataset_language_id);
+    };
+
+    // This function toggles the different language columns for Translations
+    function do_toggle_translations(el) {
+        var visible_columns_start = 0;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var translation_column_id = '.translation_' + dataset_language_id;
+        $(translation_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the translation columns were not visible at the start, show the header and visible columns
+            $('.translations_multicolumn').toggle();
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.translations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+        do_toggle_line_through(el,'button_translation_'+dataset_language_id);
+    };
+
+    // This function toggles the different field columns
+    function do_toggle_field(el) {
+        var field_id = $(el).attr('value');
+        var field_column_id = '.field_' + field_id;
+        $(field_column_id).toggle();
+        do_toggle_line_through(el,'button_'+field_id);
+    };
+
+    // This function toggles the different publication field columns
+    function do_toggle_pub_field(el) {
+        var field_id = $(el).attr('value');
+        var field_column_id = '.field_' + field_id;
+        $(field_column_id).toggle();
+        do_toggle_line_through(el,'button_pub_'+field_id);
+    };
+
+    // This function toggles the different publication field columns
+    function do_toggle_qp_field(el) {
+        var field_id = $(el).attr('value');
+        var field_column_id = '.field_' + field_id;
+        $(field_column_id).toggle();
+        do_toggle_line_through(el,'button_qp_'+field_id);
+    };
+
+ /**
+ * This function does nothing in this template.
+ * This template shares the ajax calls with other list view templates.
+ * Because of this, a dummy function is needed here.
+ * @param {string} field_name - name of the field to sort on
+ * @param {string} action     - one of: desc, asc, del
+ * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
+ * @returns {void}
+ */
+function do_sort_column(field_name, action, frmName) {
+    // This function does nothing in this template.
+    // The table header generated by the ajax call has a row with sorting arrowheads.
+    // The sorting row is hidden in the view, but a function is still needed.
+};
+    </script>
+    <script type='text/javascript'>
+
+        $('#signinfo').css({'margin-bottom': 30});
+        $('#definitionblock').css({'padding-top': $('#signinfo').height() + 30});
+
+         $('#panel-expand-collapse-btn-toolbar').css({
+            'height': $('#panel-expand-collapse-btn-group').css('height'),
+         });
+    </script>
+{% endblock %}
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <style>
+        #panel-expand-collapse-btn-group.affix {
+            position:fixed;
+        }
+    </style>
+<style>
+.preview {
+    background-color: white !important;
+    height: 40;
+    width: auto;
+    position: relative;
+    padding: 0 0 0 0 !important;
+}
+
+select option {
+    background-color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.bootstrap-select.btn-group .dropdown-menu li a:hover {
+    color: blue !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.dropdown-menu {
+    display: visible !important;
+    z-index: 5;
+    box-shadow: 0 10px 10px #333;
+}
+
+.dropdown-item:active{
+    color: blue;
+    background-color: darkviolet;
+}
+
+.bootstrap-select {
+    color: black !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+</style>
+<!--The tagQP css overrides the colour of tag to match that of disabled buttons, used for the display of other query parameters-->
+<style>
+.form-group {
+    background-color: white;
+    color: black;
+}
+option:not(:checked) {
+    background-color: white !important;
+    color: #000;
+}
+.tagQP {
+    float:left;
+    height:24px;
+    line-height:24px;
+    position:relative;
+    z-index: 0 !important;
+    opacity: .99;
+    margin-left:20px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding:0 10px 0 12px;
+    opacity:70%;
+    background:rgb(66, 139, 202);
+    color:#fff;
+    text-decoration:none;
+    -moz-border-radius-bottomright:4px;
+    -webkit-border-bottom-right-radius:4px;
+    border-bottom-right-radius:4px;
+    -moz-border-radius-topright:4px;
+    -webkit-border-top-right-radius:4px;
+    border-top-right-radius:4px;
+
+
+}
+.tagQP:before {
+    content:"";
+    float:left;
+    position:absolute;
+    top:0;
+    left:-12px;
+    width:0;
+    height:0;
+    border-color:transparent rgb(66, 139, 202) transparent transparent;
+    border-style:solid;
+    border-width:12px 12px 12px 0;
+}
+.tagQP:after{
+    content:"";
+    position:absolute;
+    top:10px;
+    left:0;
+    float:left;
+    width:4px;
+    height:4px;
+    -moz-border-radius:2px;
+    -webkit-border-radius:2px;
+    border-radius:2px;
+    background:#fff;
+    -moz-box-shadow:-1px -1px 2px #004977;
+    -webkit-box-shadow:-1px -1px 2px #004977;
+    box-shadow:-1px -1px 2px #004977;
+}
+.tags-cell {
+    overflow-y: visible;
+    width: 255px;
+    box-sizing: inherit;
+    white-space: nowrap;
+}
+.gloss-row {
+    overflow-y: scroll;
+}
+thead tr th {
+    border-bottom: 1px solid grey;
+    border-spacing: 0px;
+    border-collapse: separate;
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link active' href="">{% trans "Query View" %}</a>
+        </li>
+    </ul>
+</div>
+
+<div id="definitionblock" style="padding-top: 30px;">
+    {% if not query_parameters.items %}
+    <br>
+    <p>{% trans "No active search or query parameters." %}</p>
+
+    {% else %}
+    <h3>{% trans "Query Parameters" %}</h3>
+    <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
+        <thead id = 'query_table_header'>
+                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
+                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+        </thead>
+        <tbody>
+        {% for key, value in query_parameters.items %}
+        <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_mapping|get_item:key}}</td>
+            {% if '[]' in key %}
+        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
+                class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+            {% elif key == 'tags' %}
+                <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
+                   <div class='tagQP' >
+                   {% load underscore_to_space %}
+                        <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
+                   </div>
+                    {% if not forloop.last %} {% endif %}{% endfor %}</td>
+            {% else %}
+                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                    border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
+    <br>
+    <br>
+    <h3>{% trans "Glosses Matching Query" %}</h3>
+    <table class="table table-bordered" style="border-left: 2px solid grey; border-spacing: 15px 30px; width: auto;">
+    <tr>
+    <td><span>{% trans "Annotation ID Gloss" %}</span>
+    {% for dataset_lang in dataset_languages %}
+    <button name="button_annotation_{{dataset_lang.language_code_2char}}"
+            id="button_annotation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_annotation(this);"
+            value="{{dataset_lang.language_code_2char}}" style="text-decoration:none;">
+        {{ dataset_lang.name }}
+    </button>
+    {% endfor %}
+    </td>
+
+    <td><span>{% trans "Lemma ID Gloss" %}</span>
+    {% for dataset_lang in dataset_languages %}
+    <button name="button_lemma_{{dataset_lang.language_code_2char}}"
+            id="button_lemma_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_lemma(this);"
+            value="{{dataset_lang.language_code_2char}}" style="text-decoration:none;">
+        {{ dataset_lang.name }}
+    </button>
+    {% endfor %}
+    </td>
+
+    <td><span>{% trans "Translations" %}</span>
+    {% for dataset_lang in dataset_languages %}
+    <button name="button_translation_{{dataset_lang.language_code_2char}}"
+            id="button_translation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_translations(this);"
+            value="{{dataset_lang.language_code_2char}}" style="text-decoration:none;">
+        {{ dataset_lang.name }}
+    </button>
+    {% endfor %}
+    </td>
+    </tr>
+    <tr>
+    <td style="width:300px;" colspan=3 ><span>{% trans "Gloss List Fields" %}</span>
+    {% for fieldname,label in TOGGLE_GLOSS_LIST_DISPLAY_FIELDS %}
+        <button name="button_{{fieldname}}" id="button_{{fieldname}}" type='submit' onclick="do_toggle_field(this);"
+            value="{{fieldname}}" style="text-decoration:none;">
+            {{label}}
+        </button>
+    {% endfor %}
+    </td>
+    </tr>
+    {% if TOGGLE_QUERY_PARAMETER_FIELDS %}
+    <tr>
+    <td style="width:300px;" colspan=3 ><span>{% trans "Query Parameter Fields" %}</span>
+    {% for fieldname,label in TOGGLE_QUERY_PARAMETER_FIELDS %}
+        <button name="button_{{fieldname}}" id="button_qp_{{fieldname}}" type='submit' onclick="do_toggle_qp_field(this);"
+            value="{{fieldname}}" style="text-decoration:none;">
+            {{label}}
+        </button>
+    {% endfor %}
+    </td>
+    </tr>
+    {% endif %}
+    <tr>
+    <td style="width:300px;" colspan=3 ><span>{% trans "Publication Fields" %}</span>
+    {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
+        <button name="button_dataset" id="button_pub_dataset" type='submit' onclick="do_toggle_pub_field(this);"
+            value="dataset" style="text-decoration:none;">
+            {% trans "Dataset" %}
+        </button>
+    {% endif %}
+    {% for fieldname,label in TOGGLE_PUBLICATION_FIELDS %}
+        {% if fieldname == 'tags' or fieldname == 'hasvideo' %}
+        <button name="button_{{fieldname}}" id="button_pub_{{fieldname}}" type='submit' onclick="do_toggle_pub_field(this);"
+            value="{{fieldname}}" style="text-decoration:none;">
+            {% if fieldname == 'hasvideo' %}
+            {% trans "Video" %}
+            {% else %}
+            {{label}}
+            {% endif %}
+        </button>
+        {% endif %}
+    {% endfor %}
+    </td>
+    </tr>
+    </table>
+    <br>
+
+    <div class='table-responsive'>
+    <table class='table table-condensed' id = 'glosslist_table'>
+        <thead id = 'glosslist_table_header'></thead>
+        <tbody>
+        {% for gloss in object_list %}
+        <tr id = "focusgloss_{{gloss.id}}">
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

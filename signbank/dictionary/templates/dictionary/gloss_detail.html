@@ -79,6 +79,7 @@
     var next_morpheme_id;
     var this_gloss_id = {{gloss.id}};
 
+    var json_default_query_parameters = {{json_default_query_parameters|safe}};
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
     {% include "dictionary/search_result_bar.html" %}
@@ -115,7 +116,6 @@
     $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{gloss.lemma.dataset}}").done( function (data)
     {
         choice_lists = $.extend(data,{{other_media_field_choices | safe}});
-        console.log("Added field choices");
     });
 
     //Fill choice_lists with frequencies later
@@ -127,8 +127,6 @@
             // Reload the data in the lists
             $('.edit_list').unbind('click');
             configure_edit();
-
-            console.log("Added field choices");
         });
     });
 
@@ -191,9 +189,10 @@ function checkKey(e)
             });
         });
 
-        $('#searchresults').css({'padding-top': 10});
-        $('#definitionblock').css({'padding-top':
-                                            $('#searchresults').height() + $('#signinfo').height() + 20 });
+        $('#searchquery').css({'margin-bottom': 10, 'padding-bottom': 10});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchquery').height() + $('#signinfo').height() + 10)});
+  //      $('#definitionblock').css({'padding-top': Math.round($('#signinfo').height() + 10)});
+        $('#view_tabs').css({'padding-top': 10, 'margin-top': 10});
         $('#expand-panels').on('click', function() {
             $('#definition .collapse').collapse('show');
         });
@@ -202,15 +201,15 @@ function checkKey(e)
         });
         $('#panel-expand-collapse-btn-group').affix({
             offset: {
-                top: $('#panel-expand-collapse-btn-group').offset().top - $('#signbank-bar').height() - $('#signinfo').height()
-                 + parseInt($('#signbank-bar').css('margin-bottom'))
+                top: $('#panel-expand-collapse-btn-group').offset().top - $('#searchquery').height() - $('#signinfo').height()
+                 + parseInt($('#searchquery').css('margin-bottom'))
                  + parseInt($('#panel-expand-collapse-btn-group').css('height')),
             }
         });
         $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
             $('#panel-expand-collapse-btn-group').css({
                 'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': ($('#signbank-bar').height() - $('#navbar').height() + parseInt($('#definitionblock').css('padding-top')) + 3) + 'px',
+                'top': ($('#searchquery').height() - $('#navbar').height() + parseInt($('#definitionblock').css('padding-top')) + 3) + 'px',
             });
          });
         $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
@@ -229,6 +228,12 @@ function checkKey(e)
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
     <style>
         #panel-expand-collapse-btn-group.affix {
+            position:fixed;
+        }
+        #view_tabs.affix {
+            position:fixed;
+        }
+        #searchquery.affix {
             position:fixed;
         }
     </style>
@@ -281,22 +286,160 @@ option:not(:checked) {
     background-color: white !important;
     color: #000;
 }
+/* This makes the popup Run Query button for the default parameters ressemble the style of the QP case.
+   The <a> surrounding the text of the default parameters button is to simulate the link of the QP button. */
+.btn-query {
+    background-color: transparent;
+    border: 1px solid;
+    color: rgb(66, 139, 202);
+    border-radius: 6px;
+    height: 28px;
+}
+.btn-query:hover .btn-query:focus {
+    color: rgb(66, 139, 202);
+    background-color: lightgrey;
+}
 </style>
 
 {% endblock %}
 
 {% block content %}
+    <div class="navbar" id="searchquery" style="background-color:white;z-index: 50;">
 
-<div id="searchresults" class='navbar'
-     style="overflow-y:hidden;border:0;box-sizing:content-box; z-index:200;position:fixed; width:100%;">
+    {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
+    <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
+            style="z-index: 50;">{% trans "QUERY" %}</span></button>
+    {% endif %}
+<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
+
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
     </div>
     {% endif %}
 </div>
+    </div>
 
-<div id="signinfo" class='navbar navbar-collapse' style="border:0;z-index:200;position:fixed;">
-   
+    {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
+     <div class="modal fade" id="display_query_parameters"
+          aria-labelledby="#modalQuery" aria-hidden="true">
+         <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class='modal-header'>
+                    <h3 id='modalQuery'>
+                        {% if not query_parameters.items %}
+                        {% trans "Default Query Parameters" %}
+                        {% else %}
+                        {% trans "Query Parameters" %}
+                        {% endif %}
+                    </h3>
+                    {% if not query_parameters.items %}
+                    <p>{% trans "No active query parameters were used in the search. Here are the non-empty fields of this gloss." %}</p>
+                    {% endif %}
+                </div>
+                <div class='modal-body'>
+                {% if not query_parameters.items %}
+                    {% if not default_query_parameters.items %}
+                    <p>{% trans "No fields are filled in for this gloss." %}</p>
+                    {% else %}
+                    <input type='hidden' name='use_default_query_parameters' value='default_parameters'>
+                        <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
+                            <thead id = 'default_query_table_header'>
+                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
+                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                            </thead>
+                            <tbody>
+                            {% for key, value in default_query_parameters.items %}
+                            <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{{default_query_parameters_mapping|get_item:key}}</td>
+                                {% if '[]' in key %}
+                            <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}<button
+                                    class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+                                {% elif key == 'tags' %}
+                                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}
+                                       <div class='tagQP' >
+                                       {% load underscore_to_space %}
+                                            <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
+                                       </div>
+                                        {% if not forloop.last %} {% endif %}{% endfor %}</td>
+                                {% else %}
+                                        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{{default_query_parameters_values_mapping|get_item:key}}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                {% else %}
+                        <input type='hidden' name='use_default_query_parameters' value='query_parameters'>
+                        <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
+                            <thead id = 'query_table_header'>
+                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
+                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                            </thead>
+                            <tbody>
+                            {% for key, value in query_parameters.items %}
+                            <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_mapping|get_item:key}}</td>
+                                {% if '[]' in key %}
+                            <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
+                                    class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+                                {% elif key == 'tags' %}
+                                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
+                                       <div class='tagQP' >
+                                       {% load underscore_to_space %}
+                                            <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
+                                       </div>
+                                        {% if not forloop.last %} {% endif %}{% endfor %}</td>
+                                {% else %}
+                                        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                {% endif %}
+                </div>
+                <div class="modal-footer">
+                    {% if not query_parameters.items %}
+                        {% if not default_query_parameters.items %}
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                        {% else %}
+                            <form id="use_default_query_parameters" action='' method="POST">
+                            {% csrf_token %}
+                            <button type='submit' class="btn-query" name="use_default_query_parameters"
+                                    value="default_parameters"><a>{% trans "Run Query" %}</a></button>
+                            <input type="hidden" id="default_parameters" name="default_parameters" value="{{json_default_query_parameters}}">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'
+                                    style="text-decoration:none;">{% trans "Run Query" %}</a></button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                    {% endif %}
+                </div>
+
+            </div>
+         </div>
+     </div>
+{% endif %}
+{% if request.GET.warning %}
+<div class="alert alert-warning">{{ request.GET.warning }}</div>
+{% endif %}
+
+
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+
     <div class='btn-group'>
         {% if SIGN_NAVIGATION %}
         
@@ -313,7 +456,7 @@ option:not(:checked) {
             {% endif %}
          {% endif %}
     </div>
-
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;">
     <ul class='nav nav-tabs'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
@@ -336,7 +479,7 @@ option:not(:checked) {
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos View" %}</a>
         </li>
     </ul>
-
+    </div>
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     <div class='pull-right' style="margin-right:15px;margin-top:10px;">
@@ -506,7 +649,8 @@ option:not(:checked) {
         {% include "dictionary/glosstags.html" %}
 
         <table class='table table-condensed'>
-            <tr {%if gloss_dialects|length == 0 %} class="empty_row"{% endif %}><th>{% trans "Dialect" %}</th>
+            <tr {% if gloss_dialects|length == 0 %} class="empty_row" {% endif %}>
+                <th>{% trans "Dialect" %}</th>
                 <td class='edit edit_dialect' id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             </tr>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
@@ -1135,20 +1279,20 @@ option:not(:checked) {
             <table class='table table-condensed'>
                 <tr {%if not gloss_semanticfields %} class="empty_row"{% endif %}>
                     <th>{% trans "Semantic Field" %}</th>
-                    <td class='edit edit_semanticfield'
+                    <td class='edit edit_semanticfield' style="width:500px;"
                         id='semanticfield'>{% for sf in gloss_semanticfields %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                     <td/>
                 </tr>
                 {% if USE_DERIVATIONHISTORY %}
-                <tr {%if not gloss_derivationhistory %} class="empty_row"{% endif %}>
+                <tr {% if not gloss_derivationhistory %} class="empty_row" {% endif %} />
                     <th>{% trans "Derivation History" %}</th>
-                    <td class='edit edit_derivationhistory'
-                        id='derivationhistory'>{% for sf in gloss_derivationhistory %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                    <td class='edit edit_derivationhistory' style="width:500px;"
+                        id='derivationhistory'>{% for sf in gloss_derivationhistory %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %} </td>
                     <td/>
                 </tr>
                 {% endif %}
 		    {% for value,name,label,kind in semantics_fields %}
-	            <tr {%if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %}>
+	            <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %} />
                     <th>
                     {% if name == 'concConcSet' %}
                         <a target="_blank" href="http://concepticon.clld.org">{{label}}</a>
@@ -1156,7 +1300,8 @@ option:not(:checked) {
                         {{label}}
                     {% endif %}
                     </th>
-                    <td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}'>{% value value %}</td>
+                    <td class="edit edit_{{kind}}" id='{{name}}' style="width:500px;" value='{{value}}'>{% value value %}</td>
+                    <td/>
                 </tr>
             {% endfor %}
             

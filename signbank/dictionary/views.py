@@ -18,10 +18,10 @@ import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForGlossForm
-from signbank.frequency import configure_corpus_documents_for_dataset, import_corpus_speakers
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
+
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -164,6 +164,11 @@ def word(request, keyword, n):
         update_form = None
         video_form = None
 
+    if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
+        show_query_parameters_as_button = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
+    else:
+        show_query_parameters_as_button = False
+
     return render(request,"dictionary/word.html",
                               {'translation': trans.translation.text.encode('utf-8'),
                                'viewname': 'words',
@@ -190,7 +195,8 @@ def word(request, keyword, n):
                                'tagform': TagUpdateForm(),
                                'annotation_idgloss': {},
                                'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
+                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
+                               'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button })
 
 def gloss(request, glossid):
     """View of a gloss - mimics the word view, really for admin use
@@ -2805,6 +2811,11 @@ def gloss_revision_history(request,gloss_pk):
     else:
         show_dataset_interface = False
 
+    if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
+        show_query_parameters_as_button = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
+    else:
+        show_query_parameters_as_button = False
+
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
 
@@ -2840,7 +2851,8 @@ def gloss_revision_history(request,gloss_pk):
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'active_id': gloss_pk,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+                   'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button
                    })
 
 
