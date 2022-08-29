@@ -439,7 +439,7 @@ option:not(:checked) {
 
 
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
-   
+
     <div class='btn-group'>
         {% if SIGN_NAVIGATION %}
         
@@ -475,11 +475,14 @@ option:not(:checked) {
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
         </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos View" %}</a>
+        </li>
     </ul>
     </div>
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
-    <div class='pull-right' style="margin-right:15px;margin-top:10px;z-index:100;">
+    <div class='pull-right' style="margin-right:15px;margin-top:10px;">
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
@@ -519,7 +522,7 @@ option:not(:checked) {
         </div>
         {% endif %}
 
-<div id="definitionblock" style="z-index:0;">
+<div id="definitionblock">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
     <div id="videocontainer">
@@ -641,7 +644,7 @@ option:not(:checked) {
 </div>
 
 
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background: white;">
 
         {% include "dictionary/glosstags.html" %}
 
