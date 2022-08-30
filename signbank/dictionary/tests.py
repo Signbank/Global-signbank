@@ -2982,27 +2982,6 @@ class MinimalPairsTests(TestCase):
                                         name=name_2,dutch_name=name_2,chinese_name=name_2)
         self.new_fieldchoice_2.save()
 
-        # Store the translations in the global quick access table used in the template
-        global translated_choice_lists_table
-
-        codes_to_adjectives = dict(
-            [(language.lower().replace('_', '-'), adjective) for language, adjective in settings.LANGUAGES])
-
-        translations_for_handshape_1 = dict()
-        for (l_name, l_adjective) in codes_to_adjectives.items():
-            translations_for_handshape_1[l_name] = name_1
-
-        translations_for_handshape_2 = dict()
-        for (l_name, l_adjective) in codes_to_adjectives.items():
-            translations_for_handshape_2[l_name] = name_2
-
-        translated_choice_lists_table['domhndsh'][self.new_fieldchoice_1.machine_value] = translations_for_handshape_1
-        translated_choice_lists_table['domhndsh'][self.new_fieldchoice_2.machine_value] = translations_for_handshape_2
-
-        translated_choice_lists_table['subhndsh'][self.new_fieldchoice_1.machine_value] = translations_for_handshape_1
-        translated_choice_lists_table['subhndsh'][self.new_fieldchoice_2.machine_value] = translations_for_handshape_2
-
-
     def test_analysis_minimalpairs(self):
 
         # set the test dataset

@@ -1699,11 +1699,11 @@ class Gloss(models.Model):
         minimal_pairs_fields = dict()
 
         # If handedness is not defined for this gloss, don't bother to look up minimal pairs
-        if (self.handedness is None or self.handedness == '0'):
+        if (self.handedness_fk is None or self.handedness_fk == '0'):
             return minimal_pairs_fields
 
         # Restrict minimal pairs search if gloss has empty phonology field for Strong Hand
-        if (self.domhndsh is None or self.domhndsh == '0'):
+        if (self.domhndsh_fk is None or self.domhndsh_fk == '0'):
             return minimal_pairs_fields
 
         mpos = self.minimalpairs_objects()
@@ -1712,11 +1712,19 @@ class Gloss(models.Model):
             other_gloss_values_tuple = o.minimal_pairs_tuple()
             zipped_tuples = zip(settings.MINIMAL_PAIRS_FIELDS, focus_gloss_values_tuple, other_gloss_values_tuple)
             for (field_name, field_value, other_field_value) in zipped_tuples:
+                field_name_fk = field_name + '_fk'
                 if field_value in [None, '0'] and other_field_value in [None,'0']:
                     continue
                 if field_value != other_field_value:
                     field_label = Gloss._meta.get_field(field_name).verbose_name
-                    minimal_pairs_fields[o] = { field_name: (field_label, field_name, field_value, other_field_value, fieldname_to_kind(field_name)) }
+                    field_kind = fieldname_to_kind(field_name)
+                    if field_kind == 'list':
+                        field_value_fk = getattr(self, field_name_fk).name
+                        other_field_value_fk = getattr(o, field_name_fk).name
+                        minimal_pairs_fields[o] = {
+                            field_name: (field_label, field_name, field_value_fk, other_field_value_fk, field_kind)}
+                    else:
+                        minimal_pairs_fields[o] = { field_name: (field_label, field_name, field_value, other_field_value, field_kind) }
 
         return minimal_pairs_fields
 
@@ -2193,59 +2201,6 @@ def fieldname_to_kind(fieldname):
         field_kind = fieldname
 
     return field_kind
-
-
-def generate_translated_choice_list_table():
-    # Result of the line below is a list in this format {'en-us':'english'}
-
-    temp_translated_choice_lists_table = dict()
-    for f in Gloss._meta.fields:
-        # print('inside first for loop')
-        if f.choices:
-            # print('inside if, field ', f.name)
-            #         # if there are choices for the field, get the human values from the FieldChoice table
-            try:
-                f_category = f.field_choice_category
-            except AttributeError:
-                print('generate_translated_choice_list_table AttributeError on field ', f.name, '. Missing field_choice_category.')
-                continue
-
-            #Tro to get the choice list, but don't crash if the table is not there (yet)
-            try:
-                if f_category == 'Handshape':
-                    choice_list = list(Handshape.objects.all())
-                else:
-                    choice_list = list(FieldChoice.objects.filter(field__iexact=f_category))
-            except (OperationalError, ProgrammingError) as e:
-                choice_list = []
-
-            # print('after getting choice_list: ', choice_list)
-            field_translated_choice_list = dict()
-
-            if len(choice_list) > 0:
-                # print('choices found')
-                for choice in choice_list:
-                    # choice is either a Handshape or a FieldChoice object, get the translations from it
-                    try:
-                        human_value = choice.name
-                    except:
-                        # this should not happen, it seems the name field was removed from the model
-                        # probably a default setting is needed
-                        print('There is no field name in the FieldChoice table.')
-                        human_value = ''
-                    field_translated_choice_list[choice.pk] = human_value
-                #
-                temp_translated_choice_lists_table[f.name] = field_translated_choice_list
-            else:
-                if f.name in FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']:
-                    # if there are no choices for fields we expect choices for, print something to the log
-                    temp_translated_choice_lists_table[f.name] = field_translated_choice_list
-                    print('There are no choices for ', f_category, ' in the FieldChoice table of the database.')
-
-    return temp_translated_choice_lists_table
-
-
-translated_choice_lists_table = generate_translated_choice_list_table()
 
 
 class Relation(models.Model):

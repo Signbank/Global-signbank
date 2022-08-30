@@ -2108,7 +2108,6 @@ def minimalpairs_focusgloss(gloss_id, language_code):
             other_gloss_dict['field_display'] = values[0]
             other_gloss_dict['field_category'] = values[1]
 
-            from signbank.dictionary.models import translated_choice_lists_table
             focus_gloss_choice = values[2]
             other_gloss_choice = values[3]
 
@@ -2123,14 +2122,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
 
             field_kind = values[4]
             if field_kind == 'list':
-                if focus_gloss_choice:
-
-                    try:
-                        focus_gloss_value = translated_choice_lists_table[field][int(focus_gloss_choice)][language_code]
-                    except:
-                        focus_gloss_value = 'ERROR_' + focus_gloss_choice
-                else:
-                    focus_gloss_value = '-'
+                focus_gloss_value = focus_gloss_choice
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
                 if focus_gloss_choice == 'True' or focus_gloss_choice == True:
@@ -2144,14 +2136,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
                 focus_gloss_value = focus_gloss_choice
             other_gloss_dict['focus_gloss_value'] = focus_gloss_value
             if field_kind == 'list':
-                if other_gloss_choice:
-
-                    try:
-                        other_gloss_value = translated_choice_lists_table[field][int(other_gloss_choice)][language_code]
-                    except:
-                        other_gloss_value = 'ERROR_' + other_gloss_choice
-                else:
-                    other_gloss_value = '-'
+                other_gloss_value = other_gloss_choice
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
                 if other_gloss_choice == 'True' or other_gloss_choice == True:
