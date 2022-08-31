@@ -11,6 +11,9 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
     # Other functions that call this function expect either a list or an OrderedDict that maps machine values to human values
     # Make sure the machine values are unique by only using the first human value
 
+    if not queryset:
+        return []
+
     list_head_values = ['-', 'N/A']
 
     raw_choice_list = []
@@ -28,12 +31,12 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
 
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
-            raw_choice_list.append((id_prefix + str(choice.id), choice.name))
+            raw_choice_list.append((id_prefix + str(choice.machine_value), choice.name))
 
     if 'NoteType' in str(queryset.query):
         print(raw_choice_list)
 
-    list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].id), v) for v in list_head_values]
+    list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].machine_value), v) for v in list_head_values]
 
     if ordered:
         sorted_choice_list = OrderedDict(list_head)
@@ -72,7 +75,7 @@ def choicelist_queryset_to_colors(queryset,language_code,ordered=True,id_prefix=
     if 'NoteType' in str(queryset.query):
         print(raw_choice_list)
 
-    list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].id), v, 'ffffff') for v in list_head_values]
+    list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].machine_value), v, 'ffffff') for v in list_head_values]
 
     if ordered:
         # sort by human value

@@ -1539,24 +1539,19 @@ class Gloss(models.Model):
         gloss_fields = {}
         for f in Gloss._meta.fields:
             gloss_fields[f.name] = f
-        for field in FIELDS['phonology']:
+        phonology_fields = FIELDS['phonology']
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_phonology_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field for field in phonology_fields ]
+        for field in mapped_phonology_fields:
             gloss_field = gloss_fields[field]
-            if (isinstance(gloss_field, models.CharField) and not hasattr(gloss_field, 'field_choice_category')) or isinstance(gloss_field, models.TextField):
+            if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
                 continue
-            phonology_dict[field] = None
+            # phonology_dict[field] = None
             field_value = getattr(self, field)
-            if hasattr(gloss_field, 'field_choice_category'):
-                fieldchoice_category = gloss_field.field_choice_category
-                if fieldchoice_category == 'Handshape':
-                    choice_list = Handshape.objects.all()
-                else:
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
+            if field_value and (isinstance(gloss_field, FieldChoiceForeignKey) or isinstance(gloss_field, Handshape)):
                 human_value = field_value.name
-                if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None or human_value == '0' or human_value == 'None'):
-                    phonology_dict[field] = str(field_value.machine_value)
-                else:
-                    phonology_dict[field] = None
+                lookup_key = field.replace('_fk','')
+                phonology_dict[lookup_key] = human_value
             else:
                 # gloss_field is a Boolean
                 # TO DO: check these conversions to Strings instead of Booleans

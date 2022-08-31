@@ -414,15 +414,15 @@ def update_gloss(request, glossid):
                                         and isinstance(Gloss._meta.get_field(f.name), FieldChoiceForeignKey)]
 
         fields_empty_null = [f.name for f in Gloss._meta.fields
-                                if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
+                                if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields ]
 
         char_fields_not_null = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'CharField'
-                                    and not hasattr(f, 'field_choice_category') and not f.null]
+                                    and f.name not in fieldchoiceforeignkey_fields and not f.null]
 
         char_fields = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'CharField'
-                                    and not hasattr(f, 'field_choice_category')]
+                                    and f.name not in fieldchoiceforeignkey_fields]
 
         text_fields = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'TextField' ]
@@ -1170,9 +1170,10 @@ def update_other_media(request,gloss,field,value):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'?editothermedia')
 
     elif action_or_fieldname == 'other-media-type':
-        other_media.type = value
-        choice_list = FieldChoice.objects.filter(field__iexact='OtherMediaType')
-        value = value.name
+        # value is the (str) machine value of the Other Media Type from the choice list in the template
+        other_media_type = FieldChoice.objects.filter(field__iexact='OtherMediaType', machine_value=int(value))
+        other_media.type_fk = other_media_type
+        value = other_media_type.name
 
     elif action_or_fieldname == 'other-media-alternative-gloss':
         other_media.alternative_gloss = value

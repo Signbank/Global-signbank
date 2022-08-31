@@ -44,9 +44,11 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
     choicelist_queryset_to_field_colors
 
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
+from django.forms import TypedMultipleChoiceField, TypedChoiceField
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
-    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses
+    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
+    map_field_names_to_fk_field_names
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -293,18 +295,27 @@ class GlossListView(ListView):
         for field_group in FIELDS.values():
             for field in field_group:
                 fields_that_need_translated_options.append(field)
-
+        fields_that_need_options = map_field_names_to_fk_field_names(fields_that_need_translated_options)
         for field in fields_that_need_translated_options:
             try:
-                if isinstance(search_form.fields[field], TypedChoiceField):
+                if isinstance(search_form.fields[field], TypedChoiceField) or isinstance(search_form.fields[field], TypedMultipleChoiceField):
                     gloss_field = search_form.fields[field]
-                    if hasattr(gloss_field, 'field_choice_category'):
-                        fieldchoice_category = gloss_field.field_choice_category
+                    short_list = True
+                    if field.startswith('semField'):
+                        choices = SemanticField.objects.all()
+                    elif field.startswith('derivHist'):
+                        choices = DerivationHistory.objects.all()
+                    elif field + '_fk' in fields_that_need_options: # isinstance(gloss_field, FieldChoiceForeignKey):
+                        gloss_field_fk = Gloss._meta.get_field(field+'_fk')
+                        choices = FieldChoice.objects.filter(field__iexact=gloss_field_fk.field_choice_category)
                     else:
-                        fieldchoice_category = field
-                    choices = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                    translated_choices = [('','---------')]+choicelist_queryset_to_translated_dict(choices,self.request.LANGUAGE_CODE,
-                                                                                ordered=False,id_prefix='')
+                        # this case does not have the _fk field
+                        choices = FieldChoice.objects.filter(field__iexact=gloss_field.field_choice_category)
+                        # setting this to false adds the ------ field to the start of the list
+                        short_list = False
+
+                    translated_choices = choicelist_queryset_to_translated_dict(choices,self.request.LANGUAGE_CODE,
+                                                                                ordered=False,shortlist=short_list,id_prefix='')
                     search_form.fields[field] = forms.ChoiceField(label=search_form.fields[field].label,
                                                                     choices=translated_choices,
                                                                     widget=forms.Select(attrs={'class':'form-control'}))
@@ -907,7 +918,6 @@ class GlossListView(ListView):
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
             multiple_select_gloss_fields.remove('derivHist')
-
         for fieldnamemulti in multiple_select_gloss_fields:
 
             fieldnamemultiVarname = fieldnamemulti + '[]'
@@ -1231,8 +1241,7 @@ class GlossDetailView(DetailView):
         context['WeakHand'] = self.object.subhndsh_fk.machine_value if self.object.subhndsh_fk else 0
 
         # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
-        context['SemanticFieldDefined'] = (int(self.object.semField_fk.machine_value) > 1) \
-            if self.object.semField_fk and self.object.semField_fk.machine_value else 0  # minimal machine value is 2
+        context['SemanticFieldDefined'] =  self.object.semFieldShadow.all().count() > 0
         # context['ValenceDefined'] = (int(self.object.valence) > 1) if self.object.valence else 0          # minimal machine value is 2
         # context['IconicImageDefined'] = self.object.iconImage                                             # exists if not emtpy
 
@@ -6233,7 +6242,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         print(e)
         minimalpairs_objects = {}
 
-    print("MINIMALPAIRS_OBJECTS", minimalpairs_objects)
+    # print("MINIMALPAIRS_OBJECTS", minimalpairs_objects)
 
     translation_focus_gloss = ""
     translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
@@ -6352,20 +6361,15 @@ def glosslist_ajax_complete(request, gloss_id):
         translations_per_language.append((language,this_gloss.translation_set.filter(language=language).order_by('translation__text')))
 
     column_values = []
-    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+    gloss_list_display_fields = map_field_names_to_fk_field_names(settings.GLOSS_LIST_DISPLAY_FIELDS)
+    for fieldname in gloss_list_display_fields:
 
         machine_value = getattr(this_gloss,fieldname)
         gloss_field = Gloss._meta.get_field(fieldname)
-        if hasattr(gloss_field, 'field_choice_category'):
-            fieldchoice_category = gloss_field.field_choice_category
+        if machine_value and (isinstance(gloss_field, FieldChoiceForeignKey) or isinstance(gloss_field, Handshape)):
+            human_value = machine_value.name
         else:
-            fieldchoice_category = fieldname
-        if fieldchoice_category == 'Handshape':
-            choice_list = Handshape.objects.all()
-        else:
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
-        human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
+            human_value = machine_value
         if human_value:
             column_values.append(human_value)
         else:
@@ -6395,7 +6399,8 @@ def glosslistheader_ajax(request):
     dataset_languages = get_dataset_languages(selected_datasets)
 
     column_headers = []
-    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+    gloss_list_display_fields = map_field_names_to_fk_field_names(settings.GLOSS_LIST_DISPLAY_FIELDS)
+    for fieldname in gloss_list_display_fields:
 
         field_label = Gloss._meta.get_field(fieldname).verbose_name
         column_headers.append(field_label)
@@ -6487,11 +6492,16 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
         translations_per_language[language] = this_gloss.translation_set.filter(language=language).order_by('translation__text')
 
     column_values = []
-    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+    gloss_list_display_fields = map_field_names_to_fk_field_names(settings.GLOSS_LIST_DISPLAY_FIELDS)
+    for fieldname in gloss_list_display_fields:
 
         machine_value = getattr(this_gloss,fieldname)
 
-        human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
+        gloss_field = Gloss._meta.get_field(fieldname)
+        if machine_value and (isinstance(gloss_field, FieldChoiceForeignKey) or isinstance(gloss_field, Handshape)):
+            human_value = machine_value.name
+        else:
+            human_value = machine_value
         if human_value:
             column_values.append(human_value)
         else:
