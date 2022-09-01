@@ -967,6 +967,8 @@ class GlossListView(ListView):
 
         # Evaluate all gloss/language search fields
         for get_key, get_value in get.items():
+            if get_key == 'csrfmiddlewaretoken':
+                continue
             if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
                 query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
@@ -1177,7 +1179,7 @@ class GlossListView(ListView):
                 # If the user attempts to input a string, it is ignored by the gloss list search form
                 print("Morpheme not found: ", str(input_morpheme))
 
-        if 'hasComponentOfType' in get and get['hasComponentOfType'] != '':
+        if 'hasComponentOfType' in get and get['hasComponentOfType'] not in ['', '0']:
             query_parameters['hasComponentOfType'] = get['hasComponentOfType']
 
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
@@ -1185,7 +1187,7 @@ class GlossListView(ListView):
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
-        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
+        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] not in ['', '0']:
             query_parameters['hasMorphemeOfType'] = get['hasMorphemeOfType']
 
             morpheme_type = get['hasMorphemeOfType']
@@ -6884,8 +6886,8 @@ def glosslist_ajax_complete(request, gloss_id):
         translations_per_language.append((language,this_gloss.translation_set.filter(language=language).order_by('translation__text')))
 
     column_values = []
-    gloss_list_display_fields = map_field_names_to_fk_field_names(settings.GLOSS_LIST_DISPLAY_FIELDS)
-    for fieldname in gloss_list_display_fields:
+    gloss_list_display_fields = map_field_names_to_fk_field_names(display_fields)
+    for fieldname in display_fields:
 
         if fieldname == 'semField':
             semanticfields = ", ".join([str(sf.name) for sf in this_gloss.semFieldShadow.all()])
@@ -6948,17 +6950,20 @@ def glosslist_ajax_complete(request, gloss_id):
             continue
         else:
             # this is a field of Gloss
-            machine_value = getattr(this_gloss, fieldname)
-            gloss_field = Gloss._meta.get_field(fieldname)
+            if fieldname in gloss_list_display_fields:
+                machine_value = getattr(this_gloss, fieldname)
+                gloss_field = Gloss._meta.get_field(fieldname)
+            else:
+                machine_value = getattr(this_gloss, fieldname+'_fk')
+                gloss_field = Gloss._meta.get_field(fieldname+'_fk')
             if machine_value and (isinstance(gloss_field, FieldChoiceForeignKey) or isinstance(gloss_field, Handshape)):
                 human_value = machine_value.name
             else:
                 human_value = machine_value
             if human_value:
-                column_values.append(human_value)
+                column_values.append((fieldname,human_value))
             else:
-                column_values.append('-')
-
+                column_values.append((fieldname,'-'))
     return render(request, 'dictionary/gloss_row.html', { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
                                                           'selected_datasets': selected_datasets,
@@ -7003,7 +7008,7 @@ def glosslistheader_ajax(request):
                                   }
 
     column_headers = []
-    gloss_list_display_fields = map_field_names_to_fk_field_names(settings.GLOSS_LIST_DISPLAY_FIELDS)
+    gloss_list_display_fields = map_field_names_to_fk_field_names(display_fields)
     for fieldname in gloss_list_display_fields:
         if fieldname in fieldname_to_column_header.keys():
             column_headers.append((fieldname, fieldname_to_column_header[fieldname]))

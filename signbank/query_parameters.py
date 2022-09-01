@@ -17,6 +17,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
+from signbank.tools import map_field_names_to_fk_field_names
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
@@ -53,6 +54,8 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
         fieldnames.remove('derivHist')
     multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if
                                     field.name in fieldnames and hasattr(field, 'field_choice_category')]
+    mapped_fieldnames = map_field_names_to_fk_field_names(fieldnames)
+
     query_parameters = dict()
     for field_key in phonology_focus:
         field_value = phonology_matrix[field_key]
@@ -367,7 +370,7 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
         try:
             human_value = getattr(selected_field_choice, adjective + '_name')
         except AttributeError:
-            human_value = getattr(selected_field_choice, 'english_name')
+            human_value = getattr(selected_field_choice, 'name')
         return human_value
 
     # set up some mappings
@@ -411,7 +414,8 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
         elif key[-2:] == '[]':
             # in the Gloss Search Form, multiple choice fields have a list of values
             # these are all displayed in the Query Parameters display (as non-selectable buttons in the template)
-            field_category = Gloss._meta.get_field(key[:-2]).field_choice_category
+            field = key[:-2] + '_fk'
+            field_category = Gloss._meta.get_field(field).field_choice_category
             choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
             query_dict[key] = [ get_field_value(choice, adjective) for choice in choices_for_category ]
         elif key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):

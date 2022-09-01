@@ -36,24 +36,21 @@ import signbank.settings
 choice_list_table = dict()
 
 
-def build_choice_list(field):
-
-    choice_list = []
-
-    #See if there are any field choices there, but don't crash if there isn't even a table
-    try:
-        field_choices = list(FieldChoice.objects.filter(field__exact=field))
-    except:
-        field_choices = []
-
-    # Get choices for a certain field in FieldChoices, append machine_value and name
-    for choice in field_choices:
-        choice_list.append((str(choice.machine_value),choice.name))
-
-    choice_list = sorted(choice_list, key=lambda x: x[1])
-    built_choice_list = [('0', '-'), ('1', 'N/A')] + choice_list
-
-    return built_choice_list
+def build_choice_list(field, list_start=[]):
+    """
+    Build choice list.
+    This function assumes that machine_value 0 denotes a default/emtpy choice ('-----')
+    and machine_value 1 denotes a 'not applicable' choice ('N/A')
+    :param field: The FieldChoice field
+    :param list_start: The choices the list has to start with
+    :return: The choice list for the field, starting with the list_start choices
+    """
+    return list_start\
+           + list(FieldChoice.objects.filter(field=field, machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field=field, machine_value__gt=1)
+                  .order_by('name')])
 
 
 def get_default_language_id():
@@ -1549,7 +1546,7 @@ class Gloss(models.Model):
             # phonology_dict[field] = None
             field_value = getattr(self, field)
             if field_value and (isinstance(gloss_field, FieldChoiceForeignKey) or isinstance(gloss_field, Handshape)):
-                human_value = field_value.name
+                human_value = str(field_value.id)
                 lookup_key = field.replace('_fk','')
                 phonology_dict[lookup_key] = human_value
             else:

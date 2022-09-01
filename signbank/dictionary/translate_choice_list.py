@@ -29,12 +29,12 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
             empty_or_NA[human_value] = choice
             continue
 
-        if choices_to_exclude == None or choice not in choices_to_exclude:
+        if not choices_to_exclude or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
             raw_choice_list.append((id_prefix + str(choice.machine_value), choice.name))
 
-    if 'NoteType' in str(queryset.query):
-        print(raw_choice_list)
+    # if 'NoteType' in str(queryset.query):
+    #     print(raw_choice_list)
 
     list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].machine_value), v) for v in list_head_values]
 
