@@ -5,25 +5,14 @@
 {% load bootstrap3 %}
 {% load tagging_tags %}
 
-<tr id = "glossrow_{{focus_gloss.id}}"
+<tr id = "glossrow_{{focus_gloss.id}}" class="gloss_row">
 
-    {% if not user.is_anonymous %}
-    {% tags_for_object focus_gloss as tag_list %}
-    {% load wrong_sign %}
-    {% if tag_list|wrong_sign %}
-        class="danger"
-    {% elif not focus_gloss.has_video %}
-        class="warning"
-    {% elif focus_gloss.isNew %}
-        class="info"
-    {% else %}
+    {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
+        <td class="field_dataset" style="width:12em;">{{focus_gloss.lemma.dataset.acronym}}</td>
     {% endif %}
-    {% endif %}>
-
-    {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td style="width:12em;">{{focus_gloss.lemma.dataset.acronym}}</td>{% endif %}
 
 
-    <td>{%if focus_gloss.get_image_path %}
+    <td class="field_hasvideo">{%if focus_gloss.get_image_path %}
     {% url 'dictionary:protected_media' '' as protected_media_url %}
 
       <div class="thumbnail_container">
@@ -44,9 +33,9 @@
 
     {% for dataset_lang in dataset_languages %}
     {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
-    <td>
+    <td class="annotation_{{dataset_lang.language_code_2char}}">
       {% ifnotequal annotationidglosstranslation "" %}
-        <div class="annotation_{{dataset_lang.language_code_2char}}">
+        <div>
         {% if focus_gloss.is_morpheme %}
         <div><a href="{{PREFIX_URL}}/dictionary/morpheme/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
         {% else %}
@@ -60,27 +49,32 @@
 
     {% for dataset_lang in dataset_languages %}
     {% with focus_gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
-      <td>
-          <div class="lemma_{{dataset_lang.language_code_2char}}">{{ lemmaidglosstranslation }}</div>
+      <td class="lemma_{{dataset_lang.language_code_2char}}">
+          <div>{{ lemmaidglosstranslation }}</div>
       </td>
     {% endwith %}
     {% endfor %}
 
     {% for lang, translations in translations_per_language %}
-    <td>
-        <div class="translation_{{lang.language_code_2char}}">
+    <td class="translation_{{lang.language_code_2char}}">
+        <div>
         {% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}
         </div>
     </td>
     {% endfor %}
 
-    {% for value in column_values %}
-    <td>{{value}}</td>
+    {% for field,value in column_values %}
+    <td class="field_{{field}}">
+        <div>{{value}}</div>
+    </td>
+
     {% endfor %}
 
     {% if not user.is_anonymous %}
     {% load underscore_to_space %}
     {% tags_for_object focus_gloss as tag_list %}
-    <td>{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+    <td class="field_tags" style="width:255px;">
+        <div class="tags-cell">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
+    </td>
     {% endif %}
 </tr>

@@ -336,7 +336,7 @@ class RelationToForeignSign(models.Model):
     """Defines a relationship to another sign in another language (often a loan)"""
 
     def __str__(self):
-        return str(self.gloss) + "/" + self.other_lang + ',' + self.other_lang_gloss
+        return str(self.gloss) + "/" + str(self.other_lang) + ',' + str(self.other_lang_gloss)
 
     gloss = models.ForeignKey("Gloss")
     loan = models.BooleanField("Loan Sign", default=False)

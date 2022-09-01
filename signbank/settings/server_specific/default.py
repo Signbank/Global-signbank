@@ -105,7 +105,7 @@ FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic',
                        'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number',
                        'weakdrop','weakprop']
 
-FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','iconImg','valence','concConcSet']
+FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','valence','iconImg','concConcSet']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
@@ -113,7 +113,14 @@ FIELDS['handshape'] = ['hsNumSel','hsFingSel','hsFingSel2','hsFingConf','hsFingC
                        'hsFingUnsel','fsT','fsI','fsM','fsR','fsP','fs2T','fs2I','fs2M','fs2R','fs2P','ufT','ufI','ufM',
                        'ufR','ufP']
 
-FIELDS['publication'] = ['inWeb', 'isNew', 'excludeFromEcv']
+FIELDS['publication'] = ['inWeb', 'isNew']
+
+FIELDS['properties'] = ['hasvideo', 'hasothermedia',
+                                'definitionRole', 'definitionContains', 'defspublished',
+                                'createdBy', 'createdAfter', 'createdBefore',
+                                'useInstr', 'tags', 'excludeFromEcv']
+FIELDS['relations'] = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
+FIELDS['morpheme'] = ['morpheme', 'hasComponentOfType', 'hasMorphemeOfType']
 
 # Use these fields in the server specific settings to specify frequency fields, if available
 FREQUENCY_CATEGORIES = []
@@ -131,8 +138,18 @@ MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic'
                         'oriCh','contType','movSh','movDir','repeat','altern']
 MINIMAL_PAIRS_SEARCH_FIELDS = MINIMAL_PAIRS_FIELDS + ['namEnt','semField','valence']
 
-#Display these fields als columns in the list view
+#Display these fields as columns in the list view
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
+
+# These are fields in the Search forms by panel
+SEARCH_BY = {}
+# the ordering of the list of publication fields is important for the Gloss Search template
+SEARCH_BY['publication'] = FIELDS['publication'] + FIELDS['properties']
+SEARCH_BY['relations'] = FIELDS['relations']
+SEARCH_BY['morpheme'] = FIELDS['morpheme']
+
+QUERY_DISPLAY_FIELDS = MINIMAL_PAIRS_SEARCH_FIELDS
+SHOW_QUERY_PARAMETERS_AS_BUTTON = True
 
 # fields are ordered per kind: Field Choice Lists, Text, Boolean
 MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','relOriMov',
