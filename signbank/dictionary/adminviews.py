@@ -1561,7 +1561,7 @@ class GlossDetailView(DetailView):
 
         for morphdef in context['gloss'].parent_glosses.all():
 
-            translated_role = machine_value_to_translated_human_value(morphdef.role,morphdef_roles,self.request.LANGUAGE_CODE)
+            translated_role = morphdef.role_fk.name
 
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
@@ -2153,7 +2153,7 @@ class GlossRelationsDetailView(DetailView):
 
         for morphdef in context['gloss'].parent_glosses.all():
 
-            translated_role = machine_value_to_translated_human_value(morphdef.role,morphdef_roles,self.request.LANGUAGE_CODE)
+            translated_role = morphdef.role_fk.name
 
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
