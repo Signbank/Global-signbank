@@ -162,6 +162,7 @@ def update_gloss(request, glossid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
+    print('update gloss: ', glossid, field, value)
     original_value = '' #will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     field_category = ''
@@ -409,9 +410,9 @@ def update_gloss(request, glossid):
                 newvalue = value
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-        fieldnames = map_field_names_to_fk_field_names(fieldnames)
+        mapped_fieldnames = map_field_names_to_fk_field_names(fieldnames)
         fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
-                                        if f.name in fieldnames
+                                        if f.name in mapped_fieldnames
                                         and isinstance(Gloss._meta.get_field(f.name), FieldChoiceForeignKey)]
 
         fields_empty_null = [f.name for f in Gloss._meta.fields
@@ -434,7 +435,15 @@ def update_gloss(request, glossid):
         # The following code relies on the order of if else testing
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-        if field in fieldchoiceforeignkey_fields:
+        # print('update gloss: ', field, value)
+        if not settings.USE_FIELD_CHOICE_FOREIGN_KEY and field + '_fk' in fieldchoiceforeignkey_fields:
+            # print('field choice foreign key update ', field, value)
+            field_choice_category = Gloss._meta.get_field(field + '_fk')
+            fieldchoice = FieldChoice.objects.get(field=field_choice_category, machine_value=value)
+            gloss.__setattr__(field+'_fk', fieldchoice)
+            gloss.save()
+            newvalue = fieldchoice.name
+        elif field in fieldchoiceforeignkey_fields:
             fieldchoice = FieldChoice.objects.get(id=value)
             gloss.__setattr__(field, fieldchoice)
             gloss.save()

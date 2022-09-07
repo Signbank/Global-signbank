@@ -3431,18 +3431,19 @@ class HomonymListView(ListView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         # this is used to set up the ajax calls, one per each focus gloss in the table
-        context['ids_of_all_glosses'] = [ g.id for g in Gloss.none_morpheme_objects().select_related('lemma').filter(lemma__dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}))).exclude((Q(**{'domhndsh__isnull': True}))) ]
+        context['ids_of_all_glosses'] = [ g.id for g in Gloss.none_morpheme_objects().select_related('lemma').filter(
+            lemma__dataset__in=selected_datasets).exclude(
+            (Q(**{'handedness_fk__name__in': ['-','N/A']}))).exclude((Q(**{'domhndsh_fk__name__in': ['-','N/A']}))) ]
 
         return context
 
     def get_queryset(self):
 
-        # Get all existing saved Homonyms
-        # relation_homonyms = Relation.objects.filter(role='homonym')
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(lemma__dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}))).exclude((Q(**{'domhndsh__isnull': True})))
+        glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(
+            lemma__dataset__in=selected_datasets).exclude(
+            (Q(**{'handedness_fk__name__in': ['-','N/A']}))).exclude((Q(**{'domhndsh_fk__name__in': ['-','N/A']})))
 
         return glosses_with_phonology
 
@@ -6722,19 +6723,22 @@ def homonyms_ajax_complete(request, gloss_id):
     try:
         this_gloss = Gloss.objects.get(id=gloss_id)
         homonym_objects = this_gloss.homonym_objects()
-    except:
+    except ObjectDoesNotExist:
         homonym_objects = []
 
     result = []
     for homonym in homonym_objects:
         translation = ""
-        translations = homonym.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
+        # translations = homonym.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
+        translations = homonym.annotationidglosstranslation_set.all()
+        # print(translations)
         if translations is not None and len(translations) > 0:
             translation = translations[0].text
         else:
-            translations = homonym.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
-            if translations is not None and len(translations) > 0:
-                translation = translations[0].text
+            translation = str(homonym.id)
+            # translations = homonym.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
+            # if translations is not None and len(translations) > 0:
+            #     translation = translations[0].text
 
         result.append({ 'id': str(homonym.id), 'gloss': translation })
         # result.append({ 'id': str(homonym.id), 'gloss': str(homonym) })

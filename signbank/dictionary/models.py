@@ -1536,19 +1536,23 @@ class Gloss(models.Model):
         gloss_fields = {}
         for f in Gloss._meta.fields:
             gloss_fields[f.name] = f
-        phonology_fields = FIELDS['phonology']
+
         foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
-        mapped_phonology_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field for field in phonology_fields ]
+        mapped_phonology_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field
+                                    for field in FIELDS['phonology'] ]
         for field in mapped_phonology_fields:
             gloss_field = gloss_fields[field]
             if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
                 continue
-            # phonology_dict[field] = None
             field_value = getattr(self, field)
-            if field_value and (isinstance(gloss_field, FieldChoiceForeignKey) or isinstance(gloss_field, Handshape)):
-                human_value = str(field_value.id)
-                lookup_key = field.replace('_fk','')
-                phonology_dict[lookup_key] = human_value
+            if hasattr(gloss_field, 'field_choice_category'):
+
+                if field.endswith('_fk'):
+                    lookup_key = field.replace('_fk','')
+                else:
+                    lookup_key = field
+                phonology_dict[lookup_key] = str(field_value.id)
+
             else:
                 # gloss_field is a Boolean
                 # TO DO: check these conversions to Strings instead of Booleans
@@ -1572,14 +1576,17 @@ class Gloss(models.Model):
         return phonology_dict
 
     def minimal_pairs_tuple(self):
-
+        minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_minimal_pairs_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field for field in minimal_pairs_fields ]
         values_list = []
-        for f in settings.MINIMAL_PAIRS_FIELDS:
+        for f in mapped_minimal_pairs_fields:
             field_value = getattr(self,f)
-            # print('minimal_pairs_tuple ', f, field_value)
+            if isinstance(field_value, FieldChoice):
+                field_value = str(field_value.id)
             if f not in ['altern', 'repeat'] and field_value in ['0']:
                 values_list.append(None)
-            #     print(f, ' changed to None')
+                print(f, ' changed to None')
             else:
                 values_list.append(field_value)
         values_tuple = tuple(values_list)
@@ -1597,21 +1604,18 @@ class Gloss(models.Model):
         index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
         handedness_of_this_gloss = focus_gloss_values_tuple[index_of_handedness]
 
-        minimalpairs_objects_list = []
-
-        # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
+        # Ignore minimal pairs when the Handedness of this gloss is X, if it's a possible field choice
         try:
-            handedness_X = str(
-                FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').machine_value)
-        except:
-            # We want to ignore handshape X, so return an empty value if it doesn't exist since empty is also ignored
-            handedness_X = '0'
+            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').id)
 
-        # not sure whether these things appear in the database
-        # there are lots of different values for undefined, this handles legacy values
-        # if handedness is not defined, do not compute minimal pairs for this gloss
+        except ObjectDoesNotExist:
+            # print('minimalpairs_objects: Handedness X is not defined')
+            handedness_X = ''
 
-        if handedness_of_this_gloss in [None, '0', handedness_X, '-', '', 'None', 0]:
+        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field__iexact='Handedness', name__in=['-','N/A']) ]
+
+        if (handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X):
+            # ignore gloss with empty or X handedness
             return minimalpairs_objects_list
 
         # the next few lines to determine the initial minimal_pairs_fields_qs look long-winded
@@ -1622,37 +1626,24 @@ class Gloss(models.Model):
         minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(
                 id__in=finger_spelling_glosses).exclude(id=self.id).filter(q)
 
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_minimal_pairs_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field
+                                        for field in settings.MINIMAL_PAIRS_FIELDS ]
+
         from django.db.models import When, Case, NullBooleanField, IntegerField
         gloss_fields = {}
         for f in Gloss._meta.fields:
             gloss_fields[f.name] = f
-        zipped_tuples = zip(settings.MINIMAL_PAIRS_FIELDS, focus_gloss_values_tuple)
+        zipped_tuples = zip(mapped_minimal_pairs_fields, focus_gloss_values_tuple)
         for (field, value_of_this_field) in zipped_tuples:
             gloss_field = gloss_fields[field]
 
             if hasattr(gloss_field, 'field_choice_category'):
                 # field is a choice list
-                if value_of_this_field != None:
-                    different_field = 'different_' + field
-                    field_compare = field + '__exact'
-
-                    different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
-
-                else:
-                    different_field = 'different_' + field
-                    field_compare = field + '__exact'
-                    field_isnull = field + '__isnull'
-                    # due to legacy data, possible empty_values are: None, '', '0', 'None', ' ', '-'
-                    different_case = Case(When(**{ field_compare : '' , 'then' : 0 }),
-                                          When(**{field_isnull: True, 'then': 0}),
-                                          When(**{field_compare: 0, 'then': 0}),
-                                          When(**{field_compare: '0', 'then': 0}),
-                                          When(**{field_compare: '-', 'then': 0}),
-                                          When(**{field_compare: ' ', 'then': 0}),
-                                          When(**{field_compare: 'None', 'then': 0}),
-                                          default=1, output_field=IntegerField())
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
+                different_field = 'different_' + field
+                field_compare = field + '__exact'
+                different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
+                minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
             else:
                 # field is a Boolean
@@ -1670,7 +1661,7 @@ class Gloss(models.Model):
                     minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
         # construct extra filter to check that the number of different fields is exactly 1
-        extra_comparison = ' + '.join('different_'+field for field in settings.MINIMAL_PAIRS_FIELDS)
+        extra_comparison = ' + '.join('different_'+field for field in mapped_minimal_pairs_fields)
         extra_comparison = '(' + extra_comparison + ') = 1'
         extra_comparison = [ extra_comparison ]
 
@@ -1689,35 +1680,48 @@ class Gloss(models.Model):
 
         focus_gloss_values_tuple = self.minimal_pairs_tuple()
 
+        index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
+        handedness_of_this_gloss = focus_gloss_values_tuple[index_of_handedness]
+
         minimal_pairs_fields = dict()
 
+        empty_handedness = [str(fc.id) for fc in
+                            FieldChoice.objects.filter(field__iexact='Handedness', name__in=['-', 'N/A'])]
+
         # If handedness is not defined for this gloss, don't bother to look up minimal pairs
-        if (self.handedness_fk is None or self.handedness_fk == '0'):
+        if handedness_of_this_gloss in empty_handedness:
             return minimal_pairs_fields
 
         # Restrict minimal pairs search if gloss has empty phonology field for Strong Hand
-        if (self.domhndsh_fk is None or self.domhndsh_fk == '0'):
+        index_of_handshape = settings.MINIMAL_PAIRS_FIELDS.index('domhndsh')
+        handshape_of_this_gloss = focus_gloss_values_tuple[index_of_handshape]
+
+        empty_handshape = [str(fc.id) for fc in
+                            FieldChoice.objects.filter(field__iexact='Handshape', name__in=['-', 'N/A'])]
+
+        if handshape_of_this_gloss in empty_handshape:
             return minimal_pairs_fields
+
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_minimal_pairs_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field
+                                        for field in settings.MINIMAL_PAIRS_FIELDS ]
 
         mpos = self.minimalpairs_objects()
 
         for o in mpos:
             other_gloss_values_tuple = o.minimal_pairs_tuple()
-            zipped_tuples = zip(settings.MINIMAL_PAIRS_FIELDS, focus_gloss_values_tuple, other_gloss_values_tuple)
+            zipped_tuples = zip(mapped_minimal_pairs_fields, focus_gloss_values_tuple, other_gloss_values_tuple)
+
             for (field_name, field_value, other_field_value) in zipped_tuples:
-                field_name_fk = field_name + '_fk'
                 if field_value in [None, '0'] and other_field_value in [None,'0']:
+                    print('minimal_pairs_dict skip field: ', field_name, field_value)
                     continue
                 if field_value != other_field_value:
                     field_label = Gloss._meta.get_field(field_name).verbose_name
-                    field_kind = fieldname_to_kind(field_name)
-                    if field_kind == 'list':
-                        field_value_fk = getattr(self, field_name_fk).name
-                        other_field_value_fk = getattr(o, field_name_fk).name
-                        minimal_pairs_fields[o] = {
-                            field_name: (field_label, field_name, field_value_fk, other_field_value_fk, field_kind)}
-                    else:
-                        minimal_pairs_fields[o] = { field_name: (field_label, field_name, field_value, other_field_value, field_kind) }
+                    if field_name in foreign_key_fields:
+                        field_value = FieldChoice.objects.get(id=int(field_value)).name
+                        other_field_value = FieldChoice.objects.get(id=int(other_field_value)).name
+                    minimal_pairs_fields[o] = {field_name: (field_label, field_name, field_value, other_field_value, fieldname_to_kind(field_name))}
 
         return minimal_pairs_fields
 
@@ -1739,28 +1743,41 @@ class Gloss(models.Model):
 
         # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
         try:
-            handedness_X = str(
-                FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').machine_value)
-        except:
+            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').id)
+
+        except ObjectDoesNotExist:
+            # print('homonym_objects: Handedness X is not defined')
             handedness_X = ''
 
-        # there are lots of different values for undefined
-        if (handedness_of_this_gloss == 'None' or
-                handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
-                handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
+        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field__iexact='Handedness', name__in=['-','N/A']) ]
+
+        if (handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X):
+            # ignore gloss with empty or X handedness
             return homonym_objects_list
 
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
-        for field in settings.MINIMAL_PAIRS_FIELDS + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_minimal_pairs_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field
+                                        for field in settings.MINIMAL_PAIRS_FIELDS ]
 
-            value_of_this_field = str(phonology_for_gloss.get(field))
-            if (value_of_this_field == 'False' and field in settings.HANDEDNESS_ARTICULATION_FIELDS):
+        for field in mapped_minimal_pairs_fields + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+            if field.endswith('_fk'):
+                lookup_key = field.replace('_fk', '')
+            else:
+                lookup_key = field
+            value_of_this_field = phonology_for_gloss.get(lookup_key)
+
+            if value_of_this_field is None and field in foreign_key_fields:
+                # catch not set FK fields
+                comparison = field + '__isnull'
+                q.add(Q(**{comparison: True}), q.AND)
+            elif value_of_this_field == 'False' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
                 # fields weakdrop and weakprop use 3-valued logic, False only matches False, not Null
                 comparison1 = field + '__exact'
                 q.add(Q(**{comparison1: False}), q.AND)
-            elif (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == ''
-                  or value_of_this_field == 'None' or value_of_this_field == 'False'):
+            elif value_of_this_field in ['-',' ','','None','False', None]:
+                # field is repeat or altern
                 comparison1 = field + '__isnull'
                 comparison2 = field + '__exact'
                 comparison3 = field + '__exact'
@@ -1776,7 +1793,12 @@ class Gloss(models.Model):
                 comparison = field + '__exact'
                 q.add(Q(**{comparison: True}), q.AND)
             else:
+                # FK fields are str(int) and fall through to here
                 comparison = field + '__exact'
+                if field in foreign_key_fields:
+                    # look up based on field choice id
+                    value_of_this_field = int(value_of_this_field)
+                    comparison = field + '_id__exact'
                 q.add(Q(**{comparison: value_of_this_field}), q.AND)
 
         qs = Gloss.objects.select_related('lemma').exclude(id=self.id).filter(q)
@@ -1810,18 +1832,24 @@ class Gloss(models.Model):
 
         # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
         try:
-            handedness_X = str(
-                FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').machine_value)
-        except:
-            handedness_X = ''
+            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').id)
 
-        # there are lots of different values for undefined
-        if (handedness_of_this_gloss == 'None' or
-                handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
-                handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
+        except ObjectDoesNotExist:
+            print('homonyms: Handedness X is not defined')
             return ([], [], [])
 
-        if (self.domhndsh == None or self.domhndsh == '-' or self.domhndsh == '0'):
+        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field__iexact='Handedness', name__in=['-','N/A']) ]
+
+        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
+            # ignore gloss with empty or X handedness
+            return ([], [], [])
+
+        handshape_of_this_gloss = phonology_for_gloss['domhndsh']
+
+        empty_handshape = [str(fc.id) for fc in
+                            FieldChoice.objects.filter(field__iexact='Handshape', name__in=['-', 'N/A'])]
+
+        if handshape_of_this_gloss in empty_handshape:
             return ([], [], [])
 
         homonyms_of_this_gloss = [g for g in self.homonym_objects()]

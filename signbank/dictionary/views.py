@@ -20,7 +20,7 @@ from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, map_field_names_to_fk_field_names
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value, \
     check_value_to_translated_human_value
@@ -2757,8 +2757,9 @@ def choice_lists(request):
 
     # Translate the machine values to human values in the correct language, and save the choice lists along the way
     for topic in ['main', 'phonology', 'semantics', 'frequency']:
-
-        fields_with_choices = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in FIELDS[topic] and hasattr(field, 'field_choice_category') ]
+        mapped_topic_fields = map_field_names_to_fk_field_names(FIELDS[topic])
+        fields_with_choices = [(field.name, field.field_choice_category)
+                               for field in Gloss._meta.fields if field.name in mapped_topic_fields and hasattr(field, 'field_choice_category') ]
 
         for (field, fieldchoice_category) in fields_with_choices:
 
@@ -2766,13 +2767,18 @@ def choice_lists(request):
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             if len(choice_list) > 0:
-                all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,request.LANGUAGE_CODE,
+                if field.endswith('_fk'):
+                    lookup_key = field.replace('_fk','')
+                else:
+                    lookup_key = field
+                all_choice_lists[lookup_key] = choicelist_queryset_to_translated_dict(choice_list,request.LANGUAGE_CODE,
                                                                                  choices_to_exclude=choices_to_exclude)
                 choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
 
                 #Also concatenate the frequencies of all values
                 if 'include_frequencies' in request.GET and request.GET['include_frequencies']:
                     for choicefield in choice_list:
+                        # print('choice_lists: ', choicefield, field, fieldchoice_category)
                         machine_value = choicefield.machine_value
                         choice_list_field = '_' + str(choicefield.id)
 
@@ -2783,14 +2789,14 @@ def choice_lists(request):
 
                         else:
                             try:
-                                if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-                                    Gloss._meta.get_field(field)
-                                    filter = field
-                                    filter_value = choicefield
-                                else:
-                                    Gloss._meta.get_field(field + '_fk')
-                                    filter = field + '_fk'
-                                    filter_value = choicefield
+                                # if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+                                Gloss._meta.get_field(field)
+                                filter = field
+                                filter_value = choicefield
+                                # else:
+                                #     Gloss._meta.get_field(field + '_fk')
+                                #     filter = field + '_fk'
+                                #     filter_value = choicefield
                             except KeyError:
                                 variable_column = field
                                 search_filter = 'exact'
@@ -2799,10 +2805,10 @@ def choice_lists(request):
                             frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: filter_value}).count()
 
                         try:
-                            all_choice_lists[field][choice_list_field] += ' ['+str(frequency_for_field)+']'
+                            all_choice_lists[lookup_key][choice_list_field] += ' ['+str(frequency_for_field)+']'
                         except KeyError: #This might an excluded field
                             continue
-
+    # print(all_choice_lists)
     # Add morphology to choice lists
     all_choice_lists['morphology_role'] = choicelist_queryset_to_translated_dict(
         FieldChoice.objects.filter(field__iexact='MorphologyType'),request.LANGUAGE_CODE)
