@@ -70,27 +70,21 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     Its value is changed by clicking the up/down buttons in the second row of the search result table
     """
 
-    def get_string_from_tuple_list(lstTuples, number):
-        """Get the string value corresponding to a number in a list of number-string tuples"""
-        sBack = [tup[1] for tup in lstTuples if tup[0] == number]
-        return sBack
-
     # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
     def order_queryset_by_tuple_list(qs, sOrder, sListName, bReversed):
         """Order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]"""
 
         # Get a list of tuples for this sort-order
-        tpList = build_choice_list(sListName)
+        tpList = list(FieldChoice.objects.filter(field=sListName).values_list('machine_value', 'name'))
         # Determine sort order: ascending is default
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
 
-        # Order the list of tuples alphabetically
-        # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
-        tpList = sorted(tpList, key=operator.itemgetter(1))
         # Order by the string-values in the tuple list
-        return sorted(qs, key=lambda x: ( getattr(x, sOrder) is None or bReversed, get_string_from_tuple_list(tpList, getattr(x, sOrder))), reverse=bReversed)
+        return sorted(qs, key=lambda x: (getattr(x, sOrder) is None or getattr(x, sOrder).machine_value in [0, 1]
+                                         or bReversed, dict(tpList)[getattr(x, sOrder).machine_value]),
+                      reverse=bReversed)
 
     def order_queryset_by_annotationidglosstranslation(qs, sOrder):
         language_code_2char = sOrder[-2:]
@@ -2989,12 +2983,22 @@ class HandshapeDetailView(DetailView):
         context['handshape_fields_FC2'] = []
         context['handshape_fields_UF'] = []
 
+        FINGER_SELECTION_FIELDS = ['hsFingSel', 'fsT','fsI','fsM','fsR','fsP']
+        FINGER_SELECTION_2_FIELDS = ['hsFingSel2', 'fs2T','fs2I','fs2M','fs2R','fs2P']
+        UNSELECTED_FINGERS_FIELDS = ['hsFingUnsel', 'ufT','ufI','ufM','ufR','ufP']
+
+        mapped_handshape_fields = map_field_names_to_fk_field_names(settings.FIELDS['handshape'])
+
         handshape_fields = {}
         for f in Handshape._meta.fields:
-            handshape_fields[f.name] = f
+            if f.name in mapped_handshape_fields:
+                handshape_fields[f.name] = f
 
-        for field in FIELDS['handshape']:
-
+        for field in mapped_handshape_fields:
+            if field.endswith('_fk'):
+                lookup_key = field.replace('_fk', '')
+            else:
+                lookup_key = field
             handshape_field = handshape_fields[field]
             # Get and save the choice list for this field
             if hasattr(handshape_field, 'field_choice_category'):
@@ -3015,20 +3019,18 @@ class HandshapeDetailView(DetailView):
             kind = fieldname_to_kind(field)
 
             field_label = labels[field]
-            if field_label in ['Finger selection', 'T', 'I', 'M', 'R', 'P']:
-                if field_label != 'Finger selection':
-                    context['handshape_fields_FS1'].append([human_value, field, field_label, kind])
-            elif field_label in ['Finger selection 2', 'T2', 'I2', 'M2', 'R2', 'P2']:
-                if field_label != 'Finger selection 2':
-                    context['handshape_fields_FS2'].append([human_value, field, field_label, kind])
-            elif field_label in ['Unselected fingers', 'Tu', 'Iu', 'Mu', 'Ru', 'Pu']:
-                if field_label != 'Unselected fingers':
-                    context['handshape_fields_UF'].append([human_value, field, field_label, kind])
-            # elif field_label == 'Finger configuration 1':
-                # context['handshape_fields_FC1'].append([human_value, field, field_label, kind])
-            elif field_label == 'Finger configuration 2':
+
+            if lookup_key in FINGER_SELECTION_FIELDS and lookup_key != 'hsFingSel':
+                context['handshape_fields_FS1'].append([human_value, field, field_label, kind])
+            elif lookup_key in FINGER_SELECTION_2_FIELDS and lookup_key != 'hsFingSel2':
+                context['handshape_fields_FS2'].append([human_value, field, field_label, kind])
+            elif lookup_key in UNSELECTED_FINGERS_FIELDS and lookup_key != 'hsFingUnsel':
+                context['handshape_fields_UF'].append([human_value, field, field_label, kind])
+            elif lookup_key == 'hsFingConf':
+                context['handshape_fields_FC1'].append([human_value, field, field_label, kind])
+            elif lookup_key == 'hsFingConf2':
                 context['handshape_fields_FC2'].append([human_value, field, field_label, kind])
-            else:
+            elif field in mapped_handshape_fields:
                 context['handshape_fields'].append([human_value, field, field_label, kind])
 
         context['choice_lists'] = json.dumps(context['choice_lists'])
@@ -6087,78 +6089,56 @@ class DatasetFrequencyView(DetailView):
 def order_handshape_queryset_by_sort_order(get, qs):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
 
-    This function is used both by HandshapeListView.
+    This function is used by by HandshapeListView.
     The value of [sortOrder] is 'machine_value' by default.
     [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_handshape_list.html
     Its value is changed by clicking the up/down buttons in the second row of the search result table
     """
 
-    def get_string_from_tuple_list(lstTuples, number):
-        """Get the string value corresponding to a number in a list of number-string tuples"""
-        sBack = [tup[1] for tup in lstTuples if tup[0] == number]
-        return sBack
-
-    # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
-    def order_queryset_by_tuple_list(qs, sOrder, sListName):
-        """Order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]"""
-
-        # Get a list of tuples for this sort-order
-        tpList = build_choice_list(sListName)
-        # Determine sort order: ascending is default
-        bReversed = False
-        if (sOrder[0:1] == '-'):
-            # A starting '-' sign means: descending order
-            sOrder = sOrder[1:]
-            bReversed = True
-
-        # Order the list of tuples alphabetically
-        # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
-        tpList = sorted(tpList, key=operator.itemgetter(1))
-        # Order by the string-values in the tuple list
-        return sorted(qs, key=lambda x: get_string_from_tuple_list(tpList, getattr(x, sOrder)), reverse=bReversed)
-
     # Set the default sort order
-    sOrder = 'machine_value'  # Default sort order if nothing is specified
+    sort_order = 'machine_value'  # Default sort order if nothing is specified
     # See if the form contains any sort-order information
     if ('sortOrder' in get and get['sortOrder'] != ''):
         # Take the user-indicated sort order
-        sOrder = get['sortOrder']
+        sort_order = get['sortOrder']
 
-    # The ordering method depends on the kind of field:
-    # (1) text fields are ordered straightforwardly
-    # (2) fields made from a choice_list need special treatment
-    if (sOrder.endswith('hsThumb')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Thumb")
-    elif (sOrder.endswith('hsFingConf') or sOrder.endswith('hsFingConf2')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "JointConfiguration")
-    elif (sOrder.endswith('hsAperture')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Aperture")
-    elif (sOrder.endswith('hsSpread')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Spreading")
-    elif (sOrder.endswith('hsNumSel')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Quantity")
-    elif (sOrder.endswith('hsFingSel') or sOrder.endswith('hsFingSel2') or sOrder.endswith('hsFingUnsel')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "FingerSelection")
+    reverse = False
+    if sort_order[0] == '-':
+        # A starting '-' sign means: descending order
+        sort_order = sort_order[1:]
+        reverse = True
+
+    mapped_handshape_fields = map_field_names_to_fk_field_names(settings.FIELDS['handshape'])
+    if sort_order+'_fk' in mapped_handshape_fields:
+        sort_order = sort_order+'_fk'
+
+    if hasattr(Handshape._meta.get_field(sort_order), 'field_choice_category'):
+        # The Handshape field is a FK to a FieldChoice
+        field_choice_category = Handshape._meta.get_field(sort_order).field_choice_category
+        order_dict = dict([(v, i) for i, v in enumerate(
+            list(FieldChoice.objects.filter(field=field_choice_category, machine_value__lt=2)
+                 .values_list('id', flat=True))
+            + list(FieldChoice.objects.filter(field=field_choice_category, machine_value__gt=1)
+                   .order_by('name').values_list('id', flat=True))
+        )])
+
+        ordered_handshapes = sorted(qs, key=lambda handshape_obj: order_dict[getattr(handshape_obj, sort_order).id]
+                            if getattr(handshape_obj, sort_order) else -1, reverse=reverse)
+
     else:
-        # Use straightforward ordering on field [sOrder]
+        # Not a FK to FieldChoice field; sort by
+        qs_letters = qs.filter(**{sort_order+'__regex':r'^[a-zA-Z]'})
+        qs_special = qs.filter(**{sort_order+'__regex':r'^[^a-zA-Z]'})
 
-        bReversed = False
-        if (sOrder[0:1] == '-'):
-            # A starting '-' sign means: descending order
-            sOrder = sOrder[1:]
-            bReversed = True
+        ordered_handshapes = sorted(qs_letters, key=lambda x: getattr(x, sort_order))
+        ordered_handshapes += sorted(qs_special, key=lambda x: getattr(x, sort_order))
 
-        qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'})
-        qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'})
-
-        ordered = sorted(qs_letters, key=lambda x: getattr(x, sOrder))
-        ordered += sorted(qs_special, key=lambda x: getattr(x, sOrder))
-
-        if bReversed:
-            ordered.reverse()
+        if reverse:
+            ordered_handshapes.reverse()
 
     # return the ordered list
-    return ordered
+    return ordered_handshapes
+
 
 def order_handshape_by_angle(qs, language_code):
     # put the handshapes with an angle bracket > in the name after the others

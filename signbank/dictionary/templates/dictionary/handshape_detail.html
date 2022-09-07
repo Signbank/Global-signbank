@@ -135,7 +135,7 @@
                 </tr>
 
 		{% for value,name,label,kind in handshape_fields %}
-                {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
+                {% if value == '-' or value == 'N/A' %}
                     <tr value="{{value}}" class="empty_row">
                     <th style="width:18em;">{{label}}</th>
                     <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>

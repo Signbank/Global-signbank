@@ -2076,9 +2076,10 @@ def map_field_names_to_fk_field_names(fields):
     if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
         return fields
     gloss_field_names = [f.name for f in Gloss._meta.fields]
+    handshape_field_names = [f.name for f in Handshape._meta.fields]
     mapped_fields = []
     for field in fields:
-        if field+'_fk' in gloss_field_names:
+        if field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names:
             mapped_fields.append(field+'_fk')
         else:
             mapped_fields.append(field)

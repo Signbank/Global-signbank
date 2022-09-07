@@ -421,7 +421,13 @@ function do_adminsearch(el) {
     <thead>
       <tr>
           <th>{% trans "Handshape" %}</th>
-          <th>{% trans "Name" %}</th>
+          {% if language == 'nl' %}
+          <th>{% trans "Dutch name" %}</th>
+        {% elif language == 'zh-hans' %}
+          <th>{% trans "Chinese name" %}</th>
+        {% else %}
+          <th>{% trans "English name" %}</th>
+        {% endif %}
           <th>{% trans "Finger Selection" %}</th>
           <th>{% trans "Finger Configuration" %}</th>
           <th>{% trans "Finger Selection 2" %}</th>
@@ -583,76 +589,16 @@ function do_adminsearch(el) {
           {% endif %}
       </td>
 
-        {% if language == 'nl' %}
-        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
-        {% elif language == 'zh-hans' %}
-        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.chinese_name}}</a></td>
-        {% else %}
         <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.name}}</a></td>
-        {% endif %}
-            {% with handshape.hsFingSel as field_value %}
-            {% with "FingerSelection " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsFingConf as field_value %}
-            {% with "JointConfiguration " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsFingSel2 as field_value %}
-            {% with "FingerSelection " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsFingConf2 as field_value %}
-            {% with "JointConfiguration " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsNumSel as field_value %}
-            {% with "Quantity " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            <!--{% with handshape.hsThumb as field_value %}-->
-            <!--{% with "Thumb " as field_category %}-->
-            <!--{% with field_category|add:language as args %}-->
-            <!--<td>{{ field_value|machine_field_translate:args }}</td>-->
-            <!--{% endwith %}-->
-            <!--{% endwith %}-->
-            <!--{% endwith %}-->
-            {% with handshape.hsFingUnsel as field_value %}
-            {% with "FingerSelection " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsSpread as field_value %}
-            {% with "Spreading " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsAperture as field_value %}
-            {% with "Aperture " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
+            <td>{{ handshape.hsFingSel_fk.name }}</td>
+            <td>{{ handshape.hsFingConf_fk.name }}</td>
+            <td>{{ handshape.hsFingSel2_fk.name }}</td>
+            <td>{{ handshape.hsFingConf2_fk.name }}</td>
+            <td>{{ handshape.hsNumSel_fk.name }}</td>
+            <!--<td>{{ handshape.hsThumb_fk.name }}</td>-->
+            <td>{{ handshape.hsFingUnsel_fk.name }}</td>
+            <td>{{ handshape.hsSpread_fk.name }}</td>
+            <td>{{ handshape.hsAperture_fk.name }}</td>
     </tr>
     {% endfor %}
   </tbody>
