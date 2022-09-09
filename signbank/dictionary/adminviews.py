@@ -6,6 +6,7 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.db.models import Q, F, ExpressionWrapper, IntegerField, Count
 from django.db.models import CharField, TextField, Value as V
 from django.db.models import OuterRef, Subquery
+from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField, BooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
@@ -50,7 +51,7 @@ from django.forms import TypedMultipleChoiceField, TypedChoiceField
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
-    searchform_panels, map_search_results_to_gloss_list, map_field_names_to_fk_field_names
+    searchform_panels, map_search_results_to_gloss_list, map_field_names_to_fk_field_names, map_field_name_to_fk_field_name
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -157,39 +158,23 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     else:
         # Use straightforward ordering on field [sOrder]
         if default_sort_order:
-            from signbank.tools import convert_language_code_to_language_minus_locale
-            lang_attr_name = convert_language_code_to_language_minus_locale(settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+            lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
             sort_language = 'annotationidglosstranslation__language__language_code_2char'
+            if len(queryset_language_codes) == 0:
+                ordered = qs
+            else:
+                if lang_attr_name not in queryset_language_codes:
+                    lang_attr_name = queryset_language_codes[0]
 
-            if queryset_language_codes and lang_attr_name not in queryset_language_codes:
-                # this is actually checking if English (Default Keywords Language) is available
-                lang_attr_name = queryset_language_codes[0]
-            empty_text_filter = sOrder+'__exact'
-            qs_empty = qs.filter(**{empty_text_filter:''})
-            # sorting is done separately instead of in query
-            qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
-            qs_letters_tuple = []
-            for qso in qs_letters:
-                annotationidglosstranslation = qso.annotationidglosstranslation_set.filter(language__language_code_2char=lang_attr_name)
-                if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
-                    label = annotationidglosstranslation[0].text
-                else:
-                    # this happens if there is no annotation for the language
-                    # however, the value of an annotation can be an empty string
-                    label = ''
-                qs_letters_tuple.append((label, qso))
-            # manually do the sort based on the annotation in the sort language
-            sorted_qs_letters_tuples = sorted(qs_letters_tuple, key=lambda tup : tup[0])
-            # remove the labels that were used for sorting, just get the objects
-            just_the_objects = []
-            for x in sorted_qs_letters_tuples:
-                just_the_objects.append(x[1])
+                qs_empty = qs.filter(**{sOrder+'__isnull': True})
+                qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
+                qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name})
 
-            qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name}).order_by(sOrder)
-
-            ordered = just_the_objects
-            ordered += list(qs_special)
-            ordered += list(qs_empty)
+                # sort_key = sOrder
+                # # Using the order_by here results in duplicating the objects!
+                ordered = list(qs_letters) #.order_by(sort_key))
+                ordered += list(qs_special) #.order_by(sort_key))
+                ordered += list(qs_empty)
         else:
             ordered = qs
     if bReversed and bText:
@@ -652,8 +637,9 @@ class GlossListView(ListView):
         response['Content-Disposition'] = 'attachment; filename="dictionary-export.csv"'
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
+        mapped_fieldnames = map_field_names_to_fk_field_names(fieldnames)
 
-        fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
+        fields = [Gloss._meta.get_field(fieldname) for fieldname in mapped_fieldnames]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -677,7 +663,13 @@ class GlossListView(ListView):
 
         writer.writerow(header)
 
-        for gloss in self.get_queryset():
+        query_set = self.object_list
+        # for some reason when show_all has been selected, the object list has become a list instead of a QuerySet
+        # it was also missing elements
+        # in order to simply debug print statements, it's converted to a list here to make sure it always has the same type
+        if isinstance(query_set, QuerySet):
+            query_set = list(query_set)
+        for gloss in query_set:
             row = [str(gloss.pk), gloss.lemma.dataset.acronym]
 
             for language in dataset_languages:
@@ -707,23 +699,26 @@ class GlossListView(ListView):
             for f in fields:
 
                 #Try the value of the choicelist
-                if hasattr(f, 'field_choice_category') and hasattr(gloss, 'get_' + f.name + '_display'):
-                    value = getattr(gloss, 'get_' + f.name + '_display')()
+                if hasattr(f, 'field_choice_category'):
+                    if hasattr(gloss, 'get_' + f.name + '_display'):
+                        value = getattr(gloss, 'get_' + f.name + '_display')()
+                    else:
+                        value = getattr(gloss, f.name).name
                 else:
                     value = getattr(gloss, f.name)
 
                 # print('export csv ', gloss.id, ' field ', f.name, ' value ', value)
                 # for csv export, the text fields need quotes around them to stop e.g., semicolons from spliting the data into multiple columns
 
-                fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+                # fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
 
                 # is this needed?
-                char_fields_not_null = [f.name for f in Gloss._meta.fields
-                                        if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+                # char_fields_not_null = [f.name for f in Gloss._meta.fields
+                #                         if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
 
                 # is this needed?
-                if f.name in char_fields_not_null and value and not isinstance(value,str):
-                    value = str(value)
+                # if f.__class__.__name__ == 'CharField' and not f.null and value and not isinstance(value,str):
+                #     value = str(value)
 
                 # some legacy glosses have empty text fields of other formats
                 if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
@@ -847,11 +842,8 @@ class GlossListView(ListView):
         get = self.request.GET
 
         #First check whether we want to show everything or a subset
-        try:
-            if self.kwargs['show_all']:
-                show_all = True
-        except (KeyError,TypeError):
-            show_all = False
+        if 'show_all' in self.kwargs.keys():
+            self.show_all = True
 
         #Then check what kind of stuff we want
         if 'search_type' in get:
@@ -894,7 +886,7 @@ class GlossListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         #Get the initial selection
-        if show_all or (len(get) > 0 and 'query' not in self.request.GET):
+        if self.show_all or (len(get) > 0 and 'query' not in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
             if self.search_type == 'sign' or not self.request.user.is_authenticated():
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
@@ -934,7 +926,7 @@ class GlossListView(ListView):
             qs = qs.filter(inWeb__exact=True)
 
         #If we wanted to get everything, we're done now
-        if show_all:
+        if self.show_all:
             # sort the results
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
@@ -4493,6 +4485,7 @@ class HandshapeListView(ListView):
         for f in Handshape._meta.fields:
             handshape_fields[f.name] = f
 
+        mapped_handshape_fields = map_field_names_to_fk_field_names(FIELDS['handshape'])
         for field in FIELDS['handshape']:
 
             handshape_field = handshape_fields[field]
@@ -4566,37 +4559,44 @@ class HandshapeListView(ListView):
 
             qs = Handshape.objects.all().order_by('machine_value')
 
+        mapped_handshape_fields = map_field_names_to_fk_field_names(FIELDS['handshape'])
         fieldnames = ['machine_value', 'name', 'dutch_name', 'chinese_name']+FIELDS['handshape']
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
-
+            mapped_fieldname = map_field_name_to_fk_field_name(fieldname)
+            field = handshape_fields[mapped_fieldname]
             if fieldname in get:
                 key = fieldname + '__exact'
                 val = get[fieldname]
 
                 if fieldname == 'hsNumSel' and val != '':
-                    fieldlabel = choice_lists[fieldname][val]
+                    try:
+                        fieldlabel = FieldChoice.objects.get(field=field.field_choice_category,
+                                                                      id=val).name
+                    except (ObjectDoesNotExist, KeyError):
+                        fieldlabel = ''
+
                     if fieldlabel == 'one':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=1) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=1) | Q(hsNumSel_fk=val))
                     elif fieldlabel == 'two':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=2) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=2) | Q(hsNumSel_fk=val))
                     elif fieldlabel == 'three':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=3) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=3) | Q(hsNumSel_fk=val))
                     elif fieldlabel == 'four':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=4) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=4) | Q(hsNumSel_fk=val))
                     elif fieldlabel == 'all':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(hsNumSel_fk=val))
 
                 if isinstance(Handshape._meta.get_field(fieldname), NullBooleanField):
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]

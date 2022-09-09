@@ -725,20 +725,14 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             #Try to translate the value to machine values if needed
             if hasattr(field, 'field_choice_category'):
-                field_choices = build_choice_list(field.field_choice_category)
-                human_to_machine_values = {human_value: machine_value for machine_value, human_value in field_choices}
                 if new_human_value in ['', '0', ' ', None, 'None']:
                     new_human_value = '-'
+
+                try:
+                    field_choice = FieldChoice.objects.get(name=new_human_value, field=field.field_choice_category)
+                    new_machine_value = field_choice.id
+                except ObjectDoesNotExist:
                     new_machine_value = None
-
-                # Because some Handshape names can start with =, a special character ' is tested for in the name
-                if new_human_value[:1] == '\'':
-                    new_human_value = new_human_value[1:]
-
-                if new_human_value in human_to_machine_values.keys():
-                    new_machine_value = human_to_machine_values[new_human_value]
-                else:
-                    new_machine_value = '0'
                     error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
                         gloss_id) + '), could not find option ' + str(new_human_value) + ' for ' + human_key
 
@@ -803,16 +797,12 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 if hasattr(field, 'field_choice_category'):
                     # print('gloss ', gloss.__dict__)
                     original_machine_value = getattr(gloss, machine_key)
-                    if original_machine_value is None:
-                        original_machine_value = '0'
-
-                    field_choices = build_choice_list(field.field_choice_category)
                     try:
-                        original_human_value = dict(field_choices)[original_machine_value]
+                        original_human_value = getattr(gloss, field.name).name
                     except:
                         original_human_value = '-'
                         print('CSV Update: Original machine value for gloss ', gloss_id, ' has an undefined choice for field ', field.name, ': ', original_machine_value)
-                        original_machine_value = '0'
+                        original_machine_value = None
 
                 elif field.__class__.__name__ == 'NullBooleanField':
                     if original_machine_value is None and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
@@ -1779,6 +1769,7 @@ def get_value_for_ecv(gloss, fieldname):
         if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
             value = annotationidglosstranslations[0].text
     else:
+        fieldname = map_field_name_to_fk_field_name(fieldname)
         try:
             value = getattr(gloss, 'get_' + fieldname + '_display')()
 
@@ -1801,7 +1792,7 @@ def get_value_for_ecv(gloss, fieldname):
 def write_csv_for_handshapes(handshapelistview, csvwriter):
 #  called from the HandshapeListView when search_type is handshape
 
-    fieldnames = settings.HANDSHAPE_RESULT_FIELDS
+    fieldnames = map_field_names_to_fk_field_names(settings.HANDSHAPE_RESULT_FIELDS)
 
     fields = [Handshape._meta.get_field(fieldname) for fieldname in fieldnames]
 
@@ -1812,23 +1803,33 @@ def write_csv_for_handshapes(handshapelistview, csvwriter):
 
     # case search result is list of handshapes
 
-    handshape_list = handshapelistview.get_queryset()
+    handshape_list = handshapelistview.object_list
 
     for handshape in handshape_list:
         row = [str(handshape.pk)]
 
         for f in fields:
-
             # Try the value of the choicelist
-            try:
-                value = getattr(handshape, 'get_' + f.name + '_display')()
-
-            # If it's not there, try the raw value
-            except AttributeError:
+            if hasattr(f, 'field_choice_category'):
+                if hasattr(handshape, 'get_' + f.name + '_display'):
+                    value = getattr(handshape, 'get_' + f.name + '_display')()
+                else:
+                    value = getattr(handshape, f.name)
+                    if value is not None:
+                        value = value.name
+            else:
                 value = getattr(handshape, f.name)
 
             if not isinstance(value, str):
                 value = str(value)
+
+            if value is None:
+                if f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
+                    value = ''
+                elif f.__class__.__name__ == 'IntegerField':
+                    value = 0
+                else:
+                    value = ''
 
             row.append(value)
 
@@ -2085,3 +2086,12 @@ def map_field_names_to_fk_field_names(fields):
             mapped_fields.append(field)
     return mapped_fields
 
+def map_field_name_to_fk_field_name(field):
+    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+        return field
+    gloss_field_names = [f.name for f in Gloss._meta.fields]
+    handshape_field_names = [f.name for f in Handshape._meta.fields]
+    if field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names:
+        return field+'_fk'
+    else:
+        return field
