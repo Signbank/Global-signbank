@@ -20,18 +20,6 @@
     <!--var edit_mode_str = '{% trans "Edit" %}'-->
     <!--var turn_off_edit_mode_str = '{% trans "Turn Off Edit Mode" %}'-->
     var saving_str = '{% trans "Saving..." %}'
-    var current_language_code = '{{ request.LANGUAGE_CODE }}'
-    var handshape_search_language_code = '{{ request.LANGUAGE_CODE }}'
-    if (handshape_search_language_code == 'nl') {
-        handshape_search_language_code = 'dutch_'
-    }
-    else if (handshape_search_language_code == 'zh-hans') {
-        handshape_search_language_code = 'chinese_'
-    }
-    else {
-        handshape_search_language_code = ''
-
-    }
 
     var choice_lists = {{choice_lists|safe}};
     <!--console.log(JSON.stringify(choice_lists));-->
