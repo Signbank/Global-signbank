@@ -613,6 +613,34 @@ class Gloss(models.Model):
     def __str__(self):
         return self.idgloss
 
+    def display_handedness(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            field = self._meta.get_field('handedness')
+        else:
+            field = self._meta.get_field('handedness_fk')
+        return getattr(self,field.name).name
+
+    def display_domhndsh(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            field = self._meta.get_field('domhndsh')
+        else:
+            field = self._meta.get_field('domhndsh_fk')
+        return getattr(self,field.name).name
+
+    def display_subhndsh(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            field = self._meta.get_field('subhndsh')
+        else:
+            field = self._meta.get_field('subhndsh_fk')
+        return getattr(self,field.name).name
+
+    def display_locprim(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            field = self._meta.get_field('locprim')
+        else:
+            field = self._meta.get_field('locprim_fk')
+        return getattr(self,field.name).name
+
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
 
