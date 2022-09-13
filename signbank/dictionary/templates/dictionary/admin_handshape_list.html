@@ -416,31 +416,6 @@ function do_adminsearch(el) {
       </tr>
     <tr>
        <th></th>
-        {% if language == 'nl' %}
-       <th>
-         <a href="#" onclick="do_sort_column('dutch_name','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'dutch_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('dutch_name','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-dutch_name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-dutch_name' or searchform.sortOrder and searchform.sortOrder.value == 'dutch_name'  %}
-           <a href="#" onclick="do_sort_column('dutch_name','del', 'adminsearch')">x</a>
-         {% endif %}
-       </th>
-        {% elif language == 'zh-hans' %}
-        <th>
-         <a href="#" onclick="do_sort_column('chinese_name','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'chinese_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('chinese_name','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-chinese_name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-chinese_name' or searchform.sortOrder and searchform.sortOrder.value == 'chinese_name'  %}
-           <a href="#" onclick="do_sort_column('chinese_name','del', 'adminsearch')">x</a>
-         {% endif %}
-       </th>
-        {% else %}
        <th>
          <a href="#" onclick="do_sort_column('name','asc', 'adminsearch')">
            {% if searchform.sortOrder and searchform.sortOrder.value == 'name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
@@ -452,7 +427,6 @@ function do_adminsearch(el) {
            <a href="#" onclick="do_sort_column('name','del', 'adminsearch')">x</a>
          {% endif %}
        </th>
-        {% endif %}
         <th>
          <a href="#" onclick="do_sort_column('hsFingSel','asc', 'adminsearch')">
            {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
