@@ -2911,8 +2911,16 @@ class HandshapeDetailView(DetailView):
                     new_machine_value = o.machine_value
                     new_name = o.name
 
-                    new_handshape = Handshape(machine_value=new_machine_value, name=new_name,
-                                              dutch_name=new_dutch_name, chinese_name=new_chinese_name)
+                    # Copy translated FieldChoice fields to translated Handshape fields
+                    new_name_translations = dict([
+                        (
+                            'name_' + language.replace('-', '_'),
+                            getattr(h, 'name_' + language.replace('-', '_'))
+                        )
+                        for language in [l[0] for l in LANGUAGES]
+                    ])
+
+                    new_handshape = Handshape(machine_value=new_machine_value, name=new_name, **new_name_translations)
                     new_handshape.save()
                     handshape_not_created = 0
                     self.object = new_handshape
@@ -2933,11 +2941,20 @@ class HandshapeDetailView(DetailView):
             print('Configure Handshape ', match_machine_value, ' in FieldChoice table.')
             # the handshape object with the machine value has been either fetched or created and stored in self.object
             this_handshape = self.object
+
+            # Copy translated FieldChoice fields to translated Handshape fields
+            new_name_translations = dict([
+                (
+                    'name_' + language.replace('-', '_'),
+                    getattr(this_handshape, 'name_' + language.replace('-', '_'))
+                )
+                for language in [l[0] for l in LANGUAGES]
+            ])
+
             this_field_choice = FieldChoice(machine_value=this_handshape.machine_value,
                                             field='Handshape',
                                             name=this_handshape.name,
-                                            dutch_name=this_handshape.dutch_name,
-                                            chinese_name=this_handshape.chinese_name)
+                                            **new_name_translations)
             this_field_choice.save()
 
         context = self.get_context_data(object=self.object)
@@ -4542,7 +4559,7 @@ class HandshapeListView(ListView):
                 new_name = h.name
 
                 # Copy translated FieldChoice fields to translated Handshape fields
-                names = dict([
+                new_name_translations = dict([
                     (
                         'name_'+language.replace('-', '_'),
                         getattr(h, 'name_'+language.replace('-', '_'))
@@ -4550,7 +4567,7 @@ class HandshapeListView(ListView):
                     for language in [l[0] for l in LANGUAGES]
                 ])
 
-                new_handshape = Handshape(machine_value=new_machine_value, name=new_name, **names)
+                new_handshape = Handshape(machine_value=new_machine_value, name=new_name, **new_name_translations)
                 new_handshape.save()
                 new_handshape_created = 1
 
