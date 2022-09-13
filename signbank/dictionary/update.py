@@ -21,7 +21,7 @@ from django.conf import settings
 
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, map_field_names_to_fk_field_names
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, map_field_names_to_fk_field_names, map_field_name_to_fk_field_name
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
 from django.utils.translation import ugettext_lazy as _
@@ -1443,11 +1443,13 @@ def update_handshape(request, handshapeid):
         hs = get_object_or_404(Handshape, machine_value=handshapeid)
         hs.save() # This updates the lastUpdated field
 
-        field = request.POST.get('id', '')
+        get_field = request.POST.get('id', '')
         value = request.POST.get('value', '')
         original_value = ''
         value = str(value)
         newPattern = ''
+
+        field = map_field_name_to_fk_field_name(get_field)
 
         if len(value) == 0:
             value = ' '
@@ -1461,6 +1463,14 @@ def update_handshape(request, handshapeid):
             hs.__setattr__(field, None)
             hs.save()
             newvalue = ''
+        elif isinstance(Handshape._meta.get_field(field), FieldChoiceForeignKey):
+            # this is needed because the new value is a machine value, not an id
+            field_choice_category = Handshape._meta.get_field(field).field_choice_category
+            original_value = getattr(hs, field)
+            field_choice = FieldChoice.objects.get(field__iexact=field_choice_category, machine_value=int(value))
+            setattr(hs, field, field_choice)
+            hs.save()
+            newvalue = field_choice.name
         else:
             original_value = getattr(hs, field)
             hs.__setattr__(field, value)
