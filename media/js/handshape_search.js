@@ -36,11 +36,11 @@ function handshapetypeahead(target) {
 
      $(target).typeahead(null, {
           name: 'handshapetarget',
-          displayKey: handshape_search_language_code+'name',
+          displayKey: 'name',
           source: handshape_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(hs) {
-                  return("<p><strong>" + hs[handshape_search_language_code + 'name'] + "</strong></p>");
+                  return("<p><strong>" + hs['name'] + "</strong></p>");
               }
           }
       });

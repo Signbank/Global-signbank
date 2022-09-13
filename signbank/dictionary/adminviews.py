@@ -6588,19 +6588,11 @@ def gloss_ajax_complete(request, prefix):
 def handshape_ajax_complete(request, prefix):
     """Return a list of handshapes matching the search term
     as a JSON structure suitable for typeahead."""
-
-    if request.LANGUAGE_CODE == 'nl':
-        query = Q(dutch_name__istartswith=prefix)
-    elif request.LANGUAGE_CODE == 'zh-hans':
-        query = Q(chinese_name__istartswith=prefix)
-    else:
-        query = Q(name__istartswith=prefix)
-
-    qs = Handshape.objects.filter(query)
+    qs = Handshape.objects.filter(name__istartswith=prefix)
 
     result = []
     for g in qs:
-        result.append({'dutch_name': g.dutch_name, 'name': g.name, 'machine_value': g.machine_value, 'chinese_name': g.chinese_name})
+        result.append({'name': g.name, 'machine_value': g.machine_value})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
