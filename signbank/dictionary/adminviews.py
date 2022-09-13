@@ -4555,7 +4555,7 @@ class HandshapeListView(ListView):
             qs = Handshape.objects.all().order_by('machine_value')
 
         mapped_handshape_fields = map_field_names_to_fk_field_names(FIELDS['handshape'])
-        fieldnames = ['machine_value', 'name', 'dutch_name', 'chinese_name']+FIELDS['handshape']
+        fieldnames = ['machine_value', 'name']+FIELDS['handshape']
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
@@ -4566,6 +4566,7 @@ class HandshapeListView(ListView):
                 val = get[fieldname]
 
                 if fieldname == 'hsNumSel' and val != '':
+                    query_hsNumSel = field.name
                     try:
                         fieldlabel = FieldChoice.objects.get(field=field.field_choice_category,
                                                                       id=val).name
@@ -4575,42 +4576,33 @@ class HandshapeListView(ListView):
                     if fieldlabel == 'one':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=1) | Q(hsNumSel_fk=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=1) | Q(**{query_hsNumSel:val}))
                     elif fieldlabel == 'two':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=2) | Q(hsNumSel_fk=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=2) | Q(**{query_hsNumSel:val}))
                     elif fieldlabel == 'three':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=3) | Q(hsNumSel_fk=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=3) | Q(**{query_hsNumSel:val}))
                     elif fieldlabel == 'four':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=4) | Q(hsNumSel_fk=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=4) | Q(**{query_hsNumSel:val}))
                     elif fieldlabel == 'all':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(hsNumSel_fk=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(**{query_hsNumSel:val}))
 
                 if isinstance(Handshape._meta.get_field(fieldname), NullBooleanField):
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]
-
-
-                if self.request.LANGUAGE_CODE == 'nl' and fieldname == 'dutch_name' and val != '':
-                    query = Q(dutch_name__icontains=val)
-                    qs = qs.filter(query)
-
-                if self.request.LANGUAGE_CODE == 'zh-hans' and fieldname == 'chinese_name' and val != '':
-                    query = Q(chinese_name__icontains=val)
-                    qs = qs.filter(query)
 
                 if fieldname == 'name' and val != '':
                     query = Q(name__icontains=val)
                     qs = qs.filter(query)
 
 
-                if val != '' and fieldname != 'hsNumSel' and fieldname != 'dutch_name' and fieldname != 'chinese_name' and fieldname != 'name':
+                if val != '' and fieldname != 'hsNumSel' and fieldname != 'name':
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
 

@@ -170,29 +170,6 @@ function do_adminsearch(el) {
             <input name='search_type' class='form-control' value='handshape'>
         </div>
      {% with request.LANGUAGE_CODE as language %}
-                {% if language == 'nl' %}
-                <div id='handshape_name'>
-                    {% csrf_token %}
-                    <table class='table'>
-                        <tr id='handshape_name_field'>
-                            <td><label for='id_dutch_name'>{% trans "Handshape Name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='dutch_name' type='text'
-                                       value='{{searchform.dutch_name.value|default:'' }}'/></td>
-                        </tr>
-                    </table>
-                </div>
-                {% elif language == 'zh-hans' %}
-                <div id='handshape_name'>
-                    {% csrf_token %}
-                    <table class='table'>
-                        <tr id='handshape_name_field'>
-                            <td><label for='id_chinese_name'>{% trans "Handshape Name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='chinese_name' type='text'
-                                       value='{{searchform.chinese_name.value|default:'' }}'/></td>
-                        </tr>
-                    </table>
-                </div>
-                {% else %}
                 <div id='handshape_name'>
                     {% csrf_token %}
                     <table class='table'>
@@ -203,7 +180,6 @@ function do_adminsearch(el) {
                         </tr>
                     </table>
                 </div>
-                {% endif %}
     {% endwith %}
                 {# spacing div to allow room for typeahead dropdown #}
                 <div style='height: 4em'></div>
