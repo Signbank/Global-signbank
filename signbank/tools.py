@@ -1887,8 +1887,7 @@ def construct_scrollbar(qs, search_type, language_code):
 
     elif search_type in ['handshape']:
         for item in qs:
-            # if language_code == 'nl':
-            data_label = item.dutch_name
+            data_label = item.name
             items.append(dict(id = item.machine_value, data_label = data_label, href_type = 'handshape'))
     elif search_type in ['lemma']:
         # there is no lemma detail view, so the href goes to lemma/update
