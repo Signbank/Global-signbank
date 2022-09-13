@@ -37,6 +37,14 @@ choice_list_table = dict()
 
 
 def build_choice_list(field, list_start=[]):
+    """
+    Build choice list.
+    This function assumes that machine_value 0 denotes a default/emtpy choice ('-----')
+    and machine_value 1 denotes a 'not applicable' choice ('N/A')
+    :param field: The FieldChoice field
+    :param list_start: The choices the list has to start with
+    :return: The choice list for the field, starting with the list_start choices
+    """
     return list_start\
            + list(FieldChoice.objects.filter(field=field, machine_value__lte=1)
                   .order_by('machine_value').values_list('id', 'name')) \
