@@ -19,7 +19,7 @@ from signbank.dictionary.forms import *
 import signbank.settings
 from django.conf import settings
 
-from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
+from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, map_field_names_to_fk_field_names, map_field_name_to_fk_field_name
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
@@ -851,8 +851,8 @@ def subst_notes(gloss, field, values):
     # it allows the type of note to be in either English or Dutch in the CSV file
     note_reverse_translation = {}
     for nrc in note_role_choices:
-        note_reverse_translation[nrc.name] = nrc.machine_value
-        note_reverse_translation[nrc.dutch_name] = nrc.machine_value
+        for language in [l[0] for l in LANGUAGES]:
+            note_reverse_translation[getattr(nrc, 'name_'+language.replace('-', '_'))] = nrc
 
     for original_note in gloss.definition_set.all():
         original_note.delete()
@@ -872,12 +872,12 @@ def subst_notes(gloss, field, values):
 
     for (role, published, count, text) in new_notes_values:
         is_published = (published == 'True')
-        note_role = str(note_reverse_translation[role])
+        note_role = note_reverse_translation[role]
         index_count = int(count)
-        defn = Definition(gloss=gloss, count=index_count, role=note_role, text=text, published=is_published)
+        defn = Definition(gloss=gloss, count=index_count, role_fk=note_role, text=text, published=is_published)
         defn.save()
 
-    new_notes_refresh = [(note.role, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
+    new_notes_refresh = [(note.role_fk.name, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
     notes_by_role = []
     for note in new_notes_refresh:
         notes_by_role.append(':'.join(note))

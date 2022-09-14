@@ -1082,7 +1082,7 @@ def get_notes_as_string(gloss):
     notes_list = []
     for note in notes_of_gloss:
         # use the notes field choice machine value rather than the translation
-        note_field = note_translations[note.role]
+        note_field = note.role_fk.name
         note_tuple = (note_field, str(note.published), str(note.count), note.text)
         notes_list.append(note_tuple)
 
