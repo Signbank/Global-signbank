@@ -2472,10 +2472,17 @@ def configure_handshapes(request):
             new_id = o.machine_value
             new_machine_value = o.machine_value
             new_name = o.name
-            new_dutch_name = o.dutch_name
-            new_chinese_name = o.chinese_name
 
-            new_handshape = Handshape(machine_value=new_machine_value, name=new_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
+            # Copy translated FieldChoice fields to translated Handshape fields
+            new_name_translations = dict([
+                (
+                    'name_' + language.replace('-', '_'),
+                    getattr(o, 'name_' + language.replace('-', '_'))
+                )
+                for language in [l[0] for l in LANGUAGES]
+            ])
+
+            new_handshape = Handshape(machine_value=new_machine_value, name=new_name, **new_name_translations)
             new_handshape.save()
 
     selected_datasets = get_selected_datasets_for_user(request.user)
