@@ -16,7 +16,7 @@ from django.core.urlresolvers import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.translation import override, ugettext_lazy as _
-from django.forms.fields import TypedChoiceField, ChoiceField
+from django.forms.fields import ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
 from django.contrib.sites.models import Site
@@ -48,7 +48,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
     choicelist_queryset_to_field_colors
 
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
-from django.forms import TypedMultipleChoiceField, TypedChoiceField
+from django.forms import TypedMultipleChoiceField, ChoiceField
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
@@ -343,7 +343,7 @@ class GlossListView(ListView):
         fields_that_need_options = map_field_names_to_fk_field_names(fields_that_need_translated_options)
         for field in fields_that_need_translated_options:
             try:
-                if isinstance(search_form.fields[field], TypedChoiceField) or isinstance(search_form.fields[field], TypedMultipleChoiceField):
+                if isinstance(search_form.fields[field], TypedMultipleChoiceField):
                     gloss_field = search_form.fields[field]
                     short_list = True
                     if field.startswith('semField'):
@@ -1017,6 +1017,7 @@ class GlossListView(ListView):
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
             fieldnames.remove('derivHist')
+        mapped_fieldnames = map_field_names_to_fk_field_names(fieldnames)
 
         # SignLanguage and basic property filters
         # allows for multiselect
@@ -1045,7 +1046,10 @@ class GlossListView(ListView):
         for fieldnamemulti in multiple_select_gloss_fields:
 
             fieldnamemultiVarname = fieldnamemulti + '[]'
-            fieldnameQuery = fieldnamemulti + '__in'
+            if fieldnamemulti + '_fk' in mapped_fieldnames:
+                fieldnameQuery = fieldnamemulti + '_fk__machine_value__in'
+            else:
+                fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
             if '' in vals:
@@ -1064,8 +1068,10 @@ class GlossListView(ListView):
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
-
-                field_obj = Gloss._meta.get_field(fieldname)
+                if fieldname + '_fk' in mapped_fieldnames:
+                    field_obj = Gloss._meta.get_field(fieldname+'_fk')
+                else:
+                    field_obj = Gloss._meta.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
                     key = fieldname + '__iregex'
@@ -1170,7 +1176,7 @@ class GlossListView(ListView):
             query_parameters['hasComponentOfType'] = get['hasComponentOfType']
 
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasComponentOfType'])
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role_fk__exact=get['hasComponentOfType'])
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
@@ -1179,7 +1185,7 @@ class GlossListView(ListView):
 
             morpheme_type = get['hasMorphemeOfType']
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = Morpheme.objects.filter(mrpType__exact=morpheme_type)
+            target_morphemes = Morpheme.objects.filter(mrpType_fk__exact=morpheme_type)
 
             qs = qs.filter(id__in=target_morphemes)
 
@@ -1190,7 +1196,7 @@ class GlossListView(ListView):
             if get['definitionRole'] == 'all':
                 definitions_with_this_role = Definition.objects.all()
             else:
-                definitions_with_this_role = Definition.objects.filter(role__exact=get['definitionRole'])
+                definitions_with_this_role = Definition.objects.filter(role_fk__exact=get['definitionRole'])
 
             #Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
