@@ -2543,7 +2543,9 @@ def list_all_fieldchoice_names(request):
     for fieldchoice in FieldChoice.objects.all():
         columns = []
 
-        for column in [fieldchoice.field,fieldchoice.name,fieldchoice.dutch_name,fieldchoice.chinese_name]:
+        for column in [fieldchoice.field, fieldchoice.name] \
+                      + [getattr(fieldchoice, 'name_' + language.replace('-', '_'))
+                         for language in [l[0] for l in LANGUAGES]]:
             if column not in [None,'']:
                 columns.append(column)
             else:
