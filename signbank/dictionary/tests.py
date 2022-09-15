@@ -1557,14 +1557,6 @@ class HandshapeTests(TestCase):
             self.client.session['search_results'] = None
             self.client.session.save()
 
-            # new_machine_value = 588
-            # new_name = 'thisisanewtesthandshape_en'
-            #
-            # new_handshape = Handshape(machine_value=new_machine_value, name=new_name)
-            # new_handshape.save()
-            #
-            # print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.name)
-
             new_handshape = self.create_handshape()
             #We can now request a detail view
             print('Test HandshapeDetailView for new handshape.')
@@ -1607,8 +1599,8 @@ class HandshapeTests(TestCase):
                 gloss_data = {
                     'lemma' : lemmas[gloss_id],
                     'handedness': 2,
-                    'domhndsh' : str(self.test_handshape1.machine_value),
-                    'subhndsh': str(self.test_handshape2.machine_value),
+                    'domhndsh_fk' : str(self.test_handshape1.machine_value),
+                    'subhndsh_fk': str(self.test_handshape2.machine_value),
                 }
                 new_gloss = Gloss(**gloss_data)
                 new_gloss.save()
@@ -1870,7 +1862,7 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 for fieldname in fields_with_choices_handshapes[fieldchoice]:
-                    setattr(new_handshape, fieldname, field_choice_in_use.machine_value)
+                    setattr(new_handshape, fieldname, field_choice_in_use)
                 # for FingerSelection, set the Boolean fields of the fingers
                 if fieldchoice == 'FingerSelection':
                     new_handshape.set_fingerSelection_display()
