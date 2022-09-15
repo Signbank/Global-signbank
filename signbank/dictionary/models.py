@@ -158,7 +158,7 @@ class FieldChoice(models.Model):
     field_color = ColorField(default='ffffff')
 
     def __str__(self):
-        name = self.field + ': ' + self.name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
+        name = self.field + ': ' + self.name + ' (' + str(self.machine_value) + ')'
         return name
 
     class Meta:
@@ -200,7 +200,7 @@ class Translation(models.Model):
 
 
 class Keyword(models.Model):
-    """A Dutch keyword that is a possible translation equivalent of a sign"""
+    """A keyword that is a possible translation equivalent of a sign"""
 
     def __str__(self):
         return self.text

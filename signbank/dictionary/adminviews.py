@@ -39,7 +39,7 @@ from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, \
-    LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP, LANGUAGES
+    LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP, LANGUAGES, LANGUAGES_LANGUAGE_CODE_3CHAR
 from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
@@ -3123,34 +3123,28 @@ class SemanticFieldDetailView(DetailView):
             # the semantic field object with the machine value has been either fetched or created and stored in self.object
             print('field choice not found for SemField with machine value ', match_machine_value)
             this_semanticfield = self.object
+            new_translation = this_semanticfield.name
 
-            dutch_language = Language.objects.get(language_code_2char='nl')
-            chinese_language = Language.objects.get(language_code_2char='zh')
+            new_name_translations = dict()
 
-            dutch_translation = SemanticFieldTranslation.objects.filter(semField=this_semanticfield, language=dutch_language).first()
+            for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                translation_language = Language.objects.get(language_code_3char=language_3charcode)
+                translation = SemanticFieldTranslation.objects.filter(semField=this_semanticfield, language=translation_language).first()
 
-            if not dutch_translation:
-                # this SemanticField was created without a translation, use English
-                dutch_translation = this_semanticfield.name
-                dutch_semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield, language=dutch_language,
-                                                             name=dutch_translation)
-                dutch_semanticfieldtranslation.save()
+                if not translation:
+                    # this SemanticField was created without a translation, use English
+                    semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield, language=translation_language,
+                                                                 name=new_translation)
+                    semanticfieldtranslation.save()
 
-            chinese_translation = SemanticFieldTranslation.objects.filter(semField=this_semanticfield, language=chinese_language).first()
-
-            if not chinese_translation:
-                # this SemanticField was created without a translation, use English
-                chinese_translation = this_semanticfield.name
-                chinese_semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield, language=chinese_language,
-                                                               name=new_chinese_name)
-                chinese_semanticfieldtranslation.save()
+                new_name_translations[name_languagecode] = new_translation
 
             # for the purposes of FieldChoice choice lists, make sure the translations have values
             this_field_choice = FieldChoice(machine_value=this_semanticfield.machine_value,
                                             field='SemField',
                                             name=this_semanticfield.name,
-                                            dutch_name=dutch_translation,
-                                            chinese_name=chinese_translation)
+                                            **new_name_translations)
             this_field_choice.save()
 
         context = self.get_context_data(object=self.object)
@@ -3293,33 +3287,28 @@ class DerivationHistoryDetailView(DetailView):
             print('field choice not found for derivHist with machine value ', match_machine_value)
             this_derivationhistory = self.object
 
-            dutch_language = Language.objects.get(language_code_2char='nl')
-            chinese_language = Language.objects.get(language_code_2char='zh')
+            new_translation = this_derivationhistory.name
 
-            dutch_translation = DerivationHistoryTranslation.objects.filter(derivHist=this_derivationhistory, language=dutch_language).first()
+            new_name_translations = dict()
 
-            if not dutch_translation:
-                # this DerivationHistory was created without a translation, use English
-                dutch_translation = this_derivationhistory.name
-                dutch_derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=dutch_language,
-                                                             name=dutch_translation)
-                dutch_derivationhistorytranslation.save()
+            for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                translation_language = Language.objects.get(language_code_3char=language_3charcode)
+                translation = DerivationHistoryTranslation.objects.filter(derivHist=this_derivationhistory, language=translation_language).first()
 
-            chinese_translation = DerivationHistoryTranslation.objects.filter(derivHist=this_derivationhistory, language=chinese_language).first()
+                if not translation:
+                    # this SemanticField was created without a translation, use English
+                    derivationhistorytranslation = DerivationHistoryTranslation(derivHist=this_derivationhistory, language=translation_language,
+                                                                 name=new_translation)
+                    derivationhistorytranslation.save()
 
-            if not chinese_translation:
-                # this DerivationHistory was created without a translation, use English
-                chinese_translation = this_derivationhistory.name
-                chinese_derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=chinese_language,
-                                                               name=new_chinese_name)
-                chinese_derivationhistorytranslation.save()
+                new_name_translations[name_languagecode] = new_translation
 
             # for the purposes of FieldChoice choice lists, make sure the translations have values
             this_field_choice = FieldChoice(machine_value=this_derivationhistory.machine_value,
                                             field='derivHist',
                                             name=this_derivationhistory.name,
-                                            dutch_name=dutch_translation,
-                                            chinese_name=chinese_translation)
+                                            **new_name_translations)
             this_field_choice.save()
 
         context = self.get_context_data(object=self.object)
@@ -7691,24 +7680,18 @@ def semanticfield_fieldchoice_to_multiselect(machine_value):
             return None
     new_machine_value = semField_fieldchoice.machine_value
     new_english_name = semField_fieldchoice.name
-    # legacy values
-    new_dutch_name = semField_fieldchoice.dutch_name
-    dutch_language = Language.objects.get(language_code_2char='nl')
-    new_chinese_name = semField_fieldchoice.chinese_name
-    chinese_language = Language.objects.get(language_code_2char='zh')
 
     new_semanticfield = SemanticField(machine_value=new_machine_value, name=new_english_name)
     new_semanticfield.save()
 
-    if new_dutch_name:
-        dutch_translation = SemanticFieldTranslation(semField=new_semanticfield, language=dutch_language,
-                                                     name=new_dutch_name)
-        dutch_translation.save()
+    for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
+        print(language, language_3charcode)
+        translation_language = Language.objects.get(language_code_3char=language_3charcode)
 
-    if new_chinese_name:
-        chinese_translation = SemanticFieldTranslation(semField=new_semanticfield, language=chinese_language,
-                                                       name=new_chinese_name)
-        chinese_translation.save()
+        semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield,
+                                                            language=translation_language,
+                                                            name=new_english_name)
+        semanticfieldtranslation.save()
 
     return new_semanticfield
 
@@ -7734,24 +7717,18 @@ def derivationhistory_fieldchoice_to_multiselect(machine_value):
 
     new_machine_value = derivHist_fieldchoice.machine_value
     new_english_name = derivHist_fieldchoice.name
-    # legacy values
-    new_dutch_name = derivHist_fieldchoice.dutch_name
-    dutch_language = Language.objects.get(language_code_2char='nl')
-    new_chinese_name = derivHist_fieldchoice.chinese_name
-    chinese_language = Language.objects.get(language_code_2char='zh')
 
     new_derivationhistory = DerivationHistory(machine_value=new_machine_value, name=new_english_name)
     new_derivationhistory.save()
 
-    if new_dutch_name:
-        dutch_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=dutch_language,
-                                                     name=new_dutch_name)
-        dutch_translation.save()
+    for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
+        print(language, language_3charcode)
+        translation_language = Language.objects.get(language_code_3char=language_3charcode)
 
-    if new_chinese_name:
-        chinese_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=chinese_language,
-                                                       name=new_chinese_name)
-        chinese_translation.save()
+        derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory,
+                                                            language=translation_language,
+                                                            name=new_english_name)
+        derivationhistorytranslation.save()
 
     return new_derivationhistory
 

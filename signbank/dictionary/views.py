@@ -2963,7 +2963,11 @@ def configure_derivationhistory(request):
                                                (44, 'Motivated shape'), (45, 'Spiral'), (6, 'Straight'), (12, 'Zigzag')]
 
             for (machine_value, name) in derivationhistory_initial_choices:
-                dhfc = FieldChoice(field='derivHist', machine_value=machine_value, name=name, dutch_name=name, chinese_name=name)
+                new_name_translations = dict()
+                for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
+                    name_languagecode = 'name_' + language.replace('-', '_')
+                    new_name_translations[name_languagecode] = name
+                dhfc = FieldChoice(field='derivHist', machine_value=machine_value, name=name, **new_name_translations)
                 dhfc.save()
 
         derivationhistory = FieldChoice.objects.filter(field__iexact='derivHist')
@@ -2973,26 +2977,18 @@ def configure_derivationhistory(request):
             new_machine_value = derivHist_fieldchoice.machine_value
             new_english_name = derivHist_fieldchoice.name
 
-            new_dutch_name = derivHist_fieldchoice.dutch_name
-            dutch_language = Language.objects.get(language_code_2char='nl')
-            new_chinese_name = derivHist_fieldchoice.chinese_name
-            chinese_language = Language.objects.get(language_code_2char='zh')
-
             new_derivationhistory = DerivationHistory(machine_value=new_machine_value, name=new_english_name)
             new_derivationhistory.save()
 
-            if new_dutch_name:
-                dutch_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory,
-                                                                 language=dutch_language,
-                                                                 name=new_dutch_name)
-                dutch_translation.save()
+            for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
+                translation_language = Language.objects.get(language_code_3char=language_3charcode)
+                translation = DerivationHistoryTranslation.objects.filter(derivHist=new_derivationhistory, language=translation_language).first()
 
-            if new_chinese_name:
-                chinese_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory,
-                                                                   language=chinese_language,
-                                                                   name=new_chinese_name)
-                chinese_translation.save()
-
+                if not translation:
+                    # this DerivationHistory was created without a translation, use English
+                    derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=translation_language,
+                                                                 name=new_english_name)
+                    derivationhistorytranslation.save()
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()

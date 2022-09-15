@@ -660,13 +660,15 @@ class FieldChoiceAdminForm(forms.ModelForm):
         if not self.show_field_choice_colors:
             self.fields['field_color'].widget = forms.HiddenInput()
         if self.show_english_only:
-            self.fields['dutch_name'].widget = forms.HiddenInput()
-            self.fields['chinese_name'].widget = forms.HiddenInput()
+            for language in [l[0] for l in LANGUAGES]:
+                name_languagecode = 'name_'+ language.replace('-', '_')
+                self.fields[name_languagecode].widget = forms.HiddenInput()
 
     class Meta:
         model = FieldChoice
-        fields = ['field', 'name', 'dutch_name', 'chinese_name', 'field_color', 'machine_value']
-
+        fields = ['field', 'name'] \
+                       + ['name_'+ language.replace('-', '_') for language in [l[0] for l in LANGUAGES]] \
+                       + ['field_color', 'machine_value', ]
     def clean(self):
         # check that the field category and (english) name does not already occur
         en_name = self.cleaned_data['name']
@@ -734,7 +736,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 obj.field_color = '#'+obj.field_color
 
         if self.show_english_only:
-            self.exclude = ('dutch_name', 'chinese_name')
+            for language in [l[0] for l in LANGUAGES]:
+                name_languagecode = 'name_'+ language.replace('-', '_')
+                self.exclude = (name_languagecode)
         if self.show_field_choice_colors:
             self.exclude = ('field_color')
 

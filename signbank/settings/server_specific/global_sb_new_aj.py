@@ -18,6 +18,14 @@ LANGUAGES = (
   ('ar', gettext('Arabic'))  
 )
 
+LANGUAGES_LANGUAGE_CODE_3CHAR = (
+    ('en', 'eng'),
+    ('nl', 'nld'),
+    ('zh-hans', 'zho'),
+    ('he', 'heb'),
+    ('ar', 'ara')
+)
+
 INTERFACE_LANGUAGE_SHORT_NAMES = ['EN','NL','官话','עִברִית','عربى']
 MODELTRANSLATION_LANGUAGES = ['en','nl','zh-hans']
 

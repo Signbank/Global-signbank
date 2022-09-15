@@ -12,6 +12,10 @@ LANGUAGES = (
   ('en_US', 'American English'),
 )
 
+LANGUAGES_LANGUAGE_CODE_3CHAR = (
+    ('en', 'eng')
+)
+
 LANGUAGE_CODE = "en-us"
 
 DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en_US'}
