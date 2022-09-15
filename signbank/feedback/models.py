@@ -218,7 +218,6 @@ class SignFeedbackForm(forms.Form):
     kwnotbelong = forms.CharField(label="List keywords", required=False, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
     comment = forms.CharField(label="Comment or new keywords", required=True, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
 
- 
 handformChoices = build_choice_list("Handedness")
 
 handshapeChoices = build_choice_list("Handshape")
@@ -245,26 +244,27 @@ handinteractionChoices = build_choice_list("RelatArtic")
 
                        
 class MissingSignFeedbackForm(forms.Form):   
-    handform = forms.ChoiceField(choices=handformChoices,  required=False,
-        label='How many hands are used to make this sign?')
-    handshape = forms.ChoiceField(choices=handshapeChoices, required=False,
-        label='What is the handshape?')
-    althandshape = forms.ChoiceField(choices=handshapeChoices, required=False, 
-        label='What is the handshape of the left hand?')    
-    location = forms.ChoiceField(choices=locationChoices, required=False,
-        label='Choose the location of the sign on, or near the body')
-    relativelocation = forms.ChoiceField(choices=relativelocationChoices, 
-        label='Choose the location of the right hand on, or near the left hand', required=False)
-    handbodycontact = forms.ChoiceField(choices=handbodycontactChoices, 
-        label='Contact between hands and body', required=False)
-    handinteraction = forms.ChoiceField(choices=handinteractionChoices, 
-        label='Interaction between hands', required=False)
-    direction = forms.ChoiceField(choices=directionChoices, 
-        label='Movement direction of the hand(s)', required=False)
-    movementtype = forms.ChoiceField(choices=movementtypeChoices, 
-        label='Type of movement', required=False)
-    smallmovement = forms.ChoiceField(choices=smallmovementChoices, 
-        label='Small movements of the hand(s) and fingers', required=False)
+    handform = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDEDNESS),
+                                      required=False, label='How many hands are used to make this sign?')
+    handshape = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDSHAPE),
+                                       required=False, label='What is the handshape?')
+    althandshape = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDSHAPE),
+                                          required=False, label='What is the handshape of the left hand?')
+    location = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.LOCATION),
+                                      required=False, label='Choose the location of the sign on, or near the body')
+    relativelocation = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.LOCATION),
+                                              label='Choose the location of the right hand on, or near the left hand',
+                                              required=False)
+    handbodycontact = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.CONTACTTYPE),
+                                             label='Contact between hands and body', required=False)
+    handinteraction = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.RELATARTIC),
+                                             label='Interaction between hands', required=False)
+    direction = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.MOVEMENTDIR),
+                                       label='Movement direction of the hand(s)', required=False)
+    movementtype = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.MOVEMENTSHAPE),
+                                          label='Type of movement', required=False)
+    smallmovement = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.JOINTCONFIGURATION),
+                                           label='Small movements of the hand(s) and fingers', required=False)
     repetition = forms.ChoiceField(choices=repetitionChoices, 
         label='Number of movements', required=False)
     
