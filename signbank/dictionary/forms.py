@@ -356,7 +356,7 @@ class GlossSearchForm(forms.ModelForm):
         for (fieldname, field_category) in multiple_select_gloss_fields:
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            translated_choices = [('0','---------')] + choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
@@ -457,7 +457,7 @@ class MorphemeSearchForm(forms.ModelForm):
         for (fieldname, field_category) in multiple_select_morpheme_fields:
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            translated_choices = [('0','---------')] + choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
@@ -472,7 +472,7 @@ class DefinitionForm(forms.ModelForm):
         self.fields['note'] = forms.ChoiceField(label=_(u'Type'),
                              choices=choicelist_queryset_to_translated_dict(
                                  FieldChoice.objects.filter(field__exact='NoteType'),
-                                 get_language(), ordered=False, id_prefix=''
+                                 ordered=False, id_prefix=''
                              ),
                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         
@@ -909,7 +909,7 @@ class FocusGlossSearchForm(forms.ModelForm):
         for (fieldname, field_category) in multiple_select_gloss_fields:
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            translated_choices = [('0','---------')] + choicelist_queryset_to_translated_dict(field_choices,field_language,ordered=False,id_prefix='',shortlist=True)
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)

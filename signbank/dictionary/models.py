@@ -1572,14 +1572,17 @@ class Gloss(models.Model):
             gloss_field = gloss_fields[field]
             if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
                 continue
-            field_value = getattr(self, field)
+            field_value = getattr(self, gloss_field.name)
             if hasattr(gloss_field, 'field_choice_category'):
 
                 if field.endswith('_fk'):
                     lookup_key = field.replace('_fk','')
                 else:
                     lookup_key = field
-                phonology_dict[lookup_key] = str(field_value.id)
+                if field_value is None:
+                    phonology_dict[lookup_key] = None
+                else:
+                    phonology_dict[lookup_key] = str(field_value.id)
 
             else:
                 # gloss_field is a Boolean
@@ -1741,15 +1744,20 @@ class Gloss(models.Model):
             zipped_tuples = zip(mapped_minimal_pairs_fields, focus_gloss_values_tuple, other_gloss_values_tuple)
 
             for (field_name, field_value, other_field_value) in zipped_tuples:
+                if field_name.endswith('_fk'):
+                    lookup_key = field_name.replace('_fk', '')
+                else:
+                    lookup_key = field_name
                 if field_value in [None, '0'] and other_field_value in [None,'0']:
-                    print('minimal_pairs_dict skip field: ', field_name, field_value)
                     continue
                 if field_value != other_field_value:
                     field_label = Gloss._meta.get_field(field_name).verbose_name
                     if field_name in foreign_key_fields:
-                        field_value = FieldChoice.objects.get(id=int(field_value)).name
-                        other_field_value = FieldChoice.objects.get(id=int(other_field_value)).name
-                    minimal_pairs_fields[o] = {field_name: (field_label, field_name, field_value, other_field_value, fieldname_to_kind(field_name))}
+                        if field_value is not None:
+                            field_value = FieldChoice.objects.get(id=int(field_value)).name
+                        if other_field_value is not None:
+                            other_field_value = FieldChoice.objects.get(id=int(other_field_value)).name
+                    minimal_pairs_fields[o] = {field_name: (field_label, lookup_key, field_value, other_field_value, fieldname_to_kind(field_name))}
 
         return minimal_pairs_fields
 
@@ -2043,7 +2051,7 @@ class Gloss(models.Model):
         """Return JSON for the definition role choice list"""
         definition_role_choices = choicelist_queryset_to_translated_dict(
                                  FieldChoice.objects.filter(field__exact='NoteType'),
-                                 get_language(), ordered=False, id_prefix=''
+                                 ordered=False, id_prefix=''
                              )
         return self.options_to_json(definition_role_choices)
 
@@ -2619,14 +2627,21 @@ class Dataset(models.Model):
         return frequency_regions
 
     def generate_frequency_dict(self, language_code):
+        fields_to_map = FIELDS['phonology'] + FIELDS['semantics']
+        gloss_fields = {}
+        for f in Gloss._meta.fields:
+            gloss_fields[f.name] = f
 
-        # sort the phonology fields based on field label in the designated language
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_phonology_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field
+                                    for field in fields_to_map ]
+
         fields_data = []
-        for field in Gloss._meta.fields:
-            if field.name in FIELDS['phonology'] + FIELDS['semantics']:
-                if hasattr(field, 'field_choice_category'):
-                    fc_category = field.field_choice_category
-                    fields_data.append((field.name, field.verbose_name.title(), fc_category))
+        for field in mapped_phonology_fields:
+            gloss_field = gloss_fields[field]
+            if hasattr(gloss_field, 'field_choice_category'):
+                fc_category = gloss_field.field_choice_category
+                fields_data.append((gloss_field.name, gloss_field.verbose_name.title(), fc_category))
 
         # CHOICE_LISTS dictionary, maps from field name to pairs of ( _ machine value , translated verbose name )
         # The choice list will be sorted on the translated verbose name
@@ -2636,34 +2651,47 @@ class Dataset(models.Model):
 
                 choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('name')
                 # make a dictionary using the field name so we can look up the translated choices later
-                choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list_this_field, language_code, ordered=False)
+                choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list_this_field, ordered=False)
 
         # Sort the data by the translated verbose name field
         ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
-
         frequency_lists_phonology_fields = OrderedDict()
         # To generate the correct order, iterate over the ordered fields data, which is ordered by translated verbose name
         for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
             # FieldChoices: the ones with machine_value 0 and 1 first, the rest is sorted by name, which is the translated name
             choice_list_this_field = list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__lte=1).order_by('machine_value')) \
                                     + list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__gt=1).order_by('name'))
-
-            # Because we're dealing with multiple languages and we want the fields to be sorted for the language,
+            if f.endswith('_fk'):
+                lookup_key = f.replace('_fk', '')
+            else:
+                lookup_key = f
+            # Because we're dealing with multiple languages, we want the fields to be sorted for the language,
             # we maintain the order of the fields established for the choice_lists dict of field choice names
             choice_list_frequencies = OrderedDict()
             for fieldchoice in choice_list_this_field:
-                variable_column = f + '_fk'
+                # variable column is field.name
+                variable_column = f
+                if variable_column.startswith('semField') and fieldchoice.machine_value > 0:
+                    variable_column_query = 'semFieldShadow__machine_value__in'
+                    try:
+                        semantic_field = [sf.machine_value for sf in SemanticField.objects.filter(name__exact=fieldchoice.name)]
+                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                                                                                         **{
+                                                                                             variable_column_query: semantic_field}).count()
+                    except ObjectDoesNotExist:
+                        print('not found semantic choice, ignore: ', fieldchoice.name)
+                        continue
                 # empty values can be either 0 or else null
-                if fieldchoice.machine_value == 0:
+                elif fieldchoice.machine_value == 0:
                     choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(Q(lemma__dataset=self),
                                                                            Q(**{variable_column + '__isnull': True}) |
                                                                            Q(**{variable_column: fieldchoice})).count()
                 else:
-                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
-                        **{variable_column: fieldchoice}).count()
+                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                                **{variable_column: fieldchoice}).count()
 
             # the new frequencies for this field are added using the update method to insure the order is maintained
-            frequency_lists_phonology_fields.update({f: copy.deepcopy(choice_list_frequencies)})
+            frequency_lists_phonology_fields[lookup_key] = copy.deepcopy(choice_list_frequencies)
 
         return frequency_lists_phonology_fields
 

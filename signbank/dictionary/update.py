@@ -435,16 +435,27 @@ def update_gloss(request, glossid):
         # The following code relies on the order of if else testing
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-        # print('update gloss: ', field, value)
         if not settings.USE_FIELD_CHOICE_FOREIGN_KEY and field + '_fk' in fieldchoiceforeignkey_fields:
-            # print('field choice foreign key update ', field, value)
-            field_choice_category = Gloss._meta.get_field(field + '_fk')
-            fieldchoice = FieldChoice.objects.get(field=field_choice_category, machine_value=value)
+            # leave this print statement for debugging purposes, some code was using the id field and some using the machine_value
+            print('gloss update field choice foreign key ', gloss, field, value)
+            gloss_field = Gloss._meta.get_field(field + '_fk')
+            try:
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('Update field choice no unique machine value found: ', gloss_field.name, gloss_field.field_choice_category, value)
+                print('Setting to machine value 0')
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
             gloss.__setattr__(field+'_fk', fieldchoice)
             gloss.save()
             newvalue = fieldchoice.name
         elif field in fieldchoiceforeignkey_fields:
-            fieldchoice = FieldChoice.objects.get(id=value)
+            gloss_field = Gloss._meta.get_field(field)
+            try:
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('Update field choice no unique machine value found: ', gloss_field.name, gloss_field.field_choice_category, value)
+                print('Setting to machine value 0')
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
             gloss.__setattr__(field, fieldchoice)
             gloss.save()
             newvalue = fieldchoice.name
@@ -494,7 +505,17 @@ def update_gloss(request, glossid):
         glossrevision_newvalue = value
     else:
         glossrevision_newvalue = newvalue
-    revision = GlossRevision(old_value=original_human_value, new_value=glossrevision_newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
+    if field.endswith('_fk'):
+        # make sure the original field names are used in the revision history
+        lookup_key = field.replace('_fk', '')
+    else:
+        lookup_key = field
+    revision = GlossRevision(old_value=original_human_value,
+                             new_value=glossrevision_newvalue,
+                             field_name=lookup_key,
+                             gloss=gloss,
+                             user=request.user,
+                             time=datetime.now(tz=get_current_timezone()))
     revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
     return HttpResponse(
@@ -1677,7 +1698,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
         morph_def.save()
 
         choice_list = FieldChoice.objects.filter(field__iexact='MorphologyType')
-        newvalue = machine_value_to_translated_human_value(value, choice_list, language_code)
+        newvalue = machine_value_to_translated_human_value(value, choice_list)
 
 
     elif what == 'morphology_definition_morpheme':

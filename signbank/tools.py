@@ -17,6 +17,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
@@ -1565,7 +1566,7 @@ def fields_with_choices_glosses():
 
     from signbank.dictionary.models import Gloss
     for field in Gloss._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1581,7 +1582,7 @@ def fields_with_choices_handshapes():
 
     from signbank.dictionary.models import Handshape
     for field in Handshape._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1597,7 +1598,7 @@ def fields_with_choices_definition():
 
     from signbank.dictionary.models import Definition
     for field in Definition._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1613,7 +1614,7 @@ def fields_with_choices_morphology_definition():
 
     from signbank.dictionary.models import MorphologyDefinition
     for field in MorphologyDefinition._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1629,7 +1630,7 @@ def fields_with_choices_other_media_type():
 
     from signbank.dictionary.models import OtherMedia
     for field in OtherMedia._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1645,7 +1646,7 @@ def fields_with_choices_morpheme_type():
 
     from signbank.dictionary.models import Morpheme
     for field in Morpheme._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1721,7 +1722,7 @@ def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies
             if fieldchoice_category:
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 machine_value = getattr(gloss, f)
-                value = machine_value_to_translated_human_value(machine_value, choice_list, lang)
+                value = machine_value_to_translated_human_value(machine_value, choice_list)
                 if value is None:
                     value = ' '
             else:
@@ -2089,7 +2090,8 @@ def map_field_name_to_fk_field_name(field):
         return field
     gloss_field_names = [f.name for f in Gloss._meta.fields]
     handshape_field_names = [f.name for f in Handshape._meta.fields]
-    if field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names:
+    morpheme_field_names = [f.name for f in Morpheme._meta.fields]
+    if field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names or field+'_fk' in morpheme_field_names:
         return field+'_fk'
     else:
         return field

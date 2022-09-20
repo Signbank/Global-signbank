@@ -655,6 +655,7 @@ class FieldChoiceAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(FieldChoiceAdminForm, self).__init__(*args, **kwargs)
+        print(self.fields)
         if self.instance.field:
             self.fields['field'].disabled = True
         if not self.show_field_choice_colors:
@@ -667,10 +668,10 @@ class FieldChoiceAdminForm(forms.ModelForm):
     class Meta:
         model = FieldChoice
         fields = ['field', 'name'] \
-                       + ['name_'+ language.replace('-', '_') for language in [l[0] for l in LANGUAGES]] \
                        + ['field_color', 'machine_value', ]
     def clean(self):
         # check that the field category and (english) name does not already occur
+        cleaned_fields = self.cleaned_data
         en_name = self.cleaned_data['name']
         field = self.cleaned_data['field']
 
@@ -734,7 +735,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             obj_color = obj.field_color
             if obj_color[0] != '#':
                 obj.field_color = '#'+obj.field_color
-
+        form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
+        print('form.__dict__ after call to super FieldChoiceAdmin: ', form.__dict__)
+        print('self.__dict__ applied to FieldChoiceAdmin: ', self.__dict__)
         if self.show_english_only:
             for language in [l[0] for l in LANGUAGES]:
                 name_languagecode = 'name_'+ language.replace('-', '_')
@@ -742,7 +745,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
         if self.show_field_choice_colors:
             self.exclude = ('field_color')
 
-        form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
+
+        print(form.__dict__)
         form_base_fields = form.__dict__['base_fields']
         if not obj:
             # a new field choice is being created
@@ -813,7 +817,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_glosses = fields_with_choices_glosses()
         if field_value in fields_with_choices_glosses.keys():
-            queries = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_glosses[field_value]]
+            print(field_value, ' in gloss fields')
+            queries = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                       for field_name in fields_with_choices_glosses[field_value]]
             query = queries.pop()
             for item in queries:
                 query |= item
@@ -822,7 +828,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_handshapes = fields_with_choices_handshapes()
         if field_value in fields_with_choices_handshapes.keys():
-            queries_h = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_handshapes[field_value]]
+            print(field_value, ' in handshape fields')
+            queries_h = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_handshapes[field_value]]
             query_h = queries_h.pop()
             for item in queries_h:
                 query_h |= item
@@ -831,7 +839,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_definition = fields_with_choices_definition()
         if field_value in fields_with_choices_definition.keys():
-            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_definition[field_value]]
+            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                                for field_name in fields_with_choices_definition[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
                 query_d |= item
@@ -840,7 +849,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_morphology_definition = fields_with_choices_morphology_definition()
         if field_value in fields_with_choices_morphology_definition.keys():
-            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_morphology_definition[field_value]]
+            print(field_value, ' in morphology definition fields')
+            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_morphology_definition[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
                 query_d |= item
@@ -849,7 +860,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_other_media_type = fields_with_choices_other_media_type()
         if field_value in fields_with_choices_other_media_type.keys():
-            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_other_media_type[field_value]]
+            print(field_value, ' in other media type fields')
+            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_other_media_type[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
                 query_d |= item
@@ -858,7 +871,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_morpheme_type = fields_with_choices_morpheme_type()
         if field_value in fields_with_choices_morpheme_type.keys():
-            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_morpheme_type[field_value]]
+            print(field_value, ' in morpheme type fields')
+            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_morpheme_type[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
                 query_d |= item
@@ -918,6 +933,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                     new_color = new_color[1:]
                 # store only the hex part
                 obj.field_color = new_color
+        print(obj.__dict__)
         obj.save()
 
 class LanguageAdmin(TranslationAdmin):

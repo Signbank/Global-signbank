@@ -4,8 +4,9 @@ import signbank.settings.base as settings
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import When, Case, NullBooleanField, IntegerField
 from django.db.utils import OperationalError
+from django.utils.translation import gettext
 
-def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
+def choicelist_queryset_to_translated_dict(queryset,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
     # Or the queryset is a set of Handshape objects
     # Other functions that call this function expect either a list or an OrderedDict that maps machine values to human values
@@ -46,7 +47,7 @@ def choicelist_queryset_to_translated_dict(queryset,language_code,ordered=True,i
         sorted_choice_list = list_head + sorted(raw_choice_list, key=lambda x: x[1])
         return sorted_choice_list
 
-def choicelist_queryset_to_colors(queryset,language_code,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
+def choicelist_queryset_to_colors(queryset,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
 
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
     # Or the queryset is a set of Handshape objects
@@ -95,7 +96,7 @@ def choicelist_queryset_to_field_colors(queryset):
         temp_mapping_dict[choice.machine_value] = getattr(choice, 'field_color')
     return temp_mapping_dict
 
-def machine_value_to_translated_human_value(machine_value,choice_list,language_code):
+def machine_value_to_translated_human_value(machine_value,choice_list):
 
     if not choice_list or len(choice_list) == 0:
         # this function has been called with an inappropriate choice_list
@@ -115,7 +116,7 @@ def machine_value_to_translated_human_value(machine_value,choice_list,language_c
 
         try:
             selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
-
+            print('translate_choice_list: ', selected_field_choice, type(selected_field_choice))
             human_value = selected_field_choice.name
 
         except (IndexError, ValueError):

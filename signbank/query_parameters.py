@@ -376,7 +376,7 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
 
     def get_field_value(selected_field_choice, adjective):
         try:
-            human_value = getattr(selected_field_choice, 'name_' + adjective)
+            human_value = getattr(selected_field_choice, 'name_' + adjective.replace('-', '_'))
         except AttributeError:
             human_value = getattr(selected_field_choice, 'name')
         return human_value
@@ -422,10 +422,15 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
         elif key[-2:] == '[]':
             # in the Gloss Search Form, multiple choice fields have a list of values
             # these are all displayed in the Query Parameters display (as non-selectable buttons in the template)
-            field = key[:-2] + '_fk'
+            field = map_field_name_to_fk_field_name(key[:-2])
             field_category = Gloss._meta.get_field(field).field_choice_category
             choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
-            query_dict[key] = [ get_field_value(choice, language_code) for choice in choices_for_category ]
+            print('choices for category ', field_category ,': ',choices_for_category, type(choices_for_category))
+            result_list = []
+            for choice in choices_for_category:
+                result_list.append(choice.name)
+            print(result_list)
+            query_dict[key] = [ choice.name for choice in choices_for_category ]
         elif key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
             continue
         elif key in ['weakdrop', 'weakprop']:
@@ -450,13 +455,16 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
             if query_parameters[key] == 'all':
                 query_dict[key] = _('All')
             else:
-                choices_for_category = FieldChoice.objects.filter(field__iexact='NoteType', machine_value=query_parameters[key])
+                choices_for_category = FieldChoice.objects.filter(field__iexact='NoteType', id=query_parameters[key])
+                print(query_parameters[key])
                 query_dict[key] = [get_field_value(choice, language_code) for choice in choices_for_category][0]
         elif key in ['hasComponentOfType']:
-            choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', machine_value=query_parameters[key])
+            choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', id=query_parameters[key])
             query_dict[key] = [get_field_value(choice, language_code) for choice in choices_for_category][0]
         elif key in ['hasMorphemeOfType']:
-            choices_for_category = FieldChoice.objects.filter(field__iexact='MorphemeType', machine_value=query_parameters[key])
+            print('has morpheme type: ', query_parameters[key])
+            choices_for_category = FieldChoice.objects.filter(field__iexact='MorphemeType', id=query_parameters[key])
+            print('choices: ', choices_for_category)
             query_dict[key] = [get_field_value(choice, language_code) for choice in choices_for_category][0]
         elif key in ['morpheme']:
             try:

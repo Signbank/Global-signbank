@@ -8,7 +8,7 @@ from signbank.settings.base import LANGUAGES
 
 class LanguageTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = (LANGUAGES[0][0],)
+    required_languages = tuple([t[0] for t in LANGUAGES])
 
 
 translator.register(Language, LanguageTranslationOptions)
@@ -16,7 +16,7 @@ translator.register(Language, LanguageTranslationOptions)
 
 class FieldChoiceTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = (LANGUAGES[0][0],)
+    required_languages = tuple([t[0] for t in LANGUAGES])
 
 
 translator.register(FieldChoice, FieldChoiceTranslationOptions)
