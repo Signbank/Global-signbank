@@ -34,9 +34,6 @@ def choicelist_queryset_to_translated_dict(queryset,ordered=True,id_prefix='_',s
             machine_values_seen.append(choice.machine_value)
             raw_choice_list.append((id_prefix + str(choice.machine_value), choice.name))
 
-    # if 'NoteType' in str(queryset.query):
-    #     print(raw_choice_list)
-
     list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].machine_value), v) for v in list_head_values]
 
     if ordered:
@@ -72,9 +69,6 @@ def choicelist_queryset_to_colors(queryset,ordered=True,id_prefix='_',shortlist=
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
             raw_choice_list.append((id_prefix + str(choice.machine_value), human_value, getattr(choice, 'field_color')))
-
-    if 'NoteType' in str(queryset.query):
-        print(raw_choice_list)
 
     list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].machine_value), v, 'ffffff') for v in list_head_values]
 
@@ -116,7 +110,6 @@ def machine_value_to_translated_human_value(machine_value,choice_list):
 
         try:
             selected_field_choice = choice_list.filter(machine_value=machine_value)[0]
-            print('translate_choice_list: ', selected_field_choice, type(selected_field_choice))
             human_value = selected_field_choice.name
 
         except (IndexError, ValueError):
@@ -191,7 +184,7 @@ def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=Fal
         machine_values_seen.append(choice.machine_value)
         queryset_no_dupes.append(choice)
 
-    raw_choice_list = [(id_prefix+str(choice.pk),choice.pk) for choice in queryset_no_dupes]
+    raw_choice_list = [(id_prefix+str(choice.machine_value),choice.machine_value) for choice in queryset_no_dupes]
 
     sorted_choice_list = [(id_prefix+'0',0),(id_prefix+'1',1)]+sorted(raw_choice_list,key = lambda x: x[1])
 

@@ -788,7 +788,7 @@ def add_new_morpheme(request):
         print('add_new_morpheme request: error getting field category for mrpType, set to empty list. Check models.py for attribute field_choice_category.')
         choice_list = []
     if len(choice_list) > 0:
-        ordered_dict = choicelist_queryset_to_translated_dict(choice_list, request.LANGUAGE_CODE)
+        ordered_dict = choicelist_queryset_to_translated_dict(choice_list)
         choicelists['mrpType'] = ordered_dict
 
     context['choice_lists'] = json.dumps(choicelists)
@@ -2780,16 +2780,15 @@ def choice_lists(request):
                     lookup_key = field.replace('_fk','')
                 else:
                     lookup_key = field
-                all_choice_lists[lookup_key] = choicelist_queryset_to_translated_dict(choice_list,request.LANGUAGE_CODE,
+                all_choice_lists[lookup_key] = choicelist_queryset_to_translated_dict(choice_list,
                                                                                  choices_to_exclude=choices_to_exclude)
-                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
 
                 #Also concatenate the frequencies of all values
                 if 'include_frequencies' in request.GET and request.GET['include_frequencies']:
                     for choicefield in choice_list:
                         # print('choice_lists: ', choicefield, field, fieldchoice_category)
                         machine_value = choicefield.machine_value
-                        choice_list_field = '_' + str(choicefield.id)
+                        choice_list_field = '_' + str(choicefield.machine_value)
 
                         if machine_value == 0:
                             frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
@@ -2797,33 +2796,20 @@ def choice_lists(request):
                                                                        Q(**{field: 0})).count()
 
                         else:
-                            try:
-                                # if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-                                Gloss._meta.get_field(field)
-                                filter = field
-                                filter_value = choicefield
-                                # else:
-                                #     Gloss._meta.get_field(field + '_fk')
-                                #     filter = field + '_fk'
-                                #     filter_value = choicefield
-                            except KeyError:
-                                variable_column = field
-                                search_filter = 'exact'
-                                filter = variable_column + '__' + search_filter
-                                filter_value = machine_value
-                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: filter_value}).count()
+                            filter = field + '__machine_value'
+                            frequency_for_field = Gloss.objects.filter(
+                                lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
 
-                        try:
+                        if choice_list_field in all_choice_lists[lookup_key].keys():
                             all_choice_lists[lookup_key][choice_list_field] += ' ['+str(frequency_for_field)+']'
-                        except KeyError: #This might an excluded field
-                            continue
+
     # print(all_choice_lists)
     # Add morphology to choice lists
     all_choice_lists['morphology_role'] = choicelist_queryset_to_translated_dict(
-        FieldChoice.objects.filter(field__iexact='MorphologyType'),request.LANGUAGE_CODE)
+        FieldChoice.objects.filter(field__iexact='MorphologyType'))
 
     all_choice_lists['morph_type'] = choicelist_queryset_to_translated_dict(
-        FieldChoice.objects.filter(field__iexact='MorphemeType'),request.LANGUAGE_CODE)
+        FieldChoice.objects.filter(field__iexact='MorphemeType'))
 
     return HttpResponse(json.dumps(all_choice_lists), content_type='application/json')
 

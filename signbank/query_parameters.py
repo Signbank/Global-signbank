@@ -270,7 +270,7 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(pk__in=pks_for_glosses_with_morphdefs_with_correct_role))
         elif get_key in ['hasMorphemeOfType']:
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = Morpheme.objects.filter(mrpType_fk__exact=get_value)
+            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType_fk_id__exact=get_value) ]
             # this only works in the query is Sign or Morpheme
             query_list.append(Q(id__in=target_morphemes))
         elif get_key in ['tags']:
@@ -284,16 +284,19 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key in gloss_fields.keys():
             # not sure if this is needed, this case is Gloss fields rather than GlossSearchForm fields
             # this should be the fall through for fields not in multiselect and not covered above
-            # it could happen that a ForeignKey field falls through
+            # it could happen that a ForeignKey field falls through which is not included in multiselect
             if get_key + '_fk' in mapped_fieldnames:
+                # print('else case of query parameters, field has _fk: ', get_key)
                 field_obj = Gloss._meta.get_field(get_key+'_fk')
             else:
                 field_obj = Gloss._meta.get_field(get_key)
 
             if type(field_obj) in [CharField,TextField]:
                 q_filter = get_key + '__iregex'
+            elif hasattr(field_obj, 'field_choice_category'):
+                # just in case, field choice field that is not multi-select
+                q_filter = get_key + '_fk__machine_value__exact'
             else:
-                # if this is a _fk field, then this should be for _fk__machine_value__exact
                 q_filter = get_key + '__exact'
 
             if isinstance(field_obj,NullBooleanField):
@@ -425,11 +428,6 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
             field = map_field_name_to_fk_field_name(key[:-2])
             field_category = Gloss._meta.get_field(field).field_choice_category
             choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
-            print('choices for category ', field_category ,': ',choices_for_category, type(choices_for_category))
-            result_list = []
-            for choice in choices_for_category:
-                result_list.append(choice.name)
-            print(result_list)
             query_dict[key] = [ choice.name for choice in choices_for_category ]
         elif key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
             continue
@@ -456,15 +454,12 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
                 query_dict[key] = _('All')
             else:
                 choices_for_category = FieldChoice.objects.filter(field__iexact='NoteType', id=query_parameters[key])
-                print(query_parameters[key])
                 query_dict[key] = [get_field_value(choice, language_code) for choice in choices_for_category][0]
         elif key in ['hasComponentOfType']:
             choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', id=query_parameters[key])
             query_dict[key] = [get_field_value(choice, language_code) for choice in choices_for_category][0]
         elif key in ['hasMorphemeOfType']:
-            print('has morpheme type: ', query_parameters[key])
             choices_for_category = FieldChoice.objects.filter(field__iexact='MorphemeType', id=query_parameters[key])
-            print('choices: ', choices_for_category)
             query_dict[key] = [get_field_value(choice, language_code) for choice in choices_for_category][0]
         elif key in ['morpheme']:
             try:

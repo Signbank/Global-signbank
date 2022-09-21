@@ -916,9 +916,12 @@ class FocusGlossSearchForm(forms.ModelForm):
 
 class FieldChoiceForm(forms.Form):
     field_color = forms.CharField(widget=ColorWidget)
+    readonly_fields = ['machine_value']
 
     class Meta:
         model = FieldChoice
+        fields = ['field', 'name'] \
+                 + ['field_color', 'machine_value', ]
 
 
 

@@ -1039,7 +1039,9 @@ class GlossListView(ListView):
             query_parameters['useInstr'] = get['useInstr']
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+        multiple_select_gloss_fields = [field.name
+                                        for field in Gloss._meta.fields
+                                        if field.name in fieldnames and hasattr(field, 'field_choice_category')]
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
             multiple_select_gloss_fields.remove('derivHist')
         for fieldnamemulti in multiple_select_gloss_fields:
@@ -1184,8 +1186,7 @@ class GlossListView(ListView):
 
             morpheme_type = get['hasMorphemeOfType']
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = Morpheme.objects.filter(mrpType_fk__exact=morpheme_type)
-
+            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType_fk_id__exact=morpheme_type) ]
             qs = qs.filter(id__in=target_morphemes)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
@@ -1195,7 +1196,7 @@ class GlossListView(ListView):
             if get['definitionRole'] == 'all':
                 definitions_with_this_role = Definition.objects.all()
             else:
-                definitions_with_this_role = Definition.objects.filter(role_fk__exact=get['definitionRole'])
+                definitions_with_this_role = Definition.objects.filter(role_fk_id__exact=get['definitionRole'])
 
             #Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
@@ -5678,12 +5679,11 @@ class FieldChoiceView(ListView):
 
         all_choice_lists = {}
         for topic in ['main', 'phonology', 'semantics', 'frequency']:
-
+            mapped_fields = map_field_names_to_fk_field_names(FIELDS[topic])
             fields_with_choices = [(field, field.field_choice_category) for field in Gloss._meta.fields if
-                                   field.name in FIELDS[topic] and hasattr(field, 'field_choice_category')]
+                                   field.name in mapped_fields and hasattr(field, 'field_choice_category')]
 
             for (field, fieldchoice_category) in fields_with_choices:
-
                 # Get and save the choice list for this field
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 if len(choice_list) > 0:
@@ -5691,24 +5691,27 @@ class FieldChoiceView(ListView):
                     choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
 
                     for choice_list_field, machine_value in choice_list_machine_values:
-
                         if machine_value == 0:
                             frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
                                                                        Q(**{field.name + '__isnull': True}) |
                                                                        Q(**{field.name: 0})).count()
 
                         else:
-                            variable_column = field.name + '_id'
-                            search_filter = 'exact'
-                            filter = variable_column
+                            if field.name.startswith('semField'):
+                                filter = 'semFieldShadow__in'
+                                filter_value = [ machine_value ]
+                            elif field.name.startswith('derivHist'):
+                                filter = 'derivHistShadow__in'
+                                filter_value = [machine_value]
+                            else:
+                                filter = variable_column = field.name + '__machine_value'
+                                filter_value = machine_value
                             frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
-                                **{filter: machine_value}).count()
+                                **{filter: filter_value}).count()
 
-                        try:
+                        if choice_list_field in all_choice_lists[fieldchoice_category].keys():
                             all_choice_lists[fieldchoice_category][choice_list_field] += ' [' + str(
-                                frequency_for_field) + ']'
-                        except KeyError:
-                            continue
+                                    frequency_for_field) + ']'
 
         field_choices = {}
         for field_choice_category in all_choice_lists.keys():
@@ -5752,11 +5755,12 @@ class FieldChoiceView(ListView):
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['main','phonology','semantics']:
             for field in FIELDS[topic]:
+                mapped_field = map_field_name_to_fk_field_name(field)
                 # the following check will be used when querying is added, at the moment these don't appear in the phonology list
-                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                if mapped_field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                     choice_list = []
                     #Get and save the choice list for this field
-                    gloss_field = gloss_fields[field]
+                    gloss_field = gloss_fields[mapped_field]
                     if hasattr(gloss_field, 'field_choice_category'):
                         fieldchoice_category = gloss_field.field_choice_category
                         choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
@@ -6335,7 +6339,6 @@ class MorphemeDetailView(DetailView):
 
             # Take the human value in the language we are using
             machine_value = getattr(gl, gloss_field.name)
-            print('machine value: ', field, gloss_field.name, machine_value)
             if machine_value and len(choice_list) > 0:
                 # set the human value
                 human_value = machine_value.name

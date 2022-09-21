@@ -668,11 +668,12 @@ class FieldChoiceAdminForm(forms.ModelForm):
     class Meta:
         model = FieldChoice
         fields = ['field', 'name'] \
-                       + ['field_color', 'machine_value', ]
+                 + ['field_color', 'machine_value', ]
     def clean(self):
         # check that the field category and (english) name does not already occur
         cleaned_fields = self.cleaned_data
-        en_name = self.cleaned_data['name']
+        print(cleaned_fields)
+        en_name = self.cleaned_data['name_en']
         field = self.cleaned_data['field']
 
         if not field:
@@ -933,8 +934,10 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                     new_color = new_color[1:]
                 # store only the hex part
                 obj.field_color = new_color
-        print(obj.__dict__)
-        obj.save()
+        print('save_model (not done): ', obj.__dict__)
+        for key, value in obj.__dict__.items():
+            print(key,value)
+     #   obj.save()
 
 class LanguageAdmin(TranslationAdmin):
 
