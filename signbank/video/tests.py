@@ -12,11 +12,11 @@ import os, shutil
 import sys
 
 class CommandTests(unittest.TestCase):
-    
+
     @classmethod
     def setUpTestData(cls):
         print("setting up - not used")
-    
+
     def tearDown(self):
         """Remove all files added for test"""
         print("\n\nTeardown:")
@@ -35,18 +35,18 @@ class CommandTests(unittest.TestCase):
             print("somefolder removed")
         else:
             print("somefolder does not exist")
-            
-    def test_remove_unused_other_pathtype(self):
+
+    def test_remove_unused_other_path_type(self):
         """Check argument given"""
-        out = StringIO()  
-        args = ['image']  
-        kwargs = {'stdout': out}  
+        out = StringIO()
+        args = ['image']
+        kwargs = {'stdout': out}
         call_command('remove_unused', *args, **kwargs)
         self.assertEquals(out.getvalue(), "Wrong argument: try 'video' or 'other_media'\n")
 
-    def test_find_used_files(self):
+    def test_find_unused_files(self):
         """Check if right files are found to be removed"""
-        
+
         # Make test folder + files
         some_folder_path = os.path.join("../writable", "somefolder")
         if not os.path.exists(some_folder_path):
@@ -55,22 +55,22 @@ class CommandTests(unittest.TestCase):
         glossvideofile.close()
         glossvideofile2 = open("../writable/somefolder/fileindb.txt", "a")      # file that is in database
         glossvideofile2.close()
-        
+
         # files in database
         filenames_in_db = ['fileindb.txt']
 
         # compare test files with db filenames
         unused_files_found = remove_unused.find_unused_files(self, some_folder_path, filenames_in_db)
-  
+
         self.assertEquals(unused_files_found, ["fileNOTindb.txt"])
-        
+
 class VideoTests(unittest.TestCase):
     # These tests are causing UnicodeDecodeError errors.
     def setUp(self):
         sys.stderr.write('inside of VideoTests setUp\n')
         self.vidfilename = "signbank/video/testmedia/video.mp4"
         self.videofile = File(open(self.vidfilename), "12345.mp4")
- 
+
     # def test_Video_create(self):
     #     """We can create a video object"""
     #     sys.stderr.write('inside of VideoTests test_Video_create\n')
@@ -118,5 +118,3 @@ class VideoTests(unittest.TestCase):
     #     # do it again should give the same result, but won't have created the file
     #     poster2 = vid.poster_path()
     #     self.assertEqual(poster, poster2)
-
-        
