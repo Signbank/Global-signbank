@@ -92,8 +92,8 @@ urlpatterns = [
    # (r'^accounts/login/', 'django.contrib.auth.views.login'),
 
     url(r'^accounts/', include(signbank.registration.urls,namespace="registration")),
-    url(r'^admin/doc/', include(django.contrib.admindocs.urls)),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^'+settings.ADMIN_URL+r'/doc/', include(django.contrib.admindocs.urls)),
+    url(r'^'+settings.ADMIN_URL+r'/', include(admin.site.urls)),
 
     url(r'^settings/field_colors/$', login_required(FieldChoiceView.as_view()), {'color': True},
         name='admin_dataset_field_choice_colors'),
@@ -127,4 +127,3 @@ urlpatterns = [
                   url(r'^__debug__/', include(debug_toolbar.urls)),
     url(r'^update/expiry/', signbank.dictionary.update.update_expiry, name='update_expiry')
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
