@@ -2505,7 +2505,7 @@ class testSettings(TestCase):
         # and that there exist field choices for it
         # this test is intended to help find potential errors in templates that use choice lists for fields
         if 'phonology' in settings.FIELDS.keys():
-            phonology_fields = settings.FIELDS['phonology']
+            phonology_fields = map_field_names_to_fk_field_names(settings.FIELDS['phonology'])
             gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
             print('Testing phonology fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in phonology_fields:
@@ -2514,19 +2514,16 @@ class testSettings(TestCase):
                 # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
                 self.assertTrue(hasattr(gloss_fields_names[f], 'choices'))
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if not isinstance(gloss_fields_names[f], models.CharField):
+                if not isinstance(gloss_fields_names[f], FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
                     self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
-                elif not gloss_fields_names[f].choices:
-                    # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
-                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                elif not hasattr(gloss_fields_names[f], 'field_choice_category'):
+                    # this is not a choice list field
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and to have field_choice_category defined
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                    if hasattr(gloss_fields_names[f], 'max_length') and gloss_fields_names[f].max_length > 9:
-                        print('Note: phonology field ', f, ' has max_length ', str(gloss_fields_names[f].max_length), ' but also has field choices.')
                     self.assertTrue(hasattr(gloss_fields_names[f], 'field_choice_category'))
                     fc_category = gloss_fields_names[f].field_choice_category
                     # make sure there are fields for the category
@@ -2534,7 +2531,7 @@ class testSettings(TestCase):
                     self.assertGreater(len(fields_for_this_category),0)
 
         if 'semantics' in settings.FIELDS.keys():
-            semantics_fields = settings.FIELDS['semantics']
+            semantics_fields = map_field_names_to_fk_field_names(settings.FIELDS['semantics'])
             gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
             print('Testing semantics fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in semantics_fields:
@@ -2543,19 +2540,16 @@ class testSettings(TestCase):
                 # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
                 self.assertTrue(hasattr(gloss_fields_names[f], 'choices'))
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if not isinstance(gloss_fields_names[f], models.CharField):
+                if not isinstance(gloss_fields_names[f], FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
                     self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
-                elif not gloss_fields_names[f].choices:
+                elif not hasattr(gloss_fields_names[f], 'field_choice_category'):
                     # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
-                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and have field_choice_category defined
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                    if hasattr(gloss_fields_names[f], 'max_length') and gloss_fields_names[f].max_length > 9:
-                        print('Note: semantics field ', f, ' has max_length ', str(gloss_fields_names[f].max_length), ' but also has field choices.')
                     self.assertTrue(hasattr(gloss_fields_names[f], 'field_choice_category'))
                     fc_category = gloss_fields_names[f].field_choice_category
                     # make sure there are fields for the category
@@ -2563,7 +2557,7 @@ class testSettings(TestCase):
                     self.assertGreater(len(fields_for_this_category),0)
 
         if 'handshape' in settings.FIELDS.keys():
-            handshape_fields = settings.FIELDS['handshape']
+            handshape_fields = map_field_names_to_fk_field_names(settings.FIELDS['handshape'])
             handshape_fields_names = { f.name: f for f in Handshape._meta.fields }
             print('Testing handshape fields for declaration in Handshape model with field_choice_category in FieldChoice table.')
             for f in handshape_fields:
@@ -2572,19 +2566,16 @@ class testSettings(TestCase):
                 # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
                 self.assertTrue(hasattr(handshape_fields_names[f], 'choices'))
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if not isinstance(handshape_fields_names[f], models.CharField):
+                if not isinstance(handshape_fields_names[f], FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
                     self.assertFalse(hasattr(handshape_fields_names[f], 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
-                elif not handshape_fields_names[f].choices:
+                elif not hasattr(handshape_fields_names[f], 'field_choice_category'):
                     # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
-                    self.assertFalse(hasattr(handshape_fields_names[f], 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and have field_choice_category defined
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                    if hasattr(handshape_fields_names[f], 'max_length') and handshape_fields_names[f].max_length > 9:
-                        print('Note: handshape field ', f, ' has max_length ', str(handshape_fields_names[f].max_length), ' but also has field choices.')
                     self.assertTrue(hasattr(handshape_fields_names[f], 'field_choice_category'))
                     fc_category = handshape_fields_names[f].field_choice_category
                     # make sure there are fields for the category

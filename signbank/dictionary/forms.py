@@ -6,7 +6,7 @@ from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
-                                        MorphologyDefinition, build_choice_list, OtherMedia, Handshape, \
+                                        MorphologyDefinition, OtherMedia, Handshape, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
 from django.conf import settings
@@ -233,15 +233,33 @@ RELATION_ROLE_CHOICES = (('','---------'),
 
 
 def get_definition_role_choices():
-    return build_choice_list('NoteType', [('','---------'),('all','All')])
+    choices = [('','---------'),('all','All')]\
+           + list(FieldChoice.objects.filter(field='NoteType', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='NoteType', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
 
 
 def get_component_role_choice():
-    return build_choice_list('MorphologyType', [('','---------')])
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field='MorphologyType', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='MorphologyType', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
 
 
 def get_morpheme_role_choices():
-    return build_choice_list('MorphemeType', [('','---------')])
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field='MorphemeType', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='MorphemeType', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
 
 
 ATTRS_FOR_FORMS = {'class':'form-control'}
@@ -508,7 +526,13 @@ class RelationToForeignSignForm(forms.ModelForm):
 
 
 def get_morphology_type_choices():
-    return build_choice_list('MorphologyType')
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field='MorphologyType', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='MorphologyType', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
 
 
 class GlossMorphologyForm(forms.ModelForm):
@@ -550,11 +574,20 @@ class MorphemeMorphologyForm(forms.ModelForm):
         model = MorphologyDefinition
         fields = ['role']
 
+def get_other_media_type_choices():
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field='OtherMediaType', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='OtherMediaType', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
+
 class OtherMediaForm(forms.ModelForm):
 
     gloss = forms.CharField()
     file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*, application/pdf'}), required=True)
-    type = forms.ChoiceField(choices=build_choice_list('OtherMediaType'),widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    type = forms.ChoiceField(choices=get_other_media_type_choices,widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     alternative_gloss = forms.TextInput()
 
     class Meta:
@@ -621,7 +654,14 @@ class DatasetUpdateForm(forms.ModelForm):
         self.fields['default_language'] = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), choices=languages)
 
 def get_finger_selection_choices():
-    return build_choice_list('FingerSelection', [('','---------')])
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field='FingerSelection', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='FingerSelection', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
+
 attrs_default = {'class': 'form-control'}
 FINGER_SELECTION = ((True, 'True'), (False, 'False'), (None, 'Either'))
 
@@ -1027,7 +1067,7 @@ class FieldChoiceForm(forms.ModelForm):
                 return self.cleaned_data
             else:
                 print('self._errors: ', self._errors)
-                raise forms.ValidationError(_('Unknown errors'))
+                raise forms.ValidationError(_('Please fix the following errors.'))
         elif qs_en.count() == 1:
             # found exactly one match
             fc_obj = qs_en.first()

@@ -33,7 +33,7 @@ import signbank.settings
 
 
 # this variable is set later in the code, it needs to be declared before it is used
-choice_list_table = dict()
+# choice_list_table = dict()
 
 
 def build_choice_list(field, list_start=[]):
@@ -45,13 +45,14 @@ def build_choice_list(field, list_start=[]):
     :param list_start: The choices the list has to start with
     :return: The choice list for the field, starting with the list_start choices
     """
-    return list_start\
-           + list(FieldChoice.objects.filter(field=field, machine_value__lte=1)
-                  .order_by('machine_value').values_list('id', 'name')) \
-           + list([(field_choice.id, field_choice.name) for field_choice in
-                   FieldChoice.objects.filter(field=field, machine_value__gt=1)
-                  .order_by('name')])
+    # return list_start\
+    #        + list(FieldChoice.objects.filter(field=field, machine_value__lte=1)
+    #               .order_by('machine_value').values_list('id', 'name')) \
+    #        + list([(field_choice.id, field_choice.name) for field_choice in
+    #                FieldChoice.objects.filter(field=field, machine_value__gt=1)
+    #               .order_by('name')])
 
+    return list_start
 
 def get_default_language_id():
     language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
@@ -2100,7 +2101,11 @@ class Gloss(models.Model):
         """Return JSON for wordclass choices"""
 
         # Get the list of choices for this field
-        li = self._meta.get_field("wordClass").choices
+        li = list(FieldChoice.objects.filter(field='WordClass', machine_value__lte=1)
+                         .order_by('machine_value').values_list('id', 'name')) \
+                  + list([(field_choice.id, field_choice.name) for field_choice in
+                          FieldChoice.objects.filter(field='WordClass', machine_value__gt=1)
+                         .order_by('name')])
 
         # Sort the list
         sorted_li = sorted(li, key=lambda x: x[1])
@@ -2191,27 +2196,27 @@ except:
     pass
 
 
-def generate_choice_list_table():
-    temp_choice_list_table = dict()
-    for f in Gloss._meta.fields:
-        if f.choices:
-            temp_choice_list_table[f.name] = f.choices
-    for h in Handshape._meta.fields:
-        if h.choices:
-            if h not in temp_choice_list_table.keys():
-                temp_choice_list_table[h.name] = h.choices
-            else:
-                print('generate fieldname to kind table found identical field in Handshape and Gloss: ', h.name)
-    for k in Definition._meta.fields:
-        if k not in temp_choice_list_table.keys():
-            temp_choice_list_table[k.name] = k.choices
-        else:
-            print('generate fieldname to kind table found identical field in Handshape or Gloss and Definition: ',
-                  k.name)
-    return temp_choice_list_table
-
-
-choice_list_table = generate_choice_list_table()
+# def generate_choice_list_table():
+#     temp_choice_list_table = dict()
+#     for f in Gloss._meta.fields:
+#         if f.choices:
+#             temp_choice_list_table[f.name] = f.choices
+#     for h in Handshape._meta.fields:
+#         if h.choices:
+#             if h not in temp_choice_list_table.keys():
+#                 temp_choice_list_table[h.name] = h.choices
+#             else:
+#                 print('generate fieldname to kind table found identical field in Handshape and Gloss: ', h.name)
+#     for k in Definition._meta.fields:
+#         if k not in temp_choice_list_table.keys():
+#             temp_choice_list_table[k.name] = k.choices
+#         else:
+#             print('generate fieldname to kind table found identical field in Handshape or Gloss and Definition: ',
+#                   k.name)
+#     return temp_choice_list_table
+#
+#
+# choice_list_table = generate_choice_list_table()
 
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
@@ -2356,7 +2361,11 @@ class Morpheme(Gloss):
         """Return JSON for mrptype choices"""
 
         # Get the list of choices for this field
-        li = self._meta.get_field("mrpType").choices
+        li = list(FieldChoice.objects.filter(field='mrpType', machine_value__lte=1)
+                         .order_by('machine_value').values_list('id', 'name')) \
+                  + list([(field_choice.id, field_choice.name) for field_choice in
+                          FieldChoice.objects.filter(field='mrpType', machine_value__gt=1)
+                         .order_by('name')])
 
         # Sort the list
         sorted_li = sorted(li, key=lambda x: x[1])
