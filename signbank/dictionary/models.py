@@ -2361,10 +2361,10 @@ class Morpheme(Gloss):
         """Return JSON for mrptype choices"""
 
         # Get the list of choices for this field
-        li = list(FieldChoice.objects.filter(field='mrpType', machine_value__lte=1)
+        li = list(FieldChoice.objects.filter(field='MorphemeType', machine_value__lte=1)
                          .order_by('machine_value').values_list('id', 'name')) \
                   + list([(field_choice.id, field_choice.name) for field_choice in
-                          FieldChoice.objects.filter(field='mrpType', machine_value__gt=1)
+                          FieldChoice.objects.filter(field='MorphemeType', machine_value__gt=1)
                          .order_by('name')])
 
         # Sort the list
