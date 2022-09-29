@@ -151,10 +151,14 @@ class FieldChoice(models.Model):
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
     name = models.CharField(max_length=50)
-    dutch_name = models.CharField(max_length=50)
-    chinese_name = models.CharField(max_length=50, blank=True)
+    # the help texts show up in the Admin
+    # these fields are now obsolete; they are disabled, but are still visible
+    dutch_name = models.CharField(max_length=50,
+                                  help_text="Field from the original NGT Signbank.")
+    chinese_name = models.CharField(max_length=50, blank=True,
+                                    help_text="Field from Global Signbank before multilingual model translation.")
     machine_value = models.IntegerField(
-        help_text="The actual numeric value stored in the database. Created automatically.")
+                help_text="The actual numeric value stored in the database. Created automatically.")
     field_color = ColorField(default='ffffff')
 
     def __str__(self):

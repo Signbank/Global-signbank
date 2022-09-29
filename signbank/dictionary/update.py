@@ -2413,7 +2413,7 @@ def update_excluded_choices(request):
 def update_field_choice_color(request, fieldchoiceid):
 
     if request.method == "POST":
-        form = FieldChoiceForm(request.POST)
+        form = FieldChoiceColorForm(request.POST)
 
         thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
         # print('field choice id: ', fieldchoiceid)

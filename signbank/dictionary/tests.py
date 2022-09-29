@@ -1791,7 +1791,7 @@ class FieldChoiceTests(TestCase):
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         self.user.save()
 
-        from signbank.dictionary.admin import FieldChoiceAdmin, FieldChoiceAdminForm
+        from signbank.dictionary.admin import FieldChoiceAdmin
 
         self.factory = RequestFactory()
 

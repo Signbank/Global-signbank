@@ -914,14 +914,130 @@ class FocusGlossSearchForm(forms.ModelForm):
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
 
-class FieldChoiceForm(forms.Form):
+class FieldChoiceColorForm(forms.Form):
     field_color = forms.CharField(widget=ColorWidget)
     readonly_fields = ['machine_value']
 
     class Meta:
         model = FieldChoice
-        fields = ['field', 'name'] \
+        fields = ['field', 'name_en'] \
                  + ['field_color', 'machine_value', ]
 
+
+class FieldChoiceForm(forms.ModelForm):
+    # this ModelForm is needed in order to validate against duplicates
+
+    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    show_english_only = settings.SHOW_ENGLISH_ONLY
+    field_category = ''
+    prepopulated_fields = {}
+
+    class Meta:
+        model = FieldChoice
+        fields = ['field'] \
+                 + ['name_' + language.replace('-', '_') for language in [l[0] for l in settings.LANGUAGES]] \
+                 + ['field_color', 'machine_value', ]
+
+    def __init__(self, *args, **kwargs):
+        super(FieldChoiceForm, self).__init__(*args, **kwargs)
+        print('inside __init__ of FieldChoiceForm after calling super: ', self.__dict__)
+        # print(self.fields['field'].__dict__)
+        # print(self.instance.__dict__)
+        # a new field choice is being created
+        # see if the user is inside a category
+        try:
+            changelist_filters = self.initial['_changelist_filters']
+        except:
+            changelist_filters = ''
+        # print(changelist_filters)
+        from urllib.parse import parse_qsl
+        if changelist_filters:
+            query_params = dict(parse_qsl(changelist_filters))
+        else:
+            query_params = ''
+        if query_params:
+            new_field_category = query_params.get('field__exact')
+            self.fields['field'].initial = new_field_category
+            # construct a singleton choice list in order to appear in the cleaned_data fields
+            self.fields['field'].widget = forms.Select(choices=[(new_field_category, new_field_category)])
+        else:
+            # restrict categories to those already existing
+            # categories are determined by the fields in the Models, the user does not create categories
+            field_choice_categories = FieldChoice.objects.all().values('field').distinct()
+            field_choice_categories = [ f['field'] for f in field_choice_categories]
+            field_choice_categories = sorted(list(set(field_choice_categories)))
+            field_choices = [(f, f) for f in field_choice_categories]
+            self.fields['field'].widget = forms.Select(choices=field_choices)
+
+        if self.show_english_only:
+            self.fields['name_en'].label = 'Name'
+            for field_name in self.fields.keys():
+                if field_name.startswith('name_') and field_name != 'name_en':
+                    self.fields[field_name].widget = forms.HiddenInput()
+                    self.fields[field_name].initial = '-'
+            # print('english only, after restricting fields self.__dict__: ', self.__dict__)
+        if not self.show_field_choice_colors:
+            self.fields['field_color'].widget = forms.HiddenInput()
+        else:
+            # SHOW_FIELD_COLORS
+            # set up the HTML color picker widget
+            # for display in the HTML color picker, the field color needs to be prefixed with #
+            # in the database,only the hex number is stored
+            # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
+            if not self.instance.id:
+                print('not self.instance.id, set initial field color')
+                self.fields['field_color'].initial = '#ffffff'
+            self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color' })
+
+        # in the model, the default value is ffffff
+        # in the admin, the default value is a display value, so needs the #
+
+        if self.instance.id:
+            # we are updating a field choice
+            instance_field = self.instance.field
+            self.fields['field'].initial = instance_field
+            # construct a singleton choice list to prevent user from changing it
+            self.fields['field'].widget = forms.Select(choices=[(instance_field, instance_field)])
+
+    def clean(self):
+        # check that the field category and (english) name does not already occur
+        print('call to clean inside of FieldChoiceForm')
+        super(FieldChoiceForm, self).clean()
+
+        cleaned_fields = self.cleaned_data
+        if 'name_en' not in cleaned_fields.keys():
+            if self.show_english_only:
+                raise forms.ValidationError(_('The Name field is required'))
+            else:
+                raise forms.ValidationError(_('The Name fields are required'))
+        en_name = self.cleaned_data['name_en']
+
+        if 'field' not in cleaned_fields.keys() or not self.cleaned_data['field']:
+            raise forms.ValidationError(_('The Field Choice Category is required'))
+        field = self.cleaned_data['field']
+
+        qs_f = FieldChoice.objects.filter(field=field)
+        if qs_f.count() == 0:
+            raise forms.ValidationError(_('This Field Choice Category does not exist'))
+
+        qs_en = FieldChoice.objects.filter(field=field, name=en_name)
+        if qs_en.count() == 0:
+            # new field choice
+            if not self._errors.keys():
+                return self.cleaned_data
+            else:
+                print('self._errors: ', self._errors)
+                raise forms.ValidationError(_('Unknown errors'))
+        elif qs_en.count() == 1:
+            # found exactly one match
+            fc_obj = qs_en.first()
+            if self.instance and fc_obj.id == self.instance.id:
+                # this is an update
+                return self.cleaned_data
+            else:
+                raise forms.ValidationError(_('The combination '+field+' -- '+en_name+' already exists'))
+        else:
+            # multiple duplicates found
+            raise forms.ValidationError(_('The combination '+field+' -- '+en_name+' already exists'))
 
 
