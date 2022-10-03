@@ -974,16 +974,13 @@ class FieldChoiceForm(forms.ModelForm):
 
     class Meta:
         model = FieldChoice
-        fields = ['field'] \
-                 + ['name_' + language.replace('-', '_') for language in [l[0] for l in settings.LANGUAGES]] \
+        fields = ['field', 'name'] \
                  + ['field_color', 'machine_value', ]
 
     def __init__(self, *args, **kwargs):
         super(FieldChoiceForm, self).__init__(*args, **kwargs)
-        print('inside __init__ of FieldChoiceForm after calling super: ', self.__dict__)
-        # print(self.fields['field'].__dict__)
-        # print(self.instance.__dict__)
-        # a new field choice is being created
+
+        # a new field choice is being created or edited
         # see if the user is inside a category
         try:
             changelist_filters = self.initial['_changelist_filters']
@@ -1015,7 +1012,7 @@ class FieldChoiceForm(forms.ModelForm):
                 if field_name.startswith('name_') and field_name != 'name_en':
                     self.fields[field_name].widget = forms.HiddenInput()
                     self.fields[field_name].initial = '-'
-            # print('english only, after restricting fields self.__dict__: ', self.__dict__)
+
         if not self.show_field_choice_colors:
             self.fields['field_color'].widget = forms.HiddenInput()
         else:
@@ -1025,7 +1022,6 @@ class FieldChoiceForm(forms.ModelForm):
             # in the database,only the hex number is stored
             # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
             if not self.instance.id:
-                print('not self.instance.id, set initial field color')
                 self.fields['field_color'].initial = '#ffffff'
             self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color' })
 
@@ -1041,7 +1037,6 @@ class FieldChoiceForm(forms.ModelForm):
 
     def clean(self):
         # check that the field category and (english) name does not already occur
-        print('call to clean inside of FieldChoiceForm')
         super(FieldChoiceForm, self).clean()
 
         cleaned_fields = self.cleaned_data

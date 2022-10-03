@@ -14,6 +14,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.utils.translation import override, ugettext_lazy as _
 
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
@@ -211,7 +212,6 @@ class LanguageInline(admin.TabularInline):
 
     extra = 0
 
-from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import SimpleListFilter
 
 class SenseNumberListFilter(SimpleListFilter):
@@ -671,10 +671,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
 
-        print('call to get_form inside of FieldChoiceAdmin')
-        # print('FieldChoiceAdmin: get form self.__dict__: ', self.__dict__)
-        # print('FieldChoiceAdmin: get form fields: ',self.__dict__['fields'])
-        # print('FieldChoiceAdmin: get form trans_opts: ', self.__dict__['trans_opts'])
         if obj:
             # for display in the HTML color picker, the field color needs to be prefixed with #
             # in the database,only the hex number is stored
@@ -700,10 +696,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
         return super(FieldChoiceAdmin, self).get_translation_field_excludes(exclude_languages)
 
     def get_exclude(self, request, obj=None):
-        print('call to get exclude in FieldChoiceAdmin')
-
-        exclude = super(FieldChoiceAdmin, self).get_exclude(request, obj)
-        # this always seems to be None
 
         exclude_list = []
         if not self.show_field_choice_colors:
@@ -713,7 +705,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 name_languagecode = 'name_'+ language.replace('-', '_')
                 if name_languagecode != 'name_en':
                     exclude_list.append(name_languagecode)
-        # print('exclude: ', tuple(exclude_list))
 
         return tuple(exclude_list)
 
@@ -873,26 +864,23 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 # store only the hex part
                 obj.field_color = new_color
 
-        # The obj.name has a value when this starts
-        for name_field in obj.__dict__.keys():
-            # this is needed if we are adding a new field choice
-            # if English only is set, some of the language fields will be empty
-            # just copy the name field
-            original_value = getattr(obj, name_field)
-            print(name_field, original_value)
-            if name_field.startswith('name_') and not original_value:
-                # this is an excluded language field, copy the english field if it's empty
-                setattr(obj,name_field,obj.name)
-            if name_field.endswith('_name') and not original_value:
-                # this is a legacy field
-                setattr(obj, name_field, obj.name)
-        # For some reason, when this is executed, obj.name is empty
-        for key, value in obj.__dict__.items():
-            print('save field: ',key,value)
+        with override('en'):
+            # The obj.name has a value when this starts
+            for name_field in obj.__dict__.keys():
+                # this is needed if we are adding a new field choice
+                # if English only is set, some of the language fields will be empty
+                # just copy the name field
+                original_value = getattr(obj, name_field)
+                if name_field.startswith('name_') and not original_value:
+                    # this is an excluded language field, copy the english field if it's empty
+                    setattr(obj,name_field,obj.name)
+                if name_field.endswith('_name') and not original_value:
+                    # this is a legacy field
+                    setattr(obj, name_field, obj.name)
 
-        # Do not save to prevent weird stuff from happening
-        # uncomment when running tests
-        # obj.save()
+            # uncomment when running tests
+            obj.save()
+
 
 
 class LanguageAdmin(TranslationAdmin):
