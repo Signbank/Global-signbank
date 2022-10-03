@@ -986,7 +986,7 @@ class FieldChoiceForm(forms.ModelForm):
             changelist_filters = self.initial['_changelist_filters']
         except:
             changelist_filters = ''
-        # print(changelist_filters)
+
         from urllib.parse import parse_qsl
         if changelist_filters:
             query_params = dict(parse_qsl(changelist_filters))
@@ -1059,16 +1059,15 @@ class FieldChoiceForm(forms.ModelForm):
         if qs_en.count() == 0:
             # new field choice
             if not self._errors.keys():
-                return self.cleaned_data
+                return
             else:
-                print('self._errors: ', self._errors)
                 raise forms.ValidationError(_('Please fix the following errors.'))
         elif qs_en.count() == 1:
             # found exactly one match
             fc_obj = qs_en.first()
             if self.instance and fc_obj.id == self.instance.id:
                 # this is an update
-                return self.cleaned_data
+                return
             else:
                 raise forms.ValidationError(_('The combination '+field+' -- '+en_name+' already exists'))
         else:

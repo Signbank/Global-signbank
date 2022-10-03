@@ -2,12 +2,13 @@ from itertools import zip_longest
 from collections import OrderedDict
 
 from signbank.dictionary.adminviews import *
-from signbank.dictionary.forms import GlossCreateForm
+from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
 from signbank.settings.base import *
 
 from django.contrib.auth.models import User, Permission, Group
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
+from django.test.client import RequestFactory, encode_multipart
 import json
 from django.test import Client
 from django.contrib.messages.storage.cookie import MessageDecoder
@@ -1787,16 +1788,90 @@ class FieldChoiceTests(TestCase):
     def setUp(self):
 
         # a new test user is created for use during the tests
-        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user = User.objects.create_user(username='test-user',
+                                             email='example@example.com',
+                                             password='test-user',
+                                             is_superuser=True,
+                                             is_staff=True)
+
+        self.user_password = 'test_user'
+
+        # set the test dataset
+        self.dataset_name = settings.DEFAULT_DATASET
+        self.test_dataset = Dataset.objects.get(name=self.dataset_name)
+
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
-        self.user.save()
+        self.user.user_permissions.add(Permission.objects.get(name='Can add gloss'))
+        self.user.user_permissions.add(Permission.objects.get(name='Can add field choice'))
+        self.user.user_permissions.add(Permission.objects.get(name='Can change field choice'))
+        self.user.user_permissions.add(Permission.objects.get(name='Can delete field choice'))
+
+        self.client = Client()
+        self.client.login(username=self.user.username, password=self.user_password)
 
         from signbank.dictionary.admin import FieldChoiceAdmin
 
         self.factory = RequestFactory()
 
         self.fieldchoice_admin = FieldChoiceAdmin(model=FieldChoice, admin_site=signbank)
-        self.fieldchoice_admin.save_model(obj=FieldChoice(), request=None, form=None, change=None)
+
+    def test_update_field_choice(self):
+        from signbank.tools import fields_with_choices_glosses
+        fields_with_choices = fields_with_choices_glosses()
+
+        client = Client(enforce_csrf_checks=False)
+        client.login(username='test-user', password='test-user')
+
+        for fieldchoice in fields_with_choices.keys():
+            print('test_update_field_choice ', fieldchoice)
+            field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
+            if field_options.count() == 0:
+                # skip testing field choices with no data
+                continue
+            first_field_choice_option = field_options.first()
+            admin_url_change_suffix_1 = str(first_field_choice_option.id)+\
+                                      '/change/?_changelist_filters=field_exact%3D'+first_field_choice_option.field
+
+            initial_data = dict()
+            initial_data['name_nl'] = 'Test Update Field Choice'
+            initial_data['name'] = first_field_choice_option.name
+            initial_data['name_en'] = first_field_choice_option.name_en
+            initial_data['name_zh_hans'] = first_field_choice_option.name_zh_hans
+            initial_data['field_color'] = first_field_choice_option.field_color
+            initial_data['field'] = first_field_choice_option.field
+            initial_data['machine_value'] = first_field_choice_option.machine_value
+
+            update_data = dict()
+            update_data['name_nl'] = 'Test Update Field Choice'
+            update_data['name'] = first_field_choice_option.name
+            update_data['name_en'] = first_field_choice_option.name_en
+            update_data['name_zh_hans'] = first_field_choice_option.name_zh_hans
+            # the hash tag is needed in the form interface for display
+            update_data['field_color'] = '#' + first_field_choice_option.field_color
+            update_data['field'] = first_field_choice_option.field
+            update_data['machine_value'] = first_field_choice_option.machine_value
+
+            response = self.client.get('/admin/dictionary/fieldchoice/'+admin_url_change_suffix_1, update_data)
+            self.assertEqual(response.status_code, 302)
+
+            form = FieldChoiceForm(instance=first_field_choice_option, data=update_data)
+            self.fieldchoice_admin.save_model(obj=first_field_choice_option,
+                                              request=response.__dict__['request'],
+                                              form=form,
+                                              change=True)
+
+            first_field_choice_option.refresh_from_db()
+
+            # check that the updated field is indeed updated
+            self.assertEqual(first_field_choice_option.name_nl, update_data['name_nl'])
+
+            # check that none of the other fields were updated
+            self.assertEqual(first_field_choice_option.name, initial_data['name'])
+            self.assertEqual(first_field_choice_option.name_en, initial_data['name_en'])
+            self.assertEqual(first_field_choice_option.name_zh_hans, initial_data['name_zh_hans'])
+            self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
+            self.assertEqual(first_field_choice_option.field, initial_data['field'])
+            self.assertEqual(first_field_choice_option.machine_value, initial_data['machine_value'])
 
     def test_delete_fieldchoice_gloss(self):
 

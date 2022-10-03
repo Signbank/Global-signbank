@@ -2,7 +2,7 @@ from colorfield.fields import ColorWidget
 from django import forms
 from django.forms import TextInput, Textarea, CharField
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm
 from reversion.admin import VersionAdmin
@@ -643,7 +643,7 @@ class UserProfileInline(admin.StackedInline):
     verbose_name_plural = 'profile'
 
 # Define a new User admin
-class UserAdmin(DjangoUserAdmin):
+class UserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
 
@@ -669,6 +669,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     list_filter = ['field']
 
     def get_form(self, request, obj=None, **kwargs):
+        print('call to field choice admin get form')
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
 
         if obj:
@@ -854,28 +855,35 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # it may be possible during testing
             print('Not allowed to update field choices with machine value 0 or 1.')
             return
-        if self.show_field_choice_colors:
-            # the color in the database needs to be without the #, which is for display
-            if form and form.cleaned_data.get('field_color'):
-                new_color = form.cleaned_data['field_color']
-                # strip any initial #'s
-                while new_color[0] == '#':
-                    new_color = new_color[1:]
-                # store only the hex part
-                obj.field_color = new_color
+
+        if 'field_color' in form.data.keys():
+            new_color = form.data['field_color']
+            # strip any initial #'s
+            while new_color[0] == '#':
+                new_color = new_color[1:]
+            # store only the hex part
+            obj.field_color = new_color
 
         with override('en'):
-            # The obj.name has a value when this starts
+            for name_field in form.data.keys():
+                if name_field == 'field_color':
+                    continue
+                new_name_value = form.data[name_field]
+                setattr(obj, name_field, new_name_value)
             for name_field in obj.__dict__.keys():
                 # this is needed if we are adding a new field choice
                 # if English only is set, some of the language fields will be empty
                 # just copy the name field
                 original_value = getattr(obj, name_field)
-                if name_field.startswith('name_') and not original_value:
+                if original_value:
+                    continue
+                if name_field.startswith('name_'):
                     # this is an excluded language field, copy the english field if it's empty
+                    print('copy to field: ', name_field, obj.name)
                     setattr(obj,name_field,obj.name)
-                if name_field.endswith('_name') and not original_value:
+                if name_field.endswith('_name'):
                     # this is a legacy field
+                    print('copy to field: ', name_field, obj.name)
                     setattr(obj, name_field, obj.name)
 
             # uncomment when running tests
