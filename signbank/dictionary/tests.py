@@ -1823,7 +1823,6 @@ class FieldChoiceTests(TestCase):
         client.login(username='test-user', password='test-user')
 
         for fieldchoice in fields_with_choices.keys():
-            print('test_update_field_choice ', fieldchoice)
             field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
             if field_options.count() == 0:
                 # skip testing field choices with no data
@@ -1833,8 +1832,8 @@ class FieldChoiceTests(TestCase):
                                       '/change/?_changelist_filters=field_exact%3D'+first_field_choice_option.field
 
             initial_data = dict()
-            initial_data['name_nl'] = 'Test Update Field Choice'
             initial_data['name'] = first_field_choice_option.name
+            initial_data['name_nl'] = first_field_choice_option.name_nl
             initial_data['name_en'] = first_field_choice_option.name_en
             initial_data['name_zh_hans'] = first_field_choice_option.name_zh_hans
             initial_data['field_color'] = first_field_choice_option.field_color
@@ -1842,32 +1841,46 @@ class FieldChoiceTests(TestCase):
             initial_data['machine_value'] = first_field_choice_option.machine_value
 
             update_data = dict()
-            update_data['name_nl'] = 'Test Update Field Choice'
+            if settings.SHOW_ENGLISH_ONLY:
+                update_data['name_en'] = 'Test Update Field Choice'
+                update_data['name_nl'] = first_field_choice_option.name_nl
+            else:
+                update_data['name_nl'] = 'Test Update Field Choice'
+                update_data['name_en'] = first_field_choice_option.name_en
             update_data['name'] = first_field_choice_option.name
-            update_data['name_en'] = first_field_choice_option.name_en
             update_data['name_zh_hans'] = first_field_choice_option.name_zh_hans
             # the hash tag is needed in the form interface for display
             update_data['field_color'] = '#' + first_field_choice_option.field_color
+            # update_data['field_color'] = first_field_choice_option.field_color
             update_data['field'] = first_field_choice_option.field
             update_data['machine_value'] = first_field_choice_option.machine_value
 
             response = self.client.get('/admin/dictionary/fieldchoice/'+admin_url_change_suffix_1, update_data)
             self.assertEqual(response.status_code, 302)
 
-            form = FieldChoiceForm(instance=first_field_choice_option, data=update_data)
+            fieldchoice_form = FieldChoiceForm(instance=first_field_choice_option, data=update_data)
+
+            cleaned = fieldchoice_form.is_valid()
+            self.assertTrue(cleaned)
+
             self.fieldchoice_admin.save_model(obj=first_field_choice_option,
                                               request=response.__dict__['request'],
-                                              form=form,
+                                              form=fieldchoice_form,
                                               change=True)
 
             first_field_choice_option.refresh_from_db()
 
             # check that the updated field is indeed updated
-            self.assertEqual(first_field_choice_option.name_nl, update_data['name_nl'])
-
+            if settings.SHOW_ENGLISH_ONLY:
+                self.assertEqual(first_field_choice_option.name_en, update_data['name_en'])
+                self.assertEqual(first_field_choice_option.name_nl, initial_data['name_nl'])
+                # the English-only test updates the name field behind the scenes
+                self.assertEqual(first_field_choice_option.name, update_data['name_en'])
+            else:
+                self.assertEqual(first_field_choice_option.name_nl, update_data['name_nl'])
+                self.assertEqual(first_field_choice_option.name_en, initial_data['name_en'])
+                self.assertEqual(first_field_choice_option.name, initial_data['name'])
             # check that none of the other fields were updated
-            self.assertEqual(first_field_choice_option.name, initial_data['name'])
-            self.assertEqual(first_field_choice_option.name_en, initial_data['name_en'])
             self.assertEqual(first_field_choice_option.name_zh_hans, initial_data['name_zh_hans'])
             self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
             self.assertEqual(first_field_choice_option.field, initial_data['field'])

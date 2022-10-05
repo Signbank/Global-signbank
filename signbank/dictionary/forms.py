@@ -12,7 +12,7 @@ from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Rel
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
-from signbank.settings.server_specific import DEFAULT_KEYWORDS_LANGUAGE
+from signbank.settings.server_specific import DEFAULT_KEYWORDS_LANGUAGE, LANGUAGES
 from signbank.settings.base import FIELDS
 
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
@@ -974,7 +974,8 @@ class FieldChoiceForm(forms.ModelForm):
 
     class Meta:
         model = FieldChoice
-        fields = ['field', 'name'] \
+        fields = ['field'] \
+                 + ['name_' + language.replace('-', '_') for language in [l[0] for l in settings.LANGUAGES]] \
                  + ['field_color', 'machine_value', ]
 
     def __init__(self, *args, **kwargs):
@@ -995,7 +996,7 @@ class FieldChoiceForm(forms.ModelForm):
         if query_params:
             new_field_category = query_params.get('field__exact')
             self.fields['field'].initial = new_field_category
-            # construct a singleton choice list in order to appear in the cleaned_data fields
+            # construct a singleton choice list in order to appear in the data fields
             self.fields['field'].widget = forms.Select(choices=[(new_field_category, new_field_category)])
         else:
             # restrict categories to those already existing
@@ -1007,11 +1008,30 @@ class FieldChoiceForm(forms.ModelForm):
             self.fields['field'].widget = forms.Select(choices=field_choices)
 
         if self.show_english_only:
-            self.fields['name_en'].label = 'Name'
+            if 'name_en' in self.fields.keys():
+                self.fields['name_en'].label = 'Name'
+            else:
+                # there was some weird stuff going on with the behind the scenes Django creation of a form
+                # before getting to __init__
+                # sometimes neither name_en nor name were present in the form
+                print('other case init english only has no name_en field')
+                self.fields['name'] = forms.CharField(max_length=50)
+                self.fields['name'].label = 'Name'
+                self.fields['name'].widget = forms.CharField(max_length=50)
+                if self.instance.id:
+                    self.fields['name'].initial = self.instance.name
+                else:
+                    self.fields['name'].initial = '-'
             for field_name in self.fields.keys():
-                if field_name.startswith('name_') and field_name != 'name_en':
+                # there were some problems with the iteration that constructed the field names dynamically
+                # at the moment this is hard coded because of that
+                if field_name in ['name_nl', 'name_zh_hans']:
                     self.fields[field_name].widget = forms.HiddenInput()
                     self.fields[field_name].initial = '-'
+        if not self.instance.id:
+            self.fields['field_color'].initial = '#ffffff'
+        else:
+            self.fields['field_color'].initial = '#' + self.instance.field_color
 
         if not self.show_field_choice_colors:
             self.fields['field_color'].widget = forms.HiddenInput()
@@ -1021,8 +1041,6 @@ class FieldChoiceForm(forms.ModelForm):
             # for display in the HTML color picker, the field color needs to be prefixed with #
             # in the database,only the hex number is stored
             # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
-            if not self.instance.id:
-                self.fields['field_color'].initial = '#ffffff'
             self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color' })
 
         # in the model, the default value is ffffff
@@ -1039,17 +1057,32 @@ class FieldChoiceForm(forms.ModelForm):
         # check that the field category and (english) name does not already occur
         super(FieldChoiceForm, self).clean()
 
-        cleaned_fields = self.cleaned_data
-        if 'name_en' not in cleaned_fields.keys():
-            if self.show_english_only:
+        data_fields = self.data
+
+        if self.show_english_only:
+            if 'name_en' not in data_fields.keys():
                 raise forms.ValidationError(_('The Name field is required'))
             else:
-                raise forms.ValidationError(_('The Name fields are required'))
-        en_name = self.cleaned_data['name_en']
+                en_name = data_fields['name_en']
+        else:
+            for language in [l[0] for l in LANGUAGES]:
+                name_languagecode = 'name_'+ language.replace('-', '_')
+                if name_languagecode not in data_fields.keys():
+                    raise forms.ValidationError(_('The Name fields for all languages are required'))
+            en_name = data_fields['name_en']
 
-        if 'field' not in cleaned_fields.keys() or not self.cleaned_data['field']:
+        if 'field_color' not in data_fields.keys():
+            print('field color not in data fields')
+        else:
+            new_color = data_fields['field_color']
+            # strip any initial #'s
+            while new_color[0] == '#':
+                new_color = new_color[1:]
+            field_color = new_color
+
+        if 'field' not in data_fields.keys() or not data_fields['field']:
             raise forms.ValidationError(_('The Field Choice Category is required'))
-        field = self.cleaned_data['field']
+        field = data_fields['field']
 
         qs_f = FieldChoice.objects.filter(field=field)
         if qs_f.count() == 0:
@@ -1061,13 +1094,17 @@ class FieldChoiceForm(forms.ModelForm):
             if not self._errors.keys():
                 return
             else:
-                raise forms.ValidationError(_('Please fix the following errors.'))
+                raise forms.ValidationError(_('New Field Choice. Please fix the following errors.'))
         elif qs_en.count() == 1:
             # found exactly one match
             fc_obj = qs_en.first()
             if self.instance and fc_obj.id == self.instance.id:
                 # this is an update
-                return
+                # new field choice
+                if not self._errors.keys():
+                    return
+                else:
+                    raise forms.ValidationError(_('Update Field Choice. Please fix the following errors.'))
             else:
                 raise forms.ValidationError(_('The combination '+field+' -- '+en_name+' already exists'))
         else:

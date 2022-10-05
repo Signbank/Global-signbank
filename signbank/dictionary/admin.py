@@ -7,7 +7,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm
 from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
-from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGES
+from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGES, LANGUAGE_CODE
 from modeltranslation.admin import TranslationAdmin
 from guardian.admin import GuardedModelAdmin
 from django.contrib.auth import get_permission_codename
@@ -652,6 +652,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     actions=['delete_selected']
 
     model = FieldChoice
+    fields = ['field', 'name'] \
+             + ['field_color', 'machine_value' ]
     form = FieldChoiceForm
 
     if hasattr(server_specific, 'SHOW_FIELD_CHOICE_COLORS') and server_specific.SHOW_FIELD_CHOICE_COLORS:
@@ -669,7 +671,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     list_filter = ['field']
 
     def get_form(self, request, obj=None, **kwargs):
-        print('call to field choice admin get form')
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
 
         if obj:
@@ -680,34 +681,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             if obj_color[0] != '#':
                 obj.field_color = '#'+obj.field_color
         return form
-
-    def _clean_form(self):
-        print('clean form inside FieldChoiceAdmin')
-        try:
-            cleaned_data = self.clean()
-        except ValidationError as e:
-            self.add_error(None, e)
-        else:
-            if cleaned_data is not None:
-                self.cleaned_data = cleaned_data
-
-    def get_translation_field_excludes(self, exclude_languages=None):
-        print('call get_translation_field_excludes, exclude languages: ', exclude_languages)
-        # does this do anything?
-        return super(FieldChoiceAdmin, self).get_translation_field_excludes(exclude_languages)
-
-    def get_exclude(self, request, obj=None):
-
-        exclude_list = []
-        if not self.show_field_choice_colors:
-            exclude_list.append('field_color')
-        if self.show_english_only:
-            for language in [l[0] for l in LANGUAGES]:
-                name_languagecode = 'name_'+ language.replace('-', '_')
-                if name_languagecode != 'name_en':
-                    exclude_list.append(name_languagecode)
-
-        return tuple(exclude_list)
 
     def get_actions(self, request):
         actions = super(FieldChoiceAdmin, self).get_actions(request)
@@ -862,32 +835,25 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             while new_color[0] == '#':
                 new_color = new_color[1:]
             # store only the hex part
-            obj.field_color = new_color
+            original_color = getattr(obj, 'field_color')
+            if new_color != original_color:
+                setattr(obj, 'field_color', new_color)
 
-        with override('en'):
+        with override(LANGUAGE_CODE):
             for name_field in form.data.keys():
-                if name_field == 'field_color':
+                if name_field not in form.fields:
+                    continue
+                if name_field == 'field_color' or name_field == 'csrfmiddlewaretoken':
                     continue
                 new_name_value = form.data[name_field]
-                setattr(obj, name_field, new_name_value)
-            for name_field in obj.__dict__.keys():
-                # this is needed if we are adding a new field choice
-                # if English only is set, some of the language fields will be empty
-                # just copy the name field
                 original_value = getattr(obj, name_field)
-                if original_value:
-                    continue
-                if name_field.startswith('name_'):
-                    # this is an excluded language field, copy the english field if it's empty
-                    print('copy to field: ', name_field, obj.name)
-                    setattr(obj,name_field,obj.name)
-                if name_field.endswith('_name'):
-                    # this is a legacy field
-                    print('copy to field: ', name_field, obj.name)
-                    setattr(obj, name_field, obj.name)
+                if new_name_value != original_value:
+                    setattr(obj, name_field, new_name_value)
 
-            # uncomment when running tests
-            obj.save()
+            try:
+                obj.save()
+            except Exception as e:
+                print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
 
 
 
