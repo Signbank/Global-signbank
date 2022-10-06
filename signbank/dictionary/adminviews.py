@@ -365,7 +365,7 @@ class GlossListView(ListView):
                                                                     widget=forms.Select(attrs={'class':'form-control'}))
             except KeyError:
                 continue
-
+        print(search_form.fields)
         context['searchform'] = search_form
         context['search_type'] = self.search_type
         context['view_type'] = self.view_type
@@ -3052,7 +3052,7 @@ class HandshapeDetailView(DetailView):
         if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
             # there are no handshapes in the scrollbar, put some there
 
-            qs = Handshape.objects.all().order_by('machine_value')
+            qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
             from signbank.tools import convert_language_code_to_language_minus_locale
             lang_attr_name = convert_language_code_to_language_minus_locale(
@@ -4395,12 +4395,9 @@ class HandshapeListView(ListView):
 
         context['searchform'] = search_form
         context['search_type'] = self.search_type
-        # if self.search_type == 'sign_handshape':
-        #     context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
-        # else:
-        #     context['glosscount'] = Gloss.objects.count()  # Count the glosses + morphemes
 
-        context['handshapefieldchoicecount'] = FieldChoice.objects.filter(field__iexact='Handshape').count()
+        context['handshapefieldchoicecount'] = FieldChoice.objects.filter(field__iexact='Handshape',
+                                                                          machine_value__gt=1).count()
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -4408,44 +4405,18 @@ class HandshapeListView(ListView):
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
 
-        context['handshape_fields_FS1'] = []
-
-        context['choice_lists'] = {}
-
-        handshape_fields = {}
-        for f in Handshape._meta.fields:
-            handshape_fields[f.name] = f
-
-        for field in FIELDS['handshape']:
-
-            handshape_field = handshape_fields[field]
-            # Get and save the choice list for this field
-            if hasattr(handshape_field, 'field_choice_category'):
-                fieldchoice_category = handshape_field.field_choice_category
-            else:
-                fieldchoice_category = field
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
-
-            if len(choice_list) > 0:
-                context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list, id_prefix='')
-
-        context['choice_lists'] = json.dumps(context['choice_lists'])
-
         try:
             if self.kwargs['show_all']:
                 context['show_all'] = True
         except KeyError:
             context['show_all'] = False
 
-        context['handshapescount'] = Handshape.objects.count()
+        context['handshapescount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
         # this is needed to avoid crashing the browser if you go to the last page
         # of an extremely long list and go to Detail View on the objects
 
-        if len(self.object_list) > settings.MAX_SCROLL_BAR:
-            list_of_objects = context['page_obj'].object_list
-        else:
-            list_of_objects = self.object_list
+        list_of_objects = self.object_list
 
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
@@ -4495,26 +4466,9 @@ class HandshapeListView(ListView):
 
     def get_queryset(self):
 
-        choice_lists = {}
-
         handshape_fields = {}
         for f in Handshape._meta.fields:
             handshape_fields[f.name] = f
-
-        mapped_handshape_fields = map_field_names_to_fk_field_names(FIELDS['handshape'])
-        for field in FIELDS['handshape']:
-
-            handshape_field = handshape_fields[field]
-            # Get and save the choice list for this field
-            if hasattr(handshape_field, 'field_choice_category'):
-                fieldchoice_category = handshape_field.field_choice_category
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
-            else:
-                fieldchoice_category = field
-                choice_list = []
-
-            if len(choice_list) > 0:
-                choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list, id_prefix='')
 
         # get query terms from self.request
         get = self.request.GET
@@ -4534,7 +4488,7 @@ class HandshapeListView(ListView):
 
         setattr(self.request.session, 'search_type', self.search_type)
 
-        qs = Handshape.objects.all().order_by('machine_value')
+        qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
         if show_all:
             if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
@@ -4545,7 +4499,7 @@ class HandshapeListView(ListView):
                 qs = order_handshape_by_angle(qs)
             return qs
 
-        handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
+        handshapes = FieldChoice.objects.filter(field__iexact='Handshape', machine_value__gt=1)
         # Find out if any Handshapes exist for which no Handshape object has been created
 
         existing_handshape_objects_machine_values = [ o.machine_value for o in qs ]
@@ -4578,7 +4532,7 @@ class HandshapeListView(ListView):
 
         if new_handshape_created: # if a new Handshape object was created, reload the query result
 
-            qs = Handshape.objects.all().order_by('machine_value')
+            qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
         mapped_handshape_fields = map_field_names_to_fk_field_names(FIELDS['handshape'])
         fieldnames = ['machine_value', 'name']+FIELDS['handshape']
@@ -4624,11 +4578,11 @@ class HandshapeListView(ListView):
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]
 
                 if fieldname == 'name' and val != '':
-                    query = Q(name__icontains=val)
+                    query = Q(name__iregex=val)
                     qs = qs.filter(query)
 
 
-                if val != '' and fieldname != 'hsNumSel' and fieldname != 'name':
+                if val != '' and fieldname not in ['hsNumSel', 'name']:
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
 
@@ -4646,14 +4600,15 @@ class HandshapeListView(ListView):
             selected_handshapes = [ h.machine_value for h in qs ]
             selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-            if len(selected_handshapes) == (Handshape.objects.all().count()):
+            # set up filters, obscuring whether the _fk field names are used
+            strong_hand = map_field_name_to_fk_field_name('domhndsh')
+            strong_hand_in = strong_hand + '__machine_value__in'
+            weak_hand = map_field_name_to_fk_field_name('subhndsh')
+            weak_hand_in = weak_hand + '__machine_value__in'
 
-                qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes)
-                                          | Q(domhndsh__isnull=True) | Q(domhndsh__exact='0')
-                                          | Q(subhndsh__in=selected_handshapes) | Q(subhndsh__isnull=True) | Q(subhndsh__exact='0'))
-
-            else:
-                qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes) | Q(subhndsh__in=selected_handshapes))
+            qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+                        (Q(**{strong_hand_in: selected_handshapes}) |
+                         Q(**{weak_hand_in: selected_handshapes}) ))
 
         self.request.session['search_type'] = self.search_type
 

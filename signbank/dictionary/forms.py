@@ -662,6 +662,42 @@ def get_finger_selection_choices():
                   .order_by('name')])
     return choices
 
+def get_quantity_choices():
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field='Quantity', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='Quantity', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
+
+def get_joint_configuration_choices():
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field='JointConfiguration', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='JointConfiguration', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
+
+def get_spreading_choices():
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field='Spreading', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='Spreading', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
+
+def get_aperture_choices():
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field='Aperture', machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field='Aperture', machine_value__gt=1)
+                  .order_by('name')])
+    return choices
+
 attrs_default = {'class': 'form-control'}
 FINGER_SELECTION = ((True, 'True'), (False, 'False'), (None, 'Either'))
 
@@ -672,9 +708,20 @@ class HandshapeSearchForm(forms.ModelForm):
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="machine_value")  # Used in Handshapelistview to store user-selection
 
-    # this is used to pass the label to the handshapes list view
+    # this is used to pass the label to the handshapes list view, the choices aren't displayed, there are radio buttons
     unselectedFingers = forms.ChoiceField(label=_(u'Unselected Fingers Extended'), choices=get_finger_selection_choices,
                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+    hsFingConf = forms.ChoiceField(label=_(u'Finger configuration'), choices=get_joint_configuration_choices,
+                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hsFingConf2 = forms.ChoiceField(label=_(u'Finger configuration 2'), choices=get_joint_configuration_choices,
+                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hsNumSel = forms.ChoiceField(label=_(u'Quantity'), choices=get_quantity_choices,
+                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hsSpread = forms.ChoiceField(label=_(u'Spreading'), choices=get_spreading_choices,
+                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hsAperture = forms.ChoiceField(label=_(u'Aperture'), choices=get_aperture_choices,
+                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     fsT = forms.NullBooleanSelect()
     fsI = forms.NullBooleanSelect()
