@@ -15,7 +15,6 @@
 
     <script type='text/javascript'>
     var url = '{{PREFIX_URL}}';
-    var language_code = '{{ LANGUAGE_CODE }}';
 
     <!--var edit_mode_str = '{% trans "Edit" %}'-->
     <!--var turn_off_edit_mode_str = '{% trans "Turn Off Edit Mode" %}'-->
@@ -153,18 +152,16 @@ function do_adminsearch(el) {
             <input name='sortOrder' class='form-control' value='machine_value' >
             <input name='search_type' class='form-control' value='handshape'>
         </div>
-     {% with request.LANGUAGE_CODE as language %}
                 <div id='handshape_name'>
                     {% csrf_token %}
                     <table class='table'>
                         <tr id='handshape_name_field'>
-                            <td><label for='id_name'>{% trans "Handshape name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape name" %}' name='name' type='text'
+                            <td><label for='id_name'>{% trans "Handshape Name" %}</label></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='name' type='text'
                                        value='{{searchform.name.value|default:'' }}'/></td>
                         </tr>
                     </table>
                 </div>
-    {% endwith %}
                 {# spacing div to allow room for typeahead dropdown #}
                 <div style='height: 4em'></div>
 
@@ -374,20 +371,11 @@ function do_adminsearch(el) {
 
 {% load field_choice %}
 
-{% with request.LANGUAGE_CODE as language %}
-
-
 <table class='table table-condensed'>
     <thead>
       <tr>
           <th>{% trans "Handshape" %}</th>
-          {% if language == 'nl' %}
-          <th>{% trans "Dutch name" %}</th>
-        {% elif language == 'zh-hans' %}
-          <th>{% trans "Chinese name" %}</th>
-        {% else %}
-          <th>{% trans "English name" %}</th>
-        {% endif %}
+          <th>{% trans "Name" %}</th>
           <th>{% trans "Finger Selection" %}</th>
           <th>{% trans "Finger Configuration" %}</th>
           <th>{% trans "Finger Selection 2" %}</th>
@@ -536,7 +524,6 @@ function do_adminsearch(el) {
     </tr>
     {% endfor %}
   </tbody>
-    {% endwith %}
 </table>
 
 {% endif %}
