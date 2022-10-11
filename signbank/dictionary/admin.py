@@ -569,13 +569,56 @@ class DerivationHistoryTranslationAdmin(VersionAdmin):
     def has_add_permission(self, request):
         return False
 
+class GlossRevisionUserFilter(admin.SimpleListFilter):
+
+    title = _('User')
+    parameter_name = 'revisions_per_user'
+
+    def lookups(self, request, model_admin):
+        # filter on users who have actually changed things
+        users_present = GlossRevision.objects.all().values('user').distinct()
+        user_tuples = [ (u.id, u.username) for u in User.objects.filter(id__in=users_present) ]
+        return (tuple(
+            (user_id, user_username) for (user_id, user_username) in user_tuples
+        ))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(user_id=self.value())
+        return queryset.all()
+
+class GlossRevisionDatasetFilter(admin.SimpleListFilter):
+
+    title = _('Dataset')
+    parameter_name = 'revisions_per_dataset'
+
+    def lookups(self, request, model_admin):
+        datasets = Dataset.objects.all()
+        return (tuple(
+            (dataset.id, dataset.acronym) for dataset in datasets
+        ))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(gloss__lemma__dataset_id=self.value())
+        return queryset.all()
 
 class GlossRevisionAdmin(VersionAdmin):
 
     model = GlossRevision
 
+    list_display = ['time', 'user', 'dataset', 'gloss', 'field_name', 'old_value', 'new_value']
+    readonly_fields = ['user', 'gloss', 'field_name', 'old_value', 'new_value', 'time', 'old_value']
+    list_filter = (GlossRevisionDatasetFilter, GlossRevisionUserFilter,)
+
     def has_add_permission(self, request):
         return False
+
+    def get_list_display_links(self, request, list_display):
+        # do not allow the user to view individual revisions in list
+        self.list_display_links = (None, )
+        return self.list_display_links
+
 
 class RegistrationProfileAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'activation_key_expired', )

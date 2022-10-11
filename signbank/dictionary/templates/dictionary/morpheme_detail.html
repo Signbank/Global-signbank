@@ -332,12 +332,6 @@ function checkKey(e)
         {% endif %}
     </div>
 
-    <div id="feedback">
-        <ul>
-            <li><a href="{{PREFIX_URL}}/feedback/morpheme/{{morpheme.id}}?return={{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}">{% trans "Provide feedback about this morpheme" %}</a></li>
-        </ul>
-    </div>
-
     {% if perms.dictionary.change_morpheme and perms.dictionary.update_video %}
     <div class='editform'>
         <fieldset>
@@ -856,5 +850,16 @@ function checkKey(e)
     </div>
 </div>
 
+<footer class="footer">
+<div class="container">
+    <div class='pull-right'>
+        <div id="feedback">
+            <ul>
+                <li><a href="{{PREFIX_URL}}/feedback/morpheme/{{morpheme.id}}/">{% trans "Provide Feedback About This Morpheme" %}</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+</footer>
 
 {% endblock %}

@@ -23,7 +23,6 @@
 
   <input type='hidden' name='sourcepage' value='{{sourcepage}}'>
 
-  {% csrf_token %}
   <p> <span class="feedbackQuestion"> Please give us your comments about this {% if "morpheme" in sourcepage %}morpheme{% else %}sign{% endif %}. For example:
   do you think other keywords are needed?
   Please write your comments or new keywords below. </span> <br/>
@@ -52,13 +51,8 @@
 
   <p class="feedbackQuestion">Is this a sign or a morpheme? </p>
   {% if feedback_form.like.errors %}<ul class="errorlist">{{ feedback_form.like.errors }}</ul>{% endif %}
-    <ul id="id_like">
-      {% if "morpheme" in sourcepage %}
-      <li><input id="id_like_0" type="radio" name="like" value="1" checked="checked"/> Morpheme</li>
-      {% else %}
-      <li><input id="id_like_1" type="radio" name="like" value="0" checked="checked"/> Sign</li>
-      {% endif %}
-    </ul>
+  {{ feedback_form.like }}
+
   <p class="feedbackQuestion">Do you use this {% if "morpheme" in sourcepage %}morpheme{% else %}sign{% endif %}?</p>
 
    {% if feedback_form.use.errors %}<ul class="errorlist">{{ feedback_form.use.errors }}</ul>{% endif %}

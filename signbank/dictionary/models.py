@@ -2898,6 +2898,13 @@ class GlossRevision(models.Model):
         #return str(self.user)
         return str(self.user) + " changed " + str(self.field_name) + " to " + str(self.new_value)
 
+    @property
+    def dataset(self):
+        try:
+            return self.gloss.lemma.dataset
+        except (KeyError, AttributeError, LookupError):
+            return None
+
 class Corpus(models.Model):
 
     name = models.CharField(max_length=100)

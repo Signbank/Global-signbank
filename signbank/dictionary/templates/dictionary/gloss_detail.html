@@ -548,12 +548,6 @@ option:not(:checked) {
         {% endif %}
     </div>
 
-    <div id="feedback">
-        <ul>
-            <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}?return=/dictionary/gloss/{{gloss.id}}/">{% trans "Provide Feedback About This Sign" %}</a></li>
-        </ul>
-    </div>
-
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     <div class='editform'>
@@ -1658,5 +1652,15 @@ option:not(:checked) {
     </div>
 </div>
 
-
+<footer class="footer">
+<div class="container">
+    <div class='pull-right'>
+        <div id="feedback">
+            <ul>
+                <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}/">{% trans "Provide Feedback About This Sign" %}</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+</footer>
 {% endblock %}

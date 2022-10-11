@@ -80,10 +80,7 @@ class GeneralFeedbackForm(forms.Form):
     video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
     
 
-try:
-	signLanguageChoices = [ (0, '---------') ] + [ ( sl.id, sl.name ) for sl in SignLanguage.objects.all() ]
-except (OperationalError, ProgrammingError) as e:
-	signLanguageChoices = []
+signLanguageChoices = [ ('0', 'N/A') ] + [ ( str(sl.id), sl.name ) for sl in SignLanguage.objects.all() ]
 
 if settings.LANGUAGE_NAME == "BSL":
     whereusedChoices = (('Belfast', 'Belfast'),
@@ -98,52 +95,24 @@ if settings.LANGUAGE_NAME == "BSL":
                         ("Don't Know", "Don't Know"),
                         ('N/A', 'N/A'),
                         )
-elif settings.LANGUAGE_NAME == "Global":
-    whereusedChoices = (
-                            (0, (
-                                    ('n/a', 'N/A'),
-                                )
-                             ),
-                            (1, (
-                                        ('1', 'Groningen'),
-                                        ('2', 'Amsterdam'),
-                                        ('3', 'Voorburg'),
-                                        ('4', 'Rotterdam'),
-                                        ('5', 'Gestel'),
-                                        ('6', 'Unknown'),
-                                )
-                            ),
-                            (4, (
-                                        ('7', 'Beijing'),
-                                        ('8', 'Shanghai'),
-                                        ('9', 'Nanjing'),
-                                        ('10', 'Unknown'),
-                                )
-                             ),
-                            (7, (
-                                        ('11', 'Ambon'),
-                                        ('12', 'Makassar'),
-                                        ('13', 'Padang'),
-                                        ('14', 'Pontianak'),
-                                        ('15', 'Singaradja'),
-                                        ('16', 'Solo'),
-                                )
-                             ),
-                        )
 else:
-    whereusedChoices = (('auswide', 'Australia Wide'),
-                        ('dialectN', 'Dialect Sign (North)'),
-                        ('dialectS', 'Dialect Sign (South)'),
-                        ('nsw', "New South Wales"),
-                        ('vic', "Victoria"),
-                        ('qld', "Queensland"),
-                        ('wa', "Western Australia"),
-                        ('sa', "South Australia"),
-                        ('tas', "Tasmania"),
-                        ('nt', "Northern Territory"),
-                        ('act', "Australian Capital Territory"),
-                        ('dk', "Don't Know"),
-                        ('n/a', "N/A")
+    whereusedChoices = (('N/A', 'N/A'),
+                        ('Groningen', 'Groningen'),
+                        ('Amsterdam', 'Amsterdam'),
+                        ('Voorburg', 'Voorburg'),
+                        ('Rotterdam', 'Rotterdam'),
+                        ('Gestel', 'Gestel'),
+                        ('Unknown', 'Unknown'),
+                        ('Beijing', 'Beijing'),
+                        ('Shanghai', 'Shanghai'),
+                        ('Nanjing', 'Nanjing'),
+                        ('Unknown', 'Unknown'),
+                        ('Ambon', 'Ambon'),
+                        ('Makassar', 'Makassar'),
+                        ('Padang', 'Padang'),
+                        ('Pontianak', 'Pontianak'),
+                        ('Singaradja', 'Singaradja'),
+                        ('Solo', 'Solo'),
                         )
 
 likedChoices =    ( (1, "Morpheme"),
@@ -203,7 +172,7 @@ class SignFeedbackForm(forms.Form):
     """Form for input of sign feedback"""
 
     # isAuslan now stores Sign Language
-    isAuslan = forms.ChoiceField(choices=signLanguageChoices, initial=0)
+    isAuslan = forms.ChoiceField(choices=signLanguageChoices)
     # whereused now stores Dialect
     whereused = forms.ChoiceField(choices=whereusedChoices, initial="n/a")
     #whereused = forms.CharField(initial='n/a', widget=forms.HiddenInput)
@@ -217,6 +186,27 @@ class SignFeedbackForm(forms.Form):
     #correct = forms.IntegerField(initial=0, widget=forms.HiddenInput)
     kwnotbelong = forms.CharField(label="List keywords", required=False, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
     comment = forms.CharField(label="Comment or new keywords", required=True, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
+
+    def __init__(self, *args, **kwargs):
+        is_sign_or_morpheme = kwargs.pop('is_sign_or_morpheme')
+        signlanguage = kwargs.pop('signlanguage')
+        super(SignFeedbackForm, self).__init__(*args, **kwargs)
+        self.fields['like'].initial = is_sign_or_morpheme
+        if signlanguage:
+            # problems getting this to work correctly
+            index_of_signlanguage = [ signLanguageChoices.index(tupl)
+                                      for tupl in signLanguageChoices if tupl[0] == str(signlanguage.id) ]
+            self.fields['isAuslan'].initial = 0
+
+def build_choice_list(field_category):
+    # this was removed from the original source dictionary/models.py
+    choices = [('','---------')]\
+           + list(FieldChoice.objects.filter(field=field_category, machine_value__lte=1)
+                  .order_by('machine_value').values_list('id', 'name')) \
+           + list([(field_choice.id, field_choice.name) for field_choice in
+                   FieldChoice.objects.filter(field=field_category, machine_value__gt=1)
+                  .order_by('name')])
+    return choices
 
 handformChoices = build_choice_list("Handedness")
 
