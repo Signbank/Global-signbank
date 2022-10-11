@@ -83,7 +83,8 @@ class GeneralFeedbackForm(forms.Form):
 signLanguageChoices = [ ('0', 'N/A') ] + [ ( str(sl.id), sl.name ) for sl in SignLanguage.objects.all() ]
 
 if settings.LANGUAGE_NAME == "BSL":
-    whereusedChoices = (('Belfast', 'Belfast'),
+    whereusedChoices = (('N/A', 'N/A'),
+                        ('Belfast', 'Belfast'),
                         ('Birmingham', 'Birmingham'),
                         ('Bristol', 'Bristol'),
                         ('Cardiff', 'Cardiff'),
@@ -93,7 +94,6 @@ if settings.LANGUAGE_NAME == "BSL":
                         ('Newcastle', 'Newcastle'),
                         ('Other', 'Other (note in comments)'),
                         ("Don't Know", "Don't Know"),
-                        ('N/A', 'N/A'),
                         )
 else:
     whereusedChoices = (('N/A', 'N/A'),
@@ -174,7 +174,7 @@ class SignFeedbackForm(forms.Form):
     # isAuslan now stores Sign Language
     isAuslan = forms.ChoiceField(choices=signLanguageChoices)
     # whereused now stores Dialect
-    whereused = forms.ChoiceField(choices=whereusedChoices, initial="n/a")
+    whereused = forms.ChoiceField(choices=whereusedChoices)
     #whereused = forms.CharField(initial='n/a', widget=forms.HiddenInput)
     like = forms.ChoiceField(choices=likedChoices, widget=forms.RadioSelect)
     #like = forms.IntegerField(initial=0, widget=forms.HiddenInput)
