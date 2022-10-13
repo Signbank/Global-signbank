@@ -8,7 +8,7 @@ django-debug-toolbar==1.9.1
 django-easy-select2==1.5.7
 django-guardian==1.4.9
 django-mobile==0.7.0
-django-modeltranslation==0.12.1
+django-modeltranslation==0.13.4
 django-reversion==2.0.8
 django-select2==6.0.2
 django-summernote==0.8.6

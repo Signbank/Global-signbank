@@ -24,7 +24,7 @@ translator.register(FieldChoice, FieldChoiceTranslationOptions)
 
 class HandshapeTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = (LANGUAGES[0][0],)
+    required_languages = tuple([t[0] for t in LANGUAGES])
 
 
 translator.register(Handshape, HandshapeTranslationOptions)

@@ -663,12 +663,12 @@ def get_finger_selection_choices():
     return choices
 
 def get_quantity_choices():
-    choices = [('','---------')]\
-           + list(FieldChoice.objects.filter(field='Quantity', machine_value__lte=1)
+    choices = list(FieldChoice.objects.filter(field='Quantity', machine_value__lte=1)
                   .order_by('machine_value').values_list('id', 'name')) \
            + list([(field_choice.id, field_choice.name) for field_choice in
                    FieldChoice.objects.filter(field='Quantity', machine_value__gt=1)
                   .order_by('name')])
+    print('get_quantity_choices: ', choices)
     return choices
 
 def get_joint_configuration_choices():
@@ -716,8 +716,10 @@ class HandshapeSearchForm(forms.ModelForm):
                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hsFingConf2 = forms.ChoiceField(label=_(u'Finger configuration 2'), choices=get_joint_configuration_choices,
                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hsNumSel = forms.ChoiceField(label=_(u'Quantity'), choices=get_quantity_choices,
-                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    # hsNumSel = forms.ChoiceField(label=_(u'Quantity'), choices=get_quantity_choices,
+    #                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hsNumSel_fk = forms.ModelChoiceField(label=_(u'Quantity'),
+                    queryset=FieldChoice.objects.filter(field='Quantity'))
     hsSpread = forms.ChoiceField(label=_(u'Spreading'), choices=get_spreading_choices,
                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hsAperture = forms.ChoiceField(label=_(u'Aperture'), choices=get_aperture_choices,
@@ -744,7 +746,7 @@ class HandshapeSearchForm(forms.ModelForm):
 
         model = Handshape
         fields = ('machine_value', 'name',
-				  'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2',
+				  'hsNumSel_fk', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2',
 				  'hsAperture', 'hsThumb', 'hsSpread', 'hsFingUnsel',
                   'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                   'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',

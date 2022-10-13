@@ -457,14 +457,19 @@ class Handshape(models.Model):
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
-
+        foreign_key_fields = [f.name for f in self._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         d = dict()
         for f in self._meta.fields:
+            if f.name + '_fk' in foreign_key_fields:
+                # skip original obsolete field choice fields
+                continue
+            if f.name in ['dutch_name', 'chinese_name']:
+                # skip obsolete language fields
+                continue
             try:
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except:
                 pass
-
         return d
 
     def get_image_path(self, check_existance=True):
@@ -656,14 +661,16 @@ class Gloss(models.Model):
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
-
+        foreign_key_fields = [f.name for f in self._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         d = dict()
         for f in self._meta.fields:
+            # skip obsolete field choice fields
+            if f.name + '_fk' in foreign_key_fields:
+                continue
             try:
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except:
                 pass
-
         return d
 
     lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
@@ -1564,16 +1571,26 @@ class Gloss(models.Model):
         # this method uses string representations for Boolean values
         # in order to distinguish between null values, False values, and Neutral values
 
-        phonology_dict = dict()
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_phonology_fields = {}
+        for field in FIELDS['phonology']:
+            if field+'_fk' in foreign_key_fields:
+                mapped_phonology_fields[field] = field+'_fk'
+            else:
+                mapped_phonology_fields[field] = field
 
         gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            for f in Gloss._meta.fields:
+                if f.name in FIELDS['phonology']:
+                    gloss_fields[f.name] = f
+        else:
+            for fname in FIELDS['phonology']:
+                mapped_field_name = mapped_phonology_fields[fname]
+                gloss_fields[fname] = Gloss._meta.get_field(mapped_field_name)
 
-        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
-        mapped_phonology_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field
-                                    for field in FIELDS['phonology'] ]
-        for field in mapped_phonology_fields:
+        phonology_dict = dict()
+        for field in gloss_fields.keys():
             gloss_field = gloss_fields[field]
             if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
                 continue

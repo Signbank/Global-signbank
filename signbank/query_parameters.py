@@ -295,7 +295,7 @@ def convert_query_parameters_to_filter(query_parameters):
                 q_filter = get_key + '__iregex'
             elif hasattr(field_obj, 'field_choice_category'):
                 # just in case, field choice field that is not multi-select
-                q_filter = get_key + '_fk__machine_value__exact'
+                q_filter = get_key + '_fk__id__exact'
             else:
                 q_filter = get_key + '__exact'
 
@@ -374,15 +374,8 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
 
     return query_dict
 
-def pretty_print_query_values(dataset_languages,query_parameters,language_code):
+def pretty_print_query_values(dataset_languages,query_parameters):
     # this function maps the Gloss Search Form field values back to a human readable value for display in Query Parameters
-
-    def get_field_value(selected_field_choice, adjective):
-        try:
-            human_value = getattr(selected_field_choice, 'name_' + adjective.replace('-', '_'))
-        except AttributeError:
-            human_value = getattr(selected_field_choice, 'name')
-        return human_value
 
     # set up some mappings
     # if Query Parameters is made into a model, these will eventually become coded elsewhere
@@ -454,13 +447,13 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
                 query_dict[key] = _('All')
             else:
                 choices_for_category = FieldChoice.objects.filter(field__iexact='NoteType', id=query_parameters[key])
-                query_dict[key] = [get_field_value(choice, language_code) for choice in choices_for_category][0]
+                query_dict[key] = [choice.name for choice in choices_for_category][0]
         elif key in ['hasComponentOfType']:
             choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', id=query_parameters[key])
-            query_dict[key] = [get_field_value(choice, language_code) for choice in choices_for_category][0]
+            query_dict[key] = [choice.name for choice in choices_for_category][0]
         elif key in ['hasMorphemeOfType']:
             choices_for_category = FieldChoice.objects.filter(field__iexact='MorphemeType', id=query_parameters[key])
-            query_dict[key] = [get_field_value(choice, language_code) for choice in choices_for_category][0]
+            query_dict[key] = [choice.name for choice in choices_for_category][0]
         elif key in ['morpheme']:
             try:
                 morpheme_object = Gloss.objects.get(pk=int(query_parameters[key]))

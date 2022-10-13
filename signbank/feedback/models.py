@@ -199,13 +199,8 @@ class SignFeedbackForm(forms.Form):
             self.fields['isAuslan'].initial = 0
 
 def build_choice_list(field_category):
-    # this was removed from the original source dictionary/models.py
-    choices = [('','---------')]\
-           + list(FieldChoice.objects.filter(field=field_category, machine_value__lte=1)
-                  .order_by('machine_value').values_list('id', 'name')) \
-           + list([(field_choice.id, field_choice.name) for field_choice in
-                   FieldChoice.objects.filter(field=field_category, machine_value__gt=1)
-                  .order_by('name')])
+    # this is a dummy choices list to allow type-checking of obsolete old field choice fields
+    choices = [('','---------')]
     return choices
 
 handformChoices = build_choice_list("Handedness")

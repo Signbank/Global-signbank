@@ -365,7 +365,7 @@ class GlossListView(ListView):
                                                                     widget=forms.Select(attrs={'class':'form-control'}))
             except KeyError:
                 continue
-        print(search_form.fields)
+
         context['searchform'] = search_form
         context['search_type'] = self.search_type
         context['view_type'] = self.view_type
@@ -1350,13 +1350,13 @@ class GlossDetailView(DetailView):
 
         phonology_matrix = context['gloss'].phonology_matrix_homonymns()
         phonology_focus = [field for field in phonology_matrix.keys()
-                           if phonology_matrix[field] != None and phonology_matrix[field] not in ['False', 'Neutral']]
+                           if phonology_matrix[field] != None
+                                and phonology_matrix[field] not in ['0', '1']
+                                and phonology_matrix[field] not in ['False', 'Neutral']]
         default_query_parameters = query_parameters_this_gloss(phonology_focus, phonology_matrix)
 
         default_query_parameters_mapping = pretty_print_query_fields(dataset_languages, default_query_parameters.keys())
-
-        default_query_parameters_values_mapping = pretty_print_query_values(dataset_languages, default_query_parameters,
-                                                                            self.request.LANGUAGE_CODE)
+        default_query_parameters_values_mapping = pretty_print_query_values(dataset_languages, default_query_parameters)
         context['default_query_parameters'] = default_query_parameters
         context['default_query_parameters_mapping'] = default_query_parameters_mapping
         context['default_query_parameters_values_mapping'] = default_query_parameters_values_mapping
@@ -1371,8 +1371,7 @@ class GlossDetailView(DetailView):
 
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, self.query_parameters.keys())
 
-        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters,
-                                                                    self.request.LANGUAGE_CODE)
+        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters)
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
 
@@ -1485,28 +1484,24 @@ class GlossDetailView(DetailView):
         for topic in ['main','phonology','semantics']:
             context[topic+'_fields'] = []
             for field in FIELDS[topic]:
+                mapped_field_name = map_field_name_to_fk_field_name(field)
                 # the following check will be used when querying is added, at the moment these don't appear in the phonology list
                 if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS + ['semField', 'derivHist']:
                     if topic == 'phonology':
                         gloss_phonology.append(field)
                     choice_list = []
                     #Get and save the choice list for this field
-                    gloss_field = gloss_fields[field]
+                    gloss_field = gloss_fields[mapped_field_name]
                     if hasattr(gloss_field, 'field_choice_category'):
                         fieldchoice_category = gloss_field.field_choice_category
                         choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
                     context['static_choice_lists'][field] = {}
                     context['static_choice_list_colors'][field] = {}
 
                     #Take the human value in the language we are using
-                    # TODO: TEMPORARY check for _fk version
-                    if hasattr(gl, field + '_fk'):
-                        machine_value = getattr(gl, field + '_fk')
-                    else:
-                        machine_value = getattr(gl,field)
+                    machine_value = getattr(gl,mapped_field_name)
 
-                    if len(choice_list) > 0 and machine_value is not None:
+                    if isinstance(machine_value, FieldChoiceForeignKey):
                         # if there is a choice list, machine_value is FieldChoice object
                         human_value = machine_value.name
 
@@ -1536,7 +1531,7 @@ class GlossDetailView(DetailView):
                     kind = fieldname_to_kind(field)
                     if kind == 'list' and topic == 'phonology':
                         phonology_list_kinds.append(field)
-                    context[topic+'_fields'].append([human_value,field,labels[field],kind])
+                    context[topic+'_fields'].append([human_value,field,labels[mapped_field_name],kind])
 
         context['gloss_phonology'] = gloss_phonology
         context['phonology_list_kinds'] = phonology_list_kinds
@@ -1864,7 +1859,7 @@ class GlossDetailView(DetailView):
         default_parameters = request.POST.get('default_parameters')
         request.session['query_parameters'] = default_parameters
         request.session.modified = True
-        return redirect(URL + settings.PREFIX_URL + '/signs/search/?query')
+        return redirect(settings.PREFIX_URL + '/signs/search/?query')
 
 
 class GlossVideosView(DetailView):
@@ -3753,8 +3748,7 @@ class QueryListView(ListView):
 
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, query_parameters.keys())
 
-        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters,
-                                                                    self.request.LANGUAGE_CODE)
+        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters)
 
         gloss_search_field_prefix = "glosssearch_"
         lemma_search_field_prefix = "lemma_"
@@ -4436,6 +4430,18 @@ class HandshapeListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        handshape_to_fields = dict()
+        for handshape in self.object_list:
+            handshape_fields = []
+            for handshape_field in settings.HANDSHAPE_RESULT_FIELDS:
+                if handshape_field in ['machine_value', 'name']:
+                    continue
+                mapped_handshape_field = map_field_name_to_fk_field_name(handshape_field)
+                mapped_handshape_value = getattr(handshape, mapped_handshape_field)
+                handshape_fields.append((handshape_field, mapped_handshape_value))
+            handshape_to_fields[handshape] = handshape_fields
+
+        context['handshape_to_fields'] = handshape_to_fields
         return context
 
     def render_to_response(self, context):

@@ -321,7 +321,7 @@ function do_adminsearch(el) {
                 <table class='table'>
                         <tr><td><label for='id_hsFingConf'>{{searchform.hsFingConf.label}}</label></td><td>{{searchform.hsFingConf}}</td></tr>
                         <tr><td><label for='id_hsFingConf2'>{{searchform.hsFingConf2.label}}</label></td><td>{{searchform.hsFingConf2}}</td></tr>
-                        <tr><td><label for='id_hsNumSel'>{{searchform.hsNumSel.label}}</label></td><td>{{searchform.hsNumSel}}</td></tr>
+                        <tr><td><label for='id_hsNumSel'>{{searchform.hsNumSel_fk.label}}</label></td><td>{{searchform.hsNumSel_fk}}</td></tr>
                         <tr><td><label for='id_hsSpread'>{{searchform.hsSpread.label}}</label></td><td>{{searchform.hsSpread}}</td></tr>
                         <tr><td><label for='id_hsAperture'>{{searchform.hsAperture.label}}</label></td><td>{{searchform.hsAperture}}</td></tr>
                 </table>
@@ -512,15 +512,13 @@ function do_adminsearch(el) {
       </td>
 
         <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.name}}</a></td>
-            <td>{{ handshape.hsFingSel_fk.name }}</td>
-            <td>{{ handshape.hsFingConf_fk.name }}</td>
-            <td>{{ handshape.hsFingSel2_fk.name }}</td>
-            <td>{{ handshape.hsFingConf2_fk.name }}</td>
-            <td>{{ handshape.hsNumSel_fk.name }}</td>
-            <!--<td>{{ handshape.hsThumb_fk.name }}</td>-->
-            <td>{{ handshape.hsFingUnsel_fk.name }}</td>
-            <td>{{ handshape.hsSpread_fk.name }}</td>
-            <td>{{ handshape.hsAperture_fk.name }}</td>
+            {% with handshape_to_fields|keyvalue:handshape as handshape_fields %}
+            {% for handshape_field, handshape_field_value in handshape_fields %}
+            <td>
+                {{ handshape_field_value.name }}
+            </td>
+            {% endfor %}
+            {% endwith %}
     </tr>
     {% endfor %}
   </tbody>
