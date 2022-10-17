@@ -1567,10 +1567,11 @@ class Gloss(models.Model):
         return (other_relations, variant_relations)
 
 
-    def phonology_matrix_homonymns(self):
+    def phonology_matrix_homonymns(self, use_machine_value=False):
         # this method uses string representations for Boolean values
         # in order to distinguish between null values, False values, and Neutral values
 
+        # the following is coded here (it can't call the function in tools.py, which relies on models.py)
         foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         mapped_phonology_fields = {}
         for field in FIELDS['phonology']:
@@ -1580,6 +1581,9 @@ class Gloss(models.Model):
                 mapped_phonology_fields[field] = field
 
         gloss_fields = {}
+        # construct a dictionary where the keys are the field names as in the settings
+        # and the values are the fields of the gloss, using the new field choice model instead of the original
+        # this structure also prevents duplicates
         if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
             for f in Gloss._meta.fields:
                 if f.name in FIELDS['phonology']:
@@ -1596,22 +1600,17 @@ class Gloss(models.Model):
                 continue
             field_value = getattr(self, gloss_field.name)
             if hasattr(gloss_field, 'field_choice_category'):
-
-                if field.endswith('_fk'):
-                    lookup_key = field.replace('_fk','')
-                else:
-                    lookup_key = field
                 if field_value is None:
-                    phonology_dict[lookup_key] = None
+                    # this differentiates between null field choice fields (here) versus null Boolean fields
+                    # which get mapped to either 'False' or 'Neutral'
+                    phonology_dict[field] = None
                 else:
-                    phonology_dict[lookup_key] = str(field_value.id)
-
+                    phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
             else:
                 # gloss_field is a Boolean
                 # TO DO: check these conversions to Strings instead of Booleans
 
                 if field_value is not None:
-
                     if field_value:
                         # machine value is 1
                         phonology_dict[field] = 'True'
@@ -1636,10 +1635,11 @@ class Gloss(models.Model):
         for f in mapped_minimal_pairs_fields:
             field_value = getattr(self,f)
             if isinstance(field_value, FieldChoice):
-                field_value = str(field_value.id)
-            if f not in ['altern', 'repeat'] and field_value in ['0']:
-                values_list.append(None)
-                print(f, ' changed to None')
+                if field_value and field_value.machine_value not in ['0', '1']:
+                    values_list.append(str(field_value.id))
+                else:
+                    # if the field choice value is None or '-' or 'N/A' use None for computing minimal pairs
+                    values_list.append(None)
             else:
                 values_list.append(field_value)
         values_tuple = tuple(values_list)
