@@ -1119,7 +1119,7 @@ class GlossListView(ListView):
 
             # exclude all of tqs from qs
             qs = [q for q in qs if q not in tqs]
-
+        print(get)
         if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
             query_parameters['relationToForeignSign'] = get['relationToForeignSign']
 
@@ -1174,35 +1174,40 @@ class GlossListView(ListView):
                 print("Morpheme not found: ", str(input_morpheme))
 
         if 'hasComponentOfType' in get and get['hasComponentOfType'] not in ['', '0']:
+            print('hasComponentOfType: ', get['hasComponentOfType'])
             query_parameters['hasComponentOfType'] = get['hasComponentOfType']
 
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role_fk__exact=get['hasComponentOfType'])
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role_fk__machine_value=get['hasComponentOfType'])
+            print(morphdefs_with_correct_role)
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
+            print(pks_for_glosses_with_morphdefs_with_correct_role)
             qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
+            print(qs)
 
         if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] not in ['', '0']:
             query_parameters['hasMorphemeOfType'] = get['hasMorphemeOfType']
 
             morpheme_type = get['hasMorphemeOfType']
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType_fk_id__exact=morpheme_type) ]
+            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType_fk__machine_value=morpheme_type) ]
             qs = qs.filter(id__in=target_morphemes)
 
-        if 'definitionRole' in get and get['definitionRole'] != '':
+        if 'definitionRole' in get and get['definitionRole'] != '' and get['definitionRole'] not in ['', '0']:
+            print('definitionRole: ', get['definitionRole'])
             query_parameters['definitionRole'] = get['definitionRole']
 
             #Find all definitions with this role
             if get['definitionRole'] == 'all':
                 definitions_with_this_role = Definition.objects.all()
             else:
-                definitions_with_this_role = Definition.objects.filter(role_fk_id__exact=get['definitionRole'])
+                definitions_with_this_role = Definition.objects.filter(role_fk__machine_value=get['definitionRole'])
 
             #Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
-        if 'definitionContains' in get and get['definitionContains'] != '':
+        if 'definitionContains' in get and get['definitionContains'] != '' and get['definitionContains'] not in ['', '0']:
             query_parameters['definitionContains'] = get['definitionContains']
 
             definitions_with_this_text = Definition.objects.filter(text__iregex=get['definitionContains'])
@@ -3477,7 +3482,7 @@ class MinimalPairsListView(ListView):
             if isinstance(field_object, models.CharField) or isinstance(field_object, models.TextField):
                 continue
             field_names.append(field)
-        print(field_names)
+
         field_labels = dict()
         for field in field_names:
             field_label = Gloss._meta.get_field(field).verbose_name
@@ -3652,7 +3657,7 @@ class MinimalPairsListView(ListView):
         for fieldnamemulti in multiple_select_gloss_fields:
             mapped_fieldnamemulti = map_field_name_to_fk_field_name(fieldnamemulti)
             fieldnamemultiVarname = fieldnamemulti + '[]'
-            fieldnameQuery = mapped_fieldnamemulti + '__in'
+            fieldnameQuery = mapped_fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
             if '' in vals:
@@ -3665,7 +3670,6 @@ class MinimalPairsListView(ListView):
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
-
                 field_obj = Gloss._meta.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
@@ -6211,7 +6215,6 @@ class MorphemeDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
-        context['morphologyform'] = MorphemeMorphologyForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['morpheme'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
@@ -6288,6 +6291,8 @@ class MorphemeDetailView(DetailView):
             else:
                 topic = 'semantics'
 
+            context['static_choice_lists'][field] = {}
+            context['static_choice_list_colors'][field] = {}
             choice_list = []
             # Get and save the choice list for this field
             mapped_field = map_field_name_to_fk_field_name(field)
@@ -6295,22 +6300,12 @@ class MorphemeDetailView(DetailView):
             if hasattr(gloss_field, 'field_choice_category'):
                 fieldchoice_category = gloss_field.field_choice_category
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
-            context['static_choice_lists'][field] = {}
-            context['static_choice_list_colors'][field] = {}
-
-            # Take the human value in the language we are using
-            machine_value = getattr(gl, gloss_field.name)
-            if machine_value and len(choice_list) > 0:
-                # set the human value
-                human_value = machine_value.name
                 # The static_choice_lists structure is used in the Detail View to reverse map in javascript
                 # It's only needed for choice lists.
                 # In the template, choice lists are generated by Ajax calls
                 # But the javascript needs this when generating the page
                 display_choice_list = choicelist_queryset_to_translated_dict(choice_list)
                 display_choice_list_colors = choicelist_queryset_to_colors(choice_list)
-                # print('field ', field, ' display chice list: ', display_choice_list)
                 for (key, value) in display_choice_list.items():
                     this_value = value
                     context['static_choice_lists'][field][key] = this_value
@@ -6319,21 +6314,46 @@ class MorphemeDetailView(DetailView):
                     this_value = value
                     context['static_choice_list_colors'][field][key] = this_value
 
+            # Take the human value in the language we are using
+            field_value = getattr(gl, gloss_field.name)
+            if isinstance(field_value, FieldChoice):
+                if field_value:
+                    # this is a FieldChoice object
+                    human_value = field_value.name
+                else:
+                    # if this is a field choice field, it is empty
+                    human_value = field_value
             else:
                 # otherwise, it's a value, not a choice
                 # take care of different representations of empty text in database
-                if fieldname_to_kind(field) == 'text' and (machine_value is None or machine_value in ['-',' ','------','']):
+                if fieldname_to_kind(field) == 'text' and (field_value is None or field_value in ['-',' ','------','']):
                     human_value = ''
                 else:
-                    human_value = machine_value
+                    human_value = field_value
 
             # And add the kind of field
             kind = fieldname_to_kind(field)
             if kind == 'list' and topic == 'phonology':
                 phonology_list_kinds.append(field)
-            context[topic + '_fields'].append([human_value, field, labels[field], kind])
+            context[topic + '_fields'].append([human_value, field, labels[mapped_field], kind])
 
         context['phonology_list_kinds'] = phonology_list_kinds
+
+        # Regroup notes
+        note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+        notes = context['morpheme'].definition_set.all()
+        notes_groupedby_role = {}
+        for note in notes:
+            # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
+            if note.role_fk is not None:
+                translated_note_role = note.role_fk.name
+            else:
+                translated_note_role = ''
+            role_id = (note.role, translated_note_role)
+            if role_id not in notes_groupedby_role:
+                notes_groupedby_role[role_id] = []
+            notes_groupedby_role[role_id].append(note)
+        context['notes_groupedby_role'] = notes_groupedby_role
 
         # Gather the OtherMedia
         context['other_media'] = []

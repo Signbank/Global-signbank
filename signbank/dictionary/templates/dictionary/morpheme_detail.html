@@ -675,9 +675,9 @@ function checkKey(e)
                   <th style='width:10em'>{% trans "Type" %}</th>
                   <th>{% trans "Text" %}</th>
               </tr>
-            {% for role in roles %}
+              {% for role_id, note_list in notes_groupedby_role.items %}
 
-              {% for def in role.list %}
+              {% for def in note_list %}
               <tr>
                 <td>
 
@@ -731,10 +731,10 @@ function checkKey(e)
                  <table class='table'>
                     <tr>
                         <td style="width:2em"></td>
-                        <td style="width:7em"><input class='checkbox' name='published' type='checkbox'></td>
-                        <td style='width:5em'><input class='form-control' name='count' type='number'></td>
-                        <td style='width:10em'>{{definitionform.role}}</td>
-                        <td><input class='form-control' name='text' placeholder='{% trans "Enter New Note" %}'></td>
+                        <td style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
+                        <td style='width:5em'><input class='form-control' name='count' id='id_count' type='number'></td>
+                        <td style='width:10em'>{{definitionform.note}}</td>
+                        <td><input class='form-control' name='text' id='id_text' placeholder='{% trans "Enter New Note" %}'></td>
                     </tr>
                      <tr>
                         <td></td>

@@ -867,7 +867,7 @@ def update_blend_morphology(gloss, field, values):
 def subst_notes(gloss, field, values):
     # this is called by csv_import to modify the notes for a gloss
 
-    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+    note_role_choices = FieldChoice.objects.filter(field='NoteType')
     # this is used to speedup matching updates to Notes
     # it allows the type of note to be in either English or Dutch in the CSV file
     note_reverse_translation = {}
@@ -1177,7 +1177,7 @@ def update_definition(request, gloss, field, value):
         else:
             newvalue = 'No'
     elif what == 'definitionrole':
-        defn.role_fk = FieldChoice.objects.get(id=value)
+        defn.role_fk = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
         defn.save()
         newvalue = defn.role_fk.name
 
@@ -1202,7 +1202,7 @@ def update_other_media(request,gloss,field,value):
 
     elif action_or_fieldname == 'other-media-type':
         # value is the (str) machine value of the Other Media Type from the choice list in the template
-        other_media_type = FieldChoice.objects.filter(field__iexact='OtherMediaType', machine_value=int(value))
+        other_media_type = FieldChoice.objects.filter(field='OtherMediaType', machine_value=int(value))
         other_media.type_fk = other_media_type
         value = other_media_type.name
 
@@ -1326,7 +1326,7 @@ def add_definition(request, glossid):
             
             published = form.cleaned_data['published']
             count = form.cleaned_data['count']
-            role = FieldChoice.objects.get(pk=form.cleaned_data['note'])
+            role = FieldChoice.objects.get(field='NoteType', machine_value=int(form.cleaned_data['note']))
             text = form.cleaned_data['text']
             
             defn = Definition(gloss=thisgloss, count=count, role_fk=role, text=text, published=published)
@@ -1350,7 +1350,7 @@ def add_morphology_definition(request):
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
 
             # create definition, default to not published
-            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
+            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role_fk=role, morpheme=morpheme)
             morphdef.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
@@ -1419,7 +1419,7 @@ def add_morphemeappearance(request):
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
 
             # create definition, default to not published
-            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
+            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role_fk=role, morpheme=morpheme)
             morphdef.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
@@ -1488,7 +1488,7 @@ def update_handshape(request, handshapeid):
             # this is needed because the new value is a machine value, not an id
             field_choice_category = Handshape._meta.get_field(field).field_choice_category
             original_value = getattr(hs, field)
-            field_choice = FieldChoice.objects.get(field__iexact=field_choice_category, machine_value=int(value))
+            field_choice = FieldChoice.objects.get(field=field_choice_category, machine_value=int(value))
             setattr(hs, field, field_choice)
             hs.save()
             newvalue = field_choice.name
@@ -1513,7 +1513,7 @@ def update_handshape(request, handshapeid):
             if newvalue != original_value:
                 hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
                 newPattern = hs_mod.get_fingerSelection_display()
-                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection', name__iexact=newPattern)
+                object_fingSelection = FieldChoice.objects.filter(field='FingerSelection', name__iexact=newPattern)
                 if object_fingSelection:
                     mv = object_fingSelection[0].machine_value
                     hs_mod.__setattr__('hsFingSel', mv)
@@ -1526,7 +1526,7 @@ def update_handshape(request, handshapeid):
             if newvalue != original_value:
                 hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
                 newPattern = hs_mod.get_fingerSelection2_display()
-                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection',
+                object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
                                                                   name__iexact=newPattern)
                 if object_fingSelection:
                     mv = object_fingSelection[0].machine_value
@@ -1540,7 +1540,7 @@ def update_handshape(request, handshapeid):
             if newvalue != original_value:
                 hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
                 newPattern = hs_mod.get_unselectedFingers_display()
-                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection',
+                object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
                                                                   name__iexact=newPattern)
                 if object_fingSelection:
                     mv = object_fingSelection[0].machine_value
@@ -1694,10 +1694,10 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
         morph_def.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morphology_definition_role':
-        morph_def.role = value
+        morph_def.role_fk = value
         morph_def.save()
 
-        choice_list = FieldChoice.objects.filter(field__iexact='MorphologyType')
+        choice_list = FieldChoice.objects.filter(field='MorphologyType')
         newvalue = machine_value_to_translated_human_value(value, choice_list)
 
 

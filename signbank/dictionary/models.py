@@ -284,6 +284,11 @@ class Definition(models.Model):
         list_filter = ['role']
         search_fields = ['gloss__idgloss']
 
+    def get_role_display(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            return self.role.name if self.role else self.role
+        else:
+            return self.role_fk.name if self.role_fk else self.role_fk
 
 class SignLanguage(models.Model):
     """A sign language name"""
@@ -510,7 +515,7 @@ class Handshape(models.Model):
     def set_fingerSelection_display(self):
         # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel
         try:
-            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection',
+            fieldSelectionMatch = FieldChoice.objects.filter(field='FingerSelection',
                                                              machine_value=self.hsFingSel)
         except:
             print('set_fingerSelection failed for: ', self)
@@ -545,7 +550,7 @@ class Handshape(models.Model):
     def set_fingerSelection2_display(self):
         # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel2
         try:
-            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection',
+            fieldSelectionMatch = FieldChoice.objects.filter(field='FingerSelection',
                                                              machine_value=self.hsFingSel2)
         except:
             print('set_fingerSelection2 failed for: ', self)
@@ -580,7 +585,7 @@ class Handshape(models.Model):
     def set_unselectedFingers_display(self):
         # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingUnsel
         try:
-            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection',
+            fieldSelectionMatch = FieldChoice.objects.filter(field='FingerSelection',
                                                              machine_value=self.hsFingUnsel)
         except:
             print('set_unselectedFingers failed for: ', self)
@@ -1154,10 +1159,10 @@ class Gloss(models.Model):
         fields = {}
         for (f, field_verbose_name, fieldchoice_category) in fields_data:
             if fieldchoice_category:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 fieldchoice = getattr(self, f)
-                field_value = fieldchoice.name
-                if field_value is None:
+                if fieldchoice:
+                    field_value = fieldchoice.name
+                else:
                     field_value = ' '
             else:
                 field_value = str(getattr(self, f))
@@ -1659,13 +1664,13 @@ class Gloss(models.Model):
 
         # Ignore minimal pairs when the Handedness of this gloss is X, if it's a possible field choice
         try:
-            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').id)
+            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
 
         except ObjectDoesNotExist:
             # print('minimalpairs_objects: Handedness X is not defined')
             handedness_X = ''
 
-        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field__iexact='Handedness', name__in=['-','N/A']) ]
+        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
 
         if (handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X):
             # ignore gloss with empty or X handedness
@@ -1739,7 +1744,7 @@ class Gloss(models.Model):
         minimal_pairs_fields = dict()
 
         empty_handedness = [str(fc.id) for fc in
-                            FieldChoice.objects.filter(field__iexact='Handedness', name__in=['-', 'N/A'])]
+                            FieldChoice.objects.filter(field='Handedness', name__in=['-', 'N/A'])]
 
         # If handedness is not defined for this gloss, don't bother to look up minimal pairs
         if handedness_of_this_gloss in empty_handedness:
@@ -1750,7 +1755,7 @@ class Gloss(models.Model):
         handshape_of_this_gloss = focus_gloss_values_tuple[index_of_handshape]
 
         empty_handshape = [str(fc.id) for fc in
-                            FieldChoice.objects.filter(field__iexact='Handshape', name__in=['-', 'N/A'])]
+                            FieldChoice.objects.filter(field='Handshape', name__in=['-', 'N/A'])]
 
         if handshape_of_this_gloss in empty_handshape:
             return minimal_pairs_fields
@@ -1801,13 +1806,13 @@ class Gloss(models.Model):
 
         # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
         try:
-            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').id)
+            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
 
         except ObjectDoesNotExist:
             # print('homonym_objects: Handedness X is not defined')
             handedness_X = ''
 
-        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field__iexact='Handedness', name__in=['-','N/A']) ]
+        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
 
         if (handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X):
             # ignore gloss with empty or X handedness
@@ -1890,13 +1895,13 @@ class Gloss(models.Model):
 
         # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
         try:
-            handedness_X = str(FieldChoice.objects.get(field__iexact='Handedness', name__exact='X').id)
+            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
 
         except ObjectDoesNotExist:
             print('homonyms: Handedness X is not defined')
             return ([], [], [])
 
-        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field__iexact='Handedness', name__in=['-','N/A']) ]
+        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
 
         if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
             # ignore gloss with empty or X handedness
@@ -1905,7 +1910,7 @@ class Gloss(models.Model):
         handshape_of_this_gloss = phonology_for_gloss['domhndsh']
 
         empty_handshape = [str(fc.id) for fc in
-                            FieldChoice.objects.filter(field__iexact='Handshape', name__in=['-', 'N/A'])]
+                            FieldChoice.objects.filter(field='Handshape', name__in=['-', 'N/A'])]
 
         if handshape_of_this_gloss in empty_handshape:
             return ([], [], [])
@@ -2072,7 +2077,7 @@ class Gloss(models.Model):
     def definition_role_choices_json(self):
         """Return JSON for the definition role choice list"""
         definition_role_choices = choicelist_queryset_to_translated_dict(
-                                 FieldChoice.objects.filter(field__exact='NoteType'),
+                                 FieldChoice.objects.filter(field='NoteType'),
                                  ordered=False, id_prefix=''
                              )
         return self.options_to_json(definition_role_choices)
@@ -2346,6 +2351,24 @@ class Morpheme(Gloss):
         # We won't use this method in the interface but leave it for debugging purposes
 
         return self.idgloss
+
+    def get_mrpType_display(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            return self.mrpType.name if self.mrpType else self.mrpType
+        else:
+            return self.mrpType_fk.name if self.mrpType_fk else self.mrpType_fk
+
+    def get_handedness_display(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            return self.handedness.name if self.handedness else self.handedness
+        else:
+            return self.handedness_fk.name if self.handedness_fk else self.handedness_fk
+
+    def get_locprim_display(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            return self.locprim.name if self.locprim else self.locprim
+        else:
+            return self.locprim_fk.name if self.locprim_fk else self.locprim_fk
 
     def admin_next_morpheme(self):
         """next morpheme in the admin view, shortcut for next_dictionary_morpheme with staff=True"""
@@ -2679,7 +2702,7 @@ class Dataset(models.Model):
         for (f, field_verbose_name, fieldchoice_category) in fields_data:
             if fieldchoice_category:
 
-                choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('name')
+                choice_list_this_field = FieldChoice.objects.filter(field=fieldchoice_category).order_by('name')
                 # make a dictionary using the field name so we can look up the translated choices later
                 choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list_this_field, ordered=False)
 
@@ -2689,8 +2712,8 @@ class Dataset(models.Model):
         # To generate the correct order, iterate over the ordered fields data, which is ordered by translated verbose name
         for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
             # FieldChoices: the ones with machine_value 0 and 1 first, the rest is sorted by name, which is the translated name
-            choice_list_this_field = list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__lte=1).order_by('machine_value')) \
-                                    + list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__gt=1).order_by('name'))
+            choice_list_this_field = list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__lte=1).order_by('machine_value')) \
+                                    + list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__gt=1).order_by('name'))
             if f.endswith('_fk'):
                 lookup_key = f.replace('_fk', '')
             else:
