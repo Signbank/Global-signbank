@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('dictionary', '0047_auto_20210602_1006'),
-        ('feedback', '0005_auto_20210107_1148'),
+        ('feedback', '0004_auto_20210107_0942'),
     ]
 
     operations = [

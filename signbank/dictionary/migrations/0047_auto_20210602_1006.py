@@ -10,7 +10,7 @@ import signbank.dictionary.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0046_auto_20210106_1425'),
+        ('dictionary', '0045_auto_20210106_1350'),
     ]
 
     operations = [
