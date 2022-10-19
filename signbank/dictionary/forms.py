@@ -667,48 +667,23 @@ class DatasetUpdateForm(forms.ModelForm):
         self.fields['default_language'] = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), choices=languages)
 
 def get_finger_selection_choices():
-    choices = [('','---------')]\
-           + list(FieldChoice.objects.filter(field='FingerSelection', machine_value__lte=1)
-                  .order_by('machine_value').values_list('id', 'name')) \
-           + list([(field_choice.id, field_choice.name) for field_choice in
-                   FieldChoice.objects.filter(field='FingerSelection', machine_value__gt=1)
-                  .order_by('name')])
+    choices = [('','---------')]
     return choices
 
 def get_quantity_choices():
-    choices = list(FieldChoice.objects.filter(field='Quantity', machine_value__lte=1)
-                  .order_by('machine_value').values_list('id', 'name')) \
-           + list([(field_choice.id, field_choice.name) for field_choice in
-                   FieldChoice.objects.filter(field='Quantity', machine_value__gt=1)
-                  .order_by('name')])
-    print('get_quantity_choices: ', choices)
+    choices = [('','---------')]
     return choices
 
 def get_joint_configuration_choices():
-    choices = [('','---------')]\
-           + list(FieldChoice.objects.filter(field='JointConfiguration', machine_value__lte=1)
-                  .order_by('machine_value').values_list('id', 'name')) \
-           + list([(field_choice.id, field_choice.name) for field_choice in
-                   FieldChoice.objects.filter(field='JointConfiguration', machine_value__gt=1)
-                  .order_by('name')])
+    choices = [('','---------')]
     return choices
 
 def get_spreading_choices():
-    choices = [('','---------')]\
-           + list(FieldChoice.objects.filter(field='Spreading', machine_value__lte=1)
-                  .order_by('machine_value').values_list('id', 'name')) \
-           + list([(field_choice.id, field_choice.name) for field_choice in
-                   FieldChoice.objects.filter(field='Spreading', machine_value__gt=1)
-                  .order_by('name')])
+    choices = [('','---------')]
     return choices
 
 def get_aperture_choices():
-    choices = [('','---------')]\
-           + list(FieldChoice.objects.filter(field='Aperture', machine_value__lte=1)
-                  .order_by('machine_value').values_list('id', 'name')) \
-           + list([(field_choice.id, field_choice.name) for field_choice in
-                   FieldChoice.objects.filter(field='Aperture', machine_value__gt=1)
-                  .order_by('name')])
+    choices = [('','---------')]
     return choices
 
 attrs_default = {'class': 'form-control'}
@@ -729,10 +704,8 @@ class HandshapeSearchForm(forms.ModelForm):
                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hsFingConf2 = forms.ChoiceField(label=_(u'Finger configuration 2'), choices=get_joint_configuration_choices,
                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    # hsNumSel = forms.ChoiceField(label=_(u'Quantity'), choices=get_quantity_choices,
-    #                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hsNumSel_fk = forms.ModelChoiceField(label=_(u'Quantity'),
-                    queryset=FieldChoice.objects.filter(field='Quantity'))
+    hsNumSel = forms.ChoiceField(label=_(u'Quantity'), choices=get_quantity_choices,
+                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hsSpread = forms.ChoiceField(label=_(u'Spreading'), choices=get_spreading_choices,
                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hsAperture = forms.ChoiceField(label=_(u'Aperture'), choices=get_aperture_choices,
@@ -782,6 +755,57 @@ class HandshapeSearchForm(forms.ModelForm):
                 'ufP': forms.RadioSelect(choices=FINGER_SELECTION),
         }
 
+    def __init__(self, queryDict=None, *args, **kwargs):
+        super(HandshapeSearchForm, self).__init__(queryDict, *args, **kwargs)
+
+        self.fields['unselectedFingers'] = forms.ChoiceField(label=_(u'Unselected Fingers Extended'),
+                                                    choices=choicelist_queryset_to_translated_dict(
+                                                        list(
+                                                            FieldChoice.objects.filter(field='FingerSelection').order_by(
+                                                                'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsNumSel'] = forms.ChoiceField(label=_(u'Quantity'),
+                                                          choices=choicelist_queryset_to_translated_dict(
+                                                              list(
+                                                                  FieldChoice.objects.filter(field='Quantity').order_by(
+                                                                      'machine_value')),
+                                                              ordered=False, id_prefix='', shortlist=False
+                                                          ),
+                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsFingConf'] = forms.ChoiceField(label=_(u'Finger configuration'),
+                                                          choices=choicelist_queryset_to_translated_dict(
+                                                              list(
+                                                                  FieldChoice.objects.filter(field='JointConfiguration').order_by(
+                                                                      'machine_value')),
+                                                              ordered=False, id_prefix='', shortlist=False
+                                                          ),
+                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsFingConf2'] = forms.ChoiceField(label=_(u'Finger configuration 2'),
+                                                          choices=choicelist_queryset_to_translated_dict(
+                                                              list(
+                                                                  FieldChoice.objects.filter(field='JointConfiguration').order_by(
+                                                                      'machine_value')),
+                                                              ordered=False, id_prefix='', shortlist=False
+                                                          ),
+                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsSpread'] = forms.ChoiceField(label=_(u'Spreading'),
+                                                          choices=choicelist_queryset_to_translated_dict(
+                                                              list(
+                                                                  FieldChoice.objects.filter(field='Spreading').order_by(
+                                                                      'machine_value')),
+                                                              ordered=False, id_prefix='', shortlist=False
+                                                          ),
+                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsAperture'] = forms.ChoiceField(label=_(u'Aperture'),
+                                                          choices=choicelist_queryset_to_translated_dict(
+                                                              list(
+                                                                  FieldChoice.objects.filter(field='Aperture').order_by(
+                                                                      'machine_value')),
+                                                              ordered=False, id_prefix='', shortlist=False
+                                                          ),
+                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 class ImageUploadForHandshapeForm(forms.Form):
     """Form for image upload for a particular gloss"""

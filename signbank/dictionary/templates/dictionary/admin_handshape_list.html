@@ -158,7 +158,7 @@ function do_adminsearch(el) {
                         <tr id='handshape_name_field'>
                             <td><label for='id_name'>{% trans "Handshape Name" %}</label></td>
                             <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='name' type='text'
-                                       value='{{searchform.name.value|default:'' }}'/></td>
+                                       value="{{searchform.name.value|default:'' }}"/></td>
                         </tr>
                     </table>
                 </div>
@@ -321,7 +321,7 @@ function do_adminsearch(el) {
                 <table class='table'>
                         <tr><td><label for='id_hsFingConf'>{{searchform.hsFingConf.label}}</label></td><td>{{searchform.hsFingConf}}</td></tr>
                         <tr><td><label for='id_hsFingConf2'>{{searchform.hsFingConf2.label}}</label></td><td>{{searchform.hsFingConf2}}</td></tr>
-                        <tr><td><label for='id_hsNumSel'>{{searchform.hsNumSel_fk.label}}</label></td><td>{{searchform.hsNumSel_fk}}</td></tr>
+                        <tr><td><label for='id_hsNumSel'>{{searchform.hsNumSel.label}}</label></td><td>{{searchform.hsNumSel}}</td></tr>
                         <tr><td><label for='id_hsSpread'>{{searchform.hsSpread.label}}</label></td><td>{{searchform.hsSpread}}</td></tr>
                         <tr><td><label for='id_hsAperture'>{{searchform.hsAperture.label}}</label></td><td>{{searchform.hsAperture}}</td></tr>
                 </table>

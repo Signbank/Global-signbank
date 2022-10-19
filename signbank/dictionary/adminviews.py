@@ -4558,11 +4558,13 @@ class HandshapeListView(ListView):
 
                 if fieldname == 'hsNumSel' and val != '':
                     query_hsNumSel = field.name
-                    try:
-                        fieldlabel = FieldChoice.objects.get(field=field.field_choice_category,
-                                                                      id=val).name
-                    except (ObjectDoesNotExist, KeyError):
-                        fieldlabel = ''
+                    with override('en'):
+                        # the override is necessary in order to use the total fingers rather than each finger
+                        try:
+                            fieldlabel = FieldChoice.objects.get(field=field.field_choice_category,
+                                                                          machine_value=val).name
+                        except (ObjectDoesNotExist, KeyError):
+                            fieldlabel = ''
 
                     if fieldlabel == 'one':
                         qs = qs.annotate(
@@ -4592,8 +4594,7 @@ class HandshapeListView(ListView):
                     query = Q(name__iregex=val)
                     qs = qs.filter(query)
 
-
-                if val != '' and fieldname not in ['hsNumSel', 'name']:
+                if val not in ['', '0'] and fieldname not in ['hsNumSel', 'name']:
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
 
