@@ -730,6 +730,9 @@ class Gloss(models.Model):
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Strong Hand"),
                                            related_name="strong_hand")
+    domhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                             verbose_name=_("Strong Hand"),
+                                             related_name="strong_hand_handshapefk")
 
     subhndsh = models.CharField(_("Weak Hand"), null=True, choices=build_choice_list("Handshape"), blank=True,
                                 max_length=5)
@@ -739,7 +742,9 @@ class Gloss(models.Model):
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Weak Hand"),
                                            related_name="weak_hand")
-
+    subhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                             verbose_name=_("Weak Hand"),
+                                             related_name="weak_hand_handshapefk")
 
     # Support for handshape etymology
     domhndsh_number = models.NullBooleanField(_("Strong hand number"), null=True, blank=True)
@@ -755,6 +760,9 @@ class Gloss(models.Model):
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Final Dominant Handshape"),
                                            related_name="final_dominant_handshape")
+    final_domhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                                   verbose_name=_("Final Dominant Handshape"),
+                                                   related_name="final_dominant_handshape_handshapefk")
 
     final_subhndsh = models.CharField(_("Final Subordinate Handshape"), null=True,
                                       choices=build_choice_list("Handshape"), blank=True, max_length=5)
@@ -764,7 +772,9 @@ class Gloss(models.Model):
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Final Subordinate Handshape"),
                                            related_name="final_subordinate_handshape")
-
+    final_subhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                                   verbose_name=_("Final Subordinate Handshape"),
+                                                   related_name="final_subordinate_handshape_handshapefk")
 
     locprim = models.CharField(_("Location"), choices=build_choice_list("Location"), null=True, blank=True,
                                max_length=20)
