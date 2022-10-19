@@ -11,7 +11,7 @@ import csv
 from django.db.models import Q
 from django.http import QueryDict
 
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, ugettext_lazy as _, activate
 
 from django.http import HttpResponse, HttpResponseRedirect
 
@@ -264,6 +264,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
     all_tags_display = ', '.join([t.replace('_',' ') for t in all_tags])
     note_type_error = False
     note_tuple_error = False
+    activate(LANGUAGES[0][0])
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
     all_notes = [ n.name for n in note_role_choices]
     all_notes_display = ', '.join(all_notes)
@@ -375,7 +376,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
                     language = languages[0]
-                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language)]
+                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('translation__text')]
                     current_keyword_string = ", ".join(translations)
                 else:
                     error_string = 'ERROR: Non-existant language specified for Keywords column: ' + human_key
@@ -730,7 +731,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
                 try:
                     field_choice = FieldChoice.objects.get(name=new_human_value, field=field.field_choice_category)
-                    new_machine_value = field_choice.id
+                    new_machine_value = field_choice.machine_value
                 except ObjectDoesNotExist:
                     new_machine_value = None
                     error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
@@ -795,11 +796,14 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             try:
 
                 if hasattr(field, 'field_choice_category'):
-                    # print('gloss ', gloss.__dict__)
+                    # machine_key should be the same as field.name
                     original_machine_value = getattr(gloss, machine_key)
+                    if original_machine_value:
+                        original_machine_value = original_machine_value.machine_value
                     try:
+                        # this is a bit confusing as to why a try is used instead of combining with the previous
                         original_human_value = getattr(gloss, field.name).name
-                    except:
+                    except KeyError:
                         original_human_value = '-'
                         print('CSV Update: Original machine value for gloss ', gloss_id, ' has an undefined choice for field ', field.name, ': ', original_machine_value)
                         original_machine_value = None
@@ -1036,7 +1040,6 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
 
     split_human_values = re.findall(r'([^:]+:[^)]*\)),?\s?', values)
 
-    # print('new split human values for notes: ', split_human_values)
     for split_value in split_human_values:
         take_apart = re.match("([^:]+):\s?\((False|True),(\d),([^)]*)\)", split_value)
         if take_apart:
@@ -1078,6 +1081,7 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
 
 
 def get_notes_as_string(gloss):
+    activate(LANGUAGES[0][0])
     notes_of_gloss = gloss.definition_set.all()
     notes_list = []
     for note in notes_of_gloss:
@@ -1237,10 +1241,10 @@ def check_existance_blend_morphology(gloss, values):
     return (checked, errors)
 
 
-RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant',
+RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant', 'paradigm', 'Handshape Paradigm',
                          'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
 
-RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, antonym, hyponym, hypernym, seealso'
+RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, paradigm, antonym, hyponym, hypernym, seealso'
 
 def check_existance_relations(gloss, relations, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
@@ -1796,8 +1800,8 @@ def write_csv_for_handshapes(handshapelistview, csvwriter):
 
     fields = [Handshape._meta.get_field(fieldname) for fieldname in fieldnames]
 
-    with override(LANGUAGE_CODE):
-        header = ['Handshape ID'] + [ f.verbose_name.encode('ascii', 'ignore').decode() for f in fields ]
+    activate(LANGUAGES[0][0])
+    header = ['Handshape ID'] + [ f.verbose_name.encode('ascii', 'ignore').decode() for f in fields ]
 
     csvwriter.writerow(header)
 

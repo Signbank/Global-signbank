@@ -3651,7 +3651,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/import_csv_update.html:99
 msgid "New Value"
-msgstr "Nieuwe video"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/import_csv_update_lemmas.html:9
 msgid "Signbank: Import CSV Update Lemmas"

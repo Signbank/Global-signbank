@@ -15,7 +15,7 @@ from django.template import RequestContext
 from django.core.urlresolvers import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.paginator import Paginator
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, ugettext_lazy as _, activate
 from django.forms.fields import ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
@@ -632,6 +632,11 @@ class GlossListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
+        if 'show_all' in self.kwargs.keys():
+            # this ended up not being set sometimes in the call to get_queryset below
+            # in the case that the url is /signs/show_all/
+            self.show_all = True
+
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="dictionary-export.csv"'
@@ -653,8 +658,9 @@ class GlossListView(ListView):
                                                for language in dataset_languages]
         writer = csv.writer(response)
 
-        with override(LANGUAGE_CODE):
-            header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+        # CSV should be the first language in the settings
+        activate(LANGUAGES[0][0])
+        header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
                                                     + keyword_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
         for extra_column in ['SignLanguages','Dialects', 'Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
@@ -663,7 +669,11 @@ class GlossListView(ListView):
 
         writer.writerow(header)
 
-        query_set = self.object_list
+        if self.object_list:
+            query_set = self.object_list
+        else:
+            query_set = self.get_queryset()
+
         # for some reason when show_all has been selected, the object list has become a list instead of a QuerySet
         # it was also missing elements
         # in order to simply debug print statements, it's converted to a list here to make sure it always has the same type
@@ -697,7 +707,6 @@ class GlossListView(ListView):
                     row.append("")
 
             for f in fields:
-
                 #Try the value of the choicelist
                 if hasattr(f, 'field_choice_category'):
                     if hasattr(gloss, 'get_' + f.name + '_display'):
@@ -707,22 +716,9 @@ class GlossListView(ListView):
                 else:
                     value = getattr(gloss, f.name)
 
-                # print('export csv ', gloss.id, ' field ', f.name, ' value ', value)
-                # for csv export, the text fields need quotes around them to stop e.g., semicolons from spliting the data into multiple columns
-
-                # fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-
-                # is this needed?
-                # char_fields_not_null = [f.name for f in Gloss._meta.fields
-                #                         if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
-
-                # is this needed?
-                # if f.__class__.__name__ == 'CharField' and not f.null and value and not isinstance(value,str):
-                #     value = str(value)
-
                 # some legacy glosses have empty text fields of other formats
                 if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
-                        and (value == '-' or value == '------' or value == ' '):
+                        and value in ['-','------',' ']:
                     value = ''
 
                 if value is None:
@@ -1119,7 +1115,7 @@ class GlossListView(ListView):
 
             # exclude all of tqs from qs
             qs = [q for q in qs if q not in tqs]
-        print(get)
+
         if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
             query_parameters['relationToForeignSign'] = get['relationToForeignSign']
 
@@ -1174,16 +1170,12 @@ class GlossListView(ListView):
                 print("Morpheme not found: ", str(input_morpheme))
 
         if 'hasComponentOfType' in get and get['hasComponentOfType'] not in ['', '0']:
-            print('hasComponentOfType: ', get['hasComponentOfType'])
             query_parameters['hasComponentOfType'] = get['hasComponentOfType']
 
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
             morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role_fk__machine_value=get['hasComponentOfType'])
-            print(morphdefs_with_correct_role)
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
-            print(pks_for_glosses_with_morphdefs_with_correct_role)
             qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
-            print(qs)
 
         if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] not in ['', '0']:
             query_parameters['hasMorphemeOfType'] = get['hasMorphemeOfType']
@@ -1194,7 +1186,6 @@ class GlossListView(ListView):
             qs = qs.filter(id__in=target_morphemes)
 
         if 'definitionRole' in get and get['definitionRole'] != '' and get['definitionRole'] not in ['', '0']:
-            print('definitionRole: ', get['definitionRole'])
             query_parameters['definitionRole'] = get['definitionRole']
 
             #Find all definitions with this role
