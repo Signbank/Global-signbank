@@ -51,6 +51,9 @@ def choicelist_queryset_to_colors(queryset,ordered=True,id_prefix='_',shortlist=
     # Other functions that call this function expect either a list or an OrderedDict that maps machine values to human values
     # Make sure the machine values are unique by only using the first human value
 
+    if not queryset:
+        return []
+
     list_head_values = ['-', 'N/A']
 
     raw_choice_list = []

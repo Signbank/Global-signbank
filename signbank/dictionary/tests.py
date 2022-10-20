@@ -1530,10 +1530,12 @@ class HandshapeTests(TestCase):
         self.field_choice_handedness_2 = FieldChoice.objects.filter(field='Handeness', machine_value__gt=1).last()
         self.field_choice_handshape_1 = FieldChoice.objects.filter(field='Handshape', machine_value__gt=1).first()
         self.field_choice_handshape_2 = FieldChoice.objects.filter(field='Handshape', machine_value__gt=1).last()
+        self.handshape_handshape_1 = Handshape.objects.filter(machine_value__gt=1).first()
+        self.handshape_handshape_2 = Handshape.objects.filter(machine_value__gt=1).last()
 
         if settings.USE_HANDSHAPE:
             print('HandshapeTests setUp.')
-            used_machine_values = [ h.machine_value for h in Handshape.objects.all() ]
+            used_machine_values = [ h.machine_value for h in Handshape.objects.filter(machine_value__gt=1) ]
             max_used_machine_value = max(used_machine_values)
 
             # create two arbitrary new Handshapes
@@ -1549,7 +1551,7 @@ class HandshapeTests(TestCase):
 
     def create_handshape(self):
 
-        used_machine_values = [h.machine_value for h in Handshape.objects.all()]
+        used_machine_values = [h.machine_value for h in Handshape.objects.filter(machine_value__gt=1)]
         max_used_machine_value = max(used_machine_values)
         print('max_used_machine_value: ', max_used_machine_value)
         new_machine_value = max_used_machine_value + 1
@@ -1627,8 +1629,8 @@ class HandshapeTests(TestCase):
                 gloss_data = {
                     'lemma' : lemmas[gloss_id],
                     'handedness_fk': self.field_choice_handedness_1,
-                    'domhndsh_fk' : self.field_choice_handshape_1,
-                    'subhndsh_fk': self.field_choice_handshape_2,
+                    'domhndsh_handshapefk' : self.test_handshape1,
+                    'subhndsh_handshapefk': self.test_handshape2,
                 }
                 new_gloss = Gloss(**gloss_data)
                 new_gloss.save()
@@ -1664,7 +1666,7 @@ class HandshapeTests(TestCase):
 
             changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
             print('Confirm the gloss was updated to the new handshape.')
-            self.assertEqual(changed_gloss.domhndsh_fk.machine_value, new_handshape.machine_value)
+            self.assertEqual(changed_gloss.domhndsh_handshapefk.machine_value, new_handshape.machine_value)
 
 
 class MultipleSelectTests(TestCase):
@@ -2411,8 +2413,8 @@ class testFrequencyAnalysis(TestCase):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness_fk': self.handedness_fieldchoice_1,
-                'domhndsh_fk' : self.test_handshape_fieldchoice_1,
-                'subhndsh_fk': self.test_handshape_fieldchoice_2,
+                'domhndsh_handshapefk' : self.test_handshape1,
+                'subhndsh_handshapefk': self.test_handshape2,
                 'locprim_fk': self.locprim_fieldchoice_1,
             }
             new_gloss = Gloss(**gloss_data)
@@ -2435,13 +2437,13 @@ class testFrequencyAnalysis(TestCase):
         glosses[4].handCh_fk = self.handch_fieldchoice_1
         glosses[4].save()
 
-        glosses[5].domhndsh_fk = self.test_handshape_fieldchoice_2
+        glosses[5].domhndsh_handshapefk = self.test_handshape2
         glosses[5].save()
 
         glosses[6].handedness_fk = self.handedness_fieldchoice_1
         glosses[6].save()
 
-        glosses[7].domhndsh_fk = self.test_handshape_fieldchoice_2
+        glosses[7].domhndsh_handshapefk = self.test_handshape2
         glosses[7].save()
 
         glosses[8].namEnt_fk = self.nament_fieldchoice_1
@@ -2492,10 +2494,16 @@ class testFrequencyAnalysis(TestCase):
 
             frequency_fields = FIELDS['phonology'] + FIELDS['semantics']
             mapped_phonology_fields = map_field_names_to_fk_field_names(frequency_fields)
-
-            fields_data = [(field.name, field.verbose_name.title(), field.field_choice_category)
-                                for field in Gloss._meta.fields
-                                if (field.name in mapped_phonology_fields) and hasattr(field, 'field_choice_category') ]
+            fields_data = []
+            for field_name in mapped_phonology_fields:
+                if field_name in [ f.name for f in Gloss._meta.fields ]:
+                    gloss_field = Gloss._meta.get_field(field_name)
+                    print(gloss_field)
+                    if hasattr(gloss_field, 'field_choice_category'):
+                        fields_data.append((gloss_field.name, gloss_field.verbose_name.title(), gloss_field.field_choice_category))
+                    elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+                        fields_data.append(
+                            (gloss_field.name, gloss_field.verbose_name.title(), 'Handshape'))
             fields_data_keys = [ f_name for (f_name,v_verbose,c_category) in fields_data]
 
             self.assertNotEqual(len(fields_data),0)
@@ -2503,23 +2511,29 @@ class testFrequencyAnalysis(TestCase):
 
             ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
             for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
-
-                choice_list = list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__lte=1).
-                                   order_by('machine_value').distinct()) \
-                              + list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__gt=1)
-                                     .distinct().order_by('name'))
-
+                if fieldchoice_category == 'Handshape':
+                    choice_list = list(Handshape.objects.filter(machine_value__lte=1).
+                                    order_by('machine_value').distinct()) \
+                                + list(Handshape.objects.filter(machine_value__gt=1)
+                                        .distinct().order_by('name'))
+                else:
+                    choice_list = list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__lte=1).
+                                    order_by('machine_value').distinct()) \
+                                + list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__gt=1)
+                                        .distinct().order_by('name'))
                 if len(choice_list) > 0:
-                    translated_choices = list(OrderedDict([(choice.name, choice.id) for choice in choice_list]).keys())
+                    translated_choices = list(OrderedDict([(choice.name, choice.machine_value) for choice in choice_list]).keys())
                 else:
                     translated_choices = []
 
                 if f.endswith('_fk'):
                     lookup_key = f.replace('_fk', '')
+                elif f.endswith('_handshapefk'):
+                    lookup_key = f.replace('_handshapefk', '')
                 else:
                     lookup_key = f
-
                 frequency_choices_f = frequency_dict[lookup_key]
+                print(frequency_choices_f)
                 frequency_choices_f_keys = list(frequency_choices_f.keys())
 
                 self.assertEqual(len(translated_choices), len(frequency_choices_f))
@@ -3155,7 +3169,7 @@ class MinimalPairsTests(TestCase):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness_fk': self.handedness_fieldchoice_1,
-                'domhndsh_fk' : self.new_fieldchoice_1,
+                'domhndsh_handshapefk' : self.test_handshape1,
                 'locprim_fk': self.locprim_fieldchoice_1,
             }
             new_gloss = Gloss(**gloss_data)
@@ -3198,7 +3212,7 @@ class MinimalPairsTests(TestCase):
         glosses[9].handCh_fk = self.handch_fieldchoice_1
         glosses[9].save()
 
-        glosses[10].domhndsh_fk = self.new_fieldchoice_2
+        glosses[10].domhndsh_handshapefk = self.test_handshape2
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
@@ -3213,7 +3227,7 @@ class MinimalPairsTests(TestCase):
         glosses[13].handedness_fk = self.handedness_fieldchoice_2
         glosses[13].save()
 
-        glosses[14].domhndsh_fk = self.new_fieldchoice_2
+        glosses[14].domhndsh_handshapefk = self.test_handshape2
         glosses[14].domhndsh_letter = False
         glosses[14].save()
 
@@ -3283,7 +3297,7 @@ class MinimalPairsTests(TestCase):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness_fk': self.handedness_fieldchoice_1,
-                'domhndsh_fk' : self.new_fieldchoice_1,
+                'domhndsh_handshapefk' : self.test_handshape1,
                 'locprim_fk': self.locprim_fieldchoice_1,
                 'tokNo': 0,
                 'tokNoSgnr': 0
@@ -3309,7 +3323,7 @@ class MinimalPairsTests(TestCase):
         glosses[9].handedness_fk = None
         glosses[9].save()
 
-        glosses[10].domhndsh_fk = self.new_fieldchoice_2
+        glosses[10].domhndsh_handshapefk = self.test_handshape2
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
@@ -3321,13 +3335,13 @@ class MinimalPairsTests(TestCase):
         glosses[12].weakdrop = True
         glosses[12].save()
 
-        glosses[13].domhndsh = str(self.test_handshape2.machine_value)
+        glosses[13].domhndsh_handshapefk = self.test_handshape2
         glosses[13].handedness_fk = self.handedness_fieldchoice_2
         glosses[13].save()
 
-        glosses[14].domhndsh = str(self.test_handshape2.machine_value)
+        glosses[14].domhndsh_handshapefk = self.test_handshape2
         glosses[14].handedness_fk = self.handedness_fieldchoice_2
-        glosses[14].subhndsh = str(self.test_handshape2.machine_value)
+        glosses[14].subhndsh_handshapefk = self.test_handshape2
         glosses[14].save()
 
         glosses_to_ids = {}

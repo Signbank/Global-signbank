@@ -418,9 +418,12 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         elif key[-2:] == '[]':
             # in the Gloss Search Form, multiple choice fields have a list of values
             # these are all displayed in the Query Parameters display (as non-selectable buttons in the template)
-            field = map_field_name_to_fk_field_name(key[:-2])
-            field_category = Gloss._meta.get_field(field).field_choice_category
-            choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
+            if key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                choices_for_category = Handshape.objects.filter(machine_value__in=query_parameters[key])
+            else:
+                field = map_field_name_to_fk_field_name(key[:-2])
+                field_category = Gloss._meta.get_field(field).field_choice_category
+                choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
             query_dict[key] = [ choice.name for choice in choices_for_category ]
         elif key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
             continue
