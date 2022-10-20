@@ -1562,6 +1562,33 @@ from signbank.settings.server_specific import *
 import re
 import datetime as DT
 
+def map_field_names_to_fk_field_names(fields):
+    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+        return fields
+    gloss_field_names = [f.name for f in Gloss._meta.fields]
+    handshape_field_names = [f.name for f in Handshape._meta.fields]
+    mapped_fields = []
+    for field in fields:
+        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            mapped_fields.append(field+'_handshapefk')
+        elif field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names:
+            mapped_fields.append(field+'_fk')
+        else:
+            mapped_fields.append(field)
+    return mapped_fields
+
+def map_field_name_to_fk_field_name(field):
+    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+        return field
+    gloss_field_names = [f.name for f in Gloss._meta.fields]
+    handshape_field_names = [f.name for f in Handshape._meta.fields]
+    morpheme_field_names = [f.name for f in Morpheme._meta.fields]
+    if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+        return field + '_handshapefk'
+    elif field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names or field+'_fk' in morpheme_field_names:
+        return field+'_fk'
+    else:
+        return field
 
 def fields_with_choices_glosses():
     # return a dict that maps the field choice categories to the fields of Gloss that have the category
@@ -1710,25 +1737,16 @@ def write_ecv_file_for_dataset(dataset_name):
     return ecv_file
 
 def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies=False):
+    activate(lang)
+
     desc = ""
     if include_phonology_and_frequencies:
-        fields_data = []
-        for field in Gloss._meta.fields:
-            if field.name in ECV_SETTINGS['description_fields']:
-                if hasattr(field, 'field_choice_category'):
-                    fc_category = field.field_choice_category
-                else:
-                    fc_category = None
-                fields_data.append((field.name, fc_category))
 
-        for (f, fieldchoice_category) in fields_data:
-
-            if fieldchoice_category:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                machine_value = getattr(gloss, f)
-                value = machine_value_to_translated_human_value(machine_value, choice_list)
-                if value is None:
-                    value = ' '
+        for f in ECV_SETTINGS['description_fields']:
+            mapped_description_field = map_field_name_to_fk_field_name(f)
+            gloss_field = getattr(gloss, mapped_description_field)
+            if isinstance(gloss_field, FieldChoice) or isinstance(gloss_field, Handshape):
+                value = getattr(gloss, f).name
             else:
                 value = get_value_for_ecv(gloss, f)
 
@@ -2076,26 +2094,3 @@ def map_search_results_to_gloss_list(search_results):
         gloss_ids.append(search_result['id'])
     return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))
 
-def map_field_names_to_fk_field_names(fields):
-    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-        return fields
-    gloss_field_names = [f.name for f in Gloss._meta.fields]
-    handshape_field_names = [f.name for f in Handshape._meta.fields]
-    mapped_fields = []
-    for field in fields:
-        if field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names:
-            mapped_fields.append(field+'_fk')
-        else:
-            mapped_fields.append(field)
-    return mapped_fields
-
-def map_field_name_to_fk_field_name(field):
-    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-        return field
-    gloss_field_names = [f.name for f in Gloss._meta.fields]
-    handshape_field_names = [f.name for f in Handshape._meta.fields]
-    morpheme_field_names = [f.name for f in Morpheme._meta.fields]
-    if field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names or field+'_fk' in morpheme_field_names:
-        return field+'_fk'
-    else:
-        return field
