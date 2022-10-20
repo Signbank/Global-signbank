@@ -364,6 +364,7 @@ class Handshape(models.Model):
     name = models.CharField(_("English name"), max_length=50)
     dutch_name = models.CharField(_("Dutch name"), max_length=50)
     chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
+    field_color = ColorField(default='ffffff')
     hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"),
                                 max_length = 5)
     hsNumSel.field_choice_category = 'Quantity'
@@ -459,6 +460,10 @@ class Handshape(models.Model):
     ufM = models.NullBooleanField(_("Mu"), null=True, default=False)
     ufR = models.NullBooleanField(_("Ru"), null=True, default=False)
     ufP = models.NullBooleanField(_("Pu"), null=True, default=False)
+
+    def __str__(self):
+        name = 'Handshape: ' + self.name + ' (' + str(self.machine_value) + ')'
+        return name
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
