@@ -6,7 +6,7 @@ from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
-                                        MorphologyDefinition, OtherMedia, Handshape, \
+                                        MorphologyDefinition, OtherMedia, Handshape, SemanticField, DerivationHistory, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
 from django.conf import settings
@@ -1197,4 +1197,73 @@ class FieldChoiceForm(forms.ModelForm):
             # multiple duplicates found
             raise forms.ValidationError(_('The combination '+field+' -- '+en_name+' already exists'))
 
+class SemanticFieldColorForm(forms.Form):
+
+    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    field_color = forms.CharField(widget=ColorWidget)
+    readonly_fields = ['machine_value']
+
+    class Meta:
+        model = SemanticField
+        fields = ['name_en'] \
+                 + ['field_color', 'machine_value', ]
+
+
+class SemanticFieldForm(forms.ModelForm):
+    # this ModelForm is needed in order to validate against duplicates
+
+    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    prepopulated_fields = {}
+
+    class Meta:
+        model = SemanticField
+        fields = ['name_' + language.replace('-', '_') for language in [l[0] for l in settings.LANGUAGES]] \
+                 + ['field_color', 'machine_value', ]
+
+    def __init__(self, *args, **kwargs):
+        super(SemanticFieldForm, self).__init__(*args, **kwargs)
+
+        if not self.instance:
+            self.fields['field_color'].initial = '#ffffff'
+        else:
+            self.fields['field_color'].initial = '#' + self.instance.field_color
+
+        if not self.show_field_choice_colors:
+            self.fields['field_color'].widget = forms.HiddenInput()
+        else:
+            # SHOW_FIELD_COLORS
+            # set up the HTML color picker widget
+            # for display in the HTML color picker, the field color needs to be prefixed with #
+            # in the database,only the hex number is stored
+            # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
+            self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color'})
+
+class HandshapeForm(forms.ModelForm):
+    # this ModelForm is needed in order to validate against duplicates
+
+    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    prepopulated_fields = {}
+
+    class Meta:
+        model = Handshape
+        fields = ['name_' + language.replace('-', '_') for language in [l[0] for l in settings.LANGUAGES]] \
+                 + ['field_color', 'machine_value', ]
+
+    def __init__(self, *args, **kwargs):
+        super(HandshapeForm, self).__init__(*args, **kwargs)
+
+        if not self.instance:
+            self.fields['field_color'].initial = '#ffffff'
+        else:
+            self.fields['field_color'].initial = '#' + self.instance.field_color
+
+        if not self.show_field_choice_colors:
+            self.fields['field_color'].widget = forms.HiddenInput()
+        else:
+            # SHOW_FIELD_COLORS
+            # set up the HTML color picker widget
+            # for display in the HTML color picker, the field color needs to be prefixed with #
+            # in the database,only the hex number is stored
+            # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
+            self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color'})
 

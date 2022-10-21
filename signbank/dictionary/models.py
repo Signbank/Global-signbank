@@ -322,6 +322,7 @@ class SemanticField(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
 
     name = models.CharField(max_length=20, unique=True)
+    field_color = ColorField(default='ffffff')
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -333,6 +334,7 @@ class DerivationHistory(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
 
     name = models.CharField(max_length=20, unique=True)
+    field_color = ColorField(default='ffffff')
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -361,7 +363,7 @@ class RelationToForeignSign(models.Model):
 
 class Handshape(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
-    name = models.CharField(_("English name"), max_length=50)
+    name = models.CharField(max_length=50)
     dutch_name = models.CharField(_("Dutch name"), max_length=50)
     chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
     field_color = ColorField(default='ffffff')
@@ -2696,49 +2698,60 @@ class Dataset(models.Model):
 
     def generate_frequency_dict(self, language_code):
         fields_to_map = FIELDS['phonology'] + FIELDS['semantics']
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
 
+        # the following is coded here (it can't call the function in tools.py, which relies on models.py)
         foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
-        mapped_phonology_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field
-                                    for field in fields_to_map ]
+        mapped_phonology_fields = {}
+        # only map those fields with choices
+        for field in fields_to_map:
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                mapped_phonology_fields[field] = field + '_handshapefk'
+            elif field+'_fk' in foreign_key_fields:
+                mapped_phonology_fields[field] = field+'_fk'
+
+        gloss_fields = {}
+        # construct a dictionary where the keys are the field names as in the settings
+        # and the values are the fields of the gloss, using the new field choice model instead of the original
+        # this structure also prevents duplicates
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            for f in Gloss._meta.fields:
+                if f.name in fields_to_map:
+                    gloss_fields[f.name] = f
+        else:
+            for fname in mapped_phonology_fields.keys():
+                mapped_field_name = mapped_phonology_fields[fname]
+                gloss_fields[fname] = Gloss._meta.get_field(mapped_field_name)
 
         fields_data = []
-        for field in mapped_phonology_fields:
+        for field in mapped_phonology_fields.keys():
+            # mapped_field = mapped_phonology_fields[field]
             gloss_field = gloss_fields[field]
-            if hasattr(gloss_field, 'field_choice_category'):
-                fc_category = gloss_field.field_choice_category
-                fields_data.append((gloss_field.name, gloss_field.verbose_name.title(), fc_category))
-
-        # CHOICE_LISTS dictionary, maps from field name to pairs of ( _ machine value , translated verbose name )
-        # The choice list will be sorted on the translated verbose name
-        choice_lists = dict()
-        for (f, field_verbose_name, fieldchoice_category) in fields_data:
-            if fieldchoice_category:
-
-                choice_list_this_field = FieldChoice.objects.filter(field=fieldchoice_category).order_by('name')
-                # make a dictionary using the field name so we can look up the translated choices later
-                choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list_this_field, ordered=False)
+            if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+                fields_data.append(
+                    (field, gloss_field.verbose_name.title(), 'Handshape'))
+            elif hasattr(gloss_field, 'field_choice_category'):
+                fields_data.append((field, gloss_field.verbose_name.title(), gloss_field.field_choice_category))
 
         # Sort the data by the translated verbose name field
         ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
         frequency_lists_phonology_fields = OrderedDict()
         # To generate the correct order, iterate over the ordered fields data, which is ordered by translated verbose name
         for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
-            # FieldChoices: the ones with machine_value 0 and 1 first, the rest is sorted by name, which is the translated name
-            choice_list_this_field = list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__lte=1).order_by('machine_value')) \
-                                    + list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__gt=1).order_by('name'))
-            if f.endswith('_fk'):
-                lookup_key = f.replace('_fk', '')
+            mapped_field = mapped_phonology_fields[f]
+            # Choices: the ones with machine_value 0 and 1 first, the rest is sorted by name, which is the translated name
+            if fieldchoice_category == 'Handshape':
+                choice_list_this_field = list(Handshape.objects.filter(machine_value__lte=1).order_by('machine_value')) \
+                                         + list(Handshape.objects.filter(machine_value__gt=1).order_by('name'))
             else:
-                lookup_key = f
+                choice_list_this_field = list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__lte=1).order_by('machine_value')) \
+                                        + list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__gt=1).order_by('name'))
+
             # Because we're dealing with multiple languages, we want the fields to be sorted for the language,
             # we maintain the order of the fields established for the choice_lists dict of field choice names
             choice_list_frequencies = OrderedDict()
             for fieldchoice in choice_list_this_field:
                 # variable column is field.name
-                variable_column = f
+                variable_column = mapped_field
                 if variable_column.startswith('semField') and fieldchoice.machine_value > 0:
                     variable_column_query = 'semFieldShadow__machine_value__in'
                     try:
@@ -2752,14 +2765,14 @@ class Dataset(models.Model):
                 # empty values can be either 0 or else null
                 elif fieldchoice.machine_value == 0:
                     choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(Q(lemma__dataset=self),
-                                                                           Q(**{variable_column + '__isnull': True}) |
-                                                                           Q(**{variable_column: fieldchoice})).count()
+                                                                                     Q(**{variable_column + '__isnull': True}) |
+                                                                                     Q(**{variable_column: fieldchoice})).count()
                 else:
-                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
-                                **{variable_column: fieldchoice}).count()
+                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                                                                                     **{variable_column: fieldchoice}).count()
 
             # the new frequencies for this field are added using the update method to insure the order is maintained
-            frequency_lists_phonology_fields[lookup_key] = copy.deepcopy(choice_list_frequencies)
+            frequency_lists_phonology_fields[f] = copy.deepcopy(choice_list_frequencies)
 
         return frequency_lists_phonology_fields
 

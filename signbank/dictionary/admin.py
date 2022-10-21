@@ -4,7 +4,7 @@ from django.forms import TextInput, Textarea, CharField
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
-from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm
+from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm, SemanticFieldForm, HandshapeForm
 from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
 from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGES, LANGUAGE_CODE
@@ -394,35 +394,39 @@ class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
 
-class HandshapeAdmin(VersionAdmin):
+class HandshapeAdmin(VersionAdmin, TranslationAdmin):
+
+    readonly_fields = ['machine_value', 'dutch_name', 'chinese_name']
+    actions = ['delete_selected']
+
+    model = Handshape
+    fields = ['name', 'field_color', 'machine_value']
+    form = HandshapeForm
+
+    if hasattr(server_specific, 'SHOW_FIELD_CHOICE_COLORS') and server_specific.SHOW_FIELD_CHOICE_COLORS:
+        show_handshape_colors = True
+    else:
+        show_handshape_colors = False
 
     list_display = ['machine_value', 'name']
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(HandshapeAdmin, self).get_form(request, obj, **kwargs)
+
+        if obj:
+            # for display in the HTML color picker, the field color needs to be prefixed with #
+            # in the database,only the hex number is stored
+            # check whether there is already an initial # before adding one
+            obj_color = obj.field_color
+            if obj_color[0] != '#':
+                obj.field_color = '#'+obj.field_color
+        return form
 
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
-
-class SemanticFieldAdminForm(forms.ModelForm):
-
-    class Meta:
-        model = SemanticField
-        fields = ['name', 'description']
-
-    def __init__(self, *args, **kwargs):
-        super(SemanticFieldAdminForm, self).__init__(*args, **kwargs)
-
-    def clean(self):
-        # check that the name is not empty
-        name = self.cleaned_data.get('name')
-        if not name:
-            raise forms.ValidationError(_('The semantic field name is required'))
-
-    def get_form(self, request, obj=None, **kwargs):
-
-        form = super(SemanticFieldAdminForm, self).get_form(request, obj, **kwargs)
-        return form
 
 
 class SemanticFieldTranslationInline(admin.TabularInline):
@@ -439,20 +443,33 @@ class SemanticFieldTranslationInline(admin.TabularInline):
         }
 
 
-class SemanticFieldAdmin(VersionAdmin):
+class SemanticFieldAdmin(VersionAdmin, TranslationAdmin):
 
     model = SemanticField
-    form = SemanticFieldAdminForm
+    fields = ['machine_value', 'name', 'field_color', 'description']
+    form = SemanticFieldForm
 
-    readonly_fields=['machine_value']
+    readonly_fields = ['machine_value']
 
     list_display = ['machine_value', 'name', 'description']
 
     inlines = [SemanticFieldTranslationInline,]
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40}) }
     }
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(SemanticFieldAdmin, self).get_form(request, obj, **kwargs)
+
+        if obj:
+            # for display in the HTML color picker, the field color needs to be prefixed with #
+            # in the database,only the hex number is stored
+            # check whether there is already an initial # before adding one
+            obj_color = obj.field_color
+            if obj_color[0] != '#':
+                obj.field_color = '#'+obj.field_color
+        return form
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -468,7 +485,7 @@ class SemanticFieldTranslationAdmin(VersionAdmin):
 
     model = SemanticFieldTranslation
 
-    readonly_fields=['semField', 'language', 'name']
+    readonly_fields = ['semField', 'language', 'name']
 
     list_display = ['semField', 'name', 'language']
 
@@ -522,7 +539,7 @@ class DerivationHistoryTranslationInline(admin.TabularInline):
         }
 
 
-class DerivationHistoryAdmin(VersionAdmin):
+class DerivationHistoryAdmin(VersionAdmin, TranslationAdmin):
 
     model = DerivationHistory
     form = DerivationHistoryAdminForm

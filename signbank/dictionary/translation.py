@@ -1,5 +1,5 @@
 from modeltranslation.translator import translator, TranslationOptions
-from .models import Language, FieldChoice, Handshape
+from .models import Language, FieldChoice, Handshape, SemanticField, DerivationHistory
 from signbank.settings.base import LANGUAGES
 
 # This file lists settings for django-modeltranslation.
@@ -28,3 +28,19 @@ class HandshapeTranslationOptions(TranslationOptions):
 
 
 translator.register(Handshape, HandshapeTranslationOptions)
+
+
+class SemanticFieldTranslationOptions(TranslationOptions):
+    fields = ('name',)
+    required_languages = tuple([t[0] for t in LANGUAGES])
+
+
+translator.register(SemanticField, SemanticFieldTranslationOptions)
+
+
+class DerivationHistoryTranslationOptions(TranslationOptions):
+    fields = ('name',)
+    required_languages = tuple([t[0] for t in LANGUAGES])
+
+
+translator.register(DerivationHistory, DerivationHistoryTranslationOptions)

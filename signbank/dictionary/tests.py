@@ -2493,18 +2493,17 @@ class testFrequencyAnalysis(TestCase):
             frequency_dict_keys = frequency_dict.keys()
 
             frequency_fields = FIELDS['phonology'] + FIELDS['semantics']
-            mapped_phonology_fields = map_field_names_to_fk_field_names(frequency_fields)
+
             fields_data = []
-            for field_name in mapped_phonology_fields:
-                if field_name in [ f.name for f in Gloss._meta.fields ]:
-                    gloss_field = Gloss._meta.get_field(field_name)
-                    print(gloss_field)
-                    if hasattr(gloss_field, 'field_choice_category'):
-                        fields_data.append((gloss_field.name, gloss_field.verbose_name.title(), gloss_field.field_choice_category))
-                    elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
-                        fields_data.append(
-                            (gloss_field.name, gloss_field.verbose_name.title(), 'Handshape'))
-            fields_data_keys = [ f_name for (f_name,v_verbose,c_category) in fields_data]
+            for field_name in frequency_fields:
+                mapped_field_name = map_field_name_to_fk_field_name(field_name)
+                gloss_field = Gloss._meta.get_field(mapped_field_name)
+                if hasattr(gloss_field, 'field_choice_category'):
+                    fields_data.append((field_name, gloss_field.verbose_name.title(), gloss_field.field_choice_category))
+                elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+                    fields_data.append(
+                        (field_name, gloss_field.verbose_name.title(), 'Handshape'))
+            fields_data_keys = [f_name for (f_name,v_verbose,c_category) in fields_data]
 
             self.assertNotEqual(len(fields_data),0)
             self.assertEqual(len(frequency_dict_keys), len(fields_data_keys))
@@ -2526,14 +2525,7 @@ class testFrequencyAnalysis(TestCase):
                 else:
                     translated_choices = []
 
-                if f.endswith('_fk'):
-                    lookup_key = f.replace('_fk', '')
-                elif f.endswith('_handshapefk'):
-                    lookup_key = f.replace('_handshapefk', '')
-                else:
-                    lookup_key = f
-                frequency_choices_f = frequency_dict[lookup_key]
-                print(frequency_choices_f)
+                frequency_choices_f = frequency_dict[f]
                 frequency_choices_f_keys = list(frequency_choices_f.keys())
 
                 self.assertEqual(len(translated_choices), len(frequency_choices_f))
