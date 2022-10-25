@@ -367,7 +367,14 @@ class GlossSearchForm(forms.ModelForm):
 
         for (fieldname, field_category) in multiple_select_gloss_fields:
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            if fieldname.startswith('semField'):
+                field_choices = SemanticField.objects.all()
+            elif fieldname.startswith('derivHist'):
+                field_choices = DerivationHistory.objects.all()
+            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                field_choices = Handshape.objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
@@ -1033,8 +1040,17 @@ class FocusGlossSearchForm(forms.ModelForm):
         multiple_select_gloss_fields = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
 
         for (fieldname, field_category) in multiple_select_gloss_fields:
+            print('focus gloss search form init: ', fieldname, field_category)
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            if fieldname.startswith('semField'):
+                field_choices = SemanticField.objects.all()
+            elif fieldname.startswith('derivHist'):
+                field_choices = DerivationHistory.objects.all()
+            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                field_choices = Handshape.objects.all()
+                print(fieldname, field_choices)
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,

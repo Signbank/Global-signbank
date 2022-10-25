@@ -177,19 +177,9 @@ def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=Fal
     # Other functions that call this function expect either a list or an OrderedDict that maps machine values to machine values
     # Make sure the machine values are unique by only using the first human value
 
-    queryset_no_dupes = []
-    machine_values_seen = []
-    for choice in queryset:
-        if choice.machine_value in machine_values_seen:
-            # print('Duplicate machine value for FieldChoice ', choice.field, ' (', choice.machine_value, ')')
-            # don't append to queryset_no_dupes
-            continue
-        machine_values_seen.append(choice.machine_value)
-        queryset_no_dupes.append(choice)
+    raw_choice_list = [(id_prefix+str(choice.machine_value),choice.machine_value) for choice in queryset]
 
-    raw_choice_list = [(id_prefix+str(choice.machine_value),choice.machine_value) for choice in queryset_no_dupes]
-
-    sorted_choice_list = [(id_prefix+'0',0),(id_prefix+'1',1)]+sorted(raw_choice_list,key = lambda x: x[1])
+    sorted_choice_list = sorted(raw_choice_list,key = lambda x: x[1])
 
     if ordered:
         return OrderedDict(sorted_choice_list)

@@ -414,7 +414,7 @@ def update_gloss(request, glossid):
         fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
                                         if f.name in mapped_fieldnames
                                         and isinstance(Gloss._meta.get_field(f.name), FieldChoiceForeignKey)]
-
+        print(fieldchoiceforeignkey_fields)
         fields_empty_null = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields ]
 

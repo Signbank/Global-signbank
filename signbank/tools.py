@@ -2094,3 +2094,62 @@ def map_search_results_to_gloss_list(search_results):
         gloss_ids.append(search_result['id'])
     return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))
 
+
+def fields_to_categories():
+    choice_categories = []
+    for topic in ['main', 'phonology', 'semantics']:
+        for field in FIELDS[topic]:
+            mapped_field = map_field_name_to_fk_field_name(field)
+            # the following check will be used when querying is added, at the moment these don't appear in the phonology list
+            if mapped_field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                continue
+            if mapped_field in [f.name for f in Gloss._meta.fields]:
+                field_field = Gloss._meta.get_field(mapped_field)
+            elif mapped_field in [f.name for f in Handshape._meta.fields]:
+                field_field = Handshape._meta.get_field(mapped_field)
+            elif mapped_field in [f.name for f in Morpheme._meta.fields]:
+                field_field = Morpheme._meta.get_field(mapped_field)
+            else:
+                print('field_to_categories: field not found in Gloss, Handshape, Morpheme: ', field)
+                continue
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                if 'Handshape' not in choice_categories:
+                    choice_categories.append('Handshape')
+            elif field == 'semField':
+                # capitalize it
+                if 'SemField' not in choice_categories:
+                    choice_categories.append('SemField')
+            elif field in ['derivHist']:
+                if field not in choice_categories:
+                    choice_categories.append(field)
+            elif hasattr(field_field, 'field_choice_category'):
+                if field_field.field_choice_category not in choice_categories:
+                    choice_categories.append(field_field.field_choice_category)
+    return choice_categories
+
+def fields_to_fieldcategory_dict():
+    choice_categories = {}
+    for topic in ['main', 'phonology', 'semantics']:
+        for field in FIELDS[topic]:
+            mapped_field = map_field_name_to_fk_field_name(field)
+            # the following check will be used when querying is added, at the moment these don't appear in the phonology list
+            if mapped_field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                continue
+            if mapped_field in [f.name for f in Gloss._meta.fields]:
+                field_field = Gloss._meta.get_field(mapped_field)
+            elif mapped_field in [f.name for f in Handshape._meta.fields]:
+                field_field = Handshape._meta.get_field(mapped_field)
+            elif mapped_field in [f.name for f in Morpheme._meta.fields]:
+                field_field = Morpheme._meta.get_field(mapped_field)
+            else:
+                print('field_to_categories: field not found in Gloss, Handshape, Morpheme: ', field)
+                continue
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                choice_categories[field] = 'Handshape'
+            elif field == 'semField':
+                choice_categories[field] = 'SemField'
+            elif field in ['derivHist']:
+                choice_categories[field] = field
+            elif hasattr(field_field, 'field_choice_category'):
+                choice_categories[field] = field_field.field_choice_category
+    return choice_categories

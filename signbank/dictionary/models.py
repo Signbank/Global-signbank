@@ -25,8 +25,7 @@ from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, STATIC_URL, DATASET_EAF_DIRECTORY
-from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict, \
-    choicelist_queryset_to_machine_value_dict
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 
 import signbank.settings
 # -*- coding: utf-8 -*-
@@ -79,7 +78,6 @@ class FieldChoice(models.Model):
     ABSORIFING = 'AbsOriFing'
     ABSORIPALM = 'AbsOriPalm'
     APERTURE = 'Aperture'
-    ARTICULATOR_WH_SELECTED_FINGERS = 'Articulator WH: selected fingers'
     CONTACTTYPE = 'ContactType'
     DERIVHIST = 'derivHist'
     DOMINANTHANDFLEXION = 'DominantHandFlexion'
@@ -116,7 +114,6 @@ class FieldChoice(models.Model):
         (ABSORIFING, 'AbsOriFing'),
         (ABSORIPALM, 'AbsOriPalm'),
         (APERTURE, 'Aperture'),
-        (ARTICULATOR_WH_SELECTED_FINGERS, 'Articulator WH: selected fingers'),
         (CONTACTTYPE, 'ContactType'),
         (DERIVHIST, 'derivHist'),
         (DOMINANTHANDFLEXION, 'DominantHandFlexion'),
@@ -654,14 +651,14 @@ class Gloss(models.Model):
         if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
             field = self._meta.get_field('domhndsh')
         else:
-            field = self._meta.get_field('domhndsh_fk')
+            field = self._meta.get_field('domhndsh_handshapefk')
         return getattr(self,field.name).name
 
     def display_subhndsh(self):
         if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
             field = self._meta.get_field('subhndsh')
         else:
-            field = self._meta.get_field('subhndsh_fk')
+            field = self._meta.get_field('subhndsh_handshapefk')
         return getattr(self,field.name).name
 
     def display_locprim(self):

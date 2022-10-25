@@ -52,7 +52,8 @@ from django.forms import TypedMultipleChoiceField, ChoiceField
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
-    searchform_panels, map_search_results_to_gloss_list, map_field_names_to_fk_field_names, map_field_name_to_fk_field_name
+    searchform_panels, map_search_results_to_gloss_list, map_field_names_to_fk_field_names, map_field_name_to_fk_field_name, \
+    fields_to_categories, fields_to_fieldcategory_dict
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -334,40 +335,6 @@ class GlossListView(ListView):
             language_query_keys.append(keyword_field_name)
         context['language_query_keys'] = json.dumps(language_query_keys)
 
-        #Translations for field choices dropdown menu
-        fields_that_need_translated_options = []
-
-        for field_group in FIELDS.values():
-            for field in field_group:
-                fields_that_need_translated_options.append(field)
-        fields_that_need_options = map_field_names_to_fk_field_names(fields_that_need_translated_options)
-        for field in fields_that_need_translated_options:
-            try:
-                if isinstance(search_form.fields[field], TypedMultipleChoiceField):
-                    gloss_field = search_form.fields[field]
-                    short_list = True
-                    if field.startswith('semField'):
-                        choices = SemanticField.objects.all()
-                    elif field.startswith('derivHist'):
-                        choices = DerivationHistory.objects.all()
-                    elif field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                        choices = Handshape.objects.all()
-                    elif field + '_fk' in fields_that_need_options: # isinstance(gloss_field, FieldChoiceForeignKey):
-                        gloss_field_fk = Gloss._meta.get_field(field+'_fk')
-                        choices = FieldChoice.objects.filter(field__iexact=gloss_field_fk.field_choice_category)
-                    else:
-                        # this case does not have the _fk field
-                        choices = FieldChoice.objects.filter(field__iexact=gloss_field.field_choice_category)
-                        # setting this to false adds the ------ field to the start of the list
-                        short_list = False
-
-                    translated_choices = choicelist_queryset_to_translated_dict(choices,ordered=False,shortlist=short_list,id_prefix='')
-                    search_form.fields[field] = forms.ChoiceField(label=search_form.fields[field].label,
-                                                                    choices=translated_choices,
-                                                                    widget=forms.Select(attrs={'class':'form-control'}))
-            except KeyError:
-                continue
-
         context['searchform'] = search_form
         context['search_type'] = self.search_type
         context['view_type'] = self.view_type
@@ -427,7 +394,14 @@ class GlossListView(ListView):
 
         choices_colors = {}
         for (fieldname, field_category) in multiple_select_gloss_categories:
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            if fieldname.startswith('semField'):
+                field_choices = SemanticField.objects.all()
+            elif fieldname.startswith('derivHist'):
+                field_choices = DerivationHistory.objects.all()
+            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                field_choices = Handshape.objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
 
         context['field_colors'] = choices_colors
@@ -1390,17 +1364,17 @@ class GlossDetailView(DetailView):
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
         context['handedness'] = (int(self.object.handedness_fk.machine_value) > 1) \
             if self.object.handedness_fk and self.object.handedness_fk.machine_value else 0  # minimal machine value is 2
-        context['domhndsh'] = (int(self.object.domhndsh_fk.machine_value) > 2) \
-            if self.object.domhndsh_fk and self.object.domhndsh_fk.machine_value else 0        # minimal machine value -s 3
+        context['domhndsh'] = (int(self.object.domhndsh_handshapefk.machine_value) > 2) \
+            if self.object.domhndsh_handshapefk and self.object.domhndsh_handshapefk.machine_value else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
         # check for existence of strong hand and weak hand shapes
         try:
-            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh_fk.machine_value)
+            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh_handshapefk.machine_value)
         except (Handshape.DoesNotExist, AttributeError):
             strong_hand_obj = None
-        context['StrongHand'] = self.object.domhndsh_fk.machine_value if strong_hand_obj else 0
-        context['WeakHand'] = self.object.subhndsh_fk.machine_value if self.object.subhndsh_fk else 0
+        context['StrongHand'] = self.object.domhndsh_handshapefk.machine_value if strong_hand_obj else 0
+        context['WeakHand'] = self.object.subhndsh_handshapefk.machine_value if self.object.subhndsh_handshapefk else 0
 
         # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
         context['SemanticFieldDefined'] =  self.object.semFieldShadow.all().count() > 0
@@ -2457,7 +2431,14 @@ class MorphemeListView(ListView):
 
         choices_colors = {}
         for (fieldname, field_category) in multiple_select_morpheme_categories:
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            if fieldname.startswith('semField'):
+                field_choices = SemanticField.objects.all()
+            elif fieldname.startswith('derivHist'):
+                field_choices = DerivationHistory.objects.all()
+            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                field_choices = Handshape.objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
 
         context['field_colors'] = choices_colors
@@ -3426,7 +3407,7 @@ class HomonymListView(ListView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         handedness_filter = 'handedness_fk__name__in'
-        strong_hand_filter = 'domhndsh_fk__name__in'
+        strong_hand_filter = 'domhndsh_handshapefk__name__in'
         empty_value = ['-','N/A']
 
         # this is used to set up the ajax calls, one per each focus gloss in the table
@@ -3441,7 +3422,7 @@ class HomonymListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         handedness_filter = 'handedness_fk__name__in'
-        strong_hand_filter = 'domhndsh_fk__name__in'
+        strong_hand_filter = 'domhndsh_handshapefk__name__in'
         empty_value = ['-','N/A']
 
         glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(
@@ -3611,7 +3592,7 @@ class MinimalPairsListView(ListView):
         finger_spelling_glosses = [ a_idgloss_trans.gloss_id for a_idgloss_trans in AnnotationIdglossTranslation.objects.filter(text__startswith="#") ]
 
         handedness_filter = 'handedness_fk__name__in'
-        strong_hand_filter = 'domhndsh_fk__name__in'
+        strong_hand_filter = 'domhndsh_handshapefk__name__in'
         empty_value = ['-','N/A']
 
         glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(
@@ -5645,106 +5626,105 @@ class FieldChoiceView(ListView):
         else:
             context['SHOW_FIELD_CHOICE_COLORS'] = False
 
+        choice_categories = fields_to_categories()
         all_choice_lists = {}
-        for topic in ['main', 'phonology', 'semantics', 'frequency']:
-            mapped_fields = map_field_names_to_fk_field_names(FIELDS[topic])
-            fields_with_choices = [(field, field.field_choice_category) for field in Gloss._meta.fields if
-                                   field.name in mapped_fields and hasattr(field, 'field_choice_category')
-                                   and field.name not in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh'] ]
+        for category in choice_categories:
+            # Get and save the choice list for this category
+            if category == 'SemField':
+                field_choices = SemanticField.objects.all()
+            elif category == 'derivHist':
+                field_choices = DerivationHistory.objects.all()
+            elif category == 'Handshape':
+                field_choices = Handshape.objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field=category)
+            all_choice_lists[category] = field_choices
 
-            for (field, fieldchoice_category) in fields_with_choices:
-                # Get and save the choice list for this field
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                if len(choice_list) > 0:
-                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list, choices_to_exclude=[])
-                    choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
+        fields_with_choices = fields_to_fieldcategory_dict()
+        all_choice_lists_frequency = {}
+        for (field, category) in fields_with_choices.items():
+            if all_choice_lists[category]:
+                if category not in all_choice_lists_frequency.keys():
+                    all_choice_lists_frequency[category] = {}
+                mapped_field = map_field_name_to_fk_field_name(field)
+                field_choices = all_choice_lists[category]
+                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(field_choices)
+                for choice_list_field, machine_value in choice_list_machine_values:
+                    if machine_value == 0:
+                        filter = mapped_field + '__machine_value'
+                        frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
+                                                                   Q(**{mapped_field + '__isnull': True}) |
+                                                                   Q(**{filter: 0})).count()
 
-                    for choice_list_field, machine_value in choice_list_machine_values:
-                        if machine_value == 0:
-                            frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
-                                                                       Q(**{field.name + '__isnull': True}) |
-                                                                       Q(**{field.name: 0})).count()
-
-                        else:
-                            if field.name.startswith('semField'):
-                                filter = 'semFieldShadow__in'
-                                filter_value = [ machine_value ]
-                            elif field.name.startswith('derivHist'):
-                                filter = 'derivHistShadow__in'
-                                filter_value = [machine_value]
-                            else:
-                                filter = variable_column = field.name + '__machine_value'
-                                filter_value = machine_value
+                    else:
+                        if field == 'semField':
+                            filter = 'semFieldShadow__in'
+                            filter_value = [ machine_value ]
                             frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
                                 **{filter: filter_value}).count()
-
-                        if choice_list_field in all_choice_lists[fieldchoice_category].keys():
-                            all_choice_lists[fieldchoice_category][choice_list_field] += ' [' + str(
-                                    frequency_for_field) + ']'
+                        elif field == 'derivHist':
+                            filter = 'derivHistShadow__in'
+                            filter_value = [machine_value]
+                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+                                **{filter: filter_value}).count()
+                        elif category == 'Handshape':
+                            filter = mapped_field + '__machine_value'
+                            filter_value = machine_value
+                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+                                **{filter: filter_value}).count()
+                        else:
+                            filter = mapped_field + '__machine_value'
+                            filter_value = machine_value
+                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+                                **{filter: filter_value}).count()
+                    if choice_list_field not in all_choice_lists_frequency[category].keys():
+                        all_choice_lists_frequency[category][choice_list_field] = frequency_for_field
+                    else:
+                        # this is needed since multiple fields can have the same category
+                        all_choice_lists_frequency[category][choice_list_field] += frequency_for_field
 
         field_choices = {}
         for field_choice_category in all_choice_lists.keys():
             field_choices[field_choice_category] = []
-
-        for field_choice_category in all_choice_lists.keys():
-            for machine_value_string, display_with_frequency in all_choice_lists[field_choice_category].items():
-                if machine_value_string != '_0' and machine_value_string != '_1':
-                    mvid, mvv = machine_value_string.split('_')
-                    machine_value = int(mvv)
-
-                    try:
-                        field_choice_object = FieldChoice.objects.get(field=field_choice_category,
-                                                                      machine_value=machine_value)
-                    except (ObjectDoesNotExist, MultipleObjectsReturned):
-                        try:
-                            field_choice_object = \
-                            FieldChoice.objects.filter(field=field_choice_category, machine_value=machine_value)[0]
-                        except (ObjectDoesNotExist, IndexError):
-                            print('Multiple ', field_choice_category, ' objects share the same machine value: ',
-                                  machine_value)
-                            continue
-                    # field_display_with_frequency = field_choice_object.field + ': ' + display_with_frequency
-                    field_choices[field_choice_category].append((field_choice_object, display_with_frequency))
+            choice_objects = all_choice_lists[field_choice_category]
+            choice_list = choicelist_queryset_to_translated_dict(choice_objects)
+            category_choices = []
+            for machine_value_string, frequency in all_choice_lists_frequency[field_choice_category].items():
+                mvid, mvv = machine_value_string.split('_')
+                machine_value = int(mvv)
+                choice_object = choice_objects.get(machine_value=machine_value)
+                choice_name = choice_list[machine_value_string]
+                display_with_frequency = choice_name + ' [' + str(frequency) + ']'
+                category_choices.append((choice_object, display_with_frequency))
+            # the first two choices need to be put at the front
+            choice_machine_value_0 = category_choices[0]
+            choice_machine_value_1 = category_choices[1]
+            # the other choices will be sorted on the name
+            otherchoices = category_choices[2:]
+            field_choices[field_choice_category] = [choice_machine_value_0, choice_machine_value_1] + sorted(otherchoices, key = lambda x: x[1])
         context['field_choices'] = field_choices
 
-        gloss_labels = dict()
-        for f in Gloss._meta.fields:
-            try:
-                gloss_labels[f.name] = _(Gloss._meta.get_field(f.name).verbose_name)
-            except:
-                pass
-
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
-
-        context['static_choice_lists'] = {}
-        context['static_choice_list_colors'] = {}
-
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
-        for topic in ['main','phonology','semantics']:
-            for field in FIELDS[topic]:
-                mapped_field = map_field_name_to_fk_field_name(field)
-                # the following check will be used when querying is added, at the moment these don't appear in the phonology list
-                if mapped_field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                    choice_list = []
-                    #Get and save the choice list for this field
-                    gloss_field = gloss_fields[mapped_field]
-                    if hasattr(gloss_field, 'field_choice_category'):
-                        # old handshape field choice fields are excluded here via map_field_name_to_fk_field_name
-                        fieldchoice_category = gloss_field.field_choice_category
-                        choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+        choice_categories = fields_to_categories()
 
+        choices_colors = {}
+        display_choices = {}
+        for category in choice_categories:
+            if category == 'SemField':
+                field_choices = SemanticField.objects.all()
+                print('SemField field_choices: ', field_choices)
+            elif category == 'derivHist':
+                field_choices = DerivationHistory.objects.all()
+            elif category == 'Handshape':
+                field_choices = Handshape.objects.all()
+                print(category, field_choices)
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=category)
+            choices_colors[category] = choicelist_queryset_to_colors(field_choices, shortlist=False)
+            display_choices[category] = choicelist_queryset_to_translated_dict(field_choices, shortlist=False)
 
-                        display_choice_list = choicelist_queryset_to_translated_dict(choice_list)
-
-                        display_choice_list_colors = choicelist_queryset_to_colors(choice_list)
-
-                        context['static_choice_lists'][fieldchoice_category] = display_choice_list
-                        context['static_choice_list_colors'][fieldchoice_category] = display_choice_list_colors
-                    else:
-                        # otherwise, it's a value, not a choice
-                        pass
+        context['static_choice_lists'] = display_choices
+        context['static_choice_list_colors'] = choices_colors
 
         return context
 
