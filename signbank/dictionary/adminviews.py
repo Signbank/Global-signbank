@@ -1325,7 +1325,7 @@ class GlossDetailView(DetailView):
         phonology_matrix = context['gloss'].phonology_matrix_homonymns(use_machine_value=True)
         phonology_focus = [field for field in phonology_matrix.keys()
                            if phonology_matrix[field] != None
-                                and phonology_matrix[field] not in ['Neutral',  '0', '1'] ]
+                                and phonology_matrix[field] not in ['Neutral',  '0', '1', 'False'] ]
         default_query_parameters = query_parameters_this_gloss(phonology_focus, phonology_matrix)
         default_query_parameters_mapping = pretty_print_query_fields(dataset_languages, default_query_parameters.keys())
         default_query_parameters_values_mapping = pretty_print_query_values(dataset_languages, default_query_parameters)
