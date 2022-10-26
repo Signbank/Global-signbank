@@ -89,8 +89,6 @@ urlpatterns = [
 
     url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
 
-    url(r'configure_handshapes/$',
-        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_handshapes)),
     url(r'configure_derivationhistory/$',
         permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_derivationhistory)),
 

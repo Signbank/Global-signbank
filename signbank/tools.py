@@ -2089,6 +2089,8 @@ def searchform_panels(searchform, searchfields) :
 
 def map_search_results_to_gloss_list(search_results):
 
+    if not search_results:
+        return ([], [])
     gloss_ids = []
     for search_result in search_results:
         gloss_ids.append(search_result['id'])

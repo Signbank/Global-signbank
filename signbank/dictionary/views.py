@@ -2458,51 +2458,6 @@ def find_and_save_variants(request):
     return HttpResponse(gloss_table_prefix+gloss_table_rows+gloss_table_suffix)
 
 
-
-def configure_handshapes(request):
-
-    # check if the Handshape table has been filled
-    already_filled_handshapes = Handshape.objects.count()
-    if request.user.is_superuser and not already_filled_handshapes:
-
-        handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
-
-        for o in handshapes:
-
-            new_id = o.machine_value
-            new_machine_value = o.machine_value
-            new_name = o.name
-
-            # Copy translated FieldChoice fields to translated Handshape fields
-            new_name_translations = dict([
-                (
-                    'name_' + language.replace('-', '_'),
-                    getattr(o, 'name_' + language.replace('-', '_'))
-                )
-                for language in [l[0] for l in LANGUAGES]
-            ])
-
-            new_handshape = Handshape(machine_value=new_machine_value, name=new_name, **new_name_translations)
-            new_handshape.save()
-
-    selected_datasets = get_selected_datasets_for_user(request.user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
-
-    return render(request, 'dictionary/admin_configure_handshapes.html',
-                  { 'USE_HANDSHAPE': settings.USE_HANDSHAPE,
-                    'already_set_up': already_filled_handshapes,
-                    'handshapes':FieldChoice.objects.filter(field__iexact='Handshape'),
-                   'dataset_languages': dataset_languages,
-                   'selected_datasets': selected_datasets,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
-                   })
-
-
 def get_unused_videos(request):
 
     selected_datasets = get_selected_datasets_for_user(request.user)
