@@ -1530,30 +1530,27 @@ class HandshapeTests(TestCase):
         self.field_choice_handedness_2 = FieldChoice.objects.filter(field='Handeness', machine_value__gt=1).last()
         self.field_choice_handshape_1 = FieldChoice.objects.filter(field='Handshape', machine_value__gt=1).first()
         self.field_choice_handshape_2 = FieldChoice.objects.filter(field='Handshape', machine_value__gt=1).last()
-        self.handshape_handshape_1 = Handshape.objects.filter(machine_value__gt=1).first()
-        self.handshape_handshape_2 = Handshape.objects.filter(machine_value__gt=1).last()
 
-        if settings.USE_HANDSHAPE:
-            print('HandshapeTests setUp.')
-            used_machine_values = [ h.machine_value for h in Handshape.objects.filter(machine_value__gt=1) ]
-            max_used_machine_value = max(used_machine_values)
+        print('HandshapeTests setUp.')
+        used_machine_values = [ h.machine_value for h in Handshape.objects.filter(machine_value__gt=1) ]
+        max_used_machine_value = max(used_machine_values)
 
-            # create two arbitrary new Handshapes
+        # create two arbitrary new Handshapes
 
-            self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1')
-            self.test_handshape1.save()
+        self.test_handshape1 = Handshape(machine_value=max_used_machine_value+1, name='thisisatemporarytesthandshape1')
+        self.test_handshape1.save()
 
-            self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2')
-            self.test_handshape2.save()
+        self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2')
+        self.test_handshape2.save()
 
-            print('New handshape ', self.test_handshape1.machine_value, ' created: ', self.test_handshape1.name)
-            print('New handshape ', self.test_handshape2.machine_value, ' created: ', self.test_handshape2.name)
+        print('New handshape ', self.test_handshape1.machine_value, ' created: ', self.test_handshape1.name)
+        print('New handshape ', self.test_handshape2.machine_value, ' created: ', self.test_handshape2.name)
 
     def create_handshape(self):
 
         used_machine_values = [h.machine_value for h in Handshape.objects.filter(machine_value__gt=1)]
         max_used_machine_value = max(used_machine_values)
-        print('max_used_machine_value: ', max_used_machine_value)
+        print('create_handshape: max_used_machine_value: ', max_used_machine_value)
         new_machine_value = max_used_machine_value + 1
         new_name = 'thisisanewtesthandshape_en'
 
@@ -1569,104 +1566,99 @@ class HandshapeTests(TestCase):
 
     def test_create_handshape(self):
 
-        if settings.USE_HANDSHAPE:
-            print('HandshapeTests test_create_handshape')
-            # set the test dataset
-            dataset_name = settings.DEFAULT_DATASET
-            test_dataset = Dataset.objects.get(name=dataset_name)
-            assign_perm('view_dataset', self.user, test_dataset)
-            assign_perm('change_dataset', self.user, test_dataset)
-            # assign_perm('dictionary.search_gloss', self.user)
-            # assign_perm('dictionary.add_gloss', self.user)
-            # assign_perm('dictionary.change_gloss', self.user)
+        print('HandshapeTests test_create_handshape')
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
 
-            self.client.login(username='test-user', password='test-user')
+        self.client.login(username='test-user', password='test-user')
 
-            #Add info of the dataset to the session (normally done in the detail view)
-            self.client.session['datasetid'] = test_dataset.pk
-            self.client.session['search_results'] = None
-            self.client.session.save()
+        #Add info of the dataset to the session (normally done in the detail view)
+        self.client.session['datasetid'] = test_dataset.pk
+        self.client.session['search_results'] = None
+        self.client.session.save()
 
-            new_handshape = self.create_handshape()
-            #We can now request a detail view
-            print('Test HandshapeDetailView for new handshape.')
-            response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
-            self.assertEqual(response.status_code,200)
+        new_handshape = self.create_handshape()
+        #We can now request a detail view
+        print('Test HandshapeDetailView for new handshape.')
+        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+        self.assertEqual(response.status_code,200)
 
-            # Querying the new handshape puts it into FieldChoice
-            field_choices_handshapes = FieldChoice.objects.filter(field='Handshape')
-            machine_values_of_field_choices_handshapes = [ h.machine_value for h in field_choices_handshapes]
-            print('Test that the new handshape is in FieldChoice for Handshape')
-            self.assertIn(new_handshape.machine_value, machine_values_of_field_choices_handshapes)
+        # Querying the new handshape puts it into FieldChoice
+        field_choices_handshapes = FieldChoice.objects.filter(field='Handshape')
+        machine_values_of_field_choices_handshapes = [ h.machine_value for h in field_choices_handshapes]
+        print('Test that the new handshape is in FieldChoice for Handshape')
+        self.assertIn(new_handshape.machine_value, machine_values_of_field_choices_handshapes)
 
     def test_handshape_choices(self):
 
-        if settings.USE_HANDSHAPE:
-            print('HandshapeTests test_handshape_choices')
+        print('HandshapeTests test_handshape_choices')
 
-            # set the test dataset
-            dataset_name = settings.DEFAULT_DATASET
-            test_dataset = Dataset.objects.get(name=dataset_name)
-            assign_perm('view_dataset', self.user, test_dataset)
-            assign_perm('change_dataset', self.user, test_dataset)
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
 
-            # Create 10 lemmas for use in testing
-            language = Language.objects.get(id=get_default_language_id())
-            lemmas = {}
-            for lemma_id in range(1,4):
-                new_lemma = LemmaIdgloss(dataset=test_dataset)
-                new_lemma.save()
-                new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
-                                                                      lemma=new_lemma, language=language)
-                new_lemmaidglosstranslation.save()
-                lemmas[lemma_id] = new_lemma
+        # Create 10 lemmas for use in testing
+        language = Language.objects.get(id=get_default_language_id())
+        lemmas = {}
+        for lemma_id in range(1,4):
+            new_lemma = LemmaIdgloss(dataset=test_dataset)
+            new_lemma.save()
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation" + str(lemma_id),
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+            lemmas[lemma_id] = new_lemma
 
-            # print('created lemmas: ', lemmas)
+        # print('created lemmas: ', lemmas)
 
-            # Create 10 glosses that start out being the same
-            glosses = {}
-            for gloss_id in range(1,4):
-                gloss_data = {
-                    'lemma' : lemmas[gloss_id],
-                    'handedness_fk': self.field_choice_handedness_1,
-                    'domhndsh_handshapefk' : self.test_handshape1,
-                    'subhndsh_handshapefk': self.test_handshape2,
-                }
-                new_gloss = Gloss(**gloss_data)
-                new_gloss.save()
-                for language in test_dataset.translation_languages.all():
-                    language_code_2char = language.language_code_2char
-                    annotationIdgloss = AnnotationIdglossTranslation()
-                    annotationIdgloss.gloss = new_gloss
-                    annotationIdgloss.language = language
-                    annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
-                    annotationIdgloss.save()
-                glosses[gloss_id] = new_gloss
+        # Create 10 glosses that start out being the same
+        glosses = {}
+        for gloss_id in range(1,4):
+            gloss_data = {
+                'lemma' : lemmas[gloss_id],
+                'handedness_fk': self.field_choice_handedness_1,
+                'domhndsh_handshapefk' : self.test_handshape1,
+                'subhndsh_handshapefk': self.test_handshape2,
+            }
+            new_gloss = Gloss(**gloss_data)
+            new_gloss.save()
+            for language in test_dataset.translation_languages.all():
+                language_code_2char = language.language_code_2char
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
+                annotationIdgloss.save()
+            glosses[gloss_id] = new_gloss
 
-            # print('created glosses: ', glosses)
+        # print('created glosses: ', glosses)
 
-            # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
-            # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
+        # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
+        # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
 
-            self.client.login(username='test-user', password='test-user')
+        self.client.login(username='test-user', password='test-user')
 
-            new_handshape = self.create_handshape()
-            new_handshape_field_choice = FieldChoice.objects.get(field='Handshape', machine_value=new_handshape.machine_value)
-            print('Get fieldchoice for new handshape: ',new_handshape_field_choice)
+        new_handshape = self.create_handshape()
+        new_handshape_field_choice = FieldChoice.objects.get(field='Handshape', machine_value=new_handshape.machine_value)
+        print('Get fieldchoice for new handshape: ',new_handshape_field_choice)
 
-            #We can now request a detail view
-            print('Test HandshapeDetailView for new handshape.')
-            response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
-            self.assertEqual(response.status_code,200)
+        #We can now request a detail view
+        print('Test HandshapeDetailView for new handshape.')
+        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+        self.assertEqual(response.status_code,200)
 
-            new_handshape_value_string = '_' + str(new_handshape_field_choice.machine_value)
-            # Find out if the new handshape appears in the Field Choice menus
-            print("Update a gloss to use the new handshape, using the choice list")
-            self.client.post('/dictionary/update/gloss/'+str(glosses[1].pk),{'id':'domhndsh','value':new_handshape_value_string})
+        new_handshape_value_string = '_' + str(new_handshape_field_choice.machine_value)
+        # Find out if the new handshape appears in the Field Choice menus
+        print("Update a gloss to use the new handshape, using the choice list")
+        self.client.post('/dictionary/update/gloss/'+str(glosses[1].pk),{'id':'domhndsh','value':new_handshape_value_string})
 
-            changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
-            print('Confirm the gloss was updated to the new handshape.')
-            self.assertEqual(changed_gloss.domhndsh_handshapefk.machine_value, new_handshape.machine_value)
+        changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
+        print('Confirm the gloss was updated to the new handshape.')
+        self.assertEqual(changed_gloss.domhndsh_handshapefk.machine_value, new_handshape.machine_value)
 
 
 class MultipleSelectTests(TestCase):
@@ -1686,9 +1678,8 @@ class MultipleSelectTests(TestCase):
     def create_semanticfield(self):
 
         used_machine_values = [s.machine_value for s in SemanticField.objects.all()]
-        if not used_machine_values:
-            used_machine_values = [ 1, 2]
         max_used_machine_value = max(used_machine_values)
+        print('create_semanticfield: max_used_machine_value: ', max_used_machine_value)
         new_machine_value = max_used_machine_value + 1
         new_english_name = 'thisisanewtestsemanticfield_'+str(new_machine_value)+'_en'
         dutch_language = Language.objects.get(language_code_2char='nl')
@@ -1713,7 +1704,6 @@ class MultipleSelectTests(TestCase):
         print('New semantic field ', new_semanticfield.machine_value, ' created: ', new_semanticfield.name)
 
         return new_semanticfield
-
 
     def test_SemanticField(self):
 
@@ -2723,43 +2713,97 @@ class RevisionHistoryTests(TestCase):
 
         gloss_update_phonology_data = []
         gloss_fields = settings.FIELDS['phonology']+settings.FIELDS['semantics']+settings.FIELDS['main']+['inWeb', 'isNew', 'excludeFromEcv']
-        mapped_gloss_fields = map_field_names_to_fk_field_names(gloss_fields)
         gloss_fields_names = {f.name: f for f in Gloss._meta.fields}
 
         mapped_categories = []
-        for f in mapped_gloss_fields:
-            mapped_field = gloss_fields_names[f]
-            if hasattr(mapped_field, 'field_choice_category'):
-                mapped_category = mapped_field.field_choice_category
+        for f in gloss_fields:
+            mapped_field = map_field_name_to_fk_field_name(f)
+            gloss_field = gloss_fields_names[mapped_field]
+
+            if f == 'semField':
+                mapped_category = 'SemField'
+                if mapped_category not in mapped_categories:
+                    mapped_categories.append(mapped_category)
+            elif f == 'derivHist':
+                mapped_category = 'derivHist'
+                if mapped_category not in mapped_categories:
+                    mapped_categories.append(mapped_category)
+            elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+                mapped_category = 'Handshape'
+                if mapped_category not in mapped_categories:
+                    mapped_categories.append(mapped_category)
+            elif hasattr(gloss_field, 'field_choice_category'):
+                mapped_category = gloss_field.field_choice_category
                 if mapped_category not in mapped_categories:
                     mapped_categories.append(mapped_category)
 
-        # make a bunch of new field choices
+        # make a bunch of new choices
         for f in mapped_categories:
             # this should be an unused machine value
-            new_machine_value = 500
-            new_human_value = 'fieldchoice_' + f + '_500'
-            this_field_choice = FieldChoice(machine_value=new_machine_value,
-                                            field=f,
-                                            name=new_human_value)
-            this_field_choice.save()
+            if f == 'Handshape':
+                new_machine_value = 500
+                new_human_value = 'handshape_500'
+                this_handshape = Handshape(machine_value=new_machine_value,
+                                           name=new_human_value)
+                this_handshape.save()
+            elif f == 'SemField':
+                new_machine_value = 500
+                new_human_value = 'semfield_500'
+                this_semfield = SemanticField(machine_value=new_machine_value,
+                                              name=new_human_value)
+                this_semfield.save()
+            elif f == 'derivHist':
+                new_machine_value = 500
+                new_human_value = 'derivhist_500'
+                this_derivhist = DerivationHistory(machine_value=new_machine_value,
+                                                   name=new_human_value)
+                this_derivhist.save()
+            else:
+                new_machine_value = 500
+                new_human_value = 'fieldchoice_' + f + '_500'
+                this_field_choice = FieldChoice(machine_value=new_machine_value,
+                                                field=f,
+                                                name=new_human_value)
+                this_field_choice.save()
 
-        for f in mapped_gloss_fields:
-            if hasattr(gloss_fields_names[f], 'field_choice_category'):
+        # because semantic fields and derivation histories are multiselect, they use different identifiers for update
+        # rather than the gloss model field name
+        gloss_update_phonology_keys = []
+        for f in gloss_fields:
+            mapped_field = map_field_name_to_fk_field_name(f)
+            gloss_field = gloss_fields_names[mapped_field]
+            if f == 'semField':
+                new_machine_value_string = '_500'
+                gloss_update_phonology_data.append({'id' : 'semanticfield', 'value' : new_machine_value_string})
+                gloss_update_phonology_keys.append(f)
+            elif f == 'derivHist':
+                new_machine_value_string = '_500'
+                gloss_update_phonology_data.append({'id' : 'derivationhistory', 'value' : new_machine_value_string})
+                gloss_update_phonology_keys.append(f)
+            elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                 new_machine_value_string = '_500'
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
-            elif isinstance(gloss_fields_names[f], CharField) or isinstance(gloss_fields_names[f], TextField):
+                gloss_update_phonology_keys.append(f)
+            elif hasattr(gloss_field, 'field_choice_category'):
+                new_machine_value_string = '_500'
+                gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+                gloss_update_phonology_keys.append(f)
+            elif isinstance(gloss_field, CharField) or isinstance(gloss_field, TextField):
                 new_machine_value_string = f + '_string'
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+                gloss_update_phonology_keys.append(f)
             elif f in settings.HANDSHAPE_ETYMOLOGY_FIELDS:
                 new_machine_value_string = 'true'
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+                gloss_update_phonology_keys.append(f)
             elif f in settings.HANDEDNESS_ARTICULATION_FIELDS:
                 new_machine_value_string = '2'
                 gloss_update_phonology_data.append({'id': f, 'value': new_machine_value_string})
-            elif isinstance(gloss_fields_names[f], NullBooleanField):
+                gloss_update_phonology_keys.append(f)
+            elif isinstance(gloss_field, NullBooleanField):
                 new_machine_value_string = 'true'
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
+                gloss_update_phonology_keys.append(f)
 
         client = Client()
         client.login(username='test-user', password='test-user')
@@ -2770,13 +2814,8 @@ class RevisionHistoryTests(TestCase):
         all_revisions = GlossRevision.objects.filter(gloss=new_gloss.pk, user=self.user)
         updated_fields = [ r.field_name for r in all_revisions ]
 
-        for f in mapped_gloss_fields:
-            if f.endswith('_fk'):
-                # make sure the original field names are looked up in the revision history
-                lookup_key = f.replace('_fk', '')
-            else:
-                lookup_key = f
-            self.assertTrue(lookup_key in updated_fields)
+        for f in gloss_update_phonology_keys:
+            self.assertTrue(f in updated_fields)
 
 
 class Corpus_Tests(TestCase):

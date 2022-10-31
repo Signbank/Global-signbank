@@ -63,8 +63,8 @@ def copy_fieldchoice_names(apps, schema_editor):
             print("INFO: SemField fieldchoice not found", e)
             continue
 
-        obj.name_nl = field_choice.dutch_name
-        obj.name_zh_hans = field_choice.chinese_name
+        obj.name_nl = field_choice.name_nl
+        obj.name_zh_hans = field_choice.name_zh_hans
         obj.save()
 
     derivationhistories = DerivationHistory.objects.all()
@@ -75,8 +75,8 @@ def copy_fieldchoice_names(apps, schema_editor):
             print("INFO: derivHist fieldchoice not found", e)
             continue
 
-        obj.name_nl = field_choice.dutch_name
-        obj.name_zh_hans = field_choice.chinese_name
+        obj.name_nl = field_choice.name_nl
+        obj.name_zh_hans = field_choice.name_zh_hans
         obj.save()
 
 

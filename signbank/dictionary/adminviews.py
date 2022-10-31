@@ -4450,41 +4450,6 @@ class HandshapeListView(ListView):
                 qs = order_handshape_by_angle(qs)
             return qs
 
-        handshapes = Handshape.objects.filter(machine_value__gt=1)
-        # Find out if any Handshapes exist for which no Handshape object has been created
-
-        existing_handshape_objects_machine_values = [ o.machine_value for o in qs ]
-
-
-        new_handshape_created = 0
-
-        for h in handshapes:
-            if h.machine_value in existing_handshape_objects_machine_values:
-                pass
-            else:
-                # create a new Handshape object
-                new_id = h.machine_value
-                new_machine_value = h.machine_value
-                new_name = h.name
-
-                # Copy translated FieldChoice fields to translated Handshape fields
-                new_name_translations = dict([
-                    (
-                        'name_'+language.replace('-', '_'),
-                        getattr(h, 'name_'+language.replace('-', '_'))
-                    )
-                    for language in [l[0] for l in LANGUAGES]
-                ])
-
-                new_handshape = Handshape(machine_value=new_machine_value, name=new_name, **new_name_translations)
-                new_handshape.save()
-                new_handshape_created = 1
-
-
-        if new_handshape_created: # if a new Handshape object was created, reload the query result
-
-            qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
-
         mapped_handshape_fields = map_field_names_to_fk_field_names(FIELDS['handshape'])
         fieldnames = ['machine_value', 'name']+FIELDS['handshape']
 

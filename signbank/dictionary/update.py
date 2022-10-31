@@ -162,7 +162,8 @@ def update_gloss(request, glossid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
-    print('update gloss: ', glossid, field, value)
+    # uncomment for debugging
+    # print('update gloss: ', glossid, field, value)
     original_value = '' #will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     field_category = ''
@@ -243,12 +244,12 @@ def update_gloss(request, glossid):
     elif field == 'semanticfield':
         # expecting possibly multiple values
 
-        return update_semanticfield(gloss, field, values)
+        return update_semanticfield(request, gloss, field, values)
 
     elif field == 'derivationhistory':
         # expecting possibly multiple values
 
-        return update_derivationhistory(gloss, field, values)
+        return update_derivationhistory(request, gloss, field, values)
 
     elif field == 'dataset':
         original_value = getattr(gloss,field)
@@ -331,7 +332,8 @@ def update_gloss(request, glossid):
             newvalue = _('No')
     elif field in 'excludeFromEcv':
         original_value = getattr(gloss,field)
-        print('excludefromecv: ', original_value, ', ', value)
+        # uncomment for debugging
+        # print('excludefromecv: ', original_value, ', ', value)
         # only modify if we have publish permission
 
         gloss.excludeFromEcv = value.lower() in [_('Yes').lower(),'true',True,1]
@@ -409,12 +411,11 @@ def update_gloss(request, glossid):
                 value = (value.lower() in [_('Yes').lower(),'true',True,1])
                 newvalue = value
         # special value of 'notset' or -1 means remove the value
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         mapped_fieldnames = map_field_names_to_fk_field_names(fieldnames)
         fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
                                         if f.name in mapped_fieldnames
                                         and isinstance(Gloss._meta.get_field(f.name), FieldChoiceForeignKey)]
-        print(fieldchoiceforeignkey_fields)
         fields_empty_null = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields ]
 
@@ -437,7 +438,8 @@ def update_gloss(request, glossid):
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
         if not settings.USE_FIELD_CHOICE_FOREIGN_KEY and field + '_fk' in fieldchoiceforeignkey_fields:
             # leave this print statement for debugging purposes, some code was using the id field and some using the machine_value
-            print('gloss update field choice foreign key ', gloss, field, value)
+            # uncomment for debugging
+            # print('gloss update field choice foreign key ', gloss, field, value)
             gloss_field = Gloss._meta.get_field(field + '_fk')
             try:
                 fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
@@ -450,7 +452,8 @@ def update_gloss(request, glossid):
             newvalue = fieldchoice.name
         elif field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             # leave this print statement for debugging purposes
-            print('gloss update handshape foreign key ', gloss, field, value)
+            # uncomment for debugging
+            # print('gloss update handshape foreign key ', gloss, field, value)
             gloss_field = Gloss._meta.get_field(field + '_handshapefk')
             try:
                 handshape = Handshape.objects.get(machine_value=value)
@@ -488,6 +491,8 @@ def update_gloss(request, glossid):
             newvalue = ''
         #Regular field updating
         else:
+            # uncomment for debugging
+            # print('update else: ', field, value)
             # Alert: Note that if field is idgloss, the following code updates it
             gloss.__setattr__(field,value)
             gloss.save()
@@ -669,7 +674,7 @@ def update_dialect(gloss, field, values):
 
     return HttpResponse(str(signlanguage_value) + '\t' + str(new_dialects_value), {'content-type': 'text/plain'})
 
-def update_semanticfield(gloss, field, values):
+def update_semanticfield(request, gloss, field, values):
     # field is 'semanticfield'
     # expecting possibly multiple values
     # values is a list of strings
@@ -691,6 +696,8 @@ def update_semanticfield(gloss, field, values):
         if value in semanticfield_choices.keys():
             new_semanticfields_to_save.append(semanticfield_choices[value])
 
+    original_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
+
     # clear the old semantic fields only after we've parsed and checked the new ones
     gloss.semFieldShadow.clear()
     for sf in new_semanticfields_to_save:
@@ -699,9 +706,13 @@ def update_semanticfield(gloss, field, values):
 
     new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
 
+    revision = GlossRevision(old_value=original_semanticfield_value, new_value=new_semanticfield_value, field_name='semField',
+                             gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
     return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
 
-def update_derivationhistory(gloss, field, values):
+def update_derivationhistory(request, gloss, field, values):
     # field is 'derivationhistory'
     # expecting possibly multiple values
     # values is a list of strings
@@ -723,6 +734,8 @@ def update_derivationhistory(gloss, field, values):
         if value in derivationhistory_choices.keys():
             new_derivationhistory_to_save.append(derivationhistory_choices[value])
 
+    original_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+
     # clear the old derivation histories only after we've parsed and checked the new ones
     gloss.derivHistShadow.clear()
     for sf in new_derivationhistory_to_save:
@@ -730,6 +743,10 @@ def update_derivationhistory(gloss, field, values):
     gloss.save()
 
     new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+
+    revision = GlossRevision(old_value=original_derivationhistory_value, new_value=new_derivationhistory_value, field_name='derivHist',
+                             gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+    revision.save()
 
     return HttpResponse(str(new_derivationhistory_value), {'content-type': 'text/plain'})
 
@@ -1906,12 +1923,12 @@ def update_morpheme(request, morphemeid):
         elif field == 'semanticfield':
             # expecting possibly multiple values
 
-            return update_semanticfield(morpheme, field, values)
+            return update_semanticfield(request, morpheme, field, values)
 
         elif field == 'derivationhistory':
             # expecting possibly multiple values
 
-            return update_derivationhistory(morpheme, field, values)
+            return update_derivationhistory(request, morpheme, field, values)
 
         elif field == 'dataset':
             # this has been hidden
